@@ -1,0 +1,25 @@
+{
+  "request": "Stwórz prosty system do automatyzacji pracy dyplomowej",
+  "requirements": [
+    "Zachować prostą strukturę projektu."
+  ],
+  "plan": [
+    "1. Wczytaj opis zadania.",
+    "2. Uporządkuj wymagania.",
+    "3. Przygotuj plan pracy.",
+    "4. Sprawdź dostępne prompty i zasoby.",
+    "5. Zapisz wynik oraz log wykonania.",
+    "6. Dostępne prompty: 00_system.md, 01_requirements.md, 02_planning.md, 03_generate_code.md, 04_generate_text.md, 05_review_response.md, 06_figures.md"
+  ],
+  "verification": [],
+  "status": "ok",
+  "prompt_files": [
+    "00_system.md",
+    "01_requirements.md",
+    "02_planning.md",
+    "03_generate_code.md",
+    "04_generate_text.md",
+    "05_review_response.md",
+    "06_figures.md"
+  ]
+}

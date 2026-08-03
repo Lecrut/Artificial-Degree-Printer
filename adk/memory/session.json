@@ -1,0 +1,20 @@
+{
+  "request": "Build a minimal ADK scaffold",
+  "requirements": [
+    "Keep the project structure simple."
+  ],
+  "plan": [
+    "1. Read the task description.",
+    "2. Organize the requirements.",
+    "3. Prepare the work plan.",
+    "4. Check the available prompts and resources.",
+    "5. Save the result and execution log.",
+    "6. Available prompts: 00_system.md, 01_requirements.md, 02_planning.md, 03_generate_code.md, 04_generate_text.md, 05_review_response.md, 06_figures.md"
+  ],
+  "changes": [],
+  "verification": [],
+  "notes": [
+    "This is the minimal program core.",
+    "The next step is connecting a real model and concrete tools."
+  ]
+}
