@@ -1,45 +1,54 @@
 # Artificial Degree Printer
 
-This repository is a minimal scaffold for a system that automates the creation and modification of software projects, documentation, and thesis or paper content.
+This repository is a scaffold for a system that automates the creation and modification of software projects, project documentation, thesis content, and scientific article text using AI.
 
-At this stage the repository contains only the organizational skeleton:
-- prompt files for each stage of the workflow,
-- pipeline documentation,
-- verification placeholders,
-- memory and log storage.
+## Project goal
 
-## Purpose
+The main objective is to build a semi-autonomous workflow that:
+- receives user requirements and feedback,
+- plans the work into stages,
+- generates or updates code and text,
+- validates the result with tests and structured checks,
+- stores state, decisions, and execution logs,
+- revises the output when requirements or review comments change.
 
-The system is meant to operate in a semi-autonomous mode:
-1. the user provides requirements and feedback,
-2. the pipeline plans the work,
-3. the models generate or modify code and text,
-4. tools run tests and validation,
-5. the system records results, logs the run, and suggests the next iteration.
+## Project scope
 
-## Proposed layout
+The system targets computer science projects, academic theses, and scientific articles. It is designed to support the practical part, source code, documentation, and research writing with AI-driven assistance.
 
-- `adk/prompts/` - prompts for each stage,
-- `adk/pipeline/` - stage flow and control logic,
-- `adk/verification/` - quality checks and metrics,
-- `adk/memory/` - working state, decisions, and context memory,
-- `adk/logs/` - execution logs,
-- `adk/assets/` - generated or external figures and their provenance.
+## Documentation
 
-## How to use it
+The full project description is available in [documentation/README.md](documentation/README.md).
 
-Treat this scaffold as a project notebook. In the next steps you can add:
-- real prompts,
-- a task state schema,
-- tool definitions,
-- report formats and validation checklists.
+## Repository structure
 
-## Run
+- [adk/](adk/) - agent scaffolding, prompts, memory, and workflow notes
+- [adk/prompts/](adk/prompts/) - pipeline prompts
+- [adk/pipeline/](adk/pipeline/) - workflow description
+- [adk/verification/](adk/verification/) - validation rules
+- [adk/memory/](adk/memory/) - session state and working memory
+- [adk/logs/](adk/logs/) - execution logs
+- [adk/assets/](adk/assets/) - diagrams, figures, and provenance metadata
 
-The minimal program starts from `main.py`:
+## Minimal run
 
 ```bash
-C:/Users/Filip/AppData/Local/Programs/Python/Python313/python.exe main.py "Stwórz prosty system do automatyzacji pracy dyplomowej"
+python main.py "Stwórz prosty system do automatyzacji pracy dyplomowej"
 ```
 
-The program writes the current state to `adk/memory/session.json` and the execution log to `adk/logs/`.
+The script stores the current state in [adk/memory/session.json](adk/memory/session.json) and logs execution in [adk/logs/](adk/logs/).
+
+## AI-oriented principles
+
+This project is intended to be understandable to both humans and AI agents. The main design principles are:
+
+- modular prompts,
+- explicit task stages,
+- persistent state and memory,
+- verification before accepting results,
+- traceable changes and logged execution,
+- consistent alignment between code, documentation, and visuals.
+
+## Status
+
+This is a structured starter repository for building the full system described in the project documentation. The next steps may include real prompt implementations, automatic validation, and a stronger execution engine.
