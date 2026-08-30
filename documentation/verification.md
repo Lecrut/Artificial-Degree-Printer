@@ -1,75 +1,67 @@
-# Verification and Quality Control
+# Verification & Quality Control Standard (ADK 2027)
 
-## Verification goals
+> **Philosophy:** Verification-First & Zero-Hallucination Engineering  
+> **Engine:** `MasterVerificationSuite` (`adk/verification/`)  
+> **Evaluation Scale:** Score 0.0% – 100.0% (PASS / FAIL)
 
-The system must confirm that generated work is correct, useful, aligned with the original request, and sufficiently robust for further human review.
+---
 
-## Verification model
+## 1. The Verification-First Principle
 
-The workflow should use layered verification rather than a single final check. Each stage should provide evidence before the system proceeds.
+In `Artificial-Degree-Printer`, outputs are never accepted blindly. In accordance with seminal research (*SWE-bench*, *Reflexion*, *CoVe*, *AgentBench*), every stage must pass a formal verification gate producing reproducible evidence before the pipeline proceeds.
 
-### Stage-level validation
+---
 
-- input validation: confirm that the user request is clear and actionable,
-- planning validation: ensure the task is properly decomposed,
-- research validation: check whether enough evidence or context was gathered,
-- implementation validation: confirm code and docs are coherent and complete,
-- writing validation: verify clarity, argument structure, and domain fit,
-- final acceptance validation: confirm the output satisfies the request and review criteria.
+## 2. Seven Specialized Verification Gates
 
-## Examples of automated checks
+```
+                            MASTER VERIFICATION SUITE
+  
+  [ 1. CODE SYNTAX GATE ]      AST Python Parsing & Zero Syntax Errors
+  [ 2. MUTATION TESTING GATE ] Mutation Score (MS >= 60%) & Edge Case Coverage
+  [ 3. CITATION SOTA GATE ]    BibTeX Integrity & Max 3-Year SOTA Horizon (>= 2023)
+  [ 4. ENGLISH NAMING GATE ]   Zero Polish Diacritics in Paths / 100% English Filenames
+  [ 5. CROSS-CONSISTENCY GATE] AST Symbol Matching (Thesis Text <-> Codebase AST)
+  [ 6. STYLE & FLUFF GATE ]    Academic Tone & Elimination of AI Cliché Fluff
+  [ 7. STYLOMETRY & JSA GATE ] Type-Token Ratio (TTR), Sentence Variance & JSA Risk
+```
 
-- unit tests,
-- integration tests,
-- formatting and lint checks,
-- type checking,
-- build verification,
-- consistency checks between code and documentation,
-- thesis/article structure validation,
-- figure, caption, and diagram consistency checks,
-- requirement-traceability checks,
-- quality metrics and review criteria.
+---
 
-## Scientific and academic quality checks
+### Gate 1: Code Syntax & AST Gate (`CodeVerificationGate`)
+- Validates the Abstract Syntax Tree (AST) of every Python artifact.
+- Enforces mandatory unit test artifacts (`is_test=True`) and packaging (`Dockerfile`).
 
-For thesis and research work, validation should also cover:
+### Gate 2: Mutation Testing Gate (`MutationTestingGate`)
+- Injects artificial code mutations (e.g. `>` to `<=`, `==` to `!=`, `True` to `False`).
+- Verifies whether the test suite actively kills these mutations ($MS = \frac{\text{Killed}}{\text{Total}} \times 100\% \ge 60\%$).
 
-- clarity of research questions and hypotheses,
-- internal consistency of the argument,
-- alignment between claims and evidence,
-- logical chapter or section structure,
-- proper framing of limitations and future work,
-- support for claims with explicit references or reasoning,
-- consistency of terminology across the document.
+### Gate 3: Citation & SOTA Horizon Gate (`CitationVerificationGate`)
+- Checks every `@cite` key in Typst/LaTeX against `references.bib`.
+- Strict SOTA enforcement: All scientific publications must be published in **2023 or later** ($\ge 2023$).
 
-## Governance principle
+### Gate 4: English Naming Gate (`EnglishNamingVerificationGate`)
+- Validates that 100% of generated file paths and directories use valid English alphanumeric characters without Polish diacritics (`[ąćęłńóśźż]`).
 
-Each workflow stage should have at least one lightweight validation path. If a validation fails, the system should return to the most relevant stage rather than continuing blindly.
+### Gate 5: Cross-Consistency Gate (`CrossConsistencyValidator`)
+- Scans Chapter 4 and Chapter 3 in thesis drafts to ensure referenced classes (e.g. `CoreProcessingService`), methods, and file paths physically exist in the generated codebase AST.
 
-## Acceptance criteria
+### Gate 6: Academic Style & AI Fluff Gate (`AcademicStyleGate`)
+- Detects and flags typical AI cliché patterns (*"in today's fast-paced world"*, *"it is worth noting that"*, *"w dzisiejszym dynamicznie zmieniającym się świecie"*).
+- Enforces proper academic structure (abstract, min 3 chapters, chapter word count minimums).
 
-A result is acceptable when:
+### Gate 7: Stylometry & Anti-Plagiarism Gate (`StylometryAuditGate`)
+- Measures lexical diversity ($TTR = \frac{\text{Unique Words}}{\text{Total Words}} \ge 0.35$).
+- Evaluates sentence length variance to ensure natural rhythm.
+- Produces an estimated **JSA Plagiarism Risk Assessment** (Low / Moderate / High).
 
-- it satisfies the request and explicit constraints,
-- it passes relevant automated checks,
-- it remains consistent with the project state and current goals,
-- it can be traced to requirements, evidence, or feedback,
-- it is clear enough for a human reviewer to judge and improve,
-- it is not merely plausible but operationally usable.
+---
 
-## Quality scorecard
+## 3. Quality Scoring Formula
 
-A practical quality model for this project can include dimensions such as:
+The overall project quality score is calculated deterministically:
 
-- correctness,
-- completeness,
-- clarity,
-- usefulness,
-- consistency,
-- traceability,
-- maintainability,
-- research credibility,
-- technical soundness,
-- human review readiness.
+$$\text{Score} = \max\Big(0.0,\; 100.0 - 30.0 \cdot N_{\text{CRITICAL}} - 15.0 \cdot N_{\text{ERROR}} - 5.0 \cdot N_{\text{WARNING}}\Big)$$
 
-This scorecard helps the system decide whether to continue, revise, or escalate a task.
+- **PASS Criteria:** $N_{\text{CRITICAL}} = 0$ AND $N_{\text{ERROR}} = 0$ (Score $\ge 80.0\%$).
+- If the verification fails, a structured `VerificationIssue` report is fed back into the agent reflexion loop for autonomous remediation.

@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Latency 10 users",
+    "value": 12.4,
+    "unit": "ms",
+    "target": 200.0,
+    "passed": true
+  },
+  {
+    "name": "Latency 50 users",
+    "value": 18.2,
+    "unit": "ms",
+    "target": 200.0,
+    "passed": true
+  },
+  {
+    "name": "Latency 100 users",
+    "value": 28.6,
+    "unit": "ms",
+    "target": 200.0,
+    "passed": true
+  },
+  {
+    "name": "Latency 250 users",
+    "value": 54.1,
+    "unit": "ms",
+    "target": 200.0,
+    "passed": true
+  },
+  {
+    "name": "Latency 500 users",
+    "value": 112.8,
+    "unit": "ms",
+    "target": 200.0,
+    "passed": true
+  }
+]

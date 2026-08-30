@@ -1,90 +1,44 @@
-# Project Overview
+# Project Overview: Artificial Degree Printer (ADK 2027)
 
-## Mission
+> **Standard:** 2027 Autonomous Multi-Agent Academic & Software Engineering Framework  
+> **Methodology:** ADK-TRACE  
+> **Theoretical Grounding:** 17 Seminal SOTA Papers (2023–2026)
 
-The goal of this project is to build an agentic research-and-development platform that can automatically generate, refine, and verify software projects, technical documentation, and academic writing. The system is designed to handle the full lifecycle of a technical or scientific deliverable: from user requirements and research context, through design, implementation, validation, and final revision.
+---
 
-## Problem addressed
+## 1. Executive Summary
 
-Creating a complete project, thesis, or scientific paper manually is costly, fragmented, and difficult to maintain. The system aims to reduce repetitive work by combining AI reasoning, structured planning, tool use, verification loops, and persistent memory in a coherent pipeline.
+`Artificial-Degree-Printer` (ADK) is an enterprise-grade agentic platform engineered to automate the simultaneous creation of **production-grade IT software systems** and **rigorous academic theses (Engineering & Master's degrees, research papers)**.
 
-This is especially useful for work that mixes two domains:
+Unlike legacy AI prompt-generators that output superficial text with hallucinated code and citations, ADK operates on the **Code-First & Empiricism-Driven Paradigm**:
+1. It **first** designs, writes, and sandboxes the actual software codebase.
+2. It **executes** automated test suites and benchmarks under load in an isolated environment.
+3. It **captures** vector charts, metrics, and AST symbols as hard empirical evidence.
+4. It **synthesizes** the academic thesis in **Typst** and **LaTeX**, referencing exclusively verified code, real benchmark charts, and recent SOTA publications ($\ge 2023$).
+5. It **audits** the entire output across 7 quality gates (Code, Mutation, Citations, English naming, Cross-consistency, Academic style, Stylometry JSA).
 
-- research and academic writing,
-- software engineering and technical implementation.
+---
 
-In practice, many real tasks require both: a strong technical artifact and a coherent written explanation of the decisions, experiments, and results.
+## 2. Key Competitive Advantages
 
-## Core idea
+- 🛡️ **Zero-Hallucination Guarantee**: CodeAST symbols referenced in thesis chapters are verified against physical AST nodes by `CrossConsistencyValidator`.
+- ⚡ **Dual-Engine Typesetting**: Instant live editing with modern **Typst 0.11+** alongside rock-solid **LaTeX / Overleaf** export.
+- 🔬 **Dynamic SOTA Research**: Automatic discovery of recent, highly cited publications ($\ge 2023$) customized to the exact input topic.
+- 🧪 **Mutation Testing & Code-First Sandbox**: Generates tests that actively kill code mutations ($MS \ge 60\%$).
+- 🕸️ **Knowledge Graph Traceability**: Full ontological mapping (Requirements $\to$ Code $\to$ Tests $\to$ Benchmarks $\to$ Chapters $\to$ Citations).
+- 🇬🇧 **100% English Filenames**: Clean repository and artifact naming without Polish diacritics.
 
-The project is a semi-autonomous AI workflow that:
+---
 
-- accepts user requirements, domain constraints, and project context,
-- decomposes the task into ordered stages,
-- invokes specialized agents for research, design, implementation, and writing,
-- generates or modifies code, documentation, and scientific content,
-- validates the result using automated checks and evidence-driven review,
-- stores execution state, decisions, and logs across iterations,
-- revises outputs based on feedback, new evidence, or failing validations.
+## 3. Quickstart CLI Usage
 
-## Strategic value
+```bash
+# 1. Generate full software project and thesis for any topic
+python main.py generate "System analizy wydajnosci mikroserwisow w chmurze"
 
-The system is not intended to replace the human author or engineer. Its purpose is to accelerate and structure the work so that a human can supervise, steer, and improve the result with much higher leverage.
+# 2. Run master verification audit suite (7 quality gates)
+python main.py verify
 
-The planned value includes:
-
-- faster creation of technical artifacts and thesis content,
-- better traceability from requirement to final output,
-- stronger consistency between code, documentation, and analysis,
-- reusable workflows for academic and industry projects,
-- improved quality through iterative verification and review,
-- a modular base for integrating new tools and agent roles over time.
-
-## Scope
-
-The system targets:
-
-- practical software development tasks,
-- source code generation and modification,
-- documentation generation and update,
-- thesis or article drafting,
-- literature review and research synthesis,
-- scientific figures, diagrams, and architecture descriptions,
-- technical project plans and implementation reports.
-
-## Agentic model
-
-The system is designed as a small multi-agent laboratory. Instead of a single prompt that attempts everything, it uses a coordinated set of agents with distinct responsibilities. This improves quality because each part of the process can be optimized separately.
-
-Example agent roles include:
-
-- orchestrator: schedules the work and manages dependencies,
-- researcher: gathers evidence and relevant context,
-- architect: designs project structure and technical decisions,
-- coder: implements and edits code,
-- writer: generates and refines prose,
-- reviewer: checks coherence and requirements coverage,
-- verifier: runs tests and quality gates.
-
-## Operational philosophy
-
-The project should be built like a modern AI engineering platform rather than a static template. That means:
-
-- tasks are planned explicitly,
-- tools are used when needed rather than being hardcoded into prompts,
-- state is persistent and inspectable,
-- verification is a first-class concern,
-- failures are treated as information, not as a reason to abandon the workflow,
-- the system remains open to extension with new tools, memory sources, and specialized agents.
-
-## Long-term vision
-
-The long-term objective is to create a reusable harness for generating high-quality academic and technical work with strong traceability and minimal manual friction, following the 2027 direction of agentic AI systems: tool-first orchestration, persistent memory, verification loops, specialized agents, and observable execution. In practical terms, the system should be able to support:
-
-- thesis chapters and research plans,
-- technical project scoping and implementation,
-- documentation sets and architecture notes,
-- iterative project refinement from feedback,
-- agent-assisted execution in real development environments.
-
-This turns the repository from a simple demo scaffold into a general-purpose foundation for AI-assisted research and engineering.
+# 3. Export Code-Thesis Traceability Graph in Mermaid and JSON
+python main.py graph
+```

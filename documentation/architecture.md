@@ -1,254 +1,91 @@
-# Architecture
-
-## High-level goal
-
-The project should be structured as an agent harness rather than a single monolithic prompt. The central idea is that an AI system for research and technical project generation needs a robust execution environment: a planner, memory, tool adapters, validation loops, and a clear model of project state.
-
-## Architectural layers
-
-### 1. Interface layer
-This layer handles user interaction and project intake.
-
-It includes:
-
-- task description and requirement capture,
-- user context, constraints, and review feedback,
-- domain selection (e.g. thesis, software project, research report),
-- human approval checkpoints.
-
-### 2. Orchestration layer
-This is the central control plane of the system.
-
-Responsibilities:
-
-- decomposing a high-level request into work items,
-- choosing which agent or tool to invoke,
-- tracking stage dependencies and retries,
-- selecting validation gates,
-- deciding whether to continue, revise, or escalate to human review.
-
-This layer should be designed as a state machine or task graph rather than a simple sequential script.
-
-### 3. Agent layer
-Specialized agents provide focused expertise.
-
-Recommended roles:
-
-- orchestrator: manages workflow and priorities,
-- researcher: searches for information, evidence, and prior work,
-- architect: determines the technical structure and design choices,
-- implementer: writes code, config, and project files,
-- writer: drafts sections, explanations, and publication-quality prose,
-- reviewer: checks coherence and requirement coverage,
-- verifier: executes tests, checks, and evaluation logic.
-
-Each agent should have clear boundaries and tool permissions.
-
-### 4. Tool layer
-The tool layer turns the agent into a real operating system for project work.
-
-Suggested categories:
-
-- repository tools: git, file reading, file writing, diff review,
-- execution tools: terminal commands, build/test runners,
-- search tools: web search, local search, RAG index,
-- browser tools: retrieving sources and documentation,
-- data tools: database or vector store access,
-- document tools: PDF generation, markdown validation, citations,
-- validation tools: linting, type checking, unit tests, style checks,
-- MCP-compatible tool servers for external systems.
-
-This is a major modern requirement: the agent should be able to use tools instead of only generating text.
-
-### 5. Memory and knowledge layer
-The system needs a strong memory substrate to remain useful across multiple runs and long tasks.
-
-This layer stores:
-
-- session state and execution metadata,
-- task decomposition and revision history,
-- relevant project files and generated artifacts,
-- research notes, sources, and evidence,
-- previous project decisions and lessons learned,
-- user preferences and accepted standards.
-
-Memory should include both short-term working memory and longer-term project memory.
-
-### 6. Validation and evaluation layer
-This layer ensures that generated outputs are not accepted blindly.
-
-It should include:
-
-- syntax and build validation,
-- semantic checks against requirements,
-- technical correctness and consistency checks,
-- scientific writing checks such as argument flow and structure,
-- evaluation metrics for quality, completeness, and factual support,
-- human review gates for higher-risk or final decisions.
-
-### 7. Artifact and provenance layer
-This layer records what was produced and why.
-
-Artifacts may include:
-
-- source code,
-- reports and thesis chapters,
-- diagrams and figures,
-- test results,
-- verification logs,
-- review comments,
-- traceability to requirements.
-
-Provenance is essential for trustworthy academic and technical outputs.
-
-## Core design principles
-
-- modularity: separate orchestration, tools, memory, and validation,
-- extensibility: easy to add agents, tools, and constraints,
-- observability: logs, traces, and state snapshots should remain inspectable,
-- verification-first: do not accept a result without a quality gate,
-- tool abstraction: agents should interact using capabilities, not ad hoc scripts,
-- human oversight: important decisions remain reviewable and controllable,
-- traceability: every output can be linked back to evidence and requirements.
-
-## Reference architecture
-
-A plausible modern structure for this project is:
-
-1. User request enters the system.
-2. The orchestrator interprets the task and creates a task graph.
-3. The planner selects relevant agents and tools.
-4. Research and design agents gather needed context.
-5. Implementation agents modify files, code, or documents.
-6. Validation agents run checks and produce evidence.
-7. The orchestrator decides whether to iterate or finalize.
-8. Results and logs are stored with provenance metadata.
-
-## Recommended technical stack
-
-For the first production-grade version, the project should favor a practical and extensible stack:
-
-- Python as the orchestration and service layer,
-- PostgreSQL as the structural memory store,
-- pgvector as the semantic memory layer for similarity search and retrieval,
-- Redis for queueing or transient workflow coordination when needed,
-- JSON or SQLAlchemy models for state and project metadata,
-- MCP-compatible interfaces for tool integration,
-- file-system and terminal adapters for code and document work,
-- CLI-first execution before building a web app.
-
-This stack is modern, reliable, and easy to expand as the system grows.
-
-## Component specification
-
-### Core runtime
-
-The core runtime should provide:
-
-- configuration loading,
-- session bootstrap,
-- task orchestration,
-- agent execution loop,
-- logging and lifecycle management,
-- connectivity to the memory and tool layers.
-
-### Memory layer
-
-The memory layer should cover:
-
-- project metadata,
-- task state and dependency graph,
-- agent decisions and observations,
-- prior run history,
-- structured notes and evidence,
-- retrieval data for future similarity matching.
-
-### Tool and action layer
-
-Every agent should interact through a tool registry exposing operations such as:
-
-- read file,
-- write file,
-- search repository,
-- run shell command,
-- run tests,
-- inspect git diff,
-- fetch research sources,
-- validate document structure,
-- call external MCP tools.
-
-### Verification layer
-
-The verification layer should produce explicit evidence rather than implicit trust. It should capture:
-
-- test results,
-- type or lint output,
-- requirement coverage,
-- document consistency checks,
-- issue lists with severity and stage location,
-- revision recommendation when fail conditions are detected.
-
-## Implementation phases
-
-### Phase 1: foundation
-
-- define core data model,
-- create project and session lifecycle,
-- implement task orchestration,
-- create log persistence,
-- establish the first validation pass.
-
-### Phase 2: tool-enabled workflow
-
-- add filesystem and terminal adapters,
-- enable repo-aware code editing,
-- add lint/test execution,
-- wire review and revise loops,
-- add API/CLI interfaces.
-
-### Phase 3: knowledge layer
-
-- add Postgres-backed memory store,
-- integrate pgvector for semantic retrieval,
-- store evidence, notes, and prior outputs,
-- support contextual recall for future runs.
-
-### Phase 4: specialization
-
-- create distinct specialist agents,
-- route tasks by role and tool needs,
-- add human review checkpoints,
-- define escalation policies.
-
-### Phase 5: production hardening
-
-- metrics and telemetry,
-- safe execution constraints,
-- versioned artifacts,
-- deployment support,
-- observability and operational control.
-
-## Why this is a modern architecture
-
-This approach aligns with current trends in 2025-2027 AI system design:
-
-- model + tool ecosystem, not model alone,
-- explicit orchestration and memory,
-- specialized agents for different functions,
-- use of standardized connectors such as MCP,
-- emphasis on verification, evaluation, provenance, and traceability,
-- support for iterative human-AI collaboration.
-
-## Evolution path
-
-The project can begin as a minimal scaffold and grow into a richer system in layers:
-
-1. simple prompt-driven workflow,
-2. persistent memory and state,
-3. tool execution layer,
-4. multi-agent orchestration,
-5. verification and scoring,
-6. workflow automation and sandboxing,
-7. production-quality observability and governance.
-
-This path keeps the repository practical while aligning it with the expected direction of agentic software in the coming years.
+# System Architecture (ADK 2027)
+
+> **Standard:** 2027 Multi-Agent Software & Academic Thesis Generation Architecture  
+> **Methodology:** ADK-TRACE (Traceable, Reflexive, Artifact-Centric Engineering)  
+> **Theoretical Foundation:** 17 Seminal SOTA Papers (2023–2026)
+
+---
+
+## 1. High-Level Architectural Vision
+
+`Artificial-Degree-Printer` (ADK) is designed as a **deterministic, tool-augmented, multi-agent harness** rather than a single monolithic prompt. The platform realizes the **Code-First & Empiricism-Driven** paradigm: academic theses (Engineering & Master's) and technical documentation are generated as an empirical audit and rigorous documentation of real, sandboxed, compiled, and benchmarked software artifacts.
+
+```
+                           ADK 2027 MULTI-TIER ARCHITECTURE
+  
+  [ 1. INTERFACE PLANE ]   CLI Terminal / Rich TUI Dashboard / JSON API / HITL Gates
+             │
+             ▼
+  [ 2. ORCHESTRATION ]     StateGraph DAG Engine (SOPs, Dependencies, Reflexion Loops)
+             │
+             ▼
+  [ 3. AGENT SWARM ]       Promotor AI ── Researcher ── Architect ── Developer
+                                       ── Experimenter ── Typesetter ── Reviewer
+             │
+             ▼
+  [ 4. TOOL HARNESS ]      Model Context Protocol (MCP) ── SandboxRunner (Pytest)
+                           ── BenchmarkTool (SVG/PDF) ── TypesettingEngine (Typst/LaTeX)
+             │
+             ▼
+  [ 5. TRACE & MEMORY ]    CodeThesisTraceabilityGraph (GraphRAG) ── Session Store (JSON)
+             │
+             ▼
+  [ 6. QUALITY GATES ]     MasterVerificationSuite (AST, Citations, Mutation, JSA Stylometry)
+```
+
+---
+
+## 2. Core Architectural Layers & 2027 Modern Tooling
+
+### 1. Interface & Control Plane (`adk/tui/`, `main.py`)
+- **Rich Terminal TUI Console**: Live interactive visual rendering of project status, component tables, quality radars, and artifact paths (`TerminalDashboard`).
+- **CLI Subcommands**: `generate <topic>`, `verify`, `graph`.
+- **Human-in-the-Loop (HITL) Checkpoints**: Promotor review approval gates after SOTA research and architecture specification.
+
+### 2. Deterministic Orchestration Plane (`adk/engine/`)
+- **StateGraph Engine** (inspired by *MetaGPT* & *Agentless*): Directed Acyclic Graph (DAG) with explicit state transition contracts and retry/reflexion loops on verification failure.
+- **ExecutionContext**: Decoupled environment managing tool bindings, session storage, and workspace directories.
+
+### 3. Specialized Multi-Agent Swarm (`adk/agents/`)
+- **Promotor AI (`OrchestratorAgent`)**: High-level problem decomposition, MoSCoW requirements definition (`REQ-F-xx`, `REQ-NF-xx`).
+- **Literature Researcher (`ResearcherAgent`)**: Dynamic SOTA research ($\ge 2023$, top citations), BibTeX compilation, and implementation backlog extraction.
+- **System Architect (`ArchitectAgent`)**: C4 model design, Pydantic data schemas, sequence diagrams, and security analysis.
+- **Software Engineer (`DeveloperAgent`)**: Production-grade modular code (`src/core/`), unit test suites (`tests/`), and container packaging (`Dockerfile`).
+- **Benchmark Analyst (`ExperimenterAgent`)**: SLA latency measurements under load, raw datasets, and vector charts.
+- **Academic Typesetter (`TypesetterAgent`)**: Complete thesis composition in **Typst** and **LaTeX** (Tectonic/Overleaf ready).
+- **Formal Critic (`ReviewerAgent`)**: Multi-gate quality audit, AST cross-verification, and anti-hallucination verification.
+
+### 4. Tool & Execution Harness (`adk/tools/`)
+- **Model Context Protocol (MCP)** (Standard *Anthropic MCP* & *Toolformer*): Standardized JSON-RPC tool contracts.
+- **Sandbox Execution Runner (`SandboxRunnerTool`)**: Isolated process execution with strict timeouts, environment controls, and stdout/stderr capture.
+- **Vector Benchmark Generator (`BenchmarkTool`)**: Matplotlib 300 DPI vector charts (SVG/PNG/PDF) and JSON metrics.
+- **Dual-Engine Typesetter (`TypesettingTool`)**: Native **Typst 0.11+** generator and **LaTeX / BibLaTeX** compiler.
+- **Automated Git Provenance (`GitProvenanceTool`)**: Granular git commit history tagged per agent stage.
+
+### 5. Knowledge & Traceability Layer (`adk/graph/`, `adk/core/`)
+- **CodeThesisTraceabilityGraph (GraphRAG)**: Full ontology mapping:
+  $$\text{Requirement} \longrightarrow \text{Code File} \longrightarrow \text{Unit Test} \longrightarrow \text{Benchmark} \longrightarrow \text{Chapter} \longrightarrow \text{Citation}$$
+- **Event Sourcing Memory (`adk/core/events.py`)**: Immutable log of every agent action and tool call.
+
+### 6. Verification & Anti-Hallucination Gate (`adk/verification/`)
+- **`CodeVerificationGate`**: AST syntax validation and mandatory unit test coverage.
+- **`MutationTestingGate`**: Mutation testing engine calculating Mutation Score ($MS \ge 60\%$).
+- **`CitationVerificationGate`**: BibTeX integrity validation and strict SOTA horizon enforcement ($\ge 2023$ r.).
+- **`EnglishNamingVerificationGate`**: Verification of strict English filenames across the entire repository.
+- **`CrossConsistencyValidator`**: AST symbol matching between thesis text descriptions and codebase classes/functions.
+- **`StylometryAuditGate`**: Lexical diversity ($TTR$), sentence variance, and JSA anti-plagiarism pre-check.
+
+---
+
+## 3. Technology Stack Summary (2027 Standard)
+
+| Komponent / Warstwa | Zastosowana Nowoczesna Technologia |
+| :--- | :--- |
+| **Język Główny** | Python 3.12+ (z pełnym typowaniem `typing`, dataclasses, slots) |
+| **Modele Danych i Walidacja** | Pydantic v2 (ścisłe schematy wejść/wyjść) |
+| **Silnik Składu Akademickiego** | **Typst 0.11+** (główny) + **LaTeX / BibLaTeX** (eksport Overleaf) |
+| **Wizualizacja Naukowa** | Matplotlib 3.10+ (wektorowe wykresy SVG/PDF, 300 DPI, styl akademicki) |
+| **Interfejs Konsolowy** | Rich 13.9+ (kolorowe panele, tabele statusu, radary jakości) |
+| **Testowanie i Piaskownica** | Pytest 9.1+, Subprocess Sandbox z timeoutem, AST Parser |
+| **Wersjonalizacja** | Git CLI z automatycznymi commitami per etap agenta |
+| **Standard Integracji Narzędzi** | Model Context Protocol (MCP) kompatybilny standard JSON Schema |

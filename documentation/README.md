@@ -1,29 +1,16 @@
-# Documentation
+# Dokumentacja Projektu ADK (Artificial Degree Printer)
 
-This folder contains the project documentation for the Artificial Degree Printer system.
+Niniejszy katalog zawiera dokumentację techniczną, architektoniczną oraz bazę wiedzy artykułów naukowych dla frameworka ADK. Wszystkie pliki i foldery są nazwane w języku angielskim zgodnie ze standardem inżynierii oprogramowania.
 
-## Contents
+## Spis dokumentów i podkatalogów:
 
-- [project-overview.md](project-overview.md) - executive summary, mission, and long-term direction
-- [architecture.md](architecture.md) - system architecture and layered agent design
-- [requirements.md](requirements.md) - functional, non-functional, and quality requirements
-- [workflow.md](workflow.md) - execution pipeline, task graph, and revision loop
-- [verification.md](verification.md) - automated validation, quality gates, and acceptance criteria
-- [assets.md](assets.md) - figures, diagrams, and provenance handling
-
-## Purpose
-
-The documentation in this folder is intended to make the project easier to understand, extend, and operate by both humans and AI agents.
-
-The structure follows a practical engineering approach inspired by modern AI agent platforms:
-
-- clear project description,
-- explicit system boundaries,
-- modular agent and tool responsibilities,
-- verifiable quality gates,
-- traceable state and decision history,
-- extensibility for future tooling and integrations.
-
-## Strategy
-
-This documentation is meant to reflect the direction of agentic systems in 2027: the system is not a single prompt but a platform for research, implementation, and writing. Its long-term value comes from combining orchestration, memory, tool use, validation, MCP-compatible integrations, and human oversight in a coherent workflow, fully aligned with the latest AI-engineering patterns.
+1. 📐 [**Metodyka ADK-TRACE i Plan Ewolucji (Methodology & Roadmap)**](methodology_and_roadmap.md) — Oficjalny manifest metodyczny 2027 (ADK-TRACE), reguły inżynierskie, kamienie milowe i powiązanie z wnioskami z 17 publikacji.
+2. 📚 [**Baza Artykułów Naukowych SOTA (Scientific Papers)**](scientific_papers/) — Folder z analitycznymi kartami 17 publikacji z lat 2023–2026 oraz [Wielką Debatą Architektoniczną](scientific_papers/architectural_debate_and_synthesis.md).
+3. [Przegląd Projektu (Project Overview)](project-overview.md) — Wprowadzenie do platformy, misja i paradygmat Code-First.
+4. [Architektura Systemu (Architecture)](architecture.md) — Szczegółowy opis warstw: Orkiestracji, Roju Agentów, Narzędzi MCP, Pamięci i Weryfikacji.
+5. [Przewodnik Użytkownika (User Guide)](user-guide.md) — Instrukcja obsługi CLI, kompilacja Typst/LaTeX i generowanie projektów.
+6. [Wymagania Systemowe (Requirements)](requirements.md) — Specyfikacja wymagań funkcjonalnych i niefunkcjonalnych platformy.
+7. [Przepływ Zadań (Workflow)](workflow.md) — Opis cyklu życia projektu, grafu stanów (DAG) i pętli poprawek.
+8. [Bramki Weryfikacyjne i Audyt (Verification)](verification.md) — Standardy jakości, AST linter, weryfikacja cytowań, testy mutacyjne, angielskie nazewnictwo plików i stylometria JSA.
+9. [Struktura Repozytorium (Repository Structure)](repository-structure.md) — Mapa katalogów i modułów frameworka.
+10. [Zasoby Graficzne (Assets)](assets.md) — Standardy generowania wykresów wektorowych i diagramów.

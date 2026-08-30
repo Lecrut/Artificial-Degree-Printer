@@ -1,0 +1,95 @@
+% Szablon Pracy Dyplomowej w LaTeX (Standard 2027)
+% Kompatybilny z Tectonic, Overleaf oraz silnikiem pdfLaTeX / XeLaTeX
+
+\documentclass[12pt,a4paper,twoside]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage[style=ieee,backend=biber]{biblatex}
+
+\geometry{
+  a4paper,
+  left=30mm,
+  right=20mm,
+  top=25mm,
+  bottom=25mm
+}
+
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.96,0.96,0.96}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegray},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\addbibresource{references.bib}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    {\Large\textbf{POLITECHNIKA / UCZELNIA TECHNICZNA}\par}
+    {\large Wydział Informatyki\par}
+    \vspace{3cm}
+    {\LARGE\textbf{\MakeUppercase{Tytuł Pracy Dyplomowej}}\par}
+    \vspace{2cm}
+    {\large\textbf{PRACA DYPLOMOWA INŻYNIERSKA}\par}
+    {\large Kierunek: Informatyka Stosowana\par}
+    \vspace{3cm}
+    \begin{flushleft}
+        \textbf{Autor:} Jan Kowalski \\
+        \textbf{Promotor:} dr inż. Promotor Akademicki
+    \end{flushleft}
+    \vfill
+    {\large Warszawa, 2027\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\chapter{Wstęp i cel pracy}
+Treść wstępu...
+
+\chapter{Przegląd literatury i stan wiedzy (SOTA)}
+Treść stanu wiedzy...
+
+\chapter{Projekt architektury systemu IT}
+Treść architektury...
+
+\chapter{Implementacja i testy}
+Treść implementacji...
+
+\chapter{Badania empiryczne i benchmarki}
+Treść badań...
+
+\chapter{Podsumowanie i wnioski}
+Wnioski końcowe...
+
+\printbibliography[heading=bibintoc,title={Bibliografia}]
+
+\end{document}
+

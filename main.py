@@ -2,115 +2,114 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
+from adk.core.state import ADKProjectState
+from adk.engine.executor import ADKE2EExecutor
+from adk.graph.ontology import CodeThesisTraceabilityGraph
 from adk.logger import RunLogger
-from adk.memory_store import MemoryStore
-from adk.prompt_catalog import load_prompt_names
-from adk.state import RunState
-
+from adk.tui.dashboard import TerminalDashboard
+from adk.verification import MasterVerificationSuite
 
 ROOT = Path(__file__).resolve().parent
-ADK_DIR = ROOT / "adk"
-PROMPTS_DIR = ADK_DIR / "prompts"
-LOGS_DIR = ADK_DIR / "logs"
-MEMORY_DIR = ADK_DIR / "memory"
+LOGS_DIR = ROOT / "adk" / "logs"
+MEMORY_DIR = ROOT / "adk" / "memory"
 STATE_FILE = MEMORY_DIR / "session.json"
 
 
-def derive_requirements(request: str) -> list[str]:
-    text = request.strip()
-    if not text:
-        return ["Complete the task description."]
-
-    requirements = ["Keep the project structure simple."]
-    lowered = text.lower()
-
-    if "test" in lowered:
-        requirements.append("Include a simple verification step.")
-    if "document" in lowered or "text" in lowered or "thesis" in lowered:
-        requirements.append("Include a documentation part.")
-    if "code" in lowered or "program" in lowered:
-        requirements.append("Include a runnable practical implementation.")
-
-    return requirements
-
-
-def build_plan(prompt_names: list[str]) -> list[str]:
-    base_plan = [
-        "1. Read the task description.",
-        "2. Organize the requirements.",
-        "3. Prepare the work plan.",
-        "4. Check the available prompts and resources.",
-        "5. Save the result and execution log.",
-    ]
-    if prompt_names:
-        base_plan.append(f"6. Available prompts: {', '.join(prompt_names)}")
-    return base_plan
-
-
-def verify_structure() -> list[str]:
-    issues: list[str] = []
-    required_paths = [
-        ADK_DIR / "README.md",
-        PROMPTS_DIR,
-        ADK_DIR / "pipeline",
-        ADK_DIR / "verification",
-        ADK_DIR / "memory",
-        ADK_DIR / "logs",
-    ]
-
-    for path in required_paths:
-        if not path.exists():
-            issues.append(f"Missing required item: {path.relative_to(ROOT)}")
-
-    prompt_files = load_prompt_names(PROMPTS_DIR)
-    if not prompt_files:
-        issues.append("No prompt files found in adk/prompts/.")
-
-    return issues
-
-
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Minimal ADK scaffold for automating project work.")
-    parser.add_argument("request", nargs="*", help="Task description or requirements.")
+    parser = argparse.ArgumentParser(
+        description="ADK (Agent Development Kit) 2027: Generator Projektów IT i Prac Dyplomowych."
+    )
+    subparsers = parser.add_subparsers(dest="command", help="Dostępne polecenia")
+
+    # generate command
+    gen_parser = subparsers.add_parser("generate", help="Generuj pełny projekt IT i pracę dyplomową")
+    gen_parser.add_argument("topic", nargs="*", help="Temat pracy / specyfikacja projektu")
+    gen_parser.add_argument("--json", action="store_true", help="Zwróć wyjście wyłącznie w formacie JSON")
+
+    # verify command
+    verify_parser = subparsers.add_parser("verify", help="Uruchom weryfikację jakości i spójności projektu")
+    verify_parser.add_argument("--state-file", default=str(STATE_FILE), help="Ścieżka do pliku stanu sesji")
+
+    # graph command
+    graph_parser = subparsers.add_parser("graph", help="Generuj graf powiązań i macierz identyfikowalności (Traceability Graph)")
+    graph_parser.add_argument("--state-file", default=str(STATE_FILE), help="Ścieżka do pliku stanu sesji")
+
+    # legacy / default invocation
+    parser.add_argument("legacy_request", nargs="*", help="Domyślne zapytanie/temat dla kompatybilności wstecznej")
+
     args = parser.parse_args()
 
-    request_text = " ".join(args.request).strip()
-    prompt_names = load_prompt_names(PROMPTS_DIR)
-    requirements = derive_requirements(request_text)
-    plan = build_plan(prompt_names)
-    verification_issues = verify_structure()
+    command = args.command
+    is_json = getattr(args, "json", False)
 
-    state = RunState(
-        request=request_text or "No task description provided.",
-        requirements=requirements,
-        plan=plan,
-        changes=[],
-        verification=verification_issues,
-        notes=[
-            "This is the minimal program core.",
-            "The next step is connecting a real model and concrete tools.",
-        ],
-    )
+    if not command and args.legacy_request:
+        command = "generate"
+        topic_text = " ".join(args.legacy_request).strip()
+    elif command == "generate":
+        topic_text = " ".join(args.topic).strip() if args.topic else "Autonomiczny System Informatyczny"
+    else:
+        topic_text = "Autonomiczny System Informatyczny"
 
-    memory_store = MemoryStore(MEMORY_DIR)
-    memory_store.save(state)
+    if command == "verify":
+        state_path = Path(args.state_file)
+        if not state_path.exists():
+            print(f"Błąd: Plik stanu {state_path} nie istnieje. Najpierw uruchom generowanie.", file=sys.stderr)
+            return 1
+        state = ADKProjectState.load_from_file(state_path)
+        verifier = MasterVerificationSuite()
+        report = verifier.evaluate_state(state)
+        state.save_to_file(state_path)
+        print(json.dumps(report.model_dump(mode="json"), indent=2, ensure_ascii=False))
+        return 0 if report.passed else 1
 
-    result = {
-        "request": state.request,
-        "requirements": state.requirements,
-        "plan": state.plan,
-        "verification": state.verification,
-        "status": "ok" if not verification_issues else "needs_attention",
-        "prompt_files": prompt_names,
+    if command == "graph":
+        state_path = Path(args.state_file)
+        if not state_path.exists():
+            print(f"Błąd: Plik stanu {state_path} nie istnieje.", file=sys.stderr)
+            return 1
+        state = ADKProjectState.load_from_file(state_path)
+        graph = CodeThesisTraceabilityGraph.build_from_state(state)
+        coverage = graph.analyze_coverage()
+        print("=== Macierz Identyfikowalności (Traceability Graph) ===")
+        print(json.dumps(coverage, indent=2, ensure_ascii=False))
+        print("\n=== Diagram Mermaid ===")
+        print(graph.to_mermaid())
+        return 0
+
+    # Domyślny tryb generowania E2E
+    executor = ADKE2EExecutor(workspace_dir=ROOT)
+    final_state = executor.run_pipeline(topic_text)
+
+    result_summary = {
+        "project_id": final_state.project_id,
+        "title": final_state.metadata.title,
+        "chapters_count": len(final_state.chapters),
+        "code_artifacts_count": len(final_state.code_artifacts),
+        "citations_count": len(final_state.citations),
+        "benchmark_scenarios": len(final_state.benchmark_results),
+        "verification_score": final_state.verification_report.score if final_state.verification_report else 0.0,
+        "verification_status": "PASS" if final_state.verification_report and final_state.verification_report.passed else "FAIL",
+        "artifacts_location": {
+            "code": "generated_project/",
+            "thesis_typst": "artifacts/thesis/thesis.typ",
+            "thesis_latex": "artifacts/thesis/thesis.tex",
+            "benchmarks": "artifacts/benchmarks/",
+        },
     }
-    log_file = RunLogger(LOGS_DIR).save(result)
 
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-    print(f"\nSaved state to: {STATE_FILE.relative_to(ROOT)}")
-    print(f"Saved log to: {log_file.relative_to(ROOT)}")
-    return 0 if not verification_issues else 1
+    log_file = RunLogger(LOGS_DIR).save(result_summary)
+
+    if is_json:
+        print(json.dumps(result_summary, ensure_ascii=False, indent=2))
+    else:
+        dashboard = TerminalDashboard()
+        dashboard.render_summary(final_state)
+        print(f"[ADK] Zapisano log wykonania do: {log_file.relative_to(ROOT)}")
+
+    return 0 if final_state.verification_report and final_state.verification_report.passed else 1
 
 
 if __name__ == "__main__":
