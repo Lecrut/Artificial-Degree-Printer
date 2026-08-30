@@ -134,3 +134,20 @@ class VerificationReport(BaseModel):
     style_verified: bool = Field(default=True, description="Poprawność stylu akademickiego")
     issues: List[VerificationIssue] = Field(default_factory=list, description="Wykryte uwagi i błędy")
     evaluated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class HarnessPatch(BaseModel):
+    id: str = Field(..., description="Unikalny identyfikator poprawki, np. HP-DEV-001")
+    target_agent: str = Field(..., description="Nazwa agenta, dla którego poprawka obowiązuje, np. developer, researcher")
+    trigger_condition: str = Field(..., description="Warunek wyzwalający poprawkę (np. błąd składni AST, niski TTR)")
+    patch_instruction: str = Field(..., description="Proceduralna instrukcja naprawcza wstrzykiwana do promptu/kontekstu")
+    verification_gate: str = Field(..., description="Bramka weryfikacyjna, która zatwierdziła patch (GSME gate)")
+    success_count: int = Field(default=1, description="Liczba pomyślnych zastosowań tej poprawki")
+    is_active: bool = Field(default=True, description="Czy poprawka jest aktywna")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class HarnessRepairRegistry(BaseModel):
+    patches: List[HarnessPatch] = Field(default_factory=list, description="Lista udokumentowanych i zweryfikowanych poprawek harnessu")
+    last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+

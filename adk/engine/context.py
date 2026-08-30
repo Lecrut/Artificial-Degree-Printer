@@ -13,6 +13,9 @@ from adk.tools.sandbox import SandboxRunnerTool
 from adk.tools.typesetting import TypesettingTool
 
 
+from adk.core.models import HarnessPatch
+
+
 class ExecutionContext:
     def __init__(self, workspace_dir: Optional[Path | str] = None) -> None:
         self.workspace_dir = Path(workspace_dir).resolve() if workspace_dir else Path.cwd().resolve()
@@ -20,6 +23,8 @@ class ExecutionContext:
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
         self.research_dir = self.artifacts_dir / "research"
         self.research_dir.mkdir(parents=True, exist_ok=True)
+
+        self.harness_patches: Dict[str, HarnessPatch] = {}
 
         self.tools: Dict[str, BaseTool] = {
             "filesystem": FileSystemTool(self.workspace_dir),
@@ -34,3 +39,8 @@ class ExecutionContext:
 
     def get_tool(self, name: str) -> Optional[BaseTool]:
         return self.tools.get(name)
+
+    def inject_harness_patches(self, patches: list[HarnessPatch]) -> None:
+        for patch in patches:
+            self.harness_patches[patch.id] = patch
+

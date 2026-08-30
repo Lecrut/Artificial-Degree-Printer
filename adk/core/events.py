@@ -17,6 +17,7 @@ class EventType(str, Enum):
     HUMAN_APPROVAL_REQUESTED = "human_approval_requested"
     HUMAN_FEEDBACK_RECEIVED = "human_feedback_received"
     PIPELINE_ERROR = "pipeline_error"
+    HARNESS_PATCH_INJECTED = "harness_patch_injected"
 
 
 class ProjectEvent(BaseModel):

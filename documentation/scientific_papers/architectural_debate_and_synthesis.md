@@ -34,7 +34,7 @@ Poniższa tabela przedstawia wielowymiarowe zestawienie 17 analizowanych publika
 
 # 2. Wielka Debata Architektoniczna (Główne Dylematy i Zwycięzcy)
 
-W toku analizy najnowszych badań wyodrębniono **5 fundamentalnych starć architektonicznych**:
+W toku analizy najnowszych badań wyodrębniono **6 fundamentalnych starć architektonicznych**:
 
 ```
                                   WIELKA DEBATA ARCHITEKTONICZNA
@@ -44,6 +44,7 @@ W toku analizy najnowszych badań wyodrębniono **5 fundamentalnych starć archi
     [ 3. INTEGRACJA   ]     Ad-hoc Skrypty Narzędziowe       VS   Ustandaryzowany Protokół MCP (Anthropic MCP)
     [ 4. WERYFIKACJA  ]     Czysta Samokrytyka LLM (Refine)  VS   Twardy Sandbox z Testami (SWE-bench / Reflexion)
     [ 5. PAMIĘĆ       ]     Płaski Kontekst w Jednym Prompcie VS   Hierarchiczny Model OS / Event Sourcing (MemGPT)
+    [ 6. HARNESS      ]     Statyczne Reguły (Static Harness) VS   Samoewoluujący Living-Harness (LivingHarness 2026)
 ```
 
 ---
@@ -91,6 +92,15 @@ W toku analizy najnowszych badań wyodrębniono **5 fundamentalnych starć archi
 * **Podejście MemGPT / Event Sourcing**: Hierarchia pamięci — pamięć robocza danego agenta, niezmienna historia zdarzeń (Event Log) oraz trwała baza stanu (`session.json`).
 * 🏆 **WERDYKT DLA SYSTEMU ADK:** **Zwycięża Hierarchiczna Pamięć Event Sourcing.**
   - *Uzasadnienie:* Zapewnia pełną audytowalność każdego kroku agenta oraz minimalizuje szum informacyjny.
+
+---
+
+### Debata 6: Statyczny Harness vs. Samoewoluujący Living-Harness (Living-Harness 2026 / Gated Evolution)
+* **Podejście Statycznego Harnessu (Static Harness)**: Wszystkie prompty, zasady weryfikacji i konfiguracje narzędzi są zapisane "na sztywno" w kodzie.
+  - *Wada:* Gdy agent napotka powtarzalne specyficzne błędy (np. w specyficznym pakiecie Pythona lub Typst), popełnia je wielokrotnie w kolejnych sesjach.
+* **Podejście Samoewoluującego Harnessu (Living-Harness & GSME 2026)**: Harness utrzymuje episodyczną pamięć poprawek proceduralnych i aktualizuje własne reguły na podstawie zweryfikowanych wyników z sandboxa.
+* 🏆 **WERDYKT DLA SYSTEMU ADK:** **Zwycięża Gated Self-Evolving Living-Harness (GSME).**
+  - *Uzasadnienie:* Pozwala na akumulację wiedzy inżynieryjnej w czasie. Kluczowe jest sterowanie bramkowane (Gated Evolution): poprawka harnessu jest akceptowana wyłącznie wtedy, gdy przejdzie 100% deterministycznych testów regresyjnych w `MasterVerificationSuite`, co eliminuje ryzyko "Misevolution".
 
 ---
 

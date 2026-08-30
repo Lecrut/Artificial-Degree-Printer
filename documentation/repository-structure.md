@@ -95,6 +95,16 @@ Artificial-Degree-Printer/
 │   ├── tests/                          # Automated Pytest unit test suite
 │   └── Dockerfile                      # Container deployment specification
 │
+├── skills/                             # Developer & Agent Skill Specifications (2026 Standard)
+│   ├── adk-sota-paper-ingestor/         # SKILL.md: Automated arXiv/SOTA paper ingestion
+│   │   └── SKILL.md
+│   ├── adk-repo-hygiene-guard/          # SKILL.md: Repository cleanup & build log update
+│   │   └── SKILL.md
+│   ├── adk-code-quality-auditor/        # SKILL.md: Pydantic v2 & AST test suite auditor
+│   │   └── SKILL.md
+│   └── adk-typst-template-tester/       # SKILL.md: Typst 0.11+ & LaTeX template tester
+│       └── SKILL.md
+│
 ├── tests/                              # Automated Pytest Suite (28 Tests)
 │   ├── test_agents.py
 │   ├── test_core_models.py

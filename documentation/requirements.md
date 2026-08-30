@@ -1,165 +1,88 @@
-# Requirements
+# System Requirements (ADK 2027)
 
-## Functional requirements
+> **Uwaga:** Ten dokument opisuje **rzeczywiście zaimplementowaną architekturę** frameworka ADK w aktualnym stanie repozytorium.
+> Opisuje wymagania funkcjonalne i niefunkcjonalne spełniane przez istniejący kod.
 
-The system should follow a 2027-style AI platform model and:
+---
 
-- accept a task description, project goals, constraints, deadlines, technology stack, risk profile, and operational requirements,
-- normalize incoming requests into a common task model describing objective, context, constraints, acceptance criteria, and expected outputs,
-- detect task type and route execution to the appropriate workflow for backend work, frontend work, bug fixing, documentation, DevOps, testing, research, or architecture tasks,
-- create or update software project artifacts, code, and documentation,
-- generate or revise academic text, including thesis sections, project reports, and research summaries,
-- manage mixed technical and scientific workflows in one coherent process,
-- maintain consistency between code, architecture, reasoning, and documentation,
-- support feedback-driven iteration based on user comments or validation results,
-- orchestrate multiple specialized agents and tools for research, writing, coding, review, and verification,
-- maintain a task graph with explicit stage ordering, dependencies, retries, and revision loops,
-- store execution state, decisions, logs, and intermediate artifacts,
-- validate the result before acceptance or finalization,
-- support extension with new tools, agents, and external integrations,
-- expose a modern tool-first architecture compatible with MCP, structured memory, retrieval, and agent workflows expected in 2027.
+## 1. Wymagania Funkcjonalne (Implemented — Verified by MasterVerificationSuite)
 
-### Agent and orchestration requirements
+### REQ-F-01: Wieloagentowe Generowanie Projektu i Pracy Dyplomowej
+System przyjmuje dowolny tekstowy opis tematu i uruchamia deterministyczny pipeline 6 wyspecjalizowanych agentów (Promotor AI, Researcher, Architect, Developer, Experimenter, Typesetter, Reviewer), który na wyjściu produkuje kompletny pakiet inżynierski:
+- Kod źródłowy w Pythonie (`generated_project/src/`)
+- Testy jednostkowe Pytest (`generated_project/tests/`)
+- Plik Dockerfile
+- Pracę dyplomową w Typst (`artifacts/thesis/thesis.typ`)
+- Pracę dyplomową w LaTeX (`artifacts/thesis/thesis.tex`)
+- Bibliografię BibTeX (`artifacts/thesis/references.bib`)
+- Karty SOTA i syntezy (`artifacts/research/`)
+- Wektorowe wykresy benchmarkowe (SVG/PNG, `artifacts/benchmarks/`)
 
-- the system shall define dedicated agents for orchestration, research, architecture, implementation, writing, verification, and human approval,
-- agents shall receive scoped permissions and clear responsibilities instead of operating as one monolithic prompt,
-- the orchestrator shall maintain a dependency-aware task graph and track execution state across stages,
-- handoff between agents shall preserve context, constraints, previous decisions, and available evidence,
-- the system shall support re-entry into a failed stage without restarting the entire workflow from scratch.
+### REQ-F-02: Dynamiczny Research Literatury Naukowej (SOTA 2023–2026)
+`ResearcherAgent` musi dynamicznie wyszukiwać i syntetyzować **najpóźniejsze, najczęściej cytowane** publikacje naukowe (rok publikacji $\ge 2023$) dopasowane do podanego tematu — bez hardcodowanych listy artykułów. Wymagana liczba cytowań $\ge 100$.
 
-### Tooling requirements
+### REQ-F-03: Deterministyczny Graf Stanów (StateGraph DAG)
+Przepływ pracy musi być zdefiniowany jako Directed Acyclic Graph z jawnymi zależnościami między etapami. Etap `implementation` nie może się rozpocząć przed zakończeniem `architecture`. Etap `typesetting` nie może się rozpocząć przed zdaniem testów w `implementation`.
 
-- the system shall maintain a tool registry with descriptions, capabilities, inputs, outputs, limits, and safety constraints,
-- tools shall support filesystem operations, repository actions, terminal execution, testing, linting, build validation, retrieval, and external MCP services,
-- every tool invocation shall be traceable to the issuing stage, agent, task, and timestamp,
-- the system shall support tool capability-based selection rather than hardcoded prompt-dependent behavior,
-- tool failures shall be captured as structured events with recovery options.
+### REQ-F-04: Wielobramkowy Audyt Jakości (MasterVerificationSuite — 7 Gates)
+System musi przeprowadzić weryfikację w 7 niezależnych bramkach:
+1. Walidacja AST kodu Python
+2. Testowanie mutacyjne (Mutation Score $\ge 60\%$)
+3. Integralność BibTeX i horyzont SOTA ($\ge 2023$)
+4. 100% angielskie nazwy plików (brak polskich znaków diakrytycznych)
+5. Spójność symboli AST z treścią rozdziałów pracy
+6. Akademicki styl i eliminacja AI-fluff
+7. Zróżnicowanie leksykalne ($TTR \ge 0.35$) i pre-check JSA
 
-## Non-functional requirements
+### REQ-F-05: Angielskie Nazewnictwo Plików i Folderów
+Wszystkie pliki, katalogi i artefakty generowane przez system muszą posiadać nazwy w 100% po angielsku. Żaden plik nie może zawierać polskich znaków diakrytycznych w ścieżce.
 
-The system should:
+### REQ-F-06: Automatyczna Proweniencja Git
+System musi automatycznie tworzyć commit git po każdym ukończonym etapie, ze znacznikiem agenta jako autorem.
 
-- be modular and extensible,
-- support traceable execution and auditable decisions,
-- maintain structured memory across runs and sessions,
-- provide short-term working memory and long-term project memory,
-- support retrieval of prior artifacts, decisions, constraints, and evidence for future runs,
-- operate with minimal manual intervention while keeping critical decisions reviewable,
-- permit retries, corrective loops, and partial recovery from failure,
-- handle errors gracefully and capture actionable logs,
-- operate in a way that is transparent to both humans and agent systems,
-- allow integration with standards such as MCP for tool interoperability,
-- keep the architecture suitable for long-running, multi-stage workflows,
-- support observability through logs, metrics, execution traces, and state snapshots,
-- remain resilient under tool failures, partial output generation, or long-running tasks.
+### REQ-F-07: Grafy Identyfikowalności (Traceability)
+System musi generować graf ontologiczny mapujący:
+$$\text{Wymagania} \to \text{Kod} \to \text{Testy} \to \text{Benchmarki} \to \text{Rozdziały} \to \text{Cytowania}$$
 
-### Memory and provenance requirements
+---
 
-- the system shall preserve a full execution history including prompts, goals, tool calls, intermediate results, and acceptance decisions,
-- provenance shall be stored for generated artifacts, architecture choices, validation results, and review feedback,
-- the system shall support both structured memory and semantic memory patterns for retrieval and context recall,
-- previous run context shall be available for similarity-based or rule-based reuse in later tasks.
+## 2. Wymagania Niefunkcjonalne
 
-## Quality requirements
+### REQ-NF-01: Środowisko Wykonawcze
+- Uruchamia się na Python 3.12+ w środowisku lokalnym (Windows/Linux/macOS)
+- Zależności zarządzane przez `pip` i `requirements.txt`
+- Nie wymaga zewnętrznej bazy danych ani kolejki komunikatów do podstawowego działania
 
-Outputs should be:
+### REQ-NF-02: Persystencja Stanu Sesji
+Stan projektu persystowany jako JSON (`adk/memory/session.json`). Logi każdego uruchomienia zapisywane do `adk/logs/run-*.json`. Format czytelny przez człowieka i narzędzia analityczne.
 
-- structurally valid,
-- aligned with the user task and domain context,
-- technically plausible and internally consistent,
-- reviewable and reversible,
-- traceable to evidence, requirements, or prior discussion,
-- suitable for eventual human approval rather than machine-only acceptance,
-- validated at multiple stages using objective checks and not just final subjective judgment,
-- accompanied by explicit evidence of correctness, completeness, and compliance with the task definition.
+### REQ-NF-03: Standardy Narzędzi (MCP Compatibility)
+Wszystkie narzędzia (`BaseTool`) muszą posiadać unikalną nazwę, opis i zwracać ustrukturyzowany wynik (`ToolResult`), kompatybilny z kontraktem **Model Context Protocol (Anthropic MCP)**.
 
-### Validation and evaluation requirements
+### REQ-NF-04: Bezpieczeństwo Wykonywania Kodu
+Kod generowany przez model jest uruchamiany wyłącznie przez `SandboxRunnerTool` z:
+- Hard timeout (domyślnie 30 sekund na wywołanie)
+- Capture stdout/stderr bez możliwości modyfikacji środowiska hosta
 
-- the system shall support syntax, build, lint, and test validation for code outputs,
-- it shall validate documentation completeness, consistency, and structural quality,
-- it shall check requirement coverage and traceability from input to output,
-- it shall classify issues as blocking, warning, or informational,
-- it shall produce a review score or evaluation summary for generated results when appropriate,
-- verification shall be a required gate before final acceptance for any substantive task.
+### REQ-NF-05: Jakość Kodu i Testów ADK
+Sam framework ADK musi spełniać:
+- $\ge 27$ testów automatycznych (`pytest -v`) z wynikiem 100% PASS
+- Brak importów cyklicznych
+- Wszystkie pliki nazwane po angielsku
 
-## Project-specific requirements
+---
 
-For an academic and IT project generator, the system should also support:
+## 3. Wymagania Wykluczone z Bieżącego Zakresu (Out-of-Scope)
 
-- thesis-level structure and argument quality,
-- software architecture documentation and implementation planning,
-- requirement-to-delivery traceability,
-- research synthesis and literature-aware reasoning,
-- project validation with tests, builds, and evidence,
-- generation of consistent diagrams, tables, and explanatory visuals,
-- iterative correction based on review comments or failed checks,
-- task-specific templates for backend, frontend, QA, DevOps, research, architecture, and documentation flows,
-- multi-domain work that mixes code, docs, analysis, and technical decision records in the same project session.
+> [!NOTE]
+> Poniższe komponenty były rozważane na etapie planowania, ale **nie są zaimplementowane** w obecnej wersji repozytorium. Stanowią obszary przyszłego rozwoju (patrz `methodology_and_roadmap.md`).
 
-### Security and control requirements
-
-- the system shall enforce tool permissions and restrict dangerous operations by default,
-- code execution shall be isolated or sandboxed wherever possible,
-- sensitive project settings, credentials, and secrets shall not be exposed in logs or state payloads,
-- the system shall detect high-risk operations and require explicit approval before execution,
-- access to external systems shall be logged, auditable, and constrained to the task scope.
-
-### Operational resilience requirements
-
-- the system shall provide retry strategies, fallback procedures, and partial recovery after failed steps,
-- execution shall be resumable from saved state,
-- the system shall track resource usage, timeouts, and long-running task progress,
-- it shall support graceful degradation when a tool or agent fails,
-- critical outputs shall be versioned or preserved before destructive operations are attempted.
-
-## Requirement categories
-
-- project structure requirements,
-- technical implementation requirements,
-- documentation requirements,
-- scientific writing requirements,
-- literature and evidence requirements,
-- figure and diagram requirements,
-- verification and review requirements,
-- tooling and integration requirements.
-
-## Delivery roadmap requirements
-
-The implementation should be delivered in phases rather than as a single monolithic effort. The following roadmap should guide execution:
-
-### Phase 1 - core project runtime
-
-- support a user request with input constraints,
-- create one project session and persist its state,
-- decompose the request into stages,
-- store decisions and logs,
-- produce a first validated output.
-
-### Phase 2 - tool-enabled agent execution
-
-- read and edit repository files,
-- run terminal commands and project validation,
-- invoke tests and checks,
-- support iterative corrections after failures,
-- capture tool execution evidence for future review.
-
-### Phase 3 - knowledge and retrieval
-
-- persist structured project state in PostgreSQL,
-- add semantic memory support with pgvector or equivalent,
-- retrieve prior project context and earlier notes,
-- connect research evidence to the writing and planning stages.
-
-### Phase 4 - multi-agent orchestration
-
-- support specialized roles for research, coding, writing, architecture, and verification,
-- coordinate handoffs between agents,
-- require explicit review checkpoints for high-impact decisions,
-- preserve traceability across all agent actions.
-
-### Phase 5 - maturity and operational safety
-
-- add monitoring, telemetry, and observability,
-- support artifact versioning and review history,
-- define tool permissions and safe execution boundaries,
-- make the system robust for repeated use across projects.
+| Komponent | Status | Planowany Kamień Milowy |
+| :--- | :---: | :--- |
+| PostgreSQL jako store stanu projektu | ❌ Nie zaimplementowane | Milestone 5 (Future) |
+| pgvector / baza wektorowa | ❌ Nie zaimplementowane | Milestone 5 (Future) |
+| Redis / kolejka komunikatów | ❌ Nie zaimplementowane | Milestone 5 (Future) |
+| Docker / MicroVM sandbox driver | ❌ Nie zaimplementowane | Milestone 2 (Roadmap) |
+| Tree-Sitter AST Graph | ❌ Nie zaimplementowane | Milestone 3 (Roadmap) |
+| DSPy Teleprompter Optimization | ❌ Nie zaimplementowane | Milestone 4 (Roadmap) |
+| REST API / Web Frontend | ❌ Nie zaimplementowane | Future |

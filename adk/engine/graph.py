@@ -5,6 +5,9 @@ from typing import Callable, Dict, List, Optional
 from adk.core.state import ADKProjectState
 
 
+from adk.engine.harness import SelfEvolvingHarnessEngine
+
+
 @dataclass
 class GraphNode:
     name: str
@@ -13,10 +16,14 @@ class GraphNode:
     depends_on: List[str] = field(default_factory=list)
 
 
+from adk.core.events import EventType
+
+
 class StateGraphEngine:
-    def __init__(self) -> None:
+    def __init__(self, harness_engine: Optional[SelfEvolvingHarnessEngine] = None) -> None:
         self.nodes: Dict[str, GraphNode] = {}
         self.execution_order: List[str] = []
+        self.harness_engine = harness_engine or SelfEvolvingHarnessEngine()
 
     def add_node(
         self,
@@ -38,6 +45,20 @@ class StateGraphEngine:
         state = initial_state
         for node_name in self.execution_order:
             node = self.nodes[node_name]
+            # Retrieve active harness patches for this step
+            patches = self.harness_engine.get_relevant_patches(node_name)
+            if patches:
+                # Add procedural patch notes to event log
+                state.record_event(
+                    event_type=EventType.HARNESS_PATCH_INJECTED,
+                    stage_name=node_name,
+                    agent_name="harness",
+                    payload={
+                        "patches_count": len(patches),
+                        "patch_ids": [p.id for p in patches],
+                    },
+                )
             state = node.action(state)
         return state
+
 

@@ -1,16 +1,40 @@
-# Dokumentacja Projektu ADK (Artificial Degree Printer)
+# ADK Documentation Index (Artificial Degree Printer 2027)
 
-Niniejszy katalog zawiera dokumentację techniczną, architektoniczną oraz bazę wiedzy artykułów naukowych dla frameworka ADK. Wszystkie pliki i foldery są nazwane w języku angielskim zgodnie ze standardem inżynierii oprogramowania.
+This directory contains all technical, architectural, and scientific documentation for the ADK framework. **All files and folders are named in English** per software engineering standards.
 
-## Spis dokumentów i podkatalogów:
+---
 
-1. 📐 [**Metodyka ADK-TRACE i Plan Ewolucji (Methodology & Roadmap)**](methodology_and_roadmap.md) — Oficjalny manifest metodyczny 2027 (ADK-TRACE), reguły inżynierskie, kamienie milowe i powiązanie z wnioskami z 17 publikacji.
-2. 📚 [**Baza Artykułów Naukowych SOTA (Scientific Papers)**](scientific_papers/) — Folder z analitycznymi kartami 17 publikacji z lat 2023–2026 oraz [Wielką Debatą Architektoniczną](scientific_papers/architectural_debate_and_synthesis.md).
-3. [Przegląd Projektu (Project Overview)](project-overview.md) — Wprowadzenie do platformy, misja i paradygmat Code-First.
-4. [Architektura Systemu (Architecture)](architecture.md) — Szczegółowy opis warstw: Orkiestracji, Roju Agentów, Narzędzi MCP, Pamięci i Weryfikacji.
-5. [Przewodnik Użytkownika (User Guide)](user-guide.md) — Instrukcja obsługi CLI, kompilacja Typst/LaTeX i generowanie projektów.
-6. [Wymagania Systemowe (Requirements)](requirements.md) — Specyfikacja wymagań funkcjonalnych i niefunkcjonalnych platformy.
-7. [Przepływ Zadań (Workflow)](workflow.md) — Opis cyklu życia projektu, grafu stanów (DAG) i pętli poprawek.
-8. [Bramki Weryfikacyjne i Audyt (Verification)](verification.md) — Standardy jakości, AST linter, weryfikacja cytowań, testy mutacyjne, angielskie nazewnictwo plików i stylometria JSA.
-9. [Struktura Repozytorium (Repository Structure)](repository-structure.md) — Mapa katalogów i modułów frameworka.
-10. [Zasoby Graficzne (Assets)](assets.md) — Standardy generowania wykresów wektorowych i diagramów.
+## 📋 Core Documentation
+
+| # | Document | Description |
+| :---: | :--- | :--- |
+| 1 | [**Methodology & Roadmap**](methodology_and_roadmap.md) | ADK-TRACE methodology, 5 canonical principles, 4 evolution milestones |
+| 2 | [**Architecture**](architecture.md) | System layers: Orchestration, Agent Swarm, MCP Tools, Memory, Verification |
+| 3 | [**Workflow**](workflow.md) | 6-phase lifecycle DAG with Reflexion loops |
+| 4 | [**Verification Gates**](verification.md) | 7-gate quality audit: AST, Mutation, Citations, English naming, Style |
+| 5 | [**Requirements**](requirements.md) | Functional & non-functional requirements (as-implemented) |
+| 6 | [**Repository Structure**](repository-structure.md) | Full directory map of the framework |
+| 7 | [**Project Overview**](project-overview.md) | Mission, Code-First paradigm, competitive advantages |
+| 8 | [**User Guide**](user-guide.md) | CLI usage, Typst/LaTeX compilation, project generation |
+| 9 | [**Assets**](assets.md) | Vector chart standards and diagram generation |
+
+---
+
+## 🔒 Security, ADR & Repository Hygiene
+
+| # | Document | Description |
+| :---: | :--- | :--- |
+| 10 | [**Security & Safety**](security_and_safety.md) | Threat model, sandbox protection layers, InjecAgent security compliance |
+| 11 | [**Decision Records (ADR)**](decision_records.md) | 5 Architecture Decision Records: Typst, Event Sourcing, subprocess sandbox, Pydantic v2, Dynamic Researcher |
+| 12 | [**Build Log & Changelog**](build_log_and_changelog.md) | Consolidated build history, evolution stages, and documentation hygiene rules |
+
+---
+
+## 📚 Scientific Papers Knowledge Base (25 Papers)
+
+| Sub-directory | Contents |
+| :--- | :--- |
+| [**scientific_papers/**](scientific_papers/) | 25 analytical dossiers for SOTA papers (2023–2026) |
+| [**→ Papers Index**](scientific_papers/README.md) | Full index with citation counts and coverage map |
+| [**→ Architectural Debate**](scientific_papers/architectural_debate_and_synthesis.md) | 6 architectural debates, verdicts, 6 research horizons |
+| [**→ Master Synthesis**](scientific_papers/master_implementation_synthesis.md) | Direct code & architecture mapping for all 25 papers |
