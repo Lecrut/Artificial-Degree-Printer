@@ -1,75 +1,51 @@
 ---
 name: adk-sota-paper-ingestor
-description: Automatically ingests a 2024-2026 SOTA research paper (arXiv URL or DOI), generates an analytical dossier in documentation/scientific_papers/, and updates master_implementation_synthesis.md and README.md. Use when adding new research papers to the ADK knowledge base.
+description: Automated SOTA Research & Auto-Implementation Workflow for ADK. Discovers breakthrough papers, immediately writes dossiers in scientific_papers/, proposes code implementation to user, and upon approval implements functional code and synchronizes ALL system documentation.
 ---
 
-# ADK SOTA Paper Ingestor Skill
+# ADK SOTA Paper & Code Auto-Implementation Skill
 
-This skill defines the standardized procedural workflow for ingesting new high-impact scientific publications (2024–2026) into the `Artificial-Degree-Printer` framework knowledge base.
-
----
-
-## 📋 Activation Criteria
-Trigger this skill whenever the user or developer requests to add, summarize, or analyze a new scientific paper for the ADK system architecture.
+This skill defines the standardized 4-step procedural workflow for searching, recording, proposing, implementing, and documenting breakthrough SOTA research (2023–2026) in the `Artificial-Degree-Printer` framework.
 
 ---
 
-## 🛠️ Step-by-Step Execution Protocol
+## 📋 The 4-Step Autonomous Workflow Protocol
 
-### Step 1: Validate Paper Eligibility
-1. Verify publication year is $\ge 2024$ (strict 3-year SOTA horizon, with 2026 prioritized).
-2. Verify high citation count or top-tier venue (arXiv, ACL, NeurIPS, NAACL, TACL, IEEE).
-3. Verify title and filename are 100% in English (e.g., `author2026_topic.md`).
-
-### Step 2: Fetch and Extract Metadata
-1. Retrieve title, full list of authors, venue, publication year, citation count estimate, and DOI/arXiv link.
-2. Extract core thesis, key theoretical findings, actionable implementation items for ADK, and limitations addressed by ADK.
-
-### Step 3: Create Analytical Dossier File
-Create file in `documentation/scientific_papers/<citation_key_filename>.md` using the standard dossier template:
-
-```markdown
-# Scientific Paper Dossier: [Full Paper Title]
-
-> **Citation Key:** `@CitationKey`  
-> **Authors:** [Author List]  
-> **Publication Year:** [Year] *(Max 3-year SOTA Horizon ✅)*  
-> **Citations Count:** [Citations]  
-> **Venue / Conference:** [Venue / arXiv ID]  
-> **Link / DOI:** [Link]
-
----
-
-## 📌 Core Thesis and Research Motivation
-[Detailed core thesis description]
-
----
-
-## 💡 Key Theoretical Findings
-[Key theoretical insights and empirical metrics]
-
----
-
-## 🛠️ Actionable Implementation Items for our ADK System
-- [ ] **Implementation item:** [Concrete feature/gate/model mapping to ADK codebase]
-
----
-
-## 🚀 Key Strengths and Novelties
-[Strengths and innovations]
-
----
-
-## 🎯 How our ADK Project Overcomes and Advances Beyond this Work
-[Specific ways ADK advances beyond or improves upon this work]
+```
+  [ STEP 1: DISCOVER & RECORD DOSSIER ] -> Search 2023-2026 paper, create dossier in scientific_papers/, update index
+                     │
+                     ▼
+  [ STEP 2: PROPOSE CODE IMPLEMENTATION ] -> Present breakthrough & ask for approval ("Czy wdrażamy w kodzie?")
+                     │
+                     ▼ (Upon User Approval)
+  [ STEP 3: CODE & TEST ]               -> Implement functional engine in adk/ & unit tests in tests/
+                     │
+                     ▼
+  [ STEP 4: DOCS & BUILD LOG ]          -> Synchronize ALL core documentation files & append sequential Etap
 ```
 
-### Step 4: Update Baza Wiedzy Master Files
-1. Add the paper entry to `documentation/scientific_papers/README.md` in the index table and update total paper count.
-2. Add the paper entry to `documentation/scientific_papers/master_implementation_synthesis.md` under the backlog and implementation mapping.
-3. Update the 6 Architectural Debates in `architectural_debate_and_synthesis.md` if the paper alters an architectural decision.
+---
 
-### Step 5: Verification & Cleanup
-1. Run `python -m pytest tests/` to ensure no test failures occurred.
-2. Do NOT create loose temporary audit files outside `documentation/scientific_papers/`.
+## 🛠️ Detailed Step Execution Protocol
 
+### Step 1: Discover, Analyze & Record Dossier (Immediate Persistence)
+1. Search arXiv / top-tier venues for breakthrough SOTA papers ($\ge 2023$, $\le 3$ years horizon).
+2. Evaluate fit against ADK's core mission (IT app generation + 40–80 page thesis co-synthesis).
+3. **Immediately write the analytical dossier** in `documentation/scientific_papers/<citation_key>.md`.
+4. Update `documentation/scientific_papers/README.md`, `master_implementation_synthesis.md`, and `search_keywords_taxonomy.md`.
+   *(This ensures the research insight is permanently recorded in the knowledge base regardless of whether the code feature is ultimately implemented).*
+
+### Step 2: Propose Code Implementation to User (Approval Gate)
+1. Present a concise, high-impact summary of the breakthrough to the user.
+2. State clearly that the paper has already been analyzed and saved in `scientific_papers/`.
+3. **Ask for explicit user approval to implement the code & system architecture** (*"Karta pliku została zapisana w bazie. Czy wdrażamy te rozwiązania bezpośrednio w kodzie i głównej dokumentacji projektu?"*).
+
+### Step 3: Implement Code & Tests
+Upon user approval ("tak"):
+1. Implement functional code modifications in `adk/engine/`, `adk/tools/`, `adk/llm/`, or `adk/verification/`.
+2. Write automated unit/integration tests in `tests/`.
+3. Run `python -m pytest tests/ -v` and verify **100% PASS**.
+
+### Step 4: Synchronize ALL Core System Documentation
+1. Update ALL core system documentation (`architecture.md`, `methodology_and_roadmap.md`, `workflow.md`, `requirements.md`, `repository-structure.md`, `project-overview.md`).
+2. Append sequential, unbroken build stage (Etap 1, 2, ..., N) to `documentation/build_log_and_changelog.md`.

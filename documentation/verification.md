@@ -8,7 +8,7 @@
 
 ## 1. The Verification-First Principle
 
-In `Artificial-Degree-Printer`, outputs are never accepted blindly. In accordance with seminal research (*SWE-bench*, *Reflexion*, *CoVe*, *AgentBench*), every stage must pass a formal verification gate producing reproducible evidence before the pipeline proceeds.
+In `Artificial-Degree-Printer`, outputs are never accepted blindly. In accordance with seminal research (*SWE-bench*, *Reflexion*, *CoVe*, *AgentBench*, *Event-B Agent FSE 2026*, *Living-Harness GSME 2026*), every stage must pass a formal verification gate producing reproducible evidence before the pipeline proceeds.
 
 ---
 
