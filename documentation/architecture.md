@@ -3,8 +3,6 @@
 > **Standard:** 2027 Multi-Agent Software & Academic Thesis Generation Architecture  
 > **Methodology:** ADK-TRACE (Traceable, Reflexive, Artifact-Centric Engineering)  
 > **Theoretical Foundation:** 17 Seminal SOTA Papers (2023–2026)
-> **Theoretical Foundation:** 36 Seminal SOTA Papers (2023–2026 SOTA Horizon)  
-> **Core Equation:** $\text{Autonomous Agent} = \text{Base LLM Model} + \text{Agent Harness}$ (Harness Engineering Paradigm 2026/2027)
 
 ---
 
