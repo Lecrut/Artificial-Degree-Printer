@@ -57,14 +57,22 @@ W przypadku niezdania jakiejkolwiek bramki weryfikacyjnej (składnia, martwe cyt
 # 2. Jak Rozwijać Plan Projektu w oparciu o Rozważania z Artykułów
 
 W toku debaty nad 17 publikacjami wyłoniono 4 kluczowe filary, w oparciu o które rozwijamy architekturę systemu ADK:
+W toku debaty nad **36 publikacjami naukowymi SOTA (2023–2026)** wyłoniono **6 kluczowych filarów**, w oparciu o które rozwijamy architekturę systemu ADK:
 
 ```
                             PLAN ROZWOJU ARCHITEKTURY ADK
+                            PLAN ROZWOJU ARCHITEKTURY ADK 2027
   
   [ FILAR 1 ] Samonaprawa i Weryfikacja Mutacyjna  (z Reflexion + SWE-bench + AgentBench)
   [ FILAR 2 ] Ephemeral Sandboxing & WASM          (z Toolformer + Anthropic MCP)
   [ FILAR 3 ] Neuro-Symboliczna Macierz AST        (z GraphRAG + CodePlan + Tree of Thoughts)
   [ FILAR 4 ] Kompilacja Deklaratywna & Prompt SOPs (z DSPy + MetaGPT + Agentless)
+  [ FILAR 1 ] Samonaprawa i Weryfikacja Mutacyjna   (z Reflexion + SWE-bench + Event-B Agent)
+  [ FILAR 2 ] Ephemeral Sandboxing & WASM           (z Toolformer + Anthropic MCP + InjecAgent)
+  [ FILAR 3 ] Neuro-Symboliczna Macierz AST         (z GraphRAG + CodePlan + Tree of Thoughts)
+  [ FILAR 4 ] Kompilacja Deklaratywna & Prompt SOPs  (z DSPy + MetaGPT + Agentless)
+  [ FILAR 5 ] Inżynieria Harnessu & Routering       (z Harness Survey + ACRouter + Progressive Crystallization)
+  [ FAZA 6 ] Rój Ewolucyjny & Współ-Synteza        (z TacoMAS + EvoMAS + PaperCoder + LongDA)
 ```
 
 ---

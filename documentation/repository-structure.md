@@ -34,10 +34,11 @@ Artificial-Degree-Printer/
 │   │   ├── state.py                    # Project state & event aggregation
 │   │   └── events.py                   # Event Sourcing immutable logs
 │   │
-│   ├── engine/                         # Orchestration & Context
+│   ├── engine/                         # Orchestration, Context & Harness Evolution
 │   │   ├── __init__.py
-│   │   ├── graph.py                    # StateGraphEngine DAG & Reflexion loop
-│   │   └── context.py                  # ExecutionContext & tool bindings
+│   │   ├── graph.py                    # StateGraphEngine (Parallel DAG, Re-plan & Swarm)
+│   │   ├── harness.py                  # SelfEvolvingHarnessEngine & CrystallizedWorkflows
+│   │   └── context.py                  # ExecutionContext, parallel metrics & tool bindings
 │   │
 │   ├── graph/                          # Knowledge Graph & Traceability (GraphRAG)
 │   │   ├── __init__.py
@@ -48,12 +49,14 @@ Artificial-Degree-Printer/
 │   │   ├── task_graph.py               # Dependency graph validation
 │   │   └── tool_registry.py            # Dynamic tool registry
 │   │
-│   ├── llm/                            # LLM API Client & Fallback Engine
+│   ├── llm/                            # LLM API Client & ACRouter Model Tiering
 │   │   ├── __init__.py
-│   │   └── client.py
+│   │   └── client.py                   # LLMClient & ModelTier Router (Tier 1-3)
 │   │
-│   ├── memory/                         # Persistent Session Storage
-│   │   └── session.json
+│   ├── memory/                         # Persistent Session & Harness Storage
+│   │   ├── session.json                # Immutable project session
+│   │   ├── harness_repairs.json        # Verified GSME procedural patches
+│   │   └── crystallized_workflows.json # Fast-path crystallized templates
 │   │
 │   ├── templates/                      # Academic Document Blueprints
 │   │   ├── thesis.typ                  # Native Typst 0.11+ thesis template
@@ -105,7 +108,7 @@ Artificial-Degree-Printer/
 │   └── adk-typst-template-tester/       # SKILL.md: Typst 0.11+ & LaTeX template tester
 │       └── SKILL.md
 │
-├── tests/                              # Automated Pytest Suite (28 Tests)
+├── tests/                              # Automated Pytest Suite (37 Tests)
 │   ├── test_agents.py
 │   ├── test_core_models.py
 │   ├── test_dynamic_literature_search.py
@@ -113,9 +116,11 @@ Artificial-Degree-Printer/
 │   ├── test_git_tool.py
 │   ├── test_graph.py
 │   ├── test_harness.py
+│   ├── test_harness_evolution.py
 │   ├── test_literature_dossier.py
 │   ├── test_llm.py
 │   ├── test_mutation_gate.py
+│   ├── test_parallel_and_evolution.py  # TIPEX parallel, VMAO replan, TacoMAS swarm
 │   ├── test_stylometry.py
 │   ├── test_tools.py
 │   └── test_verification_gates.py
@@ -123,16 +128,19 @@ Artificial-Degree-Printer/
 └── documentation/                      # Complete System Documentation
     ├── README.md                       # Documentation index
     ├── methodology_and_roadmap.md      # ADK-TRACE methodology manifest & roadmap
-    ├── architecture.md                 # System architecture specification
-    ├── workflow.md                     # 6-stage execution DAG & reflexion loops
+    ├── architecture.md                 # System architecture specification (6 Pillars)
+    ├── workflow.md                     # Execution DAG, Parallelism & Reflexion
     ├── verification.md                 # 7-gate quality control & scoring rules
     ├── requirements.md                 # Functional and non-functional requirements
     ├── repository-structure.md         # Repository folder and file specification
     ├── project-overview.md             # High-level vision and Code-First paradigm
-    ├── assets.md                       # Visual asset standards
-    └── scientific_papers/              # 17 SOTA Paper Dossiers & Architectural Debate
+    ├── security_and_safety.md          # InjecAgent security threat model & guards
+    ├── decision_records.md             # 5 Architecture Decision Records (ADR)
+    ├── build_log_and_changelog.md      # Sequential build log (Etapy 1–12)
+    └── scientific_papers/              # 36 SOTA Paper Dossiers & Search Taxonomy
         ├── README.md
+        ├── search_keywords_taxonomy.md
         ├── architectural_debate_and_synthesis.md
         ├── master_implementation_synthesis.md
-        └── *.md (17 analytical dossiers)
+        └── *.md (36 analytical dossiers)
 ```

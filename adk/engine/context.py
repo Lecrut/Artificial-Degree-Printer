@@ -25,6 +25,8 @@ class ExecutionContext:
         self.research_dir.mkdir(parents=True, exist_ok=True)
 
         self.harness_patches: Dict[str, HarnessPatch] = {}
+        self.parallel_execution_count: int = 0
+        self.saved_wall_clock_seconds: float = 0.0
 
         self.tools: Dict[str, BaseTool] = {
             "filesystem": FileSystemTool(self.workspace_dir),
@@ -37,8 +39,13 @@ class ExecutionContext:
             "typesetting_tool": TypesettingTool(self.artifacts_dir / "thesis"),
         }
 
+    def record_parallel_savings(self, batches: int, saved_seconds: float) -> None:
+        self.parallel_execution_count += batches
+        self.saved_wall_clock_seconds += saved_seconds
+
     def get_tool(self, name: str) -> Optional[BaseTool]:
         return self.tools.get(name)
+
 
     def inject_harness_patches(self, patches: list[HarnessPatch]) -> None:
         for patch in patches:
