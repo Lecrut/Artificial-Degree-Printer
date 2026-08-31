@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional, TYPE_CHECKING
 from adk.agents.base import BaseAgent
 from adk.core.events import EventType
 from adk.core.state import ADKProjectState
 from adk.verification import MasterVerificationSuite
+
+if TYPE_CHECKING:
+    from adk.llm.client import LLMClient
 
 
 class ReviewerAgent(BaseAgent):
@@ -12,8 +15,8 @@ class ReviewerAgent(BaseAgent):
     role_description = "Audytor jakości formalnej, spójności kodu i tekstu oraz weryfikacji bramek akademickich"
     capabilities = ["code_audit", "citation_verification", "cross_validation", "anti_hallucination"]
 
-    def __init__(self, tools: Any = None) -> None:
-        super().__init__(tools)
+    def __init__(self, tools: Any = None, llm_client: Optional[LLMClient] = None) -> None:
+        super().__init__(tools, llm_client)
         self.verifier = MasterVerificationSuite()
 
     def run(self, state: ADKProjectState, **kwargs: Any) -> ADKProjectState:

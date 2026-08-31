@@ -15,12 +15,12 @@ def test_full_adk_e2e_pipeline(tmp_path):
     assert state.verification_report.passed is True
 
     # Sprawdź czy pliki fizycznie powstały w workspace
-    generated_code = tmp_path / "generated_project" / "src" / "core" / "service.py"
+    generated_code = tmp_path / "projects" / "test_5g" / "generated_project" / "src" / "core" / "service.py"
     assert generated_code.exists()
 
-    typst_thesis = tmp_path / "artifacts" / "thesis" / "thesis.typ"
-    latex_thesis = tmp_path / "artifacts" / "thesis" / "thesis.tex"
-    bib_file = tmp_path / "artifacts" / "thesis" / "references.bib"
+    typst_thesis = tmp_path / "projects" / "test_5g" / "artifacts" / "thesis" / "thesis.typ"
+    latex_thesis = tmp_path / "projects" / "test_5g" / "artifacts" / "thesis" / "thesis.tex"
+    bib_file = tmp_path / "projects" / "test_5g" / "artifacts" / "thesis" / "references.bib"
     assert typst_thesis.exists()
     assert latex_thesis.exists()
     assert bib_file.exists()

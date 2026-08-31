@@ -38,3 +38,27 @@ def test_heterogeneous_router_client():
     assert isinstance(dev_provider, OllamaLocalProvider)
     assert isinstance(typesetter_provider, GoogleGeminiProvider)
     assert typesetter_provider.model_name == "gemini-2.5-pro"
+
+
+def test_topaz_complexity_routing():
+    router = HeterogeneousRouterLLMClient()
+    
+    # Low complexity task
+    c1 = router.estimate_task_complexity("Format this file")
+    # Coding task
+    c2 = router.estimate_task_complexity("Implement a FastAPI class to handle users database")
+    # High complexity architectural task
+    c3 = router.estimate_task_complexity("Write C4 architecture thesis document and verify cross_consistency")
+    
+    assert c1 < c2
+    assert c2 < c3
+    assert c3 >= 0.70
+    
+    p1 = router.get_provider_for_agent("developer", c1)
+    p2 = router.get_provider_for_agent("developer", c2)
+    p3 = router.get_provider_for_agent("developer", c3)
+    
+    assert p1.model_name == "gemini-2.5-flash"
+    assert p2.model_name == "qwen2.5-coder:7b"
+    assert p3.model_name == "gemini-2.5-pro"
+

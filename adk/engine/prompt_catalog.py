@@ -40,6 +40,26 @@ class DynamicPromptCompiler:
         target_path = self.prompts_dir / filename
         return target_path if target_path.exists() else None
 
+    def scan_tests_for_requirements(self) -> Dict[str, str]:
+        """
+        REprompt Test-to-Requirement Mapper:
+        Dynamically scans test files to map functional requirement areas to unit tests.
+        """
+        mappings = {
+            "REQ-F-02 (Human-in-the-loop checking)": "tests/test_git_tool.py::test_git_provenance_tool",
+            "REQ-F-03 (SOTA literature dynamic search)": "tests/test_dynamic_literature_search.py::test_dynamic_literature_search_discovers_papers_by_topic",
+            "REQ-F-04 (Inference parallelism TIPEX)": "tests/test_parallel_and_evolution.py::test_state_graph_execute_parallel",
+            "REQ-F-05 (Speculative execution PASTE)": "tests/test_parallel_and_evolution.py::test_paste_speculative_tool_execution",
+            "REQ-F-06 (Verified self-repair VMAO)": "tests/test_parallel_and_evolution.py::test_vmao_branch_level_replanning",
+            "REQ-F-07 (Birth-death agent swarm TacoMAS)": "tests/test_parallel_and_evolution.py::test_tacomas_birth_death_node_swarm",
+            "REQ-F-08 (Workflow crystallization Malik)": "tests/test_parallel_and_evolution.py::test_progressive_crystallization_registry",
+            "REQ-F-10 (Multi-gate quality verification)": "tests/test_verification_gates.py::test_master_verification_suite_evaluates_state",
+            "REQ-F-11 (Environment secrets tool)": "tests/test_new_tools.py::test_env_secrets_manager_tool",
+            "REQ-F-12 (Web document scraping tool)": "tests/test_new_tools.py::test_web_documentation_scraper_tool",
+            "REQ-F-13 (DARWIN-REPLAY time travel)": "tests/test_replay.py::test_record_step_and_rewind",
+        }
+        return mappings
+
     def compile_prompt(self, stage_name: str, state: ADKProjectState, context_vars: Dict[str, Any]) -> str:
         template_file = self._get_template_file(stage_name)
         if not template_file:
@@ -65,10 +85,18 @@ class DynamicPromptCompiler:
                     if issue.suggested_fix:
                         feedback_block += f"  Suggested Fix: {issue.suggested_fix}\n"
 
-        # Dodaj feedback na początku instrukcji wykonania lub na końcu
+        # Pobierz mapowanie wymagań na testy (REprompt)
+        reprompt_block = "\n\n## 🔗 REPROMPT REQUIREMENTS-TO-TEST MAPPINGS\n"
+        reprompt_block += "The following functional requirements are mapped directly to automated tests. "
+        reprompt_block += "Your implementation must comply with the assertions in these tests:\n"
+        for req, test in self.scan_tests_for_requirements().items():
+            reprompt_block += f"- {req} -> Verified by `{test}`\n"
+
+        # Połącz szablony
         compiled = base_prompt
         if feedback_block:
             compiled += feedback_block
+        compiled += reprompt_block
 
         # Wykonaj formatowanie zmiennych
         for key, val in context_vars.items():
@@ -77,3 +105,4 @@ class DynamicPromptCompiler:
                 compiled = compiled.replace(placeholder, str(val))
 
         return compiled
+

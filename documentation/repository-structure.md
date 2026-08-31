@@ -111,7 +111,7 @@ Artificial-Degree-Printer/
 │   ├── adk-code-quality-auditor/        # SKILL.md: Pydantic v2 & AST test suite auditor
 │   └── adk-typst-template-tester/       # SKILL.md: Typst 0.11+ & LaTeX template tester
 │
-├── tests/                              # Automated Pytest Suite (49 Tests)
+├── tests/                              # Automated Pytest Suite (58 Tests)
 │   ├── test_agents.py
 │   ├── test_core_models.py
 │   ├── test_dynamic_literature_search.py
@@ -120,13 +120,17 @@ Artificial-Degree-Printer/
 │   ├── test_graph.py
 │   ├── test_harness.py
 │   ├── test_harness_evolution.py
+│   ├── test_interactive_agents.py      # Model-Interactive agent loop tests
 │   ├── test_literature_dossier.py
 │   ├── test_llm.py
 │   ├── test_llm_client.py
 │   ├── test_mutation_gate.py
 │   ├── test_new_tools.py
 │   ├── test_parallel_and_evolution.py  # Parallel execution & progressive crystallization
+│   ├── test_project_isolation.py       # Isolated project workspaces tests
+│   ├── test_prompt_compiler.py         # Dynamic prompt compiler tests
 │   ├── test_replay.py                  # DARWIN-REPLAY 2027 time-travel tests
+│   ├── test_repository_hygiene.py      # Repository structural & 0-byte guards
 │   ├── test_stylometry.py
 │   ├── test_tools.py
 │   └── test_verification_gates.py
@@ -139,7 +143,7 @@ Artificial-Degree-Printer/
     ├── requirements.md                 # Functional and non-functional requirements
     ├── repository-structure.md         # Repository folder and file specification
     ├── project-overview.md             # High-level vision and Code-First paradigm
-    ├── build_log_and_changelog.md      # Sequential build log (Etapy 1–14)
+    ├── build_log_and_changelog.md      # Sequential build log (Etapy 1–18)
     ├── technologies/                   # Production Technology Dossiers & Stack Index
     └── scientific_papers/              # SOTA Paper Dossiers & Search Taxonomy
 ```

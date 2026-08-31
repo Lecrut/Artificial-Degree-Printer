@@ -75,7 +75,7 @@ W toku debaty nad **36 publikacjami naukowymi SOTA (2023–2026)** wyłoniono **
 
 ### 🚀 Kamień Milowy 1: Silnik Testów Mutacyjnych (Mutation Testing Gate)
 * **Inspiracja z artykułów:** *SWE-bench (Jimenez et al., 2024)* + *Reflexion (Shinn et al., 2023)*.
-* **Problem do rozwiązania:** Skąd wiemy, że wygenerowane testy `pytest` są naprawdę dobre, a nie tylko „przechodzą na pusto”?
+* **Problem do rozwiązania:** Skąd wiemy, że wygenerowane testy (np. `pytest`, `jest`, `cargo test`) są naprawdę dobre, a nie tylko „przechodzą na pusto”?
 * **Rozwiązanie zaimplementowane w ADK:**
   - Moduł `MutationTestingGate` w `adk/verification/mutation_gate.py`.
   - Wprowadzanie mutacji do kodu Pythona (zamiana operatorów, zmiana wartości brzegowych).

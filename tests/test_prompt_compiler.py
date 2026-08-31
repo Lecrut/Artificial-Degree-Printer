@@ -22,7 +22,9 @@ def test_dynamic_prompt_compiler_variable_formatting():
             context_vars={"target_language": "Python", "test_framework": "Pytest"},
         )
 
-        assert compiled == "Generate code for Python with tests in Pytest."
+        assert "Generate code for Python with tests in Pytest." in compiled
+        assert "REPROMPT REQUIREMENTS-TO-TEST MAPPINGS" in compiled
+        assert "REQ-F-04" in compiled
 
 
 def test_dynamic_prompt_compiler_injects_verification_failures():
@@ -58,4 +60,31 @@ def test_dynamic_prompt_compiler_injects_verification_failures():
         assert "ATTENTION: RESOLVE PREVIOUS VERIFICATION FAILURES" in compiled
         assert "SyntaxError near line 10" in compiled
         assert "Fix syntax." in compiled
+
+
+def test_lightmem_context_compressor():
+    from adk.engine.context import ExecutionContext
+    context = ExecutionContext()
+    
+    raw_logs = [
+        {
+            "event_type": "STAGE_STARTED",
+            "stage_name": "research",
+            "agent_name": "researcher",
+            "payload": {"query": "Find SOTA papers for IoT data engineering analysis and dynamic parsing tools"}
+        },
+        {
+            "event_type": "TOOL_EXECUTED",
+            "stage_name": "research",
+            "agent_name": "researcher",
+            "payload": {"output": "A very long log result simulated " * 15}  # Length > 300
+        }
+    ]
+    
+    ess_summary = context.compress_execution_logs(raw_logs)
+    
+    assert "STAGE_STARTED" in ess_summary
+    assert "Compressed" in ess_summary
+    assert "A very long log result simulated" in ess_summary
+
 

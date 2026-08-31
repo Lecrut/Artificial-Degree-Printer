@@ -166,3 +166,50 @@ Wszystkie zmiany w architekturze, dodane funkcjonalności, kamienie milowe oraz 
   - Wyeliminowano wszystkie 9 plików sierocych z katalogu głównego `adk/` do podkatalogów `adk/engine/` i `adk/memory/`.
 - **Wynik weryfikacji testowej:** **52/52 PASSED** (Wszystkie testy higieny i regresji przechodzą pomyślnie).
 
+---
+
+### 🟢 Etap 16: Dynamiczny Kompilator Promptów (DSPy & Reflexion)
+- **Data realizacji:** 31.08.2026 r.
+- **Opis zmian:**
+  - Zaimplementowano klasę **`DynamicPromptCompiler`** w [`adk/engine/prompt_catalog.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/engine/prompt_catalog.py).
+  - Wdrożono pętlę sprzężenia zwrotnego (Feedback loop) — automatyczne wstrzykiwanie sekcji `<verification_feedback>` zawierającej szczegółowe raporty błędów z poprzedniego przebiegu bramek weryfikacyjnych.
+  - Dodano testy automatyczne w [`tests/test_prompt_compiler.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_prompt_compiler.py) weryfikujące poprawność wstrzykiwania błędów.
+- **Wynik weryfikacji testowej:** **54/54 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 17: Pełna Integracja SOTA z Kodem (Topaz, LightMem, REprompt)
+- **Data realizacji:** 31.08.2026 r.
+- **Opis zmian:**
+  - **Topaz Complexity Routing**: Wdrożono funkcję `estimate_task_complexity` oraz dynamiczny routing w `HeterogeneousRouterLLMClient` na bazie poziomu trudności zadania (szacowanego ze słów kluczowych i długości promptu).
+  - **LightMem Context Compressor**: Wdrożono metodę `compress_execution_logs` w `ExecutionContext` realizującą sliding-window kompresję szczegółowych logów z wykonania narzędzi przed wysłaniem ich do chmury.
+  - **REprompt Test-to-Requirement Mapper**: Dodano metodę `scan_tests_for_requirements` w `DynamicPromptCompiler` mapującą wymagania ID (`REQ-F-*`) na konkretne funkcje testujące w pytest w celu automatycznej wstrzykiwania asercji testowych bezpośrednio w promptach modeli.
+  - Dodano testy weryfikacyjne w `tests/test_llm_client.py` oraz `tests/test_prompt_compiler.py`.
+- **Wynik weryfikacji testowej:** **56/56 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 18: Interaktywna Pętla Agentowa (Model-Interactive Multi-Agent Loop)
+- **Data realizacji:** 31.08.2026 r.
+- **Opis zmian:**
+  - Rozszerzono klasę bazową `BaseAgent` w [`adk/agents/base.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/agents/base.py) o obsługę opcjonalnego klienta `llm_client`.
+  - Zaktualizowano orkiestrację pipeline'u w [`adk/engine/executor.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/engine/executor.py) i przekazano `llm_client` do wszystkich agentów.
+  - Zaimplementowano dynamiczną kompilację promptów i wywołania modeli w agentach `ArchitectAgent`, `DeveloperAgent` i `TypesetterAgent`.
+  - Wdrożono testy integracyjne w [`tests/test_interactive_agents.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_interactive_agents.py) weryfikujące poprawność dynamicznych wywołań w pętli.
+- **Wynik weryfikacji testowej:** **57/57 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 19: Izolacja Projektów (Project-Level Workspaces)
+- **Data realizacji:** 31.08.2026 r.
+- **Opis zmian:**
+  - Dodano katalogi `projects/` oraz `generated_project/` do `.gitignore` w celu unikania zanieczyszczania repozytorium frameworka generowanym kodem.
+  - Zmodyfikowano `ExecutionContext` w [`adk/engine/context.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/engine/context.py), izolując generowany kod, dokumentację, bibliografię i bazy wiedzy pod ścieżką `projects/<project_id>/`.
+  - Dostosowano narzędzia systemowe (FileSystem, Sandbox, Git, Typesetting, Secrets) do pracy w odizolowanym katalogu projektu.
+  - Zaktualizowano `ADKE2EExecutor` w [`adk/engine/executor.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/engine/executor.py), wdrożając dynamiczne przełączanie kontekstów projektowych w trakcie wywoływania `run_pipeline()`.
+  - Utworzono testy automatyczne w [`tests/test_project_isolation.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_project_isolation.py) weryfikujące poprawność izolacji.
+- **Wynik weryfikacji testowej:** **58/58 PASSED** (100% testów przechodzi pomyślnie).
+
+
+
+

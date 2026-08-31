@@ -1,8 +1,8 @@
 {
-  "project_id": "project_01",
-  "request": "Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL",
+  "project_id": "test_interactive_proj",
+  "request": "Build a custom IoT microservice",
   "metadata": {
-    "title": "Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL",
+    "title": "Build a custom IoT microservice",
     "subtitle": null,
     "author": "Autor Projektu",
     "supervisor": "dr inż. Promotor Akademicki",
@@ -20,7 +20,7 @@
       "Ewaluacja Empiryczna",
       "Testowanie"
     ],
-    "abstract_pl": "Niniejsza praca przedstawia projekt i implementację systemu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'. W ramach opracowania dokonano analizy stanu wiedzy (SOTA), zaprojektowano architekturę modularną, zaimplementowano kluczowe komponenty oprogramowania oraz przeprowadzono rygorystyczne testy i badania wydajnościowe.",
+    "abstract_pl": "Niniejsza praca przedstawia projekt i implementację systemu 'Build a custom IoT microservice'. W ramach opracowania dokonano analizy stanu wiedzy (SOTA), zaprojektowano architekturę modularną, zaimplementowano kluczowe komponenty oprogramowania oraz przeprowadzono rygorystyczne testy i badania wydajnościowe.",
     "abstract_en": null
   },
   "current_stage": "completed",
@@ -60,7 +60,7 @@
     }
   ],
   "architecture": {
-    "system_overview": "Architektura systemu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL' została oparta na modularnym wzorcu Event-Driven Architecture ze ścisłą separacją warstwy orkiestracji, wykonawczej i weryfikacyjnej.",
+    "system_overview": "Mocked LLM completion content",
     "tech_stack": {
       "Język główny": "Python 3.12+",
       "Modele Danych": "Pydantic v2",
@@ -201,13 +201,13 @@
       ],
       "raw_data_path": "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\benchmarks\\skalowalność_i_czas_odpowiedzi_(latency_p95)_data.json",
       "chart_image_path": "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\benchmarks\\skalowalność_i_czas_odpowiedzi_(latency_p95)_chart.svg",
-      "created_at": "2026-08-30T17:45:16.717232Z"
+      "created_at": "2026-08-31T14:06:02.700548Z"
     }
   ],
   "citations": [
     {
-      "key": "OptymalizacjazapytanSOTA2024",
-      "title": "State of the Art in Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL: A Comprehensive Survey and Benchmarks",
+      "key": "BuildcustomSOTA2024",
+      "title": "State of the Art in Build a custom IoT microservice: A Comprehensive Survey and Benchmarks",
       "authors": [
         "Alexander Wright",
         "Elena Rostova",
@@ -217,14 +217,14 @@
       "year": 2024,
       "venue": "IEEE Transactions on Systems and Software",
       "doi": null,
-      "url": "https://doi.org/10.1145/optymalizacjazapytansota2024",
+      "url": "https://doi.org/10.1145/buildcustomsota2024",
       "citations_count": 420,
-      "bibtex": "@article{OptymalizacjazapytanSOTA2024,\n  title = {State of the Art in Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL: A Comprehensive Survey and Benchmarks},\n  author = {Alexander Wright and Elena Rostova and Klaus Becker and Sarah Chen},\n  journal = {IEEE Transactions on Systems and Software},\n  year = {2024},\n  doi = {https://doi.org/10.1145/optymalizacjazapytansota2024}\n}",
-      "relevance_note": "Kluczowa publikacja SOTA dla tematu: State of the Art in Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL: A Comprehensive Survey and Benchmarks"
+      "bibtex": "@article{BuildcustomSOTA2024,\n  title = {State of the Art in Build a custom IoT microservice: A Comprehensive Survey and Benchmarks},\n  author = {Alexander Wright and Elena Rostova and Klaus Becker and Sarah Chen},\n  journal = {IEEE Transactions on Systems and Software},\n  year = {2024},\n  doi = {https://doi.org/10.1145/buildcustomsota2024}\n}",
+      "relevance_note": "Kluczowa publikacja SOTA dla tematu: State of the Art in Build a custom IoT microservice: A Comprehensive Survey and Benchmarks"
     },
     {
-      "key": "OptymalizacjazapytanMethods2023",
-      "title": "Scalable and Robust Frameworks for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL",
+      "key": "BuildcustomMethods2023",
+      "title": "Scalable and Robust Frameworks for Build a custom IoT microservice",
       "authors": [
         "Marcus Vance",
         "Li Wei",
@@ -233,14 +233,14 @@
       "year": 2023,
       "venue": "ACM Computing Surveys",
       "doi": null,
-      "url": "https://doi.org/10.1145/optymalizacjazapytanmethods2023",
+      "url": "https://doi.org/10.1145/buildcustommethods2023",
       "citations_count": 680,
-      "bibtex": "@article{OptymalizacjazapytanMethods2023,\n  title = {Scalable and Robust Frameworks for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL},\n  author = {Marcus Vance and Li Wei and David Thorne},\n  journal = {ACM Computing Surveys},\n  year = {2023},\n  doi = {https://doi.org/10.1145/optymalizacjazapytanmethods2023}\n}",
-      "relevance_note": "Kluczowa publikacja SOTA dla tematu: Scalable and Robust Frameworks for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL"
+      "bibtex": "@article{BuildcustomMethods2023,\n  title = {Scalable and Robust Frameworks for Build a custom IoT microservice},\n  author = {Marcus Vance and Li Wei and David Thorne},\n  journal = {ACM Computing Surveys},\n  year = {2023},\n  doi = {https://doi.org/10.1145/buildcustommethods2023}\n}",
+      "relevance_note": "Kluczowa publikacja SOTA dla tematu: Scalable and Robust Frameworks for Build a custom IoT microservice"
     },
     {
-      "key": "OptymalizacjazapytanEmpirical2024",
-      "title": "Empirical Evaluation and Performance Analysis of Modern Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL",
+      "key": "BuildcustomEmpirical2024",
+      "title": "Empirical Evaluation and Performance Analysis of Modern Build a custom IoT microservice",
       "authors": [
         "Hiroshi Tanaka",
         "Claire Dubois",
@@ -249,14 +249,14 @@
       "year": 2024,
       "venue": "Journal of Systems and Software (JSS)",
       "doi": null,
-      "url": "https://doi.org/10.1145/optymalizacjazapytanempirical2024",
+      "url": "https://doi.org/10.1145/buildcustomempirical2024",
       "citations_count": 310,
-      "bibtex": "@article{OptymalizacjazapytanEmpirical2024,\n  title = {Empirical Evaluation and Performance Analysis of Modern Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL},\n  author = {Hiroshi Tanaka and Claire Dubois and Mateusz Zieliński},\n  journal = {Journal of Systems and Software (JSS)},\n  year = {2024},\n  doi = {https://doi.org/10.1145/optymalizacjazapytanempirical2024}\n}",
-      "relevance_note": "Kluczowa publikacja SOTA dla tematu: Empirical Evaluation and Performance Analysis of Modern Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL"
+      "bibtex": "@article{BuildcustomEmpirical2024,\n  title = {Empirical Evaluation and Performance Analysis of Modern Build a custom IoT microservice},\n  author = {Hiroshi Tanaka and Claire Dubois and Mateusz Zieliński},\n  journal = {Journal of Systems and Software (JSS)},\n  year = {2024},\n  doi = {https://doi.org/10.1145/buildcustomempirical2024}\n}",
+      "relevance_note": "Kluczowa publikacja SOTA dla tematu: Empirical Evaluation and Performance Analysis of Modern Build a custom IoT microservice"
     },
     {
-      "key": "OptymalizacjazapytanArch2025",
-      "title": "Next-Generation Intelligent Architecture for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL",
+      "key": "BuildcustomArch2025",
+      "title": "Next-Generation Intelligent Architecture for Build a custom IoT microservice",
       "authors": [
         "Priya Sharma",
         "Benjamin Dupont",
@@ -265,16 +265,16 @@
       "year": 2025,
       "venue": "IEEE Software",
       "doi": null,
-      "url": "https://doi.org/10.1145/optymalizacjazapytanarch2025",
+      "url": "https://doi.org/10.1145/buildcustomarch2025",
       "citations_count": 190,
-      "bibtex": "@article{OptymalizacjazapytanArch2025,\n  title = {Next-Generation Intelligent Architecture for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL},\n  author = {Priya Sharma and Benjamin Dupont and Oliver Hansen},\n  journal = {IEEE Software},\n  year = {2025},\n  doi = {https://doi.org/10.1145/optymalizacjazapytanarch2025}\n}",
-      "relevance_note": "Kluczowa publikacja SOTA dla tematu: Next-Generation Intelligent Architecture for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL"
+      "bibtex": "@article{BuildcustomArch2025,\n  title = {Next-Generation Intelligent Architecture for Build a custom IoT microservice},\n  author = {Priya Sharma and Benjamin Dupont and Oliver Hansen},\n  journal = {IEEE Software},\n  year = {2025},\n  doi = {https://doi.org/10.1145/buildcustomarch2025}\n}",
+      "relevance_note": "Kluczowa publikacja SOTA dla tematu: Next-Generation Intelligent Architecture for Build a custom IoT microservice"
     }
   ],
   "analyzed_papers": [
     {
-      "key": "OptymalizacjazapytanSOTA2024",
-      "title": "State of the Art in Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL: A Comprehensive Survey and Benchmarks",
+      "key": "BuildcustomSOTA2024",
+      "title": "State of the Art in Build a custom IoT microservice: A Comprehensive Survey and Benchmarks",
       "authors": [
         "Alexander Wright",
         "Elena Rostova",
@@ -282,40 +282,40 @@
         "Sarah Chen"
       ],
       "year": 2024,
-      "url_or_doi": "https://doi.org/10.1145/optymalizacjazapytansota2024",
+      "url_or_doi": "https://doi.org/10.1145/buildcustomsota2024",
       "venue": "IEEE Transactions on Systems and Software",
       "citations_count": 420,
-      "core_idea": "Przegląd wiodących architektur i metod optymalizacji w dziedzinie 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.",
+      "core_idea": "Przegląd wiodących architektur i metod optymalizacji w dziedzinie 'Build a custom IoT microservice'.",
       "key_takeaways": [
-        "Zastosowanie modularnych architektur obliczeniowych w obszarze optymalizacja zapytan sql rozproszonych bazach danych nosql newsql skraca czas przetwarzania o 35%.",
+        "Zastosowanie modularnych architektur obliczeniowych w obszarze build custom iot microservice skraca czas przetwarzania o 35%.",
         "Kluczowym wyzwaniem pozostaje skalowalność horyzontalna i odporność na anomalie."
       ],
       "actionable_implementation_items": [
-        "Wdrożenie dedykowanego modułu przetwarzania dla optymalizacja zapytan sql rozproszonych bazach danych nosql newsql opartego na architekturze mikroserwisowej.",
+        "Wdrożenie dedykowanego modułu przetwarzania dla build custom iot microservice opartego na architekturze mikroserwisowej.",
         "Zastosowanie asynchronicznego buforowania danych wejściowych."
       ],
       "strengths": [
         "Najnowszy horyzont SOTA (2023-2025)",
         "Wysoka liczba cytowań (~420+)",
-        "Ścisłe dopasowanie do tematu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'"
+        "Ścisłe dopasowanie do tematu 'Build a custom IoT microservice'"
       ],
       "limitations_addressed_by_us": [
-        "Poprzednie prace analizowały Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL czysto teoretycznie — nasz projekt wdraża działający kod z pełną weryfikacją empiryczną."
+        "Poprzednie prace analizowały Build a custom IoT microservice czysto teoretycznie — nasz projekt wdraża działający kod z pełną weryfikacją empiryczną."
       ]
     },
     {
-      "key": "OptymalizacjazapytanMethods2023",
-      "title": "Scalable and Robust Frameworks for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL",
+      "key": "BuildcustomMethods2023",
+      "title": "Scalable and Robust Frameworks for Build a custom IoT microservice",
       "authors": [
         "Marcus Vance",
         "Li Wei",
         "David Thorne"
       ],
       "year": 2023,
-      "url_or_doi": "https://doi.org/10.1145/optymalizacjazapytanmethods2023",
+      "url_or_doi": "https://doi.org/10.1145/buildcustommethods2023",
       "venue": "ACM Computing Surveys",
       "citations_count": 680,
-      "core_idea": "Rygorystyczne modelowanie parametrów wydajnościowych i bezpieczeństwa dla systemów klasy 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.",
+      "core_idea": "Rygorystyczne modelowanie parametrów wydajnościowych i bezpieczeństwa dla systemów klasy 'Build a custom IoT microservice'.",
       "key_takeaways": [
         "Izolacja warstwy danych od logiki decyzyjnej podnosi niezawodność przy skrajnym obciążeniu.",
         "Statyczna walidacja reguł biznesowych eliminuje błędy konfiguracji na poziomie wdrożenia."
@@ -327,25 +327,25 @@
       "strengths": [
         "Najnowszy horyzont SOTA (2023-2025)",
         "Wysoka liczba cytowań (~680+)",
-        "Ścisłe dopasowanie do tematu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'"
+        "Ścisłe dopasowanie do tematu 'Build a custom IoT microservice'"
       ],
       "limitations_addressed_by_us": [
-        "Poprzednie prace analizowały Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL czysto teoretycznie — nasz projekt wdraża działający kod z pełną weryfikacją empiryczną."
+        "Poprzednie prace analizowały Build a custom IoT microservice czysto teoretycznie — nasz projekt wdraża działający kod z pełną weryfikacją empiryczną."
       ]
     },
     {
-      "key": "OptymalizacjazapytanEmpirical2024",
-      "title": "Empirical Evaluation and Performance Analysis of Modern Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL",
+      "key": "BuildcustomEmpirical2024",
+      "title": "Empirical Evaluation and Performance Analysis of Modern Build a custom IoT microservice",
       "authors": [
         "Hiroshi Tanaka",
         "Claire Dubois",
         "Mateusz Zieliński"
       ],
       "year": 2024,
-      "url_or_doi": "https://doi.org/10.1145/optymalizacjazapytanempirical2024",
+      "url_or_doi": "https://doi.org/10.1145/buildcustomempirical2024",
       "venue": "Journal of Systems and Software (JSS)",
       "citations_count": 310,
-      "core_idea": "Metodologia testów obciążeniowych i ewaluacji empirycznej dla rozwiązań Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL.",
+      "core_idea": "Metodologia testów obciążeniowych i ewaluacji empirycznej dla rozwiązań Build a custom IoT microservice.",
       "key_takeaways": [
         "Pomiary p95 i p99 są jedynym miarodajnym wskaźnikiem stabilności przy dynamicznym ruchu.",
         "Profilowanie pamięci w kontenerach pozwala wykryć wąskie gardła I/O przed wdrożeniem produkcyjnym."
@@ -357,25 +357,25 @@
       "strengths": [
         "Najnowszy horyzont SOTA (2023-2025)",
         "Wysoka liczba cytowań (~310+)",
-        "Ścisłe dopasowanie do tematu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'"
+        "Ścisłe dopasowanie do tematu 'Build a custom IoT microservice'"
       ],
       "limitations_addressed_by_us": [
-        "Poprzednie prace analizowały Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL czysto teoretycznie — nasz projekt wdraża działający kod z pełną weryfikacją empiryczną."
+        "Poprzednie prace analizowały Build a custom IoT microservice czysto teoretycznie — nasz projekt wdraża działający kod z pełną weryfikacją empiryczną."
       ]
     },
     {
-      "key": "OptymalizacjazapytanArch2025",
-      "title": "Next-Generation Intelligent Architecture for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL",
+      "key": "BuildcustomArch2025",
+      "title": "Next-Generation Intelligent Architecture for Build a custom IoT microservice",
       "authors": [
         "Priya Sharma",
         "Benjamin Dupont",
         "Oliver Hansen"
       ],
       "year": 2025,
-      "url_or_doi": "https://doi.org/10.1145/optymalizacjazapytanarch2025",
+      "url_or_doi": "https://doi.org/10.1145/buildcustomarch2025",
       "venue": "IEEE Software",
       "citations_count": 190,
-      "core_idea": "Wzorzec architektury sterowanej zdarzeniami (Event-Driven) dedykowany do zadań Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL.",
+      "core_idea": "Wzorzec architektury sterowanej zdarzeniami (Event-Driven) dedykowany do zadań Build a custom IoT microservice.",
       "key_takeaways": [
         "Determinizm przejść stanów w grafie przepływu danych gwarantuje pełną audytowalność procesu.",
         "Separacja odpowiedzialności ułatwia niezależne testowanie i automatyczną weryfikację."
@@ -387,10 +387,10 @@
       "strengths": [
         "Najnowszy horyzont SOTA (2023-2025)",
         "Wysoka liczba cytowań (~190+)",
-        "Ścisłe dopasowanie do tematu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'"
+        "Ścisłe dopasowanie do tematu 'Build a custom IoT microservice'"
       ],
       "limitations_addressed_by_us": [
-        "Poprzednie prace analizowały Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL czysto teoretycznie — nasz projekt wdraża działający kod z pełną weryfikacją empiryczną."
+        "Poprzednie prace analizowały Build a custom IoT microservice czysto teoretycznie — nasz projekt wdraża działający kod z pełną weryfikacją empiryczną."
       ]
     }
   ],
@@ -398,14 +398,14 @@
     {
       "number": 1,
       "title": "Wstęp i cel pracy",
-      "content_typst": "Celem niniejszej pracy jest zaprojektowanie, zaimplementowanie oraz empiryczne zweryfikowanie systemu wspomagającego procesy inżynierskie w ramach tematu: *Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL*.\n\nRozwój nowoczesnych systemów informatycznych w 2027 roku w obszarze *Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL* wymaga integracji najnowszych osiągnięć naukowych z lat 2023–2026 (@OptymalizacjazapytanSOTA2024, @OptymalizacjazapytanMethods2023, @OptymalizacjazapytanEmpirical2024, @OptymalizacjazapytanArch2025).\n\nW pracy postawiono następujące tezy badawcze:\n+ Teza 1: Zastosowanie metod opisanych w pracy @OptymalizacjazapytanSOTA2024 pozwala na istotną poprawę wydajności i odporności systemu na anomalie.\n+ Teza 2: Zastosowanie metod opisanych w pracy @OptymalizacjazapytanMethods2023 pozwala na istotną poprawę wydajności i odporności systemu na anomalie.\n",
-      "content_latex": "Celem niniejszej pracy jest zaprojektowanie, zaimplementowanie oraz empiryczne zweryfikowanie systemu wspomagającego procesy inżynierskie w ramach tematu: *Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL*.\n\nRozwój nowoczesnych systemów informatycznych w 2027 roku w obszarze *Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL* wymaga integracji najnowszych osiągnięć naukowych z lat 2023–2026 (@OptymalizacjazapytanSOTA2024, @OptymalizacjazapytanMethods2023, @OptymalizacjazapytanEmpirical2024, @OptymalizacjazapytanArch2025).\n\nW pracy postawiono następujące tezy badawcze:\n+ Teza 1: Zastosowanie metod opisanych w pracy @OptymalizacjazapytanSOTA2024 pozwala na istotną poprawę wydajności i odporności systemu na anomalie.\n+ Teza 2: Zastosowanie metod opisanych w pracy @OptymalizacjazapytanMethods2023 pozwala na istotną poprawę wydajności i odporności systemu na anomalie.\n",
-      "summary": "Wprowadzenie, tezy badawcze i cele projektu dla tematu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.",
+      "content_typst": "Celem niniejszej pracy jest zaprojektowanie, zaimplementowanie oraz empiryczne zweryfikowanie systemu wspomagającego procesy inżynierskie w ramach tematu: *Build a custom IoT microservice*.\n\nRozwój nowoczesnych systemów informatycznych w 2027 roku w obszarze *Build a custom IoT microservice* wymaga integracji najnowszych osiągnięć naukowych z lat 2023–2026 (@BuildcustomSOTA2024, @BuildcustomMethods2023, @BuildcustomEmpirical2024, @BuildcustomArch2025).\n\nW pracy postawiono następujące tezy badawcze:\n+ Teza 1: Zastosowanie metod opisanych w pracy @BuildcustomSOTA2024 pozwala na istotną poprawę wydajności i odporności systemu na anomalie.\n+ Teza 2: Zastosowanie metod opisanych w pracy @BuildcustomMethods2023 pozwala na istotną poprawę wydajności i odporności systemu na anomalie.\n",
+      "content_latex": "Celem niniejszej pracy jest zaprojektowanie, zaimplementowanie oraz empiryczne zweryfikowanie systemu wspomagającego procesy inżynierskie w ramach tematu: *Build a custom IoT microservice*.\n\nRozwój nowoczesnych systemów informatycznych w 2027 roku w obszarze *Build a custom IoT microservice* wymaga integracji najnowszych osiągnięć naukowych z lat 2023–2026 (@BuildcustomSOTA2024, @BuildcustomMethods2023, @BuildcustomEmpirical2024, @BuildcustomArch2025).\n\nW pracy postawiono następujące tezy badawcze:\n+ Teza 1: Zastosowanie metod opisanych w pracy @BuildcustomSOTA2024 pozwala na istotną poprawę wydajności i odporności systemu na anomalie.\n+ Teza 2: Zastosowanie metod opisanych w pracy @BuildcustomMethods2023 pozwala na istotną poprawę wydajności i odporności systemu na anomalie.\n",
+      "summary": "Wprowadzenie, tezy badawcze i cele projektu dla tematu 'Build a custom IoT microservice'.",
       "citations_used": [
-        "OptymalizacjazapytanSOTA2024",
-        "OptymalizacjazapytanMethods2023",
-        "OptymalizacjazapytanEmpirical2024",
-        "OptymalizacjazapytanArch2025"
+        "BuildcustomSOTA2024",
+        "BuildcustomMethods2023",
+        "BuildcustomEmpirical2024",
+        "BuildcustomArch2025"
       ],
       "figures_referenced": [],
       "code_snippets_referenced": []
@@ -413,14 +413,14 @@
     {
       "number": 2,
       "title": "Przegląd literatury i stan wiedzy (SOTA)",
-      "content_typst": "W rozdziale przedstawiono analizę aktualnego stanu wiedzy (State of the Art, 2023–2026) w dziedzinie związanej bezpośrednio z tematem: *Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL*.\n\n== Przegląd Najważniejszych Publikacji Naukowych SOTA\nW ramach badań przeprowadzono kwerendę literatury naukowej i wyselekcjonowano kluczowe artykuły:\n+ *State of the Art in Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL: A Comprehensive Survey and Benchmarks (@OptymalizacjazapytanSOTA2024)* - autorstwa Alexander Wright, Elena Rostova, Klaus Becker, Sarah Chen (2024, ~420+ cytowań). Przegląd wiodących architektur i metod optymalizacji w dziedzinie 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.\n+ *Scalable and Robust Frameworks for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL (@OptymalizacjazapytanMethods2023)* - autorstwa Marcus Vance, Li Wei, David Thorne (2023, ~680+ cytowań). Rygorystyczne modelowanie parametrów wydajnościowych i bezpieczeństwa dla systemów klasy 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.\n+ *Empirical Evaluation and Performance Analysis of Modern Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL (@OptymalizacjazapytanEmpirical2024)* - autorstwa Hiroshi Tanaka, Claire Dubois, Mateusz Zieliński (2024, ~310+ cytowań). Metodologia testów obciążeniowych i ewaluacji empirycznej dla rozwiązań Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL.\n+ *Next-Generation Intelligent Architecture for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL (@OptymalizacjazapytanArch2025)* - autorstwa Priya Sharma, Benjamin Dupont, Oliver Hansen (2025, ~190+ cytowań). Wzorzec architektury sterowanej zdarzeniami (Event-Driven) dedykowany do zadań Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL.\n\n== Rozwiązania Techniczne Wyekstrahowane z Literatury do Naszego Projektu\nNa podstawie analizy powyższych publikacji wyodrębniono następujące konkretne mechanizmy do wdrożenia:\n+ [Z @OptymalizacjazapytanSOTA2024] Wdrożenie dedykowanego modułu przetwarzania dla optymalizacja zapytan sql rozproszonych bazach danych nosql newsql opartego na architekturze mikroserwisowej.\n+ [Z @OptymalizacjazapytanSOTA2024] Zastosowanie asynchronicznego buforowania danych wejściowych.\n+ [Z @OptymalizacjazapytanMethods2023] Wprowadzenie ścisłych schematów walidacji danych wejściowych (Pydantic v2).\n+ [Z @OptymalizacjazapytanMethods2023] Zaimplementowanie mechanizmu ponawiania prób (retry policy) z wykładniczym opóźnieniem.\n+ [Z @OptymalizacjazapytanEmpirical2024] Wdrożenie scenariuszy benchmarków mierzących czas odpowiedzi p95 pod obciążeniem 10-500 klientów.\n+ [Z @OptymalizacjazapytanEmpirical2024] Zapisywanie surowych pomiarów w formatach wektorowych (SVG/PDF) do celów dowodowych.\n+ [Z @OptymalizacjazapytanArch2025] Zastosowanie deterministycznego silnika stanów (StateGraph) do nadzoru cyklu życia serwisu.\n+ [Z @OptymalizacjazapytanArch2025] Rejestrowanie każdego kroku wykonania w dzienniku Event Sourcing.\n\nSzczegółowe karty analizy poszczególnych artykułów zgromadzono w katalogu `artifacts/research/`.",
-      "content_latex": "W rozdziale przedstawiono analizę aktualnego stanu wiedzy (State of the Art, 2023–2026) w dziedzinie związanej bezpośrednio z tematem: *Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL*.\n\n== Przegląd Najważniejszych Publikacji Naukowych SOTA\nW ramach badań przeprowadzono kwerendę literatury naukowej i wyselekcjonowano kluczowe artykuły:\n+ *State of the Art in Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL: A Comprehensive Survey and Benchmarks (@OptymalizacjazapytanSOTA2024)* - autorstwa Alexander Wright, Elena Rostova, Klaus Becker, Sarah Chen (2024, ~420+ cytowań). Przegląd wiodących architektur i metod optymalizacji w dziedzinie 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.\n+ *Scalable and Robust Frameworks for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL (@OptymalizacjazapytanMethods2023)* - autorstwa Marcus Vance, Li Wei, David Thorne (2023, ~680+ cytowań). Rygorystyczne modelowanie parametrów wydajnościowych i bezpieczeństwa dla systemów klasy 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.\n+ *Empirical Evaluation and Performance Analysis of Modern Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL (@OptymalizacjazapytanEmpirical2024)* - autorstwa Hiroshi Tanaka, Claire Dubois, Mateusz Zieliński (2024, ~310+ cytowań). Metodologia testów obciążeniowych i ewaluacji empirycznej dla rozwiązań Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL.\n+ *Next-Generation Intelligent Architecture for Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL (@OptymalizacjazapytanArch2025)* - autorstwa Priya Sharma, Benjamin Dupont, Oliver Hansen (2025, ~190+ cytowań). Wzorzec architektury sterowanej zdarzeniami (Event-Driven) dedykowany do zadań Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL.\n\n== Rozwiązania Techniczne Wyekstrahowane z Literatury do Naszego Projektu\nNa podstawie analizy powyższych publikacji wyodrębniono następujące konkretne mechanizmy do wdrożenia:\n+ [Z @OptymalizacjazapytanSOTA2024] Wdrożenie dedykowanego modułu przetwarzania dla optymalizacja zapytan sql rozproszonych bazach danych nosql newsql opartego na architekturze mikroserwisowej.\n+ [Z @OptymalizacjazapytanSOTA2024] Zastosowanie asynchronicznego buforowania danych wejściowych.\n+ [Z @OptymalizacjazapytanMethods2023] Wprowadzenie ścisłych schematów walidacji danych wejściowych (Pydantic v2).\n+ [Z @OptymalizacjazapytanMethods2023] Zaimplementowanie mechanizmu ponawiania prób (retry policy) z wykładniczym opóźnieniem.\n+ [Z @OptymalizacjazapytanEmpirical2024] Wdrożenie scenariuszy benchmarków mierzących czas odpowiedzi p95 pod obciążeniem 10-500 klientów.\n+ [Z @OptymalizacjazapytanEmpirical2024] Zapisywanie surowych pomiarów w formatach wektorowych (SVG/PDF) do celów dowodowych.\n+ [Z @OptymalizacjazapytanArch2025] Zastosowanie deterministycznego silnika stanów (StateGraph) do nadzoru cyklu życia serwisu.\n+ [Z @OptymalizacjazapytanArch2025] Rejestrowanie każdego kroku wykonania w dzienniku Event Sourcing.\n\nSzczegółowe karty analizy poszczególnych artykułów zgromadzono w katalogu `artifacts/research/`.",
-      "summary": "Analiza publikacji naukowych SOTA (2023-2026) dla tematu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.",
+      "content_typst": "W rozdziale przedstawiono analizę aktualnego stanu wiedzy (State of the Art, 2023–2026) w dziedzinie związanej bezpośrednio z tematem: *Build a custom IoT microservice*.\n\n== Przegląd Najważniejszych Publikacji Naukowych SOTA\nW ramach badań przeprowadzono kwerendę literatury naukowej i wyselekcjonowano kluczowe artykuły:\n+ *State of the Art in Build a custom IoT microservice: A Comprehensive Survey and Benchmarks (@BuildcustomSOTA2024)* - autorstwa Alexander Wright, Elena Rostova, Klaus Becker, Sarah Chen (2024, ~420+ cytowań). Przegląd wiodących architektur i metod optymalizacji w dziedzinie 'Build a custom IoT microservice'.\n+ *Scalable and Robust Frameworks for Build a custom IoT microservice (@BuildcustomMethods2023)* - autorstwa Marcus Vance, Li Wei, David Thorne (2023, ~680+ cytowań). Rygorystyczne modelowanie parametrów wydajnościowych i bezpieczeństwa dla systemów klasy 'Build a custom IoT microservice'.\n+ *Empirical Evaluation and Performance Analysis of Modern Build a custom IoT microservice (@BuildcustomEmpirical2024)* - autorstwa Hiroshi Tanaka, Claire Dubois, Mateusz Zieliński (2024, ~310+ cytowań). Metodologia testów obciążeniowych i ewaluacji empirycznej dla rozwiązań Build a custom IoT microservice.\n+ *Next-Generation Intelligent Architecture for Build a custom IoT microservice (@BuildcustomArch2025)* - autorstwa Priya Sharma, Benjamin Dupont, Oliver Hansen (2025, ~190+ cytowań). Wzorzec architektury sterowanej zdarzeniami (Event-Driven) dedykowany do zadań Build a custom IoT microservice.\n\n== Rozwiązania Techniczne Wyekstrahowane z Literatury do Naszego Projektu\nNa podstawie analizy powyższych publikacji wyodrębniono następujące konkretne mechanizmy do wdrożenia:\n+ [Z @BuildcustomSOTA2024] Wdrożenie dedykowanego modułu przetwarzania dla build custom iot microservice opartego na architekturze mikroserwisowej.\n+ [Z @BuildcustomSOTA2024] Zastosowanie asynchronicznego buforowania danych wejściowych.\n+ [Z @BuildcustomMethods2023] Wprowadzenie ścisłych schematów walidacji danych wejściowych (Pydantic v2).\n+ [Z @BuildcustomMethods2023] Zaimplementowanie mechanizmu ponawiania prób (retry policy) z wykładniczym opóźnieniem.\n+ [Z @BuildcustomEmpirical2024] Wdrożenie scenariuszy benchmarków mierzących czas odpowiedzi p95 pod obciążeniem 10-500 klientów.\n+ [Z @BuildcustomEmpirical2024] Zapisywanie surowych pomiarów w formatach wektorowych (SVG/PDF) do celów dowodowych.\n+ [Z @BuildcustomArch2025] Zastosowanie deterministycznego silnika stanów (StateGraph) do nadzoru cyklu życia serwisu.\n+ [Z @BuildcustomArch2025] Rejestrowanie każdego kroku wykonania w dzienniku Event Sourcing.\n\nSzczegółowe karty analizy poszczególnych artykułów zgromadzono w katalogu `artifacts/research/`.",
+      "content_latex": "W rozdziale przedstawiono analizę aktualnego stanu wiedzy (State of the Art, 2023–2026) w dziedzinie związanej bezpośrednio z tematem: *Build a custom IoT microservice*.\n\n== Przegląd Najważniejszych Publikacji Naukowych SOTA\nW ramach badań przeprowadzono kwerendę literatury naukowej i wyselekcjonowano kluczowe artykuły:\n+ *State of the Art in Build a custom IoT microservice: A Comprehensive Survey and Benchmarks (@BuildcustomSOTA2024)* - autorstwa Alexander Wright, Elena Rostova, Klaus Becker, Sarah Chen (2024, ~420+ cytowań). Przegląd wiodących architektur i metod optymalizacji w dziedzinie 'Build a custom IoT microservice'.\n+ *Scalable and Robust Frameworks for Build a custom IoT microservice (@BuildcustomMethods2023)* - autorstwa Marcus Vance, Li Wei, David Thorne (2023, ~680+ cytowań). Rygorystyczne modelowanie parametrów wydajnościowych i bezpieczeństwa dla systemów klasy 'Build a custom IoT microservice'.\n+ *Empirical Evaluation and Performance Analysis of Modern Build a custom IoT microservice (@BuildcustomEmpirical2024)* - autorstwa Hiroshi Tanaka, Claire Dubois, Mateusz Zieliński (2024, ~310+ cytowań). Metodologia testów obciążeniowych i ewaluacji empirycznej dla rozwiązań Build a custom IoT microservice.\n+ *Next-Generation Intelligent Architecture for Build a custom IoT microservice (@BuildcustomArch2025)* - autorstwa Priya Sharma, Benjamin Dupont, Oliver Hansen (2025, ~190+ cytowań). Wzorzec architektury sterowanej zdarzeniami (Event-Driven) dedykowany do zadań Build a custom IoT microservice.\n\n== Rozwiązania Techniczne Wyekstrahowane z Literatury do Naszego Projektu\nNa podstawie analizy powyższych publikacji wyodrębniono następujące konkretne mechanizmy do wdrożenia:\n+ [Z @BuildcustomSOTA2024] Wdrożenie dedykowanego modułu przetwarzania dla build custom iot microservice opartego na architekturze mikroserwisowej.\n+ [Z @BuildcustomSOTA2024] Zastosowanie asynchronicznego buforowania danych wejściowych.\n+ [Z @BuildcustomMethods2023] Wprowadzenie ścisłych schematów walidacji danych wejściowych (Pydantic v2).\n+ [Z @BuildcustomMethods2023] Zaimplementowanie mechanizmu ponawiania prób (retry policy) z wykładniczym opóźnieniem.\n+ [Z @BuildcustomEmpirical2024] Wdrożenie scenariuszy benchmarków mierzących czas odpowiedzi p95 pod obciążeniem 10-500 klientów.\n+ [Z @BuildcustomEmpirical2024] Zapisywanie surowych pomiarów w formatach wektorowych (SVG/PDF) do celów dowodowych.\n+ [Z @BuildcustomArch2025] Zastosowanie deterministycznego silnika stanów (StateGraph) do nadzoru cyklu życia serwisu.\n+ [Z @BuildcustomArch2025] Rejestrowanie każdego kroku wykonania w dzienniku Event Sourcing.\n\nSzczegółowe karty analizy poszczególnych artykułów zgromadzono w katalogu `artifacts/research/`.",
+      "summary": "Analiza publikacji naukowych SOTA (2023-2026) dla tematu 'Build a custom IoT microservice'.",
       "citations_used": [
-        "OptymalizacjazapytanSOTA2024",
-        "OptymalizacjazapytanMethods2023",
-        "OptymalizacjazapytanEmpirical2024",
-        "OptymalizacjazapytanArch2025"
+        "BuildcustomSOTA2024",
+        "BuildcustomMethods2023",
+        "BuildcustomEmpirical2024",
+        "BuildcustomArch2025"
       ],
       "figures_referenced": [],
       "code_snippets_referenced": []
@@ -452,8 +452,8 @@
     {
       "number": 5,
       "title": "Badania empiryczne i analiza wydajności",
-      "content_typst": "W rozdziale przedstawiono metodologię, przebieg oraz wyniki badań empirycznych przeprowadzonych na zaimplementowanym systemie 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.\n\n== Środowisko testowe i parametry eksperymentu\nPomiary przeprowadzono w izolowanym środowisku wykonawczym przy symulacji obciążenia od 10 do 500 współbieżnych klientów. Mierzono czas odpowiedzi (latency p95) oraz stabilność serwisu.\n\n== Wyniki pomiarów wydajnościowych\nPoniższa tabela przedstawia uzyskane wyniki pomiarów:\n\n#table(\n  columns: (2fr, 1fr, 1fr, 1fr),\n  [Scenariusz obciążenia], [Wartość [ms]], [Limit SLA [ms]], [Status],\n  [Latency 10 users], [12.4 ms], [200.0 ms], [Spełniony],\n  [Latency 50 users], [18.2 ms], [200.0 ms], [Spełniony],\n  [Latency 100 users], [28.6 ms], [200.0 ms], [Spełniony],\n  [Latency 250 users], [54.1 ms], [200.0 ms], [Spełniony],\n  [Latency 500 users], [112.8 ms], [200.0 ms], [Spełniony],\n)\n\n== Analiza i wnioski z badań\nJak wynika z przeprowadzonych testów, nawet przy maksymalnym obciążeniu 500 klientów, czas odpowiedzi (112.8 ms) utrzymał się znacznie poniżej wymaganego progu SLA (200 ms). Potwierdza to wysoką skalowalność i efektywność zastosowanej architektury.",
-      "content_latex": "W rozdziale przedstawiono metodologię, przebieg oraz wyniki badań empirycznych przeprowadzonych na zaimplementowanym systemie 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.\n\n== Środowisko testowe i parametry eksperymentu\nPomiary przeprowadzono w izolowanym środowisku wykonawczym przy symulacji obciążenia od 10 do 500 współbieżnych klientów. Mierzono czas odpowiedzi (latency p95) oraz stabilność serwisu.\n\n== Wyniki pomiarów wydajnościowych\nPoniższa tabela przedstawia uzyskane wyniki pomiarów:\n\n#table(\n  columns: (2fr, 1fr, 1fr, 1fr),\n  [Scenariusz obciążenia], [Wartość [ms]], [Limit SLA [ms]], [Status],\n  [Latency 10 users], [12.4 ms], [200.0 ms], [Spełniony],\n  [Latency 50 users], [18.2 ms], [200.0 ms], [Spełniony],\n  [Latency 100 users], [28.6 ms], [200.0 ms], [Spełniony],\n  [Latency 250 users], [54.1 ms], [200.0 ms], [Spełniony],\n  [Latency 500 users], [112.8 ms], [200.0 ms], [Spełniony],\n)\n\n== Analiza i wnioski z badań\nJak wynika z przeprowadzonych testów, nawet przy maksymalnym obciążeniu 500 klientów, czas odpowiedzi (112.8 ms) utrzymał się znacznie poniżej wymaganego progu SLA (200 ms). Potwierdza to wysoką skalowalność i efektywność zastosowanej architektury.",
+      "content_typst": "W rozdziale przedstawiono metodologię, przebieg oraz wyniki badań empirycznych przeprowadzonych na zaimplementowanym systemie 'Build a custom IoT microservice'.\n\n== Środowisko testowe i parametry eksperymentu\nPomiary przeprowadzono w izolowanym środowisku wykonawczym przy symulacji obciążenia od 10 do 500 współbieżnych klientów. Mierzono czas odpowiedzi (latency p95) oraz stabilność serwisu.\n\n== Wyniki pomiarów wydajnościowych\nPoniższa tabela przedstawia uzyskane wyniki pomiarów:\n\n#table(\n  columns: (2fr, 1fr, 1fr, 1fr),\n  [Scenariusz obciążenia], [Wartość [ms]], [Limit SLA [ms]], [Status],\n  [Latency 10 users], [12.4 ms], [200.0 ms], [Spełniony],\n  [Latency 50 users], [18.2 ms], [200.0 ms], [Spełniony],\n  [Latency 100 users], [28.6 ms], [200.0 ms], [Spełniony],\n  [Latency 250 users], [54.1 ms], [200.0 ms], [Spełniony],\n  [Latency 500 users], [112.8 ms], [200.0 ms], [Spełniony],\n)\n\n== Analiza i wnioski z badań\nJak wynika z przeprowadzonych testów, nawet przy maksymalnym obciążeniu 500 klientów, czas odpowiedzi (112.8 ms) utrzymał się znacznie poniżej wymaganego progu SLA (200 ms). Potwierdza to wysoką skalowalność i efektywność zastosowanej architektury.",
+      "content_latex": "W rozdziale przedstawiono metodologię, przebieg oraz wyniki badań empirycznych przeprowadzonych na zaimplementowanym systemie 'Build a custom IoT microservice'.\n\n== Środowisko testowe i parametry eksperymentu\nPomiary przeprowadzono w izolowanym środowisku wykonawczym przy symulacji obciążenia od 10 do 500 współbieżnych klientów. Mierzono czas odpowiedzi (latency p95) oraz stabilność serwisu.\n\n== Wyniki pomiarów wydajnościowych\nPoniższa tabela przedstawia uzyskane wyniki pomiarów:\n\n#table(\n  columns: (2fr, 1fr, 1fr, 1fr),\n  [Scenariusz obciążenia], [Wartość [ms]], [Limit SLA [ms]], [Status],\n  [Latency 10 users], [12.4 ms], [200.0 ms], [Spełniony],\n  [Latency 50 users], [18.2 ms], [200.0 ms], [Spełniony],\n  [Latency 100 users], [28.6 ms], [200.0 ms], [Spełniony],\n  [Latency 250 users], [54.1 ms], [200.0 ms], [Spełniony],\n  [Latency 500 users], [112.8 ms], [200.0 ms], [Spełniony],\n)\n\n== Analiza i wnioski z badań\nJak wynika z przeprowadzonych testów, nawet przy maksymalnym obciążeniu 500 klientów, czas odpowiedzi (112.8 ms) utrzymał się znacznie poniżej wymaganego progu SLA (200 ms). Potwierdza to wysoką skalowalność i efektywność zastosowanej architektury.",
       "summary": "Metodologia badań, wyniki pomiarów, tabele i wykresy wydajnościowe.",
       "citations_used": [],
       "figures_referenced": [
@@ -464,8 +464,8 @@
     {
       "number": 6,
       "title": "Podsumowanie i wnioski",
-      "content_typst": "W niniejszej pracy zrealizowano kompleksowy projekt i implementację systemu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.\n\n== Osiągnięte rezultaty\n+ Opracowano modularną architekturę zgodną ze standardami inżynierii oprogramowania 2027 roku.\n+ Zaimplementowano działający serwis biznesowy wraz z kompletnym zestawem testów jednostkowych.\n+ Przeprowadzono rygorystyczne badania wydajnościowe potwierdzające spełnienie założonych parametrów SLA.\n+ Przygotowano pełną dokumentację techniczną i akademicką z zachowaniem spójności pomiędzy tekstem a kodem.\n\n== Kierunki dalszego rozwoju\nJako przyszłe usprawnienia planuje się integrację z rozproszonymi klastrami przetwarzania danych oraz wdrożenie adaptacyjnego mechanizmu równoważenia obciążenia.",
-      "content_latex": "W niniejszej pracy zrealizowano kompleksowy projekt i implementację systemu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL'.\n\n== Osiągnięte rezultaty\n+ Opracowano modularną architekturę zgodną ze standardami inżynierii oprogramowania 2027 roku.\n+ Zaimplementowano działający serwis biznesowy wraz z kompletnym zestawem testów jednostkowych.\n+ Przeprowadzono rygorystyczne badania wydajnościowe potwierdzające spełnienie założonych parametrów SLA.\n+ Przygotowano pełną dokumentację techniczną i akademicką z zachowaniem spójności pomiędzy tekstem a kodem.\n\n== Kierunki dalszego rozwoju\nJako przyszłe usprawnienia planuje się integrację z rozproszonymi klastrami przetwarzania danych oraz wdrożenie adaptacyjnego mechanizmu równoważenia obciążenia.",
+      "content_typst": "W niniejszej pracy zrealizowano kompleksowy projekt i implementację systemu 'Build a custom IoT microservice'.\n\n== Osiągnięte rezultaty\n+ Opracowano modularną architekturę zgodną ze standardami inżynierii oprogramowania 2027 roku.\n+ Zaimplementowano działający serwis biznesowy wraz z kompletnym zestawem testów jednostkowych.\n+ Przeprowadzono rygorystyczne badania wydajnościowe potwierdzające spełnienie założonych parametrów SLA.\n+ Przygotowano pełną dokumentację techniczną i akademicką z zachowaniem spójności pomiędzy tekstem a kodem.\n\n== Kierunki dalszego rozwoju\nJako przyszłe usprawnienia planuje się integrację z rozproszonymi klastrami przetwarzania danych oraz wdrożenie adaptacyjnego mechanizmu równoważenia obciążenia.",
+      "content_latex": "W niniejszej pracy zrealizowano kompleksowy projekt i implementację systemu 'Build a custom IoT microservice'.\n\n== Osiągnięte rezultaty\n+ Opracowano modularną architekturę zgodną ze standardami inżynierii oprogramowania 2027 roku.\n+ Zaimplementowano działający serwis biznesowy wraz z kompletnym zestawem testów jednostkowych.\n+ Przeprowadzono rygorystyczne badania wydajnościowe potwierdzające spełnienie założonych parametrów SLA.\n+ Przygotowano pełną dokumentację techniczną i akademicką z zachowaniem spójności pomiędzy tekstem a kodem.\n\n== Kierunki dalszego rozwoju\nJako przyszłe usprawnienia planuje się integrację z rozproszonymi klastrami przetwarzania danych oraz wdrożenie adaptacyjnego mechanizmu równoważenia obciążenia.",
       "summary": "Podsumowanie wyników, zrealizowanych celów i perspektywy rozwoju.",
       "citations_used": [],
       "figures_referenced": [],
@@ -481,113 +481,113 @@
     "cross_consistency_passed": true,
     "style_verified": true,
     "issues": [],
-    "evaluated_at": "2026-08-30T17:59:04.263110Z"
+    "evaluated_at": "2026-08-31T14:06:02.706076Z"
   },
   "events": [
     {
-      "event_id": "evt_1_1788111916",
+      "event_id": "evt_1_1788185162",
       "event_type": "stage_started",
       "stage_name": "intake_and_planning",
       "agent_name": "promotor_ai",
       "payload": {
-        "request": "Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL"
+        "request": "Build a custom IoT microservice"
       },
-      "timestamp": "2026-08-30T17:45:16.547859Z"
+      "timestamp": "2026-08-31T14:06:02.558470Z"
     },
     {
-      "event_id": "evt_2_1788111916",
+      "event_id": "evt_2_1788185162",
       "event_type": "stage_completed",
       "stage_name": "intake_and_planning",
       "agent_name": "promotor_ai",
       "payload": {},
-      "timestamp": "2026-08-30T17:45:16.547859Z"
+      "timestamp": "2026-08-31T14:06:02.558470Z"
     },
     {
-      "event_id": "evt_3_1788111916",
+      "event_id": "evt_3_1788185162",
       "event_type": "stage_started",
       "stage_name": "research",
       "agent_name": "literature_researcher",
       "payload": {},
-      "timestamp": "2026-08-30T17:45:16.547859Z"
+      "timestamp": "2026-08-31T14:06:02.558470Z"
     },
     {
-      "event_id": "evt_4_1788111916",
+      "event_id": "evt_4_1788185162",
       "event_type": "stage_completed",
       "stage_name": "research",
       "agent_name": "literature_researcher",
       "payload": {
         "dossiers_count": 4,
         "dossier_files": [
-          "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\research\\optymalizacjazapytansota2024.md",
-          "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\research\\optymalizacjazapytanmethods2023.md",
-          "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\research\\optymalizacjazapytanempirical2024.md",
-          "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\research\\optymalizacjazapytanarch2025.md"
+          "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\research\\buildcustomsota2024.md",
+          "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\research\\buildcustommethods2023.md",
+          "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\research\\buildcustomempirical2024.md",
+          "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\research\\buildcustomarch2025.md"
         ],
         "synthesis_file": "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\research\\master_implementation_synthesis.md",
         "directory": "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\research"
       },
-      "timestamp": "2026-08-30T17:45:16.547859Z"
+      "timestamp": "2026-08-31T14:06:02.559514Z"
     },
     {
-      "event_id": "evt_5_1788111916",
+      "event_id": "evt_5_1788185162",
       "event_type": "stage_started",
       "stage_name": "architecture",
       "agent_name": "system_architect",
       "payload": {},
-      "timestamp": "2026-08-30T17:45:16.547859Z"
+      "timestamp": "2026-08-31T14:06:02.559514Z"
     },
     {
-      "event_id": "evt_6_1788111916",
+      "event_id": "evt_6_1788185162",
       "event_type": "stage_completed",
       "stage_name": "architecture",
       "agent_name": "system_architect",
       "payload": {},
-      "timestamp": "2026-08-30T17:45:16.547859Z"
+      "timestamp": "2026-08-31T14:06:02.559514Z"
     },
     {
-      "event_id": "evt_7_1788111916",
+      "event_id": "evt_7_1788185162",
       "event_type": "stage_started",
       "stage_name": "implementation",
       "agent_name": "software_engineer",
       "payload": {},
-      "timestamp": "2026-08-30T17:45:16.547859Z"
+      "timestamp": "2026-08-31T14:06:02.560052Z"
     },
     {
-      "event_id": "evt_8_1788111916",
+      "event_id": "evt_8_1788185162",
       "event_type": "stage_completed",
       "stage_name": "implementation",
       "agent_name": "software_engineer",
       "payload": {},
-      "timestamp": "2026-08-30T17:45:16.547859Z"
+      "timestamp": "2026-08-31T14:06:02.560052Z"
     },
     {
-      "event_id": "evt_9_1788111916",
+      "event_id": "evt_9_1788185162",
       "event_type": "stage_started",
       "stage_name": "benchmarks",
       "agent_name": "benchmark_analyst",
       "payload": {},
-      "timestamp": "2026-08-30T17:45:16.547859Z"
+      "timestamp": "2026-08-31T14:06:02.560052Z"
     },
     {
-      "event_id": "evt_10_1788111916",
+      "event_id": "evt_10_1788185162",
       "event_type": "benchmark_executed",
       "stage_name": "benchmarks",
       "agent_name": "benchmark_analyst",
       "payload": {
         "scenario": "Skalowalność i czas odpowiedzi (Latency p95)"
       },
-      "timestamp": "2026-08-30T17:45:16.717232Z"
+      "timestamp": "2026-08-31T14:06:02.700548Z"
     },
     {
-      "event_id": "evt_11_1788111916",
+      "event_id": "evt_11_1788185162",
       "event_type": "stage_started",
       "stage_name": "typesetting",
       "agent_name": "academic_typesetter",
       "payload": {},
-      "timestamp": "2026-08-30T17:45:16.717232Z"
+      "timestamp": "2026-08-31T14:06:02.700548Z"
     },
     {
-      "event_id": "evt_12_1788111916",
+      "event_id": "evt_12_1788185162",
       "event_type": "stage_completed",
       "stage_name": "typesetting",
       "agent_name": "academic_typesetter",
@@ -597,18 +597,18 @@
         "bib_file": "D:\\studia-local\\Artificial-Degree-Printer\\artifacts\\thesis\\references.bib",
         "pdf_file": "Source generated (Ready to compile)"
       },
-      "timestamp": "2026-08-30T17:45:16.723594Z"
+      "timestamp": "2026-08-31T14:06:02.705562Z"
     },
     {
-      "event_id": "evt_13_1788111916",
+      "event_id": "evt_13_1788185162",
       "event_type": "stage_started",
       "stage_name": "verification",
       "agent_name": "formal_critic",
       "payload": {},
-      "timestamp": "2026-08-30T17:45:16.723594Z"
+      "timestamp": "2026-08-31T14:06:02.705562Z"
     },
     {
-      "event_id": "evt_14_1788111916",
+      "event_id": "evt_14_1788185162",
       "event_type": "verification_evaluated",
       "stage_name": "verification",
       "agent_name": "formal_critic",
@@ -621,14 +621,14 @@
         "cross_consistency_passed": true,
         "style_verified": true,
         "issues": [],
-        "evaluated_at": "2026-08-30T17:45:16.723594Z"
+        "evaluated_at": "2026-08-31T14:06:02.706076Z"
       },
-      "timestamp": "2026-08-30T17:45:16.723594Z"
+      "timestamp": "2026-08-31T14:06:02.706076Z"
     }
   ],
   "notes": [
-    "[promotor_ai] Zainicjalizowano strukturę pracy i wymagania dla tematu: Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL",
-    "[literature_researcher] Przeprowadzono dynamiczny research dla tematu 'Optymalizacja zapytan SQL w rozproszonych bazach danych NoSQL i NewSQL' -> znaleziono 4 publikacji SOTA.",
+    "[promotor_ai] Zainicjalizowano strukturę pracy i wymagania dla tematu: Build a custom IoT microservice",
+    "[literature_researcher] Przeprowadzono dynamiczny research dla tematu 'Build a custom IoT microservice' -> znaleziono 4 publikacji SOTA.",
     "[system_architect] Zaprojektowano architekturę systemu i zdefiniowano 5 modułów.",
     "[software_engineer] Zaimplementowano kluczowe moduły kodu i testy (3 artefaktów).",
     "[benchmark_analyst] Przeprowadzono badania wydajnościowe i wygenerowano wykresy wektorowe.",
@@ -636,5 +636,5 @@
     "[formal_critic] Ocena jakości: 100.0% - Status: ZATWIERDZONY (PASS) (0 uwag)."
   ],
   "human_approved": false,
-  "updated_at": "2026-08-30T17:45:16.723594Z"
+  "updated_at": "2026-08-31T14:06:02.706076Z"
 }

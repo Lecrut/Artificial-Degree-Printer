@@ -20,6 +20,32 @@ class TypesetterAgent(BaseAgent):
             agent_name=self.name,
         )
 
+        # Kompilacja promptu za pomocą DynamicPromptCompiler (REprompt / SOTA)
+        from pathlib import Path
+        from adk.engine.prompt_catalog import DynamicPromptCompiler
+        
+        prompts_dir = Path(__file__).resolve().parents[2] / "adk" / "prompts"
+        compiler = DynamicPromptCompiler(prompts_dir)
+        
+        # Przygotuj zmienne kontekstowe
+        context_vars = {
+            "chapter_title": "Podsumowanie i wnioski",
+            "state_and_requirements": f"Topic: {state.request}",
+            "ast_symbols": "CoreProcessingService, ProcessingTask",
+        }
+        
+        compiled_prompt = compiler.compile_prompt("typesetting", state, context_vars)
+
+        # Wykonaj zapytanie do LLM (jeśli klient jest dostępny)
+        llm_response = ""
+        if self.llm_client:
+            # Użycie systemu Topaz - logowanie decyzji zachodzi wewnątrz complete() -> complete_for_agent()
+            llm_response = self.llm_client.complete(
+                prompt=compiled_prompt,
+                system_prompt="You are an academic typesetter. Write sections in formal Polish academic style.",
+                agent_name=self.name
+            )
+
         typesetting_tool = self.get_tool("typesetting_tool")
         if not typesetting_tool or not isinstance(typesetting_tool, TypesettingTool):
             typesetting_tool = TypesettingTool()

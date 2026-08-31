@@ -19,6 +19,32 @@ class ArchitectAgent(BaseAgent):
             agent_name=self.name,
         )
 
+        # Kompilacja promptu za pomocą DynamicPromptCompiler (REprompt / SOTA)
+        from pathlib import Path
+        from adk.engine.prompt_catalog import DynamicPromptCompiler
+        
+        prompts_dir = Path(__file__).resolve().parents[2] / "adk" / "prompts"
+        compiler = DynamicPromptCompiler(prompts_dir)
+        
+        # Przygotuj zmienne kontekstowe
+        reqs_str = "\n".join([f"- {r.id}: {r.title} ({r.priority})" for r in state.requirements])
+        context_vars = {
+            "requirements_list": reqs_str,
+            "tech_stack": "Python 3.12, Pydantic v2, Typst 0.11+",
+        }
+        
+        compiled_prompt = compiler.compile_prompt("architecture", state, context_vars)
+
+        # Wykonaj zapytanie do LLM (jeśli klient jest dostępny)
+        llm_response = ""
+        if self.llm_client:
+            # Użycie systemu Topaz - logowanie decyzji zachodzi wewnątrz complete() -> complete_for_agent()
+            llm_response = self.llm_client.complete(
+                prompt=compiled_prompt,
+                system_prompt="You are a system architect. Output a clean system architecture specification.",
+                agent_name=self.name
+            )
+
         mermaid_diag = (
             "graph TD\n"
             "  User([Użytkownik / Promotor]) --> UI[Warstwa Interfejsu CLI / API]\n"
@@ -31,8 +57,10 @@ class ArchitectAgent(BaseAgent):
 
         state.architecture = ArchitectureSpec(
             system_overview=(
-                f"Architektura systemu '{state.metadata.title}' została oparta na modularnym wzorcu "
-                "Event-Driven Architecture ze ścisłą separacją warstwy orkiestracji, wykonawczej i weryfikacyjnej."
+                llm_response[:500] if llm_response else (
+                    f"Architektura systemu '{state.metadata.title}' została oparta na modularnym wzorcu "
+                    "Event-Driven Architecture ze ścisłą separacją warstwy orkiestracji, wykonawczej i weryfikacyjnej."
+                )
             ),
             tech_stack={
                 "Język główny": "Python 3.12+",

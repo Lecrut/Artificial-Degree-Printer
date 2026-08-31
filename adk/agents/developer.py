@@ -19,6 +19,33 @@ class DeveloperAgent(BaseAgent):
             agent_name=self.name,
         )
 
+        # Kompilacja promptu za pomocą DynamicPromptCompiler (REprompt / SOTA)
+        from pathlib import Path
+        from adk.engine.prompt_catalog import DynamicPromptCompiler
+        
+        prompts_dir = Path(__file__).resolve().parents[2] / "adk" / "prompts"
+        compiler = DynamicPromptCompiler(prompts_dir)
+        
+        # Przygotuj zmienne kontekstowe
+        arch_summary = state.architecture.system_overview if state.architecture else "Standard Architecture"
+        context_vars = {
+            "architecture_spec": arch_summary,
+            "target_language": "Python",
+            "test_framework": "Pytest",
+        }
+        
+        compiled_prompt = compiler.compile_prompt("implementation", state, context_vars)
+
+        # Wykonaj zapytanie do LLM (jeśli klient jest dostępny)
+        llm_response = ""
+        if self.llm_client:
+            # Użycie systemu Topaz - logowanie decyzji zachodzi wewnątrz complete() -> complete_for_agent()
+            llm_response = self.llm_client.complete(
+                prompt=compiled_prompt,
+                system_prompt="You are a senior software developer. Write clean production python code.",
+                agent_name=self.name
+            )
+
         # Generuj artefakty implementacyjne
         core_service_code = '''"""
 Core service engine implementing the business logic for the system.

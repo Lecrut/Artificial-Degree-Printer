@@ -174,12 +174,55 @@ class HeterogeneousRouterLLMClient:
             "reviewer": GoogleGeminiProvider(model_name="gemini-2.5-pro"),
         }
 
-    def get_provider_for_agent(self, agent_name: str) -> BaseLLMProvider:
-        role = agent_name.lower().replace("agent", "").strip()
-        return self.role_providers.get(role, GoogleGeminiProvider(model_name="gemini-2.5-flash"))
+    def estimate_task_complexity(self, prompt: str) -> float:
+        """Estimates task complexity score chi(T) in range [0.0, 1.0] based on prompt cues."""
+        score = 0.1
+        prompt_len = len(prompt)
+        
+        # Length-based complexity bounds
+        if prompt_len > 5000:
+            score += 0.3
+        elif prompt_len > 2000:
+            score += 0.15
+            
+        # Semantic keywords checks
+        complexity_keywords = [
+            "architect", "c4", "architecture", "typeset", "thesis", "latex", "typst",
+            "verify", "stylometry", "cross_consistency", "replan", "mutation"
+        ]
+        coding_keywords = ["implement", "function", "class", "code", "module", "parse"]
+        
+        lower_prompt = prompt.lower()
+        complexity_matches = sum(1 for kw in complexity_keywords if kw in lower_prompt)
+        if complexity_matches > 0:
+            score += min(0.6, complexity_matches * 0.15 + 0.25)
+        
+        coding_matches = sum(1 for kw in coding_keywords if kw in lower_prompt)
+        if coding_matches > 0 and complexity_matches == 0:
+            score += min(0.4, coding_matches * 0.1 + 0.15)
+            
+        return min(1.0, score)
+
+    def get_provider_for_agent(self, agent_name: str, complexity: Optional[float] = None) -> BaseLLMProvider:
+        if complexity is None:
+            role = agent_name.lower().replace("agent", "").strip()
+            return self.role_providers.get(role, GoogleGeminiProvider(model_name="gemini-2.5-flash"))
+        # Route to Tier 3 for complex tasks, Tier 2 for coding, and Tier 1 for simple tasks
+        if complexity >= 0.70:
+            return GoogleGeminiProvider(model_name="gemini-2.5-pro")
+        elif complexity >= 0.35:
+            return OllamaLocalProvider(model_name="qwen2.5-coder:7b")
+        else:
+            return GoogleGeminiProvider(model_name="gemini-2.5-flash")
 
     def complete_for_agent(self, agent_name: str, prompt: str, system_prompt: Optional[str] = None) -> str:
-        provider = self.get_provider_for_agent(agent_name)
+        complexity = self.estimate_task_complexity(prompt)
+        provider = self.get_provider_for_agent(agent_name, complexity)
+        
+        # Log Topaz routing rationale
+        tier = "Tier 3 (Cloud Pro)" if complexity >= 0.70 else ("Tier 2 (Local SLM)" if complexity >= 0.35 else "Tier 1 (Cloud Flash)")
+        print(f"[Topaz Router] Routed agent '{agent_name}' to {tier} (Model: {provider.model_name}) based on complexity score: {complexity:.2f}")
+
         messages: List[LLMMessage] = []
         if system_prompt:
             messages.append(LLMMessage(role="system", content=system_prompt))

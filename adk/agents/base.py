@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 from adk.core.events import EventType
 from adk.core.state import ADKProjectState
 from adk.tools.base import BaseTool, ToolResult
+
+if TYPE_CHECKING:
+    from adk.llm.client import LLMClient
 
 
 class BaseAgent(ABC):
@@ -12,8 +15,9 @@ class BaseAgent(ABC):
     role_description: str
     capabilities: List[str] = []
 
-    def __init__(self, tools: Optional[Dict[str, BaseTool]] = None) -> None:
+    def __init__(self, tools: Optional[Dict[str, BaseTool]] = None, llm_client: Optional[LLMClient] = None) -> None:
         self.tools = tools or {}
+        self.llm_client = llm_client
 
     def get_tool(self, tool_name: str) -> Optional[BaseTool]:
         return self.tools.get(tool_name)
@@ -28,4 +32,3 @@ class BaseAgent(ABC):
     def run(self, state: ADKProjectState, **kwargs: Any) -> ADKProjectState:
         """Wykonuje dedykowaną część pracy w ramach etapu pipeline'u."""
         raise NotImplementedError
-

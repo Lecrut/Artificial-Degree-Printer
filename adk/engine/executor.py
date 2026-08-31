@@ -18,22 +18,23 @@ class ADKE2EExecutor:
     def __init__(
         self,
         workspace_dir: Optional[Path | str] = None,
+        project_id: str = "project_01",
         provider: str = "fallback",
         model: Optional[str] = None,
     ) -> None:
-        self.context = ExecutionContext(workspace_dir, provider=provider, model=model)
+        self.context = ExecutionContext(workspace_dir, project_id=project_id, provider=provider, model=model)
         self.graph = StateGraphEngine()
         self._setup_pipeline()
 
     def _setup_pipeline(self) -> None:
-        # Zainicjalizuj agentów z narzędziami
-        orchestrator = OrchestratorAgent(self.context.tools)
-        researcher = ResearcherAgent(self.context.tools)
-        architect = ArchitectAgent(self.context.tools)
-        developer = DeveloperAgent(self.context.tools)
-        experimenter = ExperimenterAgent(self.context.tools)
-        typesetter = TypesetterAgent(self.context.tools)
-        reviewer = ReviewerAgent(self.context.tools)
+        # Zainicjalizuj agentów z narzędziami i klientem LLM
+        orchestrator = OrchestratorAgent(self.context.tools, self.context.llm_client)
+        researcher = ResearcherAgent(self.context.tools, self.context.llm_client)
+        architect = ArchitectAgent(self.context.tools, self.context.llm_client)
+        developer = DeveloperAgent(self.context.tools, self.context.llm_client)
+        experimenter = ExperimenterAgent(self.context.tools, self.context.llm_client)
+        typesetter = TypesetterAgent(self.context.tools, self.context.llm_client)
+        reviewer = ReviewerAgent(self.context.tools, self.context.llm_client)
 
         # Zbuduj graf etapów
         self.graph.add_node("intake", "Planowanie i wymagania (Promotor AI)", orchestrator.run)
@@ -44,9 +45,23 @@ class ADKE2EExecutor:
         self.graph.add_node("typesetting", "Skład pracy w Typst i LaTeX", typesetter.run, depends_on=["benchmarks"])
         self.graph.add_node("verification", "Weryfikacja jakości i spójności", reviewer.run, depends_on=["typesetting"])
 
-    def run_pipeline(self, request_text: str, project_id: str = "project_01", parallel: bool = True) -> ADKProjectState:
+    def run_pipeline(self, request_text: str, project_id: Optional[str] = None, parallel: bool = True) -> ADKProjectState:
+        pid = project_id or self.context.project_dir.name
+        # Re-initialize context if a different project_id is requested
+        if pid != self.context.project_dir.name:
+            prov = getattr(self.context.llm_client, "provider_type", "fallback")
+            client_provider = getattr(self.context.llm_client, "provider", None)
+            model = getattr(client_provider, "model_name", None) if client_provider else None
+            self.context = ExecutionContext(
+                self.context.workspace_dir,
+                project_id=pid,
+                provider=prov,
+                model=model
+            )
+            self._setup_pipeline()
+
         initial_state = ADKProjectState(
-            project_id=project_id,
+            project_id=pid,
             request=request_text,
         )
 
@@ -57,14 +72,15 @@ class ADKE2EExecutor:
             final_state = self.graph.execute_all(initial_state)
 
         # Zapisz artefakty kodu na dysku projektu
-        code_dir = self.context.workspace_dir / "generated_project"
+        code_dir = self.context.project_dir / "generated_project"
         for art in final_state.code_artifacts:
             file_path = code_dir / art.path
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(art.content, encoding="utf-8")
 
         # Zapisz stan sesji
-        session_file = self.context.workspace_dir / "adk" / "memory" / "session.json"
+        session_file = self.context.project_dir / "adk" / "memory" / "session.json"
+        session_file.parent.mkdir(parents=True, exist_ok=True)
         final_state.save_to_file(session_file)
 
         return final_state

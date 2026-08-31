@@ -22,11 +22,17 @@ class ExecutionContext:
     def __init__(
         self,
         workspace_dir: Optional[Path | str] = None,
+        project_id: str = "project_01",
         provider: str = "fallback",
         model: Optional[str] = None,
     ) -> None:
         self.workspace_dir = Path(workspace_dir).resolve() if workspace_dir else Path.cwd().resolve()
-        self.artifacts_dir = self.workspace_dir / "artifacts"
+        
+        # Izolowana ścieżka projektu
+        self.project_dir = self.workspace_dir / "projects" / project_id
+        self.project_dir.mkdir(parents=True, exist_ok=True)
+        
+        self.artifacts_dir = self.project_dir / "artifacts"
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
         self.research_dir = self.artifacts_dir / "research"
         self.research_dir.mkdir(parents=True, exist_ok=True)
@@ -38,15 +44,15 @@ class ExecutionContext:
         self.llm_client = LLMClient(provider_type=provider, model_name=model)
 
         self.tools: Dict[str, BaseTool] = {
-            "filesystem": FileSystemTool(self.workspace_dir),
-            "sandbox_runner": SandboxRunnerTool(self.workspace_dir),
+            "filesystem": FileSystemTool(self.project_dir),
+            "sandbox_runner": SandboxRunnerTool(self.project_dir),
             "literature_tool": LiteratureTool(),
             "literature_search": DynamicLiteratureSearchEngine(llm_client=self.llm_client),
             "literature_dossier": LiteratureDossierTool(self.research_dir),
-            "git_provenance": GitProvenanceTool(self.workspace_dir / "generated_project"),
+            "git_provenance": GitProvenanceTool(self.project_dir / "generated_project"),
             "benchmark_tool": BenchmarkTool(self.artifacts_dir / "benchmarks"),
             "typesetting_tool": TypesettingTool(self.artifacts_dir / "thesis"),
-            "env_secrets_manager": EnvSecretsManagerTool(self.workspace_dir / "generated_project"),
+            "env_secrets_manager": EnvSecretsManagerTool(self.project_dir / "generated_project"),
             "doc_scraper": WebDocumentationScraperTool(),
         }
 
@@ -57,3 +63,32 @@ class ExecutionContext:
     def inject_harness_patches(self, patches: List[HarnessPatch]) -> None:
         for patch in patches:
             self.harness_patches[patch.id] = patch
+
+    def compress_execution_logs(self, raw_events: List[Dict[str, Any]]) -> str:
+        """
+        LightMem Context Compressor:
+        Compresses raw verbose event logs into structured summaries, reducing token overhead.
+        """
+        compressed_lines = []
+        for idx, evt in enumerate(raw_events, 1):
+            etype = evt.get("event_type", "INFO")
+            stage = evt.get("stage_name", "general")
+            agent = evt.get("agent_name", "system")
+            payload = evt.get("payload", {})
+            
+            # Compress long payload fields (e.g. raw output or generated code contents)
+            compressed_payload = {}
+            for k, v in payload.items():
+                val_str = str(v)
+                if len(val_str) > 300:
+                    # Semantic summary indicating length and snippet
+                    compressed_payload[k] = f"[Compressed {len(val_str)} chars: '{val_str[:60]}...']"
+                else:
+                    compressed_payload[k] = v
+                    
+            compressed_lines.append(
+                f"- **Krok {idx} ({stage})**: [{agent}] {etype} -> {compressed_payload}"
+            )
+            
+        return "\n".join(compressed_lines)
+
