@@ -85,8 +85,9 @@ class TaskGraph:
             if node == start:
                 return True
             if node in visited:
-                continue
+                return False  # Avoid inf loop or cycle paths
             visited.add(node)
             stack.extend(graph.get(node, []))
 
         return False
+

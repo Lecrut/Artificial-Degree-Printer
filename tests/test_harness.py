@@ -1,5 +1,5 @@
-from adk.tool_registry import ToolRegistry, ToolSpec
-from adk.workflow import PipelineStage, TaskGraph
+from adk.engine.tool_registry import ToolRegistry, ToolSpec
+from adk.engine.workflow import PipelineStage, TaskGraph
 
 
 def test_task_graph_keeps_ordered_stages():
@@ -23,7 +23,7 @@ def test_tool_registry_registers_and_lists_tools():
 
 
 def test_detect_task_type_handles_common_it_work():
-    from adk.task_types import detect_task_type
+    from adk.engine.task_types import detect_task_type
 
     assert detect_task_type("Build a FastAPI backend service with database models") == "backend"
     assert detect_task_type("Create a React dashboard for analytics") == "frontend"
@@ -33,7 +33,7 @@ def test_detect_task_type_handles_common_it_work():
 
 
 def test_harness_supports_generic_task_and_agent_registration():
-    from adk.harness import AgentHarness
+    from adk.engine.harness import AgentHarness
 
     harness = AgentHarness()
     harness.register_agent("architect", "Designs the system")
@@ -46,7 +46,7 @@ def test_harness_supports_generic_task_and_agent_registration():
 
 
 def test_default_workflow_builds_execution_order_for_it_tasks():
-    from adk.harness import AgentHarness
+    from adk.engine.harness import AgentHarness
 
     harness = AgentHarness()
     workflow = harness.build_default_workflow("backend")
@@ -62,7 +62,7 @@ def test_default_workflow_builds_execution_order_for_it_tasks():
 
 
 def test_task_graph_rejects_cycles_and_missing_dependencies():
-    from adk.workflow import PipelineStage, TaskGraph
+    from adk.engine.workflow import PipelineStage, TaskGraph
 
     graph = TaskGraph()
     graph.add_stage(PipelineStage("intake", "Collect requirements", []))

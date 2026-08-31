@@ -7,6 +7,8 @@ from typing import Any
 
 
 class RunLogger:
+    """Logs the execution summary to a JSON file in the logs directory."""
+    
     def __init__(self, logs_dir: Path) -> None:
         self.logs_dir = logs_dir
 
@@ -16,3 +18,4 @@ class RunLogger:
         log_file = self.logs_dir / f"run-{stamp}.json"
         log_file.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         return log_file
+

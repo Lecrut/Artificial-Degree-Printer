@@ -119,3 +119,32 @@ def test_progressive_crystallization_registry(tmp_path: Path) -> None:
 
     registry.register_crystallized_pattern(pattern, "deterministic_typst_header()", execution_count=3)
     assert registry.is_crystallized(pattern) is True
+
+
+def test_paste_speculative_tool_execution() -> None:
+    engine = StateGraphEngine()
+    meta = ThesisMetadata(title="PASTE Speculation Test", student_name="Student", advisor_name="Advisor")
+    state = ADKProjectState(metadata=meta)
+
+    speculative_flag: dict[str, bool] = {"executed": False}
+
+    def background_prefetch(s: ADKProjectState) -> ADKProjectState:
+        speculative_flag["executed"] = True
+        s.record_event(
+            event_type=EventType.STAGE_COMPLETED,
+            stage_name="prefetch",
+            agent_name="paste_speculator",
+            payload={"prefetched": True},
+        )
+        return s
+
+    final_state = engine.execute_speculative_tools(
+        current_stage="architecture",
+        state=state,
+        prefetch_actions=[background_prefetch],
+    )
+
+    assert speculative_flag["executed"] is True
+    paste_events = [e for e in final_state.events if e.agent_name == "paste_speculator"]
+    assert len(paste_events) >= 1
+

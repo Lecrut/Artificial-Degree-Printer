@@ -17,6 +17,9 @@ Artificial-Degree-Printer/
 │
 ├── adk/                                # Core ADK 2027 Framework Engine
 │   ├── __init__.py
+│   ├── AGENT_GUIDE.md                  # Guidance for writing ADK agents
+│   ├── README.md                       # Short introduction to the adk module
+│   │
 │   ├── agents/                         # Specialized Agent Swarm Roles
 │   │   ├── __init__.py
 │   │   ├── base.py                     # Abstract BaseAgent interface
@@ -36,31 +39,33 @@ Artificial-Degree-Printer/
 │   │
 │   ├── engine/                         # Orchestration, Context & Harness Evolution
 │   │   ├── __init__.py
+│   │   ├── agent_registry.py           # Registry for specialized agents
+│   │   ├── context.py                  # ExecutionContext, parallel metrics & tool bindings
+│   │   ├── executor.py                 # E2E pipeline run driver
 │   │   ├── graph.py                    # StateGraphEngine (Parallel DAG, Re-plan & Swarm)
 │   │   ├── harness.py                  # SelfEvolvingHarnessEngine & CrystallizedWorkflows
-│   │   └── context.py                  # ExecutionContext, parallel metrics & tool bindings
+│   │   ├── logger.py                   # RunLogger to log JSON execution summary
+│   │   ├── prompt_catalog.py           # Scan and load prompts from prompt directory
+│   │   ├── replay.py                   # DARWIN-REPLAY 2027 Time-Travel Engine
+│   │   ├── task_types.py               # TaskTypeRegistry and detect_task_type()
+│   │   ├── tool_registry.py            # Dynamic tool registry
+│   │   └── workflow.py                 # PipelineStage and TaskGraph definition
 │   │
 │   ├── graph/                          # Knowledge Graph & Traceability (GraphRAG)
 │   │   ├── __init__.py
 │   │   └── ontology.py                 # CodeThesisTraceabilityGraph
 │   │
-│   ├── harness/                        # Task decomposition & scheduling
-│   │   ├── __init__.py
-│   │   ├── task_graph.py               # Dependency graph validation
-│   │   └── tool_registry.py            # Dynamic tool registry
-│   │
 │   ├── llm/                            # LLM API Client & ACRouter Model Tiering
 │   │   ├── __init__.py
-│   │   └── client.py                   # LLMClient & ModelTier Router (Tier 1-3)
+│   │   └── client.py                   # LLMClient & Model Router (Ollama, Gemini, OpenAI)
 │   │
-│   ├── memory/                         # Persistent Session & Harness Storage
-│   │   ├── session.json                # Immutable project session
-│   │   ├── harness_repairs.json        # Verified GSME procedural patches
-│   │   └── crystallized_workflows.json # Fast-path crystallized templates
+│   ├── memory/                         # Persistent Session Storage
+│   │   ├── README.md
+│   │   └── session.json                # Immutable project session state
 │   │
 │   ├── templates/                      # Academic Document Blueprints
-│   │   ├── thesis.typ                  # Native Typst 0.11+ thesis template
-│   │   └── thesis.tex                  # Standard LaTeX / Overleaf thesis template
+│   │   ├── latex/                      # Standard LaTeX / Overleaf thesis template
+│   │   └── typst/                      # Native Typst 0.11+ thesis template
 │   │
 │   ├── tools/                          # Model Context Protocol (MCP) Tool Harness
 │   │   ├── __init__.py
@@ -72,11 +77,13 @@ Artificial-Degree-Printer/
 │   │   ├── literature_dossier.py       # Markdown dossier generator
 │   │   ├── benchmarks.py               # Matplotlib vector chart generator
 │   │   ├── typesetting.py              # Typst & LaTeX export engine
+│   │   ├── env_tool.py                 # EnvSecretsManagerTool for secrets setup
+│   │   ├── doc_scraper.py              # WebDocumentationScraperTool
 │   │   └── git_tool.py                 # Automated git commits per stage
 │   │
 │   ├── tui/                            # Terminal User Interface
 │   │   ├── __init__.py
-│   │   └── dashboard.py                # Rich console status panels & radars
+│   │   └── dashboard.py                # Console status panels
 │   │
 │   └── verification/                   # Master Quality Audit Suite (7 Gates)
 │       ├── __init__.py
@@ -98,17 +105,13 @@ Artificial-Degree-Printer/
 │   ├── tests/                          # Automated Pytest unit test suite
 │   └── Dockerfile                      # Container deployment specification
 │
-├── skills/                             # Developer & Agent Skill Specifications (2026 Standard)
-│   ├── adk-sota-paper-ingestor/         # SKILL.md: Automated arXiv/SOTA paper ingestion
-│   │   └── SKILL.md
-│   ├── adk-repo-hygiene-guard/          # SKILL.md: Repository cleanup & build log update
-│   │   └── SKILL.md
+├── skills/                             # Composable Agent Skill Specifications
+│   ├── adk-sota-paper-ingestor/         # SKILL.md: arXiv/SOTA paper ingestion
+│   ├── adk-repo-hygiene-guard/          # SKILL.md: Repository hygiene & Zero 0-Byte guarantee
 │   ├── adk-code-quality-auditor/        # SKILL.md: Pydantic v2 & AST test suite auditor
-│   │   └── SKILL.md
 │   └── adk-typst-template-tester/       # SKILL.md: Typst 0.11+ & LaTeX template tester
-│       └── SKILL.md
 │
-├── tests/                              # Automated Pytest Suite (37 Tests)
+├── tests/                              # Automated Pytest Suite (49 Tests)
 │   ├── test_agents.py
 │   ├── test_core_models.py
 │   ├── test_dynamic_literature_search.py
@@ -119,8 +122,11 @@ Artificial-Degree-Printer/
 │   ├── test_harness_evolution.py
 │   ├── test_literature_dossier.py
 │   ├── test_llm.py
+│   ├── test_llm_client.py
 │   ├── test_mutation_gate.py
-│   ├── test_parallel_and_evolution.py  # TIPEX parallel, VMAO replan, TacoMAS swarm
+│   ├── test_new_tools.py
+│   ├── test_parallel_and_evolution.py  # Parallel execution & progressive crystallization
+│   ├── test_replay.py                  # DARWIN-REPLAY 2027 time-travel tests
 │   ├── test_stylometry.py
 │   ├── test_tools.py
 │   └── test_verification_gates.py
@@ -128,19 +134,12 @@ Artificial-Degree-Printer/
 └── documentation/                      # Complete System Documentation
     ├── README.md                       # Documentation index
     ├── methodology_and_roadmap.md      # ADK-TRACE methodology manifest & roadmap
-    ├── architecture.md                 # System architecture specification (6 Pillars)
+    ├── architecture.md                 # System architecture specification
     ├── workflow.md                     # Execution DAG, Parallelism & Reflexion
-    ├── verification.md                 # 7-gate quality control & scoring rules
     ├── requirements.md                 # Functional and non-functional requirements
     ├── repository-structure.md         # Repository folder and file specification
     ├── project-overview.md             # High-level vision and Code-First paradigm
-    ├── security_and_safety.md          # InjecAgent security threat model & guards
-    ├── decision_records.md             # 5 Architecture Decision Records (ADR)
-    ├── build_log_and_changelog.md      # Sequential build log (Etapy 1–12)
-    └── scientific_papers/              # 36 SOTA Paper Dossiers & Search Taxonomy
-        ├── README.md
-        ├── search_keywords_taxonomy.md
-        ├── architectural_debate_and_synthesis.md
-        ├── master_implementation_synthesis.md
-        └── *.md (36 analytical dossiers)
+    ├── build_log_and_changelog.md      # Sequential build log (Etapy 1–14)
+    ├── technologies/                   # Production Technology Dossiers & Stack Index
+    └── scientific_papers/              # SOTA Paper Dossiers & Search Taxonomy
 ```

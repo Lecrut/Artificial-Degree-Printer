@@ -8,7 +8,7 @@ from pathlib import Path
 from adk.core.state import ADKProjectState
 from adk.engine.executor import ADKE2EExecutor
 from adk.graph.ontology import CodeThesisTraceabilityGraph
-from adk.logger import RunLogger
+from adk.engine.logger import RunLogger
 from adk.tui.dashboard import TerminalDashboard
 from adk.verification import MasterVerificationSuite
 
@@ -27,6 +27,8 @@ def main() -> int:
     # generate command
     gen_parser = subparsers.add_parser("generate", help="Generuj pełny projekt IT i pracę dyplomową")
     gen_parser.add_argument("topic", nargs="*", help="Temat pracy / specyfikacja projektu")
+    gen_parser.add_argument("--provider", choices=["ollama", "gemini", "openai", "router", "fallback"], default="fallback", help="Dostawca modeli AI: ollama (lokalnie offline), gemini (Google API), openai, router (mieszany), fallback")
+    gen_parser.add_argument("--model", default=None, help="Nazwa konkretnego modelu (np. qwen2.5-coder, gemini-2.5-pro, gpt-4o)")
     gen_parser.add_argument("--json", action="store_true", help="Zwróć wyjście wyłącznie w formacie JSON")
 
     # verify command
@@ -80,7 +82,9 @@ def main() -> int:
         return 0
 
     # Domyślny tryb generowania E2E
-    executor = ADKE2EExecutor(workspace_dir=ROOT)
+    provider = getattr(args, "provider", "fallback")
+    model = getattr(args, "model", None)
+    executor = ADKE2EExecutor(workspace_dir=ROOT, provider=provider, model=model)
     final_state = executor.run_pipeline(topic_text)
 
     result_summary = {

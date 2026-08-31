@@ -15,8 +15,13 @@ from adk.engine.graph import StateGraphEngine
 
 
 class ADKE2EExecutor:
-    def __init__(self, workspace_dir: Optional[Path | str] = None) -> None:
-        self.context = ExecutionContext(workspace_dir)
+    def __init__(
+        self,
+        workspace_dir: Optional[Path | str] = None,
+        provider: str = "fallback",
+        model: Optional[str] = None,
+    ) -> None:
+        self.context = ExecutionContext(workspace_dir, provider=provider, model=model)
         self.graph = StateGraphEngine()
         self._setup_pipeline()
 
@@ -39,13 +44,17 @@ class ADKE2EExecutor:
         self.graph.add_node("typesetting", "Skład pracy w Typst i LaTeX", typesetter.run, depends_on=["benchmarks"])
         self.graph.add_node("verification", "Weryfikacja jakości i spójności", reviewer.run, depends_on=["typesetting"])
 
-    def run_pipeline(self, request_text: str, project_id: str = "project_01") -> ADKProjectState:
+    def run_pipeline(self, request_text: str, project_id: str = "project_01", parallel: bool = True) -> ADKProjectState:
         initial_state = ADKProjectState(
             project_id=project_id,
             request=request_text,
         )
 
-        final_state = self.graph.execute_all(initial_state)
+        # Execute pipeline using TIPEX 2026 Parallel DAG Engine or Sequential Fallback
+        if parallel:
+            final_state = self.graph.execute_parallel(initial_state)
+        else:
+            final_state = self.graph.execute_all(initial_state)
 
         # Zapisz artefakty kodu na dysku projektu
         code_dir = self.context.workspace_dir / "generated_project"
@@ -59,4 +68,5 @@ class ADKE2EExecutor:
         final_state.save_to_file(session_file)
 
         return final_state
+
 

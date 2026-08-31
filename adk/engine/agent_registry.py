@@ -32,3 +32,4 @@ class AgentRegistry:
 
     def list_names(self) -> list[str]:
         return sorted(self._agents)
+

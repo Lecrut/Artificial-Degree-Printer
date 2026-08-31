@@ -9,10 +9,18 @@ This skill defines the standardized 4-step procedural workflow for searching, re
 
 ---
 
+## 🛑 STRICT RULE: ZERO EMPTY / ZERO-BYTE FILES GUARANTEE
+
+> **NEVER CREATE OR LEAVE EMPTY (0-BYTE) FILES IN DOCUMENTATION OR CODE.**  
+> Every created paper dossier, documentation file, or code file MUST contain complete, rich, structured analytical markdown (headings, citation keys, arXiv/DOI links, theoretical findings, implementation items, and strengths).  
+> Creating placeholders or empty files is strictly forbidden.
+
+---
+
 ## 📋 The 4-Step Autonomous Workflow Protocol
 
 ```
-  [ STEP 1: DISCOVER & RECORD DOSSIER ] -> Search 2023-2026 paper, create dossier in scientific_papers/, update index
+  [ STEP 1: DISCOVER & RECORD DOSSIER ] -> Search 2023-2026 paper, create full dossier in scientific_papers/, update index
                      │
                      ▼
   [ STEP 2: PROPOSE CODE IMPLEMENTATION ] -> Present breakthrough & ask for approval ("Czy wdrażamy w kodzie?")
@@ -31,9 +39,8 @@ This skill defines the standardized 4-step procedural workflow for searching, re
 ### Step 1: Discover, Analyze & Record Dossier (Immediate Persistence)
 1. Search arXiv / top-tier venues for breakthrough SOTA papers ($\ge 2023$, $\le 3$ years horizon).
 2. Evaluate fit against ADK's core mission (IT app generation + 40–80 page thesis co-synthesis).
-3. **Immediately write the analytical dossier** in `documentation/scientific_papers/<citation_key>.md`.
+3. **Immediately write the complete analytical dossier** in `documentation/scientific_papers/<citation_key>.md` with rich markdown content.
 4. Update `documentation/scientific_papers/README.md`, `master_implementation_synthesis.md`, and `search_keywords_taxonomy.md`.
-   *(This ensures the research insight is permanently recorded in the knowledge base regardless of whether the code feature is ultimately implemented).*
 
 ### Step 2: Propose Code Implementation to User (Approval Gate)
 1. Present a concise, high-impact summary of the breakthrough to the user.

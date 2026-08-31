@@ -72,3 +72,4 @@ def detect_task_type(request: str) -> str:
 def _matches_keyword(text: str, keyword: str) -> bool:
     pattern = r"\b" + re.escape(keyword) + r"\b"
     return re.search(pattern, text) is not None
+

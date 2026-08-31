@@ -26,16 +26,27 @@ This directory contains all technical, architectural, and scientific documentati
 | :---: | :--- | :--- |
 | 10 | [**Security & Safety**](security_and_safety.md) | Threat model, sandbox protection layers, InjecAgent security compliance |
 | 11 | [**Decision Records (ADR)**](decision_records.md) | 5 Architecture Decision Records: Typst, Event Sourcing, subprocess sandbox, Pydantic v2, Dynamic Researcher |
-| 12 | [**Build Log & Changelog**](build_log_and_changelog.md) | Consolidated build history (Etapy 1–12), evolution stages, and documentation hygiene rules |
+| 12 | [**Build Log & Changelog**](build_log_and_changelog.md) | Consolidated build history (Etapy 1–13), evolution stages, and documentation hygiene rules |
 
 ---
 
-## 📚 Scientific Papers Knowledge Base (36 Papers, 2023–2026)
+## 🛠️ 2026/2027 Production Technologies Stack (7 Technologies)
 
 | Sub-directory | Contents |
 | :--- | :--- |
-| [**scientific_papers/**](scientific_papers/) | 36 analytical dossiers for SOTA papers (2023–2026 SOTA Horizon) |
+| [**technologies/**](technologies/) | 7 analytical dossiers for 2026/2027 production technologies |
+| [**→ Tech Stack Index**](technologies/README.md) | Full index of production tools: Typst, Pydantic v2, Polars, MCP, Mutmut, UV/Ruff, GraphRAG |
+| [**→ Tech Stack Synthesis**](technologies/master_tech_stack_synthesis.md) | Direct code mapping to ADK framework and generated apps (`src/core/`) |
+
+---
+
+## 📚 Scientific Papers Knowledge Base (37 Papers, 2023–2026)
+
+| Sub-directory | Contents |
+| :--- | :--- |
+| [**scientific_papers/**](scientific_papers/) | 37 analytical dossiers for SOTA papers (2023–2026 SOTA Horizon) |
+| [**→ Future Horizons (WOW Ideas)**](scientific_papers/future_research_horizons_2027.md) | **Inkubator Wizjonerskich Pomysłów (6 Horyzontów Badawczych 2027+)** |
 | [**→ Papers Index**](scientific_papers/README.md) | Full index with verified arXiv/DOI links, citation counts, and coverage map |
 | [**→ Search Taxonomy Matrix**](scientific_papers/search_keywords_taxonomy.md) | Multi-filar search matrix for finding future research papers |
 | [**→ Architectural Debate**](scientific_papers/architectural_debate_and_synthesis.md) | 6 architectural debates, verdicts, 6 research horizons |
-| [**→ Master Synthesis**](scientific_papers/master_implementation_synthesis.md) | Direct code & architecture mapping for all 36 papers |
+| [**→ Master Synthesis**](scientific_papers/master_implementation_synthesis.md) | Direct code & architecture mapping for all 37 papers |

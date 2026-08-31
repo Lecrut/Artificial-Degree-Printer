@@ -83,3 +83,13 @@ class ADKProjectState(BaseModel):
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
         return cls.model_validate(data)
+
+
+def state_to_dict(state: Any) -> dict[str, Any]:
+    """Helper for converting project state to dictionary representation."""
+    if hasattr(state, "model_dump"):
+        return state.model_dump()
+    elif hasattr(state, "__dict__"):
+        return state.__dict__
+    return dict(state)
+
