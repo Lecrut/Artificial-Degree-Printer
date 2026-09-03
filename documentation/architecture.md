@@ -2,7 +2,7 @@
 
 > **Standard:** 2027 Multi-Agent Software & Academic Thesis Generation Architecture  
 > **Methodology:** ADK-TRACE (Traceable, Reflexive, Artifact-Centric Engineering)  
-> **Theoretical Foundation:** 37 Seminal SOTA Papers (2023–2026 SOTA Horizon)  
+> **Theoretical Foundation:** 47 Seminal SOTA Papers (2023–2026 SOTA Horizon)  
 > **Production Tech Stack:** 12 SOTA Technologies (`documentation/technologies/`)  
 > **Core Equation:** $\text{Autonomous Agent} = \text{Base LLM Model} + \text{Agent Harness}$ (Harness Engineering Paradigm 2026/2027)
 
@@ -52,7 +52,8 @@
 - **Act While Thinking Speculative Tool Execution (`execute_speculative_tools()`)**: Pre-fetches BibTeX, Typst templates, and AST checks while LLM streams thoughts (48.6% latency reduction).
 
 ### 3. Agent Swarm Plane (`adk/agents/`)
-- **7 Specialized Roles**: `OrchestratorAgent` (Promotor AI), `ResearcherAgent`, `ArchitectAgent`, `DeveloperAgent`, `ExperimenterAgent`, `TypesetterAgent`, `ReviewerAgent`.
+- **7 Specialized Roles**: `OrchestratorAgent` (Promotor AI), `ResearcherAgent`, `ArchitectAgent`, `DeveloperAgent` (Open-Ended Dynamic Polyglot Engine & `DynamicLanguageResolver`), `ExperimenterAgent`, `TypesetterAgent`, `ReviewerAgent`.
+- **Open-Ended Polyglot Code Synthesis**: Autonomously discovers, scaffoldings, and implements software projects in *any* programming language (e.g. Zig, Elixir, Haskell, Scala, Julia, Kotlin, Swift, Rust, Go, TypeScript, Python, C++, C#, Mojo) with native build files, idiomatic code, unit tests, and Dockerfiles.
 - **Typed Pydantic Substrate**: All inter-agent messages pass via Pydantic v2 models (`adk/core/models.py`).
 
 ### 4. Tool & Sandbox Harness (`adk/tools/`)
@@ -61,7 +62,7 @@
 - **Dual-Engine Typesetting (`typesetting.py`)**: Simultaneously exports **Typst 0.11+** (`thesis.typ`) with CeTZ diagrams and **LaTeX** (`thesis.tex`) with BibTeX.
 - **Empirical Benchmarking (`benchmarks.py`)**: Generates vector SVG/PNG charts for p95 latency under simulated client loads (Polars & DuckDB integration).
 - **Interactive Secrets & Env Manager (`env_tool.py`)**: Autonomously creates `.env.example` and `.env` files, prompting the user via HITL Checkpoints for required API keys.
-- **Live Web Documentation Scraper (`doc_scraper.py`)**: Scraping latest documentation snippets directly from official tech web pages (Next.js 15, FastAPI, React 19, Typst 0.11+).
+- **Live Web Documentation Scraper (`doc_scraper.py`)**: Scraping latest documentation snippets directly from official tech web pages (Next.js 15, FastAPI, React 19, Typst 0.11+, Zig, Elixir docs).
 
 ### 5. Knowledge Graph & Memory Plane (`adk/graph/`, `adk/memory/`)
 - **CodeThesisTraceabilityGraph (`ontology.py`)**: GraphRAG & Tree-Sitter AST ontology mapping `Requirements -> Code AST -> Pytest -> Benchmarks -> Thesis Chapters -> SOTA Citations`.
@@ -69,11 +70,11 @@
 
 ### 6. Master Quality Audit Suite (`adk/verification/`)
 - **7-Gate Audit Engine**:
-  1. `CodeVerificationGate` (Python AST syntax parsing & packaging checks)
+  1. `CodeVerificationGate` (Python AST syntax parsing, multi-format build manifest validation: `toml`, `json`, `yaml`, `cmake`, `xml`, and universal block balance checks)
   2. `MutationTestingGate` (Mutmut mutation score $MS \ge 60\%$)
   3. `CitationVerificationGate` (BibTeX integrity & max 3-year SOTA horizon $\ge 2023$)
   4. `EnglishNamingVerificationGate` (Strict 100% English filenames & zero Polish diacritics)
-  5. `CrossConsistencyValidator` (Thesis text AST symbol matching against generated code)
+  5. `CrossConsistencyValidator` (Universal Polyglot semantic symbol extraction matching `class`, `struct`, `interface`, `type`, `defmodule`, `module`, `fn`, `func`, `def`, `trait`, `actor`, `contract` against thesis references)
   6. `AcademicStyleGate` (Academic tone & AI fluff elimination)
   7. `StylometryAuditGate` (Type-Token Ratio $TTR \ge 0.35$ & estimated JSA plagiarism risk)
 
@@ -82,3 +83,4 @@
 ## 3. Technology Stack Reference
 
 For detailed analytical dossiers on all 12 production technologies utilized in ADK and generated IT projects (`src/core/`), see **[`documentation/technologies/`](technologies/README.md)**.
+

@@ -24,19 +24,21 @@ This document explains how an agent should interpret this scaffold and how it sh
 - prefer incremental improvements over broad, risky changes,
 - keep human review available for strategic decisions.
 
-## File responsibilities
+## Package responsibilities
 
-- `main.py` - entry point for the runnable program and task bootstrap,
-- `adk/state.py` - typed task state and workflow state model,
-- `adk/memory_store.py` - persistence for session state and memory,
-- `adk/logger.py` - execution log storage and provenance,
-- `adk/prompt_catalog.py` - prompt discovery and registry,
+- `main.py` - entry point for the runnable CLI and task execution,
+- `adk/agents/` - specialized multi-agent swarm implementations,
+- `adk/core/` - typed Pydantic v2 models, events, and project state,
+- `adk/engine/` - execution engine, StateGraph DAG, prompt compiler, and self-evolving harness,
+- `adk/graph/` - code-thesis traceability graph and coverage analyzer,
+- `adk/llm/` - Topaz complexity estimator and ACRouter model client,
 - `adk/prompts/` - modular prompt templates for each stage,
-- `adk/pipeline/` - workflow design notes and orchestration logic,
-- `adk/verification/` - validation rules and quality gates,
-- `adk/assets/` - figure and diagram provenance,
-- `adk/memory/` - session memory artifacts and project state,
-- `adk/logs/` - execution history and review traces.
+- `adk/templates/` - Typst and LaTeX thesis template blueprints,
+- `adk/tools/` - MCP-compatible tool harness (filesystem, sandbox, git, typesetting, etc.),
+- `adk/tui/` - Rich terminal user interface dashboard,
+- `adk/verification/` - 7 MasterVerificationSuite quality gates,
+- `adk/memory/` - session state persistence (`MemoryStore` & `session.json`),
+- `adk/logs/` - execution history and run traces.
 
 ## Architectural expectations
 

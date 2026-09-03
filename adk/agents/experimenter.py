@@ -24,6 +24,18 @@ class ExperimenterAgent(BaseAgent):
         if not bench_tool or not isinstance(bench_tool, BenchmarkTool):
             bench_tool = BenchmarkTool()
 
+        # Uruchom testy w piaskownicy (Polyglot Sandbox)
+        sandbox = self.get_tool("sandbox_runner")
+        sandbox_info = ""
+        if sandbox:
+            detected_lang = "python"
+            if state.code_artifacts:
+                test_art = next((a for a in state.code_artifacts if a.is_test), state.code_artifacts[0])
+                detected_lang = test_art.language
+            test_res = sandbox.execute("run_polyglot_tests", language=detected_lang)
+            if test_res.success:
+                sandbox_info = f"Wszystkie testy jednostkowe ({detected_lang}) wykonane pomyślnie w Sandboxie ({test_res.metadata.get('runner_type', 'runner')})."
+
         # Wygeneruj pomiary
         latency_labels = ["10 wątków", "50 wątków", "100 wątków", "250 wątków", "500 wątków"]
         latency_values = [12.4, 18.2, 28.6, 54.1, 112.8]
@@ -79,6 +91,8 @@ class ExperimenterAgent(BaseAgent):
         )
 
         state.notes.append(f"[{self.name}] Przeprowadzono badania wydajnościowe i wygenerowano wykresy wektorowe.")
+        if sandbox_info:
+            state.notes.append(f"[{self.name}] {sandbox_info}")
         state.current_stage = "typesetting"
         if "benchmarks" not in state.completed_stages:
             state.completed_stages.append("benchmarks")

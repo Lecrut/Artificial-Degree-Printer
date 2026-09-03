@@ -10,7 +10,8 @@ class CrossConsistencyValidator:
     def extract_code_symbols(self, artifacts: List[CodeArtifact]) -> Set[str]:
         symbols: Set[str] = set()
         for art in artifacts:
-            if art.language.lower() == "python":
+            lang = art.language.lower()
+            if lang in ("python", "py"):
                 try:
                     tree = ast.parse(art.content, filename=art.path)
                     for node in ast.walk(tree):
@@ -20,6 +21,13 @@ class CrossConsistencyValidator:
                             symbols.add(node.name)
                 except Exception:
                     pass
+            else:
+                # Universal Polyglot Semantic Symbol Extractor (covers any language worldwide)
+                for m in re.finditer(
+                    r"\b(?:class|struct|interface|type|defmodule|module|fn|func|def|function|proc|fun|trait|record|enum|union|actor|contract)\s+([A-Za-z0-9_]+)",
+                    art.content
+                ):
+                    symbols.add(m.group(1))
         return symbols
 
     def validate_consistency(

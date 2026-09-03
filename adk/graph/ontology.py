@@ -77,13 +77,13 @@ class CodeThesisTraceabilityGraph:
     def to_mermaid(self) -> str:
         lines = ["graph LR"]
         for node in self.nodes.values():
-            safe_id = node["id"].replace(":", "_").replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
-            safe_label = node["label"].replace('"', "'")
+            safe_id = node["id"].replace(":", "_").replace("/", "_").replace("\\", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
+            safe_label = node["label"].replace('"', "'").replace("\\", "/")
             lines.append(f'  {safe_id}["{safe_label}"]')
 
         for edge in self.edges:
-            src = edge["source"].replace(":", "_").replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
-            tgt = edge["target"].replace(":", "_").replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
+            src = edge["source"].replace(":", "_").replace("/", "_").replace("\\", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
+            tgt = edge["target"].replace(":", "_").replace("/", "_").replace("\\", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
             rel = edge["relation"]
             lines.append(f'  {src} -->|{rel}| {tgt}')
 

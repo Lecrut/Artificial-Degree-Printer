@@ -1,14 +1,19 @@
-# Memory
+# ADK Memory Management
 
-This folder can hold session memory and project memory.
+This directory manages session state persistence and episodic memory for the ADK system.
 
-## Suggested split
+---
 
-- `session.md` - the current iteration state,
-- `project.md` - architecture decisions and stable assumptions,
-- `sources.md` - source and material list,
-- `figures.md` - diagram and figure information.
+## Components
 
-## Rule
+- **`store.py` (`MemoryStore`)**: Responsible for serializing, persisting, and loading `ADKProjectState` to/from JSON.
+- **`session.json`**: The canonical serialized state representation of the latest pipeline execution.
 
-Memory should only store what the next steps truly need so the context stays small and focused.
+---
+
+## Project-Level Isolation
+
+When running in project mode, memory and session snapshots are saved per-project under:
+`projects/<project_id>/adk/memory/session.json`
+
+This ensures full reproducibility, time-travel debugging (DARWIN-REPLAY 2027), and complete isolation between different generated projects.

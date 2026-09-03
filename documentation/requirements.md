@@ -70,7 +70,7 @@ Kod generowany przez model jest uruchamiany wyłącznie przez `SandboxRunnerTool
 
 ### REQ-NF-05: Jakość Kodu i Testów ADK
 Sam framework ADK musi spełniać:
-- **58 testów automatycznych** (`pytest -v`) z wynikiem 100% PASS
+- **93 testów automatycznych** (`pytest -v`) z wynikiem 100% PASS
 - Brak importów cyklicznych
 - Wszystkie pliki nazwane po angielsku
 

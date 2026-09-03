@@ -15,8 +15,11 @@ class BaseAgent(ABC):
     role_description: str
     capabilities: List[str] = []
 
-    def __init__(self, tools: Optional[Dict[str, BaseTool]] = None, llm_client: Optional[LLMClient] = None) -> None:
-        self.tools = tools or {}
+    def __init__(self, tools: Optional[Dict[str, BaseTool] | List[BaseTool]] = None, llm_client: Optional[LLMClient] = None) -> None:
+        if isinstance(tools, list):
+            self.tools = {t.name: t for t in tools if hasattr(t, "name")}
+        else:
+            self.tools = tools or {}
         self.llm_client = llm_client
 
     def get_tool(self, tool_name: str) -> Optional[BaseTool]:

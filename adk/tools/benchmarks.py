@@ -16,7 +16,7 @@ class BenchmarkTool(BaseTool):
     description = "Przeprowadzanie pomiarów wydajnościowych i generowanie wektorowych wykresów naukowych"
 
     def __init__(self, output_dir: Optional[Path | str] = None) -> None:
-        self.output_dir = Path(output_dir).resolve() if output_dir else Path.cwd() / "artifacts" / "benchmarks"
+        self.output_dir = Path(output_dir).resolve() if output_dir else Path.cwd() / "projects" / "project_01" / "artifacts" / "benchmarks"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def generate_chart(

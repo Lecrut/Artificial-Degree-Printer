@@ -52,10 +52,11 @@ class TerminalDashboard:
             self.console.print(score_panel)
 
         # Informacje o lokalizacji plików
+        pid = state.project_id or "project_01"
         self.console.print("\n[bold yellow]Lokalizacja Artefaktow i Bazy Wiedzy:[/bold yellow]")
-        self.console.print("  [*] Dynamiczny Research Tematu: artifacts/research/")
-        self.console.print("  [*] Kod oprogramowania:         generated_project/")
-        self.console.print("  [*] Praca w Typst:              artifacts/thesis/thesis.typ")
-        self.console.print("  [*] Praca w LaTeX:              artifacts/thesis/thesis.tex")
-        self.console.print("  [*] Wykresy i metryki:          artifacts/benchmarks/")
-        self.console.print("  [*] Pamiec i logi:              adk/memory/session.json\n")
+        self.console.print(f"  [*] Dynamiczny Research Tematu: projects/{pid}/artifacts/research/")
+        self.console.print(f"  [*] Kod oprogramowania:         projects/{pid}/generated_project/")
+        self.console.print(f"  [*] Praca w Typst:              projects/{pid}/artifacts/thesis/thesis.typ")
+        self.console.print(f"  [*] Praca w LaTeX:              projects/{pid}/artifacts/thesis/thesis.tex")
+        self.console.print(f"  [*] Wykresy i metryki:          projects/{pid}/artifacts/benchmarks/")
+        self.console.print(f"  [*] Pamiec i logi sesji:        projects/{pid}/adk/memory/session.json\n")

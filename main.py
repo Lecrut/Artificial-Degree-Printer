@@ -39,6 +39,12 @@ def main() -> int:
     graph_parser = subparsers.add_parser("graph", help="Generuj graf powiązań i macierz identyfikowalności (Traceability Graph)")
     graph_parser.add_argument("--state-file", default=str(STATE_FILE), help="Ścieżka do pliku stanu sesji")
 
+    # web command
+    web_parser = subparsers.add_parser("web", help="Uruchom interaktywny Web Dashboard & Live Thesis Viewer")
+    web_parser.add_argument("--host", default="127.0.0.1", help="Host serwera (domyślnie: 127.0.0.1)")
+    web_parser.add_argument("--port", type=int, default=8000, help="Port serwera (domyślnie: 8000)")
+    web_parser.add_argument("--no-browser", action="store_true", help="Nie otwieraj automatycznie przeglądarki")
+
     # legacy / default invocation
     parser.add_argument("legacy_request", nargs="*", help="Domyślne zapytanie/temat dla kompatybilności wstecznej")
 
@@ -79,6 +85,14 @@ def main() -> int:
         print(json.dumps(coverage, indent=2, ensure_ascii=False))
         print("\n=== Diagram Mermaid ===")
         print(graph.to_mermaid())
+        return 0
+
+    if command == "web":
+        from adk.web.server import start_web_server
+        host = getattr(args, "host", "127.0.0.1")
+        port = getattr(args, "port", 8000)
+        no_browser = getattr(args, "no_browser", False)
+        start_web_server(host=host, port=port, open_browser=not no_browser, blocking=True)
         return 0
 
     # Domyślny tryb generowania E2E

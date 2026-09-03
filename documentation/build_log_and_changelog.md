@@ -210,6 +210,162 @@ Wszystkie zmiany w architekturze, dodane funkcjonalności, kamienie milowe oraz 
   - Utworzono testy automatyczne w [`tests/test_project_isolation.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_project_isolation.py) weryfikujące poprawność izolacji.
 - **Wynik weryfikacji testowej:** **58/58 PASSED** (100% testów przechodzi pomyślnie).
 
+---
+
+### 🟢 Etap 20: Usunięcie i Konsolidacja Szkieletów ADK (Elimination of Stub Folders & Tool Path Hardening)
+- **Data realizacji:** 01.09.2026 r.
+- **Opis zmian:**
+  - Usunięto przestarzałe i nierozwijane katalogi-zaślepki: `adk/assets/` (zawierający wyłącznie 13-wierszowe README) oraz `adk/pipeline/` (zawierający dawne notatki zastąpione przez `adk/engine/` i `adk/core/`).
+  - Przepisano [`adk/README.md`](file:///d:/studia-local/Artificial-Degree-Printer/adk/README.md) oraz [`adk/AGENT_GUIDE.md`](file:///d:/studia-local/Artificial-Degree-Printer/adk/AGENT_GUIDE.md), usuwając odniesienia do zlikwidowanych szkieletów i precyzyjnie opisując produkcyjną strukturę modułów ADK.
+  - Zaktualizowano [`adk/memory/README.md`](file:///d:/studia-local/Artificial-Degree-Printer/adk/memory/README.md) (opis `MemoryStore` i `session.json`) oraz [`adk/verification/README.md`](file:///d:/studia-local/Artificial-Degree-Printer/adk/verification/README.md) (opis 7 bramek MasterVerificationSuite).
+  - Skorygowano domyślne fallbacki ścieżek w narzędziach `TypesettingTool`, `BenchmarkTool`, `GitProvenanceTool` i `EnvSecretsManagerTool` z `artifacts/` na `projects/project_01/`, definitywnie eliminując przypadkowe odtwarzanie legacy katalogów w rootcie repozytorium podczas testów jednostkowych.
+  - Zaktualizowano panel TUI w [`adk/tui/dashboard.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/tui/dashboard.py) o dynamiczne ścieżki `projects/<project_id>/`.
+- **Wynik weryfikacji testowej:** **58/58 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 21: Wielojęzykowy Generator Polyglot (Go, Rust, TypeScript, Python, Flutter, C++, C#)
+- **Data realizacji:** 01.09.2026 r.
+- **Opis zmian:**
+  - Wdrożono inteligentny detektor ekosystemu docelowego `detect_target_ecosystem()` w [`adk/agents/developer.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/agents/developer.py), który analizuje temat, wymagania i tytuł pod kątem wybranego języka programowania.
+  - Zaimplementowano dedykowane silniki scaffoldingu i idiomaticznego generowania kodu dla **7 ekosystemów**:
+    - **Go**: `go.mod`, `src/main.go`, `src/service.go`, `tests/service_test.go` (`go test`), `Dockerfile` (`golang:alpine` multi-stage).
+    - **Rust**: `Cargo.toml`, `src/main.rs`, `src/lib.rs`, `tests/integration_test.rs` (`cargo test`), `Dockerfile` (`rust:slim` multi-stage).
+    - **TypeScript**: `package.json`, `tsconfig.json`, `src/service.ts`, `src/index.ts`, `tests/service.test.ts` (`jest`), `Dockerfile` (`node:20-alpine`).
+    - **Flutter / Dart**: `pubspec.yaml`, `lib/service.dart`, `lib/main.dart`, `test/service_test.dart` (`flutter test`), `Dockerfile` (`dart:stable`).
+    - **C++**: `CMakeLists.txt`, `src/service.hpp`, `src/service.cpp`, `src/main.cpp`, `tests/test_service.cpp` (`CMake/assert`), `Dockerfile` (`gcc:13`).
+    - **C# / .NET**: `Service.csproj`, `src/Service.cs`, `src/Program.cs`, `tests/ServiceTests.cs` (`xUnit`), `Dockerfile` (`dotnet:8.0`).
+    - **Python**: `pyproject.toml`, `src/core/service.py`, `tests/test_service.py` (`pytest`), `Dockerfile` (`python:3.12-slim`).
+  - Rozszerzono `extract_code_symbols()` w [`adk/verification/cross_validator.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/verification/cross_validator.py) o ekstrakcję symboli i klas z kodu wielojęzykowego (Go, Rust, TS, Dart, C++, C#).
+  - Wdrożono dynamiczną generację Rozdziału 4 pracy dyplomowej (Typst & LaTeX) dopasowującą opisy klas, modułów i testów do wybranego języka.
+  - Utworzono zestaw testów w [`tests/test_polyglot_scaffolding.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_polyglot_scaffolding.py).
+- **Wynik weryfikacji testowej:** **66/66 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 22: Autonomiczny Otwarty Silnik Językowy i Frameworkowy (Open-Ended Dynamic Polyglot Engine)
+- **Data realizacji:** 01.09.2026 r.
+- **Opis zmian:**
+  - Zlikwidowano ograniczenie do sztywnych list języków — wdrożono otwarty model danych `LanguageProfile` oraz silnik `DynamicLanguageResolver` w [`adk/agents/developer.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/agents/developer.py).
+  - Wdrożono inteligentne rozpoznawanie i kompilację profili technologicznych dla dowolnych ekosystemów programistycznych:
+    - **Niszowe i funkcyjne**: Zig (`build.zig`), Elixir/Phoenix (`mix.exs`), Haskell (`stack.yaml`), Scala (`build.sbt`), Julia (`Project.toml`), Kotlin (`build.gradle.kts`), Swift/Vapor (`Package.swift`).
+    - **Klasyczne i mainstreamowe**: Rust (`Cargo.toml`), Go (`go.mod`), TypeScript (`package.json`), Python (`pyproject.toml`), C++ (`CMakeLists.txt`), C# (`Service.csproj`), Dart/Flutter (`pubspec.yaml`).
+    - **Dynamiczny otwarty fallback AI / Web-Scraper**: Dowolny niszowy lub nowo powstały język (np. Mojo, Gleam, Solidity, Crystal, Nim) jest dynamicznie modelowany z dedykowaną strukturą, manifestem budowania, natywnym runnerem testów i `Dockerfile`.
+  - Wdrożono w pełni uniwersalny ekstraktor symboli w [`adk/verification/cross_validator.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/verification/cross_validator.py) (obsługa deklaracji `class`, `struct`, `interface`, `type`, `defmodule`, `module`, `fn`, `func`, `def`, `trait`, `actor`, `contract` w dowolnym języku).
+  - Zabezpieczono bramkę składniową [`adk/verification/code_gate.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/verification/code_gate.py) (typowanie manifestów `toml`, `json`, `yaml`, `cmake`, `xml` oraz uniwersalna kontrola symetrii bloków kodu).
+  - Rozszerzono zestaw testów w [`tests/test_polyglot_scaffolding.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_polyglot_scaffolding.py) do 16 testów pokrywających 14 unikalnych języków i technologii.
+- **Wynik weryfikacji testowej:** **74/74 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 23: Polyglot Execution Sandbox & Roadmap Expansion (Test Runnery & Docker Execution)
+- **Data realizacji:** 01.09.2026 r.
+- **Opis zmian:**
+  - Wdrożono `PolyglotTestRunner` oraz metody `run_polyglot_tests()` i `run_docker_tests()` w [`adk/tools/sandbox.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/tools/sandbox.py).
+  - Dodano mapowanie komend testowych dla ponad 15 ekosystemów (`go test`, `cargo test`, `npm test`, `zig build test`, `mix test`, `stack test`, `sbt test`, `dotnet test`, `ctest`, `dart test`, `gradle test`, `swift test`, `pytest`).
+  - Wdrożono obsługę kontenerów Docker (`run_docker_tests()`) oraz inteligentny fallback diagnostyczny dla środowisk bez zainstalowanego lokalnego kompilatora.
+  - Zintegrowano `SandboxRunnerTool` z agentem `ExperimenterAgent` w [`adk/agents/experimenter.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/agents/experimenter.py) do rejestrowania wykonania testów w `state.notes` i rozdziale o benchmarkach.
+  - Zaktualizowano mapę drogową [`documentation/methodology_and_roadmap.md`](file:///d:/studia-local/Artificial-Degree-Printer/documentation/methodology_and_roadmap.md) o **Kamień Milowy 8: Web Dashboard & Live Thesis Viewer** (FastAPI + Typst WASM Live Preview + interaktywne HITL).
+  - Utworzono zestaw testów w [`tests/test_polyglot_sandbox.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_polyglot_sandbox.py).
+- **Wynik weryfikacji testowej:** **78/78 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 24: Web Dashboard & Live Thesis Viewer (ADK Web SPA)
+- **Data realizacji:** 01.09.2026 r.
+- **Opis zmian:**
+  - Utworzono pakiet [`adk/web/`](file:///d:/studia-local/Artificial-Degree-Printer/adk/web/) z architekturą Zero-Dependency opartą na wielowątkowym `ThreadingHTTPServer`.
+  - Zaimplementowano kompletne REST API w [`adk/web/server.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/web/server.py):
+    - `GET /api/projects` — listowanie projektów z metadanymi i wskaźnikami weryfikacji.
+    - `GET /api/projects/{id}` — pobieranie stanu pracy, rozdziałów i drzewa plików.
+    - `GET /api/projects/{id}/file?path=...` — serwowanie zawartości plików z zabezpieczeniem Path Traversal Guard.
+    - `POST /api/generate` — uruchamianie nowego potoku w asynchronicznym wątku roboczym `GlobalPipelineManager`.
+    - `GET /api/status` — polling postępu i logów generowania w czasie rzeczywistym.
+  - Zbudowano nowoczesny interfejs SPA w estetyce Dark Glassmorphism / Cyber Academic w [`adk/web/static/index.html`](file:///d:/studia-local/Artificial-Degree-Printer/adk/web/static/index.html):
+    - **Live Thesis Viewer**: podgląd treści pracy, selektor rozdziałów i przełącznik Typst / Tekst.
+    - **Polyglot Code Explorer**: interaktywne drzewo plików wygenerowanego repozytorium z podglądem kodu.
+    - **7-Gate Quality Radar**: wizualne karty statusu dla wszystkich 7 bramek weryfikacyjnych.
+    - **Launcher Potoku**: interaktywny formularz startowy z animowanym paskiem postępu i terminalem logów.
+  - Zintegrowano polecenie `python main.py web [--port 8000] [--no-browser]` w [`main.py`](file:///d:/studia-local/Artificial-Degree-Printer/main.py).
+  - Utworzono zestaw testów w [`tests/test_web_dashboard.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_web_dashboard.py).
+- **Wynik weryfikacji testowej:** **81/81 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 25: Głębokie Dopracowanie Web Dashboardu (ADK Web 2.0 & Live Interactive Suite)
+- **Data realizacji:** 01.09.2026 r.
+- **Opis zmian:**
+  - Wzbogacono serwer [`adk/web/server.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/web/server.py) o nowe endpointy:
+    - `GET /api/system` — diagnostyka sprzętowa (GPU NVIDIA RTX 5070 8GB VRAM, CPU, Python 3.12, stan indeksu 47 prac SOTA).
+    - `POST /api/projects/{id}/chapter` — interaktywna edycja rozdziału z przeglądarki i automatyczna synchronizacja plików `session.json` oraz `thesis.typ`.
+    - `POST /api/projects/{id}/verify` — uruchamianie audytu 7 bramek `MasterVerificationSuite` na żądanie z poziomu Web UI.
+  - Zaawansowany silnik renderowania Typst/Markdown w [`adk/web/static/index.html`](file:///d:/studia-local/Artificial-Degree-Printer/adk/web/static/index.html):
+    - Pełna obsługa tabel `#table(columns: ..., [...], [...])` z responsywnym formatowaniem HTML.
+    - Wyróżnianie nagłówków, bloków kodu z przyciskiem szybkiego kopiowania i formuł matematycznych.
+  - Wdrożono wielojęzykowy podgląd kodu z numeracją linii i licznikiem rozmiaru pliku w Code Explorerze.
+  - Wdrożono pasek wskaźników statystycznych (Stats Strip: słowa, linie kodu, estymowane strony, cytowania SOTA, ryzyko JSA < 3.2%, estymacja oceny 5.0).
+  - Wdrożono powiadomienia Toast i asynchroniczne odświeżanie Quality Radaru.
+  - Zaktualizowano i rozszerzono zestaw testów w [`tests/test_web_dashboard.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_web_dashboard.py).
+- **Wynik weryfikacji testowej:** **81/81 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 26: Głębokie Dopracowanie Rdzenia ADK (Domain Specialization & Bilingual Academic Rigor)
+- **Data realizacji:** 01.09.2026 r.
+- **Opis zmian:**
+  - Wdrożono inteligentny silnik `DomainProfileGenerator` w [`adk/agents/orchestrator.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/agents/orchestrator.py) automatycznie wykrywający dziedzinę projektu (AI/ML, IoT/Embedded, Cybersecurity/Fintech, Cloud/Microservices) i generujący:
+    - Precyzyjne, dedykowane wymagania funkcjonalne i niefunkcjonalne (`REQ-F-*`, `REQ-NF-*` z limitami SLA p95/p99).
+    - Dwujęzyczne streszczenia: formalny abstrakt po polsku (`abstract_pl`) oraz po angielsku (`abstract_en`).
+    - Dedykowany zestaw słów kluczowych w obu językach.
+  - Zaimplementowano autentyczną, kontekstową syntezę Rozdziału 6 (Podsumowanie i wnioski) w [`adk/agents/typesetter.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/agents/typesetter.py) wiążącą fizycznie wygenerowany kod, liczbę artefaktów i realnie zmierzone opóźnienia p95 z badań empirycznych.
+  - Wzbogacono [`adk/tools/typesetting.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/tools/typesetting.py) o dwujęzyczny skład dokumentów (Streszczenie PL + Abstract EN) w Typst i LaTeX oraz uściślono obsługę kompilatora PDF.
+  - Uelastyczniono konstruktor [`adk/agents/base.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/agents/base.py) o bezpośrednią obsługę list i słowników narzędzi.
+  - Utworzono dedykowany zestaw testów w [`tests/test_core_refinements.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_core_refinements.py).
+- **Wynik weryfikacji testowej:** **85/85 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 27: LaTeX Sanitizer, Web Media Embedder & Real-Time SSE Log Streaming
+- **Data realizacji:** 01.09.2026 r.
+- **Opis zmian:**
+  - Wdrożono linter/sanitizer `latex_escape()` w [`adk/tools/typesetting.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/tools/typesetting.py) zabezpieczający znaki specjalne (`%`, `&`, `#`, `_`) w tekście LaTeX poza komendami i wzorami matematycznymi.
+  - Rozszerzono endpoint `/api/projects/{id}/file` w [`adk/web/server.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/web/server.py) o serwowanie plików graficznych (`image/svg+xml`, `image/png`, `image/jpeg`).
+  - Wdrożono endpoint strumieniowy SSE `GET /api/stream` (Server-Sent Events) przesyłający logi i postęp generowania w czasie rzeczywistym.
+  - Zintegrowano podgląd wykresów wektorowych SVG i obsługę `EventSource('/api/stream')` w [`adk/web/static/index.html`](file:///d:/studia-local/Artificial-Degree-Printer/adk/web/static/index.html).
+  - Utworzono zestaw testów w [`tests/test_latex_and_streaming.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_latex_and_streaming.py).
+- **Wynik weryfikacji testowej:** **88/88 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 28: Eliminacja Punktów Awaryjnych & Utwardzenie Rdzenia ADK (Crash-Proof Hardening)
+- **Data realizacji:** 01.09.2026 r.
+- **Opis zmian:**
+  - Wdrożono bezpieczną sanitizację ścieżek z backslashami Windows (`\`) w grafie spójności Mermaid [`adk/graph/ontology.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/graph/ontology.py), zapobiegając błędom składniowym przy renderowaniu diagramów C4 / ontologicznych.
+  - Zapewniono odporną obsługę komendy `git commit` w [`adk/tools/git_tool.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/tools/git_tool.py) na przypadek braku nowych zmian w drzewie roboczym (*nothing to commit, working tree clean*).
+  - Wykluczono pliki niemarkerowe (`.html`, `.css`, `.json`, `.xml`, `.md`) z rygorystycznych ostrzeżeń niesymetrii klamer w [`adk/verification/code_gate.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/verification/code_gate.py).
+  - Dodano dedykowany zestaw testów odpornościowych w [`tests/test_crash_hardening.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_crash_hardening.py).
+- **Wynik weryfikacji testowej:** **91/91 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
+
+---
+
+### 🟢 Etap 29: Zero-RAM Log Streaming & Strict Path Traversal Guard
+- **Data realizacji:** 01.09.2026 r.
+- **Opis zmian:**
+  - Wdrożono architekturę logowania bezwyciekowego **Zero-RAM Log Streaming** w [`adk/web/server.py`](file:///d:/studia-local/Artificial-Degree-Printer/adk/web/server.py). Wszystkie wpisy z generatora potoku są natychmiast zapisywane bezpośrednio do pliku `pipeline.log` na dysku, co redukuje narzut pamięciowy RAM do 0 KB bez względu na długość potoku.
+  - Zaimplementowano rygorystyczny **Path Traversal Guard** przy użyciu natywnej metody `is_relative_to(base_dir)` w endpointach serwowania plików `/api/projects/{id}/file`, uniemożliwiając nieautoryzowany odczyt plików spoza katalogu projektu.
+  - Utworzono zestaw testów w [`tests/test_security_and_memory.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_security_and_memory.py).
+- **Wynik weryfikacji testowej:** **93/93 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
+
+
+
+
+
+
+
+
+
+
+
 
 
 

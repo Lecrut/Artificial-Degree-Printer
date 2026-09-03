@@ -84,6 +84,11 @@ Artificial-Degree-Printer/
 │   ├── tui/                            # Terminal User Interface
 │   │   ├── __init__.py
 │   │   └── dashboard.py                # Console status panels
+│   ├── web/                            # Web Dashboard & Live Thesis Viewer (FastAPI & Zero-Dependency)
+│   │   ├── __init__.py
+│   │   ├── server.py                   # Multi-threaded REST API & Static Handler
+│   │   └── static/
+│   │       └── index.html              # Dark Glassmorphism Live Thesis SPA
 │   │
 │   └── verification/                   # Master Quality Audit Suite (7 Gates)
 │       ├── __init__.py
@@ -111,9 +116,11 @@ Artificial-Degree-Printer/
 │   ├── adk-code-quality-auditor/        # SKILL.md: Pydantic v2 & AST test suite auditor
 │   └── adk-typst-template-tester/       # SKILL.md: Typst 0.11+ & LaTeX template tester
 │
-├── tests/                              # Automated Pytest Suite (58 Tests)
+├── tests/                              # Automated Pytest Suite (93 Tests)
 │   ├── test_agents.py
 │   ├── test_core_models.py
+│   ├── test_core_refinements.py        # Core refinements (Domain generator & bilingual abstracts)
+│   ├── test_crash_hardening.py        # Crash hardening & edge-case resilience tests
 │   ├── test_dynamic_literature_search.py
 │   ├── test_e2e_pipeline.py
 │   ├── test_git_tool.py
@@ -121,19 +128,24 @@ Artificial-Degree-Printer/
 │   ├── test_harness.py
 │   ├── test_harness_evolution.py
 │   ├── test_interactive_agents.py      # Model-Interactive agent loop tests
+│   ├── test_latex_and_streaming.py     # LaTeX sanitizer, image serving & SSE log stream tests
 │   ├── test_literature_dossier.py
 │   ├── test_llm.py
 │   ├── test_llm_client.py
 │   ├── test_mutation_gate.py
 │   ├── test_new_tools.py
 │   ├── test_parallel_and_evolution.py  # Parallel execution & progressive crystallization
+│   ├── test_polyglot_sandbox.py        # Polyglot test runner & sandbox execution tests
+│   ├── test_polyglot_scaffolding.py    # Polyglot multi-language generator & scaffolding tests
 │   ├── test_project_isolation.py       # Isolated project workspaces tests
 │   ├── test_prompt_compiler.py         # Dynamic prompt compiler tests
 │   ├── test_replay.py                  # DARWIN-REPLAY 2027 time-travel tests
 │   ├── test_repository_hygiene.py      # Repository structural & 0-byte guards
+│   ├── test_security_and_memory.py    # Security Path Traversal & Zero-RAM Log Streaming tests
 │   ├── test_stylometry.py
 │   ├── test_tools.py
-│   └── test_verification_gates.py
+│   ├── test_verification_gates.py
+│   └── test_web_dashboard.py           # Web Dashboard REST API & File Serving tests
 │
 └── documentation/                      # Complete System Documentation
     ├── README.md                       # Documentation index

@@ -27,7 +27,7 @@ class GitProvenanceTool(BaseTool):
         user_email: Optional[str] = None,
         prompt_callback: Optional[Callable[[str], str]] = None,
     ) -> None:
-        self.repo_dir = Path(repo_dir).resolve() if repo_dir else Path.cwd() / "generated_project"
+        self.repo_dir = Path(repo_dir).resolve() if repo_dir else Path.cwd() / "projects" / "project_01" / "generated_project"
         self.user_name = user_name
         self.user_email = user_email
         self.prompt_callback = prompt_callback
@@ -108,6 +108,9 @@ class GitProvenanceTool(BaseTool):
             subprocess.run(["git", "add", "."], cwd=self.repo_dir, check=True, capture_output=True)
             commit_msg = f"[{stage_name.upper()}] {message}\n\nStage-Agent: {agent_name}"
             res = subprocess.run(["git", "commit", "-m", commit_msg], cwd=self.repo_dir, capture_output=True, text=True)
+            if res.returncode != 0 and ("nothing to commit" in res.stdout or "nothing to commit" in res.stderr or "working tree clean" in res.stdout or "working tree clean" in res.stderr):
+                hash_res = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.repo_dir, capture_output=True, text=True)
+                return hash_res.stdout.strip() if hash_res.returncode == 0 else "NO_CHANGES"
             
             # Pobierz hash ostatniego commita
             hash_res = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.repo_dir, capture_output=True, text=True)

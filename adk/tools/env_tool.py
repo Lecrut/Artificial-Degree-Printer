@@ -16,7 +16,7 @@ class EnvSecretsManagerTool(BaseTool):
     description = "Zarządzanie plikami środowiskowymi .env/.env.example oraz interaktywne pobieranie haseł i kluczy API"
 
     def __init__(self, workspace_dir: Optional[Path | str] = None) -> None:
-        self.workspace_dir = Path(workspace_dir).resolve() if workspace_dir else Path.cwd() / "generated_project"
+        self.workspace_dir = Path(workspace_dir).resolve() if workspace_dir else Path.cwd() / "projects" / "project_01" / "generated_project"
 
     def setup_env_files(self, required_keys: List[Dict[str, str]]) -> Dict[str, Any]:
         """

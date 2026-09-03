@@ -2,13 +2,13 @@
 
 > **Dokument Metodyczny i Strategiczny Plan Rozwoju**  
 > **Framework:** `Artificial-Degree-Printer` (ADK 2027)  
-> **Podstawa Naukowa:** 36 Seminalnych Publikacji SOTA (2023–2026 SOTA Horizon)
+> **Podstawa Naukowa:** 47 Seminalnych Publikacji SOTA (2023–2026 SOTA Horizon)
 
 ---
 
 # 1. Metodyka ADK-TRACE (Traceable, Reflexive, Artifact-Centric Engineering)
 
-W oparciu o wnioski z **36 przeanalizowanych prac naukowych**, sformalizowano dedykowaną metodykę wytwórczą **ADK-TRACE**, zaprojektowaną specjalnie do jednoczesnego tworzenia zaawansowanego oprogramowania IT oraz rygorystycznych prac inżynierskich i magisterskich.
+W oparciu o wnioski z **47 przeanalizowanych prac naukowych**, sformalizowano dedykowaną metodykę wytwórczą **ADK-TRACE**, zaprojektowaną specjalnie do jednoczesnego tworzenia zaawansowanego oprogramowania IT oraz rygorystycznych prac inżynierskich i magisterskich.
 
 ```
                        CYKL METODYKI ADK-TRACE (2027)
@@ -124,11 +124,26 @@ W toku debaty nad **36 publikacjami naukowymi SOTA (2023–2026)** wyłoniono **
   - `replan_branch()` w `adk/engine/graph.py`: Punktowa samonaprawa gałęziowa po niezdaniu bramki weryfikacyjnej.
   - `spawn_specialist_node()` / `retire_node()`: Dynamiczne powoływanie wąsko wyspecjalizowanych agentów (*Birth Node*) i ich zamykanie (*Death Node*).
 
+### 🚀 Kamień Milowy 7: Wielojęzykowy Ephemeral Sandbox & Otwarty Silnik Polyglot (Zrealizowany)
+* **Inspiracja z artykułów:** *Anthropic MCP (2024)* + *Toolformer (Schick et al., 2023)* + *SWE-bench Polyglot (2025)*.
+* **Rozwiązanie zaimplementowane w ADK:**
+  - Wdrożenie `PolyglotTestRunner` i `SandboxRunnerTool.run_polyglot_tests()` w `adk/tools/sandbox.py` z obsługą natywnych CLI (`go test`, `cargo test`, `npm test`, `zig test`, `mix test`, `pytest`, `dotnet test`, `ctest`) oraz izolowanych kontenerów Docker.
+  - Otwarty model `LanguageProfile` i `DynamicLanguageResolver` w `adk/agents/developer.py` z integracją `WebDocumentationScraperTool` (`doc_scraper`).
+
+---
+
+### 🔮 Kamień Milowy 8: Web Dashboard & Live Thesis Viewer (Planowany — Przyszłość)
+* **Inspiracja z artykułów:** *Human-in-the-Loop Agent Systems (2025)* + *Typst Reactive Compilation (2026)*.
+* **Koncepcja i Założenia Architektoniczne:**
+  - **Lekki backend Web API (FastAPI)**: Udostępniający status sesji ADK, stan generowanych projektów oraz sterowanie pipeline'em przez REST/WebSocket.
+  - **Reaktywny podgląd pracy dyplomowej (Live PDF Preview)**: Podgląd generowanego dokumentu Typst (`thesis.typ` -> PDF) w czasie rzeczywistym w przeglądarce za pomocą silnika Typst WASM.
+  - **Wizualne punkty kontrolne HITL**: Graficzny interfejs do zatwierdzania planu badań, wprowadzania tokenów/kluczy API (`.env`) oraz podglądu struktury repozytorium `projects/<project_id>/`.
+
 ---
 
 # 3. Wdrażanie Nowych Wniosków do Generowanego Planu Pracy
 
-Kiedy ADK generuje plan dla nowego tematu pracy dyplomowej (np. w `Promotor AI / OrchestratorAgent`), plan pracy jest automatycznie wzbogacany o mechanizmy wypracowane z 36 artykułów naukowych:
+Kiedy ADK generuje plan dla nowego tematu pracy dyplomowej (np. w `Promotor AI / OrchestratorAgent`), plan pracy jest automatycznie wzbogacany o mechanizmy wypracowane z 47 artykułów naukowych:
 
 | Standardowy, Przestarzały Krok | Nowoczesny Krok w Metodyce ADK-TRACE |
 | :--- | :--- |
@@ -143,4 +158,4 @@ Kiedy ADK generuje plan dla nowego tematu pracy dyplomowej (np. w `Promotor AI /
 
 # 4. Podsumowanie
 
-Połączenie metodyki **ADK-TRACE** z planem ewolucji opartym na **36 przeanalizowanych pracach naukowych** tworzy kompletny, samowystarczalny ekosystem inżynierski. System nie tylko generuje najwyższej jakości kod i prace dyplomowe, ale posiada jasną, wytyczoną ścieżkę dalszego rozwoju badawczego i technologicznego na rok 2027.
+Połączenie metodyki **ADK-TRACE** z planem ewolucji opartym na **47 przeanalizowanych pracach naukowych** tworzy kompletny, samowystarczalny ekosystem inżynierski. System nie tylko generuje najwyższej jakości kod i prace dyplomowe, ale posiada jasną, wytyczoną ścieżkę dalszego rozwoju badawczego i technologicznego na rok 2027.

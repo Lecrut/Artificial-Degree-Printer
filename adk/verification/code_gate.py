@@ -29,7 +29,7 @@ class CodeVerificationGate:
             )
             return issues
 
-        if lang in ("python", "py"):
+        if lang in ("python", "py") and artifact.path.endswith((".py", ".pyw")):
             try:
                 ast.parse(artifact.content, filename=artifact.path)
             except SyntaxError as e:
@@ -55,11 +55,10 @@ class CodeVerificationGate:
                         suggested_fix="Popraw plik JSON.",
                     )
                 )
-        # Polyglot check: Check for basic structural completeness (non-empty content and unmatched brackets)
-        elif lang in ("typescript", "ts", "javascript", "js", "tsx", "jsx", "rust", "rs", "go", "java", "cpp", "c", "csharp", "cs", "kotlin", "kt", "swift", "dart"):
+        elif not artifact.path.endswith((".html", ".htm", ".css", ".xml", ".md", ".yaml", ".yml", ".json", ".txt")):
             open_braces = artifact.content.count("{")
             close_braces = artifact.content.count("}")
-            if abs(open_braces - close_braces) > 10 and not ("`" in artifact.content or "template" in artifact.content):
+            if abs(open_braces - close_braces) > 10 and not ("`" in artifact.content or "template" in artifact.content or "${" in artifact.content):
                 issues.append(
                     VerificationIssue(
                         stage="code_verification",
