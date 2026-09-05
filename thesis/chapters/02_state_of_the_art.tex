@@ -1,0 +1,68 @@
+% ==============================================================================
+% CHAPTER 2: STATE OF THE ART
+% ==============================================================================
+\chapter{State of the Art}
+\label{chap:state_of_the_art}
+
+\section{Evolution of LLM-Driven Software Engineering Agents}
+\label{sec:agent_evolution}
+
+The integration of Large Language Models into software engineering has progressed rapidly from rudimentary code autocomplete mechanisms toward fully autonomous coding agents \cite{Jimenez2024SWEbench}. Early generative models acted as stateless text transformers within localized editor plugins. While effective for short boilerplates, their lack of repository-wide awareness and execution feedback severely constrained their utility for complex engineering challenges.
+
+The introduction of the \textbf{SWE-bench} benchmark by Jimenez et al. \cite{Jimenez2024SWEbench} marked a significant turning point in the empirical evaluation of coding agents. By presenting models with genuine, unresolved GitHub issues from mature Python repositories (such as Django, SymPy, and scikit-learn), SWE-bench demonstrated that naive zero-shot LLM queries resolve less than 4\% of real-world bugs. Effective autonomous resolution requires sophisticated prompt orchestration, repository-level symbol retrieval, and iterative test-driven feedback loops \cite{Xia2024Agentless}.
+
+\section{Multi-Agent Frameworks and Collaborative Paradigms}
+\label{sec:multi_agent_frameworks}
+
+To address the cognitive and contextual limitations of single LLM instances, researchers have introduced collaborative Multi-Agent Systems (MAS). Two prominent architectures have fundamentally influenced modern agentic workflows:
+
+\subsection{Standard Operating Procedures: MetaGPT}
+Hong et al. \cite{Hong2024MetaGPT} introduced **MetaGPT**, an architecture that maps software development roles (Product Manager, Architect, Project Manager, Engineer, QA Tester) onto distinct agent prompts. Crucially, MetaGPT enforces collaboration via structured intermediate artifacts:
+\begin{itemize}
+    \item Product Requirement Documents (PRD) with MoSCoW prioritization,
+    \item Architectural specifications in C4 notation,
+    \item Sequence diagrams and OpenAPI schema definitions.
+\end{itemize}
+By standardizing agent outputs using Standard Operating Procedures (SOPs), MetaGPT significantly reduces conversational drift and semantic degradation across long reasoning horizons.
+
+\subsection{Communicative Software Development: ChatDev}
+Qian et al. \cite{Qian2024ChatDev} proposed **ChatDev**, modeling the software lifecycle as a virtual organization structured around the classical waterfall methodology (Design, Coding, Testing, and Documentation). The primary innovation of ChatDev is the \emph{ChatChain} mechanism, wherein pairs of agents engage in targeted dialogue (e.g., Programmer and Code Reviewer) to iteratively refine code snippets and resolve compiler syntax errors.
+
+\subsection{Repository-Level Planning: CodePlan and AutoGen}
+Subsequent investigations have explored explicit graph representations. Bairi et al. \cite{Bairi2024CodePlan} introduced **CodePlan**, which constructs incremental dependency graphs across repository modules to coordinate multi-step refactorings. Similarly, Wu et al. \cite{Wu2023AutoGen} demonstrated the expressive power of conversable multi-agent graphs in **AutoGen**, facilitating dynamic agent invocation and flexible conversation topologies.
+
+\section{Tool Integration, Memory Hierarchies, and Protocols}
+\label{sec:tools_and_memory}
+
+Autonomous engineering agents cannot rely solely on the static knowledge embedded in their neural weights during pre-training. They require dynamic, bidirectional interfaces with external operating environments and compilers \cite{Schick2023Toolformer}.
+
+\subsection{Model Context Protocol (MCP)}
+Developed as an open industry standard by Anthropic, the **Model Context Protocol (MCP)** \cite{AnthropicMCP2024} establishes a unified JSON-RPC protocol connecting AI models with external tools, file systems, and execution runners. MCP separates tool definition from model execution, providing standard primitives for tool discovery, schema validation, and resource access control. This protocol provides the infrastructural foundation for safe tool invocation within our multi-agent architecture.
+
+\subsection{Hierarchical Agent Memory}
+Managing long-horizon state without exceeding context window limits or inducing attention degradation remains a central challenge. Packer et al. \cite{Packer2024MemGPT} formulated **MemGPT**, implementing hierarchical memory management inspired by classical operating system virtual memory (dividing agent state into fast working context and persistent disk-backed storage). Complementarily, Edge et al. \cite{Edge2024GraphRAG} demonstrated **GraphRAG**, which combines vector similarity search with structured knowledge graphs to facilitate holistic document summarization and cross-entity reasoning.
+
+\section{Self-Refinement, Reflexion, and Verification}
+\label{sec:self_refinement}
+
+\subsection{Verbal Reinforcement and Execution Feedback}
+The \textbf{Reflexion} framework introduced by Shinn et al. \cite{Shinn2023Reflexion} and the \textbf{Self-Refine} architecture by Madaan et al. \cite{Madaan2023SelfRefine} demonstrated that providing LLMs with semantic feedback from runtime execution (compiler warnings, linter messages, failed unit test traces) drastically elevates code synthesis accuracy. Rather than updating neural weights, the agent maintains an internal episodic memory of past failures, utilizing verbal critiques to adaptively correct its generation.
+
+\subsection{Deliberate Reasoning and Prompt Compilation}
+Yao et al. \cite{Yao2023TreeOfThoughts} advanced reasoning strategies with **Tree of Thoughts (ToT)**, allowing agents to explore diverse problem-solving trajectories with deliberate backtracking. In parallel, Khattab et al. \cite{Khattab2024DSPy} introduced **DSPy**, abstracting prompt engineering into declarative modules optimized via automatic compilers, thereby ensuring systematic output quality across complex agent pipelines.
+
+\section{Identified Research Gap}
+\label{sec:research_gap}
+
+Despite the substantial advances achieved by MetaGPT, ChatDev, and SWE-bench-oriented frameworks, existing systems concentrate almost exclusively on producing isolated code artifacts (such as small utilities, games, or single-file patches). None of the existing multi-agent platforms address the concurrent synthesis of **production-grade software alongside a complete, rigorous, and verifiable academic thesis**.
+
+In conventional workflows, documentation is produced post-hoc by unconstrained LLM prompts, leading to critical vulnerabilities:
+\begin{enumerate}
+    \item Hallucination of architectural components, interfaces, and function signatures that do not exist in the codebase.
+    \item Severe susceptibility to citation fabrication, with references pointing to non-existent DOIs or pre-2023 outdated paradigms.
+    \item Complete absence of mutation testing to verify whether unit tests actually evaluate program invariants.
+    \item Vulnerability to anti-plagiarism and synthetic text detection (JSA) due to uniform stylometric signatures.
+\end{enumerate}
+
+This thesis directly bridges this research gap through the design, implementation, and empirical validation of the **Artificial Degree Printer (ADK)** framework.
+

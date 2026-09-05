@@ -1,0 +1,69 @@
+% ==============================================================================
+% CHAPTER 1: INTRODUCTION
+% ==============================================================================
+\chapter{Introduction}
+\label{chap:introduction}
+
+\section{Background and Research Motivation}
+\label{sec:motivation}
+
+The emergence of Large Language Models (LLMs) based on the Transformer architecture has fundamentally reshaped contemporary software engineering \cite{Jimenez2024SWEbench}. Modern development workflows increasingly incorporate artificial intelligence as collaborative co-pilots and autonomous programming agents capable of decomposing complex specifications, generating non-trivial algorithms, refactoring enterprise codebases, and automating continuous integration pipelines.
+
+However, the widespread deployment of generative models in mission-critical software engineering and rigorous academic scholarship is hindered by a fundamental vulnerability: **stochastic hallucination** and the absence of runtime verification guarantees. Because language models operate on probabilistic next-token prediction, the generated code and accompanying technical narrative often exhibit surface-level plausibility (syntactic correctness and authoritative prose) while concealing catastrophic logical bugs, invalid architectural assumptions, or fabricated external dependencies. This phenomenon, colloquially termed unverified generative coding (\emph{"vibe coding"}), introduces severe risks into software delivery and academic research.
+
+In the context of academic thesis writing and scholarly documentation, this decoupling between generative text and underlying technical reality manifests in several critical pathologies:
+\begin{itemize}
+    \item \textbf{Cross-modal architectural drift}: Discrepancies between system architectures described in the narrative text and their actual concrete implementations in source code (e.g., phantom classes, invented methods, non-matching function signatures).
+    \item \textbf{Bibliographic fabrication}: Generation of fabricated or hallucinated scientific citations (\emph{phantom citations}), misattributed claims, or citations that fall outside the state-of-the-art temporal horizon.
+    \item \textbf{Unverified empirical claims}: Inclusion of performance graphs, throughput benchmarks, and latency tables that lack reproducibility or empirical grounding in runtime measurements.
+    \item \textbf{Degraded stylistic rigor}: Over-saturation of technical documentation with formulaic conversational clichés characteristic of commercial LLM outputs.
+\end{itemize}
+
+To overcome these vulnerabilities, there is a compelling need for an autonomous engineering framework that reverses the conventional generative workflow. Rather than generating narrative prose and retrofitting code to match it, the system must adhere to a strictly empirical, verifiable paradigm.
+
+\section{The Code-First Paradigm and ADK-TRACE Methodology}
+\label{sec:code_first_paradigm}
+
+This Master of Science thesis proposes and formulates the **Code-First paradigm**, operationalized via the **ADK-TRACE** (\emph{Traceable, Reflexive, Artifact-Centric Engineering}) methodology. Under this formulation:
+\begin{enumerate}
+    \item \textbf{Runtime Precedence over Narrative}: No technical documentation or thesis chapter is synthesized until the underlying source code is fully generated, isolated in a secured runtime sandbox, and verified by passing 100\% of automated unit tests and strict mutation testing thresholds.
+    \item \textbf{Empirical Grounding}: All tables, latency percentiles ($p95$, $p99$), and performance charts embedded within the thesis originate directly from reproducible benchmarks executed on live code.
+    \item \textbf{AST-Level Traceability}: Every technical identifier (class, method, interface, parameter) referenced in the scholarly prose must be cross-verified against the Abstract Syntax Tree (AST) of the verified codebase.
+    \item \textbf{Multi-Gate Quality Enforcement}: All generated artifacts are subjected to an automated suite of independent verification gates evaluating syntactic integrity, mutation score resilience, bibliographic recency, and stylometric diversity.
+\end{enumerate}
+
+\section{Thesis Statement and Research Objectives}
+\label{sec:thesis_objectives}
+
+\subsection{Thesis Statement}
+The central thesis defended in this work is formulated as follows:
+\begin{quote}
+\itshape
+The orchestration of a specialized swarm of autonomous software engineering agents operating under the Code-First paradigm and the ADK-TRACE methodology enables the fully automated, deterministic synthesis of production-grade software in parallel with a verifiable, rigorous academic thesis, completely eliminating factual hallucinations and bibliographic fabrications.
+\end{quote}
+
+\subsection{Research and Engineering Objectives}
+To substantiate this thesis statement, the following specific objectives were established:
+\begin{enumerate}
+    \item \textbf{Design of a Multi-Agent Swarm Architecture}: Define specialized agent roles (Orchestrator, Researcher, Architect, Developer, Experimenter, Typesetter, and Reviewer) with strict separation of concerns and tool isolation utilizing the Model Context Protocol (MCP) \cite{AnthropicMCP2024}.
+    \item \textbf{Implementation of a Deterministic State Engine}: Construct a robust state machine (\texttt{StateGraphEngine}) enforcing Standard Operating Procedures (SOPs) \cite{Hong2024MetaGPT} and preventing non-deterministic conversational drift.
+    \item \textbf{Secure Sandbox Execution Environment}: Build an isolated execution runner capable of executing Python test suites (\texttt{pytest}) and computing mutation resilience scores ($MS$) in a sandboxed subprocess.
+    \item \textbf{Dynamic Literature Search Engine}: Implement an automated research engine querying live scientific repositories (arXiv, Semantic Scholar) to retrieve verified publications within the SOTA horizon ($\ge 2023$) with valid DOIs and BibTeX entries.
+    \item \textbf{Dual-Target Academic Typesetting}: Develop a typesetting engine generating publication-ready documents in Typst 0.11+ and LaTeX (Tectonic/BibLaTeX).
+    \item \textbf{Master Verification Suite}: Implement seven automated quality gates enforcing AST correctness, mutation resilience ($MS \ge 60\%$), citation integrity, English naming conventions, cross-consistency, academic style, and stylometric authenticity ($TTR \ge 0.35$).
+    \item \textbf{Empirical Evaluation}: Execute representative end-to-end synthesis experiments, analyzing orchestration latency, token consumption, and mutation scores.
+\end{enumerate}
+
+\section{Thesis Structure}
+\label{sec:thesis_structure}
+
+The remainder of this thesis is structured as follows:
+\begin{itemize}
+    \item \textbf{Chapter \ref{chap:state_of_the_art}} reviews the state of the art in autonomous LLM-driven software engineering, multi-agent frameworks, tool protocols, and automated verification techniques.
+    \item \textbf{Chapter \ref{chap:system_architecture}} details the overall architecture of the Artificial Degree Printer (ADK), specifying the swarm agent roles, data contracts, and state machine transitions.
+    \item \textbf{Chapter \ref{chap:implementation}} describes the concrete technical implementation, including the execution sandbox, literature discovery engine, and typesetting pipelines.
+    \item \textbf{Chapter \ref{chap:verification_gates}} presents the formal mathematical definitions and operational mechanics of the seven quality gates in the \emph{MasterVerificationSuite}.
+    \item \textbf{Chapter \ref{chap:experiments}} documents the experimental setup, case study evaluation, performance benchmarks, and mutation analysis results.
+    \item \textbf{Chapter \ref{chap:conclusions}} summarizes the contributions, verifies the thesis statement, identifies system limitations, and outlines future research directions.
+\end{itemize}
+

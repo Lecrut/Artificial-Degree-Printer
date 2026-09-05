@@ -84,12 +84,27 @@ Poniższa macierz klasyfikuje dotychczasowy dorobek 28 prac na 6 filarów badawc
 
 ---
 
+### 7. Filar Awangardowych Inspiracji i Badań Przyszłościowych (Avant-Garde Inspirations Incubator)
+* **Kluczowe publikacje w podfolderze `inspirations/`:** TreeDiff (`@TreeDiff2025`), DiffuCoder (`@DiffuCoder2025`), Infini-attention (`@Google2024InfiniAttention`), Native Sparse Attention (`@DeepSeek2025NSA`), Active Inference Agents (`@Friston2024ActiveInference`), Byte Latent Transformer (`@Meta2024BLT`), Landscape of Thoughts (`@LoT2026Landscapes`), ViviDoc (`@Tang2026ViviDoc`), KAN (`@Liu2024KAN`), Feynman Penrose (`@Feynman2026Diagrams`).
+* 🎯 **Zalecane słowa kluczowe do przyszłych wyszukiwań:**
+  - `"diffusion models for code generation"` OR `"AST-guided diffusion program synthesis"`
+  - `"infinite context transformer"` OR `"compressive memory linear attention" OR "native sparse attention hardware aligned"`
+  - `"active inference multi-agent systems"` OR `"free energy principle cognitive LLM agents"`
+  - `"byte latent transformer tokenizer-free"` OR `"entropy-guided patch segmentation"`
+  - `"visualizing reasoning trajectory LLM"` OR `"landscape of thoughts t-SNE reasoning manifold"`
+  - `"explorable explanations LLM agents"` OR `"DocSpec interactive document generation"`
+  - `"Kolmogorov-Arnold Networks KAN symbolic"` OR `"declarative constraint diagramming Penrose agent"`
+
+---
+
 ## 💡 Jak Używać Macierzy do Wyszukiwania Kolejnych Publikacji
 
 Podczas szukania artykułów na kolejne lata (2026–2027) łączymy co najmniej **2 frazy z różnych filarów**, np.:
 - `["self-evolving agent harness"] AND ["mutation testing LLM"]`
 - `["Model Context Protocol"] AND ["indirect prompt injection"]`
 - `["context compression multi-agent"] AND ["code thesis traceability"]`
+- `["AST-guided diffusion program synthesis"] AND ["hardware aligned sparse attention"]`
 
 Taka kombinacja gwarantuje odnajdywanie prac o najwyższej relewancji dla unikalnej architektury systemu ADK.
+
 

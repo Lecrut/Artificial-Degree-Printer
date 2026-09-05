@@ -1,0 +1,155 @@
+% ==============================================================================
+% PRACA MAGISTERSKA: ARTIFICIAL DEGREE PRINTER (ADK)
+% Główny plik kompilacyjny dokumentu (main.tex)
+% MASTER OF SCIENCE THESIS: ARTIFICIAL DEGREE PRINTER (ADK)
+% LODZ UNIVERSITY OF TECHNOLOGY (POLITECHNIKA ŁÓDZKA)
+% Main document compilation entrypoint (main.tex)
+% ==============================================================================
+
+\documentclass[12pt,a4paper,twoside]{report}
+
+% Dołączenie metadanych pracy (tytuł, autor, promotor, streszczenie)
+% 1. Thesis Metadata (English primary, Polish secondary, author & supervisor info)
+\input{config/metadata.tex}
+
+% Dołączenie konfiguracji typograficznej, pakietów i makr
+% 2. Typographic styles and package configurations (TUL guidelines)
+\input{config/styles.tex}
+
+\begin{document}
+
+% ------------------------------------------------------------------------------
+% CZĘŚĆ WSTĘPNA (Strona tytułowa, oświadczenia, streszczenia, spisy)
+% PRELIMINARY PAGES (Roman numerals)
+% ------------------------------------------------------------------------------
+\pagenumbering{roman}
+
+% 1. Elegancka strona tytułowa
+\MakeThesisTitlePage
+% 1. Official TUL Title Page (Politechnika Łódzka)
+\MakeTULTitlesPage
+\cleardoublepage
+
+% 2. Oświadczenie o samodzielności wykonania pracy (standard uczelni)
+% 2. Author's Statement of Originality (Oświadczenie o samodzielności - PŁ standard)
+\thispagestyle{plain}
+\vspace*{2cm}
+\vspace*{1.5cm}
+\begin{flushright}
+    \ThesisCity, dnia .......................... r.
+    \ThesisCity, ....................................
+\end{flushright}
+\vspace{1.5cm}
+\vspace{1.0cm}
+\begin{center}
+    {\large\bfseries Oświadczenie autora pracy}\par
+    {\Large\bfseries Statement of Originality}\par
+    \vspace{0.2cm}
+    {\small (Oświadczenie autora pracy dyplomowej)}\par
+\end{center}
+\vspace{1cm}
+Świadom odpowiedzialności prawnej oświadczam, że niniejsza praca dyplomowa magisterska pt.:\\
+\vspace{1.0cm}
+
+\noindent
+I hereby declare that this Master of Science thesis entitled:\\
+\textbf{\ThesisTitle}\\
+została przygotowana przeze mnie samodzielnie i nie zawiera treści uzyskanych w sposób niezgodny z obowiązującymi przepisami prawa.\\
+Oświadczam również, że przedstawiona praca nie była wcześniej przedmiotem procedur związanych z uzyskaniem jakiegokolwiek tytułu zawodowego lub stopnia naukowego w uczelni wyższej.\\
+\vspace{2.5cm}
+(\textit{\ThesisTitlePL})\\
+has been composed by myself independently and that all source materials and external assistance have been properly acknowledged and documented in accordance with institutional regulations.\\
+I also declare that this thesis has not been previously submitted in whole or in part for any other academic degree or qualification at any university.
+
+\vspace{1.5cm}
+\begin{flushright}
+    ............................................................\\
+    \small(czytelny podpis autora pracy)
+    \small (\ThesisAuthor)
+\end{flushright}
+\cleardoublepage
+
+% 3. Streszczenie w języku polskim
+% 3. English Abstract (Primary)
+\thispagestyle{plain}
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\AbstractEN
+
+\vspace{1.0cm}
+\noindent\textbf{Keywords:} \KeywordsEN
+\cleardoublepage
+
+% 4. Polish Streszczenie (Mandatory at TUL for theses in foreign languages)
+\thispagestyle{plain}
+\selectlanguage{polish}
+\chapter*{Streszczenie}
+\addcontentsline{toc}{chapter}{Streszczenie}
+\AbstractPL
+
+\vspace{1cm}
+\vspace{1.0cm}
+\noindent\textbf{Słowa kluczowe:} \KeywordsPL
+\selectlanguage{english}
+\cleardoublepage
+
+% 4. Abstract w języku angielskim
+\thispagestyle{plain}
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\AbstractEN
+
+\vspace{1cm}
+\noindent\textbf{Keywords:} \KeywordsEN
+\cleardoublepage
+
+% 5. Spisy treści, tabel, rysunków i listingów
+% 5. Tables of Contents, Figures, Tables, and Listings
+\tableofcontents
+\cleardoublepage
+
+\listoffigures
+\addcontentsline{toc}{chapter}{\listfigurename}
+\cleardoublepage
+
+\listoftables
+\addcontentsline{toc}{chapter}{\listtablename}
+\cleardoublepage
+
+\lstlistoflistings
+\addcontentsline{toc}{chapter}{Spis listingów}
+\addcontentsline{toc}{chapter}{List of Listings}
+\cleardoublepage
+
+% ------------------------------------------------------------------------------
+% CZĘŚĆ GŁÓWNA (Rozdziały merytoryczne)
+% MAIN BODY CHAPTERS (Arabic numerals)
+% ------------------------------------------------------------------------------
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\input{chapters/01_wstep.tex}
+\input{chapters/02_stan_wiedzy.tex}
+\input{chapters/03_architektura.tex}
+\input{chapters/04_implementacja.tex}
+\input{chapters/05_weryfikacja.tex}
+\input{chapters/06_eksperymenty.tex}
+\input{chapters/07_podsumowanie.tex}
+\input{chapters/01_introduction.tex}
+\input{chapters/02_state_of_the_art.tex}
+\input{chapters/03_system_architecture.tex}
+\input{chapters/04_implementation.tex}
+\input{chapters/05_verification_gates.tex}
+\input{chapters/06_experiments_and_evaluation.tex}
+\input{chapters/07_conclusions.tex}
+
+% ------------------------------------------------------------------------------
+% BIBLIOGRAFIA I ZAŁĄCZNIKI
+% BIBLIOGRAPHY
+% ------------------------------------------------------------------------------
+\cleardoublepage
+\printbibliography[heading=bibintoc,title={Bibliografia}]
+\printbibliography[heading=bibintoc,title={Bibliography}]
+
+\end{document}
+

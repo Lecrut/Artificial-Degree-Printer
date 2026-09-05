@@ -1,0 +1,78 @@
+% ==============================================================================
+% CHAPTER 3: SYSTEM ARCHITECTURE
+% ==============================================================================
+\chapter{System Architecture}
+\label{chap:system_architecture}
+
+\section{Architectural Overview and Core Principles}
+\label{sec:architecture_overview}
+
+The Artificial Degree Printer (ADK) is architected as a modular, deterministic multi-agent framework designed to eliminate cognitive and factual dissonance between an evolving software repository and its formal academic documentation. At its core, the architecture abandons unconstrained conversational agent chat in favor of a strictly orchestrated finite state machine (\texttt{StateGraphEngine}).
+
+Each agent within the ADK swarm operates with dedicated domain responsibilities, bounded prompt templates, granular tool access privileges, and strictly-typed input/output contracts enforced via Pydantic v2 schemas.
+
+\section{Agent Roles and Swarm Decomposition}
+\label{sec:agent_roles}
+
+The multi-agent swarm reflects the division of labor found in modern academic engineering labs and professional software delivery teams. Seven specialized agents collaborate across the lifecycle:
+
+\begin{table}[H]
+\centering
+\small
+\caption{Specialized agent roles within the ADK swarm and their responsibilities}
+\label{tab:agent_roles}
+\begin{tabularx}{\textwidth}{l p{4.5cm} X}
+\toprule
+\textbf{Agent Role} & \textbf{Core Function} & \textbf{Tools and Generated Artifacts} \\
+\midrule
+\textbf{Orchestrator} & Executive coordinator, requirements decomposition (MoSCoW) & \texttt{StateGraphEngine}, \texttt{FileSystemTool}, sprint backlogs \\
+\textbf{Researcher} & SOTA literature discovery, DOI verification (2023--2026) & \texttt{LiteratureSearchEngine}, BibTeX manager, citation dossier \\
+\textbf{Architect} & System architecture, Pydantic data schemas, C4 diagrams & Pydantic v2, Mermaid generator, API OpenAPI specifications \\
+\textbf{Developer} & Production Python implementation, unit test suites & \texttt{SandboxRunnerTool}, \texttt{pytest}, AST analyzers \\
+\textbf{Experimenter} & Empirical profiling, load generation, latency metrics & \texttt{BenchmarkTool}, locust generators, Matplotlib (SVG/PNG) \\
+\textbf{Typesetter} & Academic typesetting, LaTeX/Typst compilation & \texttt{TypesettingTool} (Typst 0.11+ / Tectonic LaTeX) \\
+\textbf{Reviewer} & Independent quality audit, multi-gate verification & \texttt{MasterVerificationSuite} (7 independent quality gates) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Data Contracts and Strongly-Typed Artifacts (Pydantic v2)}
+\label{sec:data_contracts}
+
+To prevent information loss and hallucinated drift between successive pipeline stages, all inter-agent communication is mediated by strongly-typed \texttt{pydantic.BaseModel} entities:
+
+\begin{itemize}
+    \item \textbf{\texttt{ThesisMetadata}}: Encapsulates formal thesis attributes, including primary English title, secondary Polish title, student identity, supervisor credentials, bilingual abstracts, and keywords.
+    \item \textbf{\texttt{Requirement}}: Represents a single system requirement labeled with MoSCoW priority (Must, Should, Could, Won't) and acceptance criteria.
+    \item \textbf{\texttt{ArchitectureSpec}}: Encapsulates module topologies, class hierarchies, external dependencies, and sequence diagrams in Mermaid syntax.
+    \item \textbf{\texttt{CodeArtifact}}: Defines target file paths, complete source implementations, imported packages, and structural AST node declarations.
+    \item \textbf{\texttt{Citation}}: Represents verified bibliographic entries containing citation keys, authors, title, publication venue, year, DOI, and relevance summary.
+    \item \textbf{\texttt{BenchmarkResult}}: Records raw execution telemetry (throughput, median latency, $p95$, $p99$ percentiles) and associated vector figure paths.
+    \item \textbf{\texttt{ChapterDraft}}: Represents modular thesis chapters containing chapter numbers, headings, LaTeX/Typst markup, and associated citation keys.
+\end{itemize}
+
+\section{State Machine Transitions and Operational Lifecycle}
+\label{sec:lifecycle}
+
+Execution progression is governed by a deterministic state graph divided into seven sequential phases:
+
+\begin{enumerate}
+    \item \textbf{Intake Phase}: The Orchestrator ingests the user's research topic, generates structured MoSCoW requirements, and establishes project milestones.
+    \item \textbf{Research Phase}: The Researcher queries academic indexing APIs (arXiv, Semantic Scholar), filters for publications dated $\ge 2023$, verifies DOIs, and populates \texttt{references.bib}.
+    \item \textbf{Architecture Phase}: The Architect designs the modular component architecture, writes Pydantic data schemas, and produces C4 container diagrams.
+    \item \textbf{Implementation Phase}: The Developer writes Python modules and corresponding unit tests in an isolated sandbox, iterating until reaching 100\% test pass rates.
+    \item \textbf{Benchmarks Phase}: The Experimenter executes empirical benchmarks under simulated concurrent workloads, generating vector plots and latency distribution tables.
+    \item \textbf{Typesetting Phase}: The Typesetter synthesizes the thesis chapters, linking AST code symbols, benchmark charts, and validated literature citations into LaTeX and Typst sources.
+    \item \textbf{Verification Phase}: The Reviewer audits the complete artifact set against the seven gates of the \emph{MasterVerificationSuite}. If any gate fails, control returns to the responsible agent for corrective refinement.
+\end{enumerate}
+
+\section{Tool Integration and Sandboxed Isolation (MCP)}
+\label{sec:mcp_tool_integration}
+
+Agents interact with the host system exclusively through tool interfaces conforming to the Model Context Protocol (MCP) \cite{AnthropicMCP2024}:
+\begin{itemize}
+    \item \textbf{\texttt{FileSystemTool}}: Enforces strict path traversal restrictions, confining file mutations to the active project workspace.
+    \item \textbf{\texttt{SandboxRunnerTool}}: Manages isolated subprocess environments with CPU timeouts, memory caps, and syscall constraints.
+    \item \textbf{\texttt{TypesettingTool}}: Interfaces with the Tectonic LaTeX and Typst 0.11+ compilers, sanitizing special characters and producing PDF distributions.
+\end{itemize}
+

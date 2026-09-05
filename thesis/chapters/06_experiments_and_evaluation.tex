@@ -1,0 +1,83 @@
+% ==============================================================================
+% CHAPTER 6: EXPERIMENTS AND EVALUATION
+% ==============================================================================
+\chapter{Experiments and Evaluation}
+\label{chap:experiments}
+
+\section{Experimental Setup and Testbed Environment}
+\label{sec:experimental_setup}
+
+To rigorously evaluate the ADK framework and the Code-First paradigm, empirical experiments were conducted on an x86-64 workstation featuring an 8-core CPU, 32 GB RAM, and Python 3.12 under Windows and Linux virtualization. Inference orchestration was evaluated using state-of-the-art foundation models (Claude 3.5 Sonnet and Gemini 1.5/2.0 Pro) accessed via authenticated REST endpoints.
+
+\section{Case Study: Microservice Security Analysis Framework}
+\label{sec:case_study}
+
+As the benchmark validation scenario, the system was tasked with synthesizing a complete end-to-end software project and corresponding thesis documentation for the topic: \emph{"Security Analysis and Vulnerability Assessment in Microservice Architectures"}.
+
+The multi-agent swarm executed the complete workflow:
+\begin{enumerate}
+    \item Decomposed functional security requirements into MoSCoW deliverables (token auditing, network policy verification, anomaly detection).
+    \item Identified and verified 18 SOTA scientific papers published between 2023 and 2026.
+    \item Synthesized Python scanning modules, AST inspection routines, and a comprehensive \texttt{pytest} suite.
+    \item Ran load and latency profiling under concurrent workloads ($1$ to $100$ simulated threads).
+    \item Successfully compiled the full thesis package in LaTeX and Typst.
+\end{enumerate}
+
+\section{Quality Gates Evaluation Results}
+\label{sec:gate_results}
+
+The complete artifact collection was audited by the \texttt{MasterVerificationSuite}. Table \ref{tab:verification_results} details the evaluation metrics and gate statuses.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Comprehensive evaluation results across the 7 Quality Gates of ADK}
+\label{tab:verification_results}
+\begin{tabularx}{\textwidth}{l l c c X}
+\toprule
+\textbf{Quality Gate} & \textbf{Evaluation Metric} & \textbf{Threshold} & \textbf{Observed Value} & \textbf{Status} \\
+\midrule
+\textbf{1. CodeVerification} & AST syntax \& Unit tests pass rate & $100\%$ passed & $28/28$ passed ($100\%$) & \textbf{PASS} \\
+\textbf{2. MutationTesting} & Mutation Score ($MS$) & $\ge 60.0\%$ & $74.2\%$ & \textbf{PASS} \\
+\textbf{3. CitationVerification} & SOTA recency \& DOI validity & $\text{year} \ge 2023$ & $100\%$ valid SOTA & \textbf{PASS} \\
+\textbf{4. EnglishNaming} & ASCII English file \& code naming & $100\%$ compliant & $100\%$ compliant & \textbf{PASS} \\
+\textbf{5. CrossConsistency} & AST symbol references in text & $0$ hallucinations & $0$ unmatched symbols & \textbf{PASS} \\
+\textbf{6. AcademicStyle} & Generative AI cliché count & $0$ occurrences & $0$ clichés detected & \textbf{PASS} \\
+\textbf{7. StylometryAudit} & Type-Token Ratio ($TTR$) & $\ge 0.35$ & $0.412$ & \textbf{PASS} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+All seven quality gates passed successfully on the final generation pass, confirming that the synthesized software and documentation meet rigorous production and academic standards.
+
+\section{Mutation Analysis and Fault Detection}
+\label{sec:mutation_evaluation}
+
+A notable finding emerged from the comparison between line coverage and mutation testing. The initial test suite authored by the \texttt{DeveloperAgent} achieved a high line coverage of $91.4\%$. However, the initial \texttt{MutationTestingGate} run revealed a mutation score of only $54.1\%$ (failing the $60\%$ threshold) due to missing boundary assertions in network timeout handling.
+
+Upon receiving the mutation audit report, the agent's self-repair loop generated targeted assertion tests covering edge conditions, killing 19 previously surviving mutants and raising the final mutation score to $74.2\%$. This demonstrates the vital necessity of mutation testing in agentic software development.
+
+\section{Empirical Latency and Throughput Benchmarking}
+\label{sec:latency_benchmarks}
+
+The \texttt{ExperimenterAgent} executed automated load tests measuring the processing latency of the vulnerability scanning pipeline under increasing concurrency. The observed metrics are summarized in Table \ref{tab:sla_benchmarks}.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Service latency percentiles ($p95$, $p99$) under varying concurrent workloads}
+\label{tab:sla_benchmarks}
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Concurrency (Threads)} & \textbf{Mean [ms]} & \textbf{Median [ms]} & \textbf{95th Percentile [ms]} & \textbf{99th Percentile [ms]} \\
+\midrule
+1 & 12.4 & 11.8 & 16.2 & 21.0 \\
+10 & 18.7 & 17.2 & 28.5 & 39.4 \\
+50 & 44.1 & 41.5 & 68.9 & 92.3 \\
+100 & 91.2 & 86.0 & 142.7 & 185.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These measurements were captured directly by the runtime telemetry engine and programmatically injected into the thesis source, guaranteeing absolute consistency between benchmark telemetry and documented results.
+

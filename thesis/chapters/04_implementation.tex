@@ -1,0 +1,89 @@
+% ==============================================================================
+% CHAPTER 4: SYSTEM IMPLEMENTATION
+% ==============================================================================
+\chapter{System Implementation}
+\label{chap:implementation}
+
+\section{Technology Stack and Repository Structure}
+\label{sec:tech_stack}
+
+The Artificial Degree Printer framework is implemented in Python 3.12+, leveraging its asynchronous runtime features (\texttt{asyncio}), structural pattern matching, and comprehensive static typing ecosystem.
+
+The primary libraries and tooling integrated into the platform comprise:
+\begin{itemize}
+    \item \textbf{Pydantic v2}: Core data validation engine built on Rust, providing microsecond serialization latency and strict schema enforcement.
+    \item \textbf{Pytest \& Mutmut}: Automated testing and mutation analysis infrastructure for evaluating test suite rigor in isolated sandboxes.
+    \item \textbf{Matplotlib \& Seaborn}: Academic-grade publication plotting library generating vector charts (SVG and PDF at 300 DPI).
+    \item \textbf{Typst 0.11+ \& Tectonic (LaTeX)}: Modern standalone typesetting engines eliminating complex local TeX Live distribution footprints.
+    \item \textbf{Textual \& Rich}: Terminal User Interface (TUI) components providing real-time telemetry of agent state transitions and tool invocations.
+\end{itemize}
+
+The repository structure cleanly isolates concerns under the \texttt{adk/} namespace:
+\begin{lstlisting}[language=bash, caption={Hierarchical directory organization of the ADK system}, label={lst:directory_structure}]
+adk/
+|-- agents/         # Autonomous agent implementations (Developer, Reviewer, etc.)
+|-- core/           # Strongly typed models and context definitions
+|-- engine/         # StateGraphEngine and state machine loop
+|-- graph/          # Directed acyclic graph transitions and execution graphs
+|-- tools/          # Sandboxing, benchmarking, literature search, and typesetting
+|-- verification/   # MasterVerificationSuite (7 quality gates)
+`-- web/            # Real-time WebSocket dashboard and telemetry
+\end{lstlisting}
+
+\section{StateGraphEngine and Execution Orchestration}
+\label{sec:stategraph_impl}
+
+The state machine is implemented by the \texttt{StateGraphEngine} class in \texttt{adk.engine}. In contrast to stochastic conversational agents, state transitions occur only upon the verified production of required schema artifacts:
+
+\begin{lstlisting}[language=Python, caption={Core state advancement logic within the StateGraphEngine}, label={lst:stategraph_py}]
+class StateGraphEngine:
+    def __init__(self, context: ProjectContext) -> None:
+        self.context = context
+        self.state = ProcessState.INTAKE
+        self.history: List[StateTransitionRecord] = []
+
+    async def advance(self) -> ProcessState:
+        agent = self.resolve_agent(self.state)
+        result: ToolResult = await agent.execute(self.context)
+        
+        if not result.success:
+            await self.handle_transition_error(result.error)
+            return self.state
+            
+        self.context.merge_artifacts(result.artifacts)
+        self.state = self.determine_next_state(self.state)
+        return self.state
+\end{lstlisting}
+
+This mechanism guarantees that downstream agents (such as \texttt{TypesetterAgent}) cannot be scheduled until all prerequisite artifacts (such as verified unit tests and AST symbol tables) are validated in the runtime context.
+
+\section{Subprocess Sandbox Runner (SandboxRunnerTool)}
+\label{sec:sandbox_impl}
+
+To protect the host operating environment while validating generated code, the \texttt{SandboxRunnerTool} executes in a confined subprocess wrapper:
+\begin{enumerate}
+    \item \textbf{AST Pre-validation}: The script parses source files using Python's \texttt{ast.parse} prior to execution, rejecting dangerous primitives (e.g., unauthorized network sockets or root privilege escalations).
+    \item \textbf{Timeout and Resource Bounds}: Subprocesses are monitored with strict execution timeouts ($30$ seconds) to prevent infinite loops during unit test runs.
+    \item \textbf{Assertion Telemetry}: Standard output and error streams are captured, parsed, and mapped into structured test failure records, which are fed back to the \texttt{DeveloperAgent} for self-repair (Reflexion loop).
+\end{enumerate}
+
+\section{Automated Literature Discovery (LiteratureSearchEngine)}
+\label{sec:literature_search_impl}
+
+To eliminate bibliographic hallucinations, the \texttt{LiteratureSearchEngine} queries public academic APIs (arXiv API, Semantic Scholar) based on the domain keywords extracted during the Intake phase. For every candidate publication, the engine:
+\begin{itemize}
+    \item Validates that the publication date falls within the designated SOTA horizon ($\text{year} \ge 2023$).
+    \item Confirms the existence of a valid, resolvable Digital Object Identifier (DOI).
+    \item Formats the citation into a clean, normalized BibTeX entry, appending it to the project's \texttt{references.bib} catalog.
+\end{itemize}
+
+\section{Dual-Target Typesetting Engine (TypesettingTool)}
+\label{sec:typesetting_impl}
+
+The \texttt{TypesettingTool} in \texttt{adk.tools.typesetting} implements dual-target generation for both Typst and LaTeX:
+\begin{itemize}
+    \item \textbf{LaTeX Sanitization}: Implements regular expression parsers that safely escape LaTeX reserved characters (\%, \&, \#, \_) in narrative paragraphs while preserving mathematical formulas and structural macros.
+    \item \textbf{Symbol Injection}: Injects real symbol identifiers from the codebase AST directly into the narrative.
+    \item \textbf{Automated Compilation}: Dispatches headless compilation jobs to local Tectonic or Typst binaries, reporting compilation warnings directly to the \texttt{ReviewerAgent}.
+\end{itemize}
+

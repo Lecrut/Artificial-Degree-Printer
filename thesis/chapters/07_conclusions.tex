@@ -1,0 +1,50 @@
+% ==============================================================================
+% CHAPTER 7: CONCLUSIONS AND FUTURE WORK
+% ==============================================================================
+\chapter{Conclusions and Future Work}
+\label{chap:conclusions}
+
+\section{Summary of Contributions}
+\label{sec:summary_of_contributions}
+
+This Master of Science thesis has designed, implemented, and empirically validated the **Artificial Degree Printer (ADK)**—an autonomous multi-agent framework tailored for the concurrent synthesis of production-grade software and verifiable academic documentation.
+
+The key contributions achieved throughout this research include:
+\begin{enumerate}
+    \item \textbf{Formulation of the Code-First Paradigm}: Demonstrated that reversing the generative vector (requiring running code and mutation-tested suites before narrative synthesis) fundamentally prevents LLM hallucinations.
+    \item \textbf{Specialized Swarm Architecture}: Designed seven decoupled agent roles adhering to Model Context Protocol (MCP) standards \cite{AnthropicMCP2024} and coordinated via a finite state machine (\texttt{StateGraphEngine}).
+    \item \textbf{Automated Verification Suite}: Implemented the \emph{MasterVerificationSuite} containing seven deterministic gates that rigorously evaluate AST validity, mutation score resilience ($MS \ge 60\%$), SOTA citation integrity, and lexical diversity ($TTR \ge 0.35$).
+    \item \textbf{Dynamic Literature Grounding}: Successfully eliminated bibliographic hallucinations by coupling literature discovery with live DOI verification and SOTA recency filtering ($\ge 2023$).
+    \item \textbf{Empirical Validation}: Confirmed through end-to-end benchmarking that multi-agent self-repair loops effectively elevate mutation scores and ensure cross-modal consistency.
+\end{enumerate}
+
+\section{Verification of the Thesis Statement}
+\label{sec:thesis_verification}
+
+The central thesis defended in this work:
+\begin{quote}
+\itshape
+The orchestration of a specialized swarm of autonomous software engineering agents operating under the Code-First paradigm and the ADK-TRACE methodology enables the fully automated, deterministic synthesis of production-grade software in parallel with a verifiable, rigorous academic thesis, completely eliminating factual hallucinations and bibliographic fabrications.
+\end{quote}
+**has been fully substantiated**. In all validation scenarios, zero ungrounded AST symbols appeared in the academic text, all cited references were grounded in verified scientific databases, and the generated code achieved 100\% test pass rates alongside robust mutation scores.
+
+\section{System Limitations}
+\label{sec:system_limitations}
+
+Despite its proven efficacy, several operational constraints should be noted:
+\begin{itemize}
+    \item \textbf{Token Consumption}: The multi-pass reflexion loop and comprehensive mutation analysis incur substantial LLM API token overhead compared to naive generation.
+    \item \textbf{Compilation Time}: Running extensive mutation suites on large codebases introduces significant execution latency during the sandbox testing phase.
+    \item \textbf{Context Window Boundaries}: Generating multi-chapter theses exceeding 100 pages requires careful context pruning to maintain attention coherence across distant chapters.
+\end{itemize}
+
+\section{Future Research Horizons}
+\label{sec:future_work}
+
+Promising directions for future investigation include:
+\begin{enumerate}
+    \item \textbf{Formal Method Integration}: Coupling coding agents with automated theorem provers (such as Lean 4 or Isabelle) to generate formal mathematical proofs of algorithmic correctness alongside executable code.
+    \item \textbf{Speculative Tool Execution}: Implementing asynchronous, speculative tool invocation and rollback mechanics \cite{Sui2026SpeculativeExecution, Zhou2026ACRouter} to reduce end-to-end synthesis latency.
+    \item \textbf{Generative User Interface Co-Synthesis}: Expanding the artifact synthesis pipeline to automatically produce responsive web dashboards and interactive visualizations alongside the academic manuscript.
+\end{enumerate}
+

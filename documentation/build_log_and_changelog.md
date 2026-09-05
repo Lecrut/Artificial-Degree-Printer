@@ -356,6 +356,25 @@ Wszystkie zmiany w architekturze, dodane funkcjonalności, kamienie milowe oraz 
   - Utworzono zestaw testów w [`tests/test_security_and_memory.py`](file:///d:/studia-local/Artificial-Degree-Printer/tests/test_security_and_memory.py).
 - **Wynik weryfikacji testowej:** **93/93 PASSED**, Repository Hygiene **3/3 PASSED** (100% testów przechodzi pomyślnie).
 
+---
+
+### 🟢 Etap 30: Utworzenie Inkubatora Awangardowych Inspiracji Naukowych (`scientific_papers/inspirations/`)
+- **Data realizacji:** 05.09.2026 r.
+- **Opis zmian:**
+  - Utworzono podkatalog badawczy `documentation/scientific_papers/inspirations/` stanowiący inkubator awangardowych innowacji na potrzeby pracy magisterskiej.
+  - Zorganizowano strukturę 7 tematycznych podfolderów badawczych SOTA (2024–2026):
+    1. `01_diffusion_and_discrete_flow/` (modele dyfuzyjne dla kodu i AST: `@TreeDiff2025`, `@DiffuCoder2025`),
+    2. `02_infinite_context_and_attention/` (atencja nieskończona i pojedynczy przebieg: `@Google2024InfiniAttention`, `@DeepSeek2025NSA`),
+    3. `03_active_inference_and_free_energy/` (zasada wolnej energii i samoregulacja roju: `@Friston2024ActiveInference`),
+    4. `04_tokenless_byte_latent_computing/` (modele beztokenowe na poziomie bajtów: `@Meta2024BLT`),
+    5. `05_topological_reasoning_landscapes/` (projekcje trajektorii myśli 2D/3D: `@LoT2026Landscapes` ICLR 2026),
+    6. `06_explorable_reactive_artifacts/` (żywe, reaktywne dokumenty i symulacje DocSpec: `@Tang2026ViviDoc` 2026),
+    7. `07_neuro_symbolic_and_kan/` (sieci KAN i deklaratywne więzy geometrii: `@Liu2024KAN`, `@Feynman2026Diagrams`).
+  - Opracowano 18 plików dokumentacji technicznej i szczegółowych kart analitycznych (zgodnie z Zero 0-byte Guarantee, min. 500+ bajtów na plik).
+  - Zaktualizowano indeks główny `documentation/scientific_papers/README.md` oraz taksonomię `documentation/scientific_papers/search_keywords_taxonomy.md` o 7. filar awangardowych poszukiwań.
+- **Wynik weryfikacji testowej:** Weryfikacja higieny repozytorium i testów jednostkowych.
+
+
 
 
 

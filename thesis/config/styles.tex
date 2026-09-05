@@ -1,0 +1,221 @@
+% ==============================================================================
+% STYLE I PAKIETY PRACY DYPLOMOWEJ
+% Modułowa konfiguracja typograficzna (standard uczelni technicznych)
+% TYPOGRAPHIC AND EDITORIAL CONFIGURATION
+% Tailored to Lodz University of Technology (Politechnika Łódzka - PŁ) standards
+% ==============================================================================
+
+% Kodowanie i język
+% Encodings and Languages (English primary, Polish for Streszczenie & title)
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish,english]{babel}
+\usepackage{polski}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% Geometria strony (marginesy: lewy 30mm na oprawę, prawy 20mm, góra/dół 25mm)
+% Page Geometry (TUL standard: inner 35mm for binding, outer 25mm, top/bottom 25mm)
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    left=30mm,
+    right=20mm,
+    inner=35mm,
+    outer=25mm,
+    top=25mm,
+    bottom=25mm,
+    headheight=15pt
+}
+
+% Interlinia (1.3 / 1.5 - standard akademicki)
+% Line Spacing (1.5 line spacing - TUL requirement)
+\usepackage{setspace}
+\onehalfspacing
+
+% Matematyka i symbole
+% Mathematics and Symbols
+\usepackage{amsmath,amssymb,amsfonts,mathtools}
+
+% Grafika, wykresy i podpisy
+% Graphics and Captions
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\captionsetup{font=small,labelfont=bf,margin=1cm}
+\captionsetup{font=small,labelfont=bf,margin=0.8cm}
+
+% Tabele
+% Tables
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+
+% Kolory
+% Colors
+\usepackage{xcolor}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codegreen}{rgb}{0.15,0.55,0.25}
+\definecolor{codeblue}{rgb}{0.16,0.38,0.73}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codegray}{rgb}{0.45,0.45,0.45}
+\definecolor{codegreen}{rgb}{0.12,0.52,0.22}
+\definecolor{codeblue}{rgb}{0.14,0.35,0.72}
+\definecolor{codepurple}{rgb}{0.55,0,0.8}
+\definecolor{backcolour}{rgb}{0.97,0.98,0.99}
+\definecolor{linknavy}{rgb}{0.05,0.2,0.5}
+\definecolor{linknavy}{rgb}{0.04,0.18,0.46}
+\definecolor{tulred}{rgb}{0.65,0.05,0.1}
+
+% Listingi kodu źródłowego
+% Source Code Listings
+\usepackage{listings}
+\lstdefinestyle{codeStyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=7pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{codegray!30},
+    xleftmargin=12pt,
+    framexleftmargin=10pt,
+    literate=
+        {ą}{{\k{a}}}1
+        {ć}{{\'c}}1
+        {ę}{{\k{e}}}1
+        {ł}{{\l{}}}1
+        {ń}{{\'n}}1
+        {ó}{{\'o}}1
+        {ś}{{\'s}}1
+        {ź}{{\'z}}1
+        {ż}{{\.z}}1
+        {Ą}{{\k{A}}}1
+        {Ć}{{\'C}}1
+        {Ę}{{\k{E}}}1
+        {Ł}{{\L{}}}1
+        {Ń}{{\'N}}1
+        {Ó}{{\'O}}1
+        {Ś}{{\'S}}1
+        {Ź}{{\'Z}}1
+        {Ż}{{\.Z}}1
+    framexleftmargin=10pt
+}
+\lstset{style=codeStyle}
+
+% Bibliografia (IEEE / BibLaTeX z backendem biber)
+% Bibliography (IEEE numeric style with BibLaTeX)
+\usepackage[
+    backend=biber,
+    style=ieee,
+    style=numeric-comp,
+    sorting=none,
+    doi=true,
+    url=true,
+    isbn=false
+]{biblatex}
+\addbibresource{references.bib}
+
+% Hiperłącza
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=linknavy,
+    citecolor=codeblue,
+    urlcolor=codeblue,
+    pdftitle={\ThesisTitle},
+    pdfauthor={\ThesisAuthor}
+}
+
+% Nagłówki i stopki
+% Headers and Footers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\small\thepage}
+\fancyhead[LO]{\small\nouppercase{\rightmark}}
+\fancyhead[RE]{\small\nouppercase{\leftmark}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Spis treści i numeracja
+% Section Depth
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+
+% Generator eleganckiej strony tytułowej
+\newcommand{\MakeThesisTitlePage}{%
+% ==============================================================================
+% LODZ UNIVERSITY OF TECHNOLOGY (PŁ) TITLE PAGE GENERATOR
+% ==============================================================================
+\newcommand{\MakeTULTitlesPage}{%
+\begin{titlepage}
+    \begin{center}
+        \vspace*{0.5cm}
+        \vspace*{-0.5cm}
+        {\scshape\LARGE \UniversityName\par}
+        \vspace{0.2cm}
+        {\large\itshape (\UniversityNamePL)\par}
+        \vspace{0.4cm}
+        {\large \FacultyName\par}
+        \vspace{0.2cm}
+        {\large\bfseries \FacultyName\par}
+        \vspace{0.1cm}
+        {\small \InstituteName\par}
+        \vspace{2.5cm}
+        
+        \vspace{2.2cm}
+        {\large \ThesisType\par}
+        \vspace{0.3cm}
+        {\large Kierunek: \FieldOfStudy\par}
+        \vspace{0.2cm}
+        {\small Field of Study: \textbf{\FieldOfStudy}\par}
+        \ifx\Specialization\empty\else
+        {\small Specjalność: \Specialization\par}
+        {\small Specialization: \Specialization\par}
+        \fi
+        
+        \vspace{2.0cm}
+        {\huge\bfseries \ThesisTitle\par}
+        \vspace{0.8cm}
+        {\large\itshape \ThesisTitleEN\par}
+        {\large\bfseries (\ThesisTitlePL)\par}
+        
+        \vfill
+        
+        \begin{flushleft}
+        \large
+        \begin{tabular}{ll}
+            \textbf{Autor:} & \ThesisAuthor \\
+            \textbf{Numer albumu:} & \ThesisAlbumNumber \\[0.4cm]
+            \textbf{Promotor:} & \ThesisSupervisor \\
+            \textbf{Author:} & \ThesisAuthor \\
+            \textbf{Student ID:} & \ThesisAlbumNumber \\[0.5cm]
+            \textbf{Supervisor:} & \ThesisSupervisor \\
+            & \small \ThesisSupervisorDept \\
+            \ifx\ThesisConsultant\empty\else
+            \textbf{Konsultant:} & \ThesisConsultant \\
+            \textbf{Consultant:} & \ThesisConsultant \\
+            \fi
+        \end{tabular}
+        \end{flushleft}
+        
+        \vspace{1.5cm}
+        {\large \ThesisCity, \ThesisYear\par}
+    \end{center}
+\end{titlepage}
+}
+

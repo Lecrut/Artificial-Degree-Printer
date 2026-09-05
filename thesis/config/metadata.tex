@@ -1,0 +1,80 @@
+% ==============================================================================
+% METADANE PRACY MAGISTERSKIEJ
+% Możesz w dowolnym momencie edytować poniższe wartości.
+% MASTER OF SCIENCE THESIS METADATA (LODZ UNIVERSITY OF TECHNOLOGY / PŁ)
+% ==============================================================================
+
+\newcommand{\ThesisTitle}{Autonomiczny system wieloagentowy do równoległego wytwarzania oprogramowania i weryfikowalnej dokumentacji akademickiej w paradygmacie Code-First}
+\newcommand{\ThesisTitleEN}{Autonomous Multi-Agent System for Parallel Software Engineering and Verifiable Academic Documentation under the Code-First Paradigm}
+% Thesis Titles (Required: English primary, Polish secondary as per TUL regulations)
+\newcommand{\ThesisTitle}{Autonomous Multi-Agent Framework for Parallel Software Engineering and Verifiable Academic Documentation under the Code-First Paradigm}
+\newcommand{\ThesisTitlePL}{Autonomiczny system wieloagentowy do równoległego wytwarzania oprogramowania i weryfikowalnej dokumentacji akademickiej w paradygmacie Code-First}
+
+\newcommand{\ThesisAuthor}{[Imię i Nazwisko Autora]}
+\newcommand{\ThesisAlbumNumber}{[Nr Indeksu, np. 123456]}
+% Author and Student Details
+\newcommand{\ThesisAuthor}{[Author's Full Name / Imię i Nazwisko]}
+\newcommand{\ThesisAlbumNumber}{[Student ID / Numer albumu, np. 234567]}
+
+\newcommand{\ThesisSupervisor}{dr inż. [Tytuł i Nazwisko Promotora]}
+\newcommand{\ThesisConsultant}{[Opcjonalnie: Konsultant / Promotor pomocniczy]}
+% Supervision
+\newcommand{\ThesisSupervisor}{dr inż. [Supervisor's Name / Promotor]}
+\newcommand{\ThesisSupervisorDept}{Institute of Applied Computer Science} % np. Instytut Informatyki Stosowanej (I24) / FTIMS
+\newcommand{\ThesisConsultant}{} % Optional: assistant supervisor / konsultant
+
+\newcommand{\UniversityName}{[Nazwa Uczelni, np. Politechnika Warszawska]}
+\newcommand{\FacultyName}{Wydział Informatyki i Telekomunikacji}
+\newcommand{\InstituteName}{Instytut Informatyki Stosowanej}
+\newcommand{\FieldOfStudy}{Informatyka}
+\newcommand{\Specialization}{Inżynieria Oprogramowania i Systemy Inteligentne}
+\newcommand{\ThesisType}{Praca magisterska}
+\newcommand{\ThesisCity}{Warszawa}
+% University and Faculty (TUL / Politechnika Łódzka)
+\newcommand{\UniversityName}{Lodz University of Technology}
+\newcommand{\UniversityNamePL}{Politechnika Łódzka}
+\newcommand{\FacultyName}{Faculty of Electrical, Electronic, Computer and Control Engineering} % or: Faculty of Technical Physics, Information Technology and Applied Mathematics (FTIMS)
+\newcommand{\FacultyNamePL}{Wydział Elektrotechniki, Elektroniki, Informatyki i Automatyki} % lub: Wydział Fizyki Technicznej, Informatyki i Matematyki Stosowanej
+\newcommand{\InstituteName}{Institute of Applied Computer Science}
+\newcommand{\InstituteNamePL}{Instytut Informatyki Stosowanej}
+
+\newcommand{\FieldOfStudy}{Computer Science} % or: Artificial Intelligence and Data Science
+\newcommand{\FieldOfStudyPL}{Informatyka}
+\newcommand{\Specialization}{Software Engineering and Intelligent Systems}
+\newcommand{\SpecializationPL}{Inżynieria Oprogramowania i Systemy Inteligentne}
+
+\newcommand{\ThesisType}{Master of Science Thesis}
+\newcommand{\ThesisTypePL}{Praca dyplomowa magisterska}
+\newcommand{\ThesisCity}{Łódź}
+\newcommand{\ThesisYear}{2027}
+
+% Streszczenie po polsku
+\newcommand{\AbstractPL}{%
+Przedmiotem niniejszej pracy magisterskiej jest projekt oraz implementacja autonomicznego systemu wieloagentowego Artificial Degree Printer (ADK), realizującego zadanie jednoczesnego wytwarzania działającego oprogramowania oraz rygorystycznej, spójnej dokumentacji akademickiej. W obliczu dynamicznego rozwoju modeli dużych języków (LLM) zidentyfikowano problem podatności generatorów kodu na halucynacje oraz brak spójności semantycznej pomiędzy kodem a narracją teoretyczną. W pracy zaproponowano i zwalidowano nowatorski paradygmat Code-First oraz metodykę ADK-TRACE (Traceable, Reflexive, Artifact-Centric Engineering). W ramach systemu zaimplementowano rój wyspecjalizowanych agentów programistycznych (Orchestrator, Researcher, Architect, Developer, Experimenter, Typesetter, Reviewer) koordynowanych deterministycznym grafem stanów. Wytworzone artefakty poddawane są wieloetapowemu audytowi w ramach siedmiu bramek jakościowych (MasterVerificationSuite), weryfikujących m.in. drzewo składniowe AST, odporność testów na mutacje, aktualność bibliografii oraz stylometrię. Przeprowadzone badania empiryczne potwierdzają wysoką deterministyczność systemu, pełną identyfikowalność cytowań oraz eliminację frazesów syntetycznych.
+% ==============================================================================
+% ABSTRACTS AND KEYWORDS (Required: both EN and PL)
+% ==============================================================================
+
+\newcommand{\AbstractEN}{%
+This Master of Science thesis addresses the critical challenge of semantic inconsistency and hallucination in automated software engineering driven by Large Language Models (LLMs). While generative models exhibit strong prototyping capabilities, their unconstrained deployment often produces syntactically plausible yet functionally broken code and decoupled, inaccurate technical documentation. To resolve this challenge, this work introduces the **Code-First paradigm** and the **ADK-TRACE** (Traceable, Reflexive, Artifact-Centric Engineering) methodology, realized within an autonomous multi-agent system: **Artificial Degree Printer (ADK)**. 
+
+The framework coordinates a deterministic swarm of seven specialized software engineering agents (Orchestrator, Researcher, Architect, Developer, Experimenter, Typesetter, and Reviewer) operating over a strongly-typed Pydantic v2 state machine. In strict adherence to the Code-First paradigm, technical narrative is synthesized only after source code passes isolated sandbox execution and mutation testing. The generated artifacts undergo rigorous quality verification through the **MasterVerificationSuite**, comprising seven automated gates that evaluate Python AST integrity, mutation score resilience, bibliographic recency (SOTA 2023--2026), cross-modal symbol consistency, and lexical diversity. Empirical experiments on end-to-end software synthesis demonstrate full citation provenance, high mutation resilience ($MS \ge 70\%$), and the complete elimination of synthetic conversational hallucinations.
+}
+
+% Słowa kluczowe PL
+\newcommand{\KeywordsPL}{systemy wieloagentowe, inżynieria oprogramowania, modele językowe (LLM), paradygmat Code-First, weryfikacja automatyczna, testy mutacyjne, typografia akademicka, identyfikowalność artefaktów}
+\newcommand{\KeywordsEN}{multi-agent systems, autonomous software engineering, large language models, code-first paradigm, automated verification, mutation testing, academic typesetting, artifact traceability, Model Context Protocol (MCP)}
+
+% Abstract EN
+\newcommand{\AbstractEN}{%
+This Master's thesis presents the design and implementation of an autonomous multi-agent system, Artificial Degree Printer (ADK), engineered for the simultaneous synthesis of production-grade software and rigorous, verifiable academic documentation. Addressing the prevalent vulnerability of Large Language Models (LLMs) to hallucinations and cross-modal inconsistency between technical source code and theoretical narrative, this work introduces the Code-First paradigm and the ADK-TRACE methodology (Traceable, Reflexive, Artifact-Centric Engineering). The system coordinates an orchestrated swarm of specialized agents (Orchestrator, Researcher, Architect, Developer, Experimenter, Typesetter, and Reviewer) operating over a deterministic state machine. Artifacts undergo rigorous quality enforcement across seven specialized verification gates (MasterVerificationSuite), evaluating Python AST validity, mutation score resilience, bibliographic recency, and stylometric authenticity. Empirical evaluation demonstrates robust orchestration reproducibility, end-to-end citation provenance, and effective elimination of synthetic conversational artifacts.
+\newcommand{\AbstractPL}{%
+Przedmiotem niniejszej pracy magisterskiej jest zagadnienie eliminacji halucynacji faktograficznych oraz niespójności semantycznej w zautomatyzowanym wytwarzaniu oprogramowania przy użyciu modeli dużych języków (LLM). W pracy zaproponowano nowatorski paradygmat **Code-First** oraz metodykę **ADK-TRACE** (Traceable, Reflexive, Artifact-Centric Engineering), zaimplementowane w autonomicznym systemie wieloagentowym **Artificial Degree Printer (ADK)**. 
+
+System koordynuje zdeterminowany rój siedmiu wyspecjalizowanych agentów inżynierii oprogramowania (Orchestrator, Researcher, Architect, Developer, Experimenter, Typesetter, Reviewer) działających w oparciu o silnie typowaną maszynę stanów Pydantic v2. Zgodnie z założeniami paradygmatu Code-First, treść dokumentacji akademickiej jest syntezowana wyłącznie po pomyślnym uruchomieniu kodu w izolowanym sandboksie i zaliczeniu testów mutacyjnych. Wytworzone artefakty poddawane są wieloetapowemu audytowi w pakiecie **MasterVerificationSuite**, obejmującym siedem bramek jakościowych weryfikujących m.in. drzewo składniowe AST, wskaźnik mutacji, aktualność literatury SOTA (2023--2026), spójność krzyżową tekstu z kodem oraz profil stylometryczny. Przeprowadzone badania empiryczne potwierdzają pełną deterministyczność orkiestracji, eliminację zmyślonych źródeł oraz wysoką jakość generowanego oprogramowania.
+}
+
+% Keywords EN
+\newcommand{\KeywordsEN}{multi-agent systems, software engineering, large language models, code-first paradigm, automated verification, mutation testing, academic typesetting, artifact traceability}
+
+\newcommand{\KeywordsPL}{systemy wieloagentowe, autonomiczna inżynieria oprogramowania, duże modele językowe, paradygmat Code-First, weryfikacja automatyczna, testy mutacyjne, typografia akademicka, identyfikowalność artefaktów, Model Context Protocol (MCP)}
