@@ -1,0 +1,28 @@
+# ==============================================================================
+# Pliki generowane automatycznie przez agenta (MOŻNA BEZPIECZNIE USUWAĆ)
+# ==============================================================================
+
+# 1. Kod i dokumentacja tworzone w locie przez L1 (CodeAgent & DocAgent):
+#    (np. pesel.py, pesel_doc.md, nip.py, nip_doc.md, regon.py, regon_doc.md)
+harness_mvp/workspace/*
+!harness_mvp/workspace/.gitkeep
+
+# 2. Narzędzia deterministyczne zsyntetyzowane przez L2 (ToolSynthesizer):
+#    (np. ast_param_checker.py)
+harness_mvp/dynamic_tools/*
+!harness_mvp/dynamic_tools/.gitkeep
+
+# 3. Dziennik kroków i logi z uruchomień:
+harness_mvp/harness.log
+*.log
+
+# 4. Pamięć ewolucyjna, rejestr reguł i metryki L2:
+harness_mvp/evolution_memory.json
+
+# 5. Izolowany sandbox testowy L2:
+harness_mvp/.shadow_sandbox/
+
+# 6. Bytecode Pythona:
+__pycache__/
+*.py[cod]
+
