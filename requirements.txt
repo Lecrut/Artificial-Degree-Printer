@@ -1,4 +1,0 @@
-# Dependencies for ADK 2027 Agentic Framework
-pydantic>=2.0
-matplotlib>=3.8
-pytest>=8.0

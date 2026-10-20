@@ -1,1 +1,0 @@
-"""ADK scaffold package."""
