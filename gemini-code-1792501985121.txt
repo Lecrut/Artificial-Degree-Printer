@@ -1,0 +1,239 @@
+================================================================================
+PLAN IMPLEMENTACJI SYSTEMU: NEURO-SYMBOLIC HARNESS
+Format zoptymalizowany pod środowisko agentowe (Antigravity)
+Podział na Fale: FALA 1 (Warstwy 1-3 + Guardy) -> FALA 2 (Warstwa 4: Samoewolucja)
+================================================================================
+
+ZASADY OGÓLNE DLA ŚRODOWISKA WYKONAWCZEGO (ANTIGRAVITY):
+1. Modułowość: Każde narzędzie (.py) to osobny, niezależny moduł z czystym 
+   interfejsem wejścia/wyjścia (funkcja przyjmująca słownik/JSON i zwracająca 
+   ustrukturyzowany słownik/JSON).
+2. Deklaratywność: Agenci są zdefiniowani wyłącznie jako pliki tekstowe (.md). 
+   Kod w Pythonie jedynie wczytuje odpowiedni plik .md i przekazuje go do API LLM.
+3. Stan w JSON: Cała komunikacja między warstwami odbywa się poprzez odczyt i zapis 
+   jawnych plików .json w katalogu `state/`.
+4. Testowalność: Po zbudowaniu każdego kroku (Step) należy uruchomić krótki test 
+   weryfikujący działanie modułu przed przejściem do kolejnego kroku.
+
+
+================================================================================
+STRUKTURA KATALOGÓW PROJEKTU (DO UTWORZENIA W KROKU 0)
+================================================================================
+project_root/
+│
+├── state/                              # Architektura i stan systemu (.json)
+│   ├── task_queue.json                 # Kolejka zadań (Warstwa 1)
+│   ├── hypergraph_matrix.json          # Macierz incydencji H, stopnie d(v), wagi w(v)
+│   ├── agent_registry.json             # Rejestr aktywnych agentów .md (Warstwa 2)
+│   ├── validation_report.json          # Raport końcowy z nadzorców (Warstwa 3)
+│   ├── failure_ledger.json             # Rejestr porażek (Warstwa 4 - Fala 2)
+│   ├── evolution_history.json          # Historia ewolucji (Warstwa 4 - Fala 2)
+│   └── hitl_flag.json                  # Flaga zapytania do promotora (Warstwa 4)
+│
+├── agents/                             # Definicje ról i instrukcje (.md)
+│   ├── layer1_plan/
+│   │   ├── task_planner.md             # Planista zadań
+│   │   └── task_critic_guard.md        # Krytyk zadania (GUARD między W1 a W2)
+│   ├── layer2_builders/
+│   │   ├── seed_coder.md               # Agent początkowy: programista
+│   │   ├── seed_tester.md              # Agent początkowy: tester
+│   │   └── seed_writer.md              # Agent początkowy: pisarz naukowy
+│   ├── layer3_supervisors/
+│   │   ├── code_auditor.md             # Nadzorca Inżynieryjny Kodu
+│   │   ├── symbolic_auditor.md         # Nadzorca Spójności Symbolicznej i Danych
+│   │   └── redteam_critic_guard.md     # Nadzorca Antagonistyczny / Red-Team (GUARD)
+│   └── layer4_evolution/               # (Aktywowane w Fali 2)
+│       └── evolution_architect.md      # Architekt ewolucji
+│
+├── tools/                              # Narzędzia deterministyczne (.py)
+│   ├── core_llm.py                     # Wrapper do wywoływania modeli (SML / LRM)
+│   ├── layer1_tools/
+│   │   ├── blast_radius.py             # Wyliczanie promienia rażenia z macierzy H
+│   │   └── complexity_router.py        # Przydział modelu na podstawie d(v) i w(v)
+│   ├── layer2_tools/
+│   │   ├── local_ast_editor.py         # Edycja pojedynczego węzła AST + GUARD składni
+│   │   ├── local_doc_editor.py         # Edycja pojedynczego podrozdziału (.tex/.md)
+│   │   ├── bridge_import_sync.py       # Synchronizacja zmiennych i importów
+│   │   └── bridge_hypergraph_sync.py   # Aktualizacja macierzy H po zmianie pliku
+│   ├── layer3_tools/
+│   │   ├── docker_test_runner.py       # Runner testów (pytest, ruff) w kontenerze/izolacji
+│   │   └── ref_compiler.py             # Kompilator wskaźników \ref_ast i \ref_csv
+│   └── layer4_tools/                   # (Implementowane w Fali 2)
+│       ├── agent_creator.py            # Kreacja nowych agentów .md
+│       ├── agent_splitter.py           # Podział agenta na mniejszych
+│       ├── agent_mutator.py            # Mutacja agenta (dopisanie reguł)
+│       └── docker_tool_tester.py       # Tester wygenerowanych narzędzi w izolacji
+│
+├── workspace/                          # Katalog roboczy na pliki generowanego projektu
+└── orchestrator.py                     # Główna pętla sterująca przepływem
+
+
+================================================================================
+FALA 1: BUDOWA RDZENIA SYSTEMU (WARSTWY 1–3 + GUARDY)
+(W Fali 1 Warstwa 4 jest wyłączona – błędy z W3 wracają bezpośrednio do W1)
+================================================================================
+
+--------------------------------------------------------------------------------
+ETAP 1.1: Fundamenty, schematy JSON i silnik Hipergrafu
+--------------------------------------------------------------------------------
+[x] Krok 1.1.1: Inicjalizacja struktury katalogów i pustych plików stanu w `state/`.
+    - Zdefiniuj schemat `hypergraph_matrix.json`:
+      {
+        "nodes": {"v1": {"path": "config.py", "degree": 2, "weight": 1.0}},
+        "edges": {"E1": ["v1", "v2"], "E2": ["v2", "v3"], "E3": ["v1", "v3", "v4"]},
+        "matrix": {"v1": {"E1": 1, "E2": 0, "E3": 1}}
+      }
+    - Zdefiniuj schemat `task_queue.json`:
+      lista obiektów z polami: `task_id`, `description`, `target_node`, 
+      `assigned_agent`, `status` (TODO | IN_PROGRESS | DONE | FAILED).
+
+[x] Krok 1.1.2: Implementacja `tools/core_llm.py`.
+    - Stwórz prostą funkcję `call_agent(md_path, user_payload, model_tier="SML")`, 
+      która ładuje prompt systemowy z pliku `.md`, dokleja dane wejściowe JSON 
+      i zwraca odpowiedź modelu.
+
+--------------------------------------------------------------------------------
+ETAP 1.2: Warstwa 1 (Mózg planu) + Guard Planowania
+--------------------------------------------------------------------------------
+[x] Krok 1.2.1: Implementacja narzędzia `tools/layer1_tools/blast_radius.py`.
+    - Funkcja `calculate_blast_radius(modified_node_id, matrix_path)`:
+      1. Odczytuje `hypergraph_matrix.json`.
+      2. Sprawdza, w których kolumnach (workach E_1...E_n) wierzchołek ma wartość 1.
+      3. Zwraca listę wszystkich innych wierzchołków (plików), które mają wartość 1 
+         w tych samych kolumnach, oraz oblicza sumę wiersza jako stopień `d(v)`.
+
+[x] Krok 1.2.2: Implementacja narzędzia `tools/layer1_tools/complexity_router.py`.
+    - Funkcja `select_model_tier(node_id, matrix_path)`:
+      Pobiera stopień wierzchołka `d(v)` oraz wagę `w(v)`. Jeśli `d(v) >= 2` 
+      lub `w(v) > 1.5`, zwraca `"LRM"` (duży model), w przeciwnym razie `"SML"`.
+
+[x] Krok 1.2.3: Utworzenie agentów Warstwy 1 (`.md`).
+    - Napisz `agents/layer1_plan/task_planner.md`: instrukcja rozbijania zadania 
+      użytkownika na małe, atomowe kroki przypisane do plików i wyboru agenta 
+      z `agent_registry.json`.
+    - Napisz `agents/layer1_plan/task_critic_guard.md` (Krytyk zadania - GUARD): 
+      instrukcja weryfikująca, czy lista zadań z Planisty jest atomowa, czy 
+      uwzględnia wszystkie pliki z promienia rażenia i czy przypisani agenci istnieją.
+
+--------------------------------------------------------------------------------
+ETAP 1.3: Warstwa 2 (Plac budowy – Agenci początkowi, Narzędzia i Guard składni)
+--------------------------------------------------------------------------------
+[x] Krok 1.3.1: Narzędzia lokalne plików (`tools/layer2_tools/`).
+    - `local_ast_editor.py`:
+      1. Przyjmuje ścieżkę do pliku `.py`, nazwę funkcji/klasy i nowy kod.
+      2. Parsuje plik modułem `ast`, podmienia wskazany wierzchołek drzewa AST.
+      3. Wbudowany GUARD składniowy: przed zapisaniem na dysk wywołuje `ast.parse()` 
+         na nowym kodzie. Jeśli wystąpi `SyntaxError`, odrzuca zapis i zwraca błąd.
+    - `local_doc_editor.py`:
+      Pozwala edytować pojedynczy podrozdział w pliku `.tex` lub `.md` bez 
+      nadpisywania reszty dokumentu.
+
+[x] Krok 1.3.2: Mosty międzyplikowe (`tools/layer2_tools/`).
+    - `bridge_import_sync.py`:
+      Wyciąga przez `ast` listę wyeksportowanych nazw zmiennych i funkcji z plików 
+      w worku E1, aby inne pliki używały identycznych nazw.
+    - `bridge_hypergraph_sync.py`:
+      Uruchamiany po każdej zmianie pliku w `workspace/`. Skanuje importy w `.py` 
+      oraz znaczniki `\ref_ast{...}` i `\ref_csv{...}` w tekście, po czym 
+      automatycznie aktualizuje jedynki i stopnie `d(v)` w `hypergraph_matrix.json`.
+
+[x] Krok 1.3.3: Agenci początkowi i rejestr (`agents/layer2_builders/`).
+    - Utwórz 3 pliki startowe: `seed_coder.md`, `seed_tester.md`, `seed_writer.md` 
+      (w `seed_writer.md` wpisz twardy nakaz używania znaczników `\ref_ast{plik:zmienna}` 
+      oraz `\ref_csv{plik:kolumna}` zamiast wpisywania liczb z pamięci).
+    - Zapisz ich mapowanie w `state/agent_registry.json`.
+
+--------------------------------------------------------------------------------
+ETAP 1.4: Warstwa 3 (Nadzorcy i Wyrocznie)
+--------------------------------------------------------------------------------
+[x] Krok 1.4.1: Narzędzia weryfikacyjne (`tools/layer3_tools/`).
+    - `docker_test_runner.py`:
+      Uruchamia `pytest` oraz linter `ruff` na katalogu `workspace/` (w kontenerze 
+      Docker lub odizolowanym subprocesie) i zwraca ustrukturyzowany log błędów.
+    - `ref_compiler.py`:
+      1. Szuka w plikach dokumentacji znaczników `\ref_ast{...}` oraz `\ref_csv{...}`.
+      2. Wyciąga rzeczywiste wartości z drzewa AST kodu oraz tabel `.csv` i podmienia 
+         je w skompilowanym tekście.
+      3. Sprawdza timestampy plików (czy `.csv` nie jest starszy niż kod `.py`).
+
+[x] Krok 1.4.2: Agenci Nadzorcy (`agents/layer3_supervisors/`).
+    - `code_auditor.md`: analizuje wyjście z `docker_test_runner.py`, pokrycie 
+      testami i złożoność.
+    - `symbolic_auditor.md`: analizuje wyjście z `ref_compiler.py`, świeżość 
+      danych `.csv` oraz obecność źródeł i metadanych pod wykresami.
+    - `redteam_critic_guard.md` (GUARD): złośliwy recenzent szukający sprzeczności 
+      logicznych na przecięciach hiperkrawędzi (między kodem, tabelą a wnioskami w tekście).
+    - Wynik ze wszystkich nadzorców zapisywany jest do `state/validation_report.json` 
+      jako `PASS` lub `FAIL` ze wskazaniem winnego pliku i zadania.
+
+--------------------------------------------------------------------------------
+ETAP 1.5: Orkiestrator Fali 1 (Spina Warstwy 1 -> 2 -> 3)
+--------------------------------------------------------------------------------
+[x] Krok 1.5.1: Napisz `orchestrator.py` realizujący pętlę podstawową:
+    1. Pobierz prompt od użytkownika -> uruchom `task_planner.md` (W1).
+    2. Przepuść plan przez `task_critic_guard.md` (GUARD).
+    3. Pętla po zadaniach w `task_queue.json`:
+       a. Wyznacz model przez `complexity_router.py`.
+       b. Wywołaj odpowiedniego agenta z W2 i jego narzędzia lokalne/mosty.
+       c. Zaktualizuj macierz przez `bridge_hypergraph_sync.py`.
+       d. Uruchom narzędzia i agentów W3 (`validation_report.json`).
+       e. Jeśli `PASS` -> oznacz zadanie jako `DONE`.
+       f. Jeśli `FAIL` -> (w Fali 1) przekaż raport błędu bezpośrednio z powrotem 
+          do `task_planner.md` w W1 w celu poprawienia zadania.
+
+
+================================================================================
+FALA 2: DODANIE WARSTWY 4 (SAMOEWOLUCJA AGENTÓW, NARZĘDZI I ARCHITEKTURY)
+(Rozbudowa działającego systemu z Fali 1 bez psucia istniejących modułów)
+================================================================================
+
+--------------------------------------------------------------------------------
+ETAP 2.1: Narzędzia Ewolucji Agentów (.md)
+--------------------------------------------------------------------------------
+[x] Krok 2.1.1: Implementacja `tools/layer4_tools/agent_creator.py` (Kreacja agentów).
+    - Funkcja sprawdza w `state/agent_registry.json`, czy istnieje już agent 
+      o danej specjalizacji (np. agent do wykresów lub do konkretnego formatowania).
+    - Jeśli nie ma: generuje nowy plik `.md` w `agents/layer2_builders/` lub 
+      `agents/layer3_supervisors/` (Dynamiczni Nadzorcy) i rejestruje go w JSON-ie.
+
+[x] Krok 2.1.2: Implementacja `tools/layer4_tools/agent_splitter.py` (Podział agenta).
+    - Gdy istniejący agent ma zbyt szeroki zakres i popełnia błędy:
+      1. Usuwa (lub archiwizuje) dzielonego agenta z aktywnego rejestru.
+      2. Tworzy na jego miejsce dwa nowe, węższe pliki `.md` (np. dzieli ogólnego 
+         testera na agenta testów jednostkowych i agenta testów brzegowych).
+      3. Aktualizuje `state/agent_registry.json`.
+
+[x] Krok 2.1.3: Implementacja `tools/layer4_tools/agent_mutator.py` (Mutacja agenta).
+    - Otwiera plik `.md` wskazanego agenta (z W1, W2 lub W3 – z wyjątkiem sztywnych 
+      Guardów) i dopisuje na końcu sekcję `## WYUCZONE ZASADY I ZAKAZY`, wstrzykując 
+      nową regułę na podstawie błędu zapisanego w `state/failure_ledger.json`.
+
+--------------------------------------------------------------------------------
+ETAP 2.2: Docker Tester i Ewolucja Narzędzi (.py)
+--------------------------------------------------------------------------------
+[x] Krok 2.2.1: Implementacja `tools/layer4_tools/docker_tool_tester.py`.
+    - Gdy W4 wygeneruje nowy skrypt sprawdzający `.py`:
+      1. Uruchamia nowy skrypt w izolowanym kontenerze Docker na dwóch próbkach: 
+         próbce z błędem (musi zwrócić błąd) i próbce poprawnej (musi przejść).
+      2. Jeśli test w Dockerze przejdzie pomyślnie, skrypt zostaje na stałe 
+         podpięty do Warstwy 3 i dopisany do `state/evolution_history.json`.
+
+--------------------------------------------------------------------------------
+ETAP 2.3: Mózg Warstwy 4 (Architekt Ewolucji) i Pełne Przepięcie Pętli
+--------------------------------------------------------------------------------
+[x] Krok 2.3.1: Utworzenie `agents/layer4_evolution/evolution_architect.md`.
+    - Agent przyjmuje:
+      a) zlecenie z W1 (gdy Planista zgłosi brak odpowiedniego agenta w rejestrze),
+      b) raport `FAIL` z W3 (`validation_report.json`).
+    - Podejmuje jedną z decyzji:
+      1. Wywołaj `agent_creator.py` / `agent_splitter.py` / `agent_mutator.py`.
+      2. Wygeneruj nowy skrypt walidujący i przetestuj go w `docker_tool_tester.py`.
+      3. Jeśli problem dotyczy sprzecznych wymagań – ustaw `state/hitl_flag.json` 
+         na `True` i sformułuj pytanie do promotora/użytkownika.
+
+[x] Krok 2.3.2: Aktualizacja `orchestrator.py` o pętlę Fali 2:
+    - Wepnij Warstwę 4 pomiędzy W1 a W2 (obsługa brakujących agentów) oraz 
+      pomiędzy W3 a W1 (obsługa błędów z `validation_report.json` poprzez mutację 
+      agentów `.md`, aktualizację `failure_ledger.json` i przekazanie wytycznych 
+      z powrotem do Planisty zadań w W1).
+================================================================================
