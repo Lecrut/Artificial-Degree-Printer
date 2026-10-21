@@ -1,2 +1,23 @@
-[]
-
+[
+  {
+    "task_id": "T1",
+    "description": "Implement configuration parameters for: Build a pure-Python Tic-Tac-Toe module with a tabular Q-Learning agent: 1) in config.py define learning hyperparameters ALPHA = 0.2, GAMMA = 0.95, EPSILON = 0.1, and EPISODES = 500; 2) in core.py implement board evaluation check_winner(board) and agent training/evaluation train_and_evaluate(csv_out_path) saving win_rate and draw_rate to results.csv, along with pytest unit tests in test_core.py; 3) in full mode generate a report subsection in thesis.md describing the training results exclusively via symbolic pointers \\ref_ast{config.py:EPISODES}, \\ref_ast{config.py:ALPHA}, \\ref_ast{config.py:EPSILON}, \\ref_csv{results.csv:win_rate}, and \\ref_csv{results.csv:draw_rate}.",
+    "target_node": "v1",
+    "assigned_agent": "seed_coder",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T2",
+    "description": "Implement core logic and unit tests for: Build a pure-Python Tic-Tac-Toe module with a tabular Q-Learning agent: 1) in config.py define learning hyperparameters ALPHA = 0.2, GAMMA = 0.95, EPSILON = 0.1, and EPISODES = 500; 2) in core.py implement board evaluation check_winner(board) and agent training/evaluation train_and_evaluate(csv_out_path) saving win_rate and draw_rate to results.csv, along with pytest unit tests in test_core.py; 3) in full mode generate a report subsection in thesis.md describing the training results exclusively via symbolic pointers \\ref_ast{config.py:EPISODES}, \\ref_ast{config.py:ALPHA}, \\ref_ast{config.py:EPSILON}, \\ref_csv{results.csv:win_rate}, and \\ref_csv{results.csv:draw_rate}.",
+    "target_node": "v2",
+    "assigned_agent": "seed_tester",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T3",
+    "description": "Document symbolic results for: Build a pure-Python Tic-Tac-Toe module with a tabular Q-Learning agent: 1) in config.py define learning hyperparameters ALPHA = 0.2, GAMMA = 0.95, EPSILON = 0.1, and EPISODES = 500; 2) in core.py implement board evaluation check_winner(board) and agent training/evaluation train_and_evaluate(csv_out_path) saving win_rate and draw_rate to results.csv, along with pytest unit tests in test_core.py; 3) in full mode generate a report subsection in thesis.md describing the training results exclusively via symbolic pointers \\ref_ast{config.py:EPISODES}, \\ref_ast{config.py:ALPHA}, \\ref_ast{config.py:EPSILON}, \\ref_csv{results.csv:win_rate}, and \\ref_csv{results.csv:draw_rate}.",
+    "target_node": "v4",
+    "assigned_agent": "seed_writer",
+    "status": "DONE"
+  }
+]

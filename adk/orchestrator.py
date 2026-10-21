@@ -297,8 +297,12 @@ class NeuroSymbolicOrchestrator:
             "include_docs": self.include_docs,
             "missing_agent_specialization": missing_agent_specialization,
         }
+        initial_planner_md = self.agents_dir / "planning" / "initial_task_planner.md"
+        if not initial_planner_md.exists():
+            initial_planner_md = self.agents_dir / "planning" / "task_planner.md"
+
         plan_out = call_agent(
-            self.agents_dir / "planning" / "task_planner.md",
+            initial_planner_md,
             plan_payload,
             model_tier="LRM",
             provider=self.provider,
@@ -372,9 +376,18 @@ class NeuroSymbolicOrchestrator:
                         }
                     )
 
+                remediation_agent = self.agents_dir / "planning" / "remediation_planner.md"
+                if not remediation_agent.exists():
+                    remediation_agent = self.agents_dir / "planning" / "task_planner.md"
+
                 call_agent(
-                    self.agents_dir / "planning" / "task_planner.md",
-                    {"user_prompt": user_prompt, "error_report": report, "include_docs": self.include_docs},
+                    remediation_agent,
+                    {
+                        "user_prompt": user_prompt,
+                        "error_report": report,
+                        "failed_task": task,
+                        "include_docs": self.include_docs,
+                    },
                     model_tier="LRM",
                     provider=self.provider,
                 )

@@ -1,4 +1,31 @@
 {
-  "events": []
+  "events": [
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+      }
+    }
+  ]
 }
-

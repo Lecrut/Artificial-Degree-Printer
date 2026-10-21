@@ -34,7 +34,7 @@ def _extract_json_from_text(text: str) -> dict[str, Any] | list[Any] | None:
 
 def _default_simulated_response(agent_name: str, system_prompt: str, payload: dict[str, Any], tier: str) -> dict[str, Any]:
     """Deterministic fallback response structured by agent role when running in offline/mock mode."""
-    if "task_planner" in agent_name:
+    if "task_planner" in agent_name or "initial_task_planner" in agent_name:
         prompt_text = str(payload.get("user_prompt", "Build module"))
         target_node = str(payload.get("target_node", "v1"))
         include_docs = bool(payload.get("include_docs", True))
@@ -70,6 +70,33 @@ def _default_simulated_response(agent_name: str, system_prompt: str, payload: di
         return {
             "tasks": tasks,
             "missing_agent_specialization": payload.get("missing_agent_specialization"),
+        }
+
+    if "remediation_planner" in agent_name:
+        err_rep = payload.get("error_report") or {}
+        failed_id = err_rep.get("failed_task_id", "T1")
+        failed_node = err_rep.get("failed_node", "v1")
+        failed_agent = err_rep.get("failed_agent", "seed_coder")
+        return {
+            "root_cause_diagnosis": f"Failure identified in {failed_node} by supervisor.",
+            "remediation_strategy": "Surgically patch AST or benchmark without altering completed thesis sections.",
+            "surgical_tasks": [
+                {
+                    "task_id": f"{failed_id}_FIX",
+                    "description": f"Surgically patch issues in {failed_node}",
+                    "target_node": failed_node,
+                    "assigned_agent": failed_agent,
+                    "status": "TODO",
+                }
+            ],
+        }
+
+    if "sota_researcher" in agent_name:
+        return {
+            "bibtex_entries": "@article{vaswani2017attention,\n  author = {Vaswani, Ashish and others},\n  title = {Attention Is All You Need},\n  journal = {NeurIPS},\n  year = {2017}\n}\n",
+            "literature_review_section": "\\subsection{Analiza Stanu Wiedzy}\nW literaturze przedmiotu podstawowe znaczenie ma praca \\cite{vaswani2017attention}...",
+            "citation_keys": ["vaswani2017attention"],
+            "summary": "Synthesized SOTA review with formal BibTeX bibliography.",
         }
 
     if "task_critic_guard" in agent_name:

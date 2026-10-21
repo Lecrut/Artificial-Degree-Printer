@@ -1,4 +1,19 @@
 {
-  "failures": []
+  "failures": [
+    {
+      "agent": "seed_coder",
+      "context": "{\"validation_report\": {\"status\": \"FAIL\", \"failed_task_id\": \"T1\", \"failed_node\": \"v1\", \"failed_file\": \"config.py\", \"failed_agent\": \"seed_coder\", \"supervisors\": {\"code_auditor\": {\"status\": \"FAIL\", \"issues\": [\"Detected cross-artifact inconsistency\"]}, \"symbolic_auditor\": {\"status\": \"PASS\", \"issues\": []}, \"redteam_critic_guard\": {\"status\": \"FAIL\", \"issues\": [\"Detected cross-artifact inconsistency\"]}}, \"summary\": \"Layer 3 verification failed.\"}, \"failed_agent\": \"seed_coder\", \"suggested_rule\": \"Unikaj niezgodności sygnatur wykrytych w zadaniu T1\"}",
+      "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+    },
+    {
+      "agent": "seed_coder",
+      "context": "{\"validation_report\": {\"status\": \"FAIL\", \"failed_task_id\": \"T1\", \"failed_node\": \"v1\", \"failed_file\": \"config.py\", \"failed_agent\": \"seed_coder\", \"supervisors\": {\"code_auditor\": {\"status\": \"FAIL\", \"issues\": [\"Detected cross-artifact inconsistency\"]}, \"symbolic_auditor\": {\"status\": \"PASS\", \"issues\": []}, \"redteam_critic_guard\": {\"status\": \"FAIL\", \"issues\": [\"Detected cross-artifact inconsistency\"]}}, \"summary\": \"Layer 3 verification failed.\"}, \"failed_agent\": \"seed_coder\", \"suggested_rule\": \"Unikaj niezgodności sygnatur wykrytych w zadaniu T1\"}",
+      "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+    },
+    {
+      "agent": "seed_coder",
+      "context": "{\"validation_report\": {\"status\": \"FAIL\", \"failed_task_id\": \"T1\", \"failed_node\": \"v1\", \"failed_file\": \"config.py\", \"failed_agent\": \"seed_coder\", \"supervisors\": {\"code_auditor\": {\"status\": \"FAIL\", \"issues\": [\"Detected cross-artifact inconsistency\"]}, \"symbolic_auditor\": {\"status\": \"PASS\", \"issues\": []}, \"redteam_critic_guard\": {\"status\": \"FAIL\", \"issues\": [\"Detected cross-artifact inconsistency\"]}}, \"summary\": \"Layer 3 verification failed.\"}, \"failed_agent\": \"seed_coder\", \"suggested_rule\": \"Unikaj niezgodności sygnatur wykrytych w zadaniu T1\"}",
+      "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+    }
+  ]
 }
-
