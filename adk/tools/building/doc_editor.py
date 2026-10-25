@@ -5,6 +5,16 @@ from pathlib import Path
 from typing import Any
 
 
+def _strip_duplicate_leading_heading(content: str, section_title: str) -> str:
+    """Remove a leading Markdown or LaTeX section heading if it duplicates section_title."""
+    cleaned = content.strip()
+    md_prefix = re.compile(rf"^##+\s+{re.escape(section_title)}\s*\n+", re.IGNORECASE)
+    tex_prefix = re.compile(rf"^\\(?:sub)*section\{{{re.escape(section_title)}\}}\s*\n+", re.IGNORECASE)
+    cleaned = md_prefix.sub("", cleaned, count=1)
+    cleaned = tex_prefix.sub("", cleaned, count=1)
+    return cleaned.strip()
+
+
 def edit_document_section(
     file_path: str | Path,
     section_title: str,
@@ -20,12 +30,14 @@ def edit_document_section(
             "error": f"Unsupported document format '{suffix}'. Expected .md or .tex.",
         }
 
+    normalized_body = _strip_duplicate_leading_heading(new_content, section_title)
+
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
         if suffix == ".tex":
-            initial = f"\\subsection{{{section_title}}}\n{new_content.strip()}\n"
+            initial = f"\\subsection{{{section_title}}}\n{normalized_body}\n"
         else:
-            initial = f"## {section_title}\n{new_content.strip()}\n"
+            initial = f"## {section_title}\n{normalized_body}\n"
         path.write_text(initial, encoding="utf-8")
         return {
             "status": "ok",
@@ -43,14 +55,14 @@ def edit_document_section(
         )
         if pattern.search(existing):
             updated = pattern.sub(
-                lambda m: f"{m.group(1)}\n{new_content.strip()}\n\n",
+                lambda m: f"{m.group(1)}\n{normalized_body}\n\n",
                 existing,
                 count=1,
             )
             action = "replaced"
         else:
             sep = "\n" if existing.endswith("\n") else "\n\n"
-            updated = f"{existing}{sep}## {section_title}\n{new_content.strip()}\n"
+            updated = f"{existing}{sep}## {section_title}\n{normalized_body}\n"
             action = "appended"
     else:
         pattern = re.compile(
@@ -59,14 +71,14 @@ def edit_document_section(
         )
         if pattern.search(existing):
             updated = pattern.sub(
-                lambda m: f"{m.group(1)}\n{new_content.strip()}\n\n",
+                lambda m: f"{m.group(1)}\n{normalized_body}\n\n",
                 existing,
                 count=1,
             )
             action = "replaced"
         else:
             sep = "\n" if existing.endswith("\n") else "\n\n"
-            updated = f"{existing}{sep}\\subsection{{{section_title}}}\n{new_content.strip()}\n"
+            updated = f"{existing}{sep}\\subsection{{{section_title}}}\n{normalized_body}\n"
             action = "appended"
 
     path.write_text(updated, encoding="utf-8")

@@ -42,6 +42,20 @@ class LLMConnectionManager:
         load_dotenv_file()
         self.provider = (provider or os.environ.get("HARNESS_PROVIDER", "auto")).lower()
 
+    def _probe_ollama_tags(self, timeout: float = 2.0) -> tuple[bool, list[str], str | None]:
+        """Quickly check if local Ollama server is reachable and list installed models."""
+        ollama_generate_url = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
+        ollama_base = ollama_generate_url.split("/api/")[0].rstrip("/")
+        ollama_tags_url = f"{ollama_base}/api/tags"
+        try:
+            req = urllib.request.Request(ollama_tags_url, method="GET")
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                tag_data = json.loads(resp.read().decode("utf-8"))
+                models = [str(m.get("name", "")) for m in tag_data.get("models", []) if isinstance(m, dict)]
+                return True, models, None
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+            return False, [], str(exc)
+
     def resolve_provider(self) -> str:
         """Determine active provider ('google', 'ollama', or 'mock')."""
         if self.provider in ("google", "ollama", "mock"):
@@ -51,6 +65,11 @@ class LLMConnectionManager:
             return "google"
         if os.environ.get("HARNESS_USE_OLLAMA") == "1":
             return "ollama"
+        # Outside pytest unit tests, auto-detect running local Ollama server
+        if "PYTEST_CURRENT_TEST" not in os.environ:
+            reachable, _, _ = self._probe_ollama_tags(timeout=1.5)
+            if reachable:
+                return "ollama"
         return "mock"
 
     def resolve_model_name(self, provider: str, model_tier: str) -> str:
@@ -70,18 +89,25 @@ class LLMConnectionManager:
             os.environ.get("HARNESS_SML_MODEL", "gemma4:e2b"),
         )
 
-    def call_google_gemini(self, model_name: str, combined_prompt: str, timeout: int = 45) -> dict[str, Any]:
+    def call_google_gemini(
+        self,
+        model_name: str,
+        combined_prompt: str,
+        timeout: int = 300,
+        system_prompt: str | None = None,
+        user_prompt: str | None = None,
+    ) -> dict[str, Any]:
         """Call Google Gemini generateContent REST endpoint using GEMINI_API_KEY / GOOGLE_API_KEY."""
         api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
         if not api_key:
             raise RuntimeError("Brak klucza GEMINI_API_KEY lub GOOGLE_API_KEY w zmiennych środowiskowych / .env.")
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
-        payload = {
+        payload: dict[str, Any] = {
             "contents": [
                 {
                     "role": "user",
-                    "parts": [{"text": combined_prompt}],
+                    "parts": [{"text": user_prompt if user_prompt is not None else combined_prompt}],
                 }
             ],
             "generationConfig": {
@@ -89,6 +115,10 @@ class LLMConnectionManager:
                 "responseMimeType": "application/json",
             },
         }
+        if system_prompt:
+            payload["systemInstruction"] = {
+                "parts": [{"text": system_prompt}],
+            }
         req = urllib.request.Request(
             url,
             data=json.dumps(payload).encode("utf-8"),
@@ -105,17 +135,25 @@ class LLMConnectionManager:
                     text = parts[0].get("text", "")
             return {"status": "ok", "raw_text": text, "raw_payload": data}
 
-    def call_ollama(self, model_name: str, combined_prompt: str, timeout: int = 45) -> dict[str, Any]:
+    def call_ollama(
+        self,
+        model_name: str,
+        combined_prompt: str,
+        timeout: int = 300,
+        system_prompt: str | None = None,
+        user_prompt: str | None = None,
+    ) -> dict[str, Any]:
         """Call local Ollama /api/generate endpoint."""
         ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
-        req_body = json.dumps(
-            {
-                "model": model_name,
-                "prompt": combined_prompt,
-                "stream": False,
-                "format": "json",
-            }
-        ).encode("utf-8")
+        body_dict: dict[str, Any] = {
+            "model": model_name,
+            "prompt": user_prompt if user_prompt is not None else combined_prompt,
+            "stream": False,
+            "format": "json",
+        }
+        if system_prompt:
+            body_dict["system"] = system_prompt
+        req_body = json.dumps(body_dict).encode("utf-8")
         req = urllib.request.Request(
             ollama_url,
             data=req_body,
@@ -129,4 +167,32 @@ class LLMConnectionManager:
                 "raw_text": raw_resp.get("response", "{}"),
                 "raw_payload": raw_resp,
             }
+
+    def check_llm_access(self) -> dict[str, Any]:
+        """Verify availability of Google Gemini API, local Ollama server, and Mock fallback without running benchmarks."""
+        dotenv_vars = load_dotenv_file()
+        resolved = self.resolve_provider()
+        sml_model = self.resolve_model_name(resolved, "SML")
+        lrm_model = self.resolve_model_name(resolved, "LRM")
+
+        has_gemini_key = bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"))
+
+        ollama_generate_url = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
+        ollama_reachable, ollama_models, ollama_error = self._probe_ollama_tags(timeout=3.0)
+
+        return {
+            "configured_provider": self.provider,
+            "resolved_provider": resolved,
+            "sml_model": sml_model,
+            "lrm_model": lrm_model,
+            "dotenv_loaded": bool(dotenv_vars),
+            "google_api_key_present": has_gemini_key,
+            "ollama": {
+                "url": ollama_generate_url,
+                "reachable": ollama_reachable,
+                "installed_models": ollama_models,
+                "error": ollama_error,
+            },
+        }
+
 

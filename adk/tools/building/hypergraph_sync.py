@@ -67,6 +67,21 @@ def sync_hypergraph_matrix(
                 target_node = path_to_node.get(ref_file) or stem_to_node.get(Path(ref_file).stem)
                 if target_node and target_node != src_node:
                     dynamic_couplings.append((src_node, target_node))
+            for match in re.finditer(r"\\ref_fig\{([^}]+)\}", content):
+                fig_file = match.group(1).strip()
+                target_node = path_to_node.get(fig_file) or stem_to_node.get(Path(fig_file).stem)
+                if target_node and target_node != src_node:
+                    dynamic_couplings.append((src_node, target_node))
+            for match in re.finditer(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", content):
+
+                gfx_path = match.group(1).strip()
+                target_node = path_to_node.get(gfx_path) or stem_to_node.get(Path(gfx_path).stem)
+                if target_node and target_node != src_node:
+                    dynamic_couplings.append((src_node, target_node))
+            if re.search(r"\\cite\{([^}]+)\}", content):
+                for bib_rel, bib_node in path_to_node.items():
+                    if bib_rel.endswith(".bib") and bib_node != src_node:
+                        dynamic_couplings.append((src_node, bib_node))
 
     for node_a, node_b in dynamic_couplings:
         pair_set = {node_a, node_b}

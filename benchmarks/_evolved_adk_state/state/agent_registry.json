@@ -1,0 +1,28 @@
+{
+  "agents": {
+    "seed_coder": {
+      "domain": "building",
+      "path": "agents/building/seed_coder.md",
+      "specialization": "python_coding",
+      "active": true
+    },
+    "seed_tester": {
+      "domain": "building",
+      "path": "agents/building/seed_tester.md",
+      "specialization": "unit_testing",
+      "active": true
+    },
+    "seed_writer": {
+      "domain": "building",
+      "path": "agents/building/seed_writer.md",
+      "specialization": "academic_writing",
+      "active": true
+    },
+    "sota_researcher": {
+      "domain": "building",
+      "path": "agents/building/sota_researcher.md",
+      "specialization": "literature_review",
+      "active": true
+    }
+  }
+}

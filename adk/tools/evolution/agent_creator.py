@@ -45,12 +45,49 @@ def create_specialized_agent(
     full_md_path = a_root / normalized_domain / f"{agent_id}.md"
     full_md_path.parent.mkdir(parents=True, exist_ok=True)
 
+    if normalized_domain == "verification":
+        default_schema = (
+            '{\n'
+            '  "status": "PASS | FAIL",\n'
+            '  "issues": []\n'
+            '}'
+        )
+    else:
+        default_schema = (
+            '{\n'
+            '  "ast_edits": [\n'
+            '    {\n'
+            '      "symbol": "target_symbol",\n'
+            '      "code": "def target_symbol() -> None:\\n    pass\\n"\n'
+            '    }\n'
+            '  ],\n'
+            '  "section_title": "Optional Thesis Subsection Title",\n'
+            '  "section_content": "Optional grounded academic prose with \\\\ref_ast{file:symbol} and \\\\ref_csv{file:row:column}.",\n'
+            '  "summary": "Completed specialized task."\n'
+            '}'
+        )
+
     body = instructions or (
         f"# ROLE: Dynamic Specialist Agent — `{agent_id}` (`{normalized_domain}` Domain)\n\n"
-        f"Specialization: **{specialization}**.\n\n"
-        f"## OPERATING RULES\n"
-        f"1. Execute only atomic Python tasks assigned to specialization `{specialization}`.\n"
-        f"2. Maintain strict consistency with `hypergraph_matrix.json` and symbolic pointers (`\\ref_ast`, `\\ref_csv`).\n"
+        f"You are a dynamically synthesized specialist agent (`{agent_id}`) in the **Artificial-Degree-Printer (Neuro-Symbolic Harness)**.\n"
+        f"Assigned Specialization: **{specialization}**.\n\n"
+        f"---\n\n"
+        f"## 1. OPERATING & SYMBOLIC GROUNDING RULES\n"
+        f"1. **Atomic Scope**: Execute strictly the atomic task assigned to specialization `{specialization}` on `target_file`.\n"
+        f"2. **Hypergraph & AST Integrity**: Maintain 100% compatibility with exported symbols in `exports` and `state/hypergraph_matrix.json`.\n"
+        f"3. **Zero Hallucinations**: When authoring prose or tables, never write raw numbers from memory — use `\\ref_ast{{file:symbol}}` and `\\ref_csv{{file:row:column}}` (or `\\ref_csv{{file:column}}`).\n\n"
+        f"---\n\n"
+        f"## 2. REQUIRED JSON OUTPUT SCHEMA\n"
+        f"Return strictly a valid JSON object matching this schema:\n"
+        f"```json\n"
+        f"{default_schema}\n"
+        f"```\n"
+        f"Do not output conversational text or markdown wrappers outside the JSON.\n\n"
+        f"---\n\n"
+        f"## CONSOLIDATED EVOLUTIONARY INVARIANTS\n"
+        f"- **INVARIANT (Cycle 0)**: Execute strictly atomic operations within the `{specialization}` specialization with full syntax and symbolic pointer validation.\n\n"
+        f"## LEARNED RULES AND CONSTRAINTS\n"
+
     )
     full_md_path.write_text(body.strip() + "\n", encoding="utf-8")
 

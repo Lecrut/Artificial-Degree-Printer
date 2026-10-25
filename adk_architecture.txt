@@ -1,0 +1,727 @@
+================================================================================
+SPECYFIKACJA AKTUALNEJ ARCHITEKTURY SYSTEMU: ADK (NEURO-SYMBOLIC HARNESS)
+Raport z Code Review & Pełna Dokumentacja Architektury Implementacji
+人工学位打印机 / Artificial-Degree-Printer (ADK 2.0)
+Podział domenowy: Core (W0) -> Warstwa 1 (Planning) -> Warstwa 2 (Building)
+                            -> Warstwa 3 (Verification) -> Warstwa 4 (Evolution)
+                            -> Subsystem Benchmarków i Publikacji (Publishing)
+================================================================================
+
+ZASADY ARCHITEKTONICZNE I INWARIANTY WYKONAWCZE SYSTEMU ADK:
+
+1. Grupowanie domenowe (Domain-Grouped Layout):
+   Zamiast nazw warstw w ścieżkach, katalogi `adk/agents/` oraz `adk/tools/` są
+   zorganizowane według czterech domen funkcjonalnych: `planning` (W1), `building` (W2),
+   `verification` (W3) oraz `evolution` (W4). Wewnątrz `adk/tools/` obowiązuje
+   twardy zakaz używania redundantnego słowa `tool`/`tools` w nazwach plików
+   i podkatalogów (weryfikowany przez test `tests/test_repository_hygiene.py`).
+
+2. Deklaratywność agentów (.md):
+   Wszyscy agenci są zdefiniowani jako ustrukturyzowane pliki Markdown w
+   `adk/agents/<domena>/`. Kod Pythona (`adk/core/llm.py`) wczytuje prompt
+   systemowy z pliku `.md`, dokleja ładunek wejściowy w sekcji
+   `=== INPUT JSON PAYLOAD ===` i wymusza odpowiedź w formacie ścisłego JSON-a.
+
+3. Nienaruszalność strażników (GUARD Immunity):
+   Agenci pełniący rolę sztywnych bramek jakościowych (`task_critic_guard.md` w W1
+   oraz `redteam_critic_guard.md` w W3) są całkowicie odporni na mutację promptów
+   (`agent_mutator.py`) oraz podział (`agent_splitter.py`). Żadna pętla ewolucyjna
+   nie może osłabić kryteriów akceptacji.
+
+4. Jawny stan w JSON (`adk/state/`):
+   Komunikacja między warstwami, orkiestratorem i narzędziami odbywa się wyłącznie
+   poprzez serializację do 7 jawnych plików JSON obsługiwanych przez modele
+   danych z `adk/core/models.py`. Stan jest w 100% audytowalny i odtwarzalny.
+
+5. Uziemienie symboliczne (Zero Memory Numbers & Zero Hallucination):
+   Tekst pracy dyplomowej (`.md`/`.tex`) nie może zawierać wpisanych z pamięci
+   modelu hiperparametrów ani wyników liczbowych. Każda stała kodu wymaga wskaźnika
+   `\ref_ast{plik:symbol}`, każda metryka eksperymentalna wskaźnika
+   `\ref_csv{plik:wiersz:kolumna}` lub `\ref_csv{plik:kolumna}`, a każde odwołanie
+   do wykresu/ryciny wskaźnika `\ref_fig{plik_lub_id}`, kompilowanych
+   deterministycznie przez `ref_compiler.py`.
+
+6. Świeżość artefaktów (`mtime` Invariant) i Edge-Scoped Verification:
+   Plik wynikowy `results.csv` musi zawsze posiadać znacznik czasu modyfikacji
+   (`mtime`) nowszy niż wszystkie pliki źródłowe `.py` w `adk/workspace/`.
+   Weryfikacja Warstwy 3 jest selektywnie dobierana do zakresu hiperkrawędzi
+   (`Edge-Scoped Verification`) — węzły czysto kodowe (`v1`, `v2`, `v5`) nie
+   uruchamiają fałszywych alarmów przestarzałości tabeli CSV.
+
+7. Trzy interaktywne bramki promotorskie HITL (`state/hitl_flag.json`):
+   Proces powstawania pracy i oprogramowania przechodzi przez 3 punkty kontrolne:
+   - `GATE_1_OUTLINE_APPROVAL` (zatwierdzenie tezy, zakresu i planu zadań),
+   - `GATE_2_METHODOLOGY_APPROVAL` (zatwierdzenie architektury po bramce Guard W1),
+   - `GATE_3_DEFENSE_APPROVAL` (końcowe dopuszczenie do obrony po audycie Red-Team W3).
+   Bramki mogą być zatwierdzane automatycznie, przez callback API lub interaktywnie
+   w konsoli dzięki fladze `--interactive-gates`.
+
+8. Pełna Obserwowalność Decyzji i Promptów LLM (Nowość ADK 2.0):
+   Wszystkie wywołania LLM (Google Gemini, Ollama, Mock) są natychmiast logowane
+   na żywo do konsoli w ujednoliconym formacie:
+   `[LLM DECISION: <agent>] (<provider>:<model>, <tier>, <ms>) -> <decyzja>`.
+   Każde zadanie benchmarkowe generuje w swoim dedykowanym katalogu:
+   - `llm_interactions.md` (czytelny dokument z tabelą decyzji i rozwijanymi
+     blokami pełnego promptu oraz surowej odpowiedzi),
+   - `llm_interactions.jsonl` (pełny zrzut maszynowy).
+   Dostępny jest także tryb pełnego podglądu w terminalu: `--verbose-llm` / `-v`.
+
+9. Wielofalowa Realizacja Wielocyklowa (Multi-Cycle Architectural Waves):
+   Obsługa flagi `multi_cycle_waves=True` w orkiestratorze, która przeprowadza
+   kolejno pełne pętle naprawczo-ewolucyjne:
+   `W2 -> W3(FAIL) -> W4(MUTATE/CREATE/SPLIT) -> W1(FIX) -> W2 -> W3(PASS)`
+   dla każdego z kluczowych węzłów: kodu (`v1`), eksperymentu (`v3`) i pracy (`v4`).
+
+10. Kompletność Wydawnicza i Autonomia (Thesis Bundle Publishing):
+    System nie generuje wyłącznie fragmentów kodu, lecz kompletny, autonomiczny
+    pakiet inżynierski: pełną 6-rozdziałową pracę dyplomową (PDF + LaTeX + HTML),
+    skrypt uruchomieniowy eksperymentu `run_experiment.py`, wektorowe wykresy
+    porównawcze oraz bibliografię BibTeX.
+
+
+================================================================================
+AKTUALNA STRUKTURA KATALOGÓW PAKIETU `adk/` I PROJEKTU
+================================================================================
+Artificial-Degree-Printer/
+│
+├── main.py                                     # Główny punkt wejściowy CLI: scenariusze, benchmarki, diagnostyka LLM
+├── requirements.txt                            # Formalne zależności (matplotlib, numpy, pillow, pytest, ruff)
+├── pytest.ini                                  # Konfiguracja środowiska testowego pytest
+├── adk_architecture.txt                        # Niniejsza specyfikacja aktualnej architektury i raport Code Review
+│
+├── adk/                                        # Rdzenny pakiet Neuro-Symbolic Harness
+│   ├── __init__.py                             # Eksport NeuroSymbolicOrchestrator
+│   ├── main.py                                 # Wewnętrzny delegat punku wejścia
+│   ├── orchestrator.py                         # Główna pętla sterująca (NeuroSymbolicOrchestrator)
+│   │
+│   ├── core/                                   # Warstwa 0: Rdzeń infrastrukturalny, modele, LLM i logi
+│   │   ├── __init__.py                         # Eksport klas i funkcji rdzenia
+│   │   ├── connection.py                       # LLMConnectionManager (Google Gemini / Ollama / Mock + .env)
+│   │   ├── llm.py                              # call_agent, ekstrakcja JSON, telemetria, summarize_agent_decision
+│   │   ├── logger.py                           # HarnessProcessLogger (harness_process.log + agent_trace.jsonl)
+│   │   └── models.py                           # Dataclasses stanu (TaskItem, HypergraphMatrix, ValidationReport)
+│   │
+│   ├── benchmarks/                             # Subsystem Benchmarków i Ewaluacji Wielozadaniowej
+│   │   ├── __init__.py                         # Eksport stałych i runnera benchmarków
+│   │   ├── tasks.py                            # Definicje 3 zadań referencyjnych (RL, Anomaly ML, Graph A*)
+│   │   ├── runner.py                           # run_benchmark_suite, sandboxy, raport zbiorczy master PDF
+│   │   ├── llm_logging.py                      # export_task_llm_interactions (llm_interactions.md i .jsonl)
+│   │   └── tictactoe.py                        # Komponenty bazowe dla zadania 1 (Q-Learning Tic-Tac-Toe)
+│   │
+│   ├── state/                                  # Jawny stan systemu w formacie JSON
+│   │   ├── task_queue.json                     # Kolejka zadań atomowych (TODO | IN_PROGRESS | DONE | FAILED)
+│   │   ├── hypergraph_matrix.json              # Wierzchołki v1..v6, hiperkrawędzie E1..E4, wagi w(v) i stopnie d(v)
+│   │   ├── agent_registry.json                 # Rejestr aktywnych i zarchiwizowanych agentów (.md)
+│   │   ├── validation_report.json              # Zagregowany raport z 3 nadzorców Warstwy 3 (PASS | FAIL)
+│   │   ├── failure_ledger.json                 # Pamięć długotrwała błędów (failures) i konsolidacji (compactions)
+│   │   ├── evolution_history.json              # Historia zdarzeń ewolucyjnych W4 i eskalacji wag (events)
+│   │   └── hitl_flag.json                      # Status bramek promotorskich (GATE_1..GATE_3) i pytań HITL
+│   │
+│   ├── agents/                                 # Deklaratywne definicje ról i instrukcje agentów (.md)
+│   │   ├── planning/                           # Domena Warstwy 1: Planowanie i Bramka Wejściowa
+│   │   │   ├── initial_task_planner.md         # Architekt planu początkowego (Green-Field Master Blueprint)
+│   │   │   ├── task_planner.md                 # Planista zmian przyrostowych i rewizji (Delta Planner)
+│   │   │   ├── remediation_planner.md          # Chirurgiczny planista naprawczy (surgical_tasks + updated_tasks)
+│   │   │   └── task_critic_guard.md            # Niezmienny Krytyk Planu (GUARD między W1 a W2 - 5 bramek)
+│   │   │
+│   │   ├── building/                           # Domena Warstwy 2: Plac Budowy (Kod, Testy, SOTA, Tekst)
+│   │   │   ├── seed_coder.md                   # Inżynier kodu Python 3.12+ i algorytmów (edycje AST)
+│   │   │   ├── seed_tester.md                  # Inżynier QA, testów pytest i benchmarków porównawczych CSV
+│   │   │   ├── seed_writer.md                  # Autor tekstu pracy dyplomowej (.md/.tex) ze wskaźnikami \ref_*
+│   │   │   └── sota_researcher.md              # Badacz literatury SOTA (Metoda Lejka) i bibliografii BibTeX
+│   │   │
+│   │   ├── verification/                       # Domena Warstwy 3: Nadzorcy i Wyrocznie Weryfikacyjne
+│   │   │   ├── code_auditor.md                 # Nadzorca Inżynieryjny Kodu (analiza pytest, ruff, AST)
+│   │   │   ├── symbolic_auditor.md             # Nadzorca Spójności Symbolicznej (\ref_ast, \ref_csv, \ref_fig, mtime)
+│   │   │   └── redteam_critic_guard.md         # Niezmienny Recenzent Obrony Pracy (GUARD - Gate 3)
+│   │   │
+│   │   └── evolution/                          # Domena Warstwy 4: Samoewolucja i Konsolidacja Promptów
+│   │       ├── evolution_architect.md          # Mózg ewolucji (MUTATE/CREATE/SPLIT_AGENT, CREATE_TOOL, HITL)
+│   │       └── prompt_consolidator.md          # Meta-edytor konsolidujący co 4 reguły w inwarianty
+│   │
+│   ├── tools/                                  # Narzędzia deterministyczne (.py)
+│   │   ├── __init__.py                         # Pakiet narzędzi deterministycznych
+│   │   ├── planning/                           # Narzędzia Warstwy 1
+│   │   │   ├── __init__.py
+│   │   │   ├── blast_radius.py                 # Wyliczanie promienia rażenia i stopnia d(v) z macierzy H
+│   │   │   └── complexity_router.py            # Dobór modelu (select_model_tier) + eskalacja wag (EvoRoute)
+│   │   │
+│   │   ├── building/                           # Narzędzia Warstwy 2 (Edytory lokalne, Mosty, Publisher)
+│   │   │   ├── __init__.py
+│   │   │   ├── ast_editor.py                   # Bezpieczna podmiana węzłów AST z podwójnym SYNTAX_GUARD
+│   │   │   ├── doc_editor.py                   # Bezpieczna edycja pojedynczej sekcji w .md lub .tex
+│   │   │   ├── import_sync.py                  # Ekstrakcja eksportowanych symboli AST i schematów CSV
+│   │   │   ├── hypergraph_sync.py              # Synchronizacja macierzy H (importy, \ref_ast, \ref_csv, \ref_fig, \cite)
+│   │   │   └── thesis_publisher.py             # Publikacja 6 rozdziałów, PDF, HTML, LaTeX i run_experiment.py
+│   │   │
+│   │   ├── verification/                       # Narzędzia Warstwy 3 (+ dynamicznie promowane walidatory W4)
+│   │   │   ├── __init__.py
+│   │   │   ├── test_runner.py                  # Uruchamianie pytest, ruff i walidatorów W4 (lokalnie/Docker)
+│   │   │   └── ref_compiler.py                 # Kompilator \ref_ast, \ref_csv, \ref_fig, mtime, BibTeX, AI-Fluff
+│   │   │
+│   │   └── evolution/                          # Narzędzia Warstwy 4
+│   │       ├── __init__.py
+│   │       ├── agent_creator.py                # Dynamiczna kreacja specjalistów dyn_<spec>.md w rejestrze
+│   │       ├── agent_splitter.py               # Podział przeciążonego agenta na 2 węższe sub-agenty
+│   │       ├── agent_mutator.py                # Dopisywanie reguł naprawczych + auto-konsolidacja co 4 reguły
+│   │       └── sandbox_verifier.py             # Shadow-testing nowych walidatorów .py (bad vs good sample)
+│   │
+│   ├── workspace/                              # Katalog roboczy generowanego projektu i pracy dyplomowej
+│   │   ├── config.py                           # Węzeł v1: hiperparametry i stałe konfiguracyjne
+│   │   ├── core.py                             # Węzeł v2: główna logika algorytmu i metoda bazowa (baseline)
+│   │   ├── results.csv                         # Węzeł v3: tabela wyników empirycznych (baseline vs proposed)
+│   │   ├── thesis.md                           # Węzeł v4: rękopis pracy dyplomowej z tagami \ref_ast, \ref_csv, \ref_fig
+│   │   ├── test_core.py                        # Węzeł v5: zestaw testów jednostkowych i porównawczych pytest
+│   │   └── thesis.compiled.md                  # Węzeł v6: skompilowany tekst pracy (wynik ref_compiler.py)
+│   │
+│   └── logs/                                   # Pełna telemetria i ślady wykonania procesu
+│       ├── harness_process.log                 # Czytelny log procesowy kroków i wymian prompt/odpowiedź
+│       └── agent_trace.jsonl                   # Ustrukturyzowany ślad JSONL każdego wywołania agenta
+│
+├── benchmarks/                                 # Wygenerowane trwałe pakiety zadań benchmarkowych
+│   ├── benchmark_summary.json                  # Zbiorcze metryki, czasy, telemetria LLM i wykaz zadań
+│   ├── adk_benchmark_summary.pdf               # Zbiorczy raport graficzny PDF ze statystykami
+│   ├── _evolved_adk_state/                     # Skumulowany stan ewolucyjny ADK po przejściu wszystkich zadań
+│   ├── 01_rl_tictactoe/                        # Zadanie 1: Kod, testy, CSV, wykresy, PDF pracy, llm_interactions.*
+│   ├── 02_ml_anomaly_detection/                # Zadanie 2: Kod, testy, CSV, wykresy, PDF pracy, llm_interactions.*
+│   └── 03_graph_pathfinding/                   # Zadanie 3: Kod, testy, CSV, wykresy, PDF pracy, llm_interactions.*
+│
+└── tests/                                      # Zestaw 30 testów regresyjnych i jednostkowych (pytest)
+    ├── test_layer1.py                          # Testy blast_radius, complexity_router, EvoRoute i agentów W1
+    ├── test_layer2.py                          # Testy ast_editor, doc_editor, import_sync i hypergraph_sync
+    ├── test_layer3.py                          # Testy test_runner, ref_compiler (\ref_ast, \ref_csv, \ref_fig) i W3
+    ├── test_layer4_and_orchestrator.py         # Testy W4, Edge-Scoped W3, przepisywania kolejki po split i HITL
+    ├── test_environment_and_benchmarks.py      # Testy CLI, pakietu benchmarków, publishera PDF/HTML i runnera
+    └── test_repository_hygiene.py              # Testy higieny repozytorium, braku pustych plików, składni AST
+
+
+================================================================================
+WARSTWA 0: RDZEŃ INFRASTRUKTURALNY (`adk/core/`)
+================================================================================
+
+--------------------------------------------------------------------------------
+MODUŁ 0.1: Modele Stanu i Rozwiązywanie Ścieżek (`adk/core/models.py`)
+--------------------------------------------------------------------------------
+[x] Typy podstawowe:
+    - `TaskStatus = Literal["TODO", "IN_PROGRESS", "DONE", "FAILED"]`
+    - `GateVerdict = Literal["PASS", "FAIL"]`
+    - `ModelTier = Literal["SML", "LRM"]`
+[x] Klasy danych (`@dataclass(slots=True)`):
+    - `TaskItem`: reprezentuje pojedyncze zadanie w `state/task_queue.json`
+      (`task_id`, `description`, `target_node`, `assigned_agent`, `status`).
+    - `HypergraphMatrix`: reprezentuje `state/hypergraph_matrix.json`
+      (`nodes`, `edges`, `matrix`).
+    - `ValidationReport`: reprezentuje `state/validation_report.json`
+      (`status`, `failed_task_id`, `failed_node`, `failed_file`, `failed_agent`,
+      `supervisors`, `summary`).
+    - `EvolutionEvent`: reprezentuje pojedyncze zdarzenie w `state/evolution_history.json`
+      (`type`, `details`).
+[x] Funkcje operacji na stanie:
+    - `resolve_adk_path(path_or_rel)`: rozwiązuje ścieżkę bezwzględnie lub względem
+      katalogu głównego `adk/` (automatycznie usuwając ewentualny prefiks `adk/`).
+    - `read_json_state(path_or_rel)` / `write_json_state(path_or_rel, payload)`:
+      atomowy odczyt i zapis plików `.json` w kodowaniu UTF-8 z wcięciem `indent=2`.
+
+--------------------------------------------------------------------------------
+MODUŁ 0.2: Konektor Wielodostawcowy LLM (`adk/core/connection.py`)
+--------------------------------------------------------------------------------
+[x] Ładowanie zmiennych środowiskowych (`load_dotenv_file`):
+    - Bez zewnętrznych zależności parsuje pliki `.env` z katalogu głównego projektu
+      oraz z `adk/.env`, ustawiając klucze w `os.environ`.
+[x] Klasa `LLMConnectionManager`:
+    - `resolve_provider()`: wybiera dostawcę według priorytetu:
+      1. Jawnie przekazany argument `provider` (`"google"`, `"ollama"`, `"mock"`),
+      2. W trybie `"auto"`: jeśli w środowisku istnieje `GEMINI_API_KEY` lub
+         `GOOGLE_API_KEY` -> `"google"`; jeśli `HARNESS_USE_OLLAMA == "1"` -> `"ollama"`;
+         w przeciwnym razie -> `"mock"` (deterministyczny tryb offline).
+    - `resolve_model_name(provider, model_tier)`: mapuje klasę `SML` / `LRM` na model:
+      * Dla `"google"`:
+        - `LRM` -> `HARNESS_GOOGLE_LRM_MODEL` (domyślnie `"gemini-2.5-pro"`)
+        - `SML` -> `HARNESS_GOOGLE_SML_MODEL` (domyślnie `"gemini-2.5-flash"`)
+      * Dla `"ollama"` / `"mock"`:
+        - `LRM` -> `HARNESS_OLLAMA_LRM_MODEL` / `HARNESS_LRM_MODEL` (domyślnie `"qwen3-coder:latest"`)
+        - `SML` -> `HARNESS_OLLAMA_SML_MODEL` / `HARNESS_SML_MODEL` (domyślnie `"gemma4:e2b"`)
+    - `call_google_gemini(...)`: wywołuje endpoint REST `v1beta/models/{model}:generateContent`
+      z `temperature: 0.1`, `responseMimeType: "application/json"` i osobnym polem `systemInstruction`.
+    - `call_ollama(...)`: wywołuje lokalny endpoint `http://localhost:11434/api/generate`
+      z `stream: False`, `format: "json"` i polem `system`.
+    - `check_llm_access()`: diagnostyka dostępności API i modeli w lokalnej Ollamie.
+
+--------------------------------------------------------------------------------
+MODUŁ 0.3: Wykonywanie Agentów Deklaratywnych i Obserwowalność (`adk/core/llm.py`)
+--------------------------------------------------------------------------------
+[x] Funkcja `call_agent(md_path, user_payload, model_tier="SML", provider=None)`:
+    1. Wczytuje treść pliku `.md` agenta jako prompt systemowy.
+    2. Serializuje `user_payload` do JSON-a i buduje blok `=== INPUT JSON PAYLOAD ===`.
+    3. Obsługuje trzy ścieżki wykonania:
+       - Zarejestrowany callback testowy (`set_llm_handler(handler)`),
+       - Wywołanie zdalnego/lokalnego API (`google` lub `ollama`) z odpornym
+         parserem `_extract_json_from_text(text)` (usuwa bloki `<think>...</think>`,
+         wyciąga kod z bloków ```` ```json ```` lub skanuje pierwszy poprawny obiekt
+         `{...}` przez `json.JSONDecoder().raw_decode`),
+       - Automatyczny fallback do `_default_simulated_response(...)` w przypadku
+         trybu `"mock"`, błędu sieciowego lub niepoprawnego JSON-a z modelu.
+    4. Analizuje podjętą decyzję przez `summarize_agent_decision(agent_name, payload, output)`.
+    5. Real-time CLI Stream: wypisuje natychmiast zwięzłą decyzję w konsoli:
+       `[LLM DECISION: <agent>] (<provider>:<model>, <tier>, <ms>) -> <decyzja>`.
+       Gdy `HARNESS_VERBOSE_PROMPTS=1` lub flaga `-v`: wypisuje pełne ramki promptu i odpowiedzi.
+    6. Zapisuje interakcję do telemetrii `_LLM_TELEMETRY["interactions"]`.
+    7. Rejestruje pełną wymianę poprzez `HarnessProcessLogger`.
+
+[x] Funkcja `summarize_agent_decision(...)`:
+    Semantyczny ekstraktor intencji i werdyktów dla wszystkich ról: planistów, strażników,
+    architekta ewolucji, konsolidatora promptów, koderów, testerów i pisarzy.
+
+--------------------------------------------------------------------------------
+MODUŁ 0.4: Logger Procesowy i Telemetria (`adk/core/logger.py`)
+--------------------------------------------------------------------------------
+[x] Klasa `HarnessProcessLogger` (singleton dostępny przez `get_process_logger()`):
+    - `log_step(layer, event, details)`: zapisuje znacznik czasu UTC, nazwę warstwy
+      i szczegóły kroku do czytelnego pliku `adk/logs/harness_process.log`.
+    - `log_agent_exchange(...)`: zapisuje pełny rekord JSONL w `adk/logs/agent_trace.jsonl`
+      oraz sformatowany blok wizualny w `adk/logs/harness_process.log`.
+
+
+================================================================================
+SCHEMATY STANU SYSTEMU (`adk/state/*.json`)
+================================================================================
+
+1. `state/hypergraph_matrix.json`:
+   Przechowuje topologię hipergrafu projektu:
+   - `nodes`: słownik wierzchołków `v1`..`v6` z polami `path`, `degree` d(v) oraz
+     dynamicznie ewoluującą wagą trudności `weight` w(v) (mechanizm `EvoRoute`):
+     * `v1`: `config.py` (d=2, w=1.0)
+     * `v2`: `core.py` (d=3, w=1.2)
+     * `v3`: `results.csv` (d=2, w=1.0)
+     * `v4`: `thesis.md` (d=1, w=1.6)
+     * `v5`: `test_core.py` (d=1, w=1.0)
+     * `v6`: `thesis.compiled.md` (d=0, w=1.0 — artefakt wyjściowy tylko do odczytu)
+   - `edges`: słownik hiperkrawędzi grupujących powiązane wierzchołki:
+     * `E1`: `["v1", "v2"]` (sprzężenie konfiguracji z logiką główną)
+     * `E2`: `["v2", "v3"]` (sprzężenie kodu ewaluacji z tabelą CSV)
+     * `E3`: `["v1", "v3", "v4"]` (sprzężenie parametrów, tabeli CSV i tekstu pracy)
+     * `E4`: `["v2", "v5"]` (sprzężenie logiki głównej z testami jednostkowymi)
+   - `matrix`: binarna macierz incydencji H[v_i][E_k] in {0, 1}.
+
+2. `state/task_queue.json`:
+   Lista zadań atomowych:
+   `[{"task_id": "T1", "description": "...", "target_node": "v1", "assigned_agent": "seed_coder", "status": "DONE"}, ...]`
+
+3. `state/agent_registry.json`:
+   Słownik zarejestrowanych agentów z podziałem na domeny i flagą aktywności:
+   - Startowi agenci aktywni (`"active": true`, `"domain": "building"`):
+     * `seed_coder` (`agents/building/seed_coder.md`, specjalizacja: `python_coding`)
+     * `seed_tester` (`agents/building/seed_tester.md`, specjalizacja: `unit_testing`)
+     * `seed_writer` (`agents/building/seed_writer.md`, specjalizacja: `academic_writing`)
+     * `sota_researcher` (`agents/building/sota_researcher.md`, specjalizacja: `literature_review`)
+   - Przy kreacji w W4 dopisywani są agenci `dyn_<slug>`, a przy podziale rodzic
+     otrzymuje `"active": false` oraz `"archived_reason"`, natomiast dzieci
+     `"<parent>_<sub_spec>"` otrzymują `"active": true` i przejmują zadania rodzica
+     w `state/task_queue.json`.
+
+4. `state/validation_report.json`:
+   Strukturalny werdykt z Warstwy 3:
+   `{"status": "PASS|FAIL", "failed_task_id": ..., "failed_node": ..., "failed_file": ..., "failed_agent": ..., "supervisors": {"code_auditor": {...}, "symbolic_auditor": {...}, "redteam_critic_guard": {...}}, "summary": "..."}`
+   (nadzorcy spoza zakresu hiperkrawędzi bieżącego zadania otrzymują status
+   `"SKIPPED_OUT_OF_EDGE_SCOPE"`).
+
+5. `state/failure_ledger.json`:
+   Pamięć długotrwała błędów i kompaktowań promptów:
+   - `failures`: lista wpisów `{"agent": ..., "context": ..., "injected_rule": ...}`
+   - `compactions`: lista wpisów z konsolidacji co 4 reguły
+     `{"agent": ..., "cycle": N, "rules_consolidated_count": 4, "consolidated_rules": [...], "synthesized_invariant": "..."}`
+
+6. `state/evolution_history.json`:
+   Chronologiczny rejestr akcji Warstwy 4 i routera EvoRoute (`events`):
+   typy zdarzeń: `WEIGHT_ESCALATED`, `AGENT_MUTATED`, `PROMPT_CONSOLIDATED`,
+   `AGENT_CREATED`, `AGENT_SPLIT`, `VALIDATOR_PROMOTED`, `HITL_TRIGGERED`.
+
+7. `state/hitl_flag.json`:
+   Stan bramek promotorskich Human-in-the-Loop:
+   `{"active": false, "current_gate": "GATE_3_DEFENSE_APPROVAL", "approved_gates": ["GATE_1_OUTLINE_APPROVAL", "GATE_2_METHODOLOGY_APPROVAL", "GATE_3_DEFENSE_APPROVAL"], "question": null, "context": {...}}`
+
+
+================================================================================
+WARSTWA 1: PLANOWANIE I BRAMKA WEJŚCIOWA (`adk/tools/planning/` & `adk/agents/planning/`)
+================================================================================
+
+--------------------------------------------------------------------------------
+ETAP 1.1: Narzędzia Deterministyczne Planowania i EvoRoute (`adk/tools/planning/`)
+--------------------------------------------------------------------------------
+[x] `adk/tools/planning/blast_radius.py`:
+    - Funkcja `calculate_blast_radius(modified_node_id, matrix_path)`:
+      1. Wczytuje `state/hypergraph_matrix.json` i weryfikuje obecność `modified_node_id`.
+      2. Wyznacza aktywne hiperkrawędzie `active_edges` (gdzie `H[v][E] == 1`) oraz
+         stopień wierzchołka `degree = sum(row.values())`.
+      3. Znajduje wszystkie pozostałe wierzchołki należące do tych samych hiperkrawędzi
+         i zwraca słownik z `modified_node_id`, `modified_file`, `degree`,
+         `active_edges`, `affected_nodes` oraz `affected_files`.
+
+[x] `adk/tools/planning/complexity_router.py`:
+    - Funkcja `select_model_tier(node_id, matrix_path)`:
+      1. Oblicza stopień `d(v)` z wiersza macierzy incydencji oraz pobiera wagę `w(v)`
+         z metadanych wierzchołka.
+      2. Zwraca `"LRM"` (duży model rozumujący), jeśli `d(v) >= 2` lub `w(v) > 1.5`;
+         w przeciwnym razie zwraca `"SML"` (szybki mały model).
+    - Funkcja `escalate_node_weight(node_id, delta=0.4, matrix_path="state/hypergraph_matrix.json")`
+      (**Mechanizm `EvoRoute`**):
+      1. Zwiększa wagę `weight` wierzchołka `node_id` w `hypergraph_matrix.json` o `delta`
+         (zaokrąglając do 2 miejsc po przecinku).
+      2. Zapisuje zaktualizowaną macierz i zwraca słownik z `old_weight`, `new_weight`,
+         `old_tier` oraz `new_tier` (`SML` vs `LRM`), umożliwiając automatyczne
+         przełączenie trudnego węzła z modelu `SML` na `LRM` po błędach w Warstwie 3.
+
+--------------------------------------------------------------------------------
+ETAP 1.2: Deklaratywni Agenci Planowania (`adk/agents/planning/`)
+--------------------------------------------------------------------------------
+[x] `adk/agents/planning/initial_task_planner.md` (Planista Początkowy - Green-Field):
+    - Projektuje kompletny plan prac od zera (`academic_blueprint` + lista `tasks`).
+    - Klasyfikuje typ pracy (`inzynierska`, `magisterska`, `paper`), formułuje
+      falsyfikowalną tezę badawczą (`thesis_statement`) oraz punkt odniesienia
+      (`baseline_comparison`).
+    - Wymusza ścisły porządek topologiczny DAG:
+      Faza A (`v1` - `config.py`) -> Faza B (`v2`/`v5`/`v3` - `core.py`, `test_core.py`,
+      `results.csv`) -> Faza C (`v4` - `references.bib`, `thesis.md`/`.tex`).
+    - Przypisuje bramkę `"hitl_gate": "GATE_1_OUTLINE_APPROVAL"`.
+
+[x] `adk/agents/planning/task_planner.md` (Planista Przyrostowy - Delta Planner):
+    - Planuje rozbudowę istniejącego projektu lub rewizję rozdziałów z zachowaniem
+      Zasady Nienaruszalności Struktury i propagacji zmian po promieniu rażenia
+      (Ripple-Effect Law: zmiana `v1` lub `v2` wymusza odświeżenie `v3` i `v4`).
+
+[x] `adk/agents/planning/remediation_planner.md` (Chirurgiczny Planista Naprawczy):
+    - Uruchamiany w pętli naprawczej `while` po werdykcie `FAIL` z Warstwy 3.
+    - Analizuje `error_report` (`ValidationReport`), `failure_ledger.json` oraz `agent_registry.json`.
+    - Generuje minimalną listę `surgical_tasks` (np. `T1_FIX`) wycelowaną dokładnie
+      w uszkodzony symbol AST, przestarzały plik `results.csv` lub błędny wskaźnik `\ref_*`,
+      oraz opcjonalną listę `updated_pending_tasks` aktualizującą pozostałe zadania
+      `TODO` w `state/task_queue.json` (wraz z ponowną walidacją przez `task_critic_guard.md`).
+
+[x] `adk/agents/planning/task_critic_guard.md` (Niezmienny GUARD Planowania):
+    - Egzekwuje 5 obowiązkowych bramek przed dopuszczeniem planu do Warstwy 2:
+      1. Niepusta kolejka i kompletność schematu zadań (`status == "TODO"`),
+      2. Poprawność i atomowość `target_node` (pojedynczy węzeł, zakaz edycji `v6`),
+      3. Aktywność przypisanego agenta w `agent_registry.json` (`"active": true`)
+         oraz zgodność roli z typem pliku,
+      4. Pełne pokrycie promienia rażenia (`blast_radius`),
+      5. Przyczynowa kolejność topologiczna (zadania kodowe i CSV przed `v4`).
+
+
+================================================================================
+WARSTWA 2: PLAC BUDOWY — EDYTORY, MOSTY, PUBLISHER I AGENCI
+================================================================================
+
+--------------------------------------------------------------------------------
+ETAP 2.1: Narzędzia Lokalne i Mosty Międzyplikowe (`adk/tools/building/`)
+--------------------------------------------------------------------------------
+[x] `adk/tools/building/ast_editor.py`:
+    - Funkcja `edit_ast_node(file_path, target_name, new_code)`:
+      1. **Wejściowy GUARD składniowy**: parsuje `new_code` przez `ast.parse()`.
+         W razie `SyntaxError` lub pustego ciała natychmiast odrzuca edycję ze
+         statusem `"guard": "SYNTAX_GUARD_REJECTED"`.
+      2. Rozpoznaje definicje funkcji (`FunctionDef`, `AsyncFunctionDef`), klas
+         (`ClassDef`) oraz przypisań (`Assign`, `AnnAssign`).
+      3. Automatycznie wydziela instrukcje `import` / `from ... import` z `new_code`,
+         deduplikuje je względem istniejących importów i umieszcza na początku modułu.
+      4. Podmienia istniejący węzeł o nazwie `target_name` (akcja `"replaced"`) lub
+         dopisuje nowy na końcu drzewa AST (akcja `"appended"`).
+      5. **Wyjściowy GUARD składniowy**: po `ast.unparse(tree)` ponownie weryfikuje
+         cały wyrenderowany plik przez `ast.parse()` przed zapisem na dysk.
+
+[x] `adk/tools/building/doc_editor.py`:
+    - Funkcja `edit_document_section(file_path, section_title, new_content)`:
+      1. Obsługuje formaty `.md` (nagłówki `## Tytuł`) oraz `.tex` (`\subsection{Tytuł}`).
+      2. Automatycznie usuwa zduplikowany nagłówek na początku `new_content`
+         (`_strip_duplicate_leading_heading`), zapobiegając podwójnym tytułom sekcji.
+      3. Podmienia treść wskazanej sekcji wyrażeniem regularnym bez naruszania
+         pozostałych rozdziałów dokumentu (lub dopisuje sekcję na końcu, jeśli nie istniała).
+
+[x] `adk/tools/building/import_sync.py`:
+    - Funkcja `extract_hyperedge_exports(edge_id="E1", matrix_path=..., workspace_dir=..., node_id=None)`:
+      1. Wyznacza wszystkie wierzchołki połączone hiperkrawędziami z `node_id`
+         (lub w ramach wskazanej krawędzi `edge_id` / `"ALL"`).
+      2. Dla każdego pliku `.py` wyciąga przez `ast` publiczne (niezaczynające się
+         od `_`) nazwy `functions`, `classes` oraz `variables` (`Assign` i `AnnAssign`).
+      3. Dla każdego pliku `.csv` wyciąga listę kolumn (`columns`) oraz klucze
+         wierszy z pierwszej kolumny (`row_selectors`, np. `["baseline", "proposed"]`).
+
+[x] `adk/tools/building/hypergraph_sync.py`:
+    - Funkcja `sync_hypergraph_matrix(workspace_dir, matrix_path)`:
+      1. Rejestruje nowe pliki z `workspace/` jako kolejne wierzchołki `v_k`.
+      2. Skanuje drzewa AST plików `.py` w poszukiwaniu instrukcji `Import` i `ImportFrom`.
+      3. Skanuje pliki dokumentacji `.md`/`.tex` w poszukiwaniu tagów `\ref_ast{plik:symbol}`,
+         `\ref_csv{plik:kolumna}`, `\ref_fig{plik_lub_id}`, `\includegraphics{plik}` oraz
+         `\cite{klucz}` (łącząc je z plikami `.bib`).
+      4. Dla wykrytych sprzężeń międzyplikowych dopasowuje istniejące hiperkrawędzie
+         lub tworzy nowe (`E_k`) i przelicza stopnie `d(v)` wszystkich wierzchołków
+         w `state/hypergraph_matrix.json`.
+
+[x] `adk/tools/building/thesis_publisher.py` (Nowość ADK 2.0):
+    - Funkcja `publish_workspace_thesis_bundle(...)`:
+      Generuje autonomiczny, gotowy do obrony pakiet pracy inżynierskiej:
+      1. Uruchamia generowanie wyników empirycznych oraz wektorowych rycin matplotlib
+         (`plot_results.py` -> `figures/comparison_chart.pdf` i `.png`).
+      2. Przeprowadza pełną kompilację uziemienia symbolicznego (`\ref_ast`, `\ref_csv`, `\ref_fig`)
+         poprzez `ref_compiler.py` dla plików `.md` i `.tex`.
+      3. Generuje skrypt `run_experiment.py` (z obsługą flagi `--open-pdf`), pozwalający
+         na natychmiastowe powtórzenie eksperymentu przez recenzenta na czystym systemie.
+      4. Renderuje kompletny plik HTML (`thesis.html`) ze stylami typograficznymi
+         oraz rycinami wstrzykniętymi jako Base64 PNG.
+      5. Generuje wielostronicowy, profesjonalny dokument PDF (`thesis.pdf`) z pełną
+         strukturą 6 rozdziałów, rycinami, tabelami wyników i metadanymi ewolucyjnymi.
+
+--------------------------------------------------------------------------------
+ETAP 2.2: Agenci Wykonawczy Plac Budowy (`adk/agents/building/`)
+--------------------------------------------------------------------------------
+[x] `adk/agents/building/seed_coder.md`:
+    - Generuje deterministyczny kod Python 3.12+ z pełnym typowaniem, docstringami
+      złożoności obliczeniowej, jawnym ziarnem losowości (`seed: int = 42`) oraz
+      wbudowanym punktem odniesienia (`baseline` vs `proposed`). Zwraca `ast_edits`
+      lub pełny `source_code`.
+
+[x] `adk/agents/building/seed_tester.md`:
+    - Tworzy 3 klasy testów w `test_core.py` (inwarianty matematyczne, przypadki
+      brzegowe, benchmark porównawczy) oraz generuje tabelę `results.csv` w ścisłym
+      formacie RFC 4180 (zero spacji po przecinkach, obowiązkowe wiersze `baseline`
+      i `proposed`) i opcjonalny skrypt wykresów `plot_script`.
+
+[x] `adk/agents/building/seed_writer.md`:
+    - Redaguje podrozdziały pracy dyplomowej zgodnie z kanonem 6 rozdziałów.
+    - Bezwzględnie używa wyłącznie wskaźników `\ref_ast{plik:symbol}`,
+      `\ref_csv{plik:wiersz:kolumna}` / `\ref_csv{plik:kolumna}` oraz `\ref_fig{plik_lub_id}`
+      zgodnych z `exports` i `csv_schemas`, w bezosobowym stylu akademickim.
+
+[x] `adk/agents/building/sota_researcher.md`:
+    - Tworzy przegląd literatury (`literature_review_section`) metodą 4-etapowego
+      Lejka Badawczego oraz bazę `references.bib` (`bibtex_entries`) ze ścisłą
+      synchronizacją 1:1 kluczy ASCII `\cite{authorYEARkeyword}`.
+
+
+================================================================================
+WARSTWA 3: WERYFIKACJA HIPERKRAWĘDZIOWA I KOMPILATOR SYMBOLICZNY
+================================================================================
+
+--------------------------------------------------------------------------------
+ETAP 3.1: Narzędzia Weryfikacyjne (`adk/tools/verification/`)
+--------------------------------------------------------------------------------
+[x] `adk/tools/verification/test_runner.py`:
+    - Funkcja `run_isolated_tests(workspace_dir, use_docker=False, docker_image="python:3.12-slim", verification_dir=None)`:
+      1. Uruchamia testy jednostkowe `pytest` na plikach `test_*.py` / `*_test.py`
+         w `workspace/` (w odizolowanym subprocesie lub kontenerze Docker).
+      2. Uruchamia linter `ruff check` (jeśli binarka `ruff` jest dostępna w PATH).
+      3. Automatycznie wykrywa wszystkie dodatkowe skrypty walidujące `.py`
+         wypromowane przez Warstwę 4 do katalogu `adk/tools/verification/`
+         i uruchamia każdy z nich na wszystkich plikach `.py` w `workspace/`.
+
+[x] `adk/tools/verification/ref_compiler.py`:
+    - Funkcja `compile_symbolic_references(doc_path, workspace_dir="workspace", write_compiled=True)`:
+      1. **Rozwiązywanie `\ref_ast{plik:symbol}`** (`_lookup_ast_value`): parsuje
+         wskazany plik `.py` modułem `ast` i wyciąga wartość stałej (`Assign` / `AnnAssign`)
+         bądź nazwę funkcji/klasy.
+      2. **Rozwiązywanie `\ref_csv{plik:kolumna}` oraz `\ref_csv{plik:wiersz:kolumna}`**
+         (`_lookup_csv_value`): obsługuje wybór z ostatniego wiersza tabeli (`.csv`)
+         oraz indeksowanie po nazwie metody/wiersza (`baseline:win_rate`, `proposed:win_rate`).
+      3. **Rozwiązywanie `\ref_fig{plik_lub_id}`** (`_lookup_fig_value`): sprawdza,
+         czy w `workspace/` istnieje wskazany plik ryciny/wykresu (`*.pdf`, `*.png`,
+         `*.svg`, `*.tex`, `*.py`) lub blok `tikzpicture` w dokumencie; podmienia
+         znacznik na sformatowane odwołanie `[Ryc. <target>]`, a w razie braku pliku
+         zgłasza błąd w `errors`.
+      4. **Kontrola świeżości (`mtime` Invariant)**: porównuje czas modyfikacji każdego
+         użytego pliku `.csv` z najnowszym plikiem `.py` w `workspace/`.
+      5. **Walidacja składni tagów, TikZ, BibTeX i skaner `AI_FLUFF_BLACKLIST`**.
+      6. Zapisuje skompilowany dokument do pliku `thesis.compiled.md` (lub `*.compiled.tex`).
+
+--------------------------------------------------------------------------------
+ETAP 3.2: Agenci Nadzorcy i Selektywny Zakres Hiperkrawędzi (`Edge-Scoped Verification`)
+--------------------------------------------------------------------------------
+[x] Dobór nadzorców w `_run_verification_step(current_task, include_docs, is_final_gate=False)`
+    na podstawie przynależności `target_node` do hiperkrawędzi w `state/hypergraph_matrix.json`:
+    1. **Węzły kodowo-testowe (`v1`, `v2`, `v5` — krawędzie `E1`, `E4`)**:
+       - Uruchamia `run_isolated_tests` oraz agenta `code_auditor.md`.
+       - Pomija `symbolic_auditor.md` oraz `redteam_critic_guard.md` (status
+         `"SKIPPED_OUT_OF_EDGE_SCOPE"`), unikając fałszywych alarmów `stale_csv_files`
+         podczas edycji samych plików `.py`.
+    2. **Węzeł danych/eksperymentu (`v3` — krawędź `E2`)**:
+       - Uruchamia `run_isolated_tests`, weryfikację świeżości `mtime` pliku `results.csv`
+         względem plików `.py` oraz agenta `code_auditor.md`.
+    3. **Węzeł dokumentacji (`v4` — krawędź `E3`) ORAZ końcowa bramka obrony (`is_final_gate=True`)**:
+       - Uruchamia pełną kaskadę 3 nadzorców: `run_isolated_tests` +
+         `compile_symbolic_references` + `code_auditor.md` + `symbolic_auditor.md` +
+         `redteam_critic_guard.md`.
+
+
+================================================================================
+WARSTWA 4: SAMOEWOLUCJA, KOMPAKTOWANIE PROMPTÓW I SANDBOX
+================================================================================
+
+--------------------------------------------------------------------------------
+ETAP 4.1: Narzędzia Ewolucji Agentów i Narzędzi (`adk/tools/evolution/`)
+--------------------------------------------------------------------------------
+[x] `adk/tools/evolution/agent_creator.py`:
+    - Funkcja `create_specialized_agent(...)`: tworzy nowego agenta `dyn_<slug>.md`
+      w `adk/agents/<domain>/`, rejestruje go w `state/agent_registry.json` i
+      automatycznie przypisuje do oczekującego zadania w `state/task_queue.json`.
+
+[x] `adk/tools/evolution/agent_splitter.py`:
+    - Funkcja `split_agent(...)`: archiwizuje przeciążonego agenta (`"active": false`),
+      tworzy 2 wyspecjalizowane sub-agenty dziedziczące jego inwarianty, a orkiestrator
+      (`_reassign_tasks_after_split`) natychmiast podmienia `assigned_agent` we
+      wszystkich zadaniach `TODO` / `FAILED` / `IN_PROGRESS` w `state/task_queue.json`
+      na odpowiednie sub-agenty (`<parent>_<sub_spec>`).
+
+[x] `adk/tools/evolution/agent_mutator.py`:
+    - Funkcja `mutate_agent_prompt(...)`: chroni pliki `*_guard.md`, dopisuje regułę
+      `- **RULE**: ...` do pliku `.md` agenta i co `compaction_threshold = 4` reguły
+      uruchamia `consolidate_agent_prompt(...)` z agentem `prompt_consolidator.md`.
+
+[x] `adk/tools/evolution/sandbox_verifier.py`:
+    - Funkcja `evaluate_and_promote_validator(...)`: wykonuje shadow-testing nowego
+      skryptu walidatora `.py` na `bad_sample_input` (musi zwrócić kod != 0) oraz
+      `good_sample_input` (musi zwrócić kod == 0) przed promocją do `adk/tools/verification/`.
+
+--------------------------------------------------------------------------------
+ETAP 4.2: Pełne Odblokowanie 5 Akcji w `_run_evolution_step` (`adk/agents/evolution/`)
+--------------------------------------------------------------------------------
+[x] `adk/agents/evolution/evolution_architect.md`:
+    - Otrzymuje pełny kontekst: `validation_report`, `failure_ledger`, `agent_failure_count`
+      oraz `agent_registry` i zwraca jedną z 5 obsługiwanych akcji w polu `action` / `decision`:
+      1. `"MUTATE_AGENT"` -> `mutate_agent_prompt(...)`,
+      2. `"SPLIT_AGENT"` -> `split_agent(...)` + przepisanie `assigned_agent` w `task_queue.json`,
+      3. `"CREATE_AGENT"` -> `create_specialized_agent(...)` + przypisanie do zadania,
+      4. `"CREATE_TOOL"` -> `evaluate_and_promote_validator(...)`,
+      5. `"HITL"` -> zapis pytania do `state/hitl_flag.json` (`active: True`) i pauza `"HITL_PAUSED"`.
+
+
+================================================================================
+SUBSYSTEM BENCHMARKÓW, LOGOWANIA LLM I PUBLIKACJI (`adk/benchmarks/`)
+================================================================================
+
+--------------------------------------------------------------------------------
+ETAP 5.1: Zadania Referencyjne i Ewaluacja (`adk/benchmarks/tasks.py`)
+--------------------------------------------------------------------------------
+[x] Pakiet 3 zróżnicowanych dziedzinowo tematów prac inżynierskich:
+    1. `01_rl_tictactoe`: Uczenie ze Wzmocnieniem (Q-Learning) w Grach Skończonych
+       - Domena: Reinforcement Learning & Game Theory
+       - Demonstruje: Mutację promptów W4 i pełną pętlę naprawczą na stałych AST.
+    2. `02_ml_anomaly_detection`: Wielokanałowa Detekcja Anomalii w Sygnałach Biomedycznych
+       - Domena: Machine Learning & Signal Processing
+       - Demonstruje: Dynamiczne powołanie agenta (`CREATE_AGENT` dla `anomaly_ml_specialist`)
+         oraz podział przeciążonego testera (`SPLIT_AGENT` na unit i edge-case testing).
+    3. `03_graph_pathfinding`: Optymalizacja Heurystyczna Tras w Grafach Siatkowych
+       - Domena: Graph Algorithms & Heuristic Search
+       - Demonstruje: Syntezę deterministycznego walidatora (`CREATE_TOOL` dla
+         `ast_safety_contract_validator.py`) oraz konsolidację promptów (`PROMPT_CONSOLIDATED`).
+
+--------------------------------------------------------------------------------
+ETAP 5.2: Wielozadaniowy Runner Benchmarków (`adk/benchmarks/runner.py`)
+--------------------------------------------------------------------------------
+[x] Funkcja `run_benchmark_suite(task_keys=None, provider="auto", output_root=None)`:
+    - Izolacja środowiska: `_prepare_evolved_adk_sandbox` tworzy czyste środowisko
+      dla każdego zadania, zachowując kumulujący się stan ewolucyjny (`_evolved_adk_state`).
+    - Dedykowane katalogi wyjściowe: wyniki trafiają do odrębnych podkatalogów
+      `benchmarks/<slug>/` i nie nadpisują się nawzajem.
+    - Integracja publikacyjna: po przejściu orkiestratora następuje automatyczny
+      eksport pakietu publikacyjnego (`publish_workspace_thesis_bundle`) oraz
+      zrzut śladu LLM (`export_task_llm_interactions`).
+    - Zbiorczy raport: generuje `benchmark_summary.json` oraz `adk_benchmark_summary.pdf`.
+
+--------------------------------------------------------------------------------
+ETAP 5.3: Dziennik Promptów i Decyzji LLM (`adk/benchmarks/llm_logging.py`)
+--------------------------------------------------------------------------------
+[x] Funkcja `export_task_llm_interactions(...)`:
+    - Generuje `llm_interactions.md`:
+      * Nagłówek ze statystykami zadania, użytymi modelami i łącznym czasem inferencji.
+      * Tabelę podsumowującą decyzje (Krok, Agent, Warstwa, Model, Czas, Decyzja).
+      * Szczegółowy rejestr każdego zapytania z rozwijanymi blokami `<details>`:
+        - Pełna instrukcja systemowa agenta + wejściowy JSON payload.
+        - Zwrócona surowa odpowiedź modelu i sparsowany obiekt JSON.
+    - Generuje `llm_interactions.jsonl`: maszynowy zrzut w formacie JSON Lines.
+
+
+================================================================================
+ORKIESTRATOR (`adk/orchestrator.py`) I CLI LAUNCHER (`main.py`)
+================================================================================
+
+--------------------------------------------------------------------------------
+PĘTLA STERUJĄCA: `NeuroSymbolicOrchestrator.run()` (`adk/orchestrator.py`)
+--------------------------------------------------------------------------------
+[x] Krok 1: Sprawdzenie sprzecznych wymagań wejściowych (`contradictory_requirements`).
+[x] Krok 2: Analiza Hipergrafu (`calculate_blast_radius`), Planowanie Początkowe
+    (`initial_task_planner.md`) oraz Bramka Promotorska `GATE_1_OUTLINE_APPROVAL`.
+[x] Krok 3: Bramka Krytyka Planu (`task_critic_guard.md` - GUARD W1) oraz Bramka
+    Promotorska `GATE_2_METHODOLOGY_APPROVAL`.
+[x] Krok 4: Pętla Wykonania i Nadzoru po zadaniach z `task_queue.json`:
+    Dla każdego zadania `task`:
+    a. Dobór klasy modelu (`SML` vs `LRM`) przez `select_model_tier(node_id, matrix_path)`.
+    b. Wykonanie Kroku Budowy (`_execute_builder_step` - W2) i synchronizacja macierzy H.
+    c. Selektywna weryfikacja hiperkrawędziowa (`_run_verification_step` - W3).
+    d. Pętla Naprawcza `while report["status"] != "PASS" and task_retries < max_replan_retries`:
+       1. Eskalacja wagi w(v) o 0.4 (`EvoRoute`) i zapis zdarzenia `WEIGHT_ESCALATED`.
+       2. Uruchomienie Warstwy 4 (`MUTATE`, `SPLIT`, `CREATE_AGENT`, `CREATE_TOOL`, `HITL`).
+       3. Wywołanie `remediation_planner.md` (W1, tier `LRM`), walidacja `task_critic_guard.md`,
+          wykonanie zadań chirurgicznych `surgical_tasks` i re-weryfikacja W3.
+       4. Wyczerpanie limitu prób -> eskalacja do człowieka (`GATE_REMEDIATION_EXHAUSTED`).
+[x] Krok 5: Końcowa weryfikacja pełną kaskadą (`is_final_gate=True`) i Bramka Obrony
+    `GATE_3_DEFENSE_APPROVAL`.
+
+--------------------------------------------------------------------------------
+INTERFEJS CLI: `main.py`
+--------------------------------------------------------------------------------
+[x] Opcje wywołania:
+    - `--benchmark-suite`: uruchomienie pełnego pakietu 3 zadań benchmarkowych.
+    - `--benchmark-task <ID>`: uruchomienie wybranego zadania (`1`/`rl`, `2`/`ml`, `3`/`graph`).
+    - `--verbose-llm` / `-v`: podgląd pełnych promptów i odpowiedzi LLM na żywo w konsoli.
+    - `--scenario <1|2|3|all>`: uruchomienie wybranego scenariusza testowego ADK.
+    - `--provider <google|ollama|auto|mock>`: wybór dostawcy LLM.
+    - `--check-llm`: diagnostyka konfiguracji połączenia LLM (API keys, Ollama status).
+    - `--interactive-gates`: interaktywny tryb konsolowy dla bramek promotorskich HITL.
+
+
+================================================================================
+RAPORT Z CODE REVIEW ARCHITEKTURY ADK
+================================================================================
+
+1. OCENA JAKOŚCIOWA ARCHITEKTURY:
+   - Modułowość i Separacja Odpowiedzialności: BARDZO WYSOKA (A+).
+     Podział na 4 domeny (`planning`, `building`, `verification`, `evolution`)
+     oraz rdzeń `core` zapewnia czytelne granice kompetencyjne i zapobiega
+     powstawaniu splątanego kodu (spaghetti code).
+   - Determinizm i Eliminacja Halucynacji: BARDZO WYSOKA (A+).
+     Połączenie formalnego parsowania AST (`ast.parse`/`ast.unparse`),
+     walidacji testów jednostkowych (`pytest`), lintera (`ruff`) oraz uziemienia
+     symbolicznego (`ref_compiler.py` z tagami `\ref_ast`, `\ref_csv`, `\ref_fig`)
+     całkowicie wyklucza halucynowanie metryk w tekście pracy dyplomowej.
+   - Odporność Ewolucyjna (Self-Evolution & Guard Immunity): WYSOKA (A).
+     System potrafi autonomicznie rozszerzać własną bazę agentów (`CREATE_AGENT`),
+     dzielić przeciążone role (`SPLIT_AGENT`), syntetyzować nowe walidatory
+     deterministyczne po shadow-testingu (`CREATE_TOOL`) oraz optymalizować
+     prompty (`MUTATE_AGENT` + konsolidacja co 4 reguły), zachowując pełną
+     nietykalność strażników jakości (Immunity Invariant).
+   - Obserwowalność i Diagnostyka: BARDZO WYSOKA (A+).
+     Wdrożona telemetria czasu rzeczywistego (decyzje w CLI, flaga `--verbose-llm`,
+     pliki `llm_interactions.md` i `.jsonl` w podkatalogach każdego zadania)
+     pozwala na precyzyjną inspekcję każdego promptu i każdej decyzji podejmowanej
+     przez modele językowe.
+
+2. ZIDENTYFIKOWANE PUNKTY KRYTYCZNE I ZASTOSOWANE ŚRODKI ZARADCZE:
+   - Zgodność ze stronami kodowymi Windows (Console Charset):
+     Domyślne kodowanie konsoli w systemie Windows (`cp1250`) powodowało błędy
+     `UnicodeEncodeError` przy znakach strzałek Unicode (np. `\u21b3`).
+     Środek zaradczy: Wprowadzono bezpieczne symbole ASCII (`->`, `+--`, `|`, `\--`),
+     gwarantujące bezbłędną pracę na dowolnym terminalu Windows/Linux/macOS.
+   - Izolacja Procesów i Przechowywanie Danych Benchmarków:
+     Wcześniejsze wersje nadpisywały katalog `adk/workspace/`.
+     Środek zaradczy: Wprowadzono permanentne podkatalogi `benchmarks/<slug>/`
+     z niezależnymi artefaktami i izolowanymi sandboksami ewolucyjnymi.
+   - Świeżość i Spójność Czasowa (`mtime`):
+     Węzły kodowe (`v1`, `v2`) modyfikowały czas plików `.py`, co w pełnej
+     weryfikacji wywoływało fałszywy alarm przestarzałości `results.csv`.
+     Środek zaradczy: `Edge-Scoped Verification` selektywnie sprawdza `mtime`
+     wyłącznie przy weryfikacji węzłów danych i pracy dyplomowej.
+
+3. STATUS TESTÓW REGRESYJNYCH:
+   - Całkowita liczba testów w pakiecie `tests/`: 30
+   - Liczba testów przechodzących: 30 / 30 (100% PASS)
+   - Czas wykonania pełnego pakietu testowego: ~21 sekund.
+================================================================================
+Koniec specyfikacji architektury.

@@ -1,0 +1,392 @@
+{
+  "events": [
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v1",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 16,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Preserve strict AST, CSV and symbolic reference parity in task T1 (v1).",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v3",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 18,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Preserve strict AST, CSV and symbolic reference parity in task T3 (v3).",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 1.6,
+        "new_weight": 2.0,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_writer.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v1",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 16,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "seed_coder",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+          "cycle": 1,
+          "rules_consolidated": 4,
+          "consolidated_invariant": "Maintain strict AST signature compatibility, CSV freshness, and symbolic pointer validity across all task iterations (T1, T3) to ensure cross-file reference integrity."
+        }
+      }
+    },
+    {
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "cycle": 1,
+        "rules_consolidated": 4,
+        "consolidated_invariant": "Maintain strict AST signature compatibility, CSV freshness, and symbolic pointer validity across all task iterations (T1, T3) to ensure cross-file reference integrity."
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v3",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 18,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_tester",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 2.0,
+        "new_weight": 2.4,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v1",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 16,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v3",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 18,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_tester",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 2.4,
+        "new_weight": 2.8,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v1",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
+        "delta": 0.4,
+        "degree": 16,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v3",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
+        "delta": 0.4,
+        "degree": 18,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_tester",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 2.8,
+        "new_weight": 3.2,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "VALIDATOR_PROMOTED",
+      "validator_name": "ast_safety_contract_validator.py",
+      "target_path": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\tools\\verification\\ast_safety_contract_validator.py",
+      "bad_sample_rejected": true,
+      "good_sample_accepted": true
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    }
+  ]
+}

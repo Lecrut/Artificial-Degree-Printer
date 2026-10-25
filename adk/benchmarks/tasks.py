@@ -1,0 +1,1019 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from adk.benchmarks.tictactoe import (
+    TICTACTOE_BENCHMARK_PROMPT,
+    TICTACTOE_CONFIG_AST_NODES,
+    TICTACTOE_CORE_CODE,
+    TICTACTOE_DOC_SECTION_TITLE,
+    TICTACTOE_INITIAL_CSV,
+    TICTACTOE_TEST_CODE,
+)
+
+
+@dataclass(frozen=True)
+class BenchmarkTaskSpec:
+    """Complete specification for a mocked self-expanding ADK benchmark task."""
+
+    task_id: str
+    slug: str
+    title_pl: str
+    title_en: str
+    domain: str
+    prompt: str
+    config_ast_nodes: list[tuple[str, str]]
+    core_code: str
+    test_code: str
+    initial_csv: str
+    plot_script: str
+    bibtex_entries: str
+    sota_section_title: str
+    sota_section_content: str
+    doc_section_title: str
+    doc_section_content: str
+    abstract_pl: str
+    abstract_en: str
+    architecture_tikz: str
+    thesis_chapters: list[tuple[str, str]] = field(default_factory=list)
+    missing_specialization: str | None = None
+    trigger_agent_split: bool = False
+    trigger_tool_synthesis: bool = False
+    trigger_prompt_consolidation: bool = False
+    simulate_first_fail: bool = True
+
+
+# ============================================================================
+# TASK 1: Reinforcement Learning (Tic-Tac-Toe Tabular Q-Learning)
+# ============================================================================
+
+TICTACTOE_PLOT_SCRIPT = '''from __future__ import annotations
+
+import csv
+from pathlib import Path
+
+import matplotlib
+import matplotlib.pyplot as plt
+
+matplotlib.use("Agg")
+
+
+def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
+    base = Path(workspace_dir) if workspace_dir else Path(__file__).resolve().parent
+    csv_path = base / "results.csv"
+    fig_dir = base / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    rows = []
+    if csv_path.exists():
+        with csv_path.open("r", encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+
+    if not rows:
+        rows = [
+            {"method": "baseline", "win_rate": "0.52", "draw_rate": "0.12", "loss_rate": "0.36"},
+            {"method": "proposed", "win_rate": "0.88", "draw_rate": "0.08", "loss_rate": "0.04"},
+        ]
+
+    methods = [r["method"].capitalize() for r in rows]
+    wins = [float(r["win_rate"]) * 100 for r in rows]
+    draws = [float(r["draw_rate"]) * 100 for r in rows]
+    losses = [float(r["loss_rate"]) * 100 for r in rows]
+
+    fig, ax = plt.subplots(figsize=(7.5, 4.2), dpi=180)
+    x = range(len(methods))
+    width = 0.24
+
+    b1 = ax.bar([i - width for i in x], wins, width=width, label="Win Rate (%)", color="#1b9e77")
+    b2 = ax.bar(list(x), draws, width=width, label="Draw Rate (%)", color="#7570b3")
+    b3 = ax.bar([i + width for i in x], losses, width=width, label="Loss Rate (%)", color="#d95f02")
+
+    ax.set_xticks(list(x))
+    ax.set_xticklabels(methods, fontsize=10, fontweight="bold")
+    ax.set_ylabel("Percentage of Evaluation Games (%)", fontsize=10)
+    ax.set_ylim(0, 108)
+    ax.set_title("Tabular Q-Learning vs. Random Baseline Policy (100 Eval Episodes)", fontsize=11, fontweight="bold")
+    ax.grid(axis="y", linestyle="--", alpha=0.4)
+    ax.legend(frameon=True, loc="upper right")
+
+    for bars in (b1, b2, b3):
+        for bar in bars:
+            h = bar.get_height()
+            ax.annotate(
+                f"{h:.1f}%",
+                xy=(bar.get_x() + bar.get_width() / 2, h),
+                xytext=(0, 3),
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+
+    fig.tight_layout()
+    png_out = fig_dir / "comparison_chart.png"
+    pdf_out = fig_dir / "comparison_chart.pdf"
+    fig.savefig(png_out, dpi=180)
+    fig.savefig(pdf_out)
+    plt.close(fig)
+    return [str(png_out), str(pdf_out)]
+
+
+if __name__ == "__main__":
+    generate_plots()
+'''
+
+TICTACTOE_BIBTEX = """@article{watkins1992qlearning,
+  author = {Watkins, Christopher J. C. H. and Dayan, Peter},
+  title = {Q-Learning},
+  journal = {Machine Learning},
+  volume = {8},
+  pages = {279--292},
+  year = {1992}
+}
+
+@book{sutton2018reinforcement,
+  author = {Sutton, Richard S. and Barto, Andrew G.},
+  title = {Reinforcement Learning: An Introduction},
+  publisher = {MIT Press},
+  edition = {2nd},
+  year = {2018}
+}
+"""
+
+TICTACTOE_SOTA_CONTENT = (
+    "Fundamentalne podstawy tablicowego uczenia ze wzmocnieniem zostały sformułowane przez Watkinsa i Dayana "
+    "w klasycznym algorytmie Q-Learning \\cite{watkins1992qlearning} oraz uogólnione w monografii Suttona i Barto "
+    "\\cite{sutton2018reinforcement}. W grach o skończonej przestrzeni stanów, takich jak Kółko i Krzyżyk "
+    "(Tic-Tac-Toe), strategia $\\epsilon$-zachłanna z dyskontowaniem $\\gamma$ gwarantuje zbieżność wartości "
+    "akcji $Q(s, a)$ do polityki optymalnej przy zachowaniu pełnej weryfikowalności deterministycznej."
+)
+
+TICTACTOE_DOC_FULL_CONTENT = (
+    "To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning "
+    "agent against a random baseline policy \\cite{watkins1992qlearning,sutton2018reinforcement}. "
+    "The experiments executed \\ref_ast{config.py:EPISODES} episodes "
+    "with learning rate \\ref_ast{config.py:ALPHA}, discount factor \\ref_ast{config.py:GAMMA}, "
+    "and exploration factor \\ref_ast{config.py:EPSILON}. "
+    "The reference baseline achieved a win rate of \\ref_csv{results.csv:baseline:win_rate}, whereas the proposed "
+    "agent reached a win rate of \\ref_csv{results.csv:proposed:win_rate} (\\ref_csv{results.csv:win_rate}) "
+    "and a draw rate of \\ref_csv{results.csv:draw_rate}, as illustrated in \\ref_fig{figures/comparison_chart.pdf}."
+)
+
+TICTACTOE_TIKZ = r"""\begin{tikzpicture}[node distance=2.4cm, auto]
+  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=2.8cm, minimum height=0.9cm] (env) {Plansza $3\times 3$ ($s_t$)};
+  \node[draw, rectangle, rounded corners, fill=green!15, right of=env, xshift=2.2cm, minimum width=3.2cm, minimum height=0.9cm] (qtab) {Tablica $Q(s_t, a_t)$};
+  \node[draw, rectangle, rounded corners, fill=orange!15, right of=qtab, xshift=2.2cm, minimum width=2.8cm, minimum height=0.9cm] (pol) {Polityka $\epsilon$-greedy};
+  \draw[->, thick] (env) -- node[above] {stan} (qtab);
+  \draw[->, thick] (qtab) -- node[above] {$\arg\max_a Q$} (pol);
+  \draw[->, thick] (pol.south) -- ++(0,-0.7) -| node[below, pos=0.25] {nagroda $r_t$, aktualizacja Bellmana} (env.south);
+\end{tikzpicture}"""
+
+
+# ============================================================================
+# TASK 2: Machine Learning / Bio-Signal Anomaly Detection
+# ============================================================================
+
+ANOMALY_PROMPT = (
+    "Build a Bio-Signal & Telemetry Anomaly Detection module in Python: "
+    "1) in config.py define N_SAMPLES = 600, ANOMALY_RATIO = 0.08, Z_THRESHOLD = 2.4, and ENSEMBLE_TREES = 25; "
+    "2) in core.py implement synthetic bio-signal stream generation generate_biosignal_dataset(n_samples, anomaly_ratio, seed) "
+    "and comparative evaluation train_and_evaluate(csv_out_path, seed) comparing a static univariate Z-score baseline "
+    "against a multi-feature Adaptive Robust Mahalanobis-Ensemble detector, saving precision, recall, f1_score, and false_alarm_rate to results.csv; "
+    "3) generate unit tests in test_core.py, plots in plot_results.py, and thesis documentation using symbolic tags "
+    "\\ref_ast{config.py:N_SAMPLES}, \\ref_ast{config.py:ANOMALY_RATIO}, \\ref_ast{config.py:Z_THRESHOLD}, "
+    "\\ref_ast{config.py:ENSEMBLE_TREES}, \\ref_csv{results.csv:baseline:f1_score}, and \\ref_csv{results.csv:proposed:f1_score}."
+)
+
+ANOMALY_CONFIG_AST_NODES: list[tuple[str, str]] = [
+    ("N_SAMPLES", "N_SAMPLES = 600\n"),
+    ("ANOMALY_RATIO", "ANOMALY_RATIO = 0.08\n"),
+    ("Z_THRESHOLD", "Z_THRESHOLD = 2.4\n"),
+    ("ENSEMBLE_TREES", "ENSEMBLE_TREES = 25\n"),
+]
+
+ANOMALY_CORE_CODE = '''import csv
+import math
+import random
+from pathlib import Path
+import config
+
+
+def generate_biosignal_dataset(
+    n_samples: int = config.N_SAMPLES,
+    anomaly_ratio: float = config.ANOMALY_RATIO,
+    seed: int = 42,
+) -> tuple[list[tuple[float, float, float]], list[int]]:
+    """Generate 3-channel synthetic physiological telemetry (HR, HRV-RMSSD, SpO2-drop) with binary anomaly labels."""
+    rng = random.Random(seed)
+    n_anomalies = max(1, int(round(n_samples * anomaly_ratio)))
+    anomaly_indices = set(rng.sample(range(n_samples), n_anomalies))
+
+    features: list[tuple[float, float, float]] = []
+    labels: list[int] = []
+
+    for idx in range(n_samples):
+        phase = 2.0 * math.pi * (idx / 60.0)
+        if idx in anomaly_indices:
+            # Multi-channel correlated cardiac/respiratory anomaly spike
+            hr = 72.0 + 6.0 * math.sin(phase) + rng.gauss(22.0, 4.5)
+            hrv = 45.0 - rng.gauss(19.0, 3.5)
+            spo2_drop = abs(rng.gauss(4.8, 0.9))
+            labels.append(1)
+        else:
+            hr = 72.0 + 6.0 * math.sin(phase) + rng.gauss(0.0, 3.2)
+            hrv = 45.0 + 3.0 * math.cos(phase) + rng.gauss(0.0, 2.8)
+            spo2_drop = max(0.0, rng.gauss(0.6, 0.35))
+            labels.append(0)
+        features.append((hr, hrv, spo2_drop))
+
+    return features, labels
+
+
+def _compute_classification_metrics(y_true: list[int], y_pred: list[int]) -> dict[str, float]:
+    tp = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 1)
+    fp = sum(1 for t, p in zip(y_true, y_pred) if t == 0 and p == 1)
+    fn = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 0)
+    tn = sum(1 for t, p in zip(y_true, y_pred) if t == 0 and p == 0)
+
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    f1 = (2.0 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
+    far = fp / (fp + tn) if (fp + tn) > 0 else 0.0
+    return {
+        "precision": round(precision, 3),
+        "recall": round(recall, 3),
+        "f1_score": round(f1, 3),
+        "false_alarm_rate": round(far, 4),
+    }
+
+
+def train_and_evaluate(csv_out_path: str | Path | None = None, seed: int = 42) -> dict[str, float]:
+    features, labels = generate_biosignal_dataset(
+        n_samples=config.N_SAMPLES,
+        anomaly_ratio=config.ANOMALY_RATIO,
+        seed=seed,
+    )
+
+    # 1. Baseline: Univariate Z-Score on channel 0 (Heart Rate only)
+    hrs = [row[0] for row in features]
+    mean_hr = sum(hrs) / len(hrs)
+    std_hr = math.sqrt(sum((x - mean_hr) ** 2 for x in hrs) / len(hrs)) or 1.0
+    baseline_preds = [1 if abs(x - mean_hr) / std_hr > config.Z_THRESHOLD else 0 for x in hrs]
+    base_m = _compute_classification_metrics(labels, baseline_preds)
+
+    # 2. Proposed: Robust Median/MAD Multi-Channel Ensemble with subspace projections
+    rng = random.Random(seed + 7)
+    n_dims = 3
+    medians = []
+    mads = []
+    for d in range(n_dims):
+        col = sorted(row[d] for row in features)
+        med = col[len(col) // 2]
+        abs_dev = sorted(abs(x - med) for x in col)
+        mad = (abs_dev[len(abs_dev) // 2] * 1.4826) or 1e-6
+        medians.append(med)
+        mads.append(mad)
+
+    # Ensemble of random subspace hyperplanes + robust radial distance
+    ensemble_votes = [0.0] * len(features)
+    for _ in range(config.ENSEMBLE_TREES):
+        weights = [rng.uniform(0.5, 1.5) for _ in range(n_dims)]
+        w_norm = math.sqrt(sum(w * w for w in weights))
+        weights = [w / w_norm for w in weights]
+        for idx, row in enumerate(features):
+            z_vec = [(row[d] - medians[d]) / mads[d] for d in range(n_dims)]
+            radial = math.sqrt(sum(weights[d] * (z_vec[d] ** 2) for d in range(n_dims)))
+            if radial > config.Z_THRESHOLD:
+                ensemble_votes[idx] += 1.0
+
+    proposed_preds = [1 if (vote / config.ENSEMBLE_TREES) >= 0.5 else 0 for vote in ensemble_votes]
+    prop_m = _compute_classification_metrics(labels, proposed_preds)
+
+    baseline_row = {
+        "method": "baseline",
+        "samples": float(config.N_SAMPLES),
+        **base_m,
+    }
+    proposed_row = {
+        "method": "proposed",
+        "samples": float(config.N_SAMPLES),
+        **prop_m,
+    }
+
+    if csv_out_path is not None:
+        out_p = Path(csv_out_path)
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+        with out_p.open("w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=["method", "samples", "precision", "recall", "f1_score", "false_alarm_rate"],
+            )
+            writer.writeheader()
+            writer.writerow(baseline_row)
+            writer.writerow(proposed_row)
+
+    return proposed_row
+'''
+
+ANOMALY_TEST_CODE = '''from pathlib import Path
+import core
+
+
+def test_biosignal_anomaly_detection():
+    X, y = core.generate_biosignal_dataset(200, 0.1, seed=42)
+    assert len(X) == 200
+    assert sum(y) == 20
+    csv_path = Path(__file__).resolve().parent / "results.csv"
+    metrics = core.train_and_evaluate(csv_path, seed=42)
+    assert metrics["f1_score"] >= 0.85
+    assert metrics["precision"] >= 0.80
+    assert csv_path.exists()
+'''
+
+ANOMALY_INITIAL_CSV = (
+    "method,samples,precision,recall,f1_score,false_alarm_rate\n"
+    "baseline,600.0,0.892,0.688,0.777,0.0072\n"
+    "proposed,600.0,0.979,0.979,0.979,0.0018\n"
+)
+
+ANOMALY_PLOT_SCRIPT = '''from __future__ import annotations
+
+import csv
+from pathlib import Path
+
+import matplotlib
+import matplotlib.pyplot as plt
+
+matplotlib.use("Agg")
+
+
+def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
+    base = Path(workspace_dir) if workspace_dir else Path(__file__).resolve().parent
+    csv_path = base / "results.csv"
+    fig_dir = base / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    rows = []
+    if csv_path.exists():
+        with csv_path.open("r", encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+
+    if not rows:
+        rows = [
+            {"method": "baseline", "precision": "0.892", "recall": "0.688", "f1_score": "0.777"},
+            {"method": "proposed", "precision": "0.979", "recall": "0.979", "f1_score": "0.979"},
+        ]
+
+    methods = [r["method"].capitalize() for r in rows]
+    prec = [float(r["precision"]) * 100 for r in rows]
+    rec = [float(r["recall"]) * 100 for r in rows]
+    f1 = [float(r["f1_score"]) * 100 for r in rows]
+
+    fig, ax = plt.subplots(figsize=(7.5, 4.2), dpi=180)
+    x = range(len(methods))
+    width = 0.24
+
+    b1 = ax.bar([i - width for i in x], prec, width=width, label="Precision (%)", color="#2b5c8f")
+    b2 = ax.bar(list(x), rec, width=width, label="Recall (%)", color="#388e3c")
+    b3 = ax.bar([i + width for i in x], f1, width=width, label="F1-Score (%)", color="#d95f02")
+
+    ax.set_xticks(list(x))
+    ax.set_xticklabels(methods, fontsize=10, fontweight="bold")
+    ax.set_ylabel("Metric Score (%)", fontsize=10)
+    ax.set_ylim(0, 110)
+    ax.set_title("Bio-Signal Anomaly Detection: Univariate Z-Score vs. Robust Subspace Ensemble", fontsize=10.5, fontweight="bold")
+    ax.grid(axis="y", linestyle="--", alpha=0.4)
+    ax.legend(frameon=True, loc="lower right")
+
+    for bars in (b1, b2, b3):
+        for bar in bars:
+            h = bar.get_height()
+            ax.annotate(
+                f"{h:.1f}%",
+                xy=(bar.get_x() + bar.get_width() / 2, h),
+                xytext=(0, 3),
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
+
+    fig.tight_layout()
+    png_out = fig_dir / "comparison_chart.png"
+    pdf_out = fig_dir / "comparison_chart.pdf"
+    fig.savefig(png_out, dpi=180)
+    fig.savefig(pdf_out)
+    plt.close(fig)
+    return [str(png_out), str(pdf_out)]
+
+
+if __name__ == "__main__":
+    generate_plots()
+'''
+
+ANOMALY_BIBTEX = """@inproceedings{liu2008isolation,
+  author = {Liu, Fei Tony and Ting, Kai Ming and Zhou, Zhi-Hua},
+  title = {Isolation Forest},
+  booktitle = {IEEE International Conference on Data Mining (ICDM)},
+  pages = {413--422},
+  year = {2008}
+}
+
+@article{chandola2009anomaly,
+  author = {Chandola, Varun and Banerjee, Arindam and Kumar, Vipin},
+  title = {Anomaly Detection: A Survey},
+  journal = {ACM Computing Surveys},
+  volume = {41},
+  number = {3},
+  pages = {1--58},
+  year = {2009}
+}
+"""
+
+ANOMALY_SOTA_CONTENT = (
+    "Detekcja anomalii w wielokanałowych sygnałach biomedycznych (HR, HRV-RMSSD, saturacja SpO2) wymaga odporności "
+    "na wartości odstające w estymacji parametrów rozkładu \\cite{chandola2009anomaly}. Klasyczne podejścia "
+    "oparte na jednowymiarowym teście Z-score ulegają efektowi maskowania, podczas gdy metody zespołowe "
+    "w podprzestrzeniach losowych, zapoczątkowane przez Isolation Forest \\cite{liu2008isolation}, pozwalają "
+    "na separację anomalii wielowymiarowych przy niskiej złożoności obliczeniowej."
+)
+
+ANOMALY_DOC_CONTENT = (
+    "In the empirical evaluation on \\ref_ast{config.py:N_SAMPLES} multi-channel physiological telemetry samples "
+    "with anomaly contamination ratio \\ref_ast{config.py:ANOMALY_RATIO}, the proposed Robust Subspace Ensemble "
+    "of \\ref_ast{config.py:ENSEMBLE_TREES} estimators (threshold \\ref_ast{config.py:Z_THRESHOLD}) was compared "
+    "against a univariate Z-score baseline \\cite{liu2008isolation,chandola2009anomaly}. "
+    "The baseline method achieved an F1-score of \\ref_csv{results.csv:baseline:f1_score} (recall \\ref_csv{results.csv:baseline:recall}), "
+    "whereas the proposed ensemble attained an F1-score of \\ref_csv{results.csv:proposed:f1_score} "
+    "with precision \\ref_csv{results.csv:proposed:precision}, recall \\ref_csv{results.csv:proposed:recall}, "
+    "and false alarm rate \\ref_csv{results.csv:proposed:false_alarm_rate}, as shown in \\ref_fig{figures/comparison_chart.pdf}."
+)
+
+ANOMALY_TIKZ = r"""\begin{tikzpicture}[node distance=2.3cm, auto]
+  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=2.9cm, minimum height=0.9cm] (sig) {Telemetria 3D (HR, HRV, SpO$_2$)};
+  \node[draw, rectangle, rounded corners, fill=purple!15, right of=sig, xshift=2.4cm, minimum width=3.2cm, minimum height=0.9cm] (mad) {Normalizacja Median/MAD};
+  \node[draw, rectangle, rounded corners, fill=green!15, right of=mad, xshift=2.4cm, minimum width=3.1cm, minimum height=0.9cm] (ens) {Ensemble $T=25$ Projekcji};
+  \draw[->, thick] (sig) -- (mad);
+  \draw[->, thick] (mad) -- (ens);
+\end{tikzpicture}"""
+
+
+# ============================================================================
+# TASK 3: Graph Optimization (Weighted A* Octile vs. Dijkstra Pathfinding)
+# ============================================================================
+
+PATHFINDING_PROMPT = (
+    "Build a Graph Pathfinding & Heuristic Optimization module in Python: "
+    "1) in config.py define GRID_SIZE = 32, OBSTACLE_DENSITY = 0.22, HEURISTIC_WEIGHT = 1.15, and TRIALS = 40; "
+    "2) in core.py implement 8-connected weighted grid navigation comparing uninformed Dijkstra search against "
+    "Weighted Octile A* search in train_and_evaluate(csv_out_path, seed), recording avg_expanded_nodes, "
+    "path_optimality, speedup_factor, and success_rate to results.csv; "
+    "3) generate unit tests in test_core.py, plots in plot_results.py, and thesis documentation using symbolic tags "
+    "\\ref_ast{config.py:GRID_SIZE}, \\ref_ast{config.py:OBSTACLE_DENSITY}, \\ref_ast{config.py:HEURISTIC_WEIGHT}, "
+    "\\ref_ast{config.py:TRIALS}, \\ref_csv{results.csv:baseline:avg_expanded_nodes}, "
+    "\\ref_csv{results.csv:proposed:avg_expanded_nodes}, and \\ref_csv{results.csv:proposed:speedup_factor}."
+)
+
+PATHFINDING_CONFIG_AST_NODES: list[tuple[str, str]] = [
+    ("GRID_SIZE", "GRID_SIZE = 32\n"),
+    ("OBSTACLE_DENSITY", "OBSTACLE_DENSITY = 0.22\n"),
+    ("HEURISTIC_WEIGHT", "HEURISTIC_WEIGHT = 1.15\n"),
+    ("TRIALS", "TRIALS = 40\n"),
+]
+
+PATHFINDING_CORE_CODE = '''import csv
+import heapq
+import math
+import random
+from pathlib import Path
+import config
+
+
+def generate_obstacle_grid(size: int = config.GRID_SIZE, density: float = config.OBSTACLE_DENSITY, seed: int = 42) -> list[list[int]]:
+    rng = random.Random(seed)
+    grid = [[0 for _ in range(size)] for _ in range(size)]
+    for r in range(size):
+        for c in range(size):
+            if (r, c) in ((0, 0), (size - 1, size - 1)):
+                continue
+            if rng.random() < density:
+                grid[r][c] = 1
+    # Guarantee a clear corridor along perimeter fallback if random seed blocks all paths
+    for i in range(size):
+        grid[0][i] = 0
+        grid[i][size - 1] = 0
+    return grid
+
+
+def octile_heuristic(a: tuple[int, int], b: tuple[int, int]) -> float:
+    dx = abs(a[0] - b[0])
+    dy = abs(a[1] - b[1])
+    return (dx + dy) + (math.sqrt(2.0) - 2.0) * min(dx, dy)
+
+
+def search_grid(
+    grid: list[list[int]],
+    start: tuple[int, int],
+    goal: tuple[int, int],
+    heuristic_weight: float = 0.0,
+) -> tuple[float, int]:
+    """Run Dijkstra (heuristic_weight=0.0) or Weighted Octile A* (heuristic_weight>0.0). Returns (cost, expanded_nodes)."""
+    n = len(grid)
+    pq: list[tuple[float, float, tuple[int, int]]] = [(0.0, 0.0, start)]
+    g_score: dict[tuple[int, int], float] = {start: 0.0}
+    closed: set[tuple[int, int]] = set()
+    expanded = 0
+
+    neighbors = [
+        (-1, 0, 1.0), (1, 0, 1.0), (0, -1, 1.0), (0, 1, 1.0),
+        (-1, -1, math.sqrt(2.0)), (-1, 1, math.sqrt(2.0)),
+        (1, -1, math.sqrt(2.0)), (1, 1, math.sqrt(2.0)),
+    ]
+
+    while pq:
+        _, g, current = heapq.heappop(pq)
+        if current in closed:
+            continue
+        closed.add(current)
+        expanded += 1
+
+        if current == goal:
+            return g, expanded
+
+        cr, cc = current
+        for dr, dc, step_cost in neighbors:
+            nr, nc = cr + dr, cc + dc
+            if 0 <= nr < n and 0 <= nc < n and grid[nr][nc] == 0:
+                nxt = (nr, nc)
+                if nxt in closed:
+                    continue
+                tentative_g = g + step_cost
+                if tentative_g < g_score.get(nxt, float("inf")):
+                    g_score[nxt] = tentative_g
+                    h = octile_heuristic(nxt, goal) * heuristic_weight
+                    heapq.heappush(pq, (tentative_g + h, tentative_g, nxt))
+
+    return float("inf"), expanded
+
+
+def train_and_evaluate(csv_out_path: str | Path | None = None, seed: int = 42) -> dict[str, float]:
+    dijkstra_expanded_list: list[int] = []
+    astar_expanded_list: list[int] = []
+    optimality_ratios: list[float] = []
+    successes = 0
+
+    start = (0, 0)
+    goal = (config.GRID_SIZE - 1, config.GRID_SIZE - 1)
+
+    for trial in range(config.TRIALS):
+        grid = generate_obstacle_grid(config.GRID_SIZE, config.OBSTACLE_DENSITY, seed=seed + trial)
+        cost_d, exp_d = search_grid(grid, start, goal, heuristic_weight=0.0)
+        cost_a, exp_a = search_grid(grid, start, goal, heuristic_weight=config.HEURISTIC_WEIGHT)
+
+        if math.isfinite(cost_d) and math.isfinite(cost_a):
+            successes += 1
+            dijkstra_expanded_list.append(exp_d)
+            astar_expanded_list.append(exp_a)
+            optimality_ratios.append(cost_d / cost_a if cost_a > 0 else 1.0)
+
+    avg_d = sum(dijkstra_expanded_list) / max(1, len(dijkstra_expanded_list))
+    avg_a = sum(astar_expanded_list) / max(1, len(astar_expanded_list))
+    avg_opt = sum(optimality_ratios) / max(1, len(optimality_ratios))
+    speedup = avg_d / avg_a if avg_a > 0 else 1.0
+    succ_rate = successes / float(config.TRIALS)
+
+    baseline_row = {
+        "method": "baseline",
+        "trials": float(config.TRIALS),
+        "avg_expanded_nodes": round(avg_d, 1),
+        "path_optimality": 1.0,
+        "speedup_factor": 1.0,
+        "success_rate": round(succ_rate, 2),
+    }
+    proposed_row = {
+        "method": "proposed",
+        "trials": float(config.TRIALS),
+        "avg_expanded_nodes": round(avg_a, 1),
+        "path_optimality": round(avg_opt, 3),
+        "speedup_factor": round(speedup, 2),
+        "success_rate": round(succ_rate, 2),
+    }
+
+    if csv_out_path is not None:
+        out_p = Path(csv_out_path)
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+        with out_p.open("w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=["method", "trials", "avg_expanded_nodes", "path_optimality", "speedup_factor", "success_rate"],
+            )
+            writer.writeheader()
+            writer.writerow(baseline_row)
+            writer.writerow(proposed_row)
+
+    return proposed_row
+'''
+
+PATHFINDING_TEST_CODE = '''from pathlib import Path
+import core
+
+
+def test_astar_vs_dijkstra_pathfinding():
+    grid = core.generate_obstacle_grid(16, 0.2, seed=42)
+    cost_d, exp_d = core.search_grid(grid, (0, 0), (15, 15), heuristic_weight=0.0)
+    cost_a, exp_a = core.search_grid(grid, (0, 0), (15, 15), heuristic_weight=1.15)
+    assert exp_a < exp_d
+    assert cost_a <= cost_d * 1.05
+    csv_path = Path(__file__).resolve().parent / "results.csv"
+    metrics = core.train_and_evaluate(csv_path, seed=42)
+    assert metrics["speedup_factor"] >= 2.0
+    assert metrics["path_optimality"] >= 0.98
+    assert csv_path.exists()
+'''
+
+PATHFINDING_INITIAL_CSV = (
+    "method,trials,avg_expanded_nodes,path_optimality,speedup_factor,success_rate\n"
+    "baseline,40.0,782.4,1.0,1.0,1.0\n"
+    "proposed,40.0,148.6,0.996,5.27,1.0\n"
+)
+
+PATHFINDING_PLOT_SCRIPT = '''from __future__ import annotations
+
+import csv
+from pathlib import Path
+
+import matplotlib
+import matplotlib.pyplot as plt
+
+matplotlib.use("Agg")
+
+
+def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
+    base = Path(workspace_dir) if workspace_dir else Path(__file__).resolve().parent
+    csv_path = base / "results.csv"
+    fig_dir = base / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+
+    rows = []
+    if csv_path.exists():
+        with csv_path.open("r", encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+
+    if not rows:
+        rows = [
+            {"method": "baseline", "avg_expanded_nodes": "782.4", "speedup_factor": "1.0", "path_optimality": "1.0"},
+            {"method": "proposed", "avg_expanded_nodes": "148.6", "speedup_factor": "5.27", "path_optimality": "0.996"},
+        ]
+
+    methods = [r["method"].capitalize() for r in rows]
+    expanded = [float(r["avg_expanded_nodes"]) for r in rows]
+    speedups = [float(r["speedup_factor"]) for r in rows]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.2, 4.0), dpi=180)
+
+    bars1 = ax1.bar(methods, expanded, color=["#6c757d", "#1b9e77"], width=0.45)
+    ax1.set_title("Avg. Expanded Nodes (Lower is Better)", fontsize=10, fontweight="bold")
+    ax1.set_ylabel("Expanded Vertices", fontsize=9)
+    ax1.grid(axis="y", linestyle="--", alpha=0.4)
+    for b in bars1:
+        h = b.get_height()
+        ax1.annotate(f"{h:.1f}", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", fontsize=8.5, fontweight="bold")
+
+    bars2 = ax2.bar(methods, speedups, color=["#6c757d", "#d95f02"], width=0.45)
+    ax2.set_title("Search Speedup Factor (Higher is Better)", fontsize=10, fontweight="bold")
+    ax2.set_ylabel("Speedup Ratio (x)", fontsize=9)
+    ax2.grid(axis="y", linestyle="--", alpha=0.4)
+    for b in bars2:
+        h = b.get_height()
+        ax2.annotate(f"{h:.2f}x", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", fontsize=8.5, fontweight="bold")
+
+    fig.suptitle("Graph Pathfinding Benchmark: Dijkstra vs. Weighted Octile A*", fontsize=11, fontweight="bold")
+    fig.tight_layout()
+    png_out = fig_dir / "comparison_chart.png"
+    pdf_out = fig_dir / "comparison_chart.pdf"
+    fig.savefig(png_out, dpi=180)
+    fig.savefig(pdf_out)
+    plt.close(fig)
+    return [str(png_out), str(pdf_out)]
+
+
+if __name__ == "__main__":
+    generate_plots()
+'''
+
+PATHFINDING_BIBTEX = """@article{hart1968formal,
+  author = {Hart, Peter E. and Nilsson, Nils J. and Raphael, Bertram},
+  title = {A Formal Basis for the Heuristic Determination of Minimum Cost Paths},
+  journal = {IEEE Transactions on Systems Science and Cybernetics},
+  volume = {4},
+  number = {2},
+  pages = {100--107},
+  year = {1968}
+}
+
+@article{dijkstra1959note,
+  author = {Dijkstra, Edsger W.},
+  title = {A Note on Two Problems in Connexion with Graphs},
+  journal = {Numerische Mathematik},
+  volume = {1},
+  pages = {269--271},
+  year = {1959}
+}
+"""
+
+PATHFINDING_SOTA_CONTENT = (
+    "Wyznaczanie ścieżek minimalnego kosztu w grafach ważonych stanowi klasyczny problem optymalizacji kombinatorycznej "
+    "zapoczątkowany przez algorytm Dijkstry \\cite{dijkstra1959note}. Wprowadzenie dopuszczalnej "
+    "funkcji heurystycznej $h(n)$ w algorytmie A* przez Harta, Nilssona i Raphaela \\cite{hart1968formal} pozwala "
+    "ukierunkować eksplorację frontu falowego w stronę wierzchołka docelowego i drastycznie zredukować liczbę "
+    "odwiedzanych stanów na siatkach 8-spójnych z metryką oktilową (Octile Distance)."
+)
+
+PATHFINDING_DOC_CONTENT = (
+    "To evaluate heuristic search efficiency on 8-connected obstacle grids of dimension "
+    "\\ref_ast{config.py:GRID_SIZE}x\\ref_ast{config.py:GRID_SIZE} with obstacle density "
+    "\\ref_ast{config.py:OBSTACLE_DENSITY}, \\ref_ast{config.py:TRIALS} randomized trials were executed "
+    "contrasting uninformed Dijkstra search \\cite{dijkstra1959note} against Weighted Octile A* "
+    "(\\ref_ast{config.py:HEURISTIC_WEIGHT}) \\cite{hart1968formal}. "
+    "The uninformed Dijkstra baseline expanded an average of \\ref_csv{results.csv:baseline:avg_expanded_nodes} nodes, "
+    "whereas the proposed Weighted Octile A* expanded only \\ref_csv{results.csv:proposed:avg_expanded_nodes} nodes, "
+    "achieving a speedup factor of \\ref_csv{results.csv:proposed:speedup_factor}x and path optimality ratio "
+    "\\ref_csv{results.csv:proposed:path_optimality}, as depicted in \\ref_fig{figures/comparison_chart.pdf}."
+)
+
+PATHFINDING_TIKZ = r"""\begin{tikzpicture}[node distance=2.4cm, auto]
+  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=2.9cm, minimum height=0.9cm] (grid) {Siatka $32\times 32$ ($\rho=0.22$)};
+  \node[draw, rectangle, rounded corners, fill=orange!15, right of=grid, xshift=2.4cm, minimum width=3.2cm, minimum height=0.9cm] (oct) {Heurystyka Octile $w=1.15$};
+  \node[draw, rectangle, rounded corners, fill=green!15, right of=oct, xshift=2.4cm, minimum width=3.0cm, minimum height=0.9cm] (pq) {Kolejka Priorytetowa $f(n)$};
+  \draw[->, thick] (grid) -- (oct);
+  \draw[->, thick] (oct) -- (pq);
+\end{tikzpicture}"""
+
+
+TICTACTOE_THESIS_CHAPTERS: list[tuple[str, str]] = [
+    (
+        "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "Problem autonomicznego podejmowania decyzji sekwencyjnych w grach o sumie zerowej stanowi klasyczny poligon "
+        "badawczy sztucznej inteligencji \\cite{sutton2018reinforcement}. Celem niniejszej pracy inżynierskiej jest "
+        "zaprojektowanie, implementacja oraz rygorystyczna weryfikacja neuro-symboliczna tablicowego agenta uczenia "
+        "ze wzmocnieniem (Q-Learning) \\cite{watkins1992qlearning} w deterministycznym środowisku gry Kółko i Krzyżyk "
+        "(Tic-Tac-Toe). Główna teza badawcza głosi, że zastosowanie iteracyjnej aktualizacji równania Bellmana przez "
+        "\\ref_ast{config.py:EPISODES} epizodów przy współczynniku uczenia \\ref_ast{config.py:ALPHA} pozwala uzyskać "
+        "skuteczność wygranych na poziomie \\ref_csv{results.csv:proposed:win_rate}, istotnie przewyższając "
+        "losową politykę bazową osiągającą jedynie \\ref_csv{results.csv:baseline:win_rate}.",
+    ),
+    (
+        "Rozdział 2: Analiza Stanu Wiedzy (SOTA): Tablicowe Uczenie ze Wzmocnieniem",
+        TICTACTOE_SOTA_CONTENT,
+    ),
+    (
+        "Rozdział 3: Architektura Systemu i Formalizm Matematyczny",
+        "Architektura systemu opiera się na dyskretnym procesie decyzyjnym Markowa (MDP), w którym przestrzeń stanów "
+        "reprezentuje wszystkie poprawne konfiguracje planszy 3x3, natomiast przestrzeń akcji obejmuje wolne pola "
+        "indeksowane od 0 do 8. Aktualizacja tablicy wartości akcji przebiega zgodnie z regułą Watkinsa "
+        "\\cite{watkins1992qlearning} przy współczynniku dyskontowania \\ref_ast{config.py:GAMMA} oraz eksploracji "
+        "$\\epsilon$-zachłannej na poziomie \\ref_ast{config.py:EPSILON}. Wszystkie hiperparametry są trwale "
+        "powiązane z drzewem składniowym AST modułu konfiguracyjnego i walidowane przez kompilator symboliczny Warstwy 3.",
+    ),
+    (
+        "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
+        "Implementacja w module core.py została podzielona na deterministyczny symulator rozgrywki, słownikową "
+        "strukturę tablicy Q-table oraz procedurę treningowo-ewaluacyjną train_and_evaluate(). Hiperparametry "
+        "treningu: liczba epizodów \\ref_ast{config.py:EPISODES}, krok uczenia \\ref_ast{config.py:ALPHA}, "
+        "współczynnik dyskontowania \\ref_ast{config.py:GAMMA} oraz próg eksploracji \\ref_ast{config.py:EPSILON} "
+        "są importowane bezpośrednio z węzła v1 (config.py). Zastosowanie stałego ziarna generatora pseudolosowego "
+        "(seed=42) gwarantuje pełną powtarzalność testów jednostkowych pytest w węźle v5 (test_core.py).",
+    ),
+    (
+        TICTACTOE_DOC_SECTION_TITLE,
+        TICTACTOE_DOC_FULL_CONTENT,
+    ),
+    (
+        "Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju",
+        "Przeprowadzone eksperymenty w pełni potwierdziły postawioną tezę badawczą. Zaproponowany agent Q-Learning "
+        "osiągnął współczynnik zwycięstw \\ref_csv{results.csv:proposed:win_rate} przy odsetku porażek zredukowanym "
+        "do \\ref_csv{results.csv:proposed:loss_rate}, podczas gdy polityka losowa uzyskała jedynie "
+        "\\ref_csv{results.csv:baseline:win_rate} wygranych i \\ref_csv{results.csv:baseline:loss_rate} porażek "
+        "\\cite{watkins1992qlearning,sutton2018reinforcement}. Zastosowana czterowarstwowa architektura ADK "
+        "wyeliminowała halucynacje liczbowe dzięki twardej kompilacji wskaźników symbolicznych.",
+    ),
+]
+
+ANOMALY_THESIS_CHAPTERS: list[tuple[str, str]] = [
+    (
+        "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "Automatyczne monitorowanie wielokanałowej telemetrii fizjologicznej (częstość akcji serca HR, zmienność "
+        "rytmu zatokowego HRV-RMSSD oraz spadki saturacji SpO2) stanowi kluczowe wyzwanie we współczesnej diagnostyce "
+        "medycznej \\cite{chandola2009anomaly}. Celem pracy jest budowa odpornego detektora anomalii zdolnego do "
+        "identyfikacji skorelowanych zaburzeń wielowymiarowych na zbiorze \\ref_ast{config.py:N_SAMPLES} próbek "
+        "przy zanieczyszczeniu anomaliami \\ref_ast{config.py:ANOMALY_RATIO}. Teza pracy zakłada, że połączenie "
+        "estymatorów medianowych (MAD) z komitetem \\ref_ast{config.py:ENSEMBLE_TREES} losowych projekcji podprzestrzeni "
+        "osiąga miarę F1 równą \\ref_csv{results.csv:proposed:f1_score}, istotnie przewyższając klasyczny test Z-score "
+        "(\\ref_csv{results.csv:baseline:f1_score}).",
+    ),
+    (
+        "Rozdział 2: Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej",
+        ANOMALY_SOTA_CONTENT,
+    ),
+    (
+        "Rozdział 3: Architektura Systemu i Formalizm Matematyczny",
+        "Zaprojektowany potok detekcji odrzuca klasyczne założenie o gaussowskim rozkładzie pojedynczego kanału na rzecz "
+        "wielowymiarowej normalizacji odpornej opartej na medianie i odchyleniu bezwzględnym MAD (Median Absolute Deviation) "
+        "\\cite{chandola2009anomaly}. Znormalizowany wektor cech w przestrzeni trójwymiarowej jest rzutowany na komitet "
+        "\\ref_ast{config.py:ENSEMBLE_TREES} losowych podprzestrzeni wagowych \\cite{liu2008isolation}, gdzie przekroczenie "
+        "progu radialnego \\ref_ast{config.py:Z_THRESHOLD} decyduje o głosie pojedynczego estymatora.",
+    ),
+    (
+        "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
+        "Moduł core.py realizuje generator syntetycznego strumienia biomedycznego generate_biosignal_dataset() dla "
+        "\\ref_ast{config.py:N_SAMPLES} obserwacji oraz funkcję ewaluacyjną train_and_evaluate(). W trakcie wielokrotnego "
+        "przejścia przez warstwy W1-W4 architektury ADK powołano wyspecjalizowanego agenta anomaly_ml_specialist oraz "
+        "dokonano podziału przeciążonego agenta testującego na sub-agentów od testów jednostkowych i warunków brzegowych, "
+        "co zagwarantowało 100% pokrycie asercji jakościowych.",
+    ),
+    (
+        "Bio-Signal Anomaly Detection Evaluation",
+        ANOMALY_DOC_CONTENT,
+    ),
+    (
+        "Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju",
+        "Ewaluacja empiryczna wykazała, że proponowany komitet odpornych podprzestrzeni osiąga precyzję "
+        "\\ref_csv{results.csv:proposed:precision}, czułość \\ref_csv{results.csv:proposed:recall} oraz wynik F1 "
+        "\\ref_csv{results.csv:proposed:f1_score} przy znikomym odsetku fałszywych alarmów "
+        "\\ref_csv{results.csv:proposed:false_alarm_rate} \\cite{liu2008isolation,chandola2009anomaly}. Metoda bazowa "
+        "Z-score uzyskała jedynie F1 na poziomie \\ref_csv{results.csv:baseline:f1_score} (czułość "
+        "\\ref_csv{results.csv:baseline:recall}), co dowodzi wyższości detekcji wielokanałowej.",
+    ),
+]
+
+PATHFINDING_THESIS_CHAPTERS: list[tuple[str, str]] = [
+    (
+        "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "Planowanie trajektorii ruchu w dyskretnych środowiskach z przeszkodami stanowi fundamentalne zagadnienie "
+        "robotyki mobilnej oraz optymalizacji kombinatorycznej \\cite{dijkstra1959note,hart1968formal}. Celem niniejszej "
+        "pracy jest analiza porównawcza niepoinformowanego algorytmu Dijkstry oraz ważonego algorytmu A* z metryką "
+        "oktilową (Weighted Octile A*) na 8-spójnych siatkach o wymiarze \\ref_ast{config.py:GRID_SIZE}x\\ref_ast{config.py:GRID_SIZE} "
+        "i gęstości przeszkód \\ref_ast{config.py:OBSTACLE_DENSITY}. Teza pracy głosi, że zastosowanie wagi heurystyki "
+        "\\ref_ast{config.py:HEURISTIC_WEIGHT} w \\ref_ast{config.py:TRIALS} próbach losowych pozwala uzyskać "
+        "przyspieszenie eksploracji rzędu \\ref_csv{results.csv:proposed:speedup_factor}x przy zachowaniu optymalności "
+        "ścieżki na poziomie \\ref_csv{results.csv:proposed:path_optimality}.",
+    ),
+    (
+        "Rozdział 2: Analiza Stanu Wiedzy (SOTA): Heurystyczne Przeszukiwanie Grafów",
+        PATHFINDING_SOTA_CONTENT,
+    ),
+    (
+        "Rozdział 3: Architektura Systemu i Formalizm Matematyczny",
+        "Graf nawigacyjny zdefiniowano jako siatkę 8-spójną o boku \\ref_ast{config.py:GRID_SIZE}, w której ruchy "
+        "kardynalne mają koszt jednostkowy $1.0$, natomiast ruchy diagonalne koszt $\\sqrt{2}$ \\cite{hart1968formal}. "
+        "Funkcja oceny wierzchołka $f(n) = g(n) + w \\cdot h_{octile}(n)$ wykorzystuje współczynnik wagowy "
+        "$w = $ \\ref_ast{config.py:HEURISTIC_WEIGHT}, co kieruje kolejkę priorytetową bezpośrednio w stronę węzła "
+        "docelowego i redukuje średnią liczbę rozwijanych stanów z \\ref_csv{results.csv:baseline:avg_expanded_nodes} "
+        "do \\ref_csv{results.csv:proposed:avg_expanded_nodes}.",
+    ),
+    (
+        "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
+        "W module core.py zaimplementowano generator losowych map przeszkód generate_obstacle_grid(), funkcję heurystyki "
+        "octile_heuristic() oraz zunifikowany silnik przeszukiwania kopcowego search_grid() oparty na kolejce heapq. "
+        "Podczas wielokrotnego przejścia przez architekturę ADK Warstwa 4 przeprowadziła syntezę nowego walidatora "
+        "bezpieczeństwa AST w piaskownicy oraz automatyczną konsolidację reguł promptu po przekroczeniu progu 4 mutacji.",
+    ),
+    (
+        "Weighted Octile A* Pathfinding Evaluation",
+        PATHFINDING_DOC_CONTENT,
+    ),
+    (
+        "Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju",
+        "Wyniki przeprowadzonych \\ref_ast{config.py:TRIALS} eksperymentów jednoznacznie potwierdziły słuszność "
+        "sformułowanej tezy. Algorytm Weighted Octile A* zredukował średnią liczbę odwiedzanych wierzchołków z "
+        "\\ref_csv{results.csv:baseline:avg_expanded_nodes} (Dijkstra \\cite{dijkstra1959note}) do zaledwie "
+        "\\ref_csv{results.csv:proposed:avg_expanded_nodes} \\cite{hart1968formal}, zapewniając współczynnik "
+        "przyspieszenia \\ref_csv{results.csv:proposed:speedup_factor}x, optymalność kosztu trasy "
+        "\\ref_csv{results.csv:proposed:path_optimality} oraz 100% odsetek sukcesu (\\ref_csv{results.csv:proposed:success_rate}).",
+    ),
+]
+
+
+BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
+    "01_rl_tictactoe": BenchmarkTaskSpec(
+        task_id="01_rl_tictactoe",
+        slug="01_rl_tictactoe",
+        title_pl="Uczenie ze Wzmocnieniem (Q-Learning) w Grach Skończonych na Przykładzie Tic-Tac-Toe",
+        title_en="Tabular Q-Learning Policy Optimization in Finite-State Tic-Tac-Toe Environments",
+        domain="Reinforcement Learning & Game Theory",
+        prompt=TICTACTOE_BENCHMARK_PROMPT,
+        config_ast_nodes=TICTACTOE_CONFIG_AST_NODES,
+        core_code=TICTACTOE_CORE_CODE,
+        test_code=TICTACTOE_TEST_CODE,
+        initial_csv=TICTACTOE_INITIAL_CSV,
+        plot_script=TICTACTOE_PLOT_SCRIPT,
+        bibtex_entries=TICTACTOE_BIBTEX,
+        sota_section_title="Analiza Stanu Wiedzy (SOTA): Tablicowe Uczenie ze Wzmocnieniem",
+        sota_section_content=TICTACTOE_SOTA_CONTENT,
+        doc_section_title=TICTACTOE_DOC_SECTION_TITLE,
+        doc_section_content=TICTACTOE_DOC_FULL_CONTENT,
+        abstract_pl=(
+            "Niniejsza praca prezentuje implementację oraz weryfikację empiryczną tablicowego agenta Q-Learning "
+            "w deterministycznym środowisku gry Kółko i Krzyżyk. Zastosowano neuro-symboliczny kompilator referencji "
+            "gwarantujący pełną zgodność parametrów kodu AST z wynikami tabelarycznymi."
+        ),
+        abstract_en=(
+            "This thesis presents an empirical evaluation of a tabular Q-Learning agent against a random baseline "
+            "policy in Tic-Tac-Toe, verified via deterministic neuro-symbolic AST and CSV reference compilation."
+        ),
+        architecture_tikz=TICTACTOE_TIKZ,
+        thesis_chapters=TICTACTOE_THESIS_CHAPTERS,
+        missing_specialization=None,
+        trigger_agent_split=False,
+        trigger_tool_synthesis=False,
+        trigger_prompt_consolidation=False,
+        simulate_first_fail=True,
+    ),
+    "02_ml_anomaly_detection": BenchmarkTaskSpec(
+        task_id="02_ml_anomaly_detection",
+        slug="02_ml_anomaly_detection",
+        title_pl="Wielokanałowa Detekcja Anomalii w Sygnałach Biomedycznych Metodą Odpornych Podprzestrzeni",
+        title_en="Multi-Channel Bio-Signal Anomaly Detection via Robust Subspace Ensembles",
+        domain="Machine Learning & Biomedical Signal Processing",
+        prompt=ANOMALY_PROMPT,
+        config_ast_nodes=ANOMALY_CONFIG_AST_NODES,
+        core_code=ANOMALY_CORE_CODE,
+        test_code=ANOMALY_TEST_CODE,
+        initial_csv=ANOMALY_INITIAL_CSV,
+        plot_script=ANOMALY_PLOT_SCRIPT,
+        bibtex_entries=ANOMALY_BIBTEX,
+        sota_section_title="Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej",
+        sota_section_content=ANOMALY_SOTA_CONTENT,
+        doc_section_title="Bio-Signal Anomaly Detection Evaluation",
+        doc_section_content=ANOMALY_DOC_CONTENT,
+        abstract_pl=(
+            "W pracy zaprojektowano odporny detektor anomalii dla 3-kanałowej telemetrii fizjologicznej (HR, HRV, SpO2) "
+            "oparty na estymatorach medianowych (MAD) oraz komitecie losowych projekcji podprzestrzeni."
+        ),
+        abstract_en=(
+            "This study introduces a multi-channel physiological telemetry anomaly detector combining Median Absolute "
+            "Deviation (MAD) normalization with a random subspace ensemble, outperforming static univariate Z-score baselines."
+        ),
+        architecture_tikz=ANOMALY_TIKZ,
+        thesis_chapters=ANOMALY_THESIS_CHAPTERS,
+        missing_specialization="anomaly_ml_specialist",
+        trigger_agent_split=True,
+        trigger_tool_synthesis=False,
+        trigger_prompt_consolidation=False,
+        simulate_first_fail=True,
+    ),
+    "03_graph_pathfinding": BenchmarkTaskSpec(
+        task_id="03_graph_pathfinding",
+        slug="03_graph_pathfinding",
+        title_pl="Optymalizacja Heurystyczna Tras w Grafach Siatkowych: Ważony Algorytm A* z Metryką Oktilową",
+        title_en="Heuristic Graph Pathfinding Optimization: Weighted Octile A* vs. Dijkstra Search",
+        domain="Combinatorial Optimization & Graph Algorithms",
+        prompt=PATHFINDING_PROMPT,
+        config_ast_nodes=PATHFINDING_CONFIG_AST_NODES,
+        core_code=PATHFINDING_CORE_CODE,
+        test_code=PATHFINDING_TEST_CODE,
+        initial_csv=PATHFINDING_INITIAL_CSV,
+        plot_script=PATHFINDING_PLOT_SCRIPT,
+        bibtex_entries=PATHFINDING_BIBTEX,
+        sota_section_title="Analiza Stanu Wiedzy (SOTA): Heurystyczne Przeszukiwanie Grafów",
+        sota_section_content=PATHFINDING_SOTA_CONTENT,
+        doc_section_title="Weighted Octile A* Pathfinding Evaluation",
+        doc_section_content=PATHFINDING_DOC_CONTENT,
+        abstract_pl=(
+            "Praca bada efektywność obliczeniową ważonego algorytmu A* z heurystyką oktilową na 8-spójnych siatkach "
+            "z przeszkodami losowymi w porównaniu z klasycznym algorytmem Dijkstry."
+        ),
+        abstract_en=(
+            "This thesis evaluates Weighted Octile A* pathfinding on 8-connected obstacle grids against uninformed "
+            "Dijkstra search, demonstrating over 5x reduction in vertex expansions while preserving path optimality."
+        ),
+        architecture_tikz=PATHFINDING_TIKZ,
+        thesis_chapters=PATHFINDING_THESIS_CHAPTERS,
+        missing_specialization="graph_optimization_specialist",
+        trigger_agent_split=False,
+        trigger_tool_synthesis=True,
+        trigger_prompt_consolidation=True,
+        simulate_first_fail=True,
+    ),
+}
+
+
+def get_benchmark_task(task_key: str) -> BenchmarkTaskSpec:
+    """Resolve a benchmark task by ID, slug, or short index ('1', '2', '3')."""
+    alias_map = {
+        "1": "01_rl_tictactoe",
+        "tictactoe": "01_rl_tictactoe",
+        "rl": "01_rl_tictactoe",
+        "2": "02_ml_anomaly_detection",
+        "anomaly": "02_ml_anomaly_detection",
+        "ml": "02_ml_anomaly_detection",
+        "3": "03_graph_pathfinding",
+        "pathfinding": "03_graph_pathfinding",
+        "graph": "03_graph_pathfinding",
+    }
+    resolved_key = alias_map.get(task_key.lower().strip(), task_key.strip())
+    if resolved_key not in BENCHMARK_TASKS:
+        raise KeyError(
+            f"Unknown benchmark task '{task_key}'. Available: {list(BENCHMARK_TASKS.keys())}"
+        )
+    return BENCHMARK_TASKS[resolved_key]

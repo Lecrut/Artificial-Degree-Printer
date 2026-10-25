@@ -31,20 +31,22 @@ def test_ref_compiler_resolves_and_checks_timestamps(tmp_path: Path):
     csv_file = ws / "results.csv"
     doc_file = ws / "thesis.md"
 
-    py_file.write_text("THRESHOLD = 0.95\n", encoding="utf-8")
-    csv_file.write_text("metric,score\nf1,0.98\n", encoding="utf-8")
+    py_file.write_text("THRESHOLD: float = 0.95\n", encoding="utf-8")
+    csv_file.write_text("method,score\nbaseline,0.72\nproposed,0.98\n", encoding="utf-8")
     now = time.time()
     os.utime(py_file, (now - 10, now - 10))
     os.utime(csv_file, (now, now))
 
     doc_file.write_text(
-        "Config threshold is \\ref_ast{config.py:THRESHOLD} and score is \\ref_csv{results.csv:score}.\n",
+        "Config threshold is \\ref_ast{config.py:THRESHOLD}, baseline is \\ref_csv{results.csv:baseline:score}, "
+        "proposed is \\ref_csv{results.csv:proposed:score} (latest: \\ref_csv{results.csv:score}).\n",
         encoding="utf-8",
     )
 
     comp = compile_symbolic_references(doc_file, ws)
     assert comp["status"] == "PASS"
     assert "0.95" in comp["compiled_text"]
+    assert "0.72" in comp["compiled_text"]
     assert "0.98" in comp["compiled_text"]
 
     os.utime(csv_file, (now - 100, now - 100))
@@ -59,3 +61,39 @@ def test_ref_compiler_resolves_and_checks_timestamps(tmp_path: Path):
         provider="mock",
     )
     assert auditor_res["output"]["status"] == "FAIL"
+
+    # Test BibTeX citation check, malformed tag detection, and AI fluff scanner
+    os.utime(csv_file, (now + 10, now + 10))
+    (ws / "references.bib").write_text("@article{vaswani2017attention, title={Attention}}\n", encoding="utf-8")
+    doc_file.write_text(
+        "To jest przełomowe podejście \\cite{vaswani2017attention,missing2026key} i \\ref_ast{config.py}.\n",
+        encoding="utf-8",
+    )
+    comp_checks = compile_symbolic_references(doc_file, ws)
+    assert comp_checks["status"] == "FAIL"
+    assert "przełomowe podejście" in comp_checks["fluff_detected"]
+    assert any("missing2026key" in err for err in comp_checks["errors"])
+    assert any("Malformed symbolic tag" in err for err in comp_checks["errors"])
+
+
+def test_ref_compiler_resolves_ref_fig_tags(tmp_path: Path):
+    ws = tmp_path / "workspace"
+    ws.mkdir()
+    (ws / "convergence_plot.pdf").write_text("PDF_PLOT_CONTENT", encoding="utf-8")
+    doc_file = ws / "thesis.md"
+
+    doc_file.write_text(
+        "Wykres zbieżności przedstawiono na \\ref_fig{convergence_plot.pdf} (oraz \\ref_fig{convergence_plot}).\n",
+        encoding="utf-8",
+    )
+    comp_ok = compile_symbolic_references(doc_file, ws)
+    assert comp_ok["status"] == "PASS"
+    assert "[Ryc. convergence_plot.pdf]" in comp_ok["compiled_text"]
+    assert "[Ryc. convergence_plot]" in comp_ok["compiled_text"]
+    assert "\\ref_fig{convergence_plot.pdf}" in comp_ok["resolved_references"]
+
+    doc_file.write_text("Brakujący wykres: \\ref_fig{nonexistent_chart.png}.\n", encoding="utf-8")
+    comp_missing = compile_symbolic_references(doc_file, ws)
+    assert comp_missing["status"] == "FAIL"
+    assert any("nonexistent_chart.png" in err for err in comp_missing["errors"])
+

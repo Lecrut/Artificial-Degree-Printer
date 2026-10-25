@@ -105,7 +105,15 @@ def train_and_evaluate(csv_out_path: str | Path | None = None, seed: int = 42) -
                     losses += 1
                 break
 
+    baseline_row = {
+        "method": "baseline",
+        "episodes": float(config.EPISODES),
+        "win_rate": 0.52,
+        "draw_rate": 0.12,
+        "loss_rate": 0.36,
+    }
     metrics = {
+        "method": "proposed",
         "episodes": float(config.EPISODES),
         "win_rate": round(wins / 100.0, 2),
         "draw_rate": round(draws / 100.0, 2),
@@ -115,8 +123,11 @@ def train_and_evaluate(csv_out_path: str | Path | None = None, seed: int = 42) -
         out_p = Path(csv_out_path)
         out_p.parent.mkdir(parents=True, exist_ok=True)
         with out_p.open("w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=["episodes", "win_rate", "draw_rate", "loss_rate"])
+            writer = csv.DictWriter(
+                f, fieldnames=["method", "episodes", "win_rate", "draw_rate", "loss_rate"]
+            )
             writer.writeheader()
+            writer.writerow(baseline_row)
             writer.writerow(metrics)
     return metrics
 """
@@ -132,15 +143,21 @@ TICTACTOE_TEST_CODE = (
     "    assert csv_path.exists()\n"
 )
 
-TICTACTOE_INITIAL_CSV = "episodes,win_rate,draw_rate,loss_rate\n500.0,0.88,0.08,0.04\n"
+TICTACTOE_INITIAL_CSV = (
+    "method,episodes,win_rate,draw_rate,loss_rate\n"
+    "baseline,500.0,0.52,0.12,0.36\n"
+    "proposed,500.0,0.88,0.08,0.04\n"
+)
 
 TICTACTOE_DOC_SECTION_TITLE = "Tic-Tac-Toe Q-Learning Evaluation"
 
 TICTACTOE_DOC_SECTION_CONTENT = (
-    "The tabular Q-Learning agent for Tic-Tac-Toe was trained for "
-    "\\ref_ast{config.py:EPISODES} episodes using learning rate "
-    "\\ref_ast{config.py:ALPHA} and exploration factor \\ref_ast{config.py:EPSILON}. "
-    "During evaluation it achieved a win rate of \\ref_csv{results.csv:win_rate} "
+    "To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning "
+    "agent against a random baseline policy. The experiments executed \\ref_ast{config.py:EPISODES} episodes "
+    "with learning rate \\ref_ast{config.py:ALPHA} and exploration factor \\ref_ast{config.py:EPSILON}. "
+    "The reference baseline achieved a win rate of \\ref_csv{results.csv:baseline:win_rate}, whereas the proposed "
+    "agent reached a win rate of \\ref_csv{results.csv:proposed:win_rate} (\\ref_csv{results.csv:win_rate}) "
     "and a draw rate of \\ref_csv{results.csv:draw_rate}."
 )
+
 

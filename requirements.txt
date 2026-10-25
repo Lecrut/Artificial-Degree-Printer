@@ -1,0 +1,11 @@
+# ==============================================================================
+# Artificial-Degree-Printer (Neuro-Symbolic ADK) - Dependencies
+# Install via: .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+# ==============================================================================
+
+matplotlib>=3.9.0
+numpy>=2.0.0
+pillow>=10.0.0
+pytest>=8.0.0
+ruff>=0.6.0
+

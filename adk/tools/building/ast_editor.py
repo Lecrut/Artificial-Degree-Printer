@@ -5,6 +5,19 @@ from pathlib import Path
 from typing import Any
 
 
+def _extract_stmt_name(node: ast.stmt) -> str | None:
+    """Return the symbol name defined by an AST statement (function, class, Assign, or AnnAssign)."""
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return node.name
+    if isinstance(node, ast.Assign):
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                return target.id
+    if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+        return node.target.id
+    return None
+
+
 def edit_ast_node(
     file_path: str | Path,
     target_name: str,
@@ -34,7 +47,16 @@ def edit_ast_node(
             "error": "Provided new_code contains no AST statements.",
         }
 
-    new_node = snippet_tree.body[0]
+    # Find the primary statement matching target_name if multiple statements (e.g. imports + def) were provided
+    matching_stmt = None
+    extra_imports: list[ast.stmt] = []
+    for stmt in snippet_tree.body:
+        if _extract_stmt_name(stmt) == target_name and matching_stmt is None:
+            matching_stmt = stmt
+        elif isinstance(stmt, (ast.Import, ast.ImportFrom)):
+            extra_imports.append(stmt)
+
+    new_node = matching_stmt if matching_stmt is not None else snippet_tree.body[-1]
 
     if path.exists():
         existing_source = path.read_text(encoding="utf-8")
@@ -52,18 +74,15 @@ def edit_ast_node(
         path.parent.mkdir(parents=True, exist_ok=True)
         tree = ast.Module(body=[], type_ignores=[])
 
-    replaced = False
-    new_body: list[ast.stmt] = []
-    for node in tree.body:
-        node_name = None
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            node_name = node.name
-        elif isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == target_name:
-                    node_name = target.id
-                    break
+    existing_import_dumps = {
+        ast.dump(node) for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))
+    }
+    deduped_imports = [imp for imp in extra_imports if ast.dump(imp) not in existing_import_dumps]
 
+    replaced = False
+    new_body: list[ast.stmt] = list(deduped_imports)
+    for node in tree.body:
+        node_name = _extract_stmt_name(node)
         if node_name == target_name and not replaced:
             new_body.append(new_node)
             replaced = True

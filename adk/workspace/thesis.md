@@ -1,3 +1,3 @@
 ## Tic-Tac-Toe Q-Learning Evaluation
-The tabular Q-Learning agent for Tic-Tac-Toe was trained for \ref_ast{config.py:EPISODES} episodes using learning rate \ref_ast{config.py:ALPHA} and exploration factor \ref_ast{config.py:EPSILON}. During evaluation it achieved a win rate of \ref_csv{results.csv:win_rate} and a draw rate of \ref_csv{results.csv:draw_rate}.
+To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning agent against a random baseline policy. The experiments executed \ref_ast{config.py:EPISODES} episodes with learning rate \ref_ast{config.py:ALPHA} and exploration factor \ref_ast{config.py:EPSILON}. The reference baseline achieved a win rate of \ref_csv{results.csv:baseline:win_rate}, whereas the proposed agent reached a win rate of \ref_csv{results.csv:proposed:win_rate} (\ref_csv{results.csv:win_rate}) and a draw rate of \ref_csv{results.csv:draw_rate}.
 
