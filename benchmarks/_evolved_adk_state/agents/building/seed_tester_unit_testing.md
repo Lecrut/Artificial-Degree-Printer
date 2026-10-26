@@ -29,7 +29,6 @@ Do not output conversational text or markdown wrappers outside the JSON.
 ---
 
 ## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT (Inherited from `seed_tester`)**: Maintain strict determinism and AST validity.
+- **INVARIANT (Inherited from `seed_tester`)**: Maintain strict determinism, AST validity, and CSV artifact freshness.
 
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: Preserve strict AST, CSV and symbolic reference parity in task T3 (v3).

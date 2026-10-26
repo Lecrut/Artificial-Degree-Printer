@@ -154,7 +154,11 @@ def compile_symbolic_references(
     resolved: dict[str, Any] = {}
     stale_csv_files: list[str] = []
 
-    py_files = [p for p in w_dir.rglob("*.py") if "__pycache__" not in p.parts]
+    py_files = [
+        p
+        for p in w_dir.rglob("*.py")
+        if "__pycache__" not in p.parts and "benchmarks" not in p.parts
+    ]
     latest_py_mtime = max((p.stat().st_mtime for p in py_files), default=0.0)
 
     def _replace_ast(match: re.Match[str]) -> str:

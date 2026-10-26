@@ -2,14 +2,12 @@ from pathlib import Path
 import core
 
 
-def test_astar_vs_dijkstra_pathfinding():
-    grid = core.generate_obstacle_grid(16, 0.2, seed=42)
-    cost_d, exp_d = core.search_grid(grid, (0, 0), (15, 15), heuristic_weight=0.0)
-    cost_a, exp_a = core.search_grid(grid, (0, 0), (15, 15), heuristic_weight=1.15)
-    assert exp_a < exp_d
-    assert cost_a <= cost_d * 1.05
+def test_biosignal_anomaly_detection():
+    X, y = core.generate_biosignal_dataset(200, 0.1, seed=42)
+    assert len(X) == 200
+    assert sum(y) == 20
     csv_path = Path(__file__).resolve().parent / "results.csv"
     metrics = core.train_and_evaluate(csv_path, seed=42)
-    assert metrics["speedup_factor"] >= 2.0
-    assert metrics["path_optimality"] >= 0.98
+    assert metrics["f1_score"] >= 0.85
+    assert metrics["precision"] >= 0.80
     assert csv_path.exists()

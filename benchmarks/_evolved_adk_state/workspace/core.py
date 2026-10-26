@@ -1,119 +1,110 @@
 import csv
-import heapq
 import math
 import random
 from pathlib import Path
 import config
 
 
-def generate_obstacle_grid(size: int = config.GRID_SIZE, density: float = config.OBSTACLE_DENSITY, seed: int = 42) -> list[list[int]]:
+def generate_biosignal_dataset(
+    n_samples: int = config.N_SAMPLES,
+    anomaly_ratio: float = config.ANOMALY_RATIO,
+    seed: int = 42,
+) -> tuple[list[tuple[float, float, float]], list[int]]:
+    """Generate 3-channel synthetic physiological telemetry (HR, HRV-RMSSD, SpO2-drop) with binary anomaly labels."""
     rng = random.Random(seed)
-    grid = [[0 for _ in range(size)] for _ in range(size)]
-    for r in range(size):
-        for c in range(size):
-            if (r, c) in ((0, 0), (size - 1, size - 1)):
-                continue
-            if rng.random() < density:
-                grid[r][c] = 1
-    # Guarantee a clear corridor along perimeter fallback if random seed blocks all paths
-    for i in range(size):
-        grid[0][i] = 0
-        grid[i][size - 1] = 0
-    return grid
+    n_anomalies = max(1, int(round(n_samples * anomaly_ratio)))
+    anomaly_indices = set(rng.sample(range(n_samples), n_anomalies))
+
+    features: list[tuple[float, float, float]] = []
+    labels: list[int] = []
+
+    for idx in range(n_samples):
+        phase = 2.0 * math.pi * (idx / 60.0)
+        if idx in anomaly_indices:
+            # Multi-channel correlated cardiac/respiratory anomaly spike
+            hr = 72.0 + 6.0 * math.sin(phase) + rng.gauss(22.0, 4.5)
+            hrv = 45.0 - rng.gauss(19.0, 3.5)
+            spo2_drop = abs(rng.gauss(4.8, 0.9))
+            labels.append(1)
+        else:
+            hr = 72.0 + 6.0 * math.sin(phase) + rng.gauss(0.0, 3.2)
+            hrv = 45.0 + 3.0 * math.cos(phase) + rng.gauss(0.0, 2.8)
+            spo2_drop = max(0.0, rng.gauss(0.6, 0.35))
+            labels.append(0)
+        features.append((hr, hrv, spo2_drop))
+
+    return features, labels
 
 
-def octile_heuristic(a: tuple[int, int], b: tuple[int, int]) -> float:
-    dx = abs(a[0] - b[0])
-    dy = abs(a[1] - b[1])
-    return (dx + dy) + (math.sqrt(2.0) - 2.0) * min(dx, dy)
+def _compute_classification_metrics(y_true: list[int], y_pred: list[int]) -> dict[str, float]:
+    tp = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 1)
+    fp = sum(1 for t, p in zip(y_true, y_pred) if t == 0 and p == 1)
+    fn = sum(1 for t, p in zip(y_true, y_pred) if t == 1 and p == 0)
+    tn = sum(1 for t, p in zip(y_true, y_pred) if t == 0 and p == 0)
 
-
-def search_grid(
-    grid: list[list[int]],
-    start: tuple[int, int],
-    goal: tuple[int, int],
-    heuristic_weight: float = 0.0,
-) -> tuple[float, int]:
-    """Run Dijkstra (heuristic_weight=0.0) or Weighted Octile A* (heuristic_weight>0.0). Returns (cost, expanded_nodes)."""
-    n = len(grid)
-    pq: list[tuple[float, float, tuple[int, int]]] = [(0.0, 0.0, start)]
-    g_score: dict[tuple[int, int], float] = {start: 0.0}
-    closed: set[tuple[int, int]] = set()
-    expanded = 0
-
-    neighbors = [
-        (-1, 0, 1.0), (1, 0, 1.0), (0, -1, 1.0), (0, 1, 1.0),
-        (-1, -1, math.sqrt(2.0)), (-1, 1, math.sqrt(2.0)),
-        (1, -1, math.sqrt(2.0)), (1, 1, math.sqrt(2.0)),
-    ]
-
-    while pq:
-        _, g, current = heapq.heappop(pq)
-        if current in closed:
-            continue
-        closed.add(current)
-        expanded += 1
-
-        if current == goal:
-            return g, expanded
-
-        cr, cc = current
-        for dr, dc, step_cost in neighbors:
-            nr, nc = cr + dr, cc + dc
-            if 0 <= nr < n and 0 <= nc < n and grid[nr][nc] == 0:
-                nxt = (nr, nc)
-                if nxt in closed:
-                    continue
-                tentative_g = g + step_cost
-                if tentative_g < g_score.get(nxt, float("inf")):
-                    g_score[nxt] = tentative_g
-                    h = octile_heuristic(nxt, goal) * heuristic_weight
-                    heapq.heappush(pq, (tentative_g + h, tentative_g, nxt))
-
-    return float("inf"), expanded
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    f1 = (2.0 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
+    far = fp / (fp + tn) if (fp + tn) > 0 else 0.0
+    return {
+        "precision": round(precision, 3),
+        "recall": round(recall, 3),
+        "f1_score": round(f1, 3),
+        "false_alarm_rate": round(far, 4),
+    }
 
 
 def train_and_evaluate(csv_out_path: str | Path | None = None, seed: int = 42) -> dict[str, float]:
-    dijkstra_expanded_list: list[int] = []
-    astar_expanded_list: list[int] = []
-    optimality_ratios: list[float] = []
-    successes = 0
+    features, labels = generate_biosignal_dataset(
+        n_samples=config.N_SAMPLES,
+        anomaly_ratio=config.ANOMALY_RATIO,
+        seed=seed,
+    )
 
-    start = (0, 0)
-    goal = (config.GRID_SIZE - 1, config.GRID_SIZE - 1)
+    # 1. Baseline: Univariate Z-Score on channel 0 (Heart Rate only)
+    hrs = [row[0] for row in features]
+    mean_hr = sum(hrs) / len(hrs)
+    std_hr = math.sqrt(sum((x - mean_hr) ** 2 for x in hrs) / len(hrs)) or 1.0
+    baseline_preds = [1 if abs(x - mean_hr) / std_hr > config.Z_THRESHOLD else 0 for x in hrs]
+    base_m = _compute_classification_metrics(labels, baseline_preds)
 
-    for trial in range(config.TRIALS):
-        grid = generate_obstacle_grid(config.GRID_SIZE, config.OBSTACLE_DENSITY, seed=seed + trial)
-        cost_d, exp_d = search_grid(grid, start, goal, heuristic_weight=0.0)
-        cost_a, exp_a = search_grid(grid, start, goal, heuristic_weight=config.HEURISTIC_WEIGHT)
+    # 2. Proposed: Robust Median/MAD Multi-Channel Ensemble with subspace projections
+    rng = random.Random(seed + 7)
+    n_dims = 3
+    medians = []
+    mads = []
+    for d in range(n_dims):
+        col = sorted(row[d] for row in features)
+        med = col[len(col) // 2]
+        abs_dev = sorted(abs(x - med) for x in col)
+        mad = (abs_dev[len(abs_dev) // 2] * 1.4826) or 1e-6
+        medians.append(med)
+        mads.append(mad)
 
-        if math.isfinite(cost_d) and math.isfinite(cost_a):
-            successes += 1
-            dijkstra_expanded_list.append(exp_d)
-            astar_expanded_list.append(exp_a)
-            optimality_ratios.append(cost_d / cost_a if cost_a > 0 else 1.0)
+    # Ensemble of random subspace hyperplanes + robust radial distance
+    ensemble_votes = [0.0] * len(features)
+    for _ in range(config.ENSEMBLE_TREES):
+        weights = [rng.uniform(0.5, 1.5) for _ in range(n_dims)]
+        w_norm = math.sqrt(sum(w * w for w in weights))
+        weights = [w / w_norm for w in weights]
+        for idx, row in enumerate(features):
+            z_vec = [(row[d] - medians[d]) / mads[d] for d in range(n_dims)]
+            radial = math.sqrt(sum(weights[d] * (z_vec[d] ** 2) for d in range(n_dims)))
+            if radial > config.Z_THRESHOLD:
+                ensemble_votes[idx] += 1.0
 
-    avg_d = sum(dijkstra_expanded_list) / max(1, len(dijkstra_expanded_list))
-    avg_a = sum(astar_expanded_list) / max(1, len(astar_expanded_list))
-    avg_opt = sum(optimality_ratios) / max(1, len(optimality_ratios))
-    speedup = avg_d / avg_a if avg_a > 0 else 1.0
-    succ_rate = successes / float(config.TRIALS)
+    proposed_preds = [1 if (vote / config.ENSEMBLE_TREES) >= 0.5 else 0 for vote in ensemble_votes]
+    prop_m = _compute_classification_metrics(labels, proposed_preds)
 
     baseline_row = {
         "method": "baseline",
-        "trials": float(config.TRIALS),
-        "avg_expanded_nodes": round(avg_d, 1),
-        "path_optimality": 1.0,
-        "speedup_factor": 1.0,
-        "success_rate": round(succ_rate, 2),
+        "samples": float(config.N_SAMPLES),
+        **base_m,
     }
     proposed_row = {
         "method": "proposed",
-        "trials": float(config.TRIALS),
-        "avg_expanded_nodes": round(avg_a, 1),
-        "path_optimality": round(avg_opt, 3),
-        "speedup_factor": round(speedup, 2),
-        "success_rate": round(succ_rate, 2),
+        "samples": float(config.N_SAMPLES),
+        **prop_m,
     }
 
     if csv_out_path is not None:
@@ -122,7 +113,7 @@ def train_and_evaluate(csv_out_path: str | Path | None = None, seed: int = 42) -
         with out_p.open("w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(
                 f,
-                fieldnames=["method", "trials", "avg_expanded_nodes", "path_optimality", "speedup_factor", "success_rate"],
+                fieldnames=["method", "samples", "precision", "recall", "f1_score", "false_alarm_rate"],
             )
             writer.writeheader()
             writer.writerow(baseline_row)

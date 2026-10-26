@@ -37,5 +37,3 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Unikaj niezgodności sygnatur wykrytych w zadaniu T1
-- **RULE**: Preserve strict AST, CSV and symbolic reference parity in task T1 (v1).
-- **RULE**: Preserve strict AST, CSV and symbolic reference parity in task T3 (v3).

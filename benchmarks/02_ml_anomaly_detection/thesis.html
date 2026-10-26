@@ -64,7 +64,7 @@
   <div class="paper">
     <div class="evo-banner">
       <strong>ADK Self-Evolution &amp; Verification Status:</strong> PASS &nbsp;|&nbsp;
-      <strong>Events:</strong> AGENT_MUTATED, WEIGHT_ESCALATED, AGENT_MUTATED, WEIGHT_ESCALATED, AGENT_MUTATED, WEIGHT_ESCALATED, AGENT_MUTATED &nbsp;|&nbsp;
+      <strong>Events:</strong> AGENT_MUTATED, AGENT_MUTATED, AGENT_MUTATED, WEIGHT_ESCALATED, AGENT_MUTATED, WEIGHT_ESCALATED, AGENT_MUTATED, WEIGHT_ESCALATED, AGENT_MUTATED, AGENT_CREATED, WEIGHT_ESCALATED, AGENT_MUTATED, WEIGHT_ESCALATED, AGENT_SPLIT, WEIGHT_ESCALATED, AGENT_MUTATED &nbsp;|&nbsp;
       <strong>PDF Artifact:</strong> <a href="thesis.pdf">thesis.pdf</a> &nbsp;|&nbsp;
       <strong>LaTeX Source:</strong> <a href="thesis.tex">thesis.tex</a>
     </div>
@@ -76,18 +76,18 @@
       <p><strong>Abstract (EN):</strong> This study introduces a multi-channel physiological telemetry anomaly detector combining Median Absolute Deviation (MAD) normalization with a random subspace ensemble, outperforming static univariate Z-score baselines.</p>
     </div>
 
-    <h2>1. Tic-Tac-Toe Q-Learning Evaluation</h2>
-    <p>To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning agent against a random baseline policy. The experiments executed 500 episodes with learning rate 0.2 and exploration factor 0.1. The reference baseline achieved a win rate of \ref_csv{results.csv:baseline:win_rate}, whereas the proposed agent reached a win rate of \ref_csv{results.csv:proposed:win_rate} (\ref_csv{results.csv:win_rate}) and a draw rate of \ref_csv{results.csv:draw_rate}.</p>
-    <h2>2. Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej</h2>
+    <h2>1. Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej</h2>
     <p>Detekcja anomalii w wielokanałowych sygnałach biomedycznych (HR, HRV-RMSSD, saturacja SpO2) wymaga odporności na wartości odstające w estymacji parametrów rozkładu [chandola2009anomaly]. Klasyczne podejścia oparte na jednowymiarowym teście Z-score ulegają efektowi maskowania, podczas gdy metody zespołowe w podprzestrzeniach losowych, zapoczątkowane przez Isolation Forest [liu2008isolation], pozwalają na separację anomalii wielowymiarowych przy niskiej złożoności obliczeniowej.</p>
-    <h2>3. Rozdział 1: Wstęp, Cel i Teza Pracy</h2>
+    <h2>2. Rozdział 1: Wstęp, Cel i Teza Pracy</h2>
     <p>Automatyczne monitorowanie wielokanałowej telemetrii fizjologicznej (częstość akcji serca HR, zmienność rytmu zatokowego HRV-RMSSD oraz spadki saturacji SpO2) stanowi kluczowe wyzwanie we współczesnej diagnostyce medycznej [chandola2009anomaly]. Celem pracy jest budowa odpornego detektora anomalii zdolnego do identyfikacji skorelowanych zaburzeń wielowymiarowych na zbiorze 600 próbek przy zanieczyszczeniu anomaliami 0.08. Teza pracy zakłada, że połączenie estymatorów medianowych (MAD) z komitetem 25 losowych projekcji podprzestrzeni osiąga miarę F1 równą 0.99, istotnie przewyższając klasyczny test Z-score (0.667).</p>
-    <h2>4. Rozdział 2: Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej</h2>
+    <h2>3. Rozdział 2: Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej</h2>
     <p>Detekcja anomalii w wielokanałowych sygnałach biomedycznych (HR, HRV-RMSSD, saturacja SpO2) wymaga odporności na wartości odstające w estymacji parametrów rozkładu [chandola2009anomaly]. Klasyczne podejścia oparte na jednowymiarowym teście Z-score ulegają efektowi maskowania, podczas gdy metody zespołowe w podprzestrzeniach losowych, zapoczątkowane przez Isolation Forest [liu2008isolation], pozwalają na separację anomalii wielowymiarowych przy niskiej złożoności obliczeniowej.</p>
-    <h2>5. Rozdział 3: Architektura Systemu i Formalizm Matematyczny</h2>
+    <h2>4. Rozdział 3: Architektura Systemu i Formalizm Matematyczny</h2>
     <p>Zaprojektowany potok detekcji odrzuca klasyczne założenie o gaussowskim rozkładzie pojedynczego kanału na rzecz wielowymiarowej normalizacji odpornej opartej na medianie i odchyleniu bezwzględnym MAD (Median Absolute Deviation) [chandola2009anomaly]. Znormalizowany wektor cech w przestrzeni trójwymiarowej jest rzutowany na komitet 25 losowych podprzestrzeni wagowych [liu2008isolation], gdzie przekroczenie progu radialnego 2.4 decyduje o głosie pojedynczego estymatora.</p>
-    <h2>6. Rozdział 4: Implementacja Algorytmiczna i Struktury Danych</h2>
+    <h2>5. Rozdział 4: Implementacja Algorytmiczna i Struktury Danych</h2>
     <p>Moduł core.py realizuje generator syntetycznego strumienia biomedycznego generate_biosignal_dataset() dla 600 obserwacji oraz funkcję ewaluacyjną train_and_evaluate(). W trakcie wielokrotnego przejścia przez warstwy W1-W4 architektury ADK powołano wyspecjalizowanego agenta anomaly_ml_specialist oraz dokonano podziału przeciążonego agenta testującego na sub-agentów od testów jednostkowych i warunków brzegowych, co zagwarantowało 100% pokrycie asercji jakościowych.</p>
+    <h2>6. Bio-Signal Anomaly Detection Evaluation</h2>
+    <p>In the empirical evaluation on 600 multi-channel physiological telemetry samples with anomaly contamination ratio 0.08, the proposed Robust Subspace Ensemble of 25 estimators (threshold 2.4) was compared against a univariate Z-score baseline [liu2008isolation,chandola2009anomaly]. The baseline method achieved an F1-score of 0.667 (recall 0.5), whereas the proposed ensemble attained an F1-score of 0.99 with precision 0.98, recall 1.0, and false alarm rate 0.0018, as shown in [Ryc. figures/comparison_chart.pdf].</p>
 
     <h2>Tabela Wyników Eksperymentalnych (results.csv)</h2>
     <table>
@@ -102,7 +102,7 @@
     </div>
 
     <h2>Zwalidowane Wskaźniki Neuro-Symboliczne (\ref_ast / \ref_csv / \ref_fig)</h2>
-    <ul><li><code>\ref_ast{config.py:EPISODES}</code> &rarr; <strong>500</strong></li><li><code>\ref_ast{config.py:ALPHA}</code> &rarr; <strong>0.2</strong></li><li><code>\ref_ast{config.py:EPSILON}</code> &rarr; <strong>0.1</strong></li><li><code>\ref_ast{config.py:N_SAMPLES}</code> &rarr; <strong>600</strong></li><li><code>\ref_ast{config.py:ANOMALY_RATIO}</code> &rarr; <strong>0.08</strong></li><li><code>\ref_ast{config.py:ENSEMBLE_TREES}</code> &rarr; <strong>25</strong></li><li><code>\ref_ast{config.py:Z_THRESHOLD}</code> &rarr; <strong>2.4</strong></li><li><code>\ref_csv{results.csv:proposed:f1_score}</code> &rarr; <strong>0.99</strong></li><li><code>\ref_csv{results.csv:baseline:f1_score}</code> &rarr; <strong>0.667</strong></li><li><code>\ref_csv{results.csv:baseline:recall}</code> &rarr; <strong>0.5</strong></li><li><code>\ref_csv{results.csv:proposed:precision}</code> &rarr; <strong>0.98</strong></li><li><code>\ref_csv{results.csv:proposed:recall}</code> &rarr; <strong>1.0</strong></li><li><code>\ref_csv{results.csv:proposed:false_alarm_rate}</code> &rarr; <strong>0.0018</strong></li><li><code>\ref_fig{figures/comparison_chart.pdf}</code> &rarr; <strong>[Ryc. figures/comparison_chart.pdf]</strong></li></ul>
+    <ul><li><code>\ref_ast{config.py:N_SAMPLES}</code> &rarr; <strong>600</strong></li><li><code>\ref_ast{config.py:ANOMALY_RATIO}</code> &rarr; <strong>0.08</strong></li><li><code>\ref_ast{config.py:ENSEMBLE_TREES}</code> &rarr; <strong>25</strong></li><li><code>\ref_ast{config.py:Z_THRESHOLD}</code> &rarr; <strong>2.4</strong></li><li><code>\ref_csv{results.csv:proposed:f1_score}</code> &rarr; <strong>0.99</strong></li><li><code>\ref_csv{results.csv:baseline:f1_score}</code> &rarr; <strong>0.667</strong></li><li><code>\ref_csv{results.csv:baseline:recall}</code> &rarr; <strong>0.5</strong></li><li><code>\ref_csv{results.csv:proposed:precision}</code> &rarr; <strong>0.98</strong></li><li><code>\ref_csv{results.csv:proposed:recall}</code> &rarr; <strong>1.0</strong></li><li><code>\ref_csv{results.csv:proposed:false_alarm_rate}</code> &rarr; <strong>0.0018</strong></li><li><code>\ref_fig{figures/comparison_chart.pdf}</code> &rarr; <strong>[Ryc. figures/comparison_chart.pdf]</strong></li></ul>
   </div>
 </body>
 </html>

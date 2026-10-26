@@ -8,16 +8,51 @@ from typing import Any
 from adk.core.models import read_json_state, resolve_adk_path, write_json_state
 
 
+EXCLUDED_WORKSPACE_PARTS = {
+    "benchmarks",
+    "__pycache__",
+    ".git",
+    ".venv",
+    ".pytest_cache",
+    ".ruff_cache",
+}
+
+
 def sync_hypergraph_matrix(
     workspace_dir: str | Path = "workspace",
     matrix_path: str | Path = "state/hypergraph_matrix.json",
 ) -> dict[str, Any]:
-    """Scan .py imports and \\ref_ast / \\ref_csv tags in workspace/ and update hypergraph_matrix.json."""
+    """Scan .py imports and \\ref_ast / \\ref_csv tags in workspace/ and update hypergraph_matrix.json, excluding benchmarks/ and internal caches."""
     w_dir = resolve_adk_path(workspace_dir)
     data = read_json_state(matrix_path)
     nodes: dict[str, dict[str, Any]] = data.get("nodes", {})
     edges: dict[str, list[str]] = data.get("edges", {})
     matrix: dict[str, dict[str, int]] = data.get("matrix", {})
+
+    # Prune any existing nodes that point to excluded directories (such as benchmarks/)
+    valid_nodes: dict[str, dict[str, Any]] = {}
+    excluded_node_ids: set[str] = set()
+    for node_id, meta in nodes.items():
+        rel_path = meta.get("path", "")
+        if any(part in EXCLUDED_WORKSPACE_PARTS for part in Path(rel_path).parts):
+            excluded_node_ids.add(node_id)
+        else:
+            valid_nodes[node_id] = meta
+    nodes = valid_nodes
+
+    if excluded_node_ids:
+        clean_edges: dict[str, list[str]] = {}
+        for edge_id, members in edges.items():
+            clean_members = [m for m in members if m not in excluded_node_ids]
+            if clean_members:
+                clean_edges[edge_id] = clean_members
+        edges = clean_edges
+
+        clean_matrix: dict[str, dict[str, int]] = {}
+        for n_id in nodes:
+            row = matrix.get(n_id, {})
+            clean_matrix[n_id] = {e_id: int(row.get(e_id, 0)) for e_id in edges}
+        matrix = clean_matrix
 
     path_to_node: dict[str, str] = {}
     stem_to_node: dict[str, str] = {}
@@ -29,7 +64,11 @@ def sync_hypergraph_matrix(
 
     if w_dir.exists():
         for file_path in sorted(w_dir.rglob("*")):
-            if not file_path.is_file() or file_path.name == ".gitkeep" or "__pycache__" in file_path.parts:
+            if (
+                not file_path.is_file()
+                or file_path.name == ".gitkeep"
+                or any(part in EXCLUDED_WORKSPACE_PARTS for part in file_path.parts)
+            ):
                 continue
             rel = file_path.relative_to(w_dir).as_posix()
             if rel not in path_to_node:

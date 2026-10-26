@@ -62,3 +62,4 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
+- **RULE**: [02_ml_anomaly_detection cycle #3] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.

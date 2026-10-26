@@ -373,7 +373,12 @@ class NeuroSymbolicOrchestrator:
         bib_files: dict[str, str] = {}
         if self.workspace_dir.exists():
             for p in sorted(self.workspace_dir.rglob("*")):
-                if not p.is_file() or "__pycache__" in p.parts or p.name == ".gitkeep":
+                if (
+                    not p.is_file()
+                    or "__pycache__" in p.parts
+                    or p.name == ".gitkeep"
+                    or "benchmarks" in p.parts
+                ):
                     continue
                 rel = p.relative_to(self.workspace_dir).as_posix()
                 if p.suffix == ".py":
@@ -434,7 +439,11 @@ class NeuroSymbolicOrchestrator:
 
         # For data/experiment node v3 (edge E2), verify mtime freshness of CSV files against Python sources
         if is_data_scope and self.workspace_dir.exists():
-            py_files = [p for p in self.workspace_dir.rglob("*.py") if "__pycache__" not in p.parts]
+            py_files = [
+                p
+                for p in self.workspace_dir.rglob("*.py")
+                if "__pycache__" not in p.parts and "benchmarks" not in p.parts
+            ]
             latest_py_mtime = max((p.stat().st_mtime for p in py_files), default=0.0)
             for csv_file in self.workspace_dir.glob("*.csv"):
                 if latest_py_mtime > 0 and csv_file.stat().st_mtime + 1e-6 < latest_py_mtime:

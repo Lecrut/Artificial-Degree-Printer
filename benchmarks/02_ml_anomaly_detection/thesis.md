@@ -1,7 +1,3 @@
-## Tic-Tac-Toe Q-Learning Evaluation
-To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning agent against a random baseline policy. The experiments executed \ref_ast{config.py:EPISODES} episodes with learning rate \ref_ast{config.py:ALPHA} and exploration factor \ref_ast{config.py:EPSILON}. The reference baseline achieved a win rate of \ref_csv{results.csv:baseline:win_rate}, whereas the proposed agent reached a win rate of \ref_csv{results.csv:proposed:win_rate} (\ref_csv{results.csv:win_rate}) and a draw rate of \ref_csv{results.csv:draw_rate}.
-
-
 ## Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej
 Detekcja anomalii w wielokanałowych sygnałach biomedycznych (HR, HRV-RMSSD, saturacja SpO2) wymaga odporności na wartości odstające w estymacji parametrów rozkładu \cite{chandola2009anomaly}. Klasyczne podejścia oparte na jednowymiarowym teście Z-score ulegają efektowi maskowania, podczas gdy metody zespołowe w podprzestrzeniach losowych, zapoczątkowane przez Isolation Forest \cite{liu2008isolation}, pozwalają na separację anomalii wielowymiarowych przy niskiej złożoności obliczeniowej.
 

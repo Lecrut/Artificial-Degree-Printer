@@ -1,23 +1,23 @@
 [
   {
     "task_id": "T1",
-    "description": "[Etap 1/5 - Konfiguracja AST] Zdefiniuj stale i hiperparametry w config.py (Build a Graph Pathfinding & Heuristic Optimization module in Python: 1) in config.py defin...)",
+    "description": "[Etap 1/5 - Konfiguracja AST] Zdefiniuj stale i hiperparametry w config.py (Build a Bio-Signal & Telemetry Anomaly Detection module in Python: 1) in config.py define ...)",
     "target_node": "v1",
-    "assigned_agent": "seed_coder",
+    "assigned_agent": "dyn_anomaly_ml_specialist",
     "status": "DONE"
   },
   {
     "task_id": "T2",
     "description": "[Etap 2/5 - Algorytm Glowny] Zaimplementuj logike algorytmu oraz funkcje train_and_evaluate() w core.py",
     "target_node": "v2",
-    "assigned_agent": "seed_coder",
+    "assigned_agent": "dyn_anomaly_ml_specialist",
     "status": "DONE"
   },
   {
     "task_id": "T3",
     "description": "[Etap 3/5 - Testy i Dane Empiryczne] Zbuduj testy jednostkowe test_core.py, wygeneruj results.csv oraz wykresy plot_results.py",
     "target_node": "v3",
-    "assigned_agent": "seed_tester",
+    "assigned_agent": "seed_tester_unit_testing",
     "status": "DONE"
   },
   {
