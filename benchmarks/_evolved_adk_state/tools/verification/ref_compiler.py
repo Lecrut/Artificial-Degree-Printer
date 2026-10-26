@@ -73,12 +73,20 @@ def _lookup_csv_value(csv_file: Path, column_spec: str) -> tuple[bool, Any]:
             if target_row is None:
                 return False, f"Row selector '{row_selector}' not found in '{csv_file.name}'"
             if col_name not in target_row:
-                return False, f"Column '{col_name}' not found in '{csv_file.name}'"
+                match_col = next((k for k in target_row if k.strip().lower() == col_name.strip().lower()), None)
+                if match_col is not None:
+                    col_name = match_col
+                else:
+                    return False, f"Column '{col_name}' not found in '{csv_file.name}'"
             return True, target_row[col_name]
 
         last_row = reader[-1]
         if column_spec not in last_row:
-            return False, f"Column '{column_spec}' not found in '{csv_file.name}'"
+            match_col = next((k for k in last_row if k.strip().lower() == column_spec.strip().lower()), None)
+            if match_col is not None:
+                column_spec = match_col
+            else:
+                return False, f"Column '{column_spec}' not found in '{csv_file.name}'"
         return True, last_row[column_spec]
 
 

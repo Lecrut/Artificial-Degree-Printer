@@ -103,7 +103,7 @@ Artificial-Degree-Printer/
 │   │
 │   ├── benchmarks/                             # Subsystem Benchmarków i Ewaluacji Wielozadaniowej
 │   │   ├── __init__.py                         # Eksport stałych i runnera benchmarków
-│   │   ├── tasks.py                            # Definicje 3 zadań referencyjnych (RL, Anomaly ML, Graph A*)
+│   │   ├── tasks.py                            # Definicje 4 zadań referencyjnych (RL, Anomaly ML, Graph A*, Federated Learning - 10 zadań)
 │   │   ├── runner.py                           # run_benchmark_suite, sandboxy, raport zbiorczy master PDF
 │   │   ├── llm_logging.py                      # export_task_llm_interactions (llm_interactions.md i .jsonl)
 │   │   └── tictactoe.py                        # Komponenty bazowe dla zadania 1 (Q-Learning Tic-Tac-Toe)
@@ -356,6 +356,11 @@ ETAP 1.1: Narzędzia Deterministyczne Planowania i EvoRoute (`adk/tools/planning
       3. Znajduje wszystkie pozostałe wierzchołki należące do tych samych hiperkrawędzi
          i zwraca słownik z `modified_node_id`, `modified_file`, `degree`,
          `active_edges`, `affected_nodes` oraz `affected_files`.
+    - Funkcja `get_scoped_hypergraph_context(matrix_path, blast_radius)`:
+      Ekstrahuje odchudzony kontekst topologiczny dla promptów agentów LLM (`nodes` + `active_edges`).
+      Zamiast wysyłać pełną, binarną macierz incydencji 0/1 wszystkich hiperkrawędzi (`matrix`), przekazuje
+      wyłącznie metadane węzłów (`path`, `degree`, `weight`) oraz aktywne hiperkrawędzie powiązane
+      z promieniem rażenia. Zmniejsza to payload LLM o ponad 98% (z ~350 KB do < 1 KB) i chroni okno kontekstowe.
 
 [x] `adk/tools/planning/complexity_router.py`:
     - Funkcja `select_model_tier(node_id, matrix_path)`:
@@ -447,12 +452,16 @@ ETAP 2.1: Narzędzia Lokalne i Mosty Międzyplikowe (`adk/tools/building/`)
 
 [x] `adk/tools/building/hypergraph_sync.py`:
     - Funkcja `sync_hypergraph_matrix(workspace_dir, matrix_path)`:
-      1. Rejestruje nowe pliki z `workspace/` jako kolejne wierzchołki `v_k`.
-      2. Skanuje drzewa AST plików `.py` w poszukiwaniu instrukcji `Import` i `ImportFrom`.
-      3. Skanuje pliki dokumentacji `.md`/`.tex` w poszukiwaniu tagów `\ref_ast{plik:symbol}`,
+      1. Rejestruje nowe pliki z `workspace/` jako kolejne wierzchołki `v_k`, z automatycznym
+         wykluczeniem katalogów technicznych i izolowanych benchmarków (`EXCLUDED_WORKSPACE_PARTS`:
+         `benchmarks`, `__pycache__`, `.git`, `.venv`, `.pytest_cache`, `.ruff_cache`).
+      2. Wykonuje automatyczny pruning (oczyszczanie) usuniętych lub wykluczonych węzłów
+         i powiązanych z nimi hiperkrawędzi ze `state/hypergraph_matrix.json`.
+      3. Skanuje drzewa AST plików `.py` w poszukiwaniu instrukcji `Import` i `ImportFrom`.
+      4. Skanuje pliki dokumentacji `.md`/`.tex` w poszukiwaniu tagów `\ref_ast{plik:symbol}`,
          `\ref_csv{plik:kolumna}`, `\ref_fig{plik_lub_id}`, `\includegraphics{plik}` oraz
          `\cite{klucz}` (łącząc je z plikami `.bib`).
-      4. Dla wykrytych sprzężeń międzyplikowych dopasowuje istniejące hiperkrawędzie
+      5. Dla wykrytych sprzężeń międzyplikowych dopasowuje istniejące hiperkrawędzie
          lub tworzy nowe (`E_k`) i przelicza stopnie `d(v)` wszystkich wierzchołków
          w `state/hypergraph_matrix.json`.
 

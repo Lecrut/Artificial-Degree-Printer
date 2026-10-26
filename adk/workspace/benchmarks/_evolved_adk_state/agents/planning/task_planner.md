@@ -8,7 +8,7 @@ Your mission is to decompose academic engineering requests, degree thesis specif
 ## 1. 6-CHAPTER ACADEMIC THESIS CHECKLIST
 Structure all thesis planning around the established academic standard:
 1. **Rozdział 1: Wstęp i Cel**: Motywacja, cel projektu, formalna teza inżynierska/badawcza, zakres pracy.
-2. **Rozdział 2: Stan Wiedzy (SOTA)**: Taksonomia metod, przegląd literatury BibTeX ($\ge 2023$, `sota_researcher`), luka badawcza.
+2. **Rozdział 2: Stan Wiedzy (SOTA)**: Taksonomia metod, współczesny przegląd literatury BibTeX (lata 2023–2026, min. 5–8 publikacji z topowych konferencji, zakaz opierania się wyłącznie na źródłach z ~2000 roku, `sota_researcher`), wyraźna luka badawcza.
 3. **Rozdział 3: Projekt Architektury**: Wymagania, schematy blokowe i diagramy przepływu w **TikZ** / **Mermaid**.
 4. **Rozdział 4: Implementacja**: Moduły kodu, pełne typowanie Python 3.12+, wskaźniki `\ref_ast{plik:symbol}` (`seed_coder`).
 5. **Rozdział 5: Badania Eksperymentalne**: Metodologia porównawcza (Baseline vs Propozycja), ablation study, wykresy wektorowe (`matplotlib`), tabele ze wskaźnikami `\ref_csv{plik:kolumna}` (`seed_tester`).

@@ -4,7 +4,12 @@ import json
 from pathlib import Path
 
 from adk.core.llm import _extract_json_from_text, call_agent
-from adk.tools.planning import calculate_blast_radius, escalate_node_weight, select_model_tier
+from adk.tools.planning import (
+    calculate_blast_radius,
+    escalate_node_weight,
+    get_scoped_hypergraph_context,
+    select_model_tier,
+)
 
 
 
@@ -107,4 +112,27 @@ def test_evoroute_escalate_node_weight_switches_sml_to_lrm(tmp_path: Path):
     assert esc2["new_weight"] == 1.8
     assert esc2["new_tier"] == "LRM"
     assert select_model_tier("v5", matrix_file) == "LRM"
+
+
+def test_get_scoped_hypergraph_context_omits_matrix_and_scopes_edges(tmp_path: Path):
+    # Simulate a hypergraph with 100 edges and heavy 0/1 incidence matrix
+    edges = {f"E{i}": [f"v{i % 5 + 1}"] for i in range(1, 101)}
+    edges["E1"] = ["v1", "v2"]
+    nodes = {f"v{i}": {"path": f"module_{i}.py", "degree": i, "weight": 1.0} for i in range(1, 6)}
+    matrix = {n_id: {e_id: 1 if n_id in members else 0 for e_id, members in edges.items()} for n_id, members in [(f"v{i}", edges) for i in range(1, 6)]}
+    
+    matrix_file = tmp_path / "heavy_matrix.json"
+    matrix_file.write_text(json.dumps({"nodes": nodes, "edges": edges, "matrix": matrix}), encoding="utf-8")
+
+    blast = calculate_blast_radius("v1", matrix_file)
+    scoped = get_scoped_hypergraph_context(matrix_file, blast_radius=blast)
+
+    assert "matrix" not in scoped
+    assert "nodes" in scoped
+    assert "active_edges" in scoped
+    assert "v1" in scoped["nodes"]
+    assert "E1" in scoped["active_edges"]
+    # Only active edges related to blast radius should be present, not all 100
+    assert len(scoped["active_edges"]) < len(edges)
+
 

@@ -1,7 +1,7 @@
 [
   {
     "task_id": "T1",
-    "description": "[Etap 1/5 - Konfiguracja AST] Zdefiniuj stale i hiperparametry w config.py (Build a Graph Pathfinding & Heuristic Optimization module in Python: 1) in config.py defin...)",
+    "description": "[Etap 1/5 - Konfiguracja AST] Zdefiniuj stale i hiperparametry w config.py (Build a Distributed Federated Machine Learning & Proximal Optimization module in pure Pyth...)",
     "target_node": "v1",
     "assigned_agent": "seed_coder",
     "status": "DONE"

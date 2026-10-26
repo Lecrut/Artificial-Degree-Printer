@@ -29,7 +29,12 @@ from adk.tools.evolution import (
     mutate_agent_prompt,
     split_agent,
 )
-from adk.tools.planning import calculate_blast_radius, escalate_node_weight, select_model_tier
+from adk.tools.planning import (
+    calculate_blast_radius,
+    escalate_node_weight,
+    get_scoped_hypergraph_context,
+    select_model_tier,
+)
 from adk.tools.verification import compile_symbolic_references, run_isolated_tests
 
 
@@ -348,6 +353,8 @@ class NeuroSymbolicOrchestrator:
             f"Zadanie {task.get('task_id')} -> agent '{agent_id}' na węźle {node_id} ({node_path})",
             {"model_tier": model_tier, "include_docs": self.include_docs},
         )
+        builder_blast = calculate_blast_radius(node_id, self.matrix_path)
+        scoped_graph = get_scoped_hypergraph_context(self.matrix_path, blast_radius=builder_blast)
         llm_res = call_agent(
             agent_md,
             {
@@ -356,7 +363,8 @@ class NeuroSymbolicOrchestrator:
                 "existing_content": existing_content,
                 "exports": exports_info.get("exports", {}),
                 "csv_schemas": exports_info.get("csv_schemas", {}),
-                "hypergraph_nodes": matrix_data.get("nodes", {}),
+                "hypergraph_nodes": scoped_graph.get("nodes", {}),
+                "active_edges": scoped_graph.get("active_edges", {}),
             },
             model_tier=model_tier,
             provider=self.provider,
@@ -925,6 +933,7 @@ class NeuroSymbolicOrchestrator:
             return {"status": "HITL_PAUSED", "layer4": l4_res}
 
         blast = calculate_blast_radius(target_node, self.matrix_path)
+        scoped_graph = get_scoped_hypergraph_context(self.matrix_path, blast_radius=blast)
 
         # 1. Planning (Layer 1)
         print(
@@ -936,7 +945,8 @@ class NeuroSymbolicOrchestrator:
             "user_prompt": user_prompt,
             "target_node": target_node,
             "blast_radius": blast,
-            "hypergraph_matrix": read_json_state(self.matrix_path),
+            "hypergraph": scoped_graph,
+            "hypergraph_matrix": scoped_graph,
             "agent_registry": read_json_state(self.registry_path),
             "include_docs": self.include_docs,
             "missing_agent_specialization": missing_agent_specialization,
@@ -1018,7 +1028,8 @@ class NeuroSymbolicOrchestrator:
                 "tasks": tasks,
                 "agent_registry": registry_data,
                 "blast_radius": blast,
-                "hypergraph_matrix": read_json_state(self.matrix_path),
+                "hypergraph": scoped_graph,
+                "hypergraph_matrix": scoped_graph,
                 "include_docs": self.include_docs,
             },
             model_tier="SML",
@@ -1197,6 +1208,10 @@ class NeuroSymbolicOrchestrator:
                     if self.failure_ledger_path.exists()
                     else {"failures": []}
                 )
+                remediation_blast = calculate_blast_radius(node_id, self.matrix_path)
+                remediation_scoped_graph = get_scoped_hypergraph_context(
+                    self.matrix_path, blast_radius=remediation_blast
+                )
                 remediation_out = call_agent(
                     remediation_agent,
                     {
@@ -1205,7 +1220,9 @@ class NeuroSymbolicOrchestrator:
                         "failed_task": task,
                         "failure_ledger": failure_ledger,
                         "agent_registry": read_json_state(self.registry_path),
-                        "hypergraph_matrix": read_json_state(self.matrix_path),
+                        "blast_radius": remediation_blast,
+                        "hypergraph": remediation_scoped_graph,
+                        "hypergraph_matrix": remediation_scoped_graph,
                         "include_docs": self.include_docs,
                     },
                     model_tier="LRM",
@@ -1243,8 +1260,9 @@ class NeuroSymbolicOrchestrator:
                             {
                                 "tasks": todo_slice,
                                 "agent_registry": read_json_state(self.registry_path),
-                                "blast_radius": blast,
-                                "hypergraph_matrix": read_json_state(self.matrix_path),
+                                "blast_radius": remediation_blast,
+                                "hypergraph": remediation_scoped_graph,
+                                "hypergraph_matrix": remediation_scoped_graph,
                                 "include_docs": self.include_docs,
                             },
                             model_tier="SML",
@@ -1352,7 +1370,8 @@ class NeuroSymbolicOrchestrator:
         else:
             final_report = read_json_state(self.validation_report_path)
 
-        if final_report.get("status") == "PASS":
+        defense_ok = final_report.get("status") == "PASS"
+        if defense_ok:
             if not self._check_hitl_gate(
                 gate_name="GATE_3_DEFENSE_APPROVAL",
                 context_payload={"validation_status": "PASS", "replan_count": replan_count},
@@ -1368,13 +1387,20 @@ class NeuroSymbolicOrchestrator:
                     "architecture_cycles": architecture_cycles,
                     "validation_report": final_report,
                 }
+        else:
+            self.logger.log_step(
+                "DEFENSE_GATE_WARNING",
+                f"Bramka końcowa GATE_3_DEFENSE_APPROVAL wykazała zastrzeżenia audytorów: {final_report.get('issues', [])}",
+                {"validation_report": final_report},
+            )
 
+        status_label = "COMPLETED" if defense_ok else "COMPLETED_WITH_WARNINGS"
         self.logger.log_step(
             "ORCHESTRATOR_DONE",
-            f"Zakończono scenariusz ze statusem COMPLETED (replan_count={replan_count}, cycles={len(architecture_cycles)}).",
+            f"Zakończono scenariusz ze statusem {status_label} (replan_count={replan_count}, cycles={len(architecture_cycles)}).",
         )
         return {
-            "status": "COMPLETED",
+            "status": status_label,
             "mode": {
                 "enable_layer4": self.enable_layer4,
                 "include_docs": self.include_docs,

@@ -13,9 +13,10 @@ Structure the project plan around the standard 6-chapter academic thesis canon:
    - Formal thesis statement (*teza inżynierska / badawcza*) and measurable project goals.
    - Explicit scope boundaries and outline of remaining chapters.
 2. **Rozdział 2: Analiza Stanu Wiedzy (SOTA & Related Work)**:
-   - Methodological taxonomy grouping related research.
-   - Comprehensive BibTeX review ($\ge 5-10$ seminal & recent $\ge 2023$ citations generated via `sota_researcher`).
-   - Clear research gap analysis justifying this work.
+   - Methodological taxonomy grouping related research (Classical vs Modern Neural/Heuristic vs Distributed/Adaptive).
+   - **Współczesny przegląd literatury SOTA**: minimum 5–8 zweryfikowanych źródeł, z czego większość (>= 75%) z lat **2023–2026** (topowe konferencje i czasopisma: NeurIPS, ICML, ICLR, AAAI, IEEE TPAMI, ACM Trans).
+   - **BEZWZGLĘDNY ZAKAZ** opierania stanu wiedzy wyłącznie na 2–3 archaicznych pozycjach z lat 90/2000! Pozycje klasyczne dopuszczalne są wyłącznie jako tło historyczne (maksymalnie 1-2 źródła).
+   - Wyraźna analiza luki badawczej (*research gap analysis*) uzasadniającej cel i wkład niniejszej pracy.
 3. **Rozdział 3: Projekt Architektury Systemu (System Design & Requirements)**:
    - Functional and non-functional requirements.
    - Architecture blueprints and data flow diagrams authored in **TikZ** (LaTeX) or **Mermaid** (Markdown).
@@ -48,8 +49,9 @@ Coordinate with Layer 4 (`evolution_architect`) to enforce the 3 formal promotor
   1. Architecture & Baseline code (`seed_coder`).
   2. Core implementation with strict typing (`seed_coder`).
   3. Comparative benchmarks, ablation studies, and vector plot scripts (`seed_tester`).
-  4. SOTA literature review and BibTeX bibliography (`sota_researcher`).
+  4. Contemporary SOTA literature review (2023–2026) and BibTeX bibliography (`sota_researcher`).
   5. Thesis subsections with TikZ/Mermaid diagrams and symbolic references (`seed_writer`).
+- For complex / multi-component benchmark requests, decompose into a rich sequence of **8–10 atomic tasks** covering granular algorithmic steps, testing, visualization, and academic chapters.
 
 ---
 
@@ -89,7 +91,14 @@ Return strictly a valid JSON object matching this schema:
     },
     {
       "task_id": "T4",
-      "description": "Redakcja rozdziałów pracy w thesis.tex z odwołaniami \\ref_ast i \\ref_csv",
+      "description": "Przegląd współczesnego stanu wiedzy SOTA (lata 2023-2026, min. 5-8 pozycji) i synteza bazy BibTeX w references.bib",
+      "target_node": "v4",
+      "assigned_agent": "sota_researcher",
+      "status": "TODO"
+    },
+    {
+      "task_id": "T5",
+      "description": "Redakcja rozdziałów pracy w thesis.md / thesis.tex z odwołaniami \\ref_ast i \\ref_csv oraz ryciną TikZ",
       "target_node": "v4",
       "assigned_agent": "seed_writer",
       "status": "TODO"

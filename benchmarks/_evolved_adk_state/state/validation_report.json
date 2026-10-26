@@ -15,6 +15,7 @@
     },
     "redteam_critic_guard": {
       "status": "PASS",
+      "gate_3_approved": true,
       "issues": []
     }
   },

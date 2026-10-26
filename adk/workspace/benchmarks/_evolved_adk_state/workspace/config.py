@@ -1,8 +1,3 @@
-ALPHA = 0.2
-GAMMA = 0.95
-EPSILON = 0.1
-EPISODES = 500
-GRID_SIZE = 32
-OBSTACLE_DENSITY = 0.22
-HEURISTIC_WEIGHT = 1.15
-TRIALS = 40
+FEDERATED_LEARNING_CONFIG = {'num_clients': 10, 'num_rounds': 50, 'local_epochs': 3, 'batch_size': 32, 'learning_rate': 0.01, 'client_sampling_ratio': 0.8, 'aggregation_strategy': 'FedAvg', 'proximal_param': 0.01, 'random_seed': 42, 'communication_rounds': 50, 'global_epochs': 100}
+MODEL_HYPERPARAMETERS = {'input_dim': 784, 'hidden_dim': 128, 'output_dim': 10, 'num_layers': 2, 'activation': 'relu', 'dropout_rate': 0.2, 'weight_decay': 0.0001, 'batch_norm': True}
+TRAINING_CONFIG = {'epochs': 100, 'validation_split': 0.2, 'early_stopping_patience': 10, 'optimizer': 'adam', 'loss_function': 'cross_entropy', 'metrics': ['accuracy'], 'shuffle': True, 'validation_batch_size': 32, 'learning_rate_schedule': 'cosine'}

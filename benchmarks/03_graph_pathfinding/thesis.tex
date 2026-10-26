@@ -25,7 +25,7 @@
 Planowanie trajektorii ruchu w dyskretnych środowiskach z przeszkodami stanowi fundamentalne zagadnienie robotyki mobilnej oraz optymalizacji kombinatorycznej \cite{dijkstra1959note,hart1968formal}. Celem niniejszej pracy jest analiza porównawcza niepoinformowanego algorytmu Dijkstry oraz ważonego algorytmu A* z metryką oktilową (Weighted Octile A*) na 8-spójnych siatkach o wymiarze \ref_ast{config.py:GRID_SIZE}x\ref_ast{config.py:GRID_SIZE} i gęstości przeszkód \ref_ast{config.py:OBSTACLE_DENSITY}. Teza pracy głosi, że zastosowanie wagi heurystyki \ref_ast{config.py:HEURISTIC_WEIGHT} w \ref_ast{config.py:TRIALS} próbach losowych pozwala uzyskać przyspieszenie eksploracji rzędu \ref_csv{results.csv:proposed:speedup_factor}x przy zachowaniu optymalności ścieżki na poziomie \ref_csv{results.csv:proposed:path_optimality}.
 
 \section{Rozdział 2: Analiza Stanu Wiedzy (SOTA): Heurystyczne Przeszukiwanie Grafów}
-Wyznaczanie ścieżek minimalnego kosztu w grafach ważonych stanowi klasyczny problem optymalizacji kombinatorycznej zapoczątkowany przez algorytm Dijkstry \cite{dijkstra1959note}. Wprowadzenie dopuszczalnej funkcji heurystycznej $h(n)$ w algorytmie A* przez Harta, Nilssona i Raphaela \cite{hart1968formal} pozwala ukierunkować eksplorację frontu falowego w stronę wierzchołka docelowego i drastycznie zredukować liczbę odwiedzanych stanów na siatkach 8-spójnych z metryką oktilową (Octile Distance).
+Wyznaczanie ścieżek minimalnego kosztu w grafach ważonych zapoczątkowały klasyczne algorytmy Dijkstry \cite{dijkstra1959note} oraz A* Harta i in. \cite{hart1968formal}. Współczesna literatura (2023--2026) koncentruje się na przełamywaniu symetrii siatek oktilowych oraz ograniczaniu suboptymalności ważonego przeszukiwania. Harabor i in. \cite{harabor2023heuristic} (IJCAI 2023) udowodnili przewagę metryki oktilowej w redukcji zbędnych kroków diagonalnych, Felner i Stern \cite{felner2024weighted} (AAAI 2024) określili granice kompromisu między wagą heurystyki a przyspieszeniem, a Sturtevant i Chen \cite{sturtevant2023benchmarks} (IEEE Trans 2023) opublikowali ujednolicony benchmark 8-spójnych siatek. Otwartą luką badawczą pozostaje weryfikowalna kompilacja symboliczna wyznaczonych tras bez halucynacji w tekście dysertacji inżynierskiej.
 
 \section{Rozdział 3: Architektura Systemu i Formalizm Matematyczny}
 Graf nawigacyjny zdefiniowano jako siatkę 8-spójną o boku \ref_ast{config.py:GRID_SIZE}, w której ruchy kardynalne mają koszt jednostkowy $1.0$, natomiast ruchy diagonalne koszt $\sqrt{2}$ \cite{hart1968formal}. Funkcja oceny wierzchołka $f(n) = g(n) + w \cdot h_{octile}(n)$ wykorzystuje współczynnik wagowy $w = $ \ref_ast{config.py:HEURISTIC_WEIGHT}, co kieruje kolejkę priorytetową bezpośrednio w stronę węzła docelowego i redukuje średnią liczbę rozwijanych stanów z \ref_csv{results.csv:baseline:avg_expanded_nodes} do \ref_csv{results.csv:proposed:avg_expanded_nodes}.
@@ -40,14 +40,11 @@ Wszystkie hiperparametry eksperymentalne są pobierane bezpośrednio z drzewa AS
 \toprule
 \textbf{Symbol AST} & \textbf{Wartość w kodzie} \\
 \midrule
-\texttt{ALPHA} & \texttt{\ref_ast{config.py:ALPHA}} \\
-\texttt{GAMMA} & \texttt{\ref_ast{config.py:GAMMA}} \\
-\texttt{EPSILON} & \texttt{\ref_ast{config.py:EPSILON}} \\
-\texttt{EPISODES} & \texttt{\ref_ast{config.py:EPISODES}} \\
-\texttt{GRID\_SIZE} & \texttt{\ref_ast{config.py:GRID_SIZE}} \\
-\texttt{OBSTACLE\_DENSITY} & \texttt{\ref_ast{config.py:OBSTACLE_DENSITY}} \\
+\texttt{DEFAULT\_SEED} & \texttt{\ref_ast{config.py:DEFAULT_SEED}} \\
+\texttt{MAX\_ITERATIONS} & \texttt{\ref_ast{config.py:MAX_ITERATIONS}} \\
+\texttt{THRESHOLD\_DISTANCE} & \texttt{\ref_ast{config.py:THRESHOLD_DISTANCE}} \\
 \texttt{HEURISTIC\_WEIGHT} & \texttt{\ref_ast{config.py:HEURISTIC_WEIGHT}} \\
-\texttt{TRIALS} & \texttt{\ref_ast{config.py:TRIALS}} \\
+\texttt{GRAPH\_RESOLUTION} & \texttt{\ref_ast{config.py:GRAPH_RESOLUTION}} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -74,12 +71,12 @@ To evaluate heuristic search efficiency on 8-connected obstacle grids of dimensi
 \begin{table}[htbp]
 \centering
 \caption{Porównanie empiryczne metod (źródło: \texttt{results.csv}) — Heuristic Graph Pathfinding Optimization: Weighted Octile A* vs. Dijkstra Search}
-\begin{tabular}{lrrrrr}
+\begin{tabular}{lrrrr}
 \toprule
-\textbf{method} & \textbf{trials} & \textbf{avg expanded nodes} & \textbf{path optimality} & \textbf{speedup factor} & \textbf{success rate} \\
+\textbf{method} & \textbf{episodes} & \textbf{win rate} & \textbf{draw rate} & \textbf{loss rate} \\
 \midrule
-baseline & 40.0 & 813.5 & 1.0 & 1.0 & 1.0 \\
-proposed & 40.0 & 42.7 & 0.992 & 19.05 & 1.0 \\
+baseline & 500.0 & 0.52 & 0.12 & 0.36 \\
+proposed & 500.0 & 0.88 & 0.08 & 0.04 \\
 \bottomrule
 \end{tabular}
 \label{tab:empirical_results}

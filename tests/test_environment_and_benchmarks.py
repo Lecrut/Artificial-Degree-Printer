@@ -70,6 +70,8 @@ def test_local_venv_has_all_required_packages_and_cli_works():
         cwd=str(REPO_ROOT),
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=25,
     )
     assert proc.returncode == 0, (
@@ -83,6 +85,8 @@ def test_local_venv_has_all_required_packages_and_cli_works():
         cwd=str(REPO_ROOT),
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=25,
     )
     assert cli_proc.returncode == 0, f"Błąd uruchomienia main.py --check-llm: {cli_proc.stderr}"
@@ -102,15 +106,18 @@ def test_llm_connection_manager_diagnostics():
 
 
 def test_benchmark_tasks_specifications_and_syntax():
-    """Verify all 3 benchmark tasks have valid AST in core_code, test_code, and plot_script."""
+    """Verify all 4 benchmark tasks have valid AST in core_code, test_code, and plot_script."""
     assert set(BENCHMARK_TASKS.keys()) == {
         "01_rl_tictactoe",
         "02_ml_anomaly_detection",
         "03_graph_pathfinding",
+        "04_federated_learning",
     }
     assert get_benchmark_task("1").task_id == "01_rl_tictactoe"
     assert get_benchmark_task("2").task_id == "02_ml_anomaly_detection"
     assert get_benchmark_task("3").task_id == "03_graph_pathfinding"
+    assert get_benchmark_task("4").task_id == "04_federated_learning"
+    assert len(get_benchmark_task("4").custom_tasks) == 10
 
     for task_id, spec in BENCHMARK_TASKS.items():
         ast.parse(spec.core_code, filename=f"{task_id}_core.py")
@@ -199,4 +206,19 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
 
     assert Path(res["master_summary_pdf"]).exists()
     assert Path(t_res["artifacts"]["pdf_path"]).exists()
+
+
+def test_benchmark_task_4_federated_runs_10_tasks(tmp_path: Path):
+    """Verify task 4 (04_federated_learning) runs all 10 custom tasks in isolated tmp and generates valid thesis bundle."""
+    out_dir = tmp_path / "bench_out4"
+    res = run_benchmark_suite(task_keys=["4"], provider="mock", output_root=out_dir)
+    assert res["status"] == "COMPLETED"
+    assert len(res["tasks"]) == 1
+    t_res = res["tasks"][0]
+    assert t_res["task_id"] == "04_federated_learning"
+    assert t_res["orchestrator_status"] == "COMPLETED"
+    assert Path(t_res["artifacts"]["pdf_path"]).exists()
+    assert Path(t_res["artifacts"]["runner_script"]).exists()
+    assert Path(res["master_summary_pdf"]).exists()
+
 

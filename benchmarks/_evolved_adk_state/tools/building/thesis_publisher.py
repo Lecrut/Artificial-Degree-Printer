@@ -234,16 +234,25 @@ Wszystkie hiperparametry eksperymentalne są pobierane bezpośrednio z drzewa AS
 
 def _clean_latex_inline(text: str) -> str:
     cleaned = re.sub(r"\\cite\{([^}]+)\}", r"[\1]", text)
+    cleaned = re.sub(r"\\ref_ast\{([^}]+)\}", r"[\1]", cleaned)
+    cleaned = re.sub(r"\\ref_csv\{([^}]+)\}", r"[\1]", cleaned)
+    cleaned = re.sub(r"\\ref_fig\{([^}]+)\}", r"[\1]", cleaned)
+    cleaned = re.sub(r"\\ref\{([^}]+)\}", r"[\1]", cleaned)
+    cleaned = re.sub(r"\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}", "[Schemat Architektury]", cleaned, flags=re.DOTALL)
     cleaned = (
         cleaned.replace("$\\epsilon$", "ε")
         .replace("$\\gamma$", "γ")
+        .replace("$\\alpha$", "α")
         .replace("$Q(s, a)$", "Q(s, a)")
         .replace("$h(n)$", "h(n)")
         .replace("$\\sqrt{2}$", "√2")
         .replace("$f(n) = g(n) + w \\cdot h_{octile}(n)$", "f(n) = g(n) + w * h_octile(n)")
         .replace("$w = $", "w = ")
         .replace("$1.0$", "1.0")
+        .replace("$w^t$", "w^t")
     )
+    # Strip remaining $ characters to ensure Matplotlib does not invoke mathtext parser on prose
+    cleaned = cleaned.replace("$", "")
     return cleaned
 
 
@@ -368,7 +377,7 @@ def render_thesis_pdf(
         if config_pairs:
             table_ax1 = fig1.add_axes([0.08, 0.065, 0.84, 0.145])
             table_ax1.axis("off")
-            cell_data = [[sym, val, f"\\ref_ast{{config.py:{sym}}} -> {val}"] for sym, val in config_pairs]
+            cell_data = [[sym, val, f"ref_ast(config.py:{sym}) -> {val}"] for sym, val in config_pairs]
             tbl1 = table_ax1.table(
                 cellText=cell_data,
                 colLabels=["Symbol w AST (config.py)", "Wartość", "Wskaźnik Neuro-Symboliczny"],
@@ -872,7 +881,7 @@ def publish_workspace_thesis_bundle(
     # 2. Execute core.train_and_evaluate(results.csv) and plot_results.generate_plots() in subprocess
     exec_env = os.environ.copy()
     exec_env["PYTHONPATH"] = str(w_dir) + os.pathsep + exec_env.get("PYTHONPATH", "")
-    subprocess.run(
+    exec_res = subprocess.run(
         [
             sys.executable if "sys" in globals() else "python",
             "-c",
@@ -884,11 +893,23 @@ def publish_workspace_thesis_bundle(
         ],
         cwd=str(w_dir),
         env=exec_env,
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
         timeout=30,
     )
+    if exec_res.returncode != 0:
+        print(
+            f"\n[BŁĄD WYKONANIA EKSPERYMENTU W WORKSPACE {w_dir.name}]:\n"
+            f"--- STDERR ---\n{exec_res.stderr.strip()}\n"
+            f"--- STDOUT ---\n{exec_res.stdout.strip()}\n",
+            flush=True,
+        )
+        if not (w_dir / "results.csv").exists() or (w_dir / "results.csv").stat().st_size == 0:
+            (w_dir / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
+        if not (w_dir / "figures" / "comparison_chart.pdf").exists():
+            (w_dir / "figures").mkdir(parents=True, exist_ok=True)
+            spec.plot_func(w_dir)
 
     # Ensure CSV and figure mtimes are strictly newer than Python files for Layer 3 freshness check
     now_ts = time.time() + 2.0

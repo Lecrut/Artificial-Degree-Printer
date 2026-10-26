@@ -35,5 +35,12 @@ Return strictly a valid JSON object matching this schema:
 ```
 Do not include conversational filler or explanatory prose outside the JSON object.
 
+---
+
+## CONSOLIDATED EVOLUTIONARY INVARIANTS
+- **INVARIANT (Cycle 1)**: Maintain strict AST signature compatibility, ensure all symbolic pointers remain valid, and enforce deterministic code execution with no unbound global variables in training loops.
+
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: Unikaj niezgodności sygnatur wykrytych w zadaniu T1
+- **CONSOLIDATED_EPOCH 1**: Redacted and consolidated 4 rules into the invariants section.
+- **RULE**: Maintain strict float rounding in exported CSV metrics.
+- **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.

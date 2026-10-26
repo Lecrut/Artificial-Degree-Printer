@@ -162,12 +162,12 @@ def main() -> None:
     parser.add_argument(
         "--benchmark-suite",
         action="store_true",
-        help="Uruchom pełny pakiet 3 zadań benchmarkowych (RL, ML Anomaly, Graph A*) z samoewolucją ADK oraz generowaniem kodu, LaTeX, HTML i PDF.",
+        help="Uruchom pełny pakiet 4 zadań benchmarkowych (RL, ML Anomaly, Graph A*, Federated Learning) z samoewolucją ADK oraz generowaniem kodu, LaTeX, HTML i PDF.",
     )
     parser.add_argument(
         "--benchmark-task",
         default=None,
-        help="Uruchom wybrane zadanie z pakietu benchmarkowego (np. '1'/'rl', '2'/'ml', '3'/'graph').",
+        help="Uruchom wybrane zadanie z pakietu benchmarkowego (np. '1'/'rl', '2'/'ml', '3'/'graph', '4'/'fed').",
     )
     parser.add_argument(
         "--verbose-llm",

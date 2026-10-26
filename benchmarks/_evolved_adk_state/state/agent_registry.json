@@ -10,8 +10,7 @@
       "domain": "building",
       "path": "agents/building/seed_tester.md",
       "specialization": "unit_testing",
-      "active": false,
-      "archived_reason": "Split into unit_testing and edge_case_testing"
+      "active": true
     },
     "seed_writer": {
       "domain": "building",
@@ -23,26 +22,6 @@
       "domain": "building",
       "path": "agents/building/sota_researcher.md",
       "specialization": "literature_review",
-      "active": true
-    },
-    "dyn_anomaly_ml_specialist": {
-      "domain": "building",
-      "path": "agents/building/dyn_anomaly_ml_specialist.md",
-      "specialization": "anomaly_ml_specialist",
-      "active": true
-    },
-    "seed_tester_unit_testing": {
-      "domain": "building",
-      "path": "agents/building/seed_tester_unit_testing.md",
-      "specialization": "unit_testing",
-      "parent_agent": "seed_tester",
-      "active": true
-    },
-    "seed_tester_edge_case_testing": {
-      "domain": "building",
-      "path": "agents/building/seed_tester_edge_case_testing.md",
-      "specialization": "edge_case_testing",
-      "parent_agent": "seed_tester",
       "active": true
     }
   }

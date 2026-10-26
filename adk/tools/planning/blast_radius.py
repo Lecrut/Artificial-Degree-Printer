@@ -43,3 +43,47 @@ def calculate_blast_radius(
         "affected_files": affected_files,
     }
 
+
+def get_scoped_hypergraph_context(
+    matrix_path: str | Path = "state/hypergraph_matrix.json",
+    blast_radius: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Extract lightweight hypergraph context: nodes and active hyperedges relevant to blast radius, omitting raw 0/1 incidence matrix."""
+    data = read_json_state(matrix_path)
+    nodes: dict[str, Any] = data.get("nodes", {})
+    all_edges: dict[str, list[str]] = data.get("edges", {})
+
+    active_edge_ids: set[str] = set()
+    if blast_radius and "active_edges" in blast_radius:
+        active_edge_ids.update(blast_radius["active_edges"])
+
+    if not active_edge_ids and blast_radius:
+        relevant_nodes = set(blast_radius.get("affected_nodes", []))
+        if blast_radius.get("modified_node_id"):
+            relevant_nodes.add(blast_radius["modified_node_id"])
+        for e_id, members in all_edges.items():
+            if any(m in relevant_nodes for m in members):
+                active_edge_ids.add(e_id)
+
+    scoped_edges: dict[str, list[str]] = {}
+    for e_id in sorted(active_edge_ids):
+        if e_id in all_edges:
+            scoped_edges[e_id] = all_edges[e_id]
+
+    if not scoped_edges and all_edges:
+        for e_id in sorted(all_edges.keys())[:5]:
+            scoped_edges[e_id] = all_edges[e_id]
+
+    scoped_nodes: dict[str, dict[str, Any]] = {}
+    for n_id, meta in nodes.items():
+        scoped_nodes[n_id] = {
+            "path": meta.get("path"),
+            "degree": meta.get("degree", 0),
+            "weight": meta.get("weight", 1.0),
+        }
+
+    return {
+        "nodes": scoped_nodes,
+        "active_edges": scoped_edges,
+    }
+

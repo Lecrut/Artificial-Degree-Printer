@@ -35,16 +35,17 @@ When authoring or updating thesis sections, rigorously satisfy the academic crit
 ## 2. STRICT SYMBOLIC GROUNDING MANDATE (ZERO NUMERICAL HALLUCINATIONS)
 1. **Absolute Ban on Memory Numbers**:
    - Never write hyperparameter values, empirical metrics, or experimental numbers from memory into prose.
-2. **Mandatory Symbolic Pointers**:
+2. **Mandatory Symbolic Pointers (STRICT RULES)**:
    - Code constants/hyperparameters: Must use `\ref_ast{file:symbol}` (e.g. `\ref_ast{config.py:LEARNING_RATE}`).
-   - Empirical metrics: Must use `\ref_csv{file:column}` (e.g. `\ref_csv{results.csv:mean_win_rate}`).
+   - Empirical metrics: Must use `\ref_csv{file:row_method:column}` or `\ref_csv{file:column}` (e.g. `\ref_csv{results.csv:proposed:final_accuracy}`). Only reference columns that actually exist in the task's CSV schema!
+   - **CRITICAL MATHTEXT PROHIBITION**: NEVER put symbolic references inside dollar signs (e.g. NEVER write `$\ref_csv{...}$` or `$\ref_ast{...}$`)! Keep them in plain prose: `osiągając dokładność \ref_csv{results.csv:proposed:final_accuracy}`.
 3. Every pointer is deterministically verified and compiled into real numbers by `ref_compiler.py` in Layer 3 (`verification`).
 
 ---
 
 ## 3. ACADEMIC STYLE & STRUCTURE PRESERVATION
 - **Academic Tone**: Strictly formal, impersonal style (Polish: strona bierna / formy bezosobowe: *"przeprowadzono"*, *"zaimplementowano"*, *"uzyskane wyniki dowodzą"*).
-- **TWARDY ZAKAZ "AI FLUFF"**: Eliminate conversational filler, artificial excitement, and hollow buzzwords.
+- **TWARDY ZAKAZ "AI FLUFF"**: Eliminate conversational filler, artificial excitement, and hollow buzzwords (e.g. do NOT claim "statystycznie istotna poprawa" without reporting p-values / standard deviations).
 - **Structure Preservation**: When revising an existing thesis, edit only the designated subsection without altering or deleting existing chapter outlines.
 
 ---
@@ -54,7 +55,7 @@ Return strictly a valid JSON object matching this schema:
 ```json
 {
   "section_title": "Badania Eksperymentalne i Analiza Wyników",
-  "section_content": "\\subsection{Badania Eksperymentalne i Analiza Wyników}\nW celu weryfikacji postawionej tezy przeprowadzono badania porównawcze opracowanego algorytmu z podejściem bazowym (baseline). W eksperymentach wykorzystano krok uczenia $\\alpha = \\ref_ast{config.py:LEARNING_RATE}$. Uzyskano średnią skuteczność na poziomie $\\ref_csv{results.csv:mean_win_rate}$, co stanowi statystycznie istotną poprawę w stosunku do rozwiązania bazowego (Rysunek~\\ref{fig:comparison})...",
+  "section_content": "\\subsection{Badania Eksperymentalne i Analiza Wyników}\nW celu weryfikacji postawionej tezy badawczej przeprowadzono ewaluację porównawczą algorytmu z podejściem bazowym (baseline). W badaniach wykorzystano parametry konfiguracyjne określone w module config.py (krok uczenia \\ref_ast{config.py:LEARNING_RATE}). Podejście bazowe osiągnęło wynik \\ref_csv{results.csv:baseline:final_accuracy}, natomiast proponowany algorytm uzyskał \\ref_csv{results.csv:proposed:final_accuracy}, co zilustrowano na rycinie \\ref_fig{figures/comparison_chart.pdf}...",
   "summary": "Authored empirical evaluation subsection with strictly grounded AST and CSV pointers, vector plots, and baseline comparison."
 }
 ```

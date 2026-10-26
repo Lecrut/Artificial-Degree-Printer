@@ -44,43 +44,46 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
         # 1. Layer 1: Initial Task Planner
         if "Initial Task Planner" in system_prompt or ("user_prompt" in payload and "blast_radius" in payload):
             coder_agent = spec.missing_specialization or "seed_coder"
-            tasks = [
-                {
-                    "task_id": "T1",
-                    "description": f"[{spec.task_id}] Implement AST hyperparameters in config.py for {spec.title_en}",
-                    "target_node": "v1",
-                    "assigned_agent": coder_agent,
-                    "status": "TODO",
-                },
-                {
-                    "task_id": "T2",
-                    "description": f"[{spec.task_id}] Implement core algorithm and train_and_evaluate() in core.py",
-                    "target_node": "v2",
-                    "assigned_agent": coder_agent,
-                    "status": "TODO",
-                },
-                {
-                    "task_id": "T3",
-                    "description": f"[{spec.task_id}] Implement unit tests, CSV benchmark, and plots for {spec.title_en}",
-                    "target_node": "v3",
-                    "assigned_agent": "seed_tester",
-                    "status": "TODO",
-                },
-                {
-                    "task_id": "T4",
-                    "description": f"[{spec.task_id}] Synthesize Chapters 1-2 (Intro, Thesis, SOTA review) & BibTeX citations",
-                    "target_node": "v4",
-                    "assigned_agent": "sota_researcher",
-                    "status": "TODO",
-                },
-                {
-                    "task_id": "T5",
-                    "description": f"[{spec.task_id}] Author Chapters 3-6 of full 6-chapter thesis with \\ref_ast, \\ref_csv, and \\ref_fig pointers",
-                    "target_node": "v4",
-                    "assigned_agent": "seed_writer",
-                    "status": "TODO",
-                },
-            ]
+            if spec.custom_tasks:
+                tasks = [dict(t) for t in spec.custom_tasks]
+            else:
+                tasks = [
+                    {
+                        "task_id": "T1",
+                        "description": f"[{spec.task_id}] Implement AST hyperparameters in config.py for {spec.title_en}",
+                        "target_node": "v1",
+                        "assigned_agent": coder_agent,
+                        "status": "TODO",
+                    },
+                    {
+                        "task_id": "T2",
+                        "description": f"[{spec.task_id}] Implement core algorithm and train_and_evaluate() in core.py",
+                        "target_node": "v2",
+                        "assigned_agent": coder_agent,
+                        "status": "TODO",
+                    },
+                    {
+                        "task_id": "T3",
+                        "description": f"[{spec.task_id}] Implement unit tests, CSV benchmark, and plots for {spec.title_en}",
+                        "target_node": "v3",
+                        "assigned_agent": "seed_tester",
+                        "status": "TODO",
+                    },
+                    {
+                        "task_id": "T4",
+                        "description": f"[{spec.task_id}] Synthesize Chapters 1-2 (Intro, Thesis, SOTA review) & BibTeX citations",
+                        "target_node": "v4",
+                        "assigned_agent": "sota_researcher",
+                        "status": "TODO",
+                    },
+                    {
+                        "task_id": "T5",
+                        "description": f"[{spec.task_id}] Author Chapters 3-6 of full 6-chapter thesis with \\ref_ast, \\ref_csv, and \\ref_fig pointers",
+                        "target_node": "v4",
+                        "assigned_agent": "seed_writer",
+                        "status": "TODO",
+                    },
+                ]
             return {
                 "thesis_type": "engineering",
                 "hitl_gate": "GATE_1_OUTLINE_APPROVAL",
@@ -195,7 +198,12 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                 "summary": f"Defined AST constants in config.py for {spec.task_id}.",
             }
 
-        if "core.py" in target_file or "results.csv" in target_file or "tester" in assigned_agent:
+        if (
+            "core.py" in target_file
+            or "test_core" in target_file
+            or "results.csv" in target_file
+            or "tester" in assigned_agent
+        ):
             return {
                 "source_code": spec.core_code,
                 "test_file": "test_core.py",
@@ -327,7 +335,7 @@ def _render_master_benchmark_summary_pdf(summary_data: dict[str, Any], output_pd
             chart_ax1.bar(labels, pub_times, bottom=adk_times, label="Wykonanie Kodu + PDF (ms)", color="#10b981", width=0.45)
             chart_ax1.set_title("Czas generowania kodu i pracy (ms)", fontsize=9, fontweight="bold")
             chart_ax1.set_ylabel("Czas (ms)", fontsize=8)
-            chart_ax1.tick_params(axis="x", labelsize=8)
+            chart_ax1.tick_params(axis="x", labelsize=7.5, rotation=10)
             chart_ax1.legend(fontsize=7)
             chart_ax1.grid(axis="y", linestyle="--", alpha=0.4)
 
@@ -338,16 +346,16 @@ def _render_master_benchmark_summary_pdf(summary_data: dict[str, Any], output_pd
             chart_ax2.plot(list(x_pos), tot_agents, marker="o", linewidth=2.2, color="#7c3aed", label="Agenci w rejestrze")
             chart_ax2.plot(list(x_pos), tot_events, marker="s", linewidth=2.2, color="#ea580c", label="Zdarzenia ewolucji W4")
             chart_ax2.set_xticks(list(x_pos))
-            chart_ax2.set_xticklabels(labels, fontsize=8)
+            chart_ax2.set_xticklabels(labels, fontsize=7.5, rotation=10)
             chart_ax2.set_title("Rozbudowa zasobów ADK w kolejnych zadaniach", fontsize=9, fontweight="bold")
             chart_ax2.legend(fontsize=7)
             chart_ax2.grid(True, linestyle="--", alpha=0.4)
 
         # Instructions box at bottom
-        ax.add_patch(plt.Rectangle((0.06, 0.06), 0.88, 0.21, facecolor="#f1f5f9", edgecolor="#94a3b8", linewidth=1.0))
+        ax.add_patch(plt.Rectangle((0.06, 0.05), 0.88, 0.23, facecolor="#f1f5f9", edgecolor="#94a3b8", linewidth=1.0))
         ax.text(
             0.08,
-            0.25,
+            0.265,
             "Jak uruchomić wygenerowany kod i podejrzeć PDF dla każdego zadania:",
             fontsize=9.5,
             fontweight="bold",
@@ -361,7 +369,7 @@ def _render_master_benchmark_summary_pdf(summary_data: dict[str, Any], output_pd
             f"    Plik PDF:     {r['artifacts']['pdf_path']}"
             for r in tasks_res
         ]
-        ax.text(0.08, 0.215, "\n".join(cmd_lines), fontsize=7.8, family="monospace", color="#1e293b", ha="left", va="top")
+        ax.text(0.08, 0.235, "\n".join(cmd_lines), fontsize=7.0, family="monospace", color="#1e293b", ha="left", va="top")
 
         pdf.savefig(fig)
         plt.close(fig)
@@ -467,10 +475,19 @@ def run_benchmark_suite(
 
             # Ensure all required benchmark files/sections exist so run_experiment.py & 6-chapter PDF compilation succeed
             mock_fallback = _make_task_mock_llm_handler(spec)
-            orch._materialize_workspace_artifact("config.py", mock_fallback("", {"target_file": "config.py"}, "SML"))
-            orch._materialize_workspace_artifact("core.py", mock_fallback("", {"target_file": "core.py", "task": {"assigned_agent": "seed_tester"}}, "SML"))
-            orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "sota_researcher"}}, "SML"))
-            orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "seed_writer"}}, "SML"))
+            if resolved_provider == "mock":
+                orch._materialize_workspace_artifact("config.py", mock_fallback("", {"target_file": "config.py"}, "SML"))
+                orch._materialize_workspace_artifact("core.py", mock_fallback("", {"target_file": "core.py", "task": {"assigned_agent": "seed_tester"}}, "SML"))
+                orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "sota_researcher"}}, "SML"))
+                orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "seed_writer"}}, "SML"))
+            else:
+                if not (sandbox_ws / "config.py").exists():
+                    orch._materialize_workspace_artifact("config.py", mock_fallback("", {"target_file": "config.py"}, "SML"))
+                if not (sandbox_ws / "core.py").exists():
+                    orch._materialize_workspace_artifact("core.py", mock_fallback("", {"target_file": "core.py", "task": {"assigned_agent": "seed_tester"}}, "SML"))
+                if not (sandbox_ws / "thesis.md").exists():
+                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "sota_researcher"}}, "SML"))
+                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "seed_writer"}}, "SML"))
 
             # If task also demonstrates tool synthesis + prompt consolidation, ensure both are recorded if live LLM chose another action
             if spec.trigger_tool_synthesis and spec.trigger_prompt_consolidation:
@@ -604,7 +621,7 @@ def run_benchmark_suite(
     # Mirror to root 'benchmarks/' folder in the repository so user can easily find all subdirectories at top-level
     repo_root = base_adk.parent
     root_benchmarks = repo_root / "benchmarks"
-    if bench_out_root.resolve() != root_benchmarks.resolve():
+    if output_root is None and bench_out_root.resolve() != root_benchmarks.resolve():
         root_benchmarks.mkdir(parents=True, exist_ok=True)
         for item in bench_out_root.glob("*"):
             dest_item = root_benchmarks / item.name
