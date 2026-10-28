@@ -82,6 +82,18 @@ def _extract_json_from_text(text: str) -> dict[str, Any] | list[Any] | None:
             try:
                 obj, _ = decoder.raw_decode(cleaned[idx:])
                 if isinstance(obj, (dict, list)):
+                    # If model wrapped everything inside a single 'response' field, unwrap it if possible
+                    if isinstance(obj, dict) and "response" in obj and len(obj) == 1:
+                        inner = obj["response"]
+                        if isinstance(inner, dict):
+                            return inner
+                        if isinstance(inner, str) and ("{" in inner or "[" in inner):
+                            try:
+                                sub = json.loads(inner)
+                                if isinstance(sub, (dict, list)):
+                                    return sub
+                            except Exception:
+                                pass
                     return obj
             except json.JSONDecodeError:
                 continue
@@ -350,7 +362,41 @@ def summarize_agent_decision(agent_name: str, payload: dict[str, Any], output: d
 
     # 3. Evolution agents
     if "evolution" in name or "architect" in name:
-        action = output.get("action") or output.get("decision") or "UNKNOWN"
+        # Rozpakuj response jeśli model opakował wynik w klucz 'response'
+        if "response" in output and isinstance(output["response"], str):
+            try:
+                import json as _json
+                nested = _json.loads(output["response"])
+                if isinstance(nested, dict):
+                    output = {**nested, **output}
+            except Exception:
+                pass
+
+        # Sprawdź przypadek konsolidacji/kompakcji reguł (Rule Synthesis / Compaction)
+        if "synthesized_invariant" in output or "consolidated_rules" in output:
+            cnt = output.get("rules_consolidated_count", len(output.get("consolidated_rules", [])))
+            inv = str(output.get("synthesized_invariant") or "")
+            tgt = str(output.get("agent_id") or output.get("agent") or "agenta")
+            return f"Ewolucja: KONSOLIDACJA REGUŁ ({cnt} reguł dla {tgt}: '{inv[:70]}')"
+
+        action = output.get("action") or output.get("decision")
+        if action in ("inject_rule", "apply_rule"):
+            action = "MUTATE_AGENT"
+
+        if not action or action == "UNKNOWN":
+            if "injected_rule" in output or "rule" in output:
+                action = "MUTATE_AGENT"
+            elif "suggested_actions" in output or output.get("status") in ("FAIL", "RETRY"):
+                action = "REPAIR_ANALYSIS"
+            elif "specialization" in output:
+                action = "CREATE_AGENT"
+            elif "sub_specializations" in output:
+                action = "SPLIT_AGENT"
+            elif "tool_name" in output or "validator_name" in output:
+                action = "CREATE_TOOL"
+            else:
+                action = output.get("status") or "ADAPTACJA_SYSTEMU"
+
         if action == "CREATE_AGENT":
             return f"Ewolucja: CREATE_AGENT (nowy agent: '{output.get('specialization')}')"
         if action == "SPLIT_AGENT":
@@ -360,8 +406,12 @@ def summarize_agent_decision(agent_name: str, payload: dict[str, Any], output: d
             v_name = output.get("validator_name") or output.get("tool_name") or "custom_validator.py"
             return f"Ewolucja: CREATE_TOOL (synteza walidatora: '{v_name}')"
         if action == "MUTATE_AGENT":
-            rule = output.get("rule", "")
-            return f"Ewolucja: MUTATE_AGENT ({output.get('agent_id')}: '{rule[:90]}')"
+            rule = output.get("injected_rule") or output.get("rule", "")
+            tgt = output.get("agent") or output.get("agent_id") or "seed_coder"
+            return f"Ewolucja: MUTATE_AGENT ({tgt}: '{rule[:80]}')"
+        if action == "REPAIR_ANALYSIS":
+            reason = output.get("reason") or output.get("summary") or "analiza naruszeń kontraktu"
+            return f"Ewolucja: ANALIZA NAPRAWCZA ({reason[:80]})"
         if action == "HITL":
             gate = output.get("hitl_gate", "GATE")
             q = output.get("question", "")
@@ -420,10 +470,18 @@ def call_agent(
 
     system_prompt = path.read_text(encoding="utf-8")
     serialized_payload = json.dumps(user_payload, ensure_ascii=False, indent=2)
+    action_directive = (
+        "\n\n=== MANDATORY ACTION DIRECTIVE ===\n"
+        "Act strictly in your assigned role defined in the system prompt. Analyze the input JSON payload above.\n"
+        "Output strictly a valid JSON object matching the required schema specified in your system prompt.\n"
+        "DO NOT output conversational filler, commentary, summaries, or wrapper fields like 'response'.\n"
+        "Output ONLY the JSON object with the exact keys required."
+    )
     combined_prompt = (
         f"{system_prompt.strip()}\n\n"
         f"=== INPUT JSON PAYLOAD ===\n"
-        f"{serialized_payload}\n"
+        f"{serialized_payload}"
+        f"{action_directive}\n"
     )
 
     conn = LLMConnectionManager(provider=provider)
@@ -447,7 +505,7 @@ def call_agent(
         raw_response_str = json.dumps(parsed_output, ensure_ascii=False, indent=2)
 
     elif active_provider in ("google", "ollama"):
-        user_only_prompt = f"=== INPUT JSON PAYLOAD ===\n{serialized_payload}\n"
+        user_only_prompt = f"=== INPUT JSON PAYLOAD ===\n{serialized_payload}{action_directive}\n"
         try:
             if active_provider == "google":
                 api_res = conn.call_google_gemini(

@@ -1,8 +1,8 @@
-WINDOW_SIZE: int = 128
-SAMPLE_RATE: int = 256
+SAMPLING_RATE: int = 100
+WINDOW_SIZE: int = 1000
 ANOMALY_THRESHOLD: float = 3.0
+NOISE_LEVEL: float = 0.05
 SEED: int = 42
-NORMALIZATION_RANGE: tuple[int, int] = (-1, 1)
 ALPHA = 0.2
 GAMMA = 0.95
 EPSILON = 0.1

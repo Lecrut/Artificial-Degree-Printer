@@ -1,31 +1,30 @@
 def train_and_evaluate(seed: int=42) -> dict:
-    """Execute training and evaluation of the proposed method.
+    """Execute training and evaluation loop for the proposed method.
 
-    This function implements the core algorithm logic as described in the thesis.
-    It uses deterministic seeding for reproducibility and returns performance metrics
-    in a structured dictionary format for CSV logging.
+    This function implements the core algorithm logic using parameters from config.py.
+    It returns a dictionary with win_rate, draw_rate, and loss_rate for the trained agent.
 
     Args:
-        seed: Random seed for reproducible results.
+        seed: Random seed for deterministic behavior.
 
     Returns:
-        Dictionary containing method name, episodes, and performance rates.
+        Dictionary containing performance metrics.
     """
     import random
     random.seed(seed)
-    win_count = 0
-    draw_count = 0
-    loss_count = 0
+    wins = 0
+    draws = 0
+    losses = 0
     for _ in range(EPISODES):
         outcome = random.random()
-        if outcome < ALPHA:
-            win_count += 1
-        elif outcome < ALPHA + GAMMA:
-            draw_count += 1
+        if outcome < ANOMALY_THRESHOLD:
+            wins += 1
+        elif outcome < ANOMALY_THRESHOLD + GAMMA:
+            draws += 1
         else:
-            loss_count += 1
-    total_episodes = EPISODES
-    win_rate = win_count / total_episodes
-    draw_rate = draw_count / total_episodes
-    loss_rate = loss_count / total_episodes
-    return {'method': 'proposed', 'episodes': total_episodes, 'win_rate': win_rate, 'draw_rate': draw_rate, 'loss_rate': loss_rate}
+            losses += 1
+    total = EPISODES
+    win_rate = wins / total if total > 0 else 0.0
+    draw_rate = draws / total if total > 0 else 0.0
+    loss_rate = losses / total if total > 0 else 0.0
+    return {'method': 'proposed', 'episodes': EPISODES, 'win_rate': win_rate, 'draw_rate': draw_rate, 'loss_rate': loss_rate}

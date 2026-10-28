@@ -25,16 +25,24 @@ Your mission is to perform surgical root-cause analysis on verification failures
 
 ---
 
-## 3. REQUIRED JSON OUTPUT SCHEMA
-Return strictly a valid JSON object matching this schema:
+## 3. REQUIRED JSON OUTPUT SCHEMA & CONCRETE EXAMPLE
+Return strictly a valid JSON object matching this schema.
+
+### MANDATORY RULES:
+- Return ONLY the raw JSON object.
+- DO NOT write analysis essays, markdown commentaries, summaries, or explanations outside the JSON.
+- DO NOT wrap the output inside a `"response"` string field.
+- Mandatory top-level keys: `"root_cause_diagnosis"`, `"remediation_strategy"`, `"surgical_tasks"`.
+
+### EXAMPLE OUTPUT:
 ```json
 {
-  "root_cause_diagnosis": "Precyzyjna diagnoza błędu ze wskazaniem pliku, symbolu lub podrozdziału",
-  "remediation_strategy": "Chirurgiczny plan naprawczy z zachowaniem zatwierdzonych rozdziałów i kodu",
+  "root_cause_diagnosis": "Contract mismatch in task T1: function signatures in config.py do not meet AST contract on node v1.",
+  "remediation_strategy": "Surgically patch config.py without modifying any other completed tasks or thesis sections.",
   "surgical_tasks": [
     {
       "task_id": "T1_FIX",
-      "description": "Punktowa naprawa wskaźnika symbolicznego lub regeneracja wykresów",
+      "description": "Align configuration AST types with contract specifications.",
       "target_node": "v1",
       "assigned_agent": "seed_coder",
       "status": "TODO"
@@ -42,4 +50,3 @@ Return strictly a valid JSON object matching this schema:
   ]
 }
 ```
-Do not output conversational text or markdown wrappers outside the JSON.

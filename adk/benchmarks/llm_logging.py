@@ -8,12 +8,15 @@ from typing import Any
 def _map_agent_layer(agent_stem: str) -> str:
     """Return the architecture layer associated with an agent."""
     name = agent_stem.lower()
-    if "planner" in name or "guard" in name or "critic" in name:
+    if "redteam" in name or "auditor" in name or "verifier" in name:
+        return "Warstwa 3 (Weryfikacja / Bramki Jakości)"
+    if "planner" in name or "hitl" in name:
+        return "Warstwa 1 (Planowanie / Gate HITL)"
+    if "guard" in name or "critic" in name:
+        # Ogólne guardy/krytycy jeśli nie redteam
         return "Warstwa 1 (Planowanie / Gate HITL)"
     if "coder" in name or "tester" in name or "writer" in name or "researcher" in name or "specialist" in name:
         return "Warstwa 2 (Generatory Artefaktów)"
-    if "auditor" in name:
-        return "Warstwa 3 (Deterministyczna Weryfikacja)"
     if "evolution" in name or "architect" in name or "consolidator" in name:
         return "Warstwa 4 (Autonomiczna Samoewolucja)"
     return "Agent Specjalistyczny"

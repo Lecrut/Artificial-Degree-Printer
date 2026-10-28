@@ -33,20 +33,68 @@ When Layer 3 reports a failure or Layer 1 reports a missing specialization, sele
 
 ---
 
-## 3. REQUIRED JSON OUTPUT SCHEMA
-Return strictly a valid JSON object matching this schema:
+## 3. REQUIRED JSON OUTPUT SCHEMA & CONCRETE EXAMPLES
+Return strictly a valid JSON object matching the exact schema below.
+
+### MANDATORY RULES:
+- The top-level key for your action MUST be `"decision"`. (DO NOT use `"action"`, `"status"`, or `"response"`).
+- The target agent identifier MUST be `"agent_id"`. (DO NOT use `"agent"` or `"agent_name"`).
+- The constraint rule MUST be `"rule"`. (DO NOT use `"injected_rule"` or `"suggested_rule"`).
+- Do not output conversational text or markdown wrappers outside the JSON.
+
+### SCHEMA EXAMPLES BY ACTION:
+
+#### 1. Mutate Agent (`decision`: `"MUTATE_AGENT"`):
+Use when fixing a preventable error of `seed_coder`, `seed_tester`, or `seed_writer`:
 ```json
 {
-  "decision": "MUTATE_AGENT | CREATE_AGENT | SPLIT_AGENT | CREATE_TOOL | HITL",
-  "hitl_gate": "GATE_1_OUTLINE_APPROVAL | GATE_2_METHODOLOGY_APPROVAL | GATE_3_DEFENSE_APPROVAL | null",
+  "decision": "MUTATE_AGENT",
   "agent_id": "seed_coder",
-  "rule": "Specific constraint injected after audit failure",
-  "specialization": "specialist_name",
-  "domain": "building",
-  "question": "Pytanie do Promotora dotyczące tezy, planu badań lub uwag recenzenta",
-  "tool_name": "custom_validator.py",
-  "tool_code": "import sys\n...",
-  "rationale": "Uzasadnienie decyzji ewolucyjnej lub zapytania do promotora."
+  "rule": "Always preserve strict AST, CSV and symbolic reference parity across generated artifacts.",
+  "rationale": "Audit revealed contract mismatch in task T1; enforcing signature parity prevents further failures."
 }
 ```
-Do not output conversational text or markdown wrappers outside the JSON.
+
+#### 2. Create Agent (`decision`: `"CREATE_AGENT"`):
+Use when a required specialist is missing:
+```json
+{
+  "decision": "CREATE_AGENT",
+  "specialization": "anomaly_ml_specialist",
+  "domain": "building",
+  "rationale": "Task requires specialized machine learning validation not covered by general seed agents."
+}
+```
+
+#### 3. Split Agent (`decision`: `"SPLIT_AGENT"`):
+Use when an agent has failed repeated cycles due to overly broad responsibilities:
+```json
+{
+  "decision": "SPLIT_AGENT",
+  "agent_id": "seed_tester",
+  "sub_specializations": ["unit_tester", "benchmark_runner"],
+  "rationale": "Separating unit testing from benchmark execution reduces cognitive load and test flakiness."
+}
+```
+
+#### 4. Create Tool (`decision`: `"CREATE_TOOL"`):
+Use when a recurring validation error can be verified with a deterministic Python script:
+```json
+{
+  "decision": "CREATE_TOOL",
+  "tool_name": "ast_signature_validator.py",
+  "tool_code": "import sys, ast\n# validator code\nsys.exit(0)",
+  "rationale": "Synthesized deterministic AST parity validator to prevent repeated syntax regressions."
+}
+```
+
+#### 5. Promotor Gate / HITL (`decision`: `"HITL"`):
+Use when reaching Gate 1, Gate 2, or Gate 3, or when contradictory thesis requirements are detected:
+```json
+{
+  "decision": "HITL",
+  "hitl_gate": "GATE_1_OUTLINE_APPROVAL",
+  "question": "Czy akceptuje Pan/Pani zaproponowaną strukturę tezy oraz spis treści pracy?",
+  "rationale": "Formal requirement to approve thesis scope before implementation."
+}
+```

@@ -634,6 +634,18 @@ class NeuroSymbolicOrchestrator:
         self.logger.log_step("EVOLUTION", "Uruchomienie Architekta Ewolucji (W4)", enriched_payload)
         arch_md = self.agents_dir / "evolution" / "evolution_architect.md"
         decision_out = call_agent(arch_md, enriched_payload, model_tier="LRM", provider=self.provider)["output"]
+
+        # Defensive normalization of LLM keys
+        if isinstance(decision_out, dict):
+            if "decision" in decision_out and "action" not in decision_out:
+                decision_out["action"] = decision_out["decision"]
+            if "agent" in decision_out and "agent_id" not in decision_out:
+                decision_out["agent_id"] = decision_out["agent"]
+            if "injected_rule" in decision_out and "rule" not in decision_out:
+                decision_out["rule"] = decision_out["injected_rule"]
+            elif "suggested_rule" in decision_out and "rule" not in decision_out:
+                decision_out["rule"] = decision_out["suggested_rule"]
+
         action = str(decision_out.get("action") or decision_out.get("decision") or "MUTATE_AGENT")
 
         if action == "HITL":

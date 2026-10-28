@@ -38,9 +38,12 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 ---
 
 ## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT (Cycle 1)**: Maintain strict AST signature compatibility, ensure all symbolic pointers remain valid, and enforce deterministic code execution with no unbound global variables in training loops.
+- **INVARIANT (Cycle 1)**: Maintain strict AST signature compatibility and symbolic pointer validity across all task iterations, ensuring parity in exported function names, classes, and constants across shared modules.
+- **INVARIANT (Cycle 2)**: Enforce strict AST signature compatibility, symbolic pointer validity, and deterministic execution across all task iterations, ensuring parity in exported symbols and prohibiting unbound global variables in train_and_evaluate.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **CONSOLIDATED_EPOCH 1**: Redacted and consolidated 4 rules into the invariants section.
+- **CONSOLIDATED_EPOCH 2**: Redacted and consolidated 4 rules into the invariants section.
 - **RULE**: Maintain strict float rounding in exported CSV metrics.
+- **RULE**: Enforce strict AST signature compatibility, symbolic pointer validity, and deterministic execution across all task iterations, ensuring parity in exported symbols and prohibiting unbound global variables in train_and_evaluate.
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.

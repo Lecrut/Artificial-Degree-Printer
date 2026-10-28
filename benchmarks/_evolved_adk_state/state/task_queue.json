@@ -32,6 +32,6 @@
     "description": "[Etap 5/5 - Pelna Praca 6-Rozdzialowa] Napisz Rozdzialy 3, 4, 5 i 6 w thesis.md ze wskaznikami \\ref_ast, \\ref_csv i \\ref_fig",
     "target_node": "v4",
     "assigned_agent": "seed_writer",
-    "status": "DONE"
+    "status": "FAILED"
   }
 ]

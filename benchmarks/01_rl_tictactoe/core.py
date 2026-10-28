@@ -1,105 +1,136 @@
-def train_and_evaluate(episodes: int, board_size: int, empty_cell: int, player_x: int, player_o: int, learning_rate: float, discount_factor: float, exploration_rate: float, exploration_decay: float, min_exploration: float, random_seed: int, alpha: float, gamma: float, epsilon: float) -> tuple[list[float], list[float], list[float]]:
-    """
-    Trains and evaluates a Q-learning agent for Tic-Tac-Toe.
+def train_and_evaluate(seed: int=42) -> tuple[list[float], list[float], list[float]]:
+    """Trains and evaluates the Q-learning agent against a baseline.
 
-    Implements the core reinforcement learning loop where the agent learns
-    by playing against itself or a fixed opponent. Tracks win, draw, and loss rates
-    over episodes.
+    This function implements the main training loop for the Q-learning agent,
+    alternating between training episodes and evaluation phases. It records
+    win, draw, and loss rates for both the agent and a baseline opponent.
 
     Args:
-        episodes: Number of training episodes.
-        board_size: Size of the Tic-Tac-Toe board (e.g., 3 for 3x3).
-        empty_cell: Representation of an empty cell on the board.
-        player_x: Representation of Player X.
-        player_o: Representation of Player O.
-        learning_rate: Learning rate alpha for Q-learning update rule.
-        discount_factor: Discount factor gamma for future rewards.
-        exploration_rate: Initial epsilon for epsilon-greedy action selection.
-        exploration_decay: Decay rate for epsilon over time.
-        min_exploration: Minimum value of epsilon.
-        random_seed: Seed for reproducible results.
-        alpha: Alias for learning_rate.
-        gamma: Alias for discount_factor.
-        epsilon: Alias for exploration_rate.
+        seed: Random seed for reproducibility.
 
     Returns:
-        Tuple of lists (win_rates, draw_rates, loss_rates) over training episodes.
-
-    Complexity:
-        Time: O(episodes * board_size^2)
-        Space: O(board_size^2)
+        Tuple of lists containing win_rate, draw_rate, and loss_rate for agent
+        and baseline respectively.
     """
     import random
-    random.seed(random_seed)
+    from config import BOARD_SIZE, EMPTY_CELL, PLAYER_X, PLAYER_O, LEARNING_RATE, DISCOUNT_FACTOR, EXPLORATION_RATE, EXPLORATION_DECAY, MIN_EXPLORATION_RATE, Q_TABLE_INIT_VALUE, ALPHA, GAMMA, EPSILON, EPISODES
+    random.seed(seed)
     q_table_x = {}
     q_table_o = {}
-    win_rates = []
-    draw_rates = []
-    loss_rates = []
 
-    def get_empty_cells(board: list[int]) -> list[int]:
-        return [i for i in range(len(board)) if board[i] == empty_cell]
+    def get_q_value(q_table, state, action):
+        return q_table.get((state, action), Q_TABLE_INIT_VALUE)
 
-    def is_winner(board: list[int], player: int) -> bool:
-        for i in range(board_size):
-            if all((board[i * board_size + j] == player for j in range(board_size))):
-                return True
-            if all((board[j * board_size + i] == player for j in range(board_size))):
-                return True
-        if all((board[i * board_size + i] == player for i in range(board_size))):
-            return True
-        if all((board[i * board_size + (board_size - 1 - i)] == player for i in range(board_size))):
-            return True
-        return False
+    def set_q_value(q_table, state, action, value):
+        q_table[state, action] = value
 
-    def is_board_full(board: list[int]) -> bool:
-        return empty_cell not in board
-
-    def update_q_table(q_table: dict, state: tuple, action: int, reward: float, next_state: tuple, learning_rate: float, discount_factor: float) -> None:
-        if state not in q_table:
-            q_table[state] = [0.0] * board_size ** 2
-        if next_state not in q_table:
-            q_table[next_state] = [0.0] * board_size ** 2
-        current_q = q_table[state][action]
-        max_next_q = max(q_table[next_state])
-        new_q = current_q + learning_rate * (reward + discount_factor * max_next_q - current_q)
-        q_table[state][action] = new_q
-    for episode in range(episodes):
-        board = [empty_cell] * board_size ** 2
-        state_history = []
-        if random.random() < epsilon:
-            player_to_act = player_x if episode % 2 == 0 else player_o
-            available_actions = get_empty_cells(board)
-            if not available_actions:
-                break
-            action = random.choice(available_actions)
+    def choose_action(state, q_table, exploration_rate):
+        if random.random() < exploration_rate:
+            return random.choice([i for i in range(BOARD_SIZE ** 2) if state[i] == EMPTY_CELL])
         else:
-            pass
-        done = False
-        while not done:
-            state = tuple(board)
-            state_history.append(state)
-            available_actions = get_empty_cells(board)
-            if not available_actions:
-                reward = 0.0
-                done = True
-                break
-            action = random.choice(available_actions)
-            board[action] = player_x if len(state_history) % 2 == 0 else player_o
-            if is_winner(board, player_x):
-                reward = 1.0
-                done = True
-            elif is_winner(board, player_o):
-                reward = -1.0
-                done = True
-            else:
-                reward = 0.0
-            if len(state_history) >= 2:
-                prev_state = state_history[-2]
-                prev_action = action
-                update_q_table(q_table_x, prev_state, prev_action, reward, state, learning_rate, discount_factor)
-        win_rates.append(0.5 if random.random() < 0.5 else 0.0)
-        draw_rates.append(0.2 if random.random() < 0.2 else 0.1)
-        loss_rates.append(0.3 if random.random() < 0.3 else 0.0)
-        epsilon = max(min_exploration, epsilon * exploration_decay)
-    return (win_rates, draw_rates, loss_rates)
+            q_values = [get_q_value(q_table, state, a) for a in range(BOARD_SIZE ** 2)]
+            max_q = max(q_values)
+            best_actions = [a for a, q in enumerate(q_values) if q == max_q]
+            return random.choice(best_actions)
+
+    def check_winner(state):
+        for i in range(0, BOARD_SIZE ** 2, BOARD_SIZE):
+            if state[i:i + BOARD_SIZE] == [PLAYER_X] * BOARD_SIZE:
+                return PLAYER_X
+            elif state[i:i + BOARD_SIZE] == [PLAYER_O] * BOARD_SIZE:
+                return PLAYER_O
+        for i in range(BOARD_SIZE):
+            if all((state[i + j * BOARD_SIZE] == PLAYER_X for j in range(BOARD_SIZE))):
+                return PLAYER_X
+            elif all((state[i + j * BOARD_SIZE] == PLAYER_O for j in range(BOARD_SIZE))):
+                return PLAYER_O
+        if all((state[i * (BOARD_SIZE + 1)] == PLAYER_X for i in range(BOARD_SIZE))):
+            return PLAYER_X
+        elif all((state[i * (BOARD_SIZE + 1)] == PLAYER_O for i in range(BOARD_SIZE))):
+            return PLAYER_O
+        if all((state[(BOARD_SIZE - 1) * (i + 1)] == PLAYER_X for i in range(BOARD_SIZE))):
+            return PLAYER_X
+        elif all((state[(BOARD_SIZE - 1) * (i + 1)] == PLAYER_O for i in range(BOARD_SIZE))):
+            return PLAYER_O
+        return None
+
+    def is_board_full(state):
+        return EMPTY_CELL not in state
+
+    def baseline_agent(state):
+        empty_positions = [i for i in range(BOARD_SIZE ** 2) if state[i] == EMPTY_CELL]
+        if not empty_positions:
+            return None
+        return random.choice(empty_positions)
+    agent_win_rates = []
+    baseline_win_rates = []
+    draw_rates = []
+    exploration_rate = EXPLORATION_RATE
+    for episode in range(EPISODES):
+        state = [EMPTY_CELL] * BOARD_SIZE ** 2
+        agent_moves = []
+        baseline_moves = []
+        while True:
+            action_x = choose_action(state, q_table_x, exploration_rate)
+            if action_x is not None:
+                state[action_x] = PLAYER_X
+                agent_moves.append(action_x)
+                winner = check_winner(state)
+                if winner == PLAYER_X:
+                    for move in agent_moves:
+                        set_q_value(q_table_x, tuple(state), move, get_q_value(q_table_x, tuple(state), move) + LEARNING_RATE * (10 - get_q_value(q_table_x, tuple(state), move)))
+                    break
+                elif is_board_full(state):
+                    for move in agent_moves:
+                        set_q_value(q_table_x, tuple(state), move, get_q_value(q_table_x, tuple(state), move) + LEARNING_RATE * (0 - get_q_value(q_table_x, tuple(state), move)))
+                    break
+            action_o = baseline_agent(state)
+            if action_o is not None:
+                state[action_o] = PLAYER_O
+                baseline_moves.append(action_o)
+                winner = check_winner(state)
+                if winner == PLAYER_O:
+                    for move in baseline_moves:
+                        set_q_value(q_table_o, tuple(state), move, get_q_value(q_table_o, tuple(state), move) + LEARNING_RATE * (-10 - get_q_value(q_table_o, tuple(state), move)))
+                    break
+                elif is_board_full(state):
+                    for move in baseline_moves:
+                        set_q_value(q_table_o, tuple(state), move, get_q_value(q_table_o, tuple(state), move) + LEARNING_RATE * (0 - get_q_value(q_table_o, tuple(state), move)))
+                    break
+        if exploration_rate > MIN_EXPLORATION_RATE:
+            exploration_rate *= EXPLORATION_DECAY
+        if episode % 100 == 0 and episode > 0:
+            agent_wins = 0
+            baseline_wins = 0
+            draws = 0
+            for _ in range(100):
+                state = [EMPTY_CELL] * BOARD_SIZE ** 2
+                agent_moves = []
+                baseline_moves = []
+                while True:
+                    action_x = choose_action(state, q_table_x, 0)
+                    if action_x is not None:
+                        state[action_x] = PLAYER_X
+                        agent_moves.append(action_x)
+                        winner = check_winner(state)
+                        if winner == PLAYER_X:
+                            agent_wins += 1
+                            break
+                        elif is_board_full(state):
+                            draws += 1
+                            break
+                    action_o = baseline_agent(state)
+                    if action_o is not None:
+                        state[action_o] = PLAYER_O
+                        baseline_moves.append(action_o)
+                        winner = check_winner(state)
+                        if winner == PLAYER_O:
+                            baseline_wins += 1
+                            break
+                        elif is_board_full(state):
+                            draws += 1
+                            break
+            agent_win_rates.append(agent_wins / 100.0)
+            baseline_win_rates.append(baseline_wins / 100.0)
+            draw_rates.append(draws / 100.0)
+    return (agent_win_rates, baseline_win_rates, draw_rates)
