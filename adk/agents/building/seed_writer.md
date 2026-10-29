@@ -16,7 +16,8 @@ When authoring or updating thesis sections, rigorously satisfy the academic crit
    - Formally state the research gap that this thesis addresses. Zero fluff or superficial summaries.
 3. **Rozdział 3: Projekt Architektury Systemu**:
    - Document system architecture, component boundaries, and data flows.
-   - Include formal architecture schematics using **TikZ** environments (`\begin{tikzpicture}...\end{tikzpicture}`) in LaTeX or **Mermaid** blocks in Markdown.
+   - Include formal architecture schematics using **inline TikZ** environments (`\begin{tikzpicture}...\end{tikzpicture}`) in LaTeX or **Mermaid** blocks in Markdown.
+   - **ABSOLUTE BAN ON INVENTING FIGURE FILES**: NEVER write `\ref_fig{figures/system_architecture.pdf}` or `\includegraphics{figures/system_architecture.pdf}`! Draw the diagram inline using TikZ code.
 4. **Rozdział 4: Realizacja i Implementacja**:
    - Explain algorithmic decisions and architecture modules.
    - Reference all constants, hyperparameters, and class/function names strictly via `\ref_ast{file:symbol}`.
@@ -24,7 +25,7 @@ When authoring or updating thesis sections, rigorously satisfy the academic crit
 5. **Rozdział 5: Badania Eksperymentalne i Wyniki**:
    - Embed and discuss comparative evaluation (Baseline vs. Proposed Solution).
    - Document ablation studies and parameter sensitivity.
-   - Embed vector plots via `\includegraphics{plots/...}` and format result tables using `\ref_csv{file:column}` for all quantitative metrics.
+   - Embed vector plots strictly using verified hypergraph figure nodes (e.g. `\ref_fig{figures/comparison_chart.pdf}`) and format result tables using `\ref_csv{file:column}` for all quantitative metrics.
    - Interpret standard deviations and statistical stability.
 6. **Rozdział 6: Podsumowanie i Wnioski**:
    - Evaluate whether the empirical results proved or disproved the initial thesis statement (*teza*).
@@ -32,12 +33,14 @@ When authoring or updating thesis sections, rigorously satisfy the academic crit
 
 ---
 
-## 2. STRICT SYMBOLIC GROUNDING MANDATE (ZERO NUMERICAL HALLUCINATIONS)
-1. **Absolute Ban on Memory Numbers**:
+## 2. STRICT SYMBOLIC & HYPERGRAPH GROUNDING (ZERO HALLUCINATIONS)
+1. **Absolute Ban on Memory Numbers & Invented Files**:
    - Never write hyperparameter values, empirical metrics, or experimental numbers from memory into prose.
+   - Never invent file paths or figure names not present in the workspace hypergraph state!
 2. **Mandatory Symbolic Pointers (STRICT RULES)**:
    - Code constants/hyperparameters: Must use `\ref_ast{file:symbol}` (e.g. `\ref_ast{config.py:LEARNING_RATE}`).
    - Empirical metrics: Must use `\ref_csv{file:row_method:column}` or `\ref_csv{file:column}` (e.g. `\ref_csv{results.csv:proposed:final_accuracy}`). Only reference columns that actually exist in the task's CSV schema!
+   - Figure references: Only reference figures present in the hypergraph (`\ref_fig{figures/comparison_chart.pdf}`). For architecture diagrams, use inline TikZ.
    - **CRITICAL MATHTEXT PROHIBITION**: NEVER put symbolic references inside dollar signs (e.g. NEVER write `$\ref_csv{...}$` or `$\ref_ast{...}$`)! Keep them in plain prose: `osiągając dokładność \ref_csv{results.csv:proposed:final_accuracy}`.
 3. Every pointer is deterministically verified and compiled into real numbers by `ref_compiler.py` in Layer 3 (`verification`).
 

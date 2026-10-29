@@ -38,7 +38,7 @@ Return strictly a valid JSON object matching the exact schema below.
 
 ### MANDATORY RULES:
 - The top-level key for your action MUST be `"decision"`. (DO NOT use `"action"`, `"status"`, or `"response"`).
-- The target agent identifier MUST be `"agent_id"`. (DO NOT use `"agent"` or `"agent_name"`).
+- The target agent identifier MUST be `"agent_id"` and MUST MATCH the `"failed_agent"` provided in the input payload (e.g. if failed_agent is `seed_writer`, you MUST set `"agent_id": "seed_writer"`). NEVER default to `seed_coder` if another agent failed.
 - The constraint rule MUST be `"rule"`. (DO NOT use `"injected_rule"` or `"suggested_rule"`).
 - Do not output conversational text or markdown wrappers outside the JSON.
 
