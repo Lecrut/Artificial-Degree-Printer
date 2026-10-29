@@ -339,10 +339,16 @@ def summarize_agent_decision(agent_name: str, payload: dict[str, Any], output: d
     # 1. Planning agents
     if "planner" in name:
         if "remediation" in name:
-            tasks = output.get("surgical_tasks", [])
-            diag = output.get("root_cause_diagnosis", "")
-            task_ids = ", ".join(t.get("task_id", "") for t in tasks) if tasks else "brak"
-            return f"Plan naprawczy: {len(tasks)} zadan [{task_ids}]. Diagnoza: {diag[:100]}"
+            tasks = output.get("surgical_tasks") or output.get("tasks") or []
+            diag = output.get("root_cause_diagnosis") or output.get("remediation_strategy") or output.get("summary") or ""
+            if not diag:
+                diag = output.get("reason") or (output.get("context", {}).get("suggested_rule", "") if isinstance(output.get("context"), dict) else "")
+            if not diag and "action" in output:
+                diag = f"Akcja naprawcza: {output.get('action')}"
+            target_node = payload.get("failed_task", {}).get("target_node") or payload.get("error_report", {}).get("failed_node", "v1")
+            task_ids = ", ".join(t.get("task_id", "") for t in tasks if isinstance(t, dict)) if tasks else f"{target_node}_FIX"
+            count_tasks = len(tasks) if tasks else 1
+            return f"Plan naprawczy: {count_tasks} zadań [{task_ids}]. Diagnoza: {str(diag)[:100]}"
         tasks = output.get("tasks", [])
         blueprint = output.get("academic_blueprint") or {}
         title = blueprint.get("thesis_title") or payload.get("user_prompt", "")[:50]

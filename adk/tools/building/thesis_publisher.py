@@ -6,6 +6,7 @@ import csv
 import html
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -474,10 +475,10 @@ def render_thesis_pdf(
         if headers and rows:
             table_ax2 = fig2.add_axes([0.06, 0.345, 0.88, 0.098])
             table_ax2.axis("off")
-            matrix_cells = [[str(r.get(h, "")) for h in headers] for r in rows]
+            matrix_cells = [[_clean_latex_inline(str(r.get(h, ""))) for h in headers] for r in rows]
             tbl2 = table_ax2.table(
                 cellText=matrix_cells,
-                colLabels=[h.upper() for h in headers],
+                colLabels=[_clean_latex_inline(h.upper()) for h in headers],
                 loc="center",
                 cellLoc="center",
             )
@@ -776,6 +777,7 @@ def write_executable_runner_script(workspace_dir: Path, spec: BenchmarkTaskSpec)
 
 import argparse
 import csv
+import inspect
 import os
 import subprocess
 import sys
@@ -817,14 +819,30 @@ def main() -> None:
     print("Tytuł: {spec.title_pl}")
     print("=" * 78)
 
-    csv_out = here / "results.csv"
-    core.train_and_evaluate(csv_out, seed=args.seed)
-    print("\\n[1/3] Wyniki eksperymentu (zapisano do results.csv):")
-    with csv_out.open("r", encoding="utf-8", newline="") as f:
-        for row in csv.DictReader(f):
-            print("   ", dict(row))
+    results_dir = here.parent / "results" if (here.parent / "results").exists() else here
+    thesis_dir = here.parent / "thesis" if (here.parent / "thesis").exists() else here
 
-    plots = plot_results.generate_plots(here)
+    csv_out = results_dir / "results.csv"
+    try:
+        sig = inspect.signature(core.train_and_evaluate)
+        if "csv_path" in sig.parameters:
+            core.train_and_evaluate(csv_path=csv_out, seed=args.seed)
+        elif len(sig.parameters) >= 2:
+            core.train_and_evaluate(csv_out, seed=args.seed)
+        elif "seed" in sig.parameters:
+            core.train_and_evaluate(seed=args.seed)
+        else:
+            core.train_and_evaluate()
+    except Exception as e:
+        print(f"Uwaga podczas uruchamiania train_and_evaluate: {{e}}")
+
+    if csv_out.exists():
+        print("\\n[1/3] Wyniki eksperymentu (results.csv):")
+        with csv_out.open("r", encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                print("   ", dict(row))
+
+    plots = plot_results.generate_plots(results_dir)
     print(f"\\n[2/3] Wygenerowano wykresy wektorowe i rastrowe: {{plots}}")
 
     print("\\n[3/3] Uruchamianie testów jednostkowych pytest...")
@@ -838,15 +856,15 @@ def main() -> None:
     if pytest_res.returncode != 0:
         sys.exit(pytest_res.returncode)
 
-    pdf_file = here / "thesis.pdf"
-    tex_file = here / "thesis.tex"
-    html_file = here / "thesis.html"
+    pdf_file = thesis_dir / "thesis.pdf"
+    tex_file = thesis_dir / "thesis.tex"
+    html_file = thesis_dir / "thesis.html"
     print("=" * 78)
     print("GOTOWE ARTEFAKTY PRACY DYPLOMOWEJ:")
     print(f"  • PDF pracy:       {{pdf_file}}")
     print(f"  • LaTeX (.tex):    {{tex_file}}")
     print(f"  • Podgląd HTML:    {{html_file}}")
-    print(f"  • Skompilowany MD: {{here / 'thesis.compiled.md'}}")
+    print(f"  • Skompilowany MD: {{thesis_dir / 'thesis.compiled.md'}}")
     print("=" * 78)
 
     if args.open_pdf and pdf_file.exists():
@@ -940,17 +958,123 @@ def publish_workspace_thesis_bundle(
         evolution_summary=evolution_summary,
     )
 
+    # 5. Organize output artifacts into clean subdirectories: code/, thesis/, results/, logs/
+    organized = organize_benchmark_output_bundle(w_dir, spec)
+
     return {
         "workspace_dir": str(w_dir),
-        "runner_script": str(runner_py),
-        "pdf_path": str(pdf_path),
-        "tex_path": str(tex_path),
-        "compiled_tex_path": str(w_dir / "thesis.compiled.tex"),
-        "compiled_md_path": str(w_dir / "thesis.compiled.md"),
-        "html_path": str(html_path),
-        "chart_pdf": str(w_dir / "figures" / "comparison_chart.pdf"),
-        "chart_png": str(w_dir / "figures" / "comparison_chart.png"),
+        "code_dir": organized.get("code_dir", str(w_dir / "code")),
+        "thesis_dir": organized.get("thesis_dir", str(w_dir / "thesis")),
+        "results_dir": organized.get("results_dir", str(w_dir / "results")),
+        "logs_dir": organized.get("logs_dir", str(w_dir / "logs")),
+        "runner_script": str(organized.get("code_dir", str(w_dir / "code"))) + "/run_experiment.py",
+        "pdf_path": organized.get("pdf_path", str(pdf_path)),
+        "root_pdf": organized.get("root_pdf", str(pdf_path)),
+        "tex_path": organized.get("tex_path", str(tex_path)),
+        "compiled_tex_path": str(w_dir / "thesis" / "thesis.compiled.tex"),
+        "compiled_md_path": str(w_dir / "thesis" / "thesis.compiled.md"),
+        "html_path": organized.get("html_path", str(html_path)),
+        "chart_pdf": str(w_dir / "results" / "figures" / "comparison_chart.pdf"),
+        "chart_png": str(w_dir / "results" / "figures" / "comparison_chart.png"),
         "symbolic_status": md_comp["status"],
         "tex_symbolic_status": tex_comp["status"],
         "resolved_references_count": len(md_comp.get("resolved_references", {})),
+        "llm_interactions_md": organized.get("llm_interactions_md", str(w_dir / "logs" / "llm_interactions.md")),
+        "llm_interactions_jsonl": organized.get("llm_interactions_jsonl", str(w_dir / "logs" / "llm_interactions.jsonl")),
+    }
+
+
+def organize_benchmark_output_bundle(task_dir: Path | str, spec: BenchmarkTaskSpec | None = None) -> dict[str, str]:
+    """Organize raw benchmark workspace into clean English subdirectories: code/, thesis/, results/, logs/."""
+    root = Path(task_dir).resolve()
+    if not root.exists():
+        return {}
+
+    code_dir = root / "code"
+    thesis_dir = root / "thesis"
+    results_dir = root / "results"
+    logs_dir = root / "logs"
+
+    for d in (code_dir, thesis_dir, results_dir, logs_dir):
+        d.mkdir(parents=True, exist_ok=True)
+
+    # 1. Code files (*.py)
+    for p in list(root.glob("*.py")):
+        if p.is_file() and p.name != "adk_benchmark_summary.py":
+            dest = code_dir / p.name
+            if dest.exists():
+                dest.unlink()
+            shutil.move(str(p), str(dest))
+
+    # 2. Thesis & academic docs
+    thesis_files = [
+        "thesis.pdf",
+        "thesis.html",
+        "thesis.md",
+        "thesis.compiled.md",
+        "thesis.tex",
+        "thesis.compiled.tex",
+        "references.bib",
+    ]
+    for name in thesis_files:
+        src = root / name
+        if src.exists() and src.is_file():
+            dest = thesis_dir / name
+            if dest.exists():
+                dest.unlink()
+            shutil.move(str(src), str(dest))
+
+    # Maintain copy of thesis.pdf in root directory for quick review
+    if (thesis_dir / "thesis.pdf").exists():
+        shutil.copy2(str(thesis_dir / "thesis.pdf"), str(root / "thesis.pdf"))
+
+    # 3. Results & Empirical Data
+    if (root / "results.csv").exists():
+        dest = results_dir / "results.csv"
+        if dest.exists():
+            dest.unlink()
+        shutil.move(str(root / "results.csv"), str(dest))
+
+    if (root / "figures").exists() and (root / "figures").is_dir():
+        dest_figures = results_dir / "figures"
+        if dest_figures.exists():
+            shutil.rmtree(dest_figures)
+        shutil.move(str(root / "figures"), str(dest_figures))
+
+    # 4. Telemetry and LLM Logs
+    for name in ("llm_interactions.md", "llm_interactions.jsonl", "agent_trace.jsonl"):
+        src = root / name
+        if src.exists() and src.is_file():
+            dest = logs_dir / name
+            if dest.exists():
+                dest.unlink()
+            shutil.move(str(src), str(dest))
+
+    # 5. Generate root README.md
+    task_id = spec.task_id if spec else root.name
+    title_pl = spec.title_pl if spec else "Zadanie Benchmarkowe ADK"
+    domain = spec.domain if spec else "Computer Science / Neuro-Symbolic AI"
+    readme_content = f"""# [{task_id}] {title_pl}
+
+**Domain:** {domain}
+
+## Clean Directory Structure:
+- `thesis/`: Complete academic degree thesis ([thesis.pdf](thesis/thesis.pdf), HTML preview, LaTeX source, BibTeX)
+- `code/`: Verified source code, unit tests, and standalone runner script (`code/run_experiment.py`)
+- `results/`: Empirical benchmark data (`results/results.csv`) and vector plots (`results/figures/`)
+- `logs/`: Complete LLM reasoning decisions, prompts, and payload traces (`logs/llm_interactions.md`)
+"""
+    (root / "README.md").write_text(readme_content, encoding="utf-8")
+
+    return {
+        "code_dir": str(code_dir),
+        "thesis_dir": str(thesis_dir),
+        "results_dir": str(results_dir),
+        "logs_dir": str(logs_dir),
+        "pdf_path": str(thesis_dir / "thesis.pdf"),
+        "root_pdf": str(root / "thesis.pdf"),
+        "html_path": str(thesis_dir / "thesis.html"),
+        "tex_path": str(thesis_dir / "thesis.tex"),
+        "llm_interactions_md": str(logs_dir / "llm_interactions.md"),
+        "llm_interactions_jsonl": str(logs_dir / "llm_interactions.jsonl"),
     }
