@@ -558,8 +558,8 @@ def run_benchmark_suite(
                     "architecture_cycles": arch_cycles,
                 },
             )
-            pub_res["llm_interactions_md"] = str(task_dest_dir / "llm_interactions.md")
-            pub_res["llm_interactions_jsonl"] = str(task_dest_dir / "llm_interactions.jsonl")
+            pub_res.setdefault("llm_interactions_md", str(task_dest_dir / "logs" / "llm_interactions.md"))
+            pub_res.setdefault("llm_interactions_jsonl", str(task_dest_dir / "logs" / "llm_interactions.jsonl"))
             pub_elapsed_ms = (time.perf_counter() - pub_t0) * 1000.0
             total_task_ms = (time.perf_counter() - t_start) * 1000.0
 

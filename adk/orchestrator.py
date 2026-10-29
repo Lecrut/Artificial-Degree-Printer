@@ -355,6 +355,27 @@ class NeuroSymbolicOrchestrator:
         )
         builder_blast = calculate_blast_radius(node_id, self.matrix_path)
         scoped_graph = get_scoped_hypergraph_context(self.matrix_path, blast_radius=builder_blast)
+
+        # Deterministyczny stan hipergrafu: dostępne pliki graficzne, symbole AST i kolumny CSV
+        existing_figures: list[str] = []
+        if self.workspace_dir.exists():
+            for fig_p in sorted(self.workspace_dir.rglob("*")):
+                if fig_p.is_file() and fig_p.suffix.lower() in (".pdf", ".png", ".svg") and "figures" in fig_p.parts:
+                    existing_figures.append(fig_p.relative_to(self.workspace_dir).as_posix())
+        if not existing_figures:
+            existing_figures = ["figures/comparison_chart.pdf"]
+
+        grounded_state: dict[str, Any] = {
+            "available_figures": existing_figures,
+            "available_ast_symbols": list(exports_info.get("exports", {}).keys()),
+            "available_csv_columns": list(exports_info.get("csv_schemas", {}).get("results.csv", [])),
+            "mandatory_directives": [
+                "DO NOT invent figure paths. Only reference figures explicitly listed in 'available_figures'.",
+                "For system architecture (Rozdział 3), use an INLINE TikZ environment (\\begin{tikzpicture}...\\end{tikzpicture}). NEVER reference non-existent files like figures/system_architecture.pdf.",
+                "Only reference CSV columns present in 'available_csv_columns'.",
+            ],
+        }
+
         llm_res = call_agent(
             agent_md,
             {
@@ -365,6 +386,7 @@ class NeuroSymbolicOrchestrator:
                 "csv_schemas": exports_info.get("csv_schemas", {}),
                 "hypergraph_nodes": scoped_graph.get("nodes", {}),
                 "active_edges": scoped_graph.get("active_edges", {}),
+                "grounded_hypergraph_state": grounded_state,
             },
             model_tier=model_tier,
             provider=self.provider,
@@ -758,6 +780,10 @@ class NeuroSymbolicOrchestrator:
             return {"action": "CREATE_TOOL", "decision": "CREATE_TOOL", "details": promo}
 
         target_mut_agent = str(decision_out.get("agent_id") or failed_agent)
+        # Gwarancja zgodności ze stanem hipergrafu: cel mutacji musi dyscyplinować agenta, który faktycznie zawiódł
+        if failed_agent and target_mut_agent != failed_agent:
+            if target_mut_agent in ("seed_coder", "unknown", "") and failed_agent != "seed_coder":
+                target_mut_agent = failed_agent
         registry = read_json_state(self.registry_path).get("agents", {})
         if target_mut_agent in registry and not registry[target_mut_agent].get("active", True):
             for cand_id, cand_meta in registry.items():
@@ -1289,35 +1315,38 @@ class NeuroSymbolicOrchestrator:
                             write_json_state(self.task_queue_path, tasks)
 
                 surgical_tasks = remediation_out.get("surgical_tasks") or remediation_out.get("tasks") or []
-                if isinstance(surgical_tasks, list) and surgical_tasks:
-                    for stask in surgical_tasks:
-                        if not isinstance(stask, dict):
-                            continue
-                        stask.setdefault("target_node", node_id)
-                        stask["assigned_agent"] = self._resolve_active_agent(
-                            str(stask.get("assigned_agent") or task.get("assigned_agent", "seed_coder")),
-                            fallback=str(task.get("assigned_agent", "seed_coder")),
-                        )
-                        stask.setdefault("task_id", f"{task.get('task_id', 'T1')}_FIX")
-                        cycle_trace["w1_remediation_task_id"] = str(stask["task_id"])
-                        st_node = str(stask.get("target_node", node_id))
-                        st_file = matrix_nodes.get(st_node, {}).get("path", st_node)
-                        st_tier = select_model_tier(st_node, self.matrix_path)
-                        print(
-                            f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE] Zadanie chirurgiczne {stask['task_id']} "
-                            f"[{st_file}] przez agenta '{stask['assigned_agent']}' (Tier: {st_tier})...",
-                            flush=True,
-                        )
-                        self._execute_builder_step(stask, model_tier=st_tier)
-                else:
-                    retry_tier = select_model_tier(node_id, self.matrix_path)
-                    task["assigned_agent"] = self._resolve_active_agent(str(task.get("assigned_agent", "seed_coder")))
+                if not (isinstance(surgical_tasks, list) and surgical_tasks):
+                    # Hipergraficzna synteza zadania chirurgicznego dla uszkodzonego węzła
+                    issues_summary = "; ".join(report.get("issues", []))[:120] if report.get("issues") else "usterka weryfikacji warstwy 3"
+                    surgical_tasks = [
+                        {
+                            "task_id": f"{task.get('task_id', 'T1')}_FIX",
+                            "target_node": node_id,
+                            "assigned_agent": failed_agent,
+                            "description": f"Chirurgiczna naprawa węzła {node_id} ({node_file}) na podstawie diagnozy: {issues_summary}",
+                            "status": "TODO",
+                        }
+                    ]
+
+                for stask in surgical_tasks:
+                    if not isinstance(stask, dict):
+                        continue
+                    stask.setdefault("target_node", node_id)
+                    stask["assigned_agent"] = self._resolve_active_agent(
+                        str(stask.get("assigned_agent") or failed_agent or task.get("assigned_agent", "seed_coder")),
+                        fallback=str(failed_agent or task.get("assigned_agent", "seed_coder")),
+                    )
+                    stask.setdefault("task_id", f"{task.get('task_id', 'T1')}_FIX")
+                    cycle_trace["w1_remediation_task_id"] = str(stask["task_id"])
+                    st_node = str(stask.get("target_node", node_id))
+                    st_file = matrix_nodes.get(st_node, {}).get("path", st_node)
+                    st_tier = select_model_tier(st_node, self.matrix_path)
                     print(
-                        f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE] Ponowne wykonanie zadania {t_id} "
-                        f"[{node_file}] przez agenta '{task['assigned_agent']}' (Tier: {retry_tier})...",
+                        f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE] Zadanie chirurgiczne {stask['task_id']} "
+                        f"[{st_file}] przez agenta '{stask['assigned_agent']}' (Tier: {st_tier})...",
                         flush=True,
                     )
-                    self._execute_builder_step(task, model_tier=retry_tier)
+                    self._execute_builder_step(stask, model_tier=st_tier)
 
                 print(
                     f"  [WARSTWA 3: RE-WERYFIKACJA] Ponowny audyt zadania {t_id} po petli W4 -> W1 -> W2...",
