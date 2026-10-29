@@ -41,8 +41,8 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
     """Build an intelligent task-aware mock LLM handler that drives ADK self-expansion and code/thesis generation."""
 
     def _handler(system_prompt: str, payload: dict[str, Any], model_tier: str) -> dict[str, Any]:
-        # 1. Layer 1: Initial Task Planner
-        if "Initial Task Planner" in system_prompt or ("user_prompt" in payload and "blast_radius" in payload):
+        # 1. Layer 1: Task Planner
+        if "Task Planner" in system_prompt or ("user_prompt" in payload and "blast_radius" in payload):
             coder_agent = spec.missing_specialization or "seed_coder"
             if spec.custom_tasks:
                 tasks = [dict(t) for t in spec.custom_tasks]

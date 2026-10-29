@@ -872,7 +872,7 @@ class NeuroSymbolicOrchestrator:
                 }
             )
 
-        if multi_cycle_waves:
+        if multi_cycle_waves and len(cleaned) < 3:
             # Build a complete 5-stage engineering + 6-chapter thesis pipeline covering v1, v2, v3/v5, and v4
             multi_tasks: list[dict[str, Any]] = [
                 {
@@ -989,12 +989,10 @@ class NeuroSymbolicOrchestrator:
             "include_docs": self.include_docs,
             "missing_agent_specialization": missing_agent_specialization,
         }
-        initial_planner_md = self.agents_dir / "planning" / "initial_task_planner.md"
-        if not initial_planner_md.exists():
-            initial_planner_md = self.agents_dir / "planning" / "task_planner.md"
+        planner_md = self.agents_dir / "planning" / "task_planner.md"
 
         plan_out = call_agent(
-            initial_planner_md,
+            planner_md,
             plan_payload,
             model_tier="LRM",
             provider=self.provider,
@@ -1233,8 +1231,6 @@ class NeuroSymbolicOrchestrator:
                         }
 
                 remediation_agent = self.agents_dir / "planning" / "remediation_planner.md"
-                if not remediation_agent.exists():
-                    remediation_agent = self.agents_dir / "planning" / "task_planner.md"
 
                 print(
                     f"  [POWROT DO WARSTWY 1: REMEDIACJA] Planowanie chirurgicznej naprawy dla zadania {t_id}...",

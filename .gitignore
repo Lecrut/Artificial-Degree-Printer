@@ -102,9 +102,12 @@ desktop.ini
 
 # --- Ephemeral Runtime Logs & Caches ---
 adk/logs/run-*.json
+adk/logs/*.jsonl
+adk/logs/*.log
 !adk/logs/.gitkeep
 
 # --- Generated Code and Project Workspaces ---
 projects/
 generated_project/
+adk/workspace/benchmarks/_evolved_adk_state/
 
