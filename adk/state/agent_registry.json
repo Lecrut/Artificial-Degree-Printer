@@ -23,6 +23,18 @@
       "path": "agents/building/sota_researcher.md",
       "specialization": "literature_review",
       "active": true
+    },
+    "background_researcher": {
+      "domain": "building",
+      "path": "agents/building/background_researcher.md",
+      "specialization": "background_literature",
+      "active": true
+    },
+    "discoverer_researcher": {
+      "domain": "building",
+      "path": "agents/building/discoverer_researcher.md",
+      "specialization": "sota_discovery",
+      "active": true
     }
   }
 }

@@ -44,6 +44,7 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
         # 1. Layer 1: Task Planner
         if "Task Planner" in system_prompt or ("user_prompt" in payload and "blast_radius" in payload):
             coder_agent = spec.missing_specialization or "seed_coder"
+            t_type = getattr(spec, "thesis_type", "inzynierska").strip().lower()
             if spec.custom_tasks:
                 tasks = [dict(t) for t in spec.custom_tasks]
             else:
@@ -69,23 +70,57 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                         "assigned_agent": "seed_tester",
                         "status": "TODO",
                     },
-                    {
-                        "task_id": "T4",
-                        "description": f"[{spec.task_id}] Synthesize Chapters 1-2 (Intro, Thesis, SOTA review) & BibTeX citations",
-                        "target_node": "v4",
-                        "assigned_agent": "sota_researcher",
-                        "status": "TODO",
-                    },
+                ]
+                if t_type in ("magisterska", "master", "msc"):
+                    tasks.extend(
+                        [
+                            {
+                                "task_id": "T4_BG",
+                                "description": f"[{spec.task_id}] Stage 1 Background Research (II stopień): Foundational funnel & monographs in references.bib",
+                                "target_node": "v4",
+                                "assigned_agent": "background_researcher",
+                                "status": "TODO",
+                            },
+                            {
+                                "task_id": "T4_DISC",
+                                "description": f"[{spec.task_id}] Stage 2 Discoverer Research (II stopień): Contemporary SOTA (2023-2026) & research gap in references.bib",
+                                "target_node": "v4",
+                                "assigned_agent": "discoverer_researcher",
+                                "status": "TODO",
+                            },
+                        ]
+                    )
+                elif t_type in ("paper", "article", "scientific_paper"):
+                    tasks.append(
+                        {
+                            "task_id": "T4",
+                            "description": f"[{spec.task_id}] Discoverer Research (III stopień - Paper): Competitive SOTA (2023-2026) & superiority proof in references.bib",
+                            "target_node": "v4",
+                            "assigned_agent": "discoverer_researcher",
+                            "status": "TODO",
+                        }
+                    )
+                else:
+                    tasks.append(
+                        {
+                            "task_id": "T4",
+                            "description": f"[{spec.task_id}] Background Research (I stopień - Inżynierska): Foundational funnel from classical monographs to thesis problem in references.bib",
+                            "target_node": "v4",
+                            "assigned_agent": "background_researcher",
+                            "status": "TODO",
+                        }
+                    )
+                tasks.append(
                     {
                         "task_id": "T5",
                         "description": f"[{spec.task_id}] Author Chapters 3-6 of full 6-chapter thesis with \\ref_ast, \\ref_csv, and \\ref_fig pointers",
                         "target_node": "v4",
                         "assigned_agent": "seed_writer",
                         "status": "TODO",
-                    },
-                ]
+                    }
+                )
             return {
-                "thesis_type": getattr(spec, "thesis_type", "engineering"),
+                "thesis_type": getattr(spec, "thesis_type", "inzynierska"),
                 "template_name": getattr(spec, "template_name", "thesis_plodz"),
                 "hitl_gate": "GATE_1_OUTLINE_APPROVAL",
                 "academic_blueprint": {
@@ -214,6 +249,36 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                 "plot_file": "plot_results.py",
                 "plot_script": spec.plot_script,
                 "summary": f"Generated core.py, test_core.py, results.csv, and plot_results.py for {spec.task_id}.",
+            }
+
+        if "background_researcher" in assigned_agent:
+            bg_bib = spec.background_bibtex_entries or spec.bibtex_entries
+            bg_sec = spec.background_section_content or spec.sota_section_content
+            ch2_title = spec.thesis_chapters[1][0] if len(spec.thesis_chapters) >= 2 else spec.sota_section_title
+            sections_out = []
+            if spec.thesis_chapters:
+                sections_out.append({"section_title": spec.thesis_chapters[0][0], "section_content": spec.thesis_chapters[0][1]})
+            return {
+                "research_stage": "background",
+                "bib_file": "references.bib",
+                "bibtex_entries": bg_bib,
+                "section_title": ch2_title,
+                "literature_review_section": bg_sec,
+                "sections": sections_out,
+                "summary": f"Synthesized Stage 1 Background foundational funnel and BibTeX for {spec.task_id}.",
+            }
+
+        if "discoverer_researcher" in assigned_agent:
+            disc_bib = spec.discoverer_bibtex_entries or spec.bibtex_entries
+            disc_sec = spec.discoverer_section_content or spec.sota_section_content
+            ch2_title = spec.thesis_chapters[1][0] if len(spec.thesis_chapters) >= 2 else spec.sota_section_title
+            return {
+                "research_stage": "discoverer",
+                "bib_file": "references.bib",
+                "bibtex_entries": disc_bib,
+                "section_title": ch2_title,
+                "literature_review_section": disc_sec,
+                "summary": f"Synthesized Stage 2 Discoverer SOTA (2023-2026) competitor analysis and research gap for {spec.task_id}.",
             }
 
         if "sota_researcher" in assigned_agent:
@@ -476,10 +541,17 @@ def run_benchmark_suite(
 
             # Ensure all required benchmark files/sections exist so run_experiment.py & 6-chapter PDF compilation succeed
             mock_fallback = _make_task_mock_llm_handler(spec)
+            t_type = getattr(spec, "thesis_type", "inzynierska").strip().lower()
             if resolved_provider == "mock":
                 orch._materialize_workspace_artifact("config.py", mock_fallback("", {"target_file": "config.py"}, "SML"))
                 orch._materialize_workspace_artifact("core.py", mock_fallback("", {"target_file": "core.py", "task": {"assigned_agent": "seed_tester"}}, "SML"))
-                orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "sota_researcher"}}, "SML"))
+                if t_type in ("magisterska", "master", "msc"):
+                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
+                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "discoverer_researcher"}}, "SML"))
+                elif t_type in ("paper", "article", "scientific_paper"):
+                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "discoverer_researcher"}}, "SML"))
+                else:
+                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
                 orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "seed_writer"}}, "SML"))
             else:
                 if not (sandbox_ws / "config.py").exists():
@@ -487,7 +559,13 @@ def run_benchmark_suite(
                 if not (sandbox_ws / "core.py").exists():
                     orch._materialize_workspace_artifact("core.py", mock_fallback("", {"target_file": "core.py", "task": {"assigned_agent": "seed_tester"}}, "SML"))
                 if not (sandbox_ws / "thesis.md").exists():
-                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "sota_researcher"}}, "SML"))
+                    if t_type in ("magisterska", "master", "msc"):
+                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
+                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "discoverer_researcher"}}, "SML"))
+                    elif t_type in ("paper", "article", "scientific_paper"):
+                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "discoverer_researcher"}}, "SML"))
+                    else:
+                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
                     orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "seed_writer"}}, "SML"))
 
             # If task also demonstrates tool synthesis + prompt consolidation, ensure both are recorded if live LLM chose another action

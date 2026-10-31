@@ -186,3 +186,57 @@ def test_benchmark_tasks_use_distinct_thesis_types(tmp_path: Path):
     p4 = render_template_latex(t4, ws4)
     content4 = p4.read_text(encoding="utf-8")
     assert "\\documentclass[conference]{IEEEtran}" in content4
+
+
+def test_two_researchers_and_three_tier_routing(tmp_path: Path):
+    """Verify 2-researcher architecture (background_researcher & discoverer_researcher) and 3-tier routing."""
+    from adk.benchmarks import BENCHMARK_TASKS
+    from adk.benchmarks.runner import _make_task_mock_llm_handler
+    from adk.core.models import read_json_state
+    from adk.orchestrator import _merge_bibtex_entries
+
+    # 1. Verify both researchers are active in agent_registry.json
+    reg_path = Path(__file__).resolve().parent.parent / "adk" / "state" / "agent_registry.json"
+    agents = read_json_state(reg_path)["agents"]
+    assert agents["background_researcher"]["active"] is True
+    assert agents["discoverer_researcher"]["active"] is True
+
+    # 2. Verify Tier I (inzynierska -> background_researcher only)
+    h1 = _make_task_mock_llm_handler(BENCHMARK_TASKS["01_rl_tictactoe"])
+    plan1 = h1("Task Planner", {"user_prompt": "x", "blast_radius": {}}, "LRM")
+    research_agents_1 = [
+        t["assigned_agent"]
+        for t in plan1["tasks"]
+        if "researcher" in t["assigned_agent"]
+    ]
+    assert research_agents_1 == ["background_researcher"]
+
+    # 3. Verify Tier II (magisterska -> background_researcher THEN discoverer_researcher)
+    h2 = _make_task_mock_llm_handler(BENCHMARK_TASKS["02_ml_anomaly_detection"])
+    plan2 = h2("Task Planner", {"user_prompt": "x", "blast_radius": {}}, "LRM")
+    research_agents_2 = [
+        t["assigned_agent"]
+        for t in plan2["tasks"]
+        if "researcher" in t["assigned_agent"]
+    ]
+    assert research_agents_2 == ["background_researcher", "discoverer_researcher"]
+
+    # 4. Verify Tier III (paper -> discoverer_researcher only)
+    for key in ("03_graph_pathfinding", "04_federated_learning"):
+        h3 = _make_task_mock_llm_handler(BENCHMARK_TASKS[key])
+        plan3 = h3("Task Planner", {"user_prompt": "x", "blast_radius": {}}, "LRM")
+        research_agents_3 = [
+            t["assigned_agent"]
+            for t in plan3["tasks"]
+            if "researcher" in t["assigned_agent"]
+        ]
+        assert research_agents_3 == ["discoverer_researcher"]
+
+    # 5. Verify BibTeX merging preserves both background and discoverer entries without duplicates
+    spec2 = BENCHMARK_TASKS["02_ml_anomaly_detection"]
+    merged = _merge_bibtex_entries(spec2.background_bibtex_entries, spec2.discoverer_bibtex_entries)
+    assert "hampel1974influence" in merged
+    assert "liu2008isolation" in merged
+    assert "xu2023deep" in merged
+    assert "zhang2024conformal" in merged
+

@@ -165,7 +165,31 @@ if __name__ == "__main__":
     generate_plots()
 '''
 
-TICTACTOE_BIBTEX = """@article{watkins1992qlearning,
+TICTACTOE_BIBTEX = """@book{vonneumann1944theory,
+  author = {von Neumann, John and Morgenstern, Oskar},
+  title = {Theory of Games and Economic Behavior},
+  publisher = {Princeton University Press},
+  year = {1944}
+}
+
+@book{bellman1957dynamic,
+  author = {Bellman, Richard},
+  title = {Dynamic Programming},
+  publisher = {Princeton University Press},
+  year = {1957}
+}
+
+@article{sutton1988learning,
+  author = {Sutton, Richard S.},
+  title = {Learning to Predict by the Methods of Temporal Differences},
+  journal = {Machine Learning},
+  volume = {3},
+  number = {1},
+  pages = {9--44},
+  year = {1988}
+}
+
+@article{watkins1992qlearning,
   author = {Watkins, Christopher J. C. H. and Dayan, Peter},
   title = {Q-Learning},
   journal = {Machine Learning},
@@ -181,42 +205,21 @@ TICTACTOE_BIBTEX = """@article{watkins1992qlearning,
   edition = {2nd},
   year = {2018}
 }
-
-@inproceedings{kumar2023conservative,
-  author = {Kumar, Aviral and Hong, Joey and Singh, Anikait and Levine, Sergey},
-  title = {When Should We Be Conservative? Analyzing Value Regularization in Reinforcement Learning},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  volume = {36},
-  pages = {18920--18935},
-  year = {2023}
-}
-
-@article{agarwal2023theory,
-  author = {Agarwal, Alekh and Kakade, Sham and Lee, Jason D. and Mahajan, Gaurav},
-  title = {On the Theory of Policy Gradient and Value Iteration with Provable Sample Guarantees},
-  journal = {Journal of Machine Learning Research (JMLR)},
-  volume = {24},
-  pages = {1--54},
-  year = {2023}
-}
-
-@inproceedings{schulman2024provable,
-  author = {Schulman, John and Chen, Lili and Jordan, Michael I.},
-  title = {Provable Monotonic Convergence in Discrete Finite State Decision Processes},
-  booktitle = {International Conference on Machine Learning (ICML)},
-  pages = {44102--44120},
-  year = {2024}
-}
 """
 
 TICTACTOE_SOTA_CONTENT = (
-    "Fundamentalne podstawy tablicowego uczenia ze wzmocnieniem sformułowali Watkins i Dayan \\cite{watkins1992qlearning} "
-    "oraz Sutton i Barto \\cite{sutton2018reinforcement}. Współczesny stan wiedzy (2023--2026) dynamicznie rozwija "
-    "te teorie w stronę ścisłych gwarancji zbieżności i regularności próbkowej, co wykazali Kumar i in. \\cite{kumar2023conservative} "
-    "(NeurIPS 2023) oraz Agarwal i in. \\cite{agarwal2023theory} (JMLR 2023). Ponadto najnowsze analizy deterministycznych "
-    "gier skończonych Schulmana i Chena \\cite{schulman2024provable} (ICML 2024) dowodzą monotoniczności procesu decyzyjnego "
-    "pod warunkiem adaptacji współczynnika eksploracji. Istniejącą luką badawczą pozostaje weryfikowalna symbolicznie implementacja "
-    "czysto pythonowa pozbawiona heurystyk przybliżonych, co stanowi przedmiot niniejszej dysertacji."
+    "Analiza teoretyczna problemu podejmowania decyzji w grach skończonych rozpoczyna się od klasycznej teorii gier "
+    "o sumie zerowej sformułowanej w monografii von Neumanna i Morgensterna \\cite{vonneumann1944theory}, definiującej "
+    "istnienie strategii równowagi w skończonych drzewach decyzyjnych. Matematycznym fundamentem wyznaczania polityk "
+    "optymalnych w procesach wieloetapowych jest zasada optymalności oraz programowanie dynamiczne wprowadzone przez "
+    "Bellmana \\cite{bellman1957dynamic}. W przypadku braku jawnego modelu przejść środowiska przełomem okazały się "
+    "metody różnic czasowych (Temporal-Difference Learning) zaproponowane przez Suttona \\cite{sutton1988learning}, "
+    "łączące próbkowanie Monte Carlo z rekurencyjną aktualizacją estymat wartości stanów. Zawężając lejek badawczy "
+    "bezpośrednio do sterowania bezmodelowego (off-policy control), Watkins i Dayan \\cite{watkins1992qlearning} "
+    "udowodnili zbieżność tablicowego algorytmu Q-Learning z prawdopodobieństwem 1 w skończonych przestrzeniach "
+    "stanów-akcji, co zostało kompleksowo usystematyzowane w podręczniku Suttona i Barto \\cite{sutton2018reinforcement}. "
+    "W niniejszej pracy inżynierskiej opisany aparat matematyczny zostaje zaadaptowany bezpośrednio do dyskretnej "
+    "przestrzeni planszy $3\\times 3$ gry Kółko i Krzyżyk z polityką eksploracji $\\epsilon$-zachłannej."
 )
 TICTACTOE_DOC_FULL_CONTENT = (
     "To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning "
@@ -481,7 +484,17 @@ if __name__ == "__main__":
     generate_plots()
 '''
 
-ANOMALY_BIBTEX = """@inproceedings{liu2008isolation,
+ANOMALY_BACKGROUND_BIBTEX = """@article{hampel1974influence,
+  author = {Hampel, Frank R.},
+  title = {The Influence Curve and Its Role in Robust Estimation},
+  journal = {Journal of the American Statistical Association},
+  volume = {69},
+  number = {346},
+  pages = {383--393},
+  year = {1974}
+}
+
+@inproceedings{liu2008isolation,
   author = {Liu, Fei Tony and Ting, Kai Ming and Zhou, Zhi-Hua},
   title = {Isolation Forest},
   booktitle = {IEEE International Conference on Data Mining (ICDM)},
@@ -498,8 +511,9 @@ ANOMALY_BIBTEX = """@inproceedings{liu2008isolation,
   pages = {1--58},
   year = {2009}
 }
+"""
 
-@inproceedings{xu2023deep,
+ANOMALY_DISCOVERER_BIBTEX = """@inproceedings{xu2023deep,
   author = {Xu, Hongzuo and Wang, Yuehan and Jian, Songlei and Liao, Zhen and Li, Yongjun},
   title = {Deep Isolation and Subspace Ensembles for Multivariate Time Series Outlier Detection},
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
@@ -527,16 +541,29 @@ ANOMALY_BIBTEX = """@inproceedings{liu2008isolation,
 }
 """
 
-ANOMALY_SOTA_CONTENT = (
-    "Detekcja anomalii w wielokanałowych sygnałach biomedycznych (HR, HRV-RMSSD, saturacja SpO2) zapoczątkowana została "
-    "przez przegląd Chandoli i in. \\cite{chandola2009anomaly} oraz klasyczny algorytm Isolation Forest Liu i in. \\cite{liu2008isolation}. "
-    "Najnowszy stan wiedzy (2023--2026) kładzie nacisk na komitety podprzestrzeni odpornych i konforemne ograniczenie fałszywych alarmów. "
-    "W pracy Xu i in. \\cite{xu2023deep} (NeurIPS 2023) wykazano wyższość losowych projekcji nad statycznym Z-score, a Zhang i Angelopoulos "
-    "\\cite{zhang2024conformal} (IEEE TPAMI 2024) sformułowali teoretyczne granice błędu pierwszego rodzaju w czasie rzeczywistym. "
-    "Ponadto Chen i in. \\cite{chen2024adaptive} (ICLR 2024) zaproponowali adaptacyjny filtr Mahalanobisa. Wciąż nierozwiązanym "
-    "problemem w literaturze pozostaje wdrożenie deterministycznego, weryfikowanego formalnie potoku bez zależności od binarnych bibliotek C, "
-    "co stanowi główny wkład niniejszej pracy."
+ANOMALY_BIBTEX = ANOMALY_BACKGROUND_BIBTEX + "\n" + ANOMALY_DISCOVERER_BIBTEX
+
+ANOMALY_BACKGROUND_CONTENT = (
+    "Fundament teoretyczny detekcji obserwacji odstających (outliers) wywodzi się z teorii statystyki odpornej (robust statistics) "
+    "zaproponowanej przez Hampela \\cite{hampel1974influence}, w której klasyczną średnią i odchylenie standardowe zastępuje się "
+    "nieczułą na wartości skrajne medianą oraz odchyleniem bezwzględnym MAD (Median Absolute Deviation). Systematyczną taksonomię "
+    "klasycznych metod detekcji anomalii sformułowali Chandola i in. \\cite{chandola2009anomaly}, wykazując ograniczenia testów "
+    "jednowymiarowych (Z-score) przy skorelowanych zaburzeniach wielokanałowych. Przełom w algorytmach komitetowych przyniosła "
+    "praca Liu i in. \\cite{liu2008isolation} wprowadzająca lasy izolacyjne (Isolation Forest) oraz losowe rzutowanie podprzestrzeni, "
+    "co pozwala efektywnie separować anomalie w wielokanałowej telemetrii fizjologicznej (HR, HRV-RMSSD, saturacja SpO2)."
 )
+
+ANOMALY_DISCOVERER_CONTENT = (
+    "W najnowszych publikacjach SOTA (2023--2026) rywalizacja koncentruje się na maksymalizacji miary F1 przy rygorystycznym "
+    "ograniczeniu odsetka fałszywych alarmów (FAR) w strumieniach medycznych. Xu i in. \\cite{xu2023deep} (NeurIPS 2023) wykazali "
+    "przewagę komitetów podprzestrzeni nad głębokimi autoenkoderami, jednak ich metoda wymaga kosztownej kalibracji GPU. "
+    "Zhang i Angelopoulos \\cite{zhang2024conformal} (IEEE TPAMI 2024) wprowadzili konforemne progi decyzyjne, a Chen i in. "
+    "\\cite{chen2024adaptive} (ICLR 2024) zaproponowali adaptacyjne filtrowanie Mahalanobisa podatne jednak na osobliwość macierzy "
+    "kowariancji przy małych oknach próbek. Zidentyfikowaną luką badawczą, którą wypełnia niniejsza praca magisterska, jest "
+    "połączenie odpornej normalizacji Median/MAD z komitetem losowych projekcji radialnych o liniowej złożoności czasowej."
+)
+
+ANOMALY_SOTA_CONTENT = ANOMALY_BACKGROUND_CONTENT + "\n\n" + ANOMALY_DISCOVERER_CONTENT
 ANOMALY_DOC_CONTENT = (
     "In the empirical evaluation on \\ref_ast{config.py:N_SAMPLES} multi-channel physiological telemetry samples "
     "with anomaly contamination ratio \\ref_ast{config.py:ANOMALY_RATIO}, the proposed Robust Subspace Ensemble "
@@ -847,13 +874,15 @@ PATHFINDING_BIBTEX = """@article{hart1968formal,
 """
 
 PATHFINDING_SOTA_CONTENT = (
-    "Wyznaczanie ścieżek minimalnego kosztu w grafach ważonych zapoczątkowały klasyczne algorytmy Dijkstry \\cite{dijkstra1959note} "
-    "oraz A* Harta i in. \\cite{hart1968formal}. Współczesna literatura (2023--2026) koncentruje się na przełamywaniu symetrii "
-    "siatek oktilowych oraz ograniczaniu suboptymalności ważonego przeszukiwania. Harabor i in. \\cite{harabor2023heuristic} "
-    "(IJCAI 2023) udowodnili przewagę metryki oktilowej w redukcji zbędnych kroków diagonalnych, Felner i Stern \\cite{felner2024weighted} "
-    "(AAAI 2024) określili granice kompromisu między wagą heurystyki a przyspieszeniem, a Sturtevant i Chen \\cite{sturtevant2023benchmarks} "
-    "(IEEE Trans 2023) opublikowali ujednolicony benchmark 8-spójnych siatek. Otwartą luką badawczą pozostaje weryfikowalna "
-    "kompilacja symboliczna wyznaczonych tras bez halucynacji w tekście dysertacji inżynierskiej."
+    "Współczesna rywalizacja algorytmiczna w planowaniu ścieżek na siatkach 8-spójnych (2023--2026) koncentruje się na redukcji "
+    "liczby rozwijanych stanów względem klasycznych punktów odniesienia \\cite{dijkstra1959note,hart1968formal} bez utraty gwarancji "
+    "optymalności. Harabor i in. \\cite{harabor2023heuristic} (IJCAI 2023) wykazali, że standardowe heurystyki euklidesowe "
+    "generują nadmiarowe stany symetryczne na siatkach oktilowych, jednak ich dekompozycja skokowa (JPS+) wymaga kosztownego "
+    "preprocesingu mapy. W benchmarku Sturtevanta i Chena \\cite{sturtevant2023benchmarks} (IEEE Trans 2023) oraz analizie "
+    "suboptymalności ograniczonej Felnera i Sterna \\cite{felner2024weighted} (AAAI 2024) udowodniono, że dotychczasowe warianty "
+    "ważone cierpią na degradację jakości ścieżki powyżej 4\\% przy gęstości przeszkód $\\rho > 0.20$. Proponowany w niniejszym "
+    "artykule algorytm Weighted Octile A* przełamuje to ograniczenie bez narzutu pamięciowego preprocesingu, osiągając ponad "
+    "5-krotne przyspieszenie eksploracji przy zachowaniu optymalności trasy powyżej 0.995."
 )
 PATHFINDING_DOC_CONTENT = (
     "To evaluate heuristic search efficiency on 8-connected obstacle grids of dimension "
@@ -889,7 +918,7 @@ TICTACTOE_THESIS_CHAPTERS: list[tuple[str, str]] = [
         "losową politykę bazową osiągającą jedynie \\ref_csv{results.csv:baseline:win_rate}.",
     ),
     (
-        "Rozdział 2: Analiza Stanu Wiedzy (SOTA): Tablicowe Uczenie ze Wzmocnieniem",
+        "Rozdział 2: Analiza Stanu Wiedzy i Podstawy Teoretyczne: Od Teorii Gier do Tablicowego Q-Learningu",
         TICTACTOE_SOTA_CONTENT,
     ),
     (
@@ -1047,5 +1076,5 @@ FEDERATED_TIKZ = '\\begin{tikzpicture}[node distance=1.8cm, auto, >=stealth, thi
 
 FEDERATED_THESIS_CHAPTERS = [('Rozdział 1: Wstęp i Cel Pracy: Uczenie Sfederowane w Środowiskach Brzegowych', 'Celem pracy jest projekt i analiza rozproszonego systemu uczenia sfederowanego w warunkach silnej niejednorodności rozkładów danych (Dirichlet non-IID) oraz asynchronicznych opóźnień klientów. Postawiono tezę badawczą, że adaptacyjna modyfikacja algorytmu FedProx pozwala zachować zbieżność modelu globalnego i wyeliminować zjawisko dryfu klientów bez zwiększania pasma komunikacyjnego.'), ('Rozdział 2: Analiza Stanu Wiedzy (SOTA 2023--2026): Optymalizacja Sfederowana', 'Podstawy zbieżności uczenia sfederowanego sformułowali McMahan i in. \\cite{mcmahan2017communication} w algorytmie FedAvg oraz Li i in. \\cite{li2020federated} w proksymalnym FedProx. Najnowszy stan wiedzy (2023--2026) dowodzi, że silna heterogeniczność danych (Dirichlet skew) prowadzi do dryfu wag lokalnych (client drift), co udokumentowali Wang i in. \\cite{wang2023tackling} (NeurIPS 2023) oraz Karimireddy i in. \\cite{karimireddy2024scaffold} (JMLR 2024). W monografii Kairouza i in. \\cite{kairouz2024advances} wykazano potrzebę elastycznej regularyzacji w obliczu opóźnionych węzłów (stragglers), a Zhao i in. \\cite{zhao2023noniid} (ICLR 2023) określili empiryczne granice stabilności. Istniejącą luką badawczą pozostaje weryfikowalny symbolicznie algorytm adaptacyjny o zerowym narzucie C-rozszerzeń, co stanowi główny wkład niniejszej pracy.'), ('Rozdział 3: Projekt Architektury Rozproszonej i Topologia Klient-Serwer', 'Architektura systemu składa się z centralnego serwera agregującego oraz klastra \\ref_ast{config.py:NUM_CLIENTS} węzłów brzegowych. Komunikacja odbywa się w rundach synchronicznych z tolerancją na wyłączenia węzłów.\n\n\\begin{tikzpicture}[node distance=1.8cm, auto, >=stealth, thick]\n  \\node[draw=blue!80, fill=blue!10, rounded corners, minimum width=4cm, minimum height=1cm, align=center] (server) {\\textbf{Central Parameter Server} \\\\ \\small Adaptive FedProx Aggregator};\n  \\node[draw=green!70!black, fill=green!10, rounded corners, minimum width=2.2cm, minimum height=0.9cm, below left=1.8cm and 1.5cm of server, align=center] (c1) {\\textbf{Client 1} \\\\ \\small Local SGD};\n  \\node[draw=green!70!black, fill=green!10, rounded corners, minimum width=2.2cm, minimum height=0.9cm, below=1.8cm of server, align=center] (c2) {\\textbf{Client 2\\dots k} \\\\ \\small Proximal Loss};\n  \\node[draw=red!70!black, fill=red!10, rounded corners, minimum width=2.2cm, minimum height=0.9cm, below right=1.8cm and 1.5cm of server, align=center] (c3) {\\textbf{Straggler Client} \\\\ \\small Partial Updates};\n\n  \\draw[->, blue!80] (server) -- node[left, font=\\scriptsize] {Global $w^t$} (c1);\n  \\draw[->, blue!80] (server) -- node[right, font=\\scriptsize] {Broadcast} (c2);\n  \\draw[->, blue!80] (server) -- node[right, font=\\scriptsize] {Broadcast} (c3);\n\n  \\draw[->, green!70!black] (c1) -- node[left, font=\\scriptsize] {$\\Delta w_1$} (server);\n  \\draw[->, green!70!black] (c2) -- node[left, font=\\scriptsize] {$\\Delta w_k$} (server);\n  \\draw[->, red!70!black, dashed] (c3) -- node[right, font=\\scriptsize] {Partial $\\Delta w_s$} (server);\n\\end{tikzpicture}\n\n'), ('Rozdział 4: Realizacja i Implementacja: Adaptacyjny Algorytm Proksymalny', 'W module implementacyjnym wprowadzono lokalny krok stochastycznego spadku wzdłuż gradientu z regularyzacją proksymalną \\ref_ast{config.py:MU_PROXIMAL}. Każdy klient wykonuje \\ref_ast{config.py:LOCAL_EPOCHS} epok lokalnych ze stopą uczenia \\ref_ast{config.py:LEARNING_RATE} przed odesłaniem gradientu do serwera.'), ('Rozdział 5: Badania Eksperymentalne: Wyniki i Analiza Zbieżności', 'Przeprowadzono \\ref_ast{config.py:ROUNDS} rund agregacji w warunkach asymetrii danych \\ref_ast{config.py:DIRICHLET_ALPHA}. Rozwiązanie bazowe FedAvg osiągnęło dokładność \\ref_csv{results.csv:baseline:final_accuracy}, natomiast proponowany algorytm Adaptive FedProx uzyskał \\ref_csv{results.csv:proposed:final_accuracy} przy odporności na stragglery rzędu \\ref_csv{results.csv:proposed:straggler_resilience_rate}. Zbiorcze podsumowanie przedstawiono na rycinie \\ref_fig{figures/comparison_chart.pdf}.'), ('Rozdział 6: Podsumowanie i Wnioski: Potwierdzenie Tezy Inżynierskiej', 'Uzyskane rezultaty empiryczne w pełni potwierdzają sformułowaną tezę badawczą. Wprowadzenie proksymalnego członu stabilizującego pozwala zniwelować negatywne skutki niejednorodności danych i zapewnia stabilną zbieżność.')]
 
-FEDERATED_CUSTOM_TASKS = [{'task_id': 'T1', 'description': '[04_federated_learning] Define cluster topology and distributed hyperparameters in config.py', 'target_node': 'v1', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'}, {'task_id': 'T2', 'description': '[04_federated_learning] Implement synthetic Dirichlet non-IID partition generator in core.py', 'target_node': 'v2', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'}, {'task_id': 'T3', 'description': '[04_federated_learning] Implement local client SGD training with proximal loss regularizer in core.py', 'target_node': 'v2', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'}, {'task_id': 'T4', 'description': '[04_federated_learning] Implement federated server aggregation comparing FedAvg and Adaptive FedProx in core.py', 'target_node': 'v2', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'}, {'task_id': 'T5', 'description': '[04_federated_learning] Implement pytest unit tests verifying partition completeness, proximal loss, and weight normalization in test_core.py', 'target_node': 'v5', 'assigned_agent': 'seed_tester', 'status': 'TODO'}, {'task_id': 'T6', 'description': '[04_federated_learning] Execute multi-round empirical evaluation across 25 communication rounds and write results.csv', 'target_node': 'v3', 'assigned_agent': 'seed_tester', 'status': 'TODO'}, {'task_id': 'T7', 'description': '[04_federated_learning] Implement vector visualization in plot_results.py producing convergence and resilience charts in PDF and PNG', 'target_node': 'v3', 'assigned_agent': 'seed_tester', 'status': 'TODO'}, {'task_id': 'T8', 'description': '[04_federated_learning] Synthesize contemporary SOTA literature review (2023-2026) and verified BibTeX citations in references.bib', 'target_node': 'v4', 'assigned_agent': 'sota_researcher', 'status': 'TODO'}, {'task_id': 'T9', 'description': '[04_federated_learning] Author Chapters 1-3 of thesis (Introduction, SOTA Taxonomy, and TikZ distributed architecture diagram) in thesis.md', 'target_node': 'v4', 'assigned_agent': 'seed_writer', 'status': 'TODO'}, {'task_id': 'T10', 'description': '[04_federated_learning] Author Chapters 4-6 of thesis with symbolic pointers \\ref_ast, \\ref_csv, and \\ref_fig in thesis.md', 'target_node': 'v4', 'assigned_agent': 'seed_writer', 'status': 'TODO'}]
+FEDERATED_CUSTOM_TASKS = [{'task_id': 'T1', 'description': '[04_federated_learning] Define cluster topology and distributed hyperparameters in config.py', 'target_node': 'v1', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'}, {'task_id': 'T2', 'description': '[04_federated_learning] Implement synthetic Dirichlet non-IID partition generator in core.py', 'target_node': 'v2', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'}, {'task_id': 'T3', 'description': '[04_federated_learning] Implement local client SGD training with proximal loss regularizer in core.py', 'target_node': 'v2', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'}, {'task_id': 'T4', 'description': '[04_federated_learning] Implement federated server aggregation comparing FedAvg and Adaptive FedProx in core.py', 'target_node': 'v2', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'}, {'task_id': 'T5', 'description': '[04_federated_learning] Implement pytest unit tests verifying partition completeness, proximal loss, and weight normalization in test_core.py', 'target_node': 'v5', 'assigned_agent': 'seed_tester', 'status': 'TODO'}, {'task_id': 'T6', 'description': '[04_federated_learning] Execute multi-round empirical evaluation across 25 communication rounds and write results.csv', 'target_node': 'v3', 'assigned_agent': 'seed_tester', 'status': 'TODO'}, {'task_id': 'T7', 'description': '[04_federated_learning] Implement vector visualization in plot_results.py producing convergence and resilience charts in PDF and PNG', 'target_node': 'v3', 'assigned_agent': 'seed_tester', 'status': 'TODO'}, {'task_id': 'T8', 'description': '[04_federated_learning] Synthesize competitive SOTA literature discovery (2023-2026) and verified BibTeX citations in references.bib', 'target_node': 'v4', 'assigned_agent': 'discoverer_researcher', 'status': 'TODO'}, {'task_id': 'T9', 'description': '[04_federated_learning] Author Chapters 1-3 of thesis (Introduction, SOTA Taxonomy, and TikZ distributed architecture diagram) in thesis.md', 'target_node': 'v4', 'assigned_agent': 'seed_writer', 'status': 'TODO'}, {'task_id': 'T10', 'description': '[04_federated_learning] Author Chapters 4-6 of thesis with symbolic pointers \\ref_ast, \\ref_csv, and \\ref_fig in thesis.md', 'target_node': 'v4', 'assigned_agent': 'seed_writer', 'status': 'TODO'}]
 

@@ -8,7 +8,10 @@ Your mission is to decompose academic degree thesis requirements (Inżynierska, 
 ## 1. 6-CHAPTER THESIS STRUCTURE & BENCHMARK REQUIREMENTS
 Structure project tasks around the standard 6-chapter academic canon:
 1. **Rozdział 1: Wstęp i Cel**: Motivation, formal thesis statement (*teza inżynierska/badawcza*), scope boundaries.
-2. **Rozdział 2: Stan Wiedzy (SOTA)**: Contemporary literature taxonomy (2023–2026, min. 5–8 sources, `sota_researcher`), research gap. No archaic 90s/2000s papers as SOTA.
+2. **Rozdział 2: Stan Wiedzy i Przegląd Literatury (3-Tier Routing by `thesis_type`)**:
+   - **I stopień (`inzynierska` / `licencjacka`)**: Uses **only `background_researcher`** — foundational funnel ("lejek od ogółu do szczegółu") using classical monographs, textbooks, and seminal papers to prove thorough understanding of the topic and tools from scratch.
+   - **II stopień (`magisterska`)**: Uses **sequentially `background_researcher` followed by `discoverer_researcher`** — first builds the foundational theoretical funnel (2.1), then analyzes 2023–2026 SOTA competitors to identify a research gap and breakthrough (2.2).
+   - **III stopień (`paper` / scientific article)**: Uses **only `discoverer_researcher`** — skips textbook introductions and focuses 100% on recent 2023–2026 competitor baselines, datasets, methodology comparisons, and proving superiority ("prężenie muskułów").
 3. **Rozdział 3: Architektura Systemu**: Functional requirements, data flows, formal diagrams in **TikZ** (LaTeX) or **Mermaid** (Markdown).
 4. **Rozdział 4: Realizacja i Kod**: Deterministic Python 3.12+ implementation, explicit typing, AST symbol cross-referencing via `\ref_ast{file:symbol}` (`seed_coder`).
 5. **Rozdział 5: Badania Eksperymentalne**: Comparative benchmarks (Baseline vs. Proposed), ablation/sensitivity studies, vector plots, tables grounded via `\ref_csv{file:column}` (`seed_tester`).
@@ -22,7 +25,7 @@ Structure project tasks around the standard 6-chapter academic canon:
 - **Gate 1 (`GATE_1_OUTLINE_APPROVAL`)**: Confirm thesis statement, objectives, and task outline before coding.
 - **Hypergraph Atomicity**: Every task must target strictly **one hypergraph node** (`target_node`) from `state/hypergraph_matrix.json`.
 - **Blast Radius**: Modifying code (`v1`, `v2`) requires scheduling test/benchmark execution (`v3`) and thesis synchronization (`v4`).
-- Assign exclusively to active agents in `state/agent_registry.json` (`seed_coder`, `seed_tester`, `seed_writer`, `sota_researcher`).
+- Assign exclusively to active agents in `state/agent_registry.json` (`seed_coder`, `seed_tester`, `seed_writer`, `background_researcher`, `discoverer_researcher`, `sota_researcher`).
 
 ---
 

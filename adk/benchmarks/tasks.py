@@ -4,9 +4,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from adk.benchmarks.mock_fixtures import (
+    ANOMALY_BACKGROUND_BIBTEX,
+    ANOMALY_BACKGROUND_CONTENT,
     ANOMALY_BIBTEX,
     ANOMALY_CONFIG_AST_NODES,
     ANOMALY_CORE_CODE,
+    ANOMALY_DISCOVERER_BIBTEX,
+    ANOMALY_DISCOVERER_CONTENT,
     ANOMALY_DOC_CONTENT,
     ANOMALY_INITIAL_CSV,
     ANOMALY_PLOT_SCRIPT,
@@ -87,6 +91,10 @@ class BenchmarkTaskSpec:
     bibtex_entries: str = ""
     sota_section_title: str = ""
     sota_section_content: str = ""
+    background_bibtex_entries: str = ""
+    background_section_content: str = ""
+    discoverer_bibtex_entries: str = ""
+    discoverer_section_content: str = ""
     doc_section_title: str = ""
     doc_section_content: str = ""
     config_ast_nodes: list[tuple[str, str]] = field(default_factory=list)
@@ -136,8 +144,10 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
         initial_csv=TICTACTOE_INITIAL_CSV,
         plot_script=TICTACTOE_PLOT_SCRIPT,
         bibtex_entries=TICTACTOE_BIBTEX,
-        sota_section_title="Analiza Stanu Wiedzy (SOTA): Tablicowe Uczenie ze Wzmocnieniem",
+        sota_section_title="Analiza Stanu Wiedzy i Podstawy Teoretyczne: Od Teorii Gier do Tablicowego Q-Learningu",
         sota_section_content=TICTACTOE_SOTA_CONTENT,
+        background_bibtex_entries=TICTACTOE_BIBTEX,
+        background_section_content=TICTACTOE_SOTA_CONTENT,
         doc_section_title="Tabular Q-Learning Empirical Evaluation",
         doc_section_content=TICTACTOE_DOC_FULL_CONTENT,
         abstract_pl=(
@@ -179,6 +189,10 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
         bibtex_entries=ANOMALY_BIBTEX,
         sota_section_title="Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej",
         sota_section_content=ANOMALY_SOTA_CONTENT,
+        background_bibtex_entries=ANOMALY_BACKGROUND_BIBTEX,
+        background_section_content=ANOMALY_BACKGROUND_CONTENT,
+        discoverer_bibtex_entries=ANOMALY_DISCOVERER_BIBTEX,
+        discoverer_section_content=ANOMALY_DISCOVERER_CONTENT,
         doc_section_title="Bio-Signal Anomaly Detection Evaluation",
         doc_section_content=ANOMALY_DOC_CONTENT,
         abstract_pl=(
@@ -222,6 +236,8 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
         bibtex_entries=PATHFINDING_BIBTEX,
         sota_section_title="Analiza Stanu Wiedzy (SOTA): Heurystyczne Przeszukiwanie Grafów",
         sota_section_content=PATHFINDING_SOTA_CONTENT,
+        discoverer_bibtex_entries=PATHFINDING_BIBTEX,
+        discoverer_section_content=PATHFINDING_SOTA_CONTENT,
         doc_section_title="Weighted Octile A* Pathfinding Evaluation",
         doc_section_content=PATHFINDING_DOC_CONTENT,
         abstract_pl=(
@@ -262,6 +278,8 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
         bibtex_entries=FEDERATED_BIBTEX,
         sota_section_title="Analiza Stanu Wiedzy (SOTA 2023--2026): Optymalizacja Sfederowana",
         sota_section_content=FEDERATED_SOTA_CONTENT,
+        discoverer_bibtex_entries=FEDERATED_BIBTEX,
+        discoverer_section_content=FEDERATED_SOTA_CONTENT,
         doc_section_title="Adaptive FedProx Federated Optimization Evaluation",
         doc_section_content=FEDERATED_DOC_CONTENT,
         abstract_pl=(

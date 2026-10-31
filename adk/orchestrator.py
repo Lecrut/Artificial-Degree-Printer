@@ -2,9 +2,36 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any, Callable
+
+
+def _merge_bibtex_entries(existing_bib: str, new_bib: str) -> str:
+    """Merge BibTeX entries from existing_bib and new_bib, deduplicating by citation key while preserving order."""
+    entry_pattern = re.compile(r"(@\w+\s*\{\s*([^,\s]+)\s*,.*?\n\})", re.DOTALL)
+    entries_by_key: dict[str, str] = {}
+    ordered_keys: list[str] = []
+
+    for source_text in (existing_bib, new_bib):
+        if not source_text or not source_text.strip():
+            continue
+        matches = list(entry_pattern.finditer(source_text))
+        if matches:
+            for m in matches:
+                full_entry = m.group(1).strip()
+                cite_key = m.group(2).strip()
+                if cite_key not in entries_by_key:
+                    ordered_keys.append(cite_key)
+                entries_by_key[cite_key] = full_entry
+        else:
+            raw_key = f"_raw_{len(ordered_keys)}"
+            ordered_keys.append(raw_key)
+            entries_by_key[raw_key] = source_text.strip()
+
+    return "\n\n".join(entries_by_key[k] for k in ordered_keys) + "\n"
+
 
 from adk.benchmarks.tictactoe import (
     TICTACTOE_CONFIG_AST_NODES,
@@ -256,20 +283,39 @@ class NeuroSymbolicOrchestrator:
             plot_path.write_text(plot_script, encoding="utf-8")
             materialized_any = True
 
-        # 6. BibTeX bibliography & SOTA literature review (from sota_researcher)
+        # 6. BibTeX bibliography & Literature review (background_researcher, discoverer_researcher, sota_researcher)
+        research_stage = str(llm_output.get("research_stage") or "").strip().lower()
         bibtex_entries = llm_output.get("bibtex_entries")
         if isinstance(bibtex_entries, str) and bibtex_entries.strip():
             bib_rel = str(llm_output.get("bib_file") or "references.bib")
             bib_path = self.workspace_dir / bib_rel
             bib_path.parent.mkdir(parents=True, exist_ok=True)
-            bib_path.write_text(bibtex_entries.strip() + "\n", encoding="utf-8")
+            if bib_path.exists() and research_stage == "discoverer":
+                existing_bib = bib_path.read_text(encoding="utf-8", errors="ignore")
+                merged_bib = _merge_bibtex_entries(existing_bib, bibtex_entries)
+                bib_path.write_text(merged_bib, encoding="utf-8")
+            else:
+                bib_path.write_text(bibtex_entries.strip() + "\n", encoding="utf-8")
             materialized_any = True
 
         lit_section = llm_output.get("literature_review_section")
         if isinstance(lit_section, str) and lit_section.strip() and self.include_docs:
             doc_target = full_file_path if node_path.endswith((".md", ".tex")) else (self.workspace_dir / "thesis.md")
             sec_title = str(llm_output.get("section_title") or "Analiza Stanu Wiedzy (SOTA)")
-            edit_document_section(doc_target, sec_title, lit_section)
+            if research_stage == "discoverer" and doc_target.exists():
+                existing_doc = doc_target.read_text(encoding="utf-8", errors="ignore")
+                sec_pattern = re.compile(
+                    rf"^##+\s+{re.escape(sec_title)}\s*$(.*?)(?=^##\s+|\Z)",
+                    re.MULTILINE | re.DOTALL,
+                )
+                m_sec = sec_pattern.search(existing_doc)
+                if m_sec and lit_section.strip() not in m_sec.group(1):
+                    combined_lit = m_sec.group(1).strip() + "\n\n" + lit_section.strip()
+                    edit_document_section(doc_target, sec_title, combined_lit)
+                else:
+                    edit_document_section(doc_target, sec_title, lit_section)
+            else:
+                edit_document_section(doc_target, sec_title, lit_section)
             materialized_any = True
 
         # 7. Thesis subsections (from seed_writer)
@@ -841,11 +887,14 @@ class NeuroSymbolicOrchestrator:
         user_prompt: str,
         multi_cycle_waves: bool = False,
         preferred_coder: str | None = None,
+        thesis_type: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Ensure all hypergraph blast-radius nodes and active agents are valid; build 5-stage queue when multi_cycle_waves=True."""
+        """Ensure all hypergraph blast-radius nodes and active agents are valid; build tier-aware queue when multi_cycle_waves=True."""
         coder_agent = self._resolve_active_agent(preferred_coder or "seed_coder", fallback="seed_coder")
         tester_agent = self._resolve_active_agent("seed_tester", fallback="seed_coder")
         sota_agent = self._resolve_active_agent("sota_researcher", fallback="seed_writer")
+        bg_agent = self._resolve_active_agent("background_researcher", fallback=sota_agent)
+        disc_agent = self._resolve_active_agent("discoverer_researcher", fallback=sota_agent)
         writer_agent = self._resolve_active_agent("seed_writer", fallback="seed_coder")
 
         cleaned: list[dict[str, Any]] = []
@@ -873,48 +922,79 @@ class NeuroSymbolicOrchestrator:
             )
 
         if multi_cycle_waves and len(cleaned) < 3:
-            # Build a complete 5-stage engineering + 6-chapter thesis pipeline covering v1, v2, v3/v5, and v4
+            t_type = (thesis_type or "inzynierska").strip().lower()
+            # Build a complete engineering + 6-chapter thesis pipeline covering v1, v2, v3/v5, and v4
             multi_tasks: list[dict[str, Any]] = [
                 {
                     "task_id": "T1",
-                    "description": f"[Etap 1/5 - Konfiguracja AST] Zdefiniuj stale i hiperparametry w config.py ({user_prompt[:90]}...)",
+                    "description": f"[Etap 1 - Konfiguracja AST] Zdefiniuj stale i hiperparametry w config.py ({user_prompt[:90]}...)",
                     "target_node": "v1",
                     "assigned_agent": coder_agent,
                     "status": "TODO",
                 },
                 {
                     "task_id": "T2",
-                    "description": "[Etap 2/5 - Algorytm Glowny] Zaimplementuj logike algorytmu oraz funkcje train_and_evaluate() w core.py",
+                    "description": "[Etap 2 - Algorytm Glowny] Zaimplementuj logike algorytmu oraz funkcje train_and_evaluate() w core.py",
                     "target_node": "v2",
                     "assigned_agent": coder_agent,
                     "status": "TODO",
                 },
                 {
                     "task_id": "T3",
-                    "description": "[Etap 3/5 - Testy i Dane Empiryczne] Zbuduj testy jednostkowe test_core.py, wygeneruj results.csv oraz wykresy plot_results.py",
+                    "description": "[Etap 3 - Testy i Dane Empiryczne] Zbuduj testy jednostkowe test_core.py, wygeneruj results.csv oraz wykresy plot_results.py",
                     "target_node": "v3",
                     "assigned_agent": tester_agent,
                     "status": "TODO",
                 },
             ]
             if self.include_docs:
-                multi_tasks.extend(
-                    [
+                if t_type in ("magisterska", "master", "msc"):
+                    multi_tasks.extend(
+                        [
+                            {
+                                "task_id": "T4_BG",
+                                "description": "[Etap 4a - Research Background (II stopien)] Lejek teoretyczny od klasycznych monografii i podstaw w references.bib i thesis.md",
+                                "target_node": "v4",
+                                "assigned_agent": bg_agent,
+                                "status": "TODO",
+                            },
+                            {
+                                "task_id": "T4_DISC",
+                                "description": "[Etap 4b - Research Discoverer (II stopien)] Analiza najnowszego SOTA (2023-2026), konkurencji i luki badawczej w references.bib i thesis.md",
+                                "target_node": "v4",
+                                "assigned_agent": disc_agent,
+                                "status": "TODO",
+                            },
+                        ]
+                    )
+                elif t_type in ("paper", "article", "scientific_paper"):
+                    multi_tasks.append(
                         {
                             "task_id": "T4",
-                            "description": "[Etap 4/5 - Przeglad SOTA i Bibliografia] Opracuj Rozdzial 1 (Wstep i Teza), Rozdzial 2 (SOTA) oraz baze BibTeX references.bib",
+                            "description": "[Etap 4 - Research Discoverer (III stopien - Paper)] Porownanie z najnowsza konkurencja SOTA (2023-2026) i przewaga w references.bib",
                             "target_node": "v4",
-                            "assigned_agent": sota_agent,
+                            "assigned_agent": disc_agent,
                             "status": "TODO",
-                        },
+                        }
+                    )
+                else:
+                    multi_tasks.append(
                         {
-                            "task_id": "T5",
-                            "description": "[Etap 5/5 - Pelna Praca 6-Rozdzialowa] Napisz Rozdzialy 3, 4, 5 i 6 w thesis.md ze wskaznikami \\ref_ast, \\ref_csv i \\ref_fig",
+                            "task_id": "T4",
+                            "description": "[Etap 4 - Research Background (I stopien)] Lejek teoretyczny od podstaw i klasycznych zrodel do problemu w references.bib",
                             "target_node": "v4",
-                            "assigned_agent": writer_agent,
+                            "assigned_agent": bg_agent,
                             "status": "TODO",
-                        },
-                    ]
+                        }
+                    )
+                multi_tasks.append(
+                    {
+                        "task_id": "T5",
+                        "description": "[Etap 5 - Pelna Praca 6-Rozdzialowa] Napisz Rozdzialy 3, 4, 5 i 6 w thesis.md ze wskaznikami \\ref_ast, \\ref_csv i \\ref_fig",
+                        "target_node": "v4",
+                        "assigned_agent": writer_agent,
+                        "status": "TODO",
+                    }
                 )
             return multi_tasks
 
@@ -1024,11 +1104,12 @@ class NeuroSymbolicOrchestrator:
                 for t in raw_tasks
                 if isinstance(t, dict)
                 and not matrix_nodes.get(t.get("target_node", ""), {}).get("path", "").endswith((".md", ".tex"))
-                and t.get("assigned_agent") not in ("seed_writer", "sota_researcher")
+                and t.get("assigned_agent") not in ("seed_writer", "sota_researcher", "background_researcher", "discoverer_researcher")
             ]
         else:
             tasks = [t for t in raw_tasks if isinstance(t, dict)]
 
+        planned_thesis_type = str(plan_out.get("thesis_type") or "inzynierska")
         if multi_cycle_waves:
             tasks = self._normalize_and_heal_task_plan(
                 tasks,
@@ -1036,6 +1117,7 @@ class NeuroSymbolicOrchestrator:
                 user_prompt=user_prompt,
                 multi_cycle_waves=True,
                 preferred_coder=created_specialist_id or "seed_coder",
+                thesis_type=planned_thesis_type,
             )
 
         write_json_state(self.task_queue_path, tasks)
@@ -1088,6 +1170,7 @@ class NeuroSymbolicOrchestrator:
                 user_prompt=user_prompt,
                 multi_cycle_waves=multi_cycle_waves,
                 preferred_coder=created_specialist_id or "seed_coder",
+                thesis_type=planned_thesis_type,
             )
             write_json_state(self.task_queue_path, tasks)
             guard_out = {"status": "PASS", "approved": True, "healed_in_layer1": True, "issues": []}
