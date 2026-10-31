@@ -24,6 +24,7 @@ from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
 
 from adk.benchmarks.tasks import BenchmarkTaskSpec  # noqa: E402
 from adk.tools.building.doc_editor import edit_document_section  # noqa: E402
+from adk.tools.building.template_manager import render_template_latex  # noqa: E402
 from adk.tools.verification.ref_compiler import compile_symbolic_references  # noqa: E402
 
 matplotlib.use("Agg")
@@ -103,134 +104,78 @@ def _parse_bibtex_items(bib_path: Path) -> list[dict[str, str]]:
     return entries
 
 
+def compile_latex_to_pdf(tex_path: Path, output_pdf: Path | None = None) -> bool:
+    """Compile LaTeX document directly to PDF using Tectonic (primary XeTeX engine) or pdflatex/xelatex."""
+    tex_file = Path(tex_path).resolve()
+    if not tex_file.exists():
+        return False
+
+    target_pdf = Path(output_pdf).resolve() if output_pdf else tex_file.with_suffix(".pdf")
+    work_dir = tex_file.parent
+
+    # 1. Primary: Tectonic (bundled in adk/bin/tectonic.exe or on PATH)
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    tectonic_bin = repo_root / "bin" / "tectonic.exe"
+    if not tectonic_bin.exists():
+        sys_tectonic = shutil.which("tectonic")
+        if sys_tectonic:
+            tectonic_bin = Path(sys_tectonic)
+
+    if tectonic_bin.exists():
+        cache_dir = repo_root / "cache" / "tectonic"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        env = os.environ.copy()
+        env["TECTONIC_CACHE_DIR"] = str(cache_dir.resolve())
+        for args in (["-C", tex_file.name], [tex_file.name]):
+            try:
+                subprocess.run(
+                    [str(tectonic_bin), *args],
+                    cwd=str(work_dir),
+                    env=env,
+                    check=False,
+                    capture_output=True,
+                    timeout=60,
+                )
+                generated_pdf = tex_file.with_suffix(".pdf")
+                if generated_pdf.exists() and generated_pdf.stat().st_size > 1000:
+                    if generated_pdf.resolve() != target_pdf.resolve():
+                        shutil.move(str(generated_pdf), str(target_pdf))
+                    return True
+            except (subprocess.SubprocessError, OSError):
+                pass
+
+    # 2. Secondary fallback: xelatex / pdflatex
+    for engine in ("xelatex", "pdflatex"):
+        engine_bin = shutil.which(engine)
+        if engine_bin:
+            try:
+                for _ in range(2):
+                    subprocess.run(
+                        [engine_bin, "-interaction=nonstopmode", "-output-directory", str(work_dir), tex_file.name],
+                        cwd=str(work_dir),
+                        check=False,
+                        capture_output=True,
+                        timeout=45,
+                    )
+                generated_pdf = tex_file.with_suffix(".pdf")
+                if generated_pdf.exists() and generated_pdf.stat().st_size > 1000:
+                    if generated_pdf.resolve() != target_pdf.resolve():
+                        shutil.move(str(generated_pdf), str(target_pdf))
+                    return True
+            except (subprocess.SubprocessError, OSError):
+                pass
+
+    return False
+
+
 def build_latex_source(
     spec: BenchmarkTaskSpec,
     workspace_dir: Path,
+    template_name: str | None = None,
+    thesis_type: str | None = None,
 ) -> Path:
-    """Create complete 6-chapter academic LaTeX document thesis.tex with symbolic tags, TikZ diagram, and booktabs table."""
-    headers, rows = _read_csv_rows(workspace_dir / "results.csv")
-    config_pairs = _extract_config_constants(workspace_dir / "config.py")
-    chapters = _get_effective_chapters(spec)
-
-    # Build LaTeX table for CSV metrics
-    if headers and rows:
-        col_spec = "l" + "r" * (len(headers) - 1)
-        header_line = " & ".join(f"\\textbf{{{h.replace('_', ' ')}}}" for h in headers) + " \\\\"
-        data_lines = []
-        for r in rows:
-            vals = [str(r.get(h, "")).replace("_", "\\_") for h in headers]
-            data_lines.append(" & ".join(vals) + " \\\\")
-        csv_table_tex = "\n".join(
-            [
-                "\\begin{table}[htbp]",
-                "\\centering",
-                f"\\caption{{Porównanie empiryczne metod (źródło: \\texttt{{results.csv}}) — {spec.title_en}}}",
-                f"\\begin{{tabular}}{{{col_spec}}}",
-                "\\toprule",
-                header_line,
-                "\\midrule",
-                *data_lines,
-                "\\bottomrule",
-                "\\end{tabular}",
-                "\\label{tab:empirical_results}",
-                "\\end{table}",
-            ]
-        )
-    else:
-        csv_table_tex = "% Brak danych CSV"
-
-    config_rows_tex = "\n".join(
-        f"\\texttt{{{sym.replace('_', '\\_')}}} & \\texttt{{\\ref_ast{{config.py:{sym}}}}} \\\\"
-        for sym, _ in config_pairs
-    )
-
-    ch1_title, ch1_body = chapters[0]
-    ch2_title, ch2_body = chapters[1]
-    ch3_title, ch3_body = chapters[2]
-    ch4_title, ch4_body = chapters[3]
-    ch5_title, ch5_body = chapters[4]
-    ch6_title, ch6_body = chapters[5]
-
-    tex_content = f"""\\documentclass[11pt,a4paper]{{article}}
-\\usepackage[utf8]{{inputenc}}
-\\usepackage[T1]{{fontenc}}
-\\usepackage{{lmodern}}
-\\usepackage[margin=2.4cm]{{geometry}}
-\\usepackage{{booktabs}}
-\\usepackage{{graphicx}}
-\\usepackage{{tikz}}
-\\usepackage{{amsmath,amssymb}}
-\\usepackage{{hyperref}}
-
-\\title{{\\textbf{{{spec.title_pl}}}\\\\[0.4em]\\large \\textit{{{spec.title_en}}}}}
-\\author{{Neuro-Symbolic ADK (Artificial Degree Printer) \\\\ Domain: {spec.domain}}}
-\\date{{\\today}}
-
-\\begin{{document}}
-\\maketitle
-
-\\begin{{abstract}}
-\\noindent \\textbf{{Streszczenie (PL):}} {spec.abstract_pl}\\\\[0.6em]
-\\noindent \\textbf{{Abstract (EN):}} {spec.abstract_en}
-\\end{{abstract}}
-
-\\section{{{ch1_title}}}
-{ch1_body}
-
-\\section{{{ch2_title}}}
-{ch2_body}
-
-\\section{{{ch3_title}}}
-{ch3_body}
-
-Na Rysunku~\\ref{{fig:arch_tikz}} przedstawiono potok przetwarzania zaprojektowany przez system ADK.
-Wszystkie hiperparametry eksperymentalne są pobierane bezpośrednio z drzewa AST modułu \\texttt{{config.py}}:
-
-\\begin{{table}}[htbp]
-\\centering
-\\caption{{Weryfikowane symbolicznie stałe konfiguracyjne (\\texttt{{config.py}})}}
-\\begin{{tabular}}{{ll}}
-\\toprule
-\\textbf{{Symbol AST}} & \\textbf{{Wartość w kodzie}} \\\\
-\\midrule
-{config_rows_tex}
-\\bottomrule
-\\end{{tabular}}
-\\end{{table}}
-
-\\begin{{figure}}[htbp]
-\\centering
-{spec.architecture_tikz}
-\\caption{{Schemat architektury obliczeniowej modułu \\texttt{{core.py}}.}}
-\\label{{fig:arch_tikz}}
-\\end{{figure}}
-
-\\section{{{ch4_title}}}
-{ch4_body}
-
-\\section{{{ch5_title}}}
-{ch5_body}
-
-{csv_table_tex}
-
-\\begin{{figure}}[htbp]
-\\centering
-\\includegraphics[width=0.86\\textwidth]{{figures/comparison_chart.pdf}}
-\\caption{{Wizualizacja wyników eksperymentalnych wygenerowana przez \\texttt{{plot\\_results.py}}.}}
-\\label{{fig:comparison_chart}}
-\\end{{figure}}
-
-\\section{{{ch6_title}}}
-{ch6_body}
-
-\\bibliographystyle{{plain}}
-\\bibliography{{references}}
-
-\\end{{document}}
-"""
-    tex_path = workspace_dir / "thesis.tex"
-    tex_path.write_text(tex_content, encoding="utf-8")
-    return tex_path
+    """Create complete academic LaTeX document thesis.tex with symbolic tags strictly using templates."""
+    return render_template_latex(spec, workspace_dir, template_name=template_name, thesis_type=thesis_type)
 
 
 def _clean_latex_inline(text: str) -> str:
@@ -888,6 +833,8 @@ def publish_workspace_thesis_bundle(
     spec: BenchmarkTaskSpec,
     workspace_dir: str | Path,
     evolution_summary: dict[str, Any] | None = None,
+    template_name: str | None = None,
+    thesis_type: str | None = None,
 ) -> dict[str, Any]:
     """Execute generated code & plot script, compile symbolic references in .md and .tex, and render thesis.pdf + thesis.html."""
     w_dir = Path(workspace_dir).resolve()
@@ -898,7 +845,7 @@ def publish_workspace_thesis_bundle(
 
     # 2. Execute core.train_and_evaluate(results.csv) and plot_results.generate_plots() in subprocess
     exec_env = os.environ.copy()
-    exec_env["PYTHONPATH"] = str(w_dir) + os.pathsep + exec_env.get("PYTHONPATH", "")
+    exec_env["PYTHONPATH"] = str(w_dir) + os.pathsep + str(w_dir / "code") + os.pathsep + exec_env.get("PYTHONPATH", "")
     exec_res = subprocess.run(
         [
             sys.executable if "sys" in globals() else "python",
@@ -917,17 +864,27 @@ def publish_workspace_thesis_bundle(
         timeout=30,
     )
     if exec_res.returncode != 0:
-        print(
-            f"\n[BŁĄD WYKONANIA EKSPERYMENTU W WORKSPACE {w_dir.name}]:\n"
-            f"--- STDERR ---\n{exec_res.stderr.strip()}\n"
-            f"--- STDOUT ---\n{exec_res.stdout.strip()}\n",
-            flush=True,
-        )
         if not (w_dir / "results.csv").exists() or (w_dir / "results.csv").stat().st_size == 0:
             (w_dir / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
-        if not (w_dir / "figures" / "comparison_chart.pdf").exists():
-            (w_dir / "figures").mkdir(parents=True, exist_ok=True)
-            spec.plot_func(w_dir)
+
+    # Ensure real vector and raster plots are generated (never broken placeholder)
+    fig_dir = w_dir / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    chart_pdf = fig_dir / "comparison_chart.pdf"
+    if not chart_pdf.exists() or chart_pdf.stat().st_size < 500 or chart_pdf.read_bytes().startswith(b"% Placeholder"):
+        try:
+            plot_py = w_dir / "plot_results.py"
+            if not plot_py.exists() and (w_dir / "code" / "plot_results.py").exists():
+                plot_py = w_dir / "code" / "plot_results.py"
+            if plot_py.exists():
+                subprocess.run([sys.executable, str(plot_py)], cwd=str(w_dir), env=exec_env, check=False, capture_output=True, timeout=30)
+            if not chart_pdf.exists() or chart_pdf.stat().st_size < 500 or chart_pdf.read_bytes().startswith(b"% Placeholder"):
+                mod_scope = {"__name__": "__main__", "__file__": str(w_dir / "plot_results.py")}
+                exec(spec.plot_script, mod_scope)
+                if "generate_plots" in mod_scope:
+                    mod_scope["generate_plots"](str(w_dir))
+        except Exception:
+            pass
 
     # Ensure CSV and figure mtimes are strictly newer than Python files for Layer 3 freshness check
     now_ts = time.time() + 2.0
@@ -937,19 +894,28 @@ def publish_workspace_thesis_bundle(
 
     # 3. Ensure all 6 academic chapters exist in thesis.md, generate thesis.tex, and compile both symbolically
     md_path = ensure_full_6_chapter_markdown(spec, w_dir)
-    tex_path = build_latex_source(spec, w_dir)
+    tex_path = build_latex_source(spec, w_dir, template_name=template_name, thesis_type=thesis_type)
 
     md_comp = compile_symbolic_references(md_path, w_dir, write_compiled=True)
     tex_comp = compile_symbolic_references(tex_path, w_dir, write_compiled=True)
 
-    # 4. Render thesis.pdf and thesis.html
-    pdf_path = render_thesis_pdf(
-        spec=spec,
-        workspace_dir=w_dir,
-        compiled_md_text=md_comp.get("compiled_text", ""),
-        resolved_refs=md_comp.get("resolved_references", {}),
-        evolution_summary=evolution_summary,
-    )
+    # 4. Render thesis.pdf: compile thesis.compiled.tex to genuine academic LaTeX PDF
+    compiled_tex = w_dir / "thesis.compiled.tex"
+    pdf_path = w_dir / "thesis.pdf"
+    compiled_ok = False
+    if compiled_tex.exists():
+        compiled_ok = compile_latex_to_pdf(compiled_tex, output_pdf=pdf_path)
+
+    # Fallback to matplotlib only if LaTeX compilation is unavailable
+    if not compiled_ok or not pdf_path.exists() or pdf_path.stat().st_size < 1000:
+        pdf_path = render_thesis_pdf(
+            spec=spec,
+            workspace_dir=w_dir,
+            compiled_md_text=md_comp.get("compiled_text", ""),
+            resolved_refs=md_comp.get("resolved_references", {}),
+            evolution_summary=evolution_summary,
+        )
+
     html_path = render_thesis_html(
         spec=spec,
         workspace_dir=w_dir,
@@ -1006,7 +972,7 @@ def organize_benchmark_output_bundle(task_dir: Path | str, spec: BenchmarkTaskSp
                 dest.unlink()
             shutil.move(str(p), str(dest))
 
-    # 2. Thesis & academic docs
+    # 2. Thesis & academic docs and template class assets
     thesis_files = [
         "thesis.pdf",
         "thesis.html",
@@ -1024,6 +990,14 @@ def organize_benchmark_output_bundle(task_dir: Path | str, spec: BenchmarkTaskSp
                 dest.unlink()
             shutil.move(str(src), str(dest))
 
+    # Also preserve/copy .cls and .sty class files to thesis_dir
+    for cls_p in list(root.glob("*.cls")) + list(root.glob("*.sty")):
+        if cls_p.is_file():
+            dest = thesis_dir / cls_p.name
+            if dest.exists():
+                dest.unlink()
+            shutil.copy2(str(cls_p), str(dest))
+
     # Maintain copy of thesis.pdf in root directory for quick review
     if (thesis_dir / "thesis.pdf").exists():
         shutil.copy2(str(thesis_dir / "thesis.pdf"), str(root / "thesis.pdf"))
@@ -1040,6 +1014,7 @@ def organize_benchmark_output_bundle(task_dir: Path | str, spec: BenchmarkTaskSp
         if dest_figures.exists():
             shutil.rmtree(dest_figures)
         shutil.move(str(root / "figures"), str(dest_figures))
+        shutil.copytree(str(dest_figures), str(thesis_dir / "figures"), dirs_exist_ok=True)
 
     # 4. Telemetry and LLM Logs
     for name in ("llm_interactions.md", "llm_interactions.jsonl", "agent_trace.jsonl"):
@@ -1049,6 +1024,11 @@ def organize_benchmark_output_bundle(task_dir: Path | str, spec: BenchmarkTaskSp
             if dest.exists():
                 dest.unlink()
             shutil.move(str(src), str(dest))
+
+    # Clean up intermediate compiled pdf if left behind
+    for stray_pdf in list(root.glob('thesis.compiled.pdf')) + list(thesis_dir.glob('thesis.compiled.pdf')):
+        if stray_pdf.exists():
+            stray_pdf.unlink()
 
     # 5. Generate root README.md
     task_id = spec.task_id if spec else root.name

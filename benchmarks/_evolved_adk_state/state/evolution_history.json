@@ -121,7 +121,7 @@
         "status": "mutated",
         "agent": "seed_coder",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "injected_rule": "[01_rl_tictactoe cycle #1] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
@@ -146,7 +146,7 @@
         "status": "mutated",
         "agent": "seed_tester",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "injected_rule": "[01_rl_tictactoe cycle #2] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
@@ -171,10 +171,69 @@
         "status": "mutated",
         "agent": "seed_writer",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "injected_rule": "[01_rl_tictactoe cycle #3] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_CREATED",
+      "details": {
+        "status": "created",
+        "agent_id": "dyn_anomaly_ml_specialist",
+        "specialization": "anomaly_ml_specialist",
+        "domain": "building",
+        "path": "agents/building/dyn_anomaly_ml_specialist.md"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v1",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 16,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "dyn_anomaly_ml_specialist",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\dyn_anomaly_ml_specialist.md",
+        "injected_rule": "[02_ml_anomaly_detection cycle #1] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v3",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 18,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_SPLIT",
+      "details": {
+        "status": "split",
+        "archived_agent": "seed_tester",
+        "created_agents": [
+          "seed_tester_unit_testing",
+          "seed_tester_edge_case_testing"
+        ]
       }
     },
     {
@@ -196,11 +255,66 @@
         "status": "mutated",
         "agent": "seed_writer",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "injected_rule": "[02_ml_anomaly_detection cycle #3] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_CREATED",
+      "details": {
+        "status": "created",
+        "agent_id": "dyn_graph_optimization_specialist",
+        "specialization": "graph_optimization_specialist",
+        "domain": "building",
+        "path": "agents/building/dyn_graph_optimization_specialist.md"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v1",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
+        "delta": 0.4,
+        "degree": 16,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "dyn_graph_optimization_specialist",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\dyn_graph_optimization_specialist.md",
+        "injected_rule": "[03_graph_pathfinding cycle #1] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
       }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v3",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
+        "delta": 0.4,
+        "degree": 18,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "VALIDATOR_PROMOTED",
+      "validator_name": "ast_safety_contract_validator.py",
+      "target_path": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\tools\\verification\\ast_safety_contract_validator.py",
+      "bad_sample_rejected": true,
+      "good_sample_accepted": true
     },
     {
       "type": "WEIGHT_ESCALATED",
@@ -221,16 +335,29 @@
         "status": "mutated",
         "agent": "seed_writer",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
+        "injected_rule": "[03_graph_pathfinding cycle #3] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "seed_writer",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+          "cycle": 1,
+          "rules_consolidated": 4,
+          "consolidated_invariant": "Consolidated invariant (4 rules): Maintain strict AST constant parity with thesis \\ref_ast tags, deterministic seeding (seed=42), and schema-validated CSV outputs."
+        }
       }
     },
     {
-      "type": "HITL_TRIGGERED",
-      "gate": "GATE_REMEDIATION_EXHAUSTED",
-      "question": "Wyczerpano 3 prób naprawy zadania T5."
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+        "cycle": 1,
+        "rules_consolidated": 4,
+        "consolidated_invariant": "Consolidated invariant (4 rules): Maintain strict AST constant parity with thesis \\ref_ast tags, deterministic seeding (seed=42), and schema-validated CSV outputs."
+      }
     },
     {
       "type": "AGENT_MUTATED",
@@ -238,18 +365,28 @@
         "status": "mutated",
         "agent": "seed_coder",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "injected_rule": "[03_graph_pathfinding cycle #1] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
       }
     },
     {
+      "type": "AGENT_CREATED",
+      "details": {
+        "status": "created",
+        "agent_id": "dyn_federated_ml_specialist",
+        "specialization": "federated_ml_specialist",
+        "domain": "building",
+        "path": "agents/building/dyn_federated_ml_specialist.md"
+      }
+    },
+    {
       "type": "WEIGHT_ESCALATED",
       "details": {
         "node_id": "v1",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
+        "old_weight": 2.6,
+        "new_weight": 3.0,
         "delta": 0.4,
         "degree": 16,
         "old_tier": "LRM",
@@ -261,10 +398,10 @@
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Preserve strict AST, CSV and symbolic reference parity in task T1 (v1).",
-        "active_rules_count": 3,
+        "agent": "dyn_federated_ml_specialist",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\dyn_federated_ml_specialist.md",
+        "injected_rule": "[04_federated_learning cycle #1] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
+        "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
       }
@@ -272,11 +409,11 @@
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "v3",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
+        "node_id": "v2",
+        "old_weight": 1.2,
+        "new_weight": 1.6,
         "delta": 0.4,
-        "degree": 18,
+        "degree": 4,
         "old_tier": "LRM",
         "new_tier": "LRM",
         "tier": "LRM"
@@ -286,30 +423,12 @@
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Preserve strict AST, CSV and symbolic reference parity in task T3 (v3).",
-        "active_rules_count": 0,
-        "compacted": true,
-        "compaction_details": {
-          "status": "consolidated",
-          "agent": "seed_coder",
-          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-          "cycle": 1,
-          "rules_consolidated": 4,
-          "consolidated_invariant": "Maintain strict AST signature compatibility and symbolic pointer validity across all task iterations, ensuring parity in exported function names, classes, and constants across shared modules."
-        }
-      }
-    },
-    {
-      "type": "PROMPT_CONSOLIDATED",
-      "details": {
-        "status": "consolidated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "cycle": 1,
-        "rules_consolidated": 4,
-        "consolidated_invariant": "Maintain strict AST signature compatibility and symbolic pointer validity across all task iterations, ensuring parity in exported function names, classes, and constants across shared modules."
+        "agent": "dyn_federated_ml_specialist",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\dyn_federated_ml_specialist.md",
+        "injected_rule": "[04_federated_learning cycle #2] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
       }
     },
     {
@@ -319,7 +438,7 @@
         "old_weight": 3.2,
         "new_weight": 3.6,
         "delta": 0.4,
-        "degree": 2,
+        "degree": 1,
         "old_tier": "LRM",
         "new_tier": "LRM",
         "tier": "LRM"
@@ -329,371 +448,13 @@
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Maintain strict AST signature compatibility and symbolic pointer validity across all task iterations, ensuring parity in exported function names, classes, and constants across shared modules.",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+        "injected_rule": "[04_federated_learning cycle #3] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
       }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 3.6,
-        "new_weight": 4.0,
-        "delta": 0.4,
-        "degree": 2,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Maintain strict AST signature compatibility and symbolic pointer validity across all task iterations, ensuring parity in exported function names, classes, and constants across shared modules.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 4.0,
-        "new_weight": 4.4,
-        "delta": 0.4,
-        "degree": 2,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "HITL_TRIGGERED",
-      "gate": "GATE_REMEDIATION_EXHAUSTED",
-      "question": "Wyczerpano 3 prób naprawy zadania T5."
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Enforce strict AST signature compatibility, symbolic pointer validity, and deterministic execution across all task iterations, ensuring parity in exported symbols and prohibiting unbound global variables in train_and_evaluate.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v1",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 16,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Enforce strict AST signature compatibility, symbolic pointer validity, and deterministic execution across all task iterations, ensuring parity in exported symbols and prohibiting unbound global variables in train_and_evaluate.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v3",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 18,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 4.4,
-        "new_weight": 4.8,
-        "delta": 0.4,
-        "degree": 2,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Enforce strict AST signature compatibility, symbolic pointer validity, and deterministic execution across all task iterations, ensuring parity in exported symbols and prohibiting unbound global variables in train_and_evaluate.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 4.8,
-        "new_weight": 5.2,
-        "delta": 0.4,
-        "degree": 2,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 5.2,
-        "new_weight": 5.6,
-        "delta": 0.4,
-        "degree": 2,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "HITL_TRIGGERED",
-      "gate": "GATE_REMEDIATION_EXHAUSTED",
-      "question": "Wyczerpano 3 prób naprawy zadania T5."
-    },
-    {
-      "type": "VALIDATOR_PROMOTED",
-      "validator_name": "ast_safety_contract_validator.py",
-      "target_path": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\tools\\verification\\ast_safety_contract_validator.py",
-      "bad_sample_rejected": true,
-      "good_sample_accepted": true
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Enforce strict AST signature compatibility, symbolic pointer validity, and deterministic execution across all task iterations, ensuring parity in exported symbols and prohibiting unbound global variables in train_and_evaluate.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v1",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
-        "delta": 0.4,
-        "degree": 16,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Enforce strict AST signature compatibility, symbolic pointer validity, and deterministic execution across all task iterations, ensuring parity in exported symbols and prohibiting unbound global variables in train_and_evaluate.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v3",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
-        "delta": 0.4,
-        "degree": 18,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Enforce strict AST signature compatibility, symbolic pointer validity, and deterministic execution across all task iterations, ensuring parity in exported symbols and prohibiting unbound global variables in train_and_evaluate.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 5.6,
-        "new_weight": 6.0,
-        "delta": 0.4,
-        "degree": 2,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Enforce strict AST signature compatibility, symbolic pointer validity, and deterministic execution across all task iterations, ensuring parity in exported symbols and prohibiting unbound global variables in train_and_evaluate.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 6.0,
-        "new_weight": 6.4,
-        "delta": 0.4,
-        "degree": 2,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 6.4,
-        "new_weight": 6.8,
-        "delta": 0.4,
-        "degree": 2,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Enforce strict AST signature compatibility, symbolic pointer validity, and deterministic execution across all task iterations, ensuring parity in exported symbols and prohibiting unbound global variables in train_and_evaluate.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "HITL_TRIGGERED",
-      "gate": "GATE_REMEDIATION_EXHAUSTED",
-      "question": "Wyczerpano 3 prób naprawy zadania T5."
     }
   ]
 }

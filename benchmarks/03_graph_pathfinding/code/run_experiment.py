@@ -41,7 +41,7 @@ def main() -> None:
 
     print("=" * 78)
     print("URUCHAMIANIE KODU ZADANIA: 03_graph_pathfinding")
-    print("Tytuł: Optymalizacja Heurystyczna Tras w Grafach Siatkowych: Ważony Algorytm A* z Metryką Oktilową")
+    print("Tytuł: Heurystyczna Optymalizacja Ścieżek na Siatkach Przestrzennych: Ważony Algorytm A* z Metryką Oktilową")
     print("=" * 78)
 
     results_dir = here.parent / "results" if (here.parent / "results").exists() else here

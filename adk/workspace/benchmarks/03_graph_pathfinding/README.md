@@ -1,6 +1,6 @@
-# [03_graph_pathfinding] Optymalizacja Heurystyczna Tras w Grafach Siatkowych: Ważony Algorytm A* z Metryką Oktilową
+# [03_graph_pathfinding] Heurystyczna Optymalizacja Ścieżek na Siatkach Przestrzennych: Ważony Algorytm A* z Metryką Oktilową
 
-**Domain:** Combinatorial Optimization & Graph Algorithms
+**Domain:** Graph Algorithms & Heuristic Search
 
 ## Clean Directory Structure:
 - `thesis/`: Complete academic degree thesis ([thesis.pdf](thesis/thesis.pdf), HTML preview, LaTeX source, BibTeX)

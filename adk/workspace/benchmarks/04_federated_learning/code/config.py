@@ -1,1 +1,6 @@
-FEDERATED_LEARNING_CONFIG = {'num_clients': 10, 'num_rounds': 100, 'local_epochs': 5, 'batch_size': 32, 'learning_rate': 0.01, 'proximal_param': 0.1, 'random_seed': 42, 'model_dim': 784, 'num_classes': 10, 'aggregation_strategy': 'fedavg', 'client_sampling_rate': 0.8, 'noise_level': 0.001, 'optimizer': 'sgd', 'momentum': 0.9, 'weight_decay': 0.0001, 'clip_gradients': True, 'gradient_clip_value': 1.0}
+NUM_CLIENTS = 10
+DIRICHLET_ALPHA = 0.5
+LOCAL_EPOCHS = 3
+LEARNING_RATE = 0.05
+MU_PROXIMAL = 0.01
+ROUNDS = 25

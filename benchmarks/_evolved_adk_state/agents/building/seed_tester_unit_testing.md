@@ -33,4 +33,3 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: [01_rl_tictactoe cycle #2] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.
-- **RULE**: [04_federated_learning cycle #2] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.

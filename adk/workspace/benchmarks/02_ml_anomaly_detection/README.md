@@ -1,4 +1,4 @@
-# [02_ml_anomaly_detection] Wielokanałowa Detekcja Anomalii w Sygnałach Biomedycznych Metodą Odpornych Podprzestrzeni
+# [02_ml_anomaly_detection] Odporna Detekcja Anomalii w Wielokanałowej Telemetrii Fizjologicznej: Komitety Losowych Podprzestrzeni
 
 **Domain:** Machine Learning & Biomedical Signal Processing
 

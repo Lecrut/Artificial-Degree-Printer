@@ -1,25 +1,38 @@
-\documentclass[11pt,a4paper]{article}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
-\usepackage[margin=2.4cm]{geometry}
+% IEEE Scientific Conference Paper Template (IEEEtran)
+\documentclass[conference]{IEEEtran}
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+\else
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,amssymb,amsfonts}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{tikz}
-\usepackage{amsmath,amssymb}
-\usepackage{hyperref}
-
-\title{\textbf{Optymalizacja Heurystyczna Tras w Grafach Siatkowych: Ważony Algorytm A* z Metryką Oktilową}\\[0.4em]\large \textit{Heuristic Graph Pathfinding Optimization: Weighted Octile A* vs. Dijkstra Search}}
-\author{Neuro-Symbolic ADK (Artificial Degree Printer) \\ Domain: Combinatorial Optimization & Graph Algorithms}
-\date{\today}
+\usetikzlibrary{positioning}
+\usepackage[hidelinks]{hyperref}
 
 \begin{document}
+
+\title{Heuristic Pathfinding Optimization on Spatial Grids: Weighted Octile A* vs. Dijkstra}
+
+\author{\IEEEauthorblockN{Neuro-Symbolic ADK Author}
+\IEEEauthorblockA{\textit{Institute of Applied Computer Science} \\
+\textit{Lodz University of Technology} \\
+Lodz, Poland \\
+Domain: Graph Algorithms & Heuristic Search}}
+
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Streszczenie (PL):} Praca bada efektywność obliczeniową ważonego algorytmu A* z heurystyką oktilową na 8-spójnych siatkach z przeszkodami losowymi w porównaniu z klasycznym algorytmem Dijkstry.\\[0.6em]
-\noindent \textbf{Abstract (EN):} This thesis evaluates Weighted Octile A* pathfinding on 8-connected obstacle grids against uninformed Dijkstra search, demonstrating over 5x reduction in vertex expansions while preserving path optimality.
+This thesis evaluates Weighted Octile A* pathfinding on 8-connected obstacle grids against uninformed Dijkstra search, demonstrating over 5x reduction in vertex expansions while preserving path optimality.
 \end{abstract}
+
+\begin{IEEEkeywords}
+neuro-symbolic systems, empirical verification, abstract syntax tree, automated thesis synthesis, machine learning
+\end{IEEEkeywords}
 
 \section{Rozdział 1: Wstęp, Cel i Teza Pracy}
 Planowanie trajektorii ruchu w dyskretnych środowiskach z przeszkodami stanowi fundamentalne zagadnienie robotyki mobilnej oraz optymalizacji kombinatorycznej \cite{dijkstra1959note,hart1968formal}. Celem niniejszej pracy jest analiza porównawcza niepoinformowanego algorytmu Dijkstry oraz ważonego algorytmu A* z metryką oktilową (Weighted Octile A*) na 8-spójnych siatkach o wymiarze \ref_ast{config.py:GRID_SIZE}x\ref_ast{config.py:GRID_SIZE} i gęstości przeszkód \ref_ast{config.py:OBSTACLE_DENSITY}. Teza pracy głosi, że zastosowanie wagi heurystyki \ref_ast{config.py:HEURISTIC_WEIGHT} w \ref_ast{config.py:TRIALS} próbach losowych pozwala uzyskać przyspieszenie eksploracji rzędu \ref_csv{results.csv:proposed:speedup_factor}x przy zachowaniu optymalności ścieżki na poziomie \ref_csv{results.csv:proposed:path_optimality}.
@@ -28,25 +41,25 @@ Planowanie trajektorii ruchu w dyskretnych środowiskach z przeszkodami stanowi 
 Wyznaczanie ścieżek minimalnego kosztu w grafach ważonych zapoczątkowały klasyczne algorytmy Dijkstry \cite{dijkstra1959note} oraz A* Harta i in. \cite{hart1968formal}. Współczesna literatura (2023--2026) koncentruje się na przełamywaniu symetrii siatek oktilowych oraz ograniczaniu suboptymalności ważonego przeszukiwania. Harabor i in. \cite{harabor2023heuristic} (IJCAI 2023) udowodnili przewagę metryki oktilowej w redukcji zbędnych kroków diagonalnych, Felner i Stern \cite{felner2024weighted} (AAAI 2024) określili granice kompromisu między wagą heurystyki a przyspieszeniem, a Sturtevant i Chen \cite{sturtevant2023benchmarks} (IEEE Trans 2023) opublikowali ujednolicony benchmark 8-spójnych siatek. Otwartą luką badawczą pozostaje weryfikowalna kompilacja symboliczna wyznaczonych tras bez halucynacji w tekście dysertacji inżynierskiej.
 
 \section{Rozdział 3: Architektura Systemu i Formalizm Matematyczny}
-Graf nawigacyjny zdefiniowano jako siatkę 8-spójną o boku \ref_ast{config.py:GRID_SIZE}, w której ruchy kardynalne mają koszt jednostkowy $1.0$, natomiast ruchy diagonalne koszt $\sqrt{2}$ \cite{hart1968formal}. Funkcja oceny wierzchołka $f(n) = g(n) + w \cdot h_{octile}(n)$ wykorzystuje współczynnik wagowy $w = $ \ref_ast{config.py:HEURISTIC_WEIGHT}, co kieruje kolejkę priorytetową bezpośrednio w stronę węzła docelowego i redukuje średnią liczbę rozwijanych stanów z \ref_csv{results.csv:baseline:avg_expanded_nodes} do \ref_csv{results.csv:proposed:avg_expanded_nodes}.
+Graf nawigacyjny zdefiniowano jako siatkę 8-spójną o boku \ref_ast{config.py:GRID_SIZE}, w której ruchy kardynalne mają koszt jednostkowy $1.0$, natomiast ruchy diagonalne koszt $LATEXTOKEN1END$ \cite{hart1968formal}. Funkcja oceny wierzchołka $f(n) = g(n) + w \cdot h_{octile}(n)$ wykorzystuje współczynnik wagowy $w = $ \ref_ast{config.py:HEURISTIC_WEIGHT}, co kieruje kolejkę priorytetową bezpośrednio w stronę węzła docelowego i redukuje średnią liczbę rozwijanych stanów z \ref_csv{results.csv:baseline:avg_expanded_nodes} do \ref_csv{results.csv:proposed:avg_expanded_nodes}.
 
-Na Rysunku~\ref{fig:arch_tikz} przedstawiono potok przetwarzania zaprojektowany przez system ADK.
-Wszystkie hiperparametry eksperymentalne są pobierane bezpośrednio z drzewa AST modułu \texttt{config.py}:
+Figure~\ref{fig:arch_tikz} illustrates the neural-symbolic data processing pipeline.
+The experimental hyperparameters are grounded directly in the abstract syntax tree of \texttt{config.py}:
 
 \begin{table}[htbp]
 \centering
-\caption{Weryfikowane symbolicznie stałe konfiguracyjne (\texttt{config.py})}
+\caption{Symbolically Grounded Hyperparameters (\texttt{config.py})}
 \begin{tabular}{ll}
 \toprule
-\textbf{Symbol AST} & \textbf{Wartość w kodzie} \\
+\textbf{AST Symbol} & \textbf{Grounding Value} \\
 \midrule
-\texttt{DEFAULT\_SEED} & \texttt{\ref_ast{config.py:DEFAULT_SEED}} \\
-\texttt{MAX\_ITERATIONS} & \texttt{\ref_ast{config.py:MAX_ITERATIONS}} \\
-\texttt{THRESHOLD\_COST} & \texttt{\ref_ast{config.py:THRESHOLD_COST}} \\
+\texttt{GRID\_SIZE} & \texttt{\ref_ast{config.py:GRID_SIZE}} \\
+\texttt{OBSTACLE\_DENSITY} & \texttt{\ref_ast{config.py:OBSTACLE_DENSITY}} \\
 \texttt{HEURISTIC\_WEIGHT} & \texttt{\ref_ast{config.py:HEURISTIC_WEIGHT}} \\
-\texttt{EXPANSION\_LIMIT} & \texttt{\ref_ast{config.py:EXPANSION_LIMIT}} \\
+\texttt{TRIALS} & \texttt{\ref_ast{config.py:TRIALS}} \\
 \bottomrule
 \end{tabular}
+\label{tab:config_hyperparameters}
 \end{table}
 
 \begin{figure}[htbp]
@@ -58,25 +71,25 @@ Wszystkie hiperparametry eksperymentalne są pobierane bezpośrednio z drzewa AS
   \draw[->, thick] (grid) -- (oct);
   \draw[->, thick] (oct) -- (pq);
 \end{tikzpicture}
-\caption{Schemat architektury obliczeniowej modułu \texttt{core.py}.}
+\caption{Architectural schematic of the \texttt{core.py} processing engine.}
 \label{fig:arch_tikz}
 \end{figure}
 
 \section{Rozdział 4: Implementacja Algorytmiczna i Struktury Danych}
-W module core.py zaimplementowano generator losowych map przeszkód generate_obstacle_grid(), funkcję heurystyki octile_heuristic() oraz zunifikowany silnik przeszukiwania kopcowego search_grid() oparty na kolejce heapq. Podczas wielokrotnego przejścia przez architekturę ADK Warstwa 4 przeprowadziła syntezę nowego walidatora bezpieczeństwa AST w piaskownicy oraz automatyczną konsolidację reguł promptu po przekroczeniu progu 4 mutacji.
+W module core.py zaimplementowano generator losowych map przeszkód generate\_obstacle\_grid(), funkcję heurystyki octile\_heuristic() oraz zunifikowany silnik przeszukiwania kopcowego search\_grid() oparty na kolejce heapq. Podczas wielokrotnego przejścia przez architekturę ADK Warstwa 4 przeprowadziła syntezę nowego walidatora bezpieczeństwa AST w piaskownicy oraz automatyczną konsolidację reguł promptu po przekroczeniu progu 4 mutacji.
 
 \section{Weighted Octile A* Pathfinding Evaluation}
 To evaluate heuristic search efficiency on 8-connected obstacle grids of dimension \ref_ast{config.py:GRID_SIZE}x\ref_ast{config.py:GRID_SIZE} with obstacle density \ref_ast{config.py:OBSTACLE_DENSITY}, \ref_ast{config.py:TRIALS} randomized trials were executed contrasting uninformed Dijkstra search \cite{dijkstra1959note} against Weighted Octile A* (\ref_ast{config.py:HEURISTIC_WEIGHT}) \cite{hart1968formal}. The uninformed Dijkstra baseline expanded an average of \ref_csv{results.csv:baseline:avg_expanded_nodes} nodes, whereas the proposed Weighted Octile A* expanded only \ref_csv{results.csv:proposed:avg_expanded_nodes} nodes, achieving a speedup factor of \ref_csv{results.csv:proposed:speedup_factor}x and path optimality ratio \ref_csv{results.csv:proposed:path_optimality}, as depicted in \ref_fig{figures/comparison_chart.pdf}.
 
 \begin{table}[htbp]
 \centering
-\caption{Porównanie empiryczne metod (źródło: \texttt{results.csv}) — Heuristic Graph Pathfinding Optimization: Weighted Octile A* vs. Dijkstra Search}
-\begin{tabular}{lrrrr}
+\caption{Porównanie empiryczne metod (źródło: \texttt{results.csv}) --- Heuristic Pathfinding Optimization on Spatial Grids: Weighted Octile A* vs. Dijkstra}
+\begin{tabular}{lrrrrr}
 \toprule
-\textbf{method} & \textbf{episodes} & \textbf{win rate} & \textbf{draw rate} & \textbf{loss rate} \\
+\textbf{method} & \textbf{trials} & \textbf{avg expanded nodes} & \textbf{path optimality} & \textbf{speedup factor} & \textbf{success rate} \\
 \midrule
-baseline & 500.0 & 0.52 & 0.12 & 0.36 \\
-proposed & 500.0 & 0.88 & 0.08 & 0.04 \\
+baseline & 40.0 & 813.5 & 1.0 & 1.0 & 1.0 \\
+proposed & 40.0 & 42.7 & 0.992 & 19.05 & 1.0 \\
 \bottomrule
 \end{tabular}
 \label{tab:empirical_results}
@@ -84,15 +97,15 @@ proposed & 500.0 & 0.88 & 0.08 & 0.04 \\
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.86\textwidth]{figures/comparison_chart.pdf}
-\caption{Wizualizacja wyników eksperymentalnych wygenerowana przez \texttt{plot\_results.py}.}
+\includegraphics[width=0.48\textwidth]{figures/comparison_chart.pdf}
+\caption{Empirical benchmark comparison generated by \texttt{plot\_results.py}.}
 \label{fig:comparison_chart}
 \end{figure}
 
 \section{Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju}
 Wyniki przeprowadzonych \ref_ast{config.py:TRIALS} eksperymentów jednoznacznie potwierdziły słuszność sformułowanej tezy. Algorytm Weighted Octile A* zredukował średnią liczbę odwiedzanych wierzchołków z \ref_csv{results.csv:baseline:avg_expanded_nodes} (Dijkstra \cite{dijkstra1959note}) do zaledwie \ref_csv{results.csv:proposed:avg_expanded_nodes} \cite{hart1968formal}, zapewniając współczynnik przyspieszenia \ref_csv{results.csv:proposed:speedup_factor}x, optymalność kosztu trasy \ref_csv{results.csv:proposed:path_optimality} oraz 100% odsetek sukcesu (\ref_csv{results.csv:proposed:success_rate}).
 
-\bibliographystyle{plain}
+\bibliographystyle{IEEEtran}
 \bibliography{references}
 
 \end{document}

@@ -31,6 +31,7 @@ Return strictly a valid JSON object matching this schema:
 ```json
 {
   "thesis_type": "inzynierska | magisterska | paper",
+  "template_name": "thesis_plodz | paper_ieee",
   "hitl_gate": "GATE_1_OUTLINE_APPROVAL",
   "academic_blueprint": {
     "thesis_title": "Tytuł pracy dyplomowej",

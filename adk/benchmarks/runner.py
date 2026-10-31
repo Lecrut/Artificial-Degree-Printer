@@ -85,7 +85,8 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                     },
                 ]
             return {
-                "thesis_type": "engineering",
+                "thesis_type": getattr(spec, "thesis_type", "engineering"),
+                "template_name": getattr(spec, "template_name", "thesis_plodz"),
                 "hitl_gate": "GATE_1_OUTLINE_APPROVAL",
                 "academic_blueprint": {
                     "thesis_title": spec.title_pl,
@@ -557,6 +558,8 @@ def run_benchmark_suite(
                     "elapsed_seconds": (time.perf_counter() - t_start),
                     "architecture_cycles": arch_cycles,
                 },
+                template_name=getattr(spec, "template_name", None),
+                thesis_type=getattr(spec, "thesis_type", None),
             )
             pub_res.setdefault("llm_interactions_md", str(task_dest_dir / "logs" / "llm_interactions.md"))
             pub_res.setdefault("llm_interactions_jsonl", str(task_dest_dir / "logs" / "llm_interactions.jsonl"))

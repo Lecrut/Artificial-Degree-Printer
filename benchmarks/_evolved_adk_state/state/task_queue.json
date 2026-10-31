@@ -1,37 +1,72 @@
 [
   {
     "task_id": "T1",
-    "description": "[Etap 1/5 - Konfiguracja AST] Zdefiniuj stale i hiperparametry w config.py (Build a Distributed Federated Machine Learning & Proximal Optimization module in pure Pyth...)",
+    "description": "[04_federated_learning] Define cluster topology and distributed hyperparameters in config.py",
     "target_node": "v1",
-    "assigned_agent": "seed_coder",
+    "assigned_agent": "dyn_federated_ml_specialist",
     "status": "DONE"
   },
   {
     "task_id": "T2",
-    "description": "[Etap 2/5 - Algorytm Glowny] Zaimplementuj logike algorytmu oraz funkcje train_and_evaluate() w core.py",
+    "description": "[04_federated_learning] Implement synthetic Dirichlet non-IID partition generator in core.py",
     "target_node": "v2",
-    "assigned_agent": "seed_coder",
+    "assigned_agent": "dyn_federated_ml_specialist",
     "status": "DONE"
   },
   {
     "task_id": "T3",
-    "description": "[Etap 3/5 - Testy i Dane Empiryczne] Zbuduj testy jednostkowe test_core.py, wygeneruj results.csv oraz wykresy plot_results.py",
-    "target_node": "v3",
-    "assigned_agent": "seed_tester",
+    "description": "[04_federated_learning] Implement local client SGD training with proximal loss regularizer in core.py",
+    "target_node": "v2",
+    "assigned_agent": "dyn_federated_ml_specialist",
     "status": "DONE"
   },
   {
     "task_id": "T4",
-    "description": "[Etap 4/5 - Przeglad SOTA i Bibliografia] Opracuj Rozdzial 1 (Wstep i Teza), Rozdzial 2 (SOTA) oraz baze BibTeX references.bib",
+    "description": "[04_federated_learning] Implement federated server aggregation comparing FedAvg and Adaptive FedProx in core.py",
+    "target_node": "v2",
+    "assigned_agent": "dyn_federated_ml_specialist",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T5",
+    "description": "[04_federated_learning] Implement pytest unit tests verifying partition completeness, proximal loss, and weight normalization in test_core.py",
+    "target_node": "v5",
+    "assigned_agent": "seed_tester_unit_testing",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T6",
+    "description": "[04_federated_learning] Execute multi-round empirical evaluation across 25 communication rounds and write results.csv",
+    "target_node": "v3",
+    "assigned_agent": "seed_tester_unit_testing",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T7",
+    "description": "[04_federated_learning] Implement vector visualization in plot_results.py producing convergence and resilience charts in PDF and PNG",
+    "target_node": "v3",
+    "assigned_agent": "seed_tester_unit_testing",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T8",
+    "description": "[04_federated_learning] Synthesize contemporary SOTA literature review (2023-2026) and verified BibTeX citations in references.bib",
     "target_node": "v4",
     "assigned_agent": "sota_researcher",
     "status": "DONE"
   },
   {
-    "task_id": "T5",
-    "description": "[Etap 5/5 - Pelna Praca 6-Rozdzialowa] Napisz Rozdzialy 3, 4, 5 i 6 w thesis.md ze wskaznikami \\ref_ast, \\ref_csv i \\ref_fig",
+    "task_id": "T9",
+    "description": "[04_federated_learning] Author Chapters 1-3 of thesis (Introduction, SOTA Taxonomy, and TikZ distributed architecture diagram) in thesis.md",
     "target_node": "v4",
     "assigned_agent": "seed_writer",
-    "status": "FAILED"
+    "status": "DONE"
+  },
+  {
+    "task_id": "T10",
+    "description": "[04_federated_learning] Author Chapters 4-6 of thesis with symbolic pointers \\ref_ast, \\ref_csv, and \\ref_fig in thesis.md",
+    "target_node": "v4",
+    "assigned_agent": "seed_writer",
+    "status": "DONE"
   }
 ]

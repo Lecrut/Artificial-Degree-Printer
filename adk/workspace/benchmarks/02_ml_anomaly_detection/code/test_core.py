@@ -1,24 +1,13 @@
-import pytest
-from unittest.mock import patch, MagicMock
+from pathlib import Path
+import core
 
-def test_train_and_evaluate_function_exists():
-    from core import train_and_evaluate
-    assert callable(train_and_evaluate)
 
-def test_train_and_evaluate_returns_correct_structure():
-    from core import train_and_evaluate
-    result = train_and_evaluate()
-    assert isinstance(result, dict)
-    assert 'win_rate' in result
-    assert 'draw_rate' in result
-    assert 'loss_rate' in result
-
-def test_train_and_evaluate_with_mocked_data():
-    from core import train_and_evaluate
-    
-    with patch('core.load_data', return_value=MagicMock()):
-        with patch('core.process_episodes', return_value=(0.85, 0.10, 0.05)):
-            result = train_and_evaluate()
-            assert isinstance(result['win_rate'], float)
-            assert isinstance(result['draw_rate'], float)
-            assert isinstance(result['loss_rate'], float)
+def test_biosignal_anomaly_detection():
+    X, y = core.generate_biosignal_dataset(200, 0.1, seed=42)
+    assert len(X) == 200
+    assert sum(y) == 20
+    csv_path = Path(__file__).resolve().parent / "results.csv"
+    metrics = core.train_and_evaluate(csv_path, seed=42)
+    assert metrics["f1_score"] >= 0.85
+    assert metrics["precision"] >= 0.80
+    assert csv_path.exists()

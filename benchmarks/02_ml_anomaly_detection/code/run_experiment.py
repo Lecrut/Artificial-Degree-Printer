@@ -41,7 +41,7 @@ def main() -> None:
 
     print("=" * 78)
     print("URUCHAMIANIE KODU ZADANIA: 02_ml_anomaly_detection")
-    print("Tytuł: Wielokanałowa Detekcja Anomalii w Sygnałach Biomedycznych Metodą Odpornych Podprzestrzeni")
+    print("Tytuł: Odporna Detekcja Anomalii w Wielokanałowej Telemetrii Fizjologicznej: Komitety Losowych Podprzestrzeni")
     print("=" * 78)
 
     results_dir = here.parent / "results" if (here.parent / "results").exists() else here

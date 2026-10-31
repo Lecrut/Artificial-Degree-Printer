@@ -116,8 +116,19 @@ def test_benchmark_tasks_specifications_and_syntax():
     assert get_benchmark_task("1").task_id == "01_rl_tictactoe"
     assert get_benchmark_task("2").task_id == "02_ml_anomaly_detection"
     assert get_benchmark_task("3").task_id == "03_graph_pathfinding"
+    assert get_benchmark_task("evolution").task_id == "03_graph_pathfinding"
     assert get_benchmark_task("4").task_id == "04_federated_learning"
     assert len(get_benchmark_task("4").custom_tasks) == 10
+
+    # Greenfield vs Evolution verification
+    assert get_benchmark_task("1").task_type == "greenfield"
+    assert get_benchmark_task("2").task_type == "greenfield"
+    assert get_benchmark_task("4").task_type == "greenfield"
+    t3 = get_benchmark_task("3")
+    assert t3.task_type == "evolution"
+    assert "core.py" in t3.initial_workspace_files
+    assert "config.py" in t3.initial_workspace_files
+    assert "Dijkstra" in t3.initial_workspace_files["core.py"]
 
     for task_id, spec in BENCHMARK_TASKS.items():
         ast.parse(spec.core_code, filename=f"{task_id}_core.py")

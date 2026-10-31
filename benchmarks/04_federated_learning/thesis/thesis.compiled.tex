@@ -1,25 +1,38 @@
-\documentclass[11pt,a4paper]{article}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
-\usepackage[margin=2.4cm]{geometry}
+% IEEE Scientific Conference Paper Template (IEEEtran)
+\documentclass[conference]{IEEEtran}
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+\else
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,amssymb,amsfonts}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{tikz}
-\usepackage{amsmath,amssymb}
-\usepackage{hyperref}
-
-\title{\textbf{Optymalizacja Uczenia Sfederowanego w Warunkach Niejednorodności Danych: Adaptacyjny FedProx}\\[0.4em]\large \textit{Federated Learning Optimization under Statistical Heterogeneity: Adaptive FedProx vs. FedAvg}}
-\author{Neuro-Symbolic ADK (Artificial Degree Printer) \\ Domain: Distributed Systems & Federated Machine Learning}
-\date{\today}
+\usetikzlibrary{positioning}
+\usepackage[hidelinks]{hyperref}
 
 \begin{document}
+
+\title{Federated Learning Optimization under Statistical Heterogeneity: Adaptive FedProx vs. FedAvg}
+
+\author{\IEEEauthorblockN{Neuro-Symbolic ADK Author}
+\IEEEauthorblockA{\textit{Institute of Applied Computer Science} \\
+\textit{Lodz University of Technology} \\
+Lodz, Poland \\
+Domain: Distributed Systems & Federated Machine Learning}}
+
 \maketitle
 
 \begin{abstract}
-\noindent \textbf{Streszczenie (PL):} Praca bada stabilność zbieżności i odporność na opóźnienia klientów w algorytmie Adaptive FedProx w warunkach asymetrii danych Dirichlet non-IID w porównaniu ze standardowym FedAvg.\\[0.6em]
-\noindent \textbf{Abstract (EN):} This thesis evaluates the convergence stability and straggler resilience of Adaptive FedProx under Dirichlet non-IID data heterogeneity compared to standard FedAvg across 25 communication rounds.
+This thesis evaluates the convergence stability and straggler resilience of Adaptive FedProx under Dirichlet non-IID data heterogeneity compared to standard FedAvg across 25 communication rounds.
 \end{abstract}
+
+\begin{IEEEkeywords}
+neuro-symbolic systems, empirical verification, abstract syntax tree, automated thesis synthesis, machine learning
+\end{IEEEkeywords}
 
 \section{Rozdział 1: Wstęp i Cel Pracy: Uczenie Sfederowane w Środowiskach Brzegowych}
 Celem pracy jest projekt i analiza rozproszonego systemu uczenia sfederowanego w warunkach silnej niejednorodności rozkładów danych (Dirichlet non-IID) oraz asynchronicznych opóźnień klientów. Postawiono tezę badawczą, że adaptacyjna modyfikacja algorytmu FedProx pozwala zachować zbieżność modelu globalnego i wyeliminować zjawisko dryfu klientów bez zwiększania pasma komunikacyjnego.
@@ -47,15 +60,15 @@ Architektura systemu składa się z centralnego serwera agregującego oraz klast
 
 
 
-Na Rysunku~\ref{fig:arch_tikz} przedstawiono potok przetwarzania zaprojektowany przez system ADK.
-Wszystkie hiperparametry eksperymentalne są pobierane bezpośrednio z drzewa AST modułu \texttt{config.py}:
+Figure~\ref{fig:arch_tikz} illustrates the neural-symbolic data processing pipeline.
+The experimental hyperparameters are grounded directly in the abstract syntax tree of \texttt{config.py}:
 
 \begin{table}[htbp]
 \centering
-\caption{Weryfikowane symbolicznie stałe konfiguracyjne (\texttt{config.py})}
+\caption{Symbolically Grounded Hyperparameters (\texttt{config.py})}
 \begin{tabular}{ll}
 \toprule
-\textbf{Symbol AST} & \textbf{Wartość w kodzie} \\
+\textbf{AST Symbol} & \textbf{Grounding Value} \\
 \midrule
 \texttt{NUM\_CLIENTS} & \texttt{10} \\
 \texttt{DIRICHLET\_ALPHA} & \texttt{0.5} \\
@@ -65,6 +78,7 @@ Wszystkie hiperparametry eksperymentalne są pobierane bezpośrednio z drzewa AS
 \texttt{ROUNDS} & \texttt{25} \\
 \bottomrule
 \end{tabular}
+\label{tab:config_hyperparameters}
 \end{table}
 
 \begin{figure}[htbp]
@@ -84,7 +98,7 @@ Wszystkie hiperparametry eksperymentalne są pobierane bezpośrednio z drzewa AS
   \draw[->, red!70!black, dashed] (c3) -- node[right, font=\scriptsize] {Partial $\Delta w_s$} (server);
 \end{tikzpicture}
 
-\caption{Schemat architektury obliczeniowej modułu \texttt{core.py}.}
+\caption{Architectural schematic of the \texttt{core.py} processing engine.}
 \label{fig:arch_tikz}
 \end{figure}
 
@@ -92,11 +106,11 @@ Wszystkie hiperparametry eksperymentalne są pobierane bezpośrednio z drzewa AS
 W module implementacyjnym wprowadzono lokalny krok stochastycznego spadku wzdłuż gradientu z regularyzacją proksymalną 0.01. Każdy klient wykonuje 3 epok lokalnych ze stopą uczenia 0.05 przed odesłaniem gradientu do serwera.
 
 \section{Rozdział 5: Badania Eksperymentalne: Wyniki i Analiza Zbieżności}
-Przeprowadzono 25 rund agregacji w warunkach asymetrii danych 0.5. Rozwiązanie bazowe FedAvg osiągnęło dokładność 0.78, natomiast proponowany algorytm Adaptive FedProx uzyskał 0.96 przy odporności na stragglery rzędu 0.95. Zbiorcze podsumowanie przedstawiono na rycinie [Ryc. figures/comparison_chart.pdf].
+Przeprowadzono 25 rund agregacji w warunkach asymetrii danych 0.5. Rozwiązanie bazowe FedAvg osiągnęło dokładność 0.78, natomiast proponowany algorytm Adaptive FedProx uzyskał 0.96 przy odporności na stragglery rzędu 0.95. Zbiorcze podsumowanie przedstawiono na rycinie \ref{fig:comparison_chart}.
 
 \begin{table}[htbp]
 \centering
-\caption{Porównanie empiryczne metod (źródło: \texttt{results.csv}) — Federated Learning Optimization under Statistical Heterogeneity: Adaptive FedProx vs. FedAvg}
+\caption{Porównanie empiryczne metod (źródło: \texttt{results.csv}) --- Federated Learning Optimization under Statistical Heterogeneity: Adaptive FedProx vs. FedAvg}
 \begin{tabular}{lrrrrrr}
 \toprule
 \textbf{method} & \textbf{rounds} & \textbf{convergence rounds} & \textbf{final accuracy} & \textbf{communication overhead kb} & \textbf{straggler resilience rate} & \textbf{divergence rate} \\
@@ -110,15 +124,15 @@ proposed & 25.0 & 1.0 & 0.96 & 340.0 & 0.95 & 0.0 \\
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.86\textwidth]{figures/comparison_chart.pdf}
-\caption{Wizualizacja wyników eksperymentalnych wygenerowana przez \texttt{plot\_results.py}.}
+\includegraphics[width=0.48\textwidth]{figures/comparison_chart.pdf}
+\caption{Empirical benchmark comparison generated by \texttt{plot\_results.py}.}
 \label{fig:comparison_chart}
 \end{figure}
 
 \section{Rozdział 6: Podsumowanie i Wnioski: Potwierdzenie Tezy Inżynierskiej}
 Uzyskane rezultaty empiryczne w pełni potwierdzają sformułowaną tezę badawczą. Wprowadzenie proksymalnego członu stabilizującego pozwala zniwelować negatywne skutki niejednorodności danych i zapewnia stabilną zbieżność.
 
-\bibliographystyle{plain}
+\bibliographystyle{IEEEtran}
 \bibliography{references}
 
 \end{document}

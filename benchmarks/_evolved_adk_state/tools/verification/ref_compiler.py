@@ -173,7 +173,10 @@ def compile_symbolic_references(
         rel_file = match.group(1).strip()
         sym = match.group(2).strip()
         key = f"\\ref_ast{{{rel_file}:{sym}}}"
-        ok, val = _lookup_ast_value(w_dir / rel_file, sym)
+        target_py = w_dir / rel_file
+        if not target_py.exists() and (w_dir / "code" / rel_file).exists():
+            target_py = w_dir / "code" / rel_file
+        ok, val = _lookup_ast_value(target_py, sym)
         if not ok:
             errors.append(str(val))
             return key
@@ -185,6 +188,8 @@ def compile_symbolic_references(
         col = match.group(2).strip()
         key = f"\\ref_csv{{{rel_file}:{col}}}"
         csv_path = w_dir / rel_file
+        if not csv_path.exists() and (w_dir / "results" / rel_file).exists():
+            csv_path = w_dir / "results" / rel_file
         ok, val = _lookup_csv_value(csv_path, col)
         if not ok:
             errors.append(str(val))
@@ -205,6 +210,11 @@ def compile_symbolic_references(
             errors.append(str(val))
             return key
         resolved[key] = val
+        if d_path.suffix == ".tex":
+            stem = Path(fig_target).stem
+            if stem in ("comparison_chart", "figure", "arch_tikz"):
+                return f"\\ref{{fig:{stem}}}"
+            return str(val).replace("_", "\\_")
         return str(val)
 
     compiled_text = re.sub(r"\\ref_ast\{([^:}]+):([^}]+)\}", _replace_ast, text)
@@ -223,7 +233,7 @@ def compile_symbolic_references(
         errors.append(f"Unbalanced TikZ environment: {tikz_begins} \\begin vs {tikz_ends} \\end.")
 
     # Check \cite{...} keys against .bib files if any .bib file exists in workspace
-    bib_files = list(w_dir.glob("*.bib")) if w_dir.exists() else []
+    bib_files = (list(w_dir.glob("*.bib")) + list((w_dir / "thesis").glob("*.bib"))) if w_dir.exists() else []
     if bib_files:
         defined_bib_keys: set[str] = set()
         for bf in bib_files:
