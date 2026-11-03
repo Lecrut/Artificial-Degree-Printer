@@ -23,8 +23,9 @@ import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
 
 from adk.benchmarks.tasks import BenchmarkTaskSpec  # noqa: E402
+from adk.mocks.thesis_mock_expander import expand_academic_chapters  # noqa: E402
 from adk.tools.building.doc_editor import edit_document_section  # noqa: E402
-from adk.tools.building.template_manager import render_template_latex  # noqa: E402
+from adk.tools.building.template_manager import render_template_latex, resolve_template_name  # noqa: E402
 from adk.tools.verification.ref_compiler import compile_symbolic_references  # noqa: E402
 
 matplotlib.use("Agg")
@@ -44,10 +45,40 @@ def _get_effective_chapters(spec: BenchmarkTaskSpec) -> list[tuple[str, str]]:
     ]
 
 
-def ensure_full_6_chapter_markdown(spec: BenchmarkTaskSpec, workspace_dir: Path) -> Path:
-    """Ensure thesis.md in workspace_dir contains all 6 academic chapters grounded with symbolic pointers."""
+def ensure_full_6_chapter_markdown(
+    spec: BenchmarkTaskSpec,
+    workspace_dir: Path,
+    force_mock_expand: bool = False,
+) -> Path:
+    """Ensure thesis.md contains all 6 canonical chapters, preserving LLM-authored chapters and only expanding missing sections."""
     md_path = workspace_dir / "thesis.md"
-    for ch_title, ch_body in _get_effective_chapters(spec):
+    existing_md = md_path.read_text(encoding="utf-8") if md_path.exists() else ""
+
+    headers, rows = _read_csv_rows(workspace_dir / "results.csv")
+    config_pairs = _extract_config_constants(workspace_dir / "config.py")
+    chosen_template = resolve_template_name(
+        thesis_type=getattr(spec, "thesis_type", None),
+        requested_template=getattr(spec, "template_name", None),
+    )
+    expanded = expand_academic_chapters(
+        spec=spec,
+        base_chapters=_get_effective_chapters(spec),
+        workspace_dir=workspace_dir,
+        config_pairs=config_pairs,
+        headers=headers,
+        rows=rows,
+        is_ieee=(chosen_template == "paper_ieee"),
+    )
+    for ch_title, ch_body in expanded:
+        if not force_mock_expand and existing_md:
+            # Check if this chapter was already authored by LLM or user in thesis.md
+            m_idx = re.match(r"^(Rozdział\s+\d+|Chapter\s+\d+)", ch_title, re.IGNORECASE)
+            prefix = m_idx.group(1) if m_idx else ch_title
+            pattern = re.compile(rf"^##+\s+{re.escape(prefix)}[^\n]*\n(.*?)(?=^##+\s+|\Z)", re.MULTILINE | re.DOTALL)
+            m = pattern.search(existing_md)
+            if m and len(m.group(1).strip()) > 80:
+                # Chapter already authored by LLM, preserve it without overwriting
+                continue
         edit_document_section(md_path, ch_title, ch_body)
     return md_path
 
@@ -841,7 +872,7 @@ def publish_workspace_thesis_bundle(
     w_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Write standalone runner script run_experiment.py
-    runner_py = write_executable_runner_script(w_dir, spec)
+    write_executable_runner_script(w_dir, spec)
 
     # 2. Execute core.train_and_evaluate(results.csv) and plot_results.generate_plots() in subprocess
     exec_env = os.environ.copy()

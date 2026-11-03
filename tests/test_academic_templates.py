@@ -188,7 +188,7 @@ def test_benchmark_tasks_use_distinct_thesis_types(tmp_path: Path):
     assert "\\documentclass[conference]{IEEEtran}" in content4
 
 
-def test_two_researchers_and_three_tier_routing(tmp_path: Path):
+def test_two_researchers_and_three_tier_routing():
     """Verify 2-researcher architecture (background_researcher & discoverer_researcher) and 3-tier routing."""
     from adk.benchmarks import BENCHMARK_TASKS
     from adk.benchmarks.runner import _make_task_mock_llm_handler

@@ -282,7 +282,7 @@ def test_interactive_gates_callback_and_weight_escalation_in_orchestrator(tmp_pa
     # 2. Verify gate_approval_callback can pause execution at GATE_2_METHODOLOGY_APPROVAL
     visited_gates: list[str] = []
 
-    def _reject_gate2(gate_name: str, ctx: dict) -> bool:
+    def _reject_gate2(gate_name: str, _ctx: dict) -> bool:
         visited_gates.append(gate_name)
         return gate_name != "GATE_2_METHODOLOGY_APPROVAL"
 

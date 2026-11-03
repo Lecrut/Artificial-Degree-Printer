@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +15,53 @@ from adk.core.logger import get_process_logger
 from adk.orchestrator import NeuroSymbolicOrchestrator
 
 DEFAULT_BENCHMARK_TASK = TICTACTOE_BENCHMARK_PROMPT
+
+# Per-run state that must start clean for every scenario so evolution history, failure ledger,
+# HITL gate status, validation report and the task queue do not leak across scenarios.
+# The hypergraph matrix is NOT reset here: its node/edge structure is part of the harness state and
+# is reconciled with the workspace by sync_hypergraph_matrix during the run.
+_VOLATILE_STATE_FILES = (
+    "task_queue.json",
+    "validation_report.json",
+    "failure_ledger.json",
+    "evolution_history.json",
+    "hitl_flag.json",
+)
+
+
+def _reset_volatile_state(adk_root: str | Path | None) -> None:
+    """Reset per-run state files to their canonical empty form before a fresh scenario run."""
+    base = Path(adk_root) if adk_root else Path(__file__).resolve().parent / "adk"
+    state_dir = base / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+
+    empty_forms = {
+        "task_queue.json": [],
+        "validation_report.json": {
+            "status": "PASS",
+            "failed_task_id": None,
+            "failed_node": None,
+            "failed_file": None,
+            "failed_agent": None,
+            "supervisors": {},
+            "summary": "",
+        },
+        "failure_ledger.json": {"failures": []},
+        "evolution_history.json": {"events": []},
+        "hitl_flag.json": {
+            "active": False,
+            "current_gate": None,
+            "approved_gates": [],
+            "question": None,
+            "context": {},
+        },
+    }
+    for fname in _VOLATILE_STATE_FILES:
+        (state_dir / fname).write_text(
+            json.dumps(empty_forms[fname], ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
 
 SCENARIO_DEFINITIONS: dict[str, dict[str, Any]] = {
     "1": {
@@ -70,6 +117,7 @@ def run_scenario(
     logger.log_step("MAIN_SCENARIO", f"=== URUCHAMIANIE: {cfg['name']} (provider={provider}, multi_cycle_waves={multi_cycle_waves}) ===")
 
     reset_llm_telemetry()
+    _reset_volatile_state(adk_root)
     orch = NeuroSymbolicOrchestrator(
         adk_root=adk_root,
         enable_layer4=cfg["enable_layer4"],

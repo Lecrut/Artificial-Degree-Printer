@@ -70,11 +70,5 @@ Return strictly a valid JSON object matching one of these forms:
 ```
 Do not output conversational text or markdown wrappers outside the JSON.
 
----
-
-## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT (Cycle 1)**: Consolidated invariant (4 rules): Maintain strict AST constant parity with thesis \ref_ast tags, deterministic seeding (seed=42), and schema-validated CSV outputs.
-
 ## LEARNED RULES AND CONSTRAINTS
-- **CONSOLIDATED_EPOCH 1**: Redacted and consolidated 4 rules into the invariants section.
-- **RULE**: [04_federated_learning cycle #3] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.
+- **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.

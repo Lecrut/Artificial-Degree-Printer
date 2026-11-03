@@ -49,9 +49,9 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 ---
 
 ## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT (Cycle 1)**: Consolidated invariant (4 rules): Maintain strict AST constant parity with thesis \ref_ast tags, deterministic seeding (seed=42), and schema-validated CSV outputs.
+- **INVARIANT (Cycle 1)**: Maintain strict AST signature compatibility and symbolic pointer validity across all modules, ensure benchmark CSV files include both baseline and proposed rows, and eliminate unbound global variables in train_and_evaluate.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **CONSOLIDATED_EPOCH 1**: Redacted and consolidated 4 rules into the invariants section.
 - **RULE**: Maintain strict float rounding in exported CSV metrics.
-- **RULE**: [03_graph_pathfinding cycle #1] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.
+- **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.

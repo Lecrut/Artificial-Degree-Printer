@@ -7,32 +7,6 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
-
-def _merge_bibtex_entries(existing_bib: str, new_bib: str) -> str:
-    """Merge BibTeX entries from existing_bib and new_bib, deduplicating by citation key while preserving order."""
-    entry_pattern = re.compile(r"(@\w+\s*\{\s*([^,\s]+)\s*,.*?\n\})", re.DOTALL)
-    entries_by_key: dict[str, str] = {}
-    ordered_keys: list[str] = []
-
-    for source_text in (existing_bib, new_bib):
-        if not source_text or not source_text.strip():
-            continue
-        matches = list(entry_pattern.finditer(source_text))
-        if matches:
-            for m in matches:
-                full_entry = m.group(1).strip()
-                cite_key = m.group(2).strip()
-                if cite_key not in entries_by_key:
-                    ordered_keys.append(cite_key)
-                entries_by_key[cite_key] = full_entry
-        else:
-            raw_key = f"_raw_{len(ordered_keys)}"
-            ordered_keys.append(raw_key)
-            entries_by_key[raw_key] = source_text.strip()
-
-    return "\n\n".join(entries_by_key[k] for k in ordered_keys) + "\n"
-
-
 from adk.benchmarks.tictactoe import (
     TICTACTOE_CONFIG_AST_NODES,
     TICTACTOE_CORE_CODE,
@@ -60,9 +34,37 @@ from adk.tools.planning import (
     calculate_blast_radius,
     escalate_node_weight,
     get_scoped_hypergraph_context,
+    scout_domain_conventions,
     select_model_tier,
+    synthesize_table_of_contents,
 )
 from adk.tools.verification import compile_symbolic_references, run_isolated_tests
+
+
+def _merge_bibtex_entries(existing_bib: str, new_bib: str) -> str:
+    """Merge BibTeX entries from existing_bib and new_bib, deduplicating by citation key while preserving order."""
+    entry_pattern = re.compile(r"(@\w+\s*\{\s*([^,\s]+)\s*,.*?\n\})", re.DOTALL)
+    entries_by_key: dict[str, str] = {}
+    ordered_keys: list[str] = []
+
+    for source_text in (existing_bib, new_bib):
+        if not source_text or not source_text.strip():
+            continue
+        matches = list(entry_pattern.finditer(source_text))
+        if matches:
+            for m in matches:
+                full_entry = m.group(1).strip()
+                cite_key = m.group(2).strip()
+                if cite_key not in entries_by_key:
+                    ordered_keys.append(cite_key)
+                entries_by_key[cite_key] = full_entry
+        else:
+            raw_key = f"_raw_{len(ordered_keys)}"
+            ordered_keys.append(raw_key)
+            entries_by_key[raw_key] = source_text.strip()
+
+    return "\n\n".join(entries_by_key[k] for k in ordered_keys) + "\n"
+
 
 
 class NeuroSymbolicOrchestrator:
@@ -97,6 +99,7 @@ class NeuroSymbolicOrchestrator:
         self.failure_ledger_path = self.state_dir / "failure_ledger.json"
         self.evolution_history_path = self.state_dir / "evolution_history.json"
         self.hitl_flag_path = self.state_dir / "hitl_flag.json"
+        self.blueprint_path = self.state_dir / "academic_blueprint.json"
 
     def _record_evolution_event(self, event: dict[str, Any]) -> None:
         history = (
@@ -422,6 +425,8 @@ class NeuroSymbolicOrchestrator:
             ],
         }
 
+        blueprint_data = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+
         llm_res = call_agent(
             agent_md,
             {
@@ -433,6 +438,9 @@ class NeuroSymbolicOrchestrator:
                 "hypergraph_nodes": scoped_graph.get("nodes", {}),
                 "active_edges": scoped_graph.get("active_edges", {}),
                 "grounded_hypergraph_state": grounded_state,
+                "academic_blueprint": blueprint_data,
+                "table_of_contents": blueprint_data.get("table_of_contents", []),
+                "literature_recon": blueprint_data.get("literature_recon", {}),
             },
             model_tier=model_tier,
             provider=self.provider,
@@ -923,44 +931,23 @@ class NeuroSymbolicOrchestrator:
 
         if multi_cycle_waves and len(cleaned) < 3:
             t_type = (thesis_type or "inzynierska").strip().lower()
-            # Build a complete engineering + 6-chapter thesis pipeline covering v1, v2, v3/v5, and v4
-            multi_tasks: list[dict[str, Any]] = [
-                {
-                    "task_id": "T1",
-                    "description": f"[Etap 1 - Konfiguracja AST] Zdefiniuj stale i hiperparametry w config.py ({user_prompt[:90]}...)",
-                    "target_node": "v1",
-                    "assigned_agent": coder_agent,
-                    "status": "TODO",
-                },
-                {
-                    "task_id": "T2",
-                    "description": "[Etap 2 - Algorytm Glowny] Zaimplementuj logike algorytmu oraz funkcje train_and_evaluate() w core.py",
-                    "target_node": "v2",
-                    "assigned_agent": coder_agent,
-                    "status": "TODO",
-                },
-                {
-                    "task_id": "T3",
-                    "description": "[Etap 3 - Testy i Dane Empiryczne] Zbuduj testy jednostkowe test_core.py, wygeneruj results.csv oraz wykresy plot_results.py",
-                    "target_node": "v3",
-                    "assigned_agent": tester_agent,
-                    "status": "TODO",
-                },
-            ]
+            # Build a logical Research-First engineering + 6-chapter thesis pipeline:
+            # 1) Literature Research (v4) -> 2) AST Config (v1) -> 3) Core Algorithm (v2) -> 4) Empirical CSV/Tests (v3) -> 5) Full Thesis Synthesis (v4)
+            multi_tasks: list[dict[str, Any]] = []
             if self.include_docs:
                 if t_type in ("magisterska", "master", "msc"):
                     multi_tasks.extend(
                         [
                             {
-                                "task_id": "T4_BG",
-                                "description": "[Etap 4a - Research Background (II stopien)] Lejek teoretyczny od klasycznych monografii i podstaw w references.bib i thesis.md",
+                                "task_id": "T1_BG",
+                                "description": "[Etap 1a - Research Background (II stopien)] Lejek teoretyczny od klasycznych monografii i podstaw w references.bib i thesis.md",
                                 "target_node": "v4",
                                 "assigned_agent": bg_agent,
                                 "status": "TODO",
                             },
                             {
-                                "task_id": "T4_DISC",
-                                "description": "[Etap 4b - Research Discoverer (II stopien)] Analiza najnowszego SOTA (2023-2026), konkurencji i luki badawczej w references.bib i thesis.md",
+                                "task_id": "T1_DISC",
+                                "description": "[Etap 1b - Research Discoverer (II stopien)] Analiza najnowszego SOTA (2023-2026), konkurencji i luki badawczej w references.bib i thesis.md",
                                 "target_node": "v4",
                                 "assigned_agent": disc_agent,
                                 "status": "TODO",
@@ -970,8 +957,8 @@ class NeuroSymbolicOrchestrator:
                 elif t_type in ("paper", "article", "scientific_paper"):
                     multi_tasks.append(
                         {
-                            "task_id": "T4",
-                            "description": "[Etap 4 - Research Discoverer (III stopien - Paper)] Porownanie z najnowsza konkurencja SOTA (2023-2026) i przewaga w references.bib",
+                            "task_id": "T1",
+                            "description": "[Etap 1 - Research Discoverer (III stopien - Paper)] Porownanie z najnowsza konkurencja SOTA (2023-2026) i przewaga w references.bib",
                             "target_node": "v4",
                             "assigned_agent": disc_agent,
                             "status": "TODO",
@@ -980,23 +967,58 @@ class NeuroSymbolicOrchestrator:
                 else:
                     multi_tasks.append(
                         {
-                            "task_id": "T4",
-                            "description": "[Etap 4 - Research Background (I stopien)] Lejek teoretyczny od podstaw i klasycznych zrodel do problemu w references.bib",
+                            "task_id": "T1",
+                            "description": "[Etap 1 - Research Background (I stopien)] Lejek teoretyczny od podstaw i klasycznych zrodel do problemu w references.bib",
                             "target_node": "v4",
                             "assigned_agent": bg_agent,
                             "status": "TODO",
                         }
                     )
+
+            code_start_idx = 2 if self.include_docs else 1
+            multi_tasks.extend(
+                [
+                    {
+                        "task_id": f"T{code_start_idx}",
+                        "description": f"[Etap {code_start_idx} - Konfiguracja AST] Zdefiniuj stale i hiperparametry w config.py wg konwencji z literatury ({user_prompt[:80]}...)",
+                        "target_node": "v1",
+                        "assigned_agent": coder_agent,
+                        "status": "TODO",
+                    },
+                    {
+                        "task_id": f"T{code_start_idx + 1}",
+                        "description": f"[Etap {code_start_idx + 1} - Algorytm Glowny i Baseline] Zaimplementuj logike algorytmu oraz funkcje train_and_evaluate() w core.py",
+                        "target_node": "v2",
+                        "assigned_agent": coder_agent,
+                        "status": "TODO",
+                    },
+                    {
+                        "task_id": f"T{code_start_idx + 2}",
+                        "description": f"[Etap {code_start_idx + 2} - Testy i Dane Empiryczne] Zbuduj testy jednostkowe test_core.py, wygeneruj results.csv oraz wykresy plot_results.py",
+                        "target_node": "v3",
+                        "assigned_agent": tester_agent,
+                        "status": "TODO",
+                    },
+                ]
+            )
+            if self.include_docs:
                 multi_tasks.append(
                     {
-                        "task_id": "T5",
-                        "description": "[Etap 5 - Pelna Praca 6-Rozdzialowa] Napisz Rozdzialy 3, 4, 5 i 6 w thesis.md ze wskaznikami \\ref_ast, \\ref_csv i \\ref_fig",
+                        "task_id": f"T{code_start_idx + 3}",
+                        "description": f"[Etap {code_start_idx + 3} - Pelna Praca 6-Rozdzialowa wg Spisu Tresci] Napisz Rozdzialy 1-6 w thesis.md ze wskaznikami \\ref_ast, \\ref_csv i \\ref_fig",
                         "target_node": "v4",
                         "assigned_agent": writer_agent,
                         "status": "TODO",
                     }
                 )
             return multi_tasks
+
+        if multi_cycle_waves and self.include_docs and cleaned:
+            research_agents = {"background_researcher", "discoverer_researcher", "sota_researcher"}
+            research_tasks = [t for t in cleaned if t.get("assigned_agent") in research_agents]
+            non_research_tasks = [t for t in cleaned if t.get("assigned_agent") not in research_agents]
+            if research_tasks and non_research_tasks:
+                cleaned = research_tasks + non_research_tasks
 
         # Ensure every blast-radius affected node is covered if cleaned is missing required nodes
         covered_nodes = {t["target_node"] for t in cleaned}
@@ -1053,10 +1075,17 @@ class NeuroSymbolicOrchestrator:
         blast = calculate_blast_radius(target_node, self.matrix_path)
         scoped_graph = get_scoped_hypergraph_context(self.matrix_path, blast_radius=blast)
 
-        # 1. Planning (Layer 1)
+        # 1. Planning (Layer 1): Domain Reconnaissance + TOC Synthesis + Task Decomposition
         print(
             f"\n[WARSTWA 1: PLANOWANIE] Obliczanie promienia razenia hipergrafu od wezla '{target_node}' -> wezly: {blast.get('affected_nodes', [])}",
             flush=True,
+        )
+
+        initial_recon = scout_domain_conventions(user_prompt, thesis_type="inzynierska")
+        initial_toc = synthesize_table_of_contents(
+            user_prompt,
+            thesis_type="inzynierska",
+            recon_report=initial_recon,
         )
 
         plan_payload: dict[str, Any] = {
@@ -1068,6 +1097,8 @@ class NeuroSymbolicOrchestrator:
             "agent_registry": read_json_state(self.registry_path),
             "include_docs": self.include_docs,
             "missing_agent_specialization": missing_agent_specialization,
+            "literature_recon": initial_recon,
+            "table_of_contents": initial_toc,
         }
         planner_md = self.agents_dir / "planning" / "task_planner.md"
 
@@ -1077,6 +1108,39 @@ class NeuroSymbolicOrchestrator:
             model_tier="LRM",
             provider=self.provider,
         )["output"]
+
+        planned_thesis_type = str(plan_out.get("thesis_type") or "inzynierska")
+        recon_report = scout_domain_conventions(user_prompt, thesis_type=planned_thesis_type)
+        blueprint_raw = dict(plan_out.get("academic_blueprint") or {})
+        toc_structure = blueprint_raw.get("table_of_contents") or synthesize_table_of_contents(
+            user_prompt,
+            thesis_type=planned_thesis_type,
+            recon_report=recon_report,
+            title_pl=str(blueprint_raw.get("thesis_title") or ""),
+        )
+        blueprint_raw["literature_recon"] = blueprint_raw.get("literature_recon") or recon_report
+        blueprint_raw["table_of_contents"] = toc_structure
+        plan_out["academic_blueprint"] = blueprint_raw
+        write_json_state(self.blueprint_path, blueprint_raw)
+
+        toc_chapters = toc_structure.get("chapters", []) if isinstance(toc_structure, dict) else toc_structure
+        self.logger.log_step(
+            "PLANNING_RECON_TOC",
+            f"Rekonesans literatury ({recon_report.get('domain')}) i synteza Spisu Tresci ({len(toc_chapters)} rozdzialow, typ={planned_thesis_type})",
+            {
+                "thesis_type": planned_thesis_type,
+                "task_key": recon_report.get("task_key"),
+                "canonical_baselines": recon_report.get("canonical_baselines", []),
+                "standard_metrics": recon_report.get("standard_metrics", []),
+                "chapters_count": len(toc_chapters),
+            },
+        )
+        print(
+            f"  [WARSTWA 1: REKONESANS LITERATURY I SPIS TRESCI] Dziedzina: '{recon_report.get('domain')}' | "
+            f"Typ: {planned_thesis_type} | Rozdzialy w TOC: {len(toc_chapters)} | "
+            f"Metryki: {', '.join(recon_report.get('standard_metrics', [])[:4])}",
+            flush=True,
+        )
 
         raw_tasks: list[dict[str, Any]] = plan_out.get("tasks", [])
         created_specialist_id: str | None = None
@@ -1109,7 +1173,6 @@ class NeuroSymbolicOrchestrator:
         else:
             tasks = [t for t in raw_tasks if isinstance(t, dict)]
 
-        planned_thesis_type = str(plan_out.get("thesis_type") or "inzynierska")
         if multi_cycle_waves:
             tasks = self._normalize_and_heal_task_plan(
                 tasks,
@@ -1209,7 +1272,13 @@ class NeuroSymbolicOrchestrator:
 
         # Determine which task indices trigger a full W2 -> W3 [FAIL] -> W4 [Evolution] -> W1 [Remediation] -> W2 -> W3 [PASS] wave
         if simulate_first_attempt_fail and multi_cycle_waves:
-            wave_fail_indices = {0, min(2, len(tasks) - 1), len(tasks) - 1}
+            v1_idx = next((i for i, t in enumerate(tasks) if t.get("target_node") == "v1"), 0)
+            v3_idx = next((i for i, t in enumerate(tasks) if t.get("target_node") == "v3"), min(2, len(tasks) - 1))
+            v4_writer_idx = next(
+                (i for i in range(len(tasks) - 1, -1, -1) if tasks[i].get("target_node") == "v4"),
+                len(tasks) - 1,
+            )
+            wave_fail_indices = {v1_idx, v3_idx, v4_writer_idx}
         elif simulate_first_attempt_fail:
             wave_fail_indices = {0}
         else:

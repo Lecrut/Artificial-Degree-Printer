@@ -28,6 +28,14 @@ def sync_hypergraph_matrix(
     nodes: dict[str, dict[str, Any]] = data.get("nodes", {})
     edges: dict[str, list[str]] = data.get("edges", {})
     matrix: dict[str, dict[str, int]] = data.get("matrix", {})
+    edge_meta: dict[str, dict[str, Any]] = data.get("edge_meta", {})
+
+    # Drop edges that were dynamically discovered in a previous sync; they are re-derived below from
+    # current workspace code. Without this, the hypergraph grew monotonically (blast radius never shrank)
+    # because removed imports / \ref tags left orphan edge memberships behind.
+    for eid in [eid for eid, meta in edge_meta.items() if meta.get("dynamic")]:
+        edges.pop(eid, None)
+        edge_meta.pop(eid, None)
 
     # Prune any existing nodes that point to excluded directories (such as benchmarks/)
     valid_nodes: dict[str, dict[str, Any]] = {}
@@ -132,18 +140,14 @@ def sync_hypergraph_matrix(
         if matched_edge is None:
             matched_edge = f"E{len(edges) + 1}"
             edges[matched_edge] = sorted(pair_set)
-            for n_id in nodes:
-                matrix.setdefault(n_id, {})[matched_edge] = 1 if n_id in pair_set else 0
+            edge_meta[matched_edge] = {"dynamic": True}
 
+    # Rebuild the incidence matrix entirely from current edge memberships so stale entries from
+    # removed couplings do not linger (previously `row[e_id]` preserved old values for non-members).
     all_edge_ids = list(edges.keys())
-    for n_id in nodes:
-        row = matrix.setdefault(n_id, {})
-        for e_id in all_edge_ids:
-            row[e_id] = 1 if n_id in edges[e_id] else int(row.get(e_id, 0))
-            if row[e_id] == 1 and n_id not in edges[e_id]:
-                edges[e_id].append(n_id)
-        degree = sum(int(v) for v in row.values())
-        nodes[n_id]["degree"] = degree
+    matrix = {n_id: {e_id: (1 if n_id in edges[e_id] else 0) for e_id in all_edge_ids} for n_id in nodes}
+    for n_id, meta in nodes.items():
+        meta["degree"] = sum(int(v) for v in matrix[n_id].values())
 
     write_json_state(
         matrix_path,
@@ -151,6 +155,7 @@ def sync_hypergraph_matrix(
             "nodes": nodes,
             "edges": edges,
             "matrix": matrix,
+            "edge_meta": edge_meta,
         },
     )
     return {

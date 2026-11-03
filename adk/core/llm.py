@@ -145,7 +145,7 @@ def _default_simulated_response(agent_name: str, system_prompt: str, payload: di
                     }
                 )
         return {
-            "thesis_type": "engineering",
+            "thesis_type": "inzynierska",
             "hitl_gate": "GATE_1_OUTLINE_APPROVAL",
             "academic_blueprint": {
                 "thesis_title": f"Design and Empirical Evaluation: {prompt_text[:60]}",
@@ -155,6 +155,8 @@ def _default_simulated_response(agent_name: str, system_prompt: str, payload: di
                     "System architecture diagram in TikZ/Mermaid",
                     "Comparative win-rate and convergence plots in matplotlib",
                 ],
+                "literature_recon": payload.get("literature_recon", {}),
+                "table_of_contents": payload.get("table_of_contents", []),
             },
             "tasks": tasks,
             "missing_agent_specialization": payload.get("missing_agent_specialization"),
@@ -219,12 +221,15 @@ def _default_simulated_response(agent_name: str, system_prompt: str, payload: di
         }
 
 
-    if "sota_researcher" in agent_name:
+    if "sota_researcher" in agent_name or "background_researcher" in agent_name or "discoverer_researcher" in agent_name:
+        stage = "discoverer" if "discoverer" in agent_name else "background"
         return {
+            "research_stage": stage,
+            "bib_file": "references.bib",
             "bibtex_entries": "@article{vaswani2017attention,\n  author = {Vaswani, Ashish and others},\n  title = {Attention Is All You Need},\n  journal = {NeurIPS},\n  year = {2017}\n}\n",
-            "literature_review_section": "\\subsection{State-of-the-Art Literature Review}\nFoundational work in sequence modeling includes \\cite{vaswani2017attention}...",
+            "literature_review_section": "Foundational work in sequence modeling includes \\cite{vaswani2017attention}...",
             "citation_keys": ["vaswani2017attention"],
-            "summary": "Synthesized SOTA review with formal BibTeX bibliography.",
+            "summary": f"Synthesized {stage} literature review with formal BibTeX bibliography.",
         }
 
 

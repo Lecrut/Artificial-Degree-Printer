@@ -119,3 +119,23 @@ def test_adk_neuro_symbolic_harness_structure():
     ]
     missing = [rel for rel in expected_paths if not (adk_root / rel).exists()]
     assert not missing, f"Brakujące pliki w strukturze adk/: {missing}"
+
+
+def test_no_mock_files_in_tools_directory():
+    """Verify that all mock files and fixtures reside strictly in adk/mocks/, and not in adk/tools/."""
+    tools_root = Path(__file__).resolve().parent.parent / "adk" / "tools"
+    mock_files = [str(p.relative_to(tools_root)) for p in tools_root.rglob("*") if "mock" in p.name.lower()]
+    assert not mock_files, f"Wykryto pliki mock wewnątrz katalogu adk/tools/: {mock_files}"
+
+
+
+def test_no_unused_function_arguments_in_codebase():
+    """Verify via Ruff ARG rule that functions across adk, tests, and main.py have no unused arguments."""
+    import subprocess
+    import sys
+
+    root = Path(__file__).resolve().parent.parent
+    cmd = [sys.executable, "-m", "ruff", "check", "--select", "ARG", "adk", "tests", "main.py"]
+    res = subprocess.run(cmd, cwd=str(root), capture_output=True, text=True, check=False)
+    assert res.returncode == 0, f"Wykryto nieużywane argumenty funkcji w repozytorium:\n{res.stdout}\n{res.stderr}"
+

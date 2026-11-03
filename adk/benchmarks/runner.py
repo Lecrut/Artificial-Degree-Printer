@@ -20,6 +20,7 @@ from adk.core.llm import get_llm_telemetry, reset_llm_telemetry, set_llm_handler
 from adk.core.models import read_json_state, write_json_state  # noqa: E402
 from adk.orchestrator import NeuroSymbolicOrchestrator  # noqa: E402
 from adk.tools.building.thesis_publisher import publish_workspace_thesis_bundle  # noqa: E402
+from adk.tools.planning import scout_domain_conventions, synthesize_table_of_contents  # noqa: E402
 
 matplotlib.use("Agg")
 
@@ -40,49 +41,34 @@ VALIDATOR_SYNTHESIS_CODE = (
 def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
     """Build an intelligent task-aware mock LLM handler that drives ADK self-expansion and code/thesis generation."""
 
-    def _handler(system_prompt: str, payload: dict[str, Any], model_tier: str) -> dict[str, Any]:
-        # 1. Layer 1: Task Planner
+    def _handler(system_prompt: str, payload: dict[str, Any], _model_tier: str) -> dict[str, Any]:
+        # 1. Layer 1: Task Planner (Research-First Reconnaissance + TOC Synthesis + Task Decomposition)
         if "Task Planner" in system_prompt or ("user_prompt" in payload and "blast_radius" in payload):
             coder_agent = spec.missing_specialization or "seed_coder"
             t_type = getattr(spec, "thesis_type", "inzynierska").strip().lower()
+            recon_report = scout_domain_conventions(spec.task_id, thesis_type=t_type)
+            toc_structure = synthesize_table_of_contents(
+                spec.task_id,
+                thesis_type=t_type,
+                recon_report=recon_report,
+                title_pl=spec.title_pl,
+            )
             if spec.custom_tasks:
                 tasks = [dict(t) for t in spec.custom_tasks]
             else:
-                tasks = [
-                    {
-                        "task_id": "T1",
-                        "description": f"[{spec.task_id}] Implement AST hyperparameters in config.py for {spec.title_en}",
-                        "target_node": "v1",
-                        "assigned_agent": coder_agent,
-                        "status": "TODO",
-                    },
-                    {
-                        "task_id": "T2",
-                        "description": f"[{spec.task_id}] Implement core algorithm and train_and_evaluate() in core.py",
-                        "target_node": "v2",
-                        "assigned_agent": coder_agent,
-                        "status": "TODO",
-                    },
-                    {
-                        "task_id": "T3",
-                        "description": f"[{spec.task_id}] Implement unit tests, CSV benchmark, and plots for {spec.title_en}",
-                        "target_node": "v3",
-                        "assigned_agent": "seed_tester",
-                        "status": "TODO",
-                    },
-                ]
+                tasks = []
                 if t_type in ("magisterska", "master", "msc"):
                     tasks.extend(
                         [
                             {
-                                "task_id": "T4_BG",
+                                "task_id": "T1_BG",
                                 "description": f"[{spec.task_id}] Stage 1 Background Research (II stopień): Foundational funnel & monographs in references.bib",
                                 "target_node": "v4",
                                 "assigned_agent": "background_researcher",
                                 "status": "TODO",
                             },
                             {
-                                "task_id": "T4_DISC",
+                                "task_id": "T1_DISC",
                                 "description": f"[{spec.task_id}] Stage 2 Discoverer Research (II stopień): Contemporary SOTA (2023-2026) & research gap in references.bib",
                                 "target_node": "v4",
                                 "assigned_agent": "discoverer_researcher",
@@ -93,7 +79,7 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                 elif t_type in ("paper", "article", "scientific_paper"):
                     tasks.append(
                         {
-                            "task_id": "T4",
+                            "task_id": "T1",
                             "description": f"[{spec.task_id}] Discoverer Research (III stopień - Paper): Competitive SOTA (2023-2026) & superiority proof in references.bib",
                             "target_node": "v4",
                             "assigned_agent": "discoverer_researcher",
@@ -103,21 +89,44 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                 else:
                     tasks.append(
                         {
-                            "task_id": "T4",
+                            "task_id": "T1",
                             "description": f"[{spec.task_id}] Background Research (I stopień - Inżynierska): Foundational funnel from classical monographs to thesis problem in references.bib",
                             "target_node": "v4",
                             "assigned_agent": "background_researcher",
                             "status": "TODO",
                         }
                     )
-                tasks.append(
-                    {
-                        "task_id": "T5",
-                        "description": f"[{spec.task_id}] Author Chapters 3-6 of full 6-chapter thesis with \\ref_ast, \\ref_csv, and \\ref_fig pointers",
-                        "target_node": "v4",
-                        "assigned_agent": "seed_writer",
-                        "status": "TODO",
-                    }
+                tasks.extend(
+                    [
+                        {
+                            "task_id": "T2",
+                            "description": f"[{spec.task_id}] Implement AST hyperparameters in config.py for {spec.title_en}",
+                            "target_node": "v1",
+                            "assigned_agent": coder_agent,
+                            "status": "TODO",
+                        },
+                        {
+                            "task_id": "T3",
+                            "description": f"[{spec.task_id}] Implement core algorithm and train_and_evaluate() in core.py",
+                            "target_node": "v2",
+                            "assigned_agent": coder_agent,
+                            "status": "TODO",
+                        },
+                        {
+                            "task_id": "T4",
+                            "description": f"[{spec.task_id}] Implement unit tests, CSV benchmark, and plots for {spec.title_en}",
+                            "target_node": "v3",
+                            "assigned_agent": "seed_tester",
+                            "status": "TODO",
+                        },
+                        {
+                            "task_id": "T5",
+                            "description": f"[{spec.task_id}] Author all 6 chapters of thesis/paper following Table of Contents with \\ref_ast, \\ref_csv, and \\ref_fig pointers",
+                            "target_node": "v4",
+                            "assigned_agent": "seed_writer",
+                            "status": "TODO",
+                        },
+                    ]
                 )
             return {
                 "thesis_type": getattr(spec, "thesis_type", "inzynierska"),
@@ -126,8 +135,10 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                 "academic_blueprint": {
                     "thesis_title": spec.title_pl,
                     "thesis_statement": spec.abstract_en,
-                    "baseline_comparison": f"Comparative benchmark in {spec.domain}",
+                    "baseline_comparison": f"Comparative benchmark in {spec.domain}: {', '.join(recon_report.get('competitor_baselines', []))}",
                     "planned_visualizations": ["TikZ Architecture Diagram", "Matplotlib Vector Comparison Chart"],
+                    "literature_recon": recon_report,
+                    "table_of_contents": toc_structure,
                 },
                 "tasks": tasks,
                 "missing_agent_specialization": spec.missing_specialization,
@@ -255,16 +266,12 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
             bg_bib = spec.background_bibtex_entries or spec.bibtex_entries
             bg_sec = spec.background_section_content or spec.sota_section_content
             ch2_title = spec.thesis_chapters[1][0] if len(spec.thesis_chapters) >= 2 else spec.sota_section_title
-            sections_out = []
-            if spec.thesis_chapters:
-                sections_out.append({"section_title": spec.thesis_chapters[0][0], "section_content": spec.thesis_chapters[0][1]})
             return {
                 "research_stage": "background",
                 "bib_file": "references.bib",
                 "bibtex_entries": bg_bib,
                 "section_title": ch2_title,
                 "literature_review_section": bg_sec,
-                "sections": sections_out,
                 "summary": f"Synthesized Stage 1 Background foundational funnel and BibTeX for {spec.task_id}.",
             }
 
@@ -605,6 +612,11 @@ def run_benchmark_suite(
                 lrm_model=lrm_model,
                 sml_model=sml_model,
             )
+
+            # Copy academic_blueprint.json (with literature_recon and table_of_contents) into workspace
+            blueprint_src = evolved_adk_dir / "state" / "academic_blueprint.json"
+            if blueprint_src.exists():
+                shutil.copy2(blueprint_src, sandbox_ws / "academic_blueprint.json")
 
             # Copy materialized workspace to its dedicated permanent directory: benchmarks/<slug>/
             task_dest_dir = bench_out_root / spec.slug

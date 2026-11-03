@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from adk.benchmarks.mock_fixtures import (
+from adk.mocks.code_fixtures import (
     ANOMALY_BACKGROUND_BIBTEX,
     ANOMALY_BACKGROUND_CONTENT,
     ANOMALY_BIBTEX,
@@ -39,7 +39,6 @@ from adk.benchmarks.mock_fixtures import (
     PATHFINDING_DOC_CONTENT,
     PATHFINDING_INITIAL_CSV,
     PATHFINDING_PLOT_SCRIPT,
-    PATHFINDING_PROMPT,
     PATHFINDING_SOTA_CONTENT,
     PATHFINDING_TEST_CODE,
     PATHFINDING_THESIS_CHAPTERS,
@@ -49,7 +48,6 @@ from adk.benchmarks.mock_fixtures import (
     TICTACTOE_CONFIG_AST_NODES,
     TICTACTOE_CORE_CODE,
     TICTACTOE_DOC_FULL_CONTENT,
-    TICTACTOE_DOC_SECTION_TITLE,
     TICTACTOE_INITIAL_CSV,
     TICTACTOE_PLOT_SCRIPT,
     TICTACTOE_SOTA_CONTENT,

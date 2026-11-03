@@ -12,8 +12,13 @@ import csv
 import re
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from adk.benchmarks.tasks import BenchmarkTaskSpec
+from adk.mocks.thesis_mock_expander import expand_academic_chapters
+from adk.tools.building.literature_engine import get_domain_bibtex
+
+if TYPE_CHECKING:
+    from adk.benchmarks.tasks import BenchmarkTaskSpec
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent.parent / "templates"
 SUPPORTED_TEMPLATES = ("thesis_plodz", "paper_ieee")
@@ -120,19 +125,19 @@ def _escape_latex_prose(text: str) -> str:
         placeholders[token] = m.group(0)
         return token
 
-    # 1. Protect \ref_ast{...}, \ref_csv{...}, \ref_fig{...}, \cite{...}, \ref{...}, \texttt{...}, etc.
-    s = re.sub(r"\\[a-zA-Z_]+\{[^}]*\}", repl_tag, text)
-    # 2. Protect math $...$
+    # 1. Protect LaTeX equation/math/table/figure environments first so nothing inside them is altered
+    s = re.sub(r"\\begin\{(equation\*?|align\*?|math|displaymath|tabular|tikzpicture)\}.*?\\end\{\1\}", repl_tag, text, flags=re.DOTALL)
+    # 2. Protect inline math $...$ so nested commands and subscripts inside math are preserved as one block
     s = re.sub(r"\$[^$]+\$", repl_tag, s)
-    # 3. Protect LaTeX environments if any
-    s = re.sub(r"\\begin\{[^}]+\}.*?\\end\{[^}]+\}", repl_tag, s, flags=re.DOTALL)
+    # 3. Protect \ref_ast{...}, \ref_csv{...}, \ref_fig{...}, \cite{...}, \ref{...}, \texttt{...}, etc.
+    s = re.sub(r"\\[a-zA-Z_]+\{[^}]*\}", repl_tag, s)
     # 4. Protect square-bracketed citations if any, e.g. [1], [2]
     s = re.sub(r"\[[0-9,\s\-]+\]", repl_tag, s)
 
     # In remaining prose, replace any unescaped underscore with \_
-    s = s.replace("_", "\\_")
+    s = re.sub(r"(?<!\\)_", r"\\_", s)
 
-    for token, orig in placeholders.items():
+    for token, orig in reversed(list(placeholders.items())):
         s = s.replace(token, orig)
     return s
 
@@ -151,15 +156,62 @@ def render_template_latex(
     copy_template_assets(chosen_template, workspace_dir)
 
     bib_path = workspace_dir / "references.bib"
+    full_domain_bib = getattr(spec, "bibtex_entries", "") or get_domain_bibtex(spec.task_id)
     if bib_path.exists():
         bib_raw = bib_path.read_text(encoding="utf-8", errors="ignore")
+        if full_domain_bib and len(re.findall(r"@\w+\{", bib_raw)) < len(re.findall(r"@\w+\{", full_domain_bib)):
+            from adk.orchestrator import _merge_bibtex_entries
+            bib_raw = _merge_bibtex_entries(bib_raw, full_domain_bib)
         cleaned_bib = re.sub(r"(?<!\\)&", r"\\&", bib_raw)
-        if cleaned_bib != bib_raw:
-            bib_path.write_text(cleaned_bib, encoding="utf-8")
+        bib_path.write_text(cleaned_bib, encoding="utf-8")
+    elif full_domain_bib:
+        cleaned_bib = re.sub(r"(?<!\\)&", r"\\&", full_domain_bib)
+        bib_path.write_text(cleaned_bib, encoding="utf-8")
 
     headers, rows = _read_csv_rows(workspace_dir / "results.csv")
     config_pairs = _extract_config_constants(workspace_dir / "config.py")
-    chapters = _get_effective_chapters(spec)
+    base_chapters = _get_effective_chapters(spec)
+    chapters = expand_academic_chapters(
+        spec=spec,
+        base_chapters=base_chapters,
+        workspace_dir=workspace_dir,
+        config_pairs=config_pairs,
+        headers=headers,
+        rows=rows,
+        is_ieee=(chosen_template == "paper_ieee"),
+    )
+
+    # If thesis.md already contains LLM-authored chapters, load and prefer them over mock fallback
+    md_file = workspace_dir / "thesis.md"
+    if md_file.exists():
+        raw_md = md_file.read_text(encoding="utf-8")
+        matches = list(re.finditer(r"^##\s+(.+?)\s*$", raw_md, flags=re.MULTILINE))
+        existing_chapters: dict[str, str] = {}
+        for i, m in enumerate(matches):
+            t = m.group(1).strip()
+            start = m.end()
+            end = matches[i + 1].start() if i + 1 < len(matches) else len(raw_md)
+            b = raw_md[start:end].strip()
+            if len(b) > 80:
+                existing_chapters[t] = b
+
+        if existing_chapters:
+            real_chapters: list[tuple[str, str]] = []
+            for ch_t, mock_body in chapters:
+                m_idx = re.match(r"^(Rozdział\s+\d+|Chapter\s+\d+)", ch_t, re.IGNORECASE)
+                prefix = m_idx.group(1).lower() if m_idx else ch_t.lower()
+                matched_body = None
+                matched_title = ch_t
+                for et, eb in existing_chapters.items():
+                    if et.lower().startswith(prefix) or et.lower() == ch_t.lower():
+                        matched_body = eb
+                        matched_title = et
+                        break
+                if matched_body is not None:
+                    real_chapters.append((matched_title, matched_body))
+                else:
+                    real_chapters.append((ch_t, mock_body))
+            chapters = real_chapters
 
     # LaTeX table for CSV metrics
     if headers and rows:
@@ -239,6 +291,9 @@ def render_template_latex(
 {esc_abstract_en}
 }}
 \\keywordssecondary{{artificial intelligence, machine learning, neuro-symbolic systems, empirical verification}}
+
+\\renewcommand{{\\texttt}}[1]{{{{\\normalfont\\ttfamily #1}}}}
+\\DeclareFontShape{{OMS}}{{cmsy}}{{m}}{{n}}{{<-> cmsy10}}{{}}
 
 \\begin{{document}}
 
@@ -331,6 +386,9 @@ Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modu�
 \\usepackage{{tikz}}
 \\usetikzlibrary{{positioning}}
 \\usepackage[hidelinks]{{hyperref}}
+
+\\renewcommand{{\\texttt}}[1]{{{{\\normalfont\\ttfamily #1}}}}
+\\DeclareFontShape{{OMS}}{{cmsy}}{{m}}{{n}}{{<-> cmsy10}}{{}}
 
 \\begin{{document}}
 
