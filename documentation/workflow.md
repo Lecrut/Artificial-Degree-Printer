@@ -1,83 +1,123 @@
-# Execution Workflow & State Transitions (ADK 2027)
+# Neuro-Symbolic Execution Workflow & State Transitions (ADK 2026/2027)
 
-> **Workflow Pattern:** Deterministic DAG, Parallel Execution (TIPEX 2026) & Closed-Loop Agentic Reflexion  
-> **Standard:** Metodyka ADK-TRACE  
-> **Engine:** `StateGraphEngine` (`adk/engine/graph.py`)
+> **Architektura:** Neuro-Symbolic Closed-Loop Harness (4 Warstwy + Hipergraf Macierzowy)  
+> **Silnik:** `NeuroSymbolicOrchestrator` (`adk/orchestrator.py`)  
+> **Zasada przewodnia:** Karpathy Simplicity, Surgical Changes, Dynamic Chapter Planning, Deterministic AST/CSV Grounding  
 
 ---
 
-## 1. The 6-Stage Execution Pipeline
+## 1. Architektura 4 Warstw i Przepływ Sterowania
 
 ```
-  [1. INTAKE]  ────────▶  [2. RESEARCH]  ────────▶  [3. ARCHITECTURE]
-  Promotor AI            Researcher Agent           Architect Agent
-  (Requirements)         (SOTA >= 2023)             (C4 & Pydantic)
-                                                           │
-                                                           ▼
-  [6. VERIFICATION] ◀───  [5. TYPESETTING]  ◀───  [4. IMPLEMENTATION]
-  Master Suite           Typesetter Agent           Developer & Benchmarker
-  (7 Quality Gates)      (Typst & LaTeX)            (Pytest, SVG Charts)
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ WARSTWA 1: PLANOWANIE & REKONESANS (LRM - task_planner)               │
+  │ • scout_domain_conventions -> konwencje dziedzinowe, metryki, sekcje   │
+  │ • task_planner sam planuje rozdziały: planned_chapters (np. 4-6)       │
+  │ • domain_context -> 5-zadaniowy DAG zadań badawczo-inżynierskich (T1..T5│
+  └───────────────────────────────────┬────────────────────────────────────┘
+                                      │  Kolejka Zadań (task_queue.json)
+                                      ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ WARSTWA 2: BUDOWANIE RESEARCH-FIRST (SLM/LRM builders)                 │
+  │ • T1 (v4): background/discoverer_researcher (references.bib + lit. rev)│
+  │ • T2 (v1): seed_coder (config.py AST)                                  │
+  │ • T3 (v2): seed_coder (core.py algorytm i baseline)                    │
+  │ • T4 (v3): seed_tester (test_core.py + results.csv + wykresy)          │
+  │ • T5 (v4): seed_writer (redakcja rozdziałów wg planned_chapters        │
+  │            z kotwicami \ref_ast, \ref_csv, \ref_fig)                   │
+  └───────────────────────────────────┬────────────────────────────────────┘
+                                      │  Wyniki na węźle hipergrafu
+                                      ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ WARSTWA 3: WERYFIKACJA KONTRAKTU & SUPERVISION (SML)                   │
+  │ • Zadanie pośrednie (is_final_gate=False):                             │
+  │     - code_auditor: pytest + ruff                                      │
+  │     - symbolic_auditor: ignoruje oczekujące zależności przyszłych TODO  │
+  │     - redteam_critic_guard: SKIPPED_INTERMEDIATE_TASK                  │
+  │ • Bramka Końcowa (Gate 3 Defense, is_final_gate=True):                 │
+  │     - rygorystyczny audyt wszystkich AST, CSV, mtime, TikZ, fluff      │
+  │     - pełny audyt recenzencki redteam_critic_guard                     │
+  └──────────────────────────┬──────────────────┬──────────────────────────┘
+                             │ PASS             │ FAIL
+                             ▼                  ▼
+                   Kolejne zadanie       ┌─────────────────────────────────┐
+                   lub Gate 3 Obrona     │ PĘTLA REMEDIACJI (W3->W4->W1->W2│
+                                         │ • Waga EvoRoute w(v) +0.4       │
+                                         │ • W4: Ewolucja / mutacja reguły │
+                                         │ • W1: "Poprzednio nie zadziałało│
+                                         │   ... Zrób to: ..." -> T_FIX    │
+                                         │ • W2: Wykonanie naprawcze       │
+                                         │ • W3: Re-audyt                  │
+                                         └─────────────────────────────────┘
 ```
 
 ---
 
-## 2. Detailed Stage Breakdown
+## 2. Szczegółowy Opis Faz Przepływu
 
-### Stage 1: Problem Intake & Requirements Framing
-- **Agent:** `OrchestratorAgent` (Promotor AI)
-- **Input:** High-level project topic (e.g. *"System analizy wydajnosci mikroserwisow w chmurze"*).
-- **Artifacts:** `ThesisMetadata`, `List[Requirement]` with MoSCoW priorities (`MUST`, `SHOULD`, `COULD`).
+### Faza 1: Rekonesans Literatury i Dynamiczne Planowanie Rozdziałów (Layer 1)
+- **Rekonesans dziedzinowy (`scout_domain_conventions`):** Bada kanon dziedziny, bazy odniesienia (baselines), standardowe metryki oraz typowe wzorce sekcji (`suggested_sections`).
+- **Dynamiczne planowanie rozdziałów:** Zamiast narzucać sztywne 6 rozdziałów w kodzie Pythona, to **`task_planner` w Warstwie 1** projektuje strukturę pracy (`planned_chapters`) dopasowaną do tematu i typu pracy (np. inżynierska, magisterska, artykuł naukowy).
+- **Zapis blueprintu:** Zaplanowana struktura jest utrwalana w `adk/state/academic_blueprint.json` jako `table_of_contents` dla wykonawców Warstwy 2 (`seed_writer`).
+- **Kompaktowy prompt planera:** Do agenta `task_planner` trafia wyłącznie zwięzłe `domain_context` (dziedzina, metryki, baselines, sugerowane sekcje), co eliminuje przeciążenie kontekstu i gwarantuje stabilny zwrot DAG zadań `tasks: [T1..T5]`.
+- **Punkty kontrolne HITL:** `GATE_1_OUTLINE_APPROVAL` (teza i struktura rozdziałów) oraz `GATE_2_METHODOLOGY_APPROVAL` (architektura).
 
-### Stage 2: SOTA Literature Discovery & Implementation Backlog
-- **Agent:** `ResearcherAgent`
-- **Tool:** `DynamicLiteratureSearchEngine` + `LiteratureDossierTool`
-- **Action:** Dynamically searches seminal papers published in **2023–2026** tailored to the topic. Generates BibTeX citations and technical dossiers in `artifacts/research/`.
-- **Output:** Chapters 1 & 2 drafts citing recent SOTA papers.
+### Faza 2: Wykonanie Zadań w Porządku Research-First (Layer 2)
+Każde zadanie operuje atomowo na dokładnie jednym węźle hipergrafu z `adk/state/hypergraph_matrix.json`:
+1. **Zadanie T1 (Węzeł `v4` — Dokumentacja/Literatura):**
+   - Agenci: `background_researcher` (I stopień / II stopień etap 1) oraz opcjonalnie `discoverer_researcher` (II stopień etap 2 / III stopień).
+   - Generuje `references.bib` i syntetyzuje rozdział o stanie wiedzy, fundamentach teoretycznych i luce badawczej.
+2. **Zadanie T2 (Węzeł `v1` — Konfiguracja AST):**
+   - Agent: `seed_coder`.
+   - Zapisuje stałe, interfejsy i hiperparametry w `config.py`.
+3. **Zadanie T3 (Węzeł `v2` — Algorytm Główny):**
+   - Agent: `seed_coder`.
+   - Implementuje proponowaną metodę i algorytm bazowy w `core.py`.
+4. **Zadanie T4 (Węzeł `v3` — Eksperymenty i Pomiary):**
+   - Agent: `seed_tester`.
+   - Buduje testy `test_core.py`, uruchamia badania porównawcze, zapisuje empiryczne pomiary w `results.csv` oraz generuje wektorowe wykresy w `figures/`.
+5. **Zadanie T5 (Węzeł `v4` — Redakcja Pracy):**
+   - Agent: `seed_writer`.
+   - Redaguje zaplanowane rozdziały pracy w `thesis.md` wg `planned_chapters`, wiążąc twierdzenia twardymi kotwicami neuro-symbolicznymi:
+     - `\ref_ast{plik:symbol}` — powiązanie z konkretnym węzłem AST w kodzie Pythona,
+     - `\ref_csv{plik:kolumna}` — powiązanie z rzeczywistymi pomiarami w tabeli CSV,
+     - `\ref_fig{ścieżka}` — powiązanie z wygenerowanym wykresem lub diagramem TikZ,
+     - `\cite{klucz}` — odwołanie do pozycji w `references.bib`.
 
-### Stage 3: Architecture Specification & C4 Modeling
-- **Agent:** `ArchitectAgent`
-- **Action:** Designs modular component hierarchy, Pydantic v2 data models, security considerations, and Mermaid sequence/C4 diagrams.
-- **Output:** `ArchitectureSpec` + Chapter 3 draft.
+### Faza 3: Dwuetapowa Weryfikacja Hipergraficzna (Layer 3)
+Weryfikacja rozróżnia etap pośredni od obrony końcowej:
+- **Zadania pośrednie (`is_final_gate=False`):**
+  - Wywołuje `_get_pending_future_files()`: kompilator symboliczny ignoruje błędy braku plików, które są zaplanowane w kolejnych zadaniach o statusie `TODO` (np. brak `config.py` podczas weryfikacji T1 jest oczekiwaną zależnością przyszłą).
+  - Nadzorca recenzencki `redteam_critic_guard` zwraca `SKIPPED_INTERMEDIATE_TASK` — nie blokuje procesu żądaniem nieistniejących jeszcze wykresów czy implementacji.
+- **Bramka Końcowa Obrony Pracy (`is_final_gate=True`):**
+  - Bezwzględny audyt kompletności: zero brakujących plików, weryfikacja świeżości mtime plików CSV względem kodu Python, walidacja schematów TikZ, integralności cytowań BibTeX oraz detekcja zakazanego żargonu ("AI fluff").
+  - Pełny audyt krytyczny promotora/recenzenta przez `redteam_critic_guard`.
 
-### Stage 4: Code-First Implementation & Benchmarking
-- **Agents:** `DeveloperAgent` & `ExperimenterAgent`
-- **Tools:** `SandboxRunnerTool` (Pytest), `BenchmarkTool` (Matplotlib SVG/PNG), `GitProvenanceTool`.
-- **Action:** Implements clean production code (`src/core/`), unit test suites (`tests/`), Dockerfile, and runs empirical load benchmarks (p95 latency).
-- **Output:** `List[CodeArtifact]`, `List[BenchmarkResult]`, git commits per stage.
+### Faza 4: Działaniowa Pętla Remediacji (Layer 3 -> Layer 4 -> Layer 1 -> Layer 2 -> Layer 3)
+W przypadku wystąpienia błędu na zadaniu:
+1. **Eskalacja trudności (EvoRoute):** Waga węzła hipergrafu $w(v)$ rośnie o $+0.4$, rejestrując zdarzenie w `evolution_history.json`.
+2. **Warstwa 4 (Samoewolucja):** `evolution_architect` analizuje usterkę i decyduje o mutacji promptu agenta lub podziale roli na specjalistów.
+3. **Warstwa 1 (Chirurgiczna Remediacja):** `remediation_planner` otrzymuje jasną dyrektywę wykonawczą:
+   `"Poprzednio nie zadziałało: {issues_summary}. Zrób to: w zadaniu {task_id} na węźle {node_id} ({node_file}) wyeliminuj ten błąd i wygeneruj w pełni poprawną zawartość."`
+4. **Warstwa 2:** Agent wykonuje dedykowane mikrozadanie `{task_id}_FIX` bez naruszania pozostałych węzłów.
+5. **Warstwa 3:** Ponowny audyt stanu.
 
-### Stage 5: Dual-Engine Typesetting (Typst & LaTeX)
-- **Agent:** `TypesetterAgent`
-- **Tool:** `TypesettingTool`
-- **Action:** Generates fully styled academic paper in Typst 0.11+ syntax (`artifacts/thesis/thesis.typ`) and LaTeX (`artifacts/thesis/thesis.tex`) with automated BibTeX linking and vector chart placement (PaperCoder & LongDA Co-Synthesis).
-- **Output:** Compiled PDF previews and source `.typ` / `.tex` files.
-
-### Stage 6: Multi-Gate Verification & Closed-Loop Reflexion
-- **Agent:** `ReviewerAgent`
-- **Engine:** `MasterVerificationSuite` (7 Gates: AST, Mutation, Citations, English Naming, Cross-Consistency, Academic Style, Stylometry TTR).
-- **Reflexion Loop:** If any gate fails $\to$ `VerificationIssue` is created $\to$ `SelfEvolvingHarnessEngine` evaluates a `HarnessPatch` $\to$ Gated Evolution (GSME 2026) commits patch $\to$ Retries failed stage via `replan_branch()`.
+### Faza 5: Pętla Naprawcza Bramki Końcowej Gate 3 (W3 -> W1 -> W2 -> W3)
+- Jeśli końcowy audyt obrony (`is_final_gate=True`) wykaże usterki (np. brakujący symbol AST, niespójność kolumny CSV lub zastrzeżenia recenzenta):
+  - System **nie maskuje błędów** ani nie kończy z fałszywym ostrzeżeniem.
+  - Zgłoszone błędy są przekazywane do `remediation_planner` w Warstwie 1.
+  - Warstwa 1 generuje zadania naprawcze `GATE_3_FIX_k` dla odpowiednich węzłów.
+  - Warstwa 2 wykonuje poprawki, a Warstwa 3 przeprowadza re-audyt Gate 3.
+  - Po pomyślnym przejściu następuje zapytanie promotora w `GATE_3_DEFENSE_APPROVAL`.
+  - W przypadku wyczerpania limitu prób (`max_retries`) następuje bezpieczne wstrzymanie w bramce HITL `GATE_DEFENSE_FAILED`.
 
 ---
 
-## 3. Ultra-Low-Cost Routing & Progressive Crystallization (2026 SOTA)
+## 3. Dynamiczny Routing Modeli (EvoRoute)
 
-### Agent-as-a-Router (ACRouter 2026)
-Wykonanie każdego etapu podlega dynamicznemu routingowi modeli (*ModelTier*):
-- **Tier 1 (Gemini Flash / SLM):** Etapy 2, 5 i lintery (oszczędność 65-80% kosztu wywołań API).
-- **Tier 2 (Standard Code Model):** Etapy 4 i testowanie mutacyjne.
-- **Tier 3 (Frontier Reasoning Model):** Etapy 1, 3 oraz głęboka pętla samonaprawy.
-
-### Progressive Workflow Crystallization
-Gdy trajektoria wykonawcza danego typu etapu zostanie pomyślnie zweryfikowana co najmniej 3 razy, `CrystallizedWorkflowRegistry` automatycznie przerejestrowuje ją jako skrystalizowany, deterministyczny generator Pythona — redukując wywołanie LLM w kolejnych uruchomieniach o **>70%**.
-
----
-
-## 4. Standardized SOTA Research & Auto-Implementation Protocol
-
-Dla każdego nowego przełomu naukowego (2023–2026) obowiązuje ściśle określony **4-etapowy protokół postępowania**:
-
-1. **Odkrycie, Analiza i Natychmiastowy Zapis Dossier (Discovery & Dossier Persistence):** Wyszukanie publikacji SOTA i natychmiastowe utworzenie karty analitycznej w `documentation/scientific_papers/<key>.md` oraz aktualizacja indeksiów (`README.md`, `master_implementation_synthesis.md`). Wiedza jest trwale zapisana niezależnie od późniejszego wdrożenia w kodzie.
-2. **Propozycja Wdrożenia w Kodzie (Code Approval Gate):** Przedstawienie zwięzłego podsumowania użytkownikowi i zapytanie: *"Karta papieru została zapisana w bazie wiedzy. Czy wdrażamy ten przełom bezpośrednio w kodzie i głównej dokumentacji?"*.
-3. **Implementacja Kodowa i Testy (Code & Test):** Po uzyskaniu zgody ("tak") — zaimplementowanie funkcji w `adk/` oraz napisanie testów w `tests/` (100% PASS).
-4. **Pełna Aktualizacja Dokumentacji Głównej (Full Core Docs Sync):** 
-   - Zaktualizowanie wszystkich plików dokumentacji głównej (`architecture.md`, `methodology_and_roadmap.md`, `requirements.md`, `repository-structure.md`, `project-overview.md`).
-   - Dopisanie sekwencyjnego etapu do `build_log_and_changelog.md` (bez przeskakiwania numerów).
+| Warstwa | Agenci / Zadanie | Domyślny Model Tier | Typ Modelu Ollama / API |
+|---|---|---|---|
+| **Warstwa 1** | `task_planner`, `remediation_planner` | **LRM** (Large Reasoning) | np. `qwen3-coder:latest` / Frontier |
+| **Warstwa 2** | `background_researcher`, `seed_coder`, `seed_tester`, `seed_writer` | **Dynamiczny wg węzła** | $w(v) < 1.5 \to$ SML, $w(v) \ge 1.5 \to$ LRM |
+| **Warstwa 3** | `code_auditor`, `symbolic_auditor`, `redteam_critic_guard` | **SML** + Determinizm Pythona | pytest + ruff + AST/CSV compiler |
+| **Warstwa 4** | `evolution_architect`, `prompt_consolidator` | **LRM** | Meta-ewolucja reguł i agentów |

@@ -314,5 +314,22 @@ def test_dynamic_toc_subsection_injection_into_thesis_mock_expander(tmp_path: Pa
     assert "\\section{Niestandardowa Sekcja Rekonesansu Planera 1.1}" in expanded[0][1]
 
 
+def test_vertical_feature_slices_in_single_task_planner():
+    """Verify that task_planner cleanly produces vertical feature slices with co-evolving code, tests, and documentation, along with academic_blueprint."""
+    planner_res = call_agent(
+        "agents/planning/task_planner.md",
+        {"user_prompt": "Build Q-learning agent with unit tests and thesis documentation"},
+        model_tier="LRM",
+        provider="mock",
+    )
+    assert planner_res["status"] == "ok"
+    tasks = planner_res["output"]["tasks"]
+    assert len(tasks) >= 2
+    target_nodes = {t["target_node"] for t in tasks}
+    assert "v1" in target_nodes or "v2" in target_nodes
 
-
+    # Academic blueprint must be part of single task_planner output (not a separate thesis_architect)
+    blueprint = planner_res["output"]["academic_blueprint"]
+    assert "thesis_title" in blueprint
+    assert "thesis_statement" in blueprint
+    assert len(blueprint["planned_chapters"]) >= 4

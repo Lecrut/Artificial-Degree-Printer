@@ -274,7 +274,7 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     draws = [float(r["draw_rate"]) * 100 for r in rows]
     losses = [float(r["loss_rate"]) * 100 for r in rows]
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.2), dpi=180)
+    fig, ax = plt.subplots(figsize=(4.8, 3.0), dpi=180)
     x = range(len(methods))
     width = 0.24
 
@@ -283,12 +283,12 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     b3 = ax.bar([i + width for i in x], losses, width=width, label="Loss Rate (%)", color="#d95f02")
 
     ax.set_xticks(list(x))
-    ax.set_xticklabels(methods, fontsize=10, fontweight="bold")
-    ax.set_ylabel("Percentage of Evaluation Games (%)", fontsize=10)
+    ax.set_xticklabels(methods, fontsize=9, fontweight="bold")
+    ax.set_ylabel("Evaluation Games (%)", fontsize=9)
     ax.set_ylim(0, 108)
-    ax.set_title("Tabular Q-Learning vs. Random Baseline Policy (100 Eval Episodes)", fontsize=11, fontweight="bold")
+    ax.set_title("Tabular Q-Learning vs. Random Baseline", fontsize=10, fontweight="bold")
     ax.grid(axis="y", linestyle="--", alpha=0.4)
-    ax.legend(frameon=True, loc="upper right")
+    ax.legend(frameon=True, loc="upper right", fontsize=8)
 
     for bars in (b1, b2, b3):
         for bar in bars:
@@ -306,8 +306,8 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     fig.tight_layout()
     png_out = fig_dir / "comparison_chart.png"
     pdf_out = fig_dir / "comparison_chart.pdf"
-    fig.savefig(png_out, dpi=180)
-    fig.savefig(pdf_out)
+    fig.savefig(png_out, dpi=180, bbox_inches="tight")
+    fig.savefig(pdf_out, bbox_inches="tight")
     plt.close(fig)
     return [str(png_out), str(pdf_out)]
 
@@ -343,13 +343,13 @@ TICTACTOE_DOC_FULL_CONTENT = (
     "and a draw rate of \\ref_csv{results.csv:draw_rate}, as illustrated in \\ref_fig{figures/comparison_chart.pdf}."
 )
 
-TICTACTOE_TIKZ = r"""\begin{tikzpicture}[node distance=2.4cm, auto]
-  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=2.8cm, minimum height=0.9cm] (env) {Plansza $3\times 3$ ($s_t$)};
-  \node[draw, rectangle, rounded corners, fill=green!15, right of=env, xshift=2.2cm, minimum width=3.2cm, minimum height=0.9cm] (qtab) {Tablica $Q(s_t, a_t)$};
-  \node[draw, rectangle, rounded corners, fill=orange!15, right of=qtab, xshift=2.2cm, minimum width=2.8cm, minimum height=0.9cm] (pol) {Polityka $\epsilon$-greedy};
-  \draw[->, thick] (env) -- node[above] {stan} (qtab);
-  \draw[->, thick] (qtab) -- node[above] {$\arg\max_a Q$} (pol);
-  \draw[->, thick] (pol.south) -- ++(0,-0.7) -| node[below, pos=0.25] {nagroda $r_t$, aktualizacja Bellmana} (env.south);
+TICTACTOE_TIKZ = r"""\begin{tikzpicture}[auto, >=stealth, node distance=1.05cm]
+  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=4.5cm, minimum height=0.65cm, align=center] (env) {Plansza $3\times 3$ ($s_t$)};
+  \node[draw, rectangle, rounded corners, fill=green!15, below of=env, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (qtab) {Tablica $Q(s_t, a_t)$};
+  \node[draw, rectangle, rounded corners, fill=orange!15, below of=qtab, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (pol) {Polityka $\epsilon$-greedy};
+  \draw[->, thick] (env) -- node[right] {stan $s_t$} (qtab);
+  \draw[->, thick] (qtab) -- node[right] {$\arg\max_a Q$} (pol);
+  \draw[->, thick] (pol.west) -- ++(-0.5,0) |- node[near start, left] {nagroda $r_t$} (env.west);
 \end{tikzpicture}"""
 
 
@@ -553,7 +553,7 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     rec = [float(r["recall"]) * 100 for r in rows]
     f1 = [float(r["f1_score"]) * 100 for r in rows]
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.2), dpi=180)
+    fig, ax = plt.subplots(figsize=(4.8, 3.0), dpi=180)
     x = range(len(methods))
     width = 0.24
 
@@ -562,12 +562,12 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     b3 = ax.bar([i + width for i in x], f1, width=width, label="F1-Score (%)", color="#d95f02")
 
     ax.set_xticks(list(x))
-    ax.set_xticklabels(methods, fontsize=10, fontweight="bold")
-    ax.set_ylabel("Metric Score (%)", fontsize=10)
+    ax.set_xticklabels(methods, fontsize=9, fontweight="bold")
+    ax.set_ylabel("Metric Score (%)", fontsize=9)
     ax.set_ylim(0, 110)
-    ax.set_title("Bio-Signal Anomaly Detection: Univariate Z-Score vs. Robust Subspace Ensemble", fontsize=10.5, fontweight="bold")
+    ax.set_title("Bio-Signal Anomaly Detection: Baseline vs. Ensemble", fontsize=10, fontweight="bold")
     ax.grid(axis="y", linestyle="--", alpha=0.4)
-    ax.legend(frameon=True, loc="lower right")
+    ax.legend(frameon=True, loc="lower right", fontsize=8)
 
     for bars in (b1, b2, b3):
         for bar in bars:
@@ -585,8 +585,8 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     fig.tight_layout()
     png_out = fig_dir / "comparison_chart.png"
     pdf_out = fig_dir / "comparison_chart.pdf"
-    fig.savefig(png_out, dpi=180)
-    fig.savefig(pdf_out)
+    fig.savefig(png_out, dpi=180, bbox_inches="tight")
+    fig.savefig(pdf_out, bbox_inches="tight")
     plt.close(fig)
     return [str(png_out), str(pdf_out)]
 
@@ -631,12 +631,12 @@ ANOMALY_DOC_CONTENT = (
     "and false alarm rate \\ref_csv{results.csv:proposed:false_alarm_rate}, as shown in \\ref_fig{figures/comparison_chart.pdf}."
 )
 
-ANOMALY_TIKZ = r"""\begin{tikzpicture}[node distance=2.3cm, auto]
-  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=2.9cm, minimum height=0.9cm] (sig) {Telemetria 3D (HR, HRV, SpO$_2$)};
-  \node[draw, rectangle, rounded corners, fill=purple!15, right of=sig, xshift=2.4cm, minimum width=3.2cm, minimum height=0.9cm] (mad) {Normalizacja Median/MAD};
-  \node[draw, rectangle, rounded corners, fill=green!15, right of=mad, xshift=2.4cm, minimum width=3.1cm, minimum height=0.9cm] (ens) {Ensemble $T=25$ Projekcji};
-  \draw[->, thick] (sig) -- (mad);
-  \draw[->, thick] (mad) -- (ens);
+ANOMALY_TIKZ = r"""\begin{tikzpicture}[auto, >=stealth, node distance=1.05cm]
+  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=4.5cm, minimum height=0.65cm, align=center] (sig) {Telemetria 3D (HR, HRV, SpO$_2$)};
+  \node[draw, rectangle, rounded corners, fill=purple!15, below of=sig, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (mad) {Normalizacja Median/MAD};
+  \node[draw, rectangle, rounded corners, fill=green!15, below of=mad, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (ens) {Komitet Projekcji ($T=25$)};
+  \draw[->, thick] (sig) -- node[right] {sygnał} (mad);
+  \draw[->, thick] (mad) -- node[right] {cechy} (ens);
 \end{tikzpicture}"""
 
 
@@ -851,30 +851,30 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     expanded = [float(r["avg_expanded_nodes"]) for r in rows]
     speedups = [float(r["speedup_factor"]) for r in rows]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.2, 4.0), dpi=180)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6.0, 2.8), dpi=180)
 
     bars1 = ax1.bar(methods, expanded, color=["#6c757d", "#1b9e77"], width=0.45)
-    ax1.set_title("Avg. Expanded Nodes (Lower is Better)", fontsize=10, fontweight="bold")
-    ax1.set_ylabel("Expanded Vertices", fontsize=9)
+    ax1.set_title("Expanded Nodes (Lower=Better)", fontsize=9, fontweight="bold")
+    ax1.set_ylabel("Vertices", fontsize=8.5)
     ax1.grid(axis="y", linestyle="--", alpha=0.4)
     for b in bars1:
         h = b.get_height()
-        ax1.annotate(f"{h:.1f}", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", fontsize=8.5, fontweight="bold")
+        ax1.annotate(f"{h:.1f}", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", fontsize=8, fontweight="bold")
 
     bars2 = ax2.bar(methods, speedups, color=["#6c757d", "#d95f02"], width=0.45)
-    ax2.set_title("Search Speedup Factor (Higher is Better)", fontsize=10, fontweight="bold")
-    ax2.set_ylabel("Speedup Ratio (x)", fontsize=9)
+    ax2.set_title("Speedup Factor (Higher=Better)", fontsize=9, fontweight="bold")
+    ax2.set_ylabel("Speedup (x)", fontsize=8.5)
     ax2.grid(axis="y", linestyle="--", alpha=0.4)
     for b in bars2:
         h = b.get_height()
-        ax2.annotate(f"{h:.2f}x", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", fontsize=8.5, fontweight="bold")
+        ax2.annotate(f"{h:.2f}x", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", fontsize=8, fontweight="bold")
 
-    fig.suptitle("Graph Pathfinding Benchmark: Dijkstra vs. Weighted Octile A*", fontsize=11, fontweight="bold")
+    fig.suptitle("Pathfinding: Dijkstra vs. Weighted Octile A*", fontsize=10, fontweight="bold")
     fig.tight_layout()
     png_out = fig_dir / "comparison_chart.png"
     pdf_out = fig_dir / "comparison_chart.pdf"
-    fig.savefig(png_out, dpi=180)
-    fig.savefig(pdf_out)
+    fig.savefig(png_out, dpi=180, bbox_inches="tight")
+    fig.savefig(pdf_out, bbox_inches="tight")
     plt.close(fig)
     return [str(png_out), str(pdf_out)]
 
@@ -908,12 +908,12 @@ PATHFINDING_DOC_CONTENT = (
     "\\ref_csv{results.csv:proposed:path_optimality}, as depicted in \\ref_fig{figures/comparison_chart.pdf}."
 )
 
-PATHFINDING_TIKZ = r"""\begin{tikzpicture}[node distance=2.4cm, auto]
-  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=2.9cm, minimum height=0.9cm] (grid) {Siatka $32\times 32$ ($\rho=0.22$)};
-  \node[draw, rectangle, rounded corners, fill=orange!15, right of=grid, xshift=2.4cm, minimum width=3.2cm, minimum height=0.9cm] (oct) {Heurystyka Octile $w=1.15$};
-  \node[draw, rectangle, rounded corners, fill=green!15, right of=oct, xshift=2.4cm, minimum width=3.0cm, minimum height=0.9cm] (pq) {Kolejka Priorytetowa $f(n)$};
-  \draw[->, thick] (grid) -- (oct);
-  \draw[->, thick] (oct) -- (pq);
+PATHFINDING_TIKZ = r"""\begin{tikzpicture}[auto, >=stealth, node distance=1.05cm]
+  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=4.5cm, minimum height=0.65cm, align=center] (grid) {Siatka $32\times 32$ ($\rho=0.22$)};
+  \node[draw, rectangle, rounded corners, fill=orange!15, below of=grid, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (oct) {Ważona Heurystyka Octile};
+  \node[draw, rectangle, rounded corners, fill=green!15, below of=oct, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (pq) {Kolejka Priorytetowa $f(n)$};
+  \draw[->, thick] (grid) -- node[right] {graf} (oct);
+  \draw[->, thick] (oct) -- node[right] {waga $w$} (pq);
 \end{tikzpicture}"""
 
 
@@ -1076,7 +1076,7 @@ FEDERATED_TEST_CODE = 'from pathlib import Path\nimport config\nimport core\n\n\
 
 FEDERATED_INITIAL_CSV = 'method,rounds,convergence_rounds,final_accuracy,communication_overhead_kb,straggler_resilience_rate,divergence_rate\nbaseline,25.0,19.0,0.73,480.0,0.60,0.19\nproposed,25.0,11.0,0.92,340.0,0.95,0.02\n'
 
-FEDERATED_PLOT_SCRIPT = 'from __future__ import annotations\n\nimport csv\nfrom pathlib import Path\n\nimport matplotlib\nimport matplotlib.pyplot as plt\n\nmatplotlib.use("Agg")\n\n\ndef generate_plots(workspace_dir: str | Path | None = None) -> list[str]:\n    base = Path(workspace_dir) if workspace_dir else Path(__file__).resolve().parent\n    csv_path = base / "results.csv"\n    fig_dir = base / "figures"\n    fig_dir.mkdir(parents=True, exist_ok=True)\n\n    rows = []\n    if csv_path.exists():\n        with csv_path.open("r", encoding="utf-8", newline="") as f:\n            rows = list(csv.DictReader(f))\n\n    if not rows:\n        rows = [\n            {"method": "baseline", "rounds": "25.0", "convergence_rounds": "19.0", "final_accuracy": "0.73", "communication_overhead_kb": "480.0", "straggler_resilience_rate": "0.60", "divergence_rate": "0.19"},\n            {"method": "proposed", "rounds": "25.0", "convergence_rounds": "11.0", "final_accuracy": "0.92", "communication_overhead_kb": "340.0", "straggler_resilience_rate": "0.95", "divergence_rate": "0.02"},\n        ]\n\n    methods = [r["method"].capitalize() for r in rows]\n    acc = [float(r["final_accuracy"]) * 100 for r in rows]\n    resilience = [float(r["straggler_resilience_rate"]) * 100 for r in rows]\n    comm = [float(r["communication_overhead_kb"]) for r in rows]\n\n    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.5, 4.0), dpi=180)\n\n    # Panel 1: Accuracy and Resilience\n    x = range(len(methods))\n    w = 0.32\n    b1 = ax1.bar([i - w / 2 for i in x], acc, width=w, label="Final Accuracy (%)", color="#1e3a8a")\n    b2 = ax1.bar([i + w / 2 for i in x], resilience, width=w, label="Straggler Resilience (%)", color="#10b981")\n    ax1.set_xticks(list(x))\n    ax1.set_xticklabels(methods, fontsize=9, fontweight="bold")\n    ax1.set_ylabel("Percentage (%)", fontsize=9)\n    ax1.set_ylim(0, 115)\n    ax1.set_title("Classification and Straggler Resilience", fontsize=10, fontweight="bold")\n    ax1.grid(axis="y", linestyle="--", alpha=0.4)\n    ax1.legend(fontsize=8, loc="upper left")\n\n    for bars in (b1, b2):\n        for b in bars:\n            h = b.get_height()\n            ax1.annotate(f"{h:.1f}%", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=7.5)\n\n    # Panel 2: Communication Overhead\n    b3 = ax2.bar(methods, comm, width=0.45, color=["#f59e0b", "#6366f1"])\n    ax2.set_ylabel("Total Transferred Data (KB)", fontsize=9)\n    ax2.set_ylim(0, max(comm) * 1.25)\n    ax2.set_title("Communication Bandwidth Overhead", fontsize=10, fontweight="bold")\n    ax2.grid(axis="y", linestyle="--", alpha=0.4)\n    for b in b3:\n        h = b.get_height()\n        ax2.annotate(f"{h:.0f} KB", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=8)\n\n    fig.tight_layout()\n    png_out = fig_dir / "comparison_chart.png"\n    pdf_out = fig_dir / "comparison_chart.pdf"\n    fig.savefig(png_out, dpi=180)\n    fig.savefig(pdf_out)\n    plt.close(fig)\n    return [str(png_out), str(pdf_out)]\n\n\nif __name__ == "__main__":\n    generate_plots()\n'
+FEDERATED_PLOT_SCRIPT = 'from __future__ import annotations\n\nimport csv\nfrom pathlib import Path\n\nimport matplotlib\nimport matplotlib.pyplot as plt\n\nmatplotlib.use("Agg")\n\n\ndef generate_plots(workspace_dir: str | Path | None = None) -> list[str]:\n    base = Path(workspace_dir) if workspace_dir else Path(__file__).resolve().parent\n    csv_path = base / "results.csv"\n    fig_dir = base / "figures"\n    fig_dir.mkdir(parents=True, exist_ok=True)\n\n    rows = []\n    if csv_path.exists():\n        with csv_path.open("r", encoding="utf-8", newline="") as f:\n            rows = list(csv.DictReader(f))\n\n    if not rows:\n        rows = [\n            {"method": "baseline", "rounds": "25.0", "convergence_rounds": "19.0", "final_accuracy": "0.73", "communication_overhead_kb": "480.0", "straggler_resilience_rate": "0.60", "divergence_rate": "0.19"},\n            {"method": "proposed", "rounds": "25.0", "convergence_rounds": "11.0", "final_accuracy": "0.92", "communication_overhead_kb": "340.0", "straggler_resilience_rate": "0.95", "divergence_rate": "0.02"},\n        ]\n\n    methods = [r["method"].capitalize() for r in rows]\n    acc = [float(r["final_accuracy"]) * 100 for r in rows]\n    resilience = [float(r["straggler_resilience_rate"]) * 100 for r in rows]\n    comm = [float(r["communication_overhead_kb"]) for r in rows]\n\n    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6.0, 2.8), dpi=180)\n\n    # Panel 1: Accuracy and Resilience\n    x = range(len(methods))\n    w = 0.32\n    b1 = ax1.bar([i - w / 2 for i in x], acc, width=w, label="Accuracy (%)", color="#1e3a8a")\n    b2 = ax1.bar([i + w / 2 for i in x], resilience, width=w, label="Resilience (%)", color="#10b981")\n    ax1.set_xticks(list(x))\n    ax1.set_xticklabels(methods, fontsize=8.5, fontweight="bold")\n    ax1.set_ylabel("Score (%)", fontsize=8.5)\n    ax1.set_ylim(0, 115)\n    ax1.set_title("Accuracy & Resilience", fontsize=9, fontweight="bold")\n    ax1.grid(axis="y", linestyle="--", alpha=0.4)\n    ax1.legend(fontsize=7.5, loc="upper left")\n\n    for bars in (b1, b2):\n        for b in bars:\n            h = b.get_height()\n            ax1.annotate(f"{h:.1f}%", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=7.5)\n\n    # Panel 2: Communication Overhead\n    b3 = ax2.bar(methods, comm, width=0.45, color=["#f59e0b", "#6366f1"])\n    ax2.set_ylabel("Data Transferred (KB)", fontsize=8.5)\n    ax2.set_ylim(0, max(comm) * 1.25)\n    ax2.set_title("Bandwidth Overhead", fontsize=9, fontweight="bold")\n    ax2.grid(axis="y", linestyle="--", alpha=0.4)\n    for b in b3:\n        h = b.get_height()\n        ax2.annotate(f"{h:.0f} KB", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=7.5)\n\n    fig.tight_layout()\n    png_out = fig_dir / "comparison_chart.png"\n    pdf_out = fig_dir / "comparison_chart.pdf"\n    fig.savefig(png_out, dpi=180, bbox_inches=\"tight\")\n    fig.savefig(pdf_out, bbox_inches=\"tight\")\n    plt.close(fig)\n    return [str(png_out), str(pdf_out)]\n\n\nif __name__ == "__main__":\n    generate_plots()\n'
 
 FEDERATED_BIBTEX = get_domain_bibtex("04_federated_learning", stage="discoverer")
 
@@ -1084,9 +1084,18 @@ FEDERATED_SOTA_CONTENT = 'Podstawy zbieżności uczenia sfederowanego sformułow
 
 FEDERATED_DOC_CONTENT = 'W ramach weryfikacji eksperymentalnej zbadano zbieżność sfederowanego uczenia na grupie \\ref_ast{config.py:NUM_CLIENTS} klientów z niejednorodnością danych Dirichlet \\ref_ast{config.py:DIRICHLET_ALPHA} oraz epokami lokalnymi \\ref_ast{config.py:LOCAL_EPOCHS}. Zastosowanie kary proksymalnej \\ref_ast{config.py:MU_PROXIMAL} w trakcie \\ref_ast{config.py:ROUNDS} rund komunikacyjnych pozwoliło podnieść dokładność z \\ref_csv{results.csv:baseline:final_accuracy} do \\ref_csv{results.csv:proposed:final_accuracy}, uzyskując odporność na stragglery rzędu \\ref_csv{results.csv:proposed:straggler_resilience_rate} zgodnie z ryciną \\ref_fig{figures/comparison_chart.pdf}.'
 
-FEDERATED_TIKZ = '\\begin{tikzpicture}[node distance=1.8cm, auto, >=stealth, thick]\n  \\node[draw=blue!80, fill=blue!10, rounded corners, minimum width=4cm, minimum height=1cm, align=center] (server) {\\textbf{Central Parameter Server} \\\\ \\small Adaptive FedProx Aggregator};\n  \\node[draw=green!70!black, fill=green!10, rounded corners, minimum width=2.2cm, minimum height=0.9cm, below left=1.8cm and 1.5cm of server, align=center] (c1) {\\textbf{Client 1} \\\\ \\small Local SGD};\n  \\node[draw=green!70!black, fill=green!10, rounded corners, minimum width=2.2cm, minimum height=0.9cm, below=1.8cm of server, align=center] (c2) {\\textbf{Client 2\\dots k} \\\\ \\small Proximal Loss};\n  \\node[draw=red!70!black, fill=red!10, rounded corners, minimum width=2.2cm, minimum height=0.9cm, below right=1.8cm and 1.5cm of server, align=center] (c3) {\\textbf{Straggler Client} \\\\ \\small Partial Updates};\n\n  \\draw[->, blue!80] (server) -- node[left, font=\\scriptsize] {Global $w^t$} (c1);\n  \\draw[->, blue!80] (server) -- node[right, font=\\scriptsize] {Broadcast} (c2);\n  \\draw[->, blue!80] (server) -- node[right, font=\\scriptsize] {Broadcast} (c3);\n\n  \\draw[->, green!70!black] (c1) -- node[left, font=\\scriptsize] {$\\Delta w_1$} (server);\n  \\draw[->, green!70!black] (c2) -- node[left, font=\\scriptsize] {$\\Delta w_k$} (server);\n  \\draw[->, red!70!black, dashed] (c3) -- node[right, font=\\scriptsize] {Partial $\\Delta w_s$} (server);\n\\end{tikzpicture}\n'
+FEDERATED_TIKZ = (
+    "\\begin{tikzpicture}[auto, >=stealth, node distance=1.1cm]\n"
+    "  \\node[draw, rectangle, rounded corners, fill=blue!10, minimum width=4.5cm, minimum height=0.65cm, align=center] (server) {\\textbf{Serwer Centralny} ($w^t$)};\n"
+    "  \\node[draw, rectangle, rounded corners, fill=green!15, below of=server, node distance=1.1cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (clients) {Klienci 1\\dots $k$ (Lokalne SGD)};\n"
+    "  \\node[draw, rectangle, rounded corners, fill=orange!15, below of=clients, node distance=1.1cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (agg) {Agregacja FedProx ($\\mu \\|\\Delta w\\|^2$)};\n"
+    "  \\draw[->, thick] (server) -- node[right] {rozgłoszenie $w^t$} (clients);\n"
+    "  \\draw[->, thick] (clients) -- node[right] {gradienty $\\Delta w_k$} (agg);\n"
+    "  \\draw[->, thick] (agg.west) -- ++(-0.5,0) |- node[near start, left] {nowy model $w^{t+1}$} (server.west);\n"
+    "\\end{tikzpicture}\n"
+)
 
-FEDERATED_THESIS_CHAPTERS = [('Rozdział 1: Wstęp i Cel Pracy: Uczenie Sfederowane w Środowiskach Brzegowych', 'Celem pracy jest projekt i analiza rozproszonego systemu uczenia sfederowanego w warunkach silnej niejednorodności rozkładów danych (Dirichlet non-IID) oraz asynchronicznych opóźnień klientów. Postawiono tezę badawczą, że adaptacyjna modyfikacja algorytmu FedProx pozwala zachować zbieżność modelu globalnego i wyeliminować zjawisko dryfu klientów bez zwiększania pasma komunikacyjnego.'), ('Rozdział 2: Analiza Stanu Wiedzy (SOTA 2023--2026): Optymalizacja Sfederowana', 'Podstawy zbieżności uczenia sfederowanego sformułowali McMahan i in. \\cite{mcmahan2017communication} w algorytmie FedAvg oraz Li i in. \\cite{li2020federated} w proksymalnym FedProx. Najnowszy stan wiedzy (2023--2026) dowodzi, że silna heterogeniczność danych (Dirichlet skew) prowadzi do dryfu wag lokalnych (client drift), co udokumentowali Wang i in. \\cite{wang2023tackling} (NeurIPS 2023) oraz Karimireddy i in. \\cite{karimireddy2024scaffold} (JMLR 2024). W monografii Kairouza i in. \\cite{kairouz2024advances} wykazano potrzebę elastycznej regularyzacji w obliczu opóźnionych węzłów (stragglers), a Zhao i in. \\cite{zhao2023noniid} (ICLR 2023) określili empiryczne granice stabilności. Istniejącą luką badawczą pozostaje weryfikowalny symbolicznie algorytm adaptacyjny o zerowym narzucie C-rozszerzeń, co stanowi główny wkład niniejszej pracy.'), ('Rozdział 3: Projekt Architektury Rozproszonej i Topologia Klient-Serwer', 'Architektura systemu składa się z centralnego serwera agregującego oraz klastra \\ref_ast{config.py:NUM_CLIENTS} węzłów brzegowych. Komunikacja odbywa się w rundach synchronicznych z tolerancją na wyłączenia węzłów.\n\n\\begin{tikzpicture}[node distance=1.8cm, auto, >=stealth, thick]\n  \\node[draw=blue!80, fill=blue!10, rounded corners, minimum width=4cm, minimum height=1cm, align=center] (server) {\\textbf{Central Parameter Server} \\\\ \\small Adaptive FedProx Aggregator};\n  \\node[draw=green!70!black, fill=green!10, rounded corners, minimum width=2.2cm, minimum height=0.9cm, below left=1.8cm and 1.5cm of server, align=center] (c1) {\\textbf{Client 1} \\\\ \\small Local SGD};\n  \\node[draw=green!70!black, fill=green!10, rounded corners, minimum width=2.2cm, minimum height=0.9cm, below=1.8cm of server, align=center] (c2) {\\textbf{Client 2\\dots k} \\\\ \\small Proximal Loss};\n  \\node[draw=red!70!black, fill=red!10, rounded corners, minimum width=2.2cm, minimum height=0.9cm, below right=1.8cm and 1.5cm of server, align=center] (c3) {\\textbf{Straggler Client} \\\\ \\small Partial Updates};\n\n  \\draw[->, blue!80] (server) -- node[left, font=\\scriptsize] {Global $w^t$} (c1);\n  \\draw[->, blue!80] (server) -- node[right, font=\\scriptsize] {Broadcast} (c2);\n  \\draw[->, blue!80] (server) -- node[right, font=\\scriptsize] {Broadcast} (c3);\n\n  \\draw[->, green!70!black] (c1) -- node[left, font=\\scriptsize] {$\\Delta w_1$} (server);\n  \\draw[->, green!70!black] (c2) -- node[left, font=\\scriptsize] {$\\Delta w_k$} (server);\n  \\draw[->, red!70!black, dashed] (c3) -- node[right, font=\\scriptsize] {Partial $\\Delta w_s$} (server);\n\\end{tikzpicture}\n\n'), ('Rozdział 4: Realizacja i Implementacja: Adaptacyjny Algorytm Proksymalny', 'W module implementacyjnym wprowadzono lokalny krok stochastycznego spadku wzdłuż gradientu z regularyzacją proksymalną \\ref_ast{config.py:MU_PROXIMAL}. Każdy klient wykonuje \\ref_ast{config.py:LOCAL_EPOCHS} epok lokalnych ze stopą uczenia \\ref_ast{config.py:LEARNING_RATE} przed odesłaniem gradientu do serwera.'), ('Rozdział 5: Badania Eksperymentalne: Wyniki i Analiza Zbieżności', 'Przeprowadzono \\ref_ast{config.py:ROUNDS} rund agregacji w warunkach asymetrii danych \\ref_ast{config.py:DIRICHLET_ALPHA}. Rozwiązanie bazowe FedAvg osiągnęło dokładność \\ref_csv{results.csv:baseline:final_accuracy}, natomiast proponowany algorytm Adaptive FedProx uzyskał \\ref_csv{results.csv:proposed:final_accuracy} przy odporności na stragglery rzędu \\ref_csv{results.csv:proposed:straggler_resilience_rate}. Zbiorcze podsumowanie przedstawiono na rycinie \\ref_fig{figures/comparison_chart.pdf}.'), ('Rozdział 6: Podsumowanie i Wnioski: Potwierdzenie Tezy Inżynierskiej', 'Uzyskane rezultaty empiryczne w pełni potwierdzają sformułowaną tezę badawczą. Wprowadzenie proksymalnego członu stabilizującego pozwala zniwelować negatywne skutki niejednorodności danych i zapewnia stabilną zbieżność.')]
+FEDERATED_THESIS_CHAPTERS = [('Rozdział 1: Wstęp i Cel Pracy: Uczenie Sfederowane w Środowiskach Brzegowych', 'Celem pracy jest projekt i analiza rozproszonego systemu uczenia sfederowanego w warunkach silnej niejednorodności rozkładów danych (Dirichlet non-IID) oraz asynchronicznych opóźnień klientów. Postawiono tezę badawczą, że adaptacyjna modyfikacja algorytmu FedProx pozwala zachować zbieżność modelu globalnego i wyeliminować zjawisko dryfu klientów bez zwiększania pasma komunikacyjnego.'), ('Rozdział 2: Analiza Stanu Wiedzy (SOTA 2023--2026): Optymalizacja Sfederowana', 'Podstawy zbieżności uczenia sfederowanego sformułowali McMahan i in. \\cite{mcmahan2017communication} w algorytmie FedAvg oraz Li i in. \\cite{li2020federated} w proksymalnym FedProx. Najnowszy stan wiedzy (2023--2026) dowodzi, że silna heterogeniczność danych (Dirichlet skew) prowadzi do dryfu wag lokalnych (client drift), co udokumentowali Wang i in. \\cite{wang2023tackling} (NeurIPS 2023) oraz Karimireddy i in. \\cite{karimireddy2024scaffold} (JMLR 2024). W monografii Kairouza i in. \\cite{kairouz2024advances} wykazano potrzebę elastycznej regularyzacji w obliczu opóźnionych węzłów (stragglers), a Zhao i in. \\cite{zhao2023noniid} (ICLR 2023) określili empiryczne granice stabilności. Istniejącą luką badawczą pozostaje weryfikowalny symbolicznie algorytm adaptacyjny o zerowym narzucie C-rozszerzeń, co stanowi główny wkład niniejszej pracy.'), ('Rozdział 3: Projekt Architektury Rozproszonej i Topologia Klient-Serwer', 'Architektura systemu składa się z centralnego serwera agregującego oraz klastra \\ref_ast{config.py:NUM_CLIENTS} węzłów brzegowych. Komunikacja odbywa się w rundach synchronicznych z tolerancją na wyłączenia węzłów.\n\n' + FEDERATED_TIKZ + '\n'), ('Rozdział 4: Realizacja i Implementacja: Adaptacyjny Algorytm Proksymalny', 'W module implementacyjnym wprowadzono lokalny krok stochastycznego spadku wzdłuż gradientu z regularyzacją proksymalną \\ref_ast{config.py:MU_PROXIMAL}. Każdy klient wykonuje \\ref_ast{config.py:LOCAL_EPOCHS} epok lokalnych ze stopą uczenia \\ref_ast{config.py:LEARNING_RATE} przed odesłaniem gradientu do serwera.'), ('Rozdział 5: Badania Eksperymentalne: Wyniki i Analiza Zbieżności', 'Przeprowadzono \\ref_ast{config.py:ROUNDS} rund agregacji w warunkach asymetrii danych \\ref_ast{config.py:DIRICHLET_ALPHA}. Rozwiązanie bazowe FedAvg osiągnęło dokładność \\ref_csv{results.csv:baseline:final_accuracy}, natomiast proponowany algorytm Adaptive FedProx uzyskał \\ref_csv{results.csv:proposed:final_accuracy} przy odporności na stragglery rzędu \\ref_csv{results.csv:proposed:straggler_resilience_rate}. Zbiorcze podsumowanie przedstawiono na rycinie \\ref_fig{figures/comparison_chart.pdf}.'), ('Rozdział 6: Podsumowanie i Wnioski: Potwierdzenie Tezy Inżynierskiej', 'Uzyskane rezultaty empiryczne w pełni potwierdzają sformułowaną tezę badawczą. Wprowadzenie proksymalnego członu stabilizującego pozwala zniwelować negatywne skutki niejednorodności danych i zapewnia stabilną zbieżność.')]
 
 FEDERATED_CUSTOM_TASKS = [
     {'task_id': 'T1', 'description': '[04_federated_learning] Synthesize competitive SOTA literature discovery (2023-2026) and verified BibTeX citations in references.bib', 'target_node': 'v4', 'assigned_agent': 'discoverer_researcher', 'status': 'TODO'},

@@ -87,6 +87,12 @@ def test_paper_ieee_template_rendering_and_compilation(tmp_path: Path):
     assert "\\IEEEauthorblockN{" in content
     assert "\\begin{IEEEkeywords}" in content
     assert "\\bibliographystyle{IEEEtran}" in content
+    assert "\\pagestyle{plain}" in content
+    assert "\\thispagestyle{plain}" in content
+    assert "width=\\columnwidth,keepaspectratio" in content
+    assert "\\pagestyle{plain}" in content
+    assert "\\thispagestyle{plain}" in content
+    assert "width=\\columnwidth,keepaspectratio" in content
 
     # Verify symbolic compilation
     comp = compile_symbolic_references(tex_path, ws, write_compiled=True)

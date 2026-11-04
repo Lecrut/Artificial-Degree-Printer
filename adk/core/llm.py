@@ -18,6 +18,9 @@ _LLM_TELEMETRY: dict[str, Any] = {
     "calls_count": 0,
     "live_network_calls": 0,
     "total_inference_ms": 0.0,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0,
     "models_used": [],
     "call_log": [],
     "interactions": [],
@@ -29,6 +32,9 @@ def reset_llm_telemetry() -> None:
     _LLM_TELEMETRY["calls_count"] = 0
     _LLM_TELEMETRY["live_network_calls"] = 0
     _LLM_TELEMETRY["total_inference_ms"] = 0.0
+    _LLM_TELEMETRY["prompt_tokens"] = 0
+    _LLM_TELEMETRY["completion_tokens"] = 0
+    _LLM_TELEMETRY["total_tokens"] = 0
     _LLM_TELEMETRY["models_used"] = []
     _LLM_TELEMETRY["call_log"] = []
     _LLM_TELEMETRY["interactions"] = []
@@ -40,6 +46,9 @@ def get_llm_telemetry() -> dict[str, Any]:
         "calls_count": int(_LLM_TELEMETRY["calls_count"]),
         "live_network_calls": int(_LLM_TELEMETRY["live_network_calls"]),
         "total_inference_ms": round(float(_LLM_TELEMETRY["total_inference_ms"]), 2),
+        "prompt_tokens": int(_LLM_TELEMETRY.get("prompt_tokens", 0)),
+        "completion_tokens": int(_LLM_TELEMETRY.get("completion_tokens", 0)),
+        "total_tokens": int(_LLM_TELEMETRY.get("total_tokens", 0)),
         "models_used": list(_LLM_TELEMETRY["models_used"]),
         "call_log": list(_LLM_TELEMETRY["call_log"]),
         "interactions": list(_LLM_TELEMETRY.get("interactions", [])),
@@ -151,6 +160,13 @@ def _default_simulated_response(agent_name: str, system_prompt: str, payload: di
                 "thesis_title": f"Design and Empirical Evaluation: {prompt_text[:60]}",
                 "thesis_statement": "Deterministic neuro-symbolic verification eliminates metric hallucinations.",
                 "baseline_comparison": "Comparison of the proposed algorithm against a random baseline policy.",
+                "planned_chapters": [
+                    {"id": 1, "title": "Wstęp i formalizacja problemu"},
+                    {"id": 2, "title": "Przegląd literatury i stan wiedzy"},
+                    {"id": 3, "title": "Architektura i implementacja algorytmu"},
+                    {"id": 4, "title": "Ewaluacja empiryczna i analiza porównawcza wyników"},
+                    {"id": 5, "title": "Wnioski i podsumowanie badań"},
+                ],
                 "planned_visualizations": [
                     "System architecture diagram in TikZ/Mermaid",
                     "Comparative win-rate and convergence plots in matplotlib",
@@ -542,6 +558,9 @@ def call_agent(
                 fallback["llm_raw_text"] = raw_response_str
                 parsed_output = fallback
 
+            call_prompt_tokens = int(api_res.get("prompt_tokens") or 0)
+            call_completion_tokens = int(api_res.get("completion_tokens") or 0)
+            call_total_tokens = int(api_res.get("total_tokens") or (call_prompt_tokens + call_completion_tokens))
             is_network_call = True
         except (urllib.error.URLError, TimeoutError, RuntimeError, json.JSONDecodeError) as exc:
             logger.log_step(
@@ -558,9 +577,16 @@ def call_agent(
 
     elapsed_ms = (time.perf_counter() - start_t) * 1000.0
 
+    p_tok = call_prompt_tokens if is_network_call else 0
+    c_tok = call_completion_tokens if is_network_call else 0
+    t_tok = call_total_tokens if is_network_call else 0
+
     if is_network_call:
         _LLM_TELEMETRY["live_network_calls"] = int(_LLM_TELEMETRY["live_network_calls"]) + 1
         _LLM_TELEMETRY["total_inference_ms"] = float(_LLM_TELEMETRY["total_inference_ms"]) + elapsed_ms
+        _LLM_TELEMETRY["prompt_tokens"] = int(_LLM_TELEMETRY.get("prompt_tokens", 0)) + p_tok
+        _LLM_TELEMETRY["completion_tokens"] = int(_LLM_TELEMETRY.get("completion_tokens", 0)) + c_tok
+        _LLM_TELEMETRY["total_tokens"] = int(_LLM_TELEMETRY.get("total_tokens", 0)) + t_tok
 
     _LLM_TELEMETRY["call_log"].append(
         {
@@ -569,6 +595,9 @@ def call_agent(
             "model": model_name,
             "tier": model_tier,
             "elapsed_ms": round(elapsed_ms, 2),
+            "prompt_tokens": p_tok,
+            "completion_tokens": c_tok,
+            "total_tokens": t_tok,
         }
     )
 
@@ -584,6 +613,9 @@ def call_agent(
         "model_tier": model_tier,
         "model_name": model_name,
         "elapsed_ms": round(elapsed_ms, 2),
+        "prompt_tokens": p_tok,
+        "completion_tokens": c_tok,
+        "total_tokens": t_tok,
         "decision_summary": decision_summary,
         "system_prompt": system_prompt,
         "user_payload": user_payload,

@@ -34,9 +34,10 @@ You must **STRICTLY AND UNCONDITIONALLY** structure all LaTeX thesis documents a
 ---
 
 ## 2. STRICT SYMBOLIC & HYPERGRAPH GROUNDING (ZERO HALLUCINATIONS)
-1. **Diagrams & Vector Plots (NEVER Invent Figure Files)**:
-   - For architecture schematics: Draw inline using **TikZ** (`\begin{tikzpicture}...\end{tikzpicture}`) in LaTeX or **Mermaid** in Markdown. **NEVER** write `\ref_fig{figures/system_architecture.pdf}` or invent unverified files!
-   - For empirical plots: Only reference existing figures from the hypergraph state (e.g. `\ref_fig{figures/comparison_chart.pdf}`).
+1. **Diagrams, Plots & Formula Layout (NEVER Overflow Boundaries)**:
+   - **Compact TikZ Architecture Schematics**: Draw inline using **TikZ** (`\begin{tikzpicture}...\end{tikzpicture}`) in LaTeX or **Mermaid** in Markdown. **NEVER** write `\ref_fig{figures/system_architecture.pdf}` or invent unverified files! Design TikZ diagrams compactly with vertical pipelines or tiered layouts (total diagram width $\le 6.5\,\text{cm}$, node `minimum width` 4.0--5.0 cm, `node distance` 1.0--1.2 cm) so they fit naturally within a single IEEE column ($8.89\,\text{cm}$) or thesis margins without clipping.
+   - **Empirical Plots**: Only reference existing figures from the hypergraph state (e.g. `\ref_fig{figures/comparison_chart.pdf}`). In plot generation scripts, use compact figure sizes (e.g. `figsize=(4.8, 3.0)` for single plots or `figsize=(6.0, 2.8)` for two subplots) with `bbox_inches="tight"`. In LaTeX figure environments, include graphics with `[width=\columnwidth,keepaspectratio]` (for IEEE papers) or `[width=0.86\textwidth,keepaspectratio]` (for theses).
+   - **Concise Mathematical Formulas**: Write clean, standard, concise mathematical formulations without artificial component bloat. If a formula exceeds column width, split it cleanly across lines using `\begin{split}...\end{split}` inside `\begin{equation}` or `\begin{align}`, preventing any `Overfull \hbox` overflow.
 2. **Deterministic Symbolic Pointers**:
    - Code constants/hyperparameters: `\ref_ast{file:symbol}` (e.g. `\ref_ast{config.py:LEARNING_RATE}`).
    - Empirical metrics: `\ref_csv{file:row_method:column}` or `\ref_csv{file:column}` (e.g. `\ref_csv{results.csv:proposed:final_accuracy}`). Never invent column names.

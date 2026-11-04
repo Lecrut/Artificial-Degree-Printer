@@ -15,45 +15,11 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from adk.mocks.paper_catalogs import DOMAIN_CATALOG_MAP, resolve_offline_catalog
-
-
-def _clean_bib_field(val: Any) -> str:
-    s = str(val or "").strip()
-    s = s.replace("\\&", "&").replace("&", "\\&")
-    s = s.replace("\\%", "%").replace("%", "\\%")
-    s = s.replace("\\_", "_").replace("_", "\\_")
-    return s
-
-
-def format_bibtex(entry: dict[str, Any]) -> str:
-    """Format a structured paper metadata dict into a clean, LaTeX-safe BibTeX entry."""
-    entry_type = str(entry.get("entry_type") or "article").strip().lower()
-    cite_key = str(entry.get("key") or "unknown2024").strip()
-    author = _clean_bib_field(entry.get("author") or "Unknown Author")
-    title = _clean_bib_field(entry.get("title") or "Untitled Publication")
-    year = str(entry.get("year") or "2024").strip()
-    venue = _clean_bib_field(entry.get("venue") or "arXiv preprint")
-    volume = str(entry.get("volume") or "").strip()
-    pages = str(entry.get("pages") or "").strip()
-    publisher = _clean_bib_field(entry.get("publisher") or "Academic Press")
-
-    lines = [f"@{entry_type}{{{cite_key},"]
-    lines.append(f"  author = {{{author}}},")
-    lines.append(f"  title = {{{title}}},")
-    if entry_type == "book":
-        lines.append(f"  publisher = {{{publisher}}},")
-    elif entry_type == "inproceedings":
-        lines.append(f"  booktitle = {{{venue}}},")
-    else:
-        lines.append(f"  journal = {{{venue}}},")
-    if volume:
-        lines.append(f"  volume = {{{volume}}},")
-    if pages:
-        lines.append(f"  pages = {{{pages}}},")
-    lines.append(f"  year = {{{year}}}")
-    lines.append("}")
-    return "\n".join(lines)
+from adk.mocks.paper_catalogs import (
+    DOMAIN_CATALOG_MAP,
+    format_bibtex,
+    resolve_offline_catalog,
+)
 
 
 

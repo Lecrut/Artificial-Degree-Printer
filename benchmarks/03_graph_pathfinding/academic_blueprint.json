@@ -1,4 +1,33 @@
 {
+  "thesis_title": "Design and Empirical Evaluation: Evolve and optimize the existing graph pathfinding project i",
+  "thesis_statement": "Deterministic neuro-symbolic verification eliminates metric hallucinations.",
+  "baseline_comparison": "Comparison of the proposed algorithm against a random baseline policy.",
+  "planned_chapters": [
+    {
+      "id": 1,
+      "title": "Wstęp i formalizacja problemu"
+    },
+    {
+      "id": 2,
+      "title": "Przegląd literatury i stan wiedzy"
+    },
+    {
+      "id": 3,
+      "title": "Architektura i implementacja algorytmu"
+    },
+    {
+      "id": 4,
+      "title": "Ewaluacja empiryczna i analiza porównawcza wyników"
+    },
+    {
+      "id": 5,
+      "title": "Wnioski i podsumowanie badań"
+    }
+  ],
+  "planned_visualizations": [
+    "System architecture diagram in TikZ/Mermaid",
+    "Comparative win-rate and convergence plots in matplotlib"
+  ],
   "literature_recon": {
     "task_key": "03_graph_pathfinding",
     "domain": "Graph Algorithms & Heuristic Search Optimization",
@@ -79,371 +108,28 @@
     ]
   },
   "table_of_contents": {
-    "thesis_title": " Badania i Implementacja: Ważony Algorytm A* z Metryką Oktilową (Weighted Octile A*)",
-    "thesis_type": "inzynierska",
-    "domain": "Graph Algorithms & Heuristic Search Optimization",
-    "algorithm_focus": "Ważony Algorytm A* z Metryką Oktilową (Weighted Octile A*)",
-    "research_first_workflow": [
-      "ETAP 1 (Research & Spis Treści): Rekonesans literatury w references.bib oraz budowa Rozdziału 2 i spisu treści przed pisaniem kodu.",
-      "ETAP 2 (Konfiguracja AST): Definicja hiperparametrów w config.py na podstawie wniosków z literatury.",
-      "ETAP 3 (Implementacja Jądra i Baseline'u): Kodowanie algorytmu proponowanego oraz baseline'u z literatury w core.py.",
-      "ETAP 4 (Eksperymenty i Wykresy): Uruchomienie test_core.py, wygenerowanie results.csv (metryki z literatury) oraz plot_results.py.",
-      "ETAP 5 (Redakcja Rozdziałów wg Spisu Treści): Synteza pełnego tekstu pracy zgodnie ze spisem treści i kompilacja wskaźników symbolicznych."
-    ],
-    "canonical_baselines": [
-      "Uninformed Dijkstra Shortest Path (w = 0.0, Dijkstra 1959)",
-      "Unweighted A* Search (w = 1.0, Hart, Nilsson & Raphael 1968)",
-      "Jump Point Search (JPS, Harabor & Grastien 2011) & Anytime Repairing A* (ARA*)",
-      "Neural A* / ViT-A* / Focal Search (2023-2025)"
-    ],
-    "target_metrics": [
-      "avg_expanded_nodes",
-      "path_optimality",
-      "speedup_factor",
-      "success_rate"
-    ],
-    "total_planned_citations": 22,
     "chapters": [
       {
-        "chapter_index": 1,
-        "chapter_title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-        "assigned_agent": "background_researcher",
-        "target_node": "v4",
-        "logical_purpose": "Zdefiniowanie motywacji, formalnego równania optymalizacyjnego, tezy głównej i 4 mierzalnych hipotez badawczych.",
-        "subsections": [
-          {
-            "id": "1.1",
-            "title": "Kontekst Dziedzinowy (Graph Algorithms & Heuristic Search Optimization), Geneza Problemu i Motywacja Badawcza",
-            "focus": "Wprowadzenie do problemu: Ważony Algorytm A* z Metryką Oktilową (Weighted Octile A*) na tle wymagań determinizmu i weryfikowalności.",
-            "citations": [
-              "dijkstra1959note",
-              "hart1968formal",
-              "pohl1970heuristic",
-              "pearl1984heuristics",
-              "koenig2002dstar"
-            ]
-          },
-          {
-            "id": "1.2",
-            "title": "Formalne Sformułowanie Problemu Obliczeniowego i Przestrzeni Konfiguracji",
-            "focus": "Zapis zadania optymalizacji wielokryterialnej i powiązanie ze stałymi AST z config.py.",
-            "citations": [
-              "harabor2011online",
-              "sturtevant2012benchmarks",
-              "harabor2023heuristic",
-              "sturtevant2023benchmarks",
-              "li2023anytime"
-            ]
-          },
-          {
-            "id": "1.3",
-            "title": "Główna Teza Pracy, Hipotezy Badawcze (H1-H4) i Kryteria Weryfikacji",
-            "focus": "Sformułowanie hipotez weryfikowanych przez metryki avg_expanded_nodes, path_optimality, speedup_factor, success_rate.",
-            "citations": [
-              "stern2023bidirectional",
-              "botea2023compressed",
-              "sharon2023conflict",
-              "wilt2023pathology",
-              "felner2024weighted"
-            ]
-          }
-        ],
-        "required_symbolic_tags": [
-          "\\cite",
-          "\\ref_ast"
-        ]
+        "id": 1,
+        "title": "Wstęp i formalizacja problemu"
       },
       {
-        "chapter_index": 2,
-        "chapter_title": "Rozdział 2: Analiza Stanu Wiedzy i Podstawy Teoretyczne (Graph Algorithms & Heuristic Search Optimization)",
-        "assigned_agent": "background_researcher",
-        "target_node": "v4",
-        "logical_purpose": "Szczegółowa analiza artykułów z bazy arXiv/IEEE/ACM/monografii, ekstrakcja metodologii i ograniczeń oraz budowa tabeli porównawczej SOTA.",
-        "subsections": [
-          {
-            "id": "2.1",
-            "title": "Metodologia Przeglądu Literatury i Taksonomia Analizowanych Źródeł",
-            "focus": "Sklasyfikowanie 22 pozycji literaturowych w układzie lejka od ogółu do szczegółu.",
-            "citations": [
-              "dijkstra1959note",
-              "hart1968formal",
-              "pohl1970heuristic",
-              "pearl1984heuristics",
-              "koenig2002dstar"
-            ]
-          },
-          {
-            "id": "2.2",
-            "title": "Aksjomatyczne Podstawy Dziedziny, Klasyczne Monografie i Modele Równowagi",
-            "focus": "Wyprowadzenie fundamentalnych pojęć z klasycznych podręczników i monografii.",
-            "citations": [
-              "dijkstra1959note",
-              "hart1968formal",
-              "pohl1970heuristic",
-              "pearl1984heuristics",
-              "koenig2002dstar",
-              "harabor2011online"
-            ]
-          },
-          {
-            "id": "2.3",
-            "title": "Rekurencyjne Operatory Optymalności i Algorytmy Iteracyjne",
-            "focus": "Szczegółowa analiza mechanizmów matematycznych stojących za wykorzystanymi narzędziami.",
-            "citations": [
-              "sturtevant2012benchmarks",
-              "harabor2023heuristic",
-              "sturtevant2023benchmarks",
-              "li2023anytime",
-              "stern2023bidirectional",
-              "botea2023compressed",
-              "sharon2023conflict",
-              "wilt2023pathology"
-            ]
-          },
-          {
-            "id": "2.4",
-            "title": "Zawężenie do Problemu Pracy i Syntetyczna Tabela Porównawcza Literatury",
-            "focus": "Zestawienie metod odniesienia (Uninformed Dijkstra Shortest Path (w = 0.0, Dijkstra 1959), Unweighted A* Search (w = 1.0, Hart, Nilsson & Raphael 1968)) w tabeli porównawczej i wskazanie luki inżynierskiej.",
-            "citations": [
-              "felner2024weighted",
-              "chen2024focal",
-              "goldenberg2024suboptimal",
-              "rivera2024realtime",
-              "agostinelli2024learned",
-              "shperberg2024deadline",
-              "zhang2025hardware",
-              "nowak2025deterministic"
-            ]
-          }
-        ],
-        "required_symbolic_tags": [
-          "\\cite",
-          "tab:literature_sota_synthesis"
-        ]
+        "id": 2,
+        "title": "Przegląd literatury i stan wiedzy"
       },
       {
-        "chapter_index": 3,
-        "chapter_title": "Rozdział 3: Architektura Systemu i Formalizm Matematyczny",
-        "assigned_agent": "seed_writer",
-        "target_node": "v4",
-        "logical_purpose": "Wyprowadzenie modelu matematycznego dla: Ważony Algorytm A* z Metryką Oktilową (Weighted Octile A*), sformułowanie Lematu 1 i Twierdzeń 1-2 wraz z dowodami oraz schematu TikZ.",
-        "subsections": [
-          {
-            "id": "3.1",
-            "title": "Koncepcja Architektoniczna, Schemat Przepływu Danych (TikZ) i Dekompozycja Modułowa",
-            "focus": "Opis współdziałania modułów config.py, core.py, test_core.py oraz results.csv.",
-            "citations": [
-              "dijkstra1959note",
-              "hart1968formal",
-              "pohl1970heuristic",
-              "pearl1984heuristics"
-            ]
-          },
-          {
-            "id": "3.2",
-            "title": "Formalny Model Matematyczny i Równania Operatorowe (Ważony Algorytm A* z Metryką Oktilową (Weighted Octile A*))",
-            "focus": "Ścisły zapis operatora aktualizacji stanu i funkcji kosztu/celu.",
-            "citations": [
-              "koenig2002dstar",
-              "harabor2011online",
-              "sturtevant2012benchmarks",
-              "harabor2023heuristic",
-              "sturtevant2023benchmarks"
-            ]
-          },
-          {
-            "id": "3.3",
-            "title": "Własności Analityczne: Lemat o Ograniczoności oraz Twierdzenia o Zbieżności z Dowodami",
-            "focus": "Formalne dowody matematyczne krok po kroku wykazujące przewagę nad metodą bazową.",
-            "citations": [
-              "li2023anytime",
-              "stern2023bidirectional",
-              "botea2023compressed",
-              "sharon2023conflict",
-              "wilt2023pathology"
-            ]
-          },
-          {
-            "id": "3.4",
-            "title": "Analiza Złożoności Obliczeniowej (Czasowej i Pamięciowej)",
-            "focus": "Oszacowanie asymptotyczne O(...) względem rozmiaru stanu i parametrów z config.py.",
-            "citations": [
-              "felner2024weighted",
-              "chen2024focal",
-              "goldenberg2024suboptimal",
-              "rivera2024realtime"
-            ]
-          }
-        ],
-        "required_symbolic_tags": [
-          "\\cite",
-          "\\ref_ast",
-          "tikzpicture"
-        ]
+        "id": 3,
+        "title": "Architektura i implementacja algorytmu"
       },
       {
-        "chapter_index": 4,
-        "chapter_title": "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
-        "assigned_agent": "seed_writer",
-        "target_node": "v4",
-        "logical_purpose": "Udokumentowanie wygenerowanego kodu w config.py i core.py na podstawie drzewa składniowego AST oraz testów pytest.",
-        "subsections": [
-          {
-            "id": "4.1",
-            "title": "Struktura Projektu i Organizacja Modułów Wykonywalnych w Pythonie 3.12+",
-            "focus": "Architektura czysto pythonowa o zerowym narzucie zewnętrznych kompilatorów C/C++.",
-            "citations": [
-              "pohl1970heuristic",
-              "pearl1984heuristics",
-              "koenig2002dstar",
-              "harabor2011online"
-            ]
-          },
-          {
-            "id": "4.2",
-            "title": "Analiza Drzewa Składniowego AST i Specyfikacja Procedur w Module core.py",
-            "focus": "Szczegółowy opis sygnatur, argumentów, pętli i instrukcji każdej funkcji z core.py.",
-            "citations": [
-              "sturtevant2012benchmarks",
-              "harabor2023heuristic",
-              "sturtevant2023benchmarks",
-              "li2023anytime",
-              "stern2023bidirectional"
-            ]
-          },
-          {
-            "id": "4.3",
-            "title": "Powiązanie Stałych Konfiguracyjnych z Logiką Wykonawczą i Testami Jednostkowymi",
-            "focus": "Mapowanie symboli \\ref_ast{config.py:...} oraz weryfikacja niezmienników w test_core.py.",
-            "citations": [
-              "botea2023compressed",
-              "sharon2023conflict",
-              "wilt2023pathology",
-              "felner2024weighted"
-            ]
-          }
-        ],
-        "required_symbolic_tags": [
-          "\\ref_ast",
-          "\\cite"
-        ]
+        "id": 4,
+        "title": "Ewaluacja empiryczna i analiza porównawcza wyników"
       },
       {
-        "chapter_index": 5,
-        "chapter_title": "Rozdział 5: Badania Eksperymentalne, Studium Ablacyjne i Dyskusja Wyników",
-        "assigned_agent": "seed_writer",
-        "target_node": "v4",
-        "logical_purpose": "Prezentacja wyników z results.csv (avg_expanded_nodes, path_optimality, speedup_factor, success_rate), analiza wrażliwości hiperparametrów i bezpośrednie porównanie z literaturą.",
-        "subsections": [
-          {
-            "id": "5.1",
-            "title": "Metodologia Badań Eksperymentalnych, Zbiory Danych i Protokół Ewaluacyjny (seed=42)",
-            "focus": "Opis środowiska testowego (8-connected 2D spatial obstacle grids (GRID_SIZE x GRID_SIZE, obstacle density rho), MovingAI 2D Grid Pathfinding Benchmarks).",
-            "citations": [
-              "dijkstra1959note",
-              "hart1968formal",
-              "pohl1970heuristic",
-              "pearl1984heuristics",
-              "koenig2002dstar"
-            ]
-          },
-          {
-            "id": "5.2",
-            "title": "Analiza Porównawcza Wyników Empirycznych: Proposed vs. Baseline (avg_expanded_nodes, path_optimality, speedup_factor, success_rate)",
-            "focus": "Zestawienie tabelaryczne i wizualizacja wektorowa \\ref_fig{figures/comparison_chart.pdf}.",
-            "citations": [
-              "harabor2011online",
-              "sturtevant2012benchmarks",
-              "harabor2023heuristic",
-              "sturtevant2023benchmarks",
-              "li2023anytime",
-              "stern2023bidirectional"
-            ]
-          },
-          {
-            "id": "5.3",
-            "title": "Wielowymiarowe Studium Ablacyjne i Analiza Wrażliwości Hiperparametrów",
-            "focus": "Wpływ poszczególnych stałych z config.py na stabilność i czas wykonania.",
-            "citations": [
-              "botea2023compressed",
-              "sharon2023conflict",
-              "wilt2023pathology",
-              "felner2024weighted",
-              "chen2024focal"
-            ]
-          },
-          {
-            "id": "5.4",
-            "title": "Dyskusja Wyników na Tle Literatury z Bazy arXiv i Konferencji SOTA",
-            "focus": "Konfrontacja uzyskanych wskaźników z wartościami raportowanymi w Tabeli SOTA.",
-            "citations": [
-              "goldenberg2024suboptimal",
-              "rivera2024realtime",
-              "agostinelli2024learned",
-              "shperberg2024deadline",
-              "zhang2025hardware",
-              "nowak2025deterministic"
-            ]
-          }
-        ],
-        "required_symbolic_tags": [
-          "\\ref_csv",
-          "\\ref_fig",
-          "\\ref_ast",
-          "\\cite"
-        ]
-      },
-      {
-        "chapter_index": 6,
-        "chapter_title": "Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju",
-        "assigned_agent": "seed_writer",
-        "target_node": "v4",
-        "logical_purpose": "Formalne rozstrzygnięcie hipotez badawczych H1-H4, analiza zagrożeń dla trafności (Threats to Validity) oraz dalsze prace.",
-        "subsections": [
-          {
-            "id": "6.1",
-            "title": "Syntetyczne Podsumowanie Wyników i Formalna Weryfikacja Hipotez (H1-H4)",
-            "focus": "Dowodowe potwierdzenie tezy pracy w oparciu o kod AST i macierz results.csv.",
-            "citations": [
-              "dijkstra1959note",
-              "hart1968formal",
-              "pohl1970heuristic",
-              "pearl1984heuristics",
-              "koenig2002dstar",
-              "harabor2011online"
-            ]
-          },
-          {
-            "id": "6.2",
-            "title": "Analiza Zagrożeń dla Trafności Badań (Internal & External Threats to Validity)",
-            "focus": "Ocena determinizmu, skalowalności oraz założeń modelowych.",
-            "citations": [
-              "dijkstra1959note",
-              "hart1968formal",
-              "pohl1970heuristic",
-              "pearl1984heuristics",
-              "koenig2002dstar",
-              "harabor2011online"
-            ]
-          },
-          {
-            "id": "6.3",
-            "title": "Kierunki Dalszych Prac Badawczych i Rozwojowych",
-            "focus": "Perspektywy integracji z solwerami formalnymi i wdrożeń brzegowych.",
-            "citations": [
-              "dijkstra1959note",
-              "hart1968formal",
-              "pohl1970heuristic",
-              "pearl1984heuristics",
-              "koenig2002dstar",
-              "harabor2011online"
-            ]
-          }
-        ],
-        "required_symbolic_tags": [
-          "\\cite"
-        ]
+        "id": 5,
+        "title": "Wnioski i podsumowanie badań"
       }
     ]
-  }
+  },
+  "thesis_type": "inzynierska"
 }

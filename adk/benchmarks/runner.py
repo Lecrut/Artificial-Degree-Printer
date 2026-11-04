@@ -561,19 +561,11 @@ def run_benchmark_suite(
                     orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
                 orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "seed_writer"}}, "SML"))
             else:
-                if not (sandbox_ws / "config.py").exists():
-                    orch._materialize_workspace_artifact("config.py", mock_fallback("", {"target_file": "config.py"}, "SML"))
-                if not (sandbox_ws / "core.py").exists():
-                    orch._materialize_workspace_artifact("core.py", mock_fallback("", {"target_file": "core.py", "task": {"assigned_agent": "seed_tester"}}, "SML"))
-                if not (sandbox_ws / "thesis.md").exists():
-                    if t_type in ("magisterska", "master", "msc"):
-                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
-                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "discoverer_researcher"}}, "SML"))
-                    elif t_type in ("paper", "article", "scientific_paper"):
-                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "discoverer_researcher"}}, "SML"))
-                    else:
-                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
-                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "seed_writer"}}, "SML"))
+                # Live LLM provider: strictly evaluate LLM generation and self-evolution.
+                # Do NOT inject mock fixtures into the workspace on failure.
+                missing_artifacts = [f for f in ('config.py', 'core.py', 'thesis.md') if not (sandbox_ws / f).exists()]
+                if missing_artifacts:
+                    print(f"  [LIVE RUNNER] Artefakty nie zostaly wytworzone przez LLM: {missing_artifacts}. Zapisuje autentyczny stan wykonania.", flush=True)
 
             # If task also demonstrates tool synthesis + prompt consolidation, ensure both are recorded if live LLM chose another action
             if spec.trigger_tool_synthesis and spec.trigger_prompt_consolidation:
@@ -681,19 +673,38 @@ def run_benchmark_suite(
                         "promoted_validators": ver_scripts,
                     },
                     "artifacts": pub_res,
+                    "artifact_metrics": {
+                        "py_lines": sum(
+                            len(p.read_text(encoding="utf-8", errors="ignore").splitlines())
+                            for p in sandbox_ws.glob("*.py")
+                            if "__pycache__" not in p.parts
+                        ),
+                        "csv_rows": max(
+                            0,
+                            len((sandbox_ws / "results.csv").read_text(encoding="utf-8", errors="ignore").splitlines()) - 1
+                        ) if (sandbox_ws / "results.csv").exists() else 0,
+                        "doc_words": len(
+                            (sandbox_ws / "thesis.md").read_text(encoding="utf-8", errors="ignore").split()
+                        ) if (sandbox_ws / "thesis.md").exists() else 0,
+                    },
                 }
             )
     finally:
         set_llm_handler(None)
 
     suite_elapsed_ms = (time.perf_counter() - suite_start) * 1000.0
+    all_completed = all(t.get("orchestrator_status") == "COMPLETED" for t in results_per_task)
+    suite_status = "COMPLETED" if all_completed else "COMPLETED_WITH_FAILURES"
     summary_payload = {
-        "status": "COMPLETED",
+        "status": suite_status,
         "provider": resolved_provider,
         "sml_model": sml_model,
         "lrm_model": lrm_model,
         "total_llm_calls": total_llm_calls,
         "total_live_network_calls": total_live_network_calls,
+        "total_prompt_tokens": sum(t.get("llm_telemetry", {}).get("prompt_tokens", 0) for t in results_per_task),
+        "total_completion_tokens": sum(t.get("llm_telemetry", {}).get("completion_tokens", 0) for t in results_per_task),
+        "total_tokens": sum(t.get("llm_telemetry", {}).get("total_tokens", 0) for t in results_per_task),
         "total_elapsed_ms": round(suite_elapsed_ms, 2),
         "total_elapsed_seconds": round(suite_elapsed_ms / 1000.0, 3),
         "evolved_adk_state_dir": str(evolved_adk_dir),

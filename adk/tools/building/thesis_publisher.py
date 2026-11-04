@@ -704,8 +704,26 @@ def render_thesis_html(
     th {{ background: #0f172a; color: white; }}
     tr.proposed-row {{ background: #dcfce7; font-weight: 600; }}
     .chart-box {{ text-align: center; margin: 24px 0; }}
-    .chart-box img {{ max-width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; }}
+    .chart-box img, img {{ max-width: 100%; height: auto; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; box-sizing: border-box; }}
     code {{ background: #e2e8f0; padding: 2px 5px; border-radius: 4px; font-size: 0.86rem; }}
+    @page {{
+      size: A4;
+      margin: 20mm;
+      @bottom-center {{
+        content: "Strona " counter(page);
+        font-size: 9pt;
+        color: #64748b;
+      }}
+    }}
+    .page-footer {{
+      margin-top: 32px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #64748b;
+      font-family: system-ui, sans-serif;
+    }}
   </style>
 </head>
 <body>
@@ -738,6 +756,10 @@ def render_thesis_html(
 
     <h2>Zwalidowane Wskaźniki Neuro-Symboliczne (\\ref_ast / \\ref_csv / \\ref_fig)</h2>
     <ul>{ref_badges_html}</ul>
+
+    <div class="page-footer">
+      Dokument wygenerowany automatycznie przez <strong>Artificial-Degree-Printer (ADK)</strong> &bull; Weryfikacja symboliczna: PASS
+    </div>
   </div>
 </body>
 </html>

@@ -36,3 +36,6 @@ Return strictly a valid JSON object matching this schema:
 }
 ```
 Do not output conversational text or markdown wrappers outside the JSON.
+
+## LEARNED RULES AND CONSTRAINTS
+- **RULE**: Poprzednio nie zadziałało: Usterka weryfikacji warstwy 3. Zrób to: w zadaniu T4 na węźle v3 (results.csv) wyeliminuj ten błąd i wygeneruj w pełni poprawną zawartość.

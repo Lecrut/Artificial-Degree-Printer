@@ -217,9 +217,7 @@ def _expand_chapter_1(
             "odniesienia $\\mathcal{F}_{0}$:"
         ),
         "\\begin{equation}\n"
-        "  \\theta^{\\star} = \\arg\\max_{\\theta \\in \\Theta} \\mathcal{J}(\\theta) = "
-        "\\arg\\max_{\\theta \\in \\Theta} \\mathcal{E}_{\\omega \\sim \\mathcal{D}} "
-        "[ \\mathcal{U}( \\mathcal{F}_{\\theta}(\\omega) ) - \\mathcal{U}( \\mathcal{F}_{0}(\\omega) ) - \\lambda \\cdot \\mathcal{C}(\\mathcal{F}_{\\theta}) ],\n"
+        "  \\theta^{\\star} = \\arg\\max_{\\theta \\in \\Theta} [ \\mathcal{U}(\\theta) - \\lambda \\mathcal{C}(\\theta) ],\n"
         "\\label{eq:problem_formulation}\n"
         "\\end{equation}",
         (
@@ -538,7 +536,7 @@ def _expand_chapter_3(
             f"której ewolucja podlega nieliniowemu operatorowi aktualizacji $\\Psi_{{\\theta}}$:"
         ),
         "\\begin{equation}\n"
-        "  W_{t+1}(s, a) = (1 - \\alpha_t) W_t(s, a) + \\alpha_t ( \\mathcal{R}(s, a) + \\gamma \\cdot \\Phi_{\\theta}(W_t, s') - \\mu \\cdot \\Omega(W_t, W_0) ),\n"
+        "  W_{t+1}(s, a) = (1 - \\alpha) W_t(s, a) + \\alpha [ \\mathcal{R}(s, a) + \\gamma \\max_{a'} W_t(s', a') ],\n"
         "\\label{eq:general_state_update}\n"
         "\\end{equation}",
         (
@@ -577,14 +575,14 @@ def _expand_chapter_3(
             "punkt stały operatora optymalnego $\\Psi_{\\theta}(W^{\\star}) = W^{\\star}$. Wówczas oczekiwany błąd "
             "średniokwadratowy spełnia nierówność kontrakcji:}\n"
             "\\begin{equation}\n"
-            "  \\mathcal{E}[ \\| W_T - W^{\\star} \\|_2^2 ] \\le ( 1 - 2\\alpha(1 - \\gamma_e) + \\alpha^2 L^2 )^T \\| W_0 - W^{\\star} \\|_2^2 + \\frac{\\alpha \\sigma_{\\xi}^2}{2(1 - \\gamma_e)}.\n"
+            "  \\mathcal{E}[ \\| W_T - W^{\\star} \\|_2^2 ] \\le q^T \\| W_0 - W^{\\star} \\|_2^2 + \\frac{\\alpha \\sigma_{\\xi}^2}{2(1 - \\gamma)}.\n"
             "\\label{eq:theorem_convergence}\n"
             "\\end{equation}\n"
             f"\\textbf{{Dowód Twierdzenia 1 (Krok 1 — Rozwinięcie kwadratu normy błędu).}} "
             f"Oznaczmy błąd aproksymacji w chwili $t$ jako $e_t = W_t - W^{{\\star}}$. Odejmując punkt stały $W^{{\\star}}$ "
             f"od obu stron równania~(\\ref{{eq:general_state_update}}) i podnosząc normę euklidesową do kwadratu, uzyskujemy:\n"
             "\\begin{equation}\n"
-            "  \\|e_{t+1}\\|_2^2 = \\|e_t\\|_2^2 + 2\\alpha \\langle e_t, \\Psi_{\\theta}(W_t) - \\Psi_{\\theta}(W^{\\star}) - e_t + \\xi_t \\rangle + \\alpha^2 \\|\\Psi_{\\theta}(W_t) - W_t + \\xi_t\\|_2^2.\n"
+            "  \\|e_{t+1}\\|_2^2 \\le q \\|e_t\\|_2^2 + \\alpha^2 \\sigma_{\\xi}^2.\n"
             "\\end{equation}\n"
             f"\\textbf{{Dowód Twierdzenia 1 (Krok 2 — Silna monotoniczność i warunek Lipschitza).}} "
             f"Na mocy Lematu 1 oraz własności zwężających operatora $\\Psi_{{\\theta}}$ ze stałą Lipschitza $L$ "
@@ -612,7 +610,7 @@ def _expand_chapter_3(
                     "\\mathcal{U}(\\pi_{\\star}) - \\mathcal{U}(\\pi_{0})$ spełnia dolne ograniczenie "
                     "zależne od separowalności przestrzeni stanów $\\delta_{\\min} > 0$:}\n"
                     "\\begin{equation}\n"
-                    "  \\mathcal{P}( \\mathcal{U}(\\pi_{\\star}) - \\mathcal{U}(\\pi_{0}) \\ge \\frac{\\delta_{\\min}}{2} ) \\ge 1 - 2 \\exp( - \\frac{N \\cdot \\delta_{\\min}^2}{8 R_{\\max}^2} ).\n"
+                    "  \\mathcal{P}( \\Delta \\mathcal{U} \\ge \\frac{\\delta_{\\min}}{2} ) \\ge 1 - 2 \\exp( - \\frac{N \\delta_{\\min}^2}{8 R_{\\max}^2} ).\n"
                     "\\label{eq:theorem_concentration}\n"
                     "\\end{equation}\n"
                     f"\\textbf{{Dowód Twierdzenia 2.}} Korzystając z nierówności koncentracji Hoeffdinga-Azumy dla "

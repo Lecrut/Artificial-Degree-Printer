@@ -49,9 +49,10 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 ---
 
 ## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT (Cycle 1)**: Maintain strict AST signature compatibility and symbolic pointer validity across all modules, ensure benchmark CSV files include both baseline and proposed rows, and eliminate unbound global variables in train_and_evaluate.
+- **INVARIANT (Cycle 1)**: Consolidated directive from 4 rules: Unikaj niezgodności sygnatur wykrytych w zadaniu T1 | Poprzednio nie zadziałało: Usterka weryfikacji warstwy 3. Zrób to: w zadaniu T1 na węźle v1 (config.py) wyeliminuj ten błąd i wygeneruj w pełni poprawną zawartość. | Ensure all benchmark CSV files contain both baseline and proposed rows. | Avoid unbound global variables in train_and_evaluate.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **CONSOLIDATED_EPOCH 1**: Redacted and consolidated 4 rules into the invariants section.
 - **RULE**: Maintain strict float rounding in exported CSV metrics.
-- **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
+- **RULE**: Poprzednio nie zadziałało: Usterka weryfikacji warstwy 3. Zrób to: w zadaniu T1 na węźle v1 (config.py) wyeliminuj ten błąd i wygeneruj w pełni poprawną zawartość.
+- **RULE**: Final rule triggering automatic prompt consolidation.

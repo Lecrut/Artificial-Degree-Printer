@@ -1,4 +1,4 @@
-# ADK Documentation Index (Artificial Degree Printer 2027)
+# ADK Documentation Index (Artificial Degree Printer 2026/2027)
 
 This directory contains all technical, architectural, and scientific documentation for the ADK framework. **All files and folders are named in English** per software engineering standards.
 
@@ -8,14 +8,14 @@ This directory contains all technical, architectural, and scientific documentati
 
 | # | Document | Description |
 | :---: | :--- | :--- |
-| 1 | [**Methodology & Roadmap**](methodology_and_roadmap.md) | ADK-TRACE methodology, 5 canonical principles, 6 evolution milestones |
-| 2 | [**Architecture**](architecture.md) | System layers: Orchestration, 6-Pillar Harness, Agent Swarm, MCP Tools, Memory, Verification |
-| 3 | [**Workflow**](workflow.md) | 6-phase lifecycle DAG, Parallel Execution (TIPEX), ACRouter Model Tiering & Reflexion loops |
-| 4 | [**Verification Gates**](verification.md) | 7-gate quality audit: AST, Mutation, Citations, English naming, Stylometry TTR |
+| 1 | [**Architecture**](architecture.md) | 4-Layer Neuro-Symbolic Harness, Incidence Hypergraph Matrix, Dynamic Chapter Planning, Scoped Verification & Closed-Loop Reflexion |
+| 2 | [**Workflow**](workflow.md) | 5-phase execution DAG, Research-First Task Pipeline, Task-Level Remediation & Gate 3 Defense loops |
+| 3 | [**Methodology & Roadmap**](methodology_and_roadmap.md) | ADK-TRACE methodology, 5 canonical principles, 6 evolution milestones |
+| 4 | [**Verification Gates**](verification.md) | Multi-gate quality audit: AST, CSV freshness, citations, TikZ diagrams, stylometry & anti-fluff |
 | 5 | [**Requirements**](requirements.md) | Functional & non-functional requirements (as-implemented) |
 | 6 | [**Repository Structure**](repository-structure.md) | Full directory map of the framework |
 | 7 | [**Project Overview**](project-overview.md) | Mission, Code-First paradigm, competitive advantages |
-| 8 | [**User Guide**](user-guide.md) | CLI usage, Typst 0.11+/LaTeX compilation, project generation |
+| 8 | [**User Guide**](user-guide.md) | CLI usage, benchmark execution, project generation |
 | 9 | [**Assets**](assets.md) | Vector chart standards and diagram generation |
 
 ---
@@ -25,8 +25,8 @@ This directory contains all technical, architectural, and scientific documentati
 | # | Document | Description |
 | :---: | :--- | :--- |
 | 10 | [**Security & Safety**](security_and_safety.md) | Threat model, sandbox protection layers, InjecAgent security compliance |
-| 11 | [**Decision Records (ADR)**](decision_records.md) | 5 Architecture Decision Records: Typst, Event Sourcing, subprocess sandbox, Pydantic v2, Dynamic Researcher |
-| 12 | [**Build Log & Changelog**](build_log_and_changelog.md) | Consolidated build history (Etapy 1–13), evolution stages, and documentation hygiene rules |
+| 11 | [**Decision Records (ADR)**](decision_records.md) | Architecture Decision Records: Neuro-Symbolic Harness, Event Sourcing, subprocess sandbox, Pydantic v2, Dynamic Researcher |
+| 12 | [**Build Log & Changelog**](build_log_and_changelog.md) | Consolidated build history, evolution stages, and documentation hygiene rules |
 
 ---
 
@@ -35,7 +35,7 @@ This directory contains all technical, architectural, and scientific documentati
 | Sub-directory | Contents |
 | :--- | :--- |
 | [**technologies/**](technologies/) | 7 analytical dossiers for 2026/2027 production technologies |
-| [**→ Tech Stack Index**](technologies/README.md) | Full index of production tools: Typst, Pydantic v2, Polars, MCP, Mutmut, UV/Ruff, GraphRAG |
+| [**→ Tech Stack Index**](technologies/README.md) | Full index of production tools: Pydantic v2, Polars, MCP, Mutmut, UV/Ruff, GraphRAG |
 | [**→ Tech Stack Synthesis**](technologies/master_tech_stack_synthesis.md) | Direct code mapping to ADK framework and generated apps (`src/core/`) |
 
 ---

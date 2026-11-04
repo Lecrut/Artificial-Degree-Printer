@@ -37,7 +37,3 @@ Return strictly a valid JSON object matching this schema:
 }
 ```
 Do not output conversational text or markdown wrappers outside the JSON.
-
-## LEARNED RULES AND CONSTRAINTS
-- **RULE**: Preserve strict AST, CSV and symbolic reference parity in task T1 (v4).
-- **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.

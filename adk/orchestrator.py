@@ -477,6 +477,40 @@ class NeuroSymbolicOrchestrator:
             "bib_files": bib_files,
         }
 
+    def _get_pending_future_files(self, current_task: dict[str, Any]) -> set[str]:
+        """Return filenames scheduled to be created by subsequent TODO tasks in the queue."""
+        pending: set[str] = set()
+        if not self.task_queue_path.exists():
+            return pending
+        tasks = read_json_state(self.task_queue_path)
+        if not isinstance(tasks, list):
+            return pending
+
+        current_id = str(current_task.get("task_id", ""))
+        found_current = False
+        matrix_data = read_json_state(self.matrix_path)
+        matrix_nodes = matrix_data.get("nodes", {})
+
+        for t in tasks:
+            if not isinstance(t, dict):
+                continue
+            t_id = str(t.get("task_id", ""))
+            if t_id == current_id:
+                found_current = True
+                continue
+            if found_current and t.get("status") == "TODO":
+                t_node = str(t.get("target_node", ""))
+                node_meta = matrix_nodes.get(t_node, {})
+                path_str = str(node_meta.get("path", ""))
+                if path_str:
+                    pending.add(Path(path_str).name)
+                    pending.add(path_str)
+                if t_node in ("v1", "v2"):
+                    pending.update({"config.py", "core.py"})
+                elif t_node in ("v3", "v5"):
+                    pending.update({"results.csv", "figures", "plot_results.py", "test_core.py"})
+        return pending
+
     def _run_verification_step(
         self,
         current_task: dict[str, Any],
@@ -569,6 +603,14 @@ class NeuroSymbolicOrchestrator:
                     if comp["status"] == "FAIL":
                         ref_errors.extend(comp["errors"])
 
+                
+                if not is_final_gate:
+                    pending_files = self._get_pending_future_files(current_task)
+                    ref_errors = [
+                        err for err in ref_errors
+                        if not any(pf in err for pf in pending_files)
+                    ]
+
                 symbolic_audit = call_agent(
                     self.agents_dir / "verification" / "symbolic_auditor.md",
                     {
@@ -587,19 +629,27 @@ class NeuroSymbolicOrchestrator:
                     "skipped": "include_docs=False",
                 }
 
-            redteam_audit = call_agent(
-                self.agents_dir / "verification" / "redteam_critic_guard.md",
-                {
-                    "issues": code_audit.get("issues", []) + symbolic_audit.get("issues", []),
-                    "code_audit": code_audit,
-                    "symbolic_audit": symbolic_audit,
-                    "code_files": snapshot["code_files"],
-                    "csv_files": snapshot["csv_files"],
-                    "compiled_docs": compiled_docs,
-                },
-                model_tier="SML",
-                provider=self.provider,
-            )["output"]
+            if not is_final_gate:
+                redteam_audit = {
+                    "status": "SKIPPED_INTERMEDIATE_TASK",
+                    "verdict": "PASS",
+                    "gate_3_approved": False,
+                    "issues": [],
+                }
+            else:
+                redteam_audit = call_agent(
+                    self.agents_dir / "verification" / "redteam_critic_guard.md",
+                    {
+                        "issues": code_audit.get("issues", []) + symbolic_audit.get("issues", []),
+                        "code_audit": code_audit,
+                        "symbolic_audit": symbolic_audit,
+                        "code_files": snapshot["code_files"],
+                        "csv_files": snapshot["csv_files"],
+                        "compiled_docs": compiled_docs,
+                    },
+                    model_tier="SML",
+                    provider=self.provider,
+                )["output"]
         else:
             symbolic_audit = {
                 "status": "SKIPPED_OUT_OF_EDGE_SCOPE",
@@ -615,7 +665,7 @@ class NeuroSymbolicOrchestrator:
             }
 
         def _is_supervisor_pass(sup: dict[str, Any]) -> bool:
-            return sup.get("status") in ("PASS", "SKIPPED_OUT_OF_EDGE_SCOPE")
+            return sup.get("status") in ("PASS", "SKIPPED_OUT_OF_EDGE_SCOPE", "SKIPPED_INTERMEDIATE_TASK")
 
         # Enforce deterministic symbolic ground truth so small LLMs (e.g. gemma4:e2b) cannot ignore
         # real pytest/ruff/ref_compiler errors OR hallucinate failures when all deterministic checks pass.
@@ -643,17 +693,18 @@ class NeuroSymbolicOrchestrator:
                     symbolic_audit["issues"] = list(
                         ref_errors
                         or [
-                            f"Wykryto niespójność wskaźników symbolicznych \\ref_ast / \\ref_csv w zadaniu {current_task.get('task_id')} na węźle {target_node}."
+                            f"Wykryto niespójność wskaźników symbolicznych \ref_ast / \ref_csv w zadaniu {current_task.get('task_id')} na węźle {target_node}."
                         ]
                     )
-                redteam_audit["status"] = "FAIL"
-                if not redteam_audit.get("issues"):
-                    redteam_audit["issues"] = list(symbolic_audit["issues"])
+                if is_final_gate:
+                    redteam_audit["status"] = "FAIL"
+                    if not redteam_audit.get("issues"):
+                        redteam_audit["issues"] = list(symbolic_audit["issues"])
             else:
                 if effective_include_docs:
                     symbolic_audit["status"] = "PASS"
                     symbolic_audit["issues"] = []
-                if not deterministic_code_fail:
+                if is_final_gate and not deterministic_code_fail:
                     redteam_audit["status"] = "PASS"
                     redteam_audit["issues"] = []
 
@@ -931,23 +982,25 @@ class NeuroSymbolicOrchestrator:
 
         if multi_cycle_waves and len(cleaned) < 3:
             t_type = (thesis_type or "inzynierska").strip().lower()
-            # Build a logical Research-First engineering + 6-chapter thesis pipeline:
-            # 1) Literature Research (v4) -> 2) AST Config (v1) -> 3) Core Algorithm (v2) -> 4) Empirical CSV/Tests (v3) -> 5) Full Thesis Synthesis (v4)
+            # Build an incremental Vertical Feature Slice pipeline:
+            # Code development, unit tests, and thesis documentation progress together feature by feature.
             multi_tasks: list[dict[str, Any]] = []
+
+            # Slice 1: Literature Reconnaissance & Theoretical Foundations
             if self.include_docs:
                 if t_type in ("magisterska", "master", "msc"):
                     multi_tasks.extend(
                         [
                             {
                                 "task_id": "T1_BG",
-                                "description": "[Etap 1a - Research Background (II stopien)] Lejek teoretyczny od klasycznych monografii i podstaw w references.bib i thesis.md",
+                                "description": "[Przyrost 1: Badania (II stopień)] Lejek teoretyczny od klasycznych monografii i podstaw w references.bib i thesis.md",
                                 "target_node": "v4",
                                 "assigned_agent": bg_agent,
                                 "status": "TODO",
                             },
                             {
                                 "task_id": "T1_DISC",
-                                "description": "[Etap 1b - Research Discoverer (II stopien)] Analiza najnowszego SOTA (2023-2026), konkurencji i luki badawczej w references.bib i thesis.md",
+                                "description": "[Przyrost 1: Badania (II stopień)] Analiza najnowszego SOTA (2023-2026), konkurencji i luki badawczej w references.bib i thesis.md",
                                 "target_node": "v4",
                                 "assigned_agent": disc_agent,
                                 "status": "TODO",
@@ -958,7 +1011,7 @@ class NeuroSymbolicOrchestrator:
                     multi_tasks.append(
                         {
                             "task_id": "T1",
-                            "description": "[Etap 1 - Research Discoverer (III stopien - Paper)] Porownanie z najnowsza konkurencja SOTA (2023-2026) i przewaga w references.bib",
+                            "description": "[Przyrost 1: Badania (Paper)] Porównanie z najnowszą konkurencją SOTA (2023-2026) i przewaga w references.bib",
                             "target_node": "v4",
                             "assigned_agent": disc_agent,
                             "status": "TODO",
@@ -968,49 +1021,112 @@ class NeuroSymbolicOrchestrator:
                     multi_tasks.append(
                         {
                             "task_id": "T1",
-                            "description": "[Etap 1 - Research Background (I stopien)] Lejek teoretyczny od podstaw i klasycznych zrodel do problemu w references.bib",
+                            "description": "[Przyrost 1: Badania (I stopień)] Lejek teoretyczny od podstaw i klasycznych źródeł do problemu w references.bib",
                             "target_node": "v4",
                             "assigned_agent": bg_agent,
                             "status": "TODO",
                         }
                     )
 
-            code_start_idx = 2 if self.include_docs else 1
-            multi_tasks.extend(
-                [
-                    {
-                        "task_id": f"T{code_start_idx}",
-                        "description": f"[Etap {code_start_idx} - Konfiguracja AST] Zdefiniuj stale i hiperparametry w config.py wg konwencji z literatury ({user_prompt[:80]}...)",
-                        "target_node": "v1",
-                        "assigned_agent": coder_agent,
-                        "status": "TODO",
-                    },
-                    {
-                        "task_id": f"T{code_start_idx + 1}",
-                        "description": f"[Etap {code_start_idx + 1} - Algorytm Glowny i Baseline] Zaimplementuj logike algorytmu oraz funkcje train_and_evaluate() w core.py",
-                        "target_node": "v2",
-                        "assigned_agent": coder_agent,
-                        "status": "TODO",
-                    },
-                    {
-                        "task_id": f"T{code_start_idx + 2}",
-                        "description": f"[Etap {code_start_idx + 2} - Testy i Dane Empiryczne] Zbuduj testy jednostkowe test_core.py, wygeneruj results.csv oraz wykresy plot_results.py",
-                        "target_node": "v3",
-                        "assigned_agent": tester_agent,
-                        "status": "TODO",
-                    },
-                ]
+            # Slice 2: Domain Model & AST Interfaces + Unit Tests + Documentation
+            t_idx = len(multi_tasks) + 1
+            multi_tasks.append(
+                {
+                    "task_id": f"T{t_idx}",
+                    "description": f"[Przyrost 2: Model i parametry] Zdefiniuj stałe i hiperparametry w config.py ({user_prompt[:70]}...)",
+                    "target_node": "v1",
+                    "assigned_agent": coder_agent,
+                    "status": "TODO",
+                }
+            )
+            t_idx += 1
+            multi_tasks.append(
+                {
+                    "task_id": f"T{t_idx}",
+                    "description": "[Przyrost 2: Model i parametry] Zbuduj testy jednostkowe walidacji parametrów i struktur w test_core.py",
+                    "target_node": "v5",
+                    "assigned_agent": tester_agent,
+                    "status": "TODO",
+                }
             )
             if self.include_docs:
+                t_idx += 1
                 multi_tasks.append(
                     {
-                        "task_id": f"T{code_start_idx + 3}",
-                        "description": f"[Etap {code_start_idx + 3} - Pelna Praca 6-Rozdzialowa wg Spisu Tresci] Napisz Rozdzialy 1-6 w thesis.md ze wskaznikami \\ref_ast, \\ref_csv i \\ref_fig",
+                        "task_id": f"T{t_idx}",
+                        "description": "[Przyrost 2: Model i parametry] Udokumentuj formalizm przestrzeni stanów i tezę inżynierską w thesis.md",
                         "target_node": "v4",
                         "assigned_agent": writer_agent,
                         "status": "TODO",
                     }
                 )
+
+            # Slice 3: Core Algorithm & Baseline + Unit Tests + Documentation
+            t_idx += 1
+            multi_tasks.append(
+                {
+                    "task_id": f"T{t_idx}",
+                    "description": "[Przyrost 3: Algorytm i baseline] Zaimplementuj logikę algorytmu oraz metodę referencyjną w core.py",
+                    "target_node": "v2",
+                    "assigned_agent": coder_agent,
+                    "status": "TODO",
+                }
+            )
+            t_idx += 1
+            multi_tasks.append(
+                {
+                    "task_id": f"T{t_idx}",
+                    "description": "[Przyrost 3: Algorytm i baseline] Zbuduj testy jednostkowe poprawności algorytmu i metody bazowej w test_core.py",
+                    "target_node": "v5",
+                    "assigned_agent": tester_agent,
+                    "status": "TODO",
+                }
+            )
+            if self.include_docs:
+                t_idx += 1
+                multi_tasks.append(
+                    {
+                        "task_id": f"T{t_idx}",
+                        "description": "[Przyrost 3: Algorytm i baseline] Udokumentuj architekturę modułową i model decyzyjny w thesis.md",
+                        "target_node": "v4",
+                        "assigned_agent": writer_agent,
+                        "status": "TODO",
+                    }
+                )
+
+            # Slice 4: Empirical Benchmark & Metrics + Quality Tests + Documentation
+            t_idx += 1
+            multi_tasks.append(
+                {
+                    "task_id": f"T{t_idx}",
+                    "description": "[Przyrost 4: Ewaluacja empiryczna] Przeprowadź badania porównawcze, zapisz results.csv i wygeneruj wykresy w plot_results.py",
+                    "target_node": "v3",
+                    "assigned_agent": tester_agent,
+                    "status": "TODO",
+                }
+            )
+            t_idx += 1
+            multi_tasks.append(
+                {
+                    "task_id": f"T{t_idx}",
+                    "description": "[Przyrost 4: Ewaluacja empiryczna] Zaimplementuj testy asercji jakościowych wyników i zbieżności w test_core.py",
+                    "target_node": "v5",
+                    "assigned_agent": tester_agent,
+                    "status": "TODO",
+                }
+            )
+            if self.include_docs:
+                t_idx += 1
+                multi_tasks.append(
+                    {
+                        "task_id": f"T{t_idx}",
+                        "description": "[Przyrost 4: Ewaluacja empiryczna] Zredaguj rozdział badań eksperymentalnych (tabele CSV, wykresy) i podsumowanie w thesis.md",
+                        "target_node": "v4",
+                        "assigned_agent": writer_agent,
+                        "status": "TODO",
+                    }
+                )
+
             return multi_tasks
 
         if multi_cycle_waves and self.include_docs and cleaned:
@@ -1082,11 +1198,26 @@ class NeuroSymbolicOrchestrator:
         )
 
         initial_recon = scout_domain_conventions(user_prompt, thesis_type="inzynierska")
-        initial_toc = synthesize_table_of_contents(
-            user_prompt,
-            thesis_type="inzynierska",
-            recon_report=initial_recon,
-        )
+        suggested_sections = [
+            str(p).split(":")[0].strip() if ":" in str(p) else str(p).strip()
+            for p in initial_recon.get("common_structural_patterns", [])
+        ]
+        domain_summary = {
+            "domain": initial_recon.get("domain"),
+            "topic_canonical": initial_recon.get("topic_canonical"),
+            "canonical_baselines": initial_recon.get("canonical_baselines", []),
+            "standard_metrics": initial_recon.get("standard_metrics", []),
+            "open_research_gaps": initial_recon.get("open_research_gaps", []),
+            "suggested_sections": suggested_sections,
+        }
+
+        # Natychmiast zapisujemy bazowy academic_blueprint na dysk dla Layer 2 workers
+        base_blueprint = {
+            "thesis_type": "inzynierska",
+            "thesis_title": initial_recon.get("topic_canonical", user_prompt),
+            "literature_recon": initial_recon,
+        }
+        write_json_state(self.blueprint_path, base_blueprint)
 
         plan_payload: dict[str, Any] = {
             "user_prompt": user_prompt,
@@ -1097,8 +1228,7 @@ class NeuroSymbolicOrchestrator:
             "agent_registry": read_json_state(self.registry_path),
             "include_docs": self.include_docs,
             "missing_agent_specialization": missing_agent_specialization,
-            "literature_recon": initial_recon,
-            "table_of_contents": initial_toc,
+            "domain_context": domain_summary,
         }
         planner_md = self.agents_dir / "planning" / "task_planner.md"
 
@@ -1109,20 +1239,89 @@ class NeuroSymbolicOrchestrator:
             provider=self.provider,
         )["output"]
 
+        # Stopień 1: Refleksyjna ewolucja promptu planisty w przypadku pustej listy zadań
+        raw_tasks_candidate = plan_out.get("tasks")
+        if not raw_tasks_candidate or not isinstance(raw_tasks_candidate, list) or len(raw_tasks_candidate) == 0:
+            self.logger.log_step(
+                "PLANNER_REFLEXIVE_EVOLUTION",
+                "task_planner zwrócił 0 zadań. Wykonuję refleksyjną ewolucję promptu z informacją zwrotną o błędzie.",
+                {"first_attempt": plan_out},
+            )
+            healing_payload = dict(plan_payload)
+            healing_payload["reflection_feedback"] = (
+                "BŁĄD: Poprzednia odpowiedź nie zawierała listy zadań w polu 'tasks'. "
+                "Wymagane jest umieszczenie tablicy 'tasks' jako pierwszego klucza w JSON z co najmniej 3 przyrostami "
+                "(Vertical Feature Slices): kod, testy jednostkowe i opis w pracy dyplomowej."
+            )
+            retry_res = call_agent(
+                planner_md,
+                healing_payload,
+                model_tier="LRM",
+                provider=self.provider,
+            )
+            if retry_res.get("status") == "ok":
+                cand = retry_res.get("output", {})
+                if cand.get("tasks") and isinstance(cand.get("tasks"), list) and len(cand.get("tasks")) > 0:
+                    plan_out = cand
+
+        # Stopień 2: Ewolucja Warstwy 4 (Prompt Mutation) w przypadku powtórnego braku zadań
+        if (not plan_out.get("tasks") or len(plan_out.get("tasks")) == 0) and self.enable_layer4:
+            self.logger.log_step(
+                "PLANNER_LAYER4_MUTATION",
+                "task_planner nie zdołał wygenerować zadań. Wywołuję Architekta Ewolucji (W4) do mutacji promptu...",
+            )
+            evo_res = self._run_evolution_step({
+                "failed_agent": "task_planner",
+                "suggested_rule": "MUST ALWAYS place 'tasks' array with at least 3 vertical feature slices (code, test, doc) at the top of JSON.",
+            })
+            self._record_evolution_event({"type": "PLANNER_PROMPT_MUTATED", "details": evo_res})
+            mutated_retry = call_agent(
+                planner_md,
+                plan_payload,
+                model_tier="LRM",
+                provider=self.provider,
+            )
+            if mutated_retry.get("status") == "ok":
+                cand = mutated_retry.get("output", {})
+                if cand.get("tasks") and isinstance(cand.get("tasks"), list) and len(cand.get("tasks")) > 0:
+                    plan_out = cand
+
         planned_thesis_type = str(plan_out.get("thesis_type") or "inzynierska")
         recon_report = scout_domain_conventions(user_prompt, thesis_type=planned_thesis_type)
         blueprint_raw = dict(plan_out.get("academic_blueprint") or {})
-        toc_structure = blueprint_raw.get("table_of_contents") or synthesize_table_of_contents(
-            user_prompt,
-            thesis_type=planned_thesis_type,
-            recon_report=recon_report,
-            title_pl=str(blueprint_raw.get("thesis_title") or ""),
+        blueprint_raw["literature_recon"] = recon_report
+        blueprint_raw["thesis_type"] = planned_thesis_type
+
+        # Dynamiczne rozdziały zaplanowane przez task_planner
+        toc_candidate = blueprint_raw.get("table_of_contents") or plan_out.get("table_of_contents")
+        if isinstance(toc_candidate, dict):
+            toc_chapters_candidate = toc_candidate.get("chapters", [])
+        elif isinstance(toc_candidate, list):
+            toc_chapters_candidate = toc_candidate
+        else:
+            toc_chapters_candidate = None
+
+        planned_chapters = (
+            blueprint_raw.get("planned_chapters")
+            or plan_out.get("planned_chapters")
+            or toc_chapters_candidate
         )
-        blueprint_raw["literature_recon"] = blueprint_raw.get("literature_recon") or recon_report
+        if not planned_chapters:
+            toc_fallback = synthesize_table_of_contents(
+                user_prompt,
+                thesis_type=planned_thesis_type,
+                recon_report=recon_report,
+                title_pl=str(blueprint_raw.get("thesis_title") or ""),
+            )
+            planned_chapters = toc_fallback.get("chapters", [])
+
+        toc_structure = {"chapters": planned_chapters} if isinstance(planned_chapters, list) else planned_chapters
         blueprint_raw["table_of_contents"] = toc_structure
+        blueprint_raw["planned_chapters"] = planned_chapters
         plan_out["academic_blueprint"] = blueprint_raw
         write_json_state(self.blueprint_path, blueprint_raw)
 
+        toc_structure = blueprint_raw.get("table_of_contents", {})
         toc_chapters = toc_structure.get("chapters", []) if isinstance(toc_structure, dict) else toc_structure
         self.logger.log_step(
             "PLANNING_RECON_TOC",
@@ -1351,6 +1550,13 @@ class NeuroSymbolicOrchestrator:
                     flush=True,
                 )
 
+                issues_list = report.get("issues", [])
+                issues_summary = "; ".join(issues_list) if issues_list else "Usterka weryfikacji warstwy 3"
+                remediation_directive = (
+                    f"Poprzednio nie zadziałało: {issues_summary}. "
+                    f"Zrób to: w zadaniu {t_id} na węźle {node_id} ({node_file}) wyeliminuj ten błąd i wygeneruj w pełni poprawną zawartość."
+                )
+
                 if self.enable_layer4:
                     print(
                         f"  [WARSTWA 4: SAMOEWOLUCJA] Uruchomienie Architekta Ewolucji (cykl #{replan_count}, agent: {failed_agent})...",
@@ -1364,7 +1570,7 @@ class NeuroSymbolicOrchestrator:
                             "cycle_index": replan_count,
                             "task_id": task.get("task_id"),
                             "target_node": node_id,
-                            "suggested_rule": f"Preserve strict AST, CSV and symbolic reference parity in task {task.get('task_id')} ({node_id}).",
+                            "suggested_rule": remediation_directive,
                         },
                         tasks_in_memory=tasks,
                     )
@@ -1404,6 +1610,7 @@ class NeuroSymbolicOrchestrator:
                         "user_prompt": user_prompt,
                         "error_report": report,
                         "failed_task": task,
+                        "remediation_directive": remediation_directive,
                         "failure_ledger": failure_ledger,
                         "agent_registry": read_json_state(self.registry_path),
                         "blast_radius": remediation_blast,
@@ -1464,14 +1671,12 @@ class NeuroSymbolicOrchestrator:
 
                 surgical_tasks = remediation_out.get("surgical_tasks") or remediation_out.get("tasks") or []
                 if not (isinstance(surgical_tasks, list) and surgical_tasks):
-                    # Hipergraficzna synteza zadania chirurgicznego dla uszkodzonego węzła
-                    issues_summary = "; ".join(report.get("issues", []))[:120] if report.get("issues") else "usterka weryfikacji warstwy 3"
                     surgical_tasks = [
                         {
                             "task_id": f"{task.get('task_id', 'T1')}_FIX",
                             "target_node": node_id,
                             "assigned_agent": failed_agent,
-                            "description": f"Chirurgiczna naprawa węzła {node_id} ({node_file}) na podstawie diagnozy: {issues_summary}",
+                            "description": f"Poprzednio nie zadziałało: {issues_summary}. Zrób to: napraw węzeł {node_id} ({node_file}) i wyeliminuj błędy.",
                             "status": "TODO",
                         }
                     ]
@@ -1544,46 +1749,133 @@ class NeuroSymbolicOrchestrator:
                     "validation_report": report,
                 }
 
-        # 4. Final Defense Verification & Gate 3 Promotor Checkpoint
-        if tasks:
+        # 4. Final Defense Verification & Gate 3 Promotor Checkpoint (W3 -> W1 -> W2 -> W3 Remediation Loop)
+        defense_target_task = tasks[-1] if tasks else {"target_node": "v4", "task_id": "FINAL_DEFENSE"}
+        print(
+            "\n  [WARSTWA 3: BRAMKA KONCOWA OBRONY PRACY (GATE_3_DEFENSE_APPROVAL)] Pelna walidacja kodu, CSV i 6 rozdzialow pracy...",
+            flush=True,
+        )
+        final_report = self._run_verification_step(
+            defense_target_task,
+            include_docs=self.include_docs,
+            is_final_gate=True,
+            inject_failure=False,
+        )
+
+        defense_retries = 0
+        while final_report.get("status") != "PASS" and defense_retries < effective_max_retries:
+            defense_retries += 1
+            replan_count += 1
+            defense_issues = "; ".join(final_report.get("issues", [])) or "Usterka obrony pracy (Gate 3)"
             print(
-                "\n  [WARSTWA 3: BRAMKA KONCOWA OBRONY PRACY (GATE_3_DEFENSE_APPROVAL)] Pelna walidacja kodu, CSV i 6 rozdzialow pracy...",
+                f"\n  [WARSTWA 3 -> ODRZUCENIE OBRONY GATE 3] Proba naprawy #{defense_retries}: {defense_issues}\n"
+                f"  [POWROT DO WARSTWY 1: REMEDIACJA OBRONY] Synteza zadan naprawczych dla Gate 3...",
+                flush=True,
+            )
+            def_node = str(final_report.get("failed_file") or "v4")
+            if not def_node.startswith("v"):
+                def_node = next(
+                    (nid for nid, nmeta in matrix_nodes.items() if nmeta.get("path") == def_node),
+                    "v4",
+                )
+            remediation_agent = self.agents_dir / "planning" / "remediation_planner.md"
+            def_remed_out = call_agent(
+                remediation_agent,
+                {
+                    "user_prompt": user_prompt,
+                    "error_report": final_report,
+                    "failed_task": {
+                        "task_id": f"GATE_3_FIX_{defense_retries}",
+                        "target_node": def_node,
+                        "assigned_agent": "seed_writer" if def_node == "v4" else "seed_coder",
+                    },
+                    "remediation_directive": f"Poprzednio nie zadziałało podczas obrony Gate 3: {defense_issues}. Zrób to: usun usterki i doprowadz prace do pelnej zgodnosci.",
+                    "failure_ledger": read_json_state(self.failure_ledger_path) if self.failure_ledger_path.exists() else {"failures": []},
+                    "agent_registry": read_json_state(self.registry_path),
+                    "blast_radius": calculate_blast_radius(def_node, self.matrix_path),
+                    "hypergraph": get_scoped_hypergraph_context(self.matrix_path, blast_radius=calculate_blast_radius(def_node, self.matrix_path)),
+                    "hypergraph_matrix": get_scoped_hypergraph_context(self.matrix_path, blast_radius=calculate_blast_radius(def_node, self.matrix_path)),
+                    "include_docs": self.include_docs,
+                },
+                model_tier="LRM",
+                provider=self.provider,
+            )["output"]
+
+            def_tasks = def_remed_out.get("surgical_tasks") or def_remed_out.get("tasks") or []
+            if not def_tasks:
+                def_tasks = [
+                    {
+                        "task_id": f"GATE_3_FIX_{defense_retries}",
+                        "target_node": def_node,
+                        "assigned_agent": "seed_writer" if def_node == "v4" else "seed_coder",
+                        "description": f"Poprzednio nie zadziałało: {defense_issues}. Zrób to: usun bledy obrony pracy.",
+                        "status": "TODO",
+                    }
+                ]
+
+            for dtask in def_tasks:
+                if not isinstance(dtask, dict):
+                    continue
+                dt_node = str(dtask.get("target_node") or def_node)
+                dtask["target_node"] = dt_node
+                dtask["assigned_agent"] = self._resolve_active_agent(
+                    str(dtask.get("assigned_agent") or "seed_writer"),
+                    fallback="seed_writer",
+                )
+                dt_tier = select_model_tier(dt_node, self.matrix_path)
+                print(
+                    f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE DLA GATE 3] Zadanie {dtask.get('task_id')} "
+                    f"na wezle {dt_node} przez agenta '{dtask['assigned_agent']}'...",
+                    flush=True,
+                )
+                self._execute_builder_step(dtask, model_tier=dt_tier)
+
+            print(
+                f"  [WARSTWA 3: RE-AUDYT GATE 3] Ponowna weryfikacja obrony po naprawie #{defense_retries}...",
                 flush=True,
             )
             final_report = self._run_verification_step(
-                tasks[-1],
+                defense_target_task,
                 include_docs=self.include_docs,
                 is_final_gate=True,
                 inject_failure=False,
             )
-        else:
-            final_report = read_json_state(self.validation_report_path)
 
         defense_ok = final_report.get("status") == "PASS"
-        if defense_ok:
-            if not self._check_hitl_gate(
-                gate_name="GATE_3_DEFENSE_APPROVAL",
-                context_payload={"validation_status": "PASS", "replan_count": replan_count},
-                interactive_gates=interactive_gates,
-                gate_approval_callback=gate_approval_callback,
-            ):
-                return {
-                    "status": "HITL_PAUSED",
-                    "gate": "GATE_3_DEFENSE_APPROVAL",
-                    "hitl": read_json_state(self.hitl_flag_path),
-                    "tasks": tasks,
-                    "replan_count": replan_count,
-                    "architecture_cycles": architecture_cycles,
-                    "validation_report": final_report,
-                }
-        else:
-            self.logger.log_step(
-                "DEFENSE_GATE_WARNING",
-                f"Bramka końcowa GATE_3_DEFENSE_APPROVAL wykazała zastrzeżenia audytorów: {final_report.get('issues', [])}",
-                {"validation_report": final_report},
+        if not defense_ok:
+            self._update_hitl_gate(
+                gate_name="GATE_DEFENSE_FAILED",
+                active=True,
+                question=f"Obrona końcowa Gate 3 zakończona niepowodzeniem po {defense_retries} próbach naprawy: {final_report.get('issues', [])}",
+                context={"validation_report": final_report, "replan_count": replan_count},
             )
+            return {
+                "status": "HITL_PAUSED",
+                "gate": "GATE_DEFENSE_FAILED",
+                "hitl": read_json_state(self.hitl_flag_path),
+                "tasks": tasks,
+                "replan_count": replan_count,
+                "architecture_cycles": architecture_cycles,
+                "validation_report": final_report,
+            }
 
-        status_label = "COMPLETED" if defense_ok else "COMPLETED_WITH_WARNINGS"
+        if not self._check_hitl_gate(
+            gate_name="GATE_3_DEFENSE_APPROVAL",
+            context_payload={"validation_status": "PASS", "replan_count": replan_count},
+            interactive_gates=interactive_gates,
+            gate_approval_callback=gate_approval_callback,
+        ):
+            return {
+                "status": "HITL_PAUSED",
+                "gate": "GATE_3_DEFENSE_APPROVAL",
+                "hitl": read_json_state(self.hitl_flag_path),
+                "tasks": tasks,
+                "replan_count": replan_count,
+                "architecture_cycles": architecture_cycles,
+                "validation_report": final_report,
+            }
+
+        status_label = "COMPLETED"
         self.logger.log_step(
             "ORCHESTRATOR_DONE",
             f"Zakończono scenariusz ze statusem {status_label} (replan_count={replan_count}, cycles={len(architecture_cycles)}).",

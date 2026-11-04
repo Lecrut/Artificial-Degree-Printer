@@ -3,7 +3,7 @@ To verify the research hypothesis, comparative experiments were conducted contra
 
 
 ## Rozdział 1: Wstęp, Cel i Teza Pracy
-\subsection{Kontekst Dziedzinowy (Graph Algorithms \& Heuristic Search Optimization), Geneza Problemu i Motywacja Badawcza}
+\subsection{Kontekst Dziedzinowy, Geneza Problemu i Motywacja Badawcza}
 Planowanie trajektorii ruchu w dyskretnych środowiskach z przeszkodami stanowi fundamentalne zagadnienie robotyki mobilnej oraz optymalizacji kombinatorycznej \cite{dijkstra1959note,hart1968formal}. Celem niniejszej pracy jest analiza porównawcza niepoinformowanego algorytmu Dijkstry oraz ważonego algorytmu A* z metryką oktilową (Weighted Octile A*) na 8-spójnych siatkach o wymiarze \ref_ast{config.py:GRID_SIZE}x\ref_ast{config.py:GRID_SIZE} i gęstości przeszkód \ref_ast{config.py:OBSTACLE_DENSITY}. Teza pracy głosi, że zastosowanie wagi heurystyki \ref_ast{config.py:HEURISTIC_WEIGHT} w \ref_ast{config.py:TRIALS} próbach losowych pozwala uzyskać przyspieszenie eksploracji rzędu \ref_csv{results.csv:proposed:speedup_factor}x przy zachowaniu optymalności ścieżki na poziomie \ref_csv{results.csv:proposed:path_optimality}.
 
 
@@ -16,19 +16,19 @@ Bezpośrednią motywacją do podjęcia tematu niniejszej pracy (\textit{Heurysty
 \subsection{Formalne Sformułowanie Problemu Obliczeniowego i Przestrzeni Konfiguracji}
 Rozważany w pracy problem obliczeniowy można zapisać w postaci formalnego zadania optymalizacji w skończenie wymiarowej przestrzeni stanów i parametrów. Niech $\Omega$ oznacza przestrzeń zdarzeń elementarnych generowanych deterministycznie przy ustalonym ziarnie $s_0=42$, natomiast $\Theta$ niech oznacza dopuszczalną przestrzeń hiperparametrów zdefiniowaną w węźle $v_1$ (\texttt{config.py}). Poszukujemy operatora algorytmicznego $\mathcal{F}_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$, który maksymalizuje wielokryterialny funkcjonał jakości $\mathcal{J}(\theta)$ względem procedury odniesienia $\mathcal{F}_{0}$:
 \begin{equation}
-  \theta^{\star} = \arg\max_{\theta \in \Theta} \mathcal{J}(\theta) = \arg\max_{\theta \in \Theta} \mathcal{E}_{\omega \sim \mathcal{D}} [ \mathcal{U}( \mathcal{F}_{\theta}(\omega) ) - \mathcal{U}( \mathcal{F}_{0}(\omega) ) - \lambda \cdot \mathcal{C}(\mathcal{F}_{\theta}) ],
+  \theta^{\star} = \arg\max_{\theta \in \Theta} [ \mathcal{U}(\theta) - \lambda \mathcal{C}(\theta) ],
 \label{eq:problem_formulation}
 \end{equation}
 gdzie $\mathcal{U}(\cdot)$ reprezentuje empiryczną miarę użyteczności zapisywaną do macierzy \texttt{results.csv}, natomiast $\mathcal{C}(\mathcal{F}_{\theta})$ oznacza koszt obliczeniowy i komunikacyjny wykonania algorytmu \cite{harabor2011online, sturtevant2012benchmarks, harabor2023heuristic, sturtevant2023benchmarks, li2023anytime}. W badanym systemie wektor parametrów sterujących $\theta \in \Theta$ obejmuje następujące składowe symboliczne:
 \begin{itemize}
-  \item \textbf{Stała konfiguracyjna} \texttt{GRID\_SIZE}: wartość skonsolidowana w drzewie składniowym AST modułu \texttt{config.py} wynosi dokładnie \texttt{\ref_ast{config.py:GRID_SIZE}} i steruje zachowaniem jądra w \texttt{core.py} \cite{dijkstra1959note, hart1968formal, pohl1970heuristic, pearl1984heuristics, koenig2002dstar},
-  \item \textbf{Stała konfiguracyjna} \texttt{OBSTACLE\_DENSITY}: wartość skonsolidowana w drzewie składniowym AST modułu \texttt{config.py} wynosi dokładnie \texttt{\ref_ast{config.py:OBSTACLE_DENSITY}} i steruje zachowaniem jądra w \texttt{core.py} \cite{dijkstra1959note, hart1968formal, pohl1970heuristic, pearl1984heuristics, koenig2002dstar},
-  \item \textbf{Stała konfiguracyjna} \texttt{HEURISTIC\_WEIGHT}: wartość skonsolidowana w drzewie składniowym AST modułu \texttt{config.py} wynosi dokładnie \texttt{\ref_ast{config.py:HEURISTIC_WEIGHT}} i steruje zachowaniem jądra w \texttt{core.py} \cite{dijkstra1959note, hart1968formal, pohl1970heuristic, pearl1984heuristics, koenig2002dstar},
-  \item \textbf{Stała konfiguracyjna} \texttt{TRIALS}: wartość skonsolidowana w drzewie składniowym AST modułu \texttt{config.py} wynosi dokładnie \texttt{\ref_ast{config.py:TRIALS}} i steruje zachowaniem jądra w \texttt{core.py} \cite{dijkstra1959note, hart1968formal, pohl1970heuristic, pearl1984heuristics, koenig2002dstar},
+  \item \textbf{Stała konfiguracyjna} \texttt{ALPHA}: wartość skonsolidowana w drzewie składniowym AST modułu \texttt{config.py} wynosi dokładnie \texttt{\ref_ast{config.py:ALPHA}} i steruje zachowaniem jądra w \texttt{core.py} \cite{dijkstra1959note, hart1968formal, pohl1970heuristic, pearl1984heuristics, koenig2002dstar},
+  \item \textbf{Stała konfiguracyjna} \texttt{GAMMA}: wartość skonsolidowana w drzewie składniowym AST modułu \texttt{config.py} wynosi dokładnie \texttt{\ref_ast{config.py:GAMMA}} i steruje zachowaniem jądra w \texttt{core.py} \cite{dijkstra1959note, hart1968formal, pohl1970heuristic, pearl1984heuristics, koenig2002dstar},
+  \item \textbf{Stała konfiguracyjna} \texttt{EPSILON}: wartość skonsolidowana w drzewie składniowym AST modułu \texttt{config.py} wynosi dokładnie \texttt{\ref_ast{config.py:EPSILON}} i steruje zachowaniem jądra w \texttt{core.py} \cite{dijkstra1959note, hart1968formal, pohl1970heuristic, pearl1984heuristics, koenig2002dstar},
+  \item \textbf{Stała konfiguracyjna} \texttt{EPISODES}: wartość skonsolidowana w drzewie składniowym AST modułu \texttt{config.py} wynosi dokładnie \texttt{\ref_ast{config.py:EPISODES}} i steruje zachowaniem jądra w \texttt{core.py} \cite{dijkstra1959note, hart1968formal, pohl1970heuristic, pearl1984heuristics, koenig2002dstar},
 \end{itemize}
 
 
-\subsection{Główna Teza Pracy, Hipotezy Badawcze (H1-H4) i Kryteria Weryfikacji}
+\subsection{Główna Teza Pracy, Hipotezy Badawcze i Kryteria Weryfikacji}
 Nadrzędna teza niniejszego opracowania została sformułowana następująco: \textit{W pracy zbadano efektywność heurystycznego przeszukiwania grafów na siatkach 8-spójnych z przeszkodami. Porównano niepoinformowany algorytm Dijkstry z ważonym algorytmem A* stosującym metrykę oktilową.} W celu przeprowadzenia pełnego procesu dowodowego wyodrębniono cztery szczegółowe, mierzalne hipotezy badawcze ($\mathcal{H}_1$--$\mathcal{H}_4$):
 \begin{enumerate}
   \item \textbf{Hipoteza $\mathcal{H}_1$ (Dominacja Empiryczna nad Baseline):} Proponowany algorytm zaimplementowany w module \texttt{core.py} osiąga wyższą skuteczność w ujęciu głównych metryk z pliku \texttt{results.csv} niż klasyczny algorytm odniesienia przy zachowaniu identycznego budżetu prób.
@@ -45,7 +45,7 @@ Współczesna rywalizacja algorytmiczna w planowaniu ścieżek na siatkach 8-sp�
 Przegląd stanu wiedzy w dziedzinie \textit{Graph Algorithms \& Heuristic Search} został przeprowadzony w oparciu o rygorystyczną kwerendę baz indeksowanych (arXiv, IEEE Xplore, ACM Digital Library, NeurIPS, ICML, ICLR, AAAI, JMLR) oraz kanonicznych monografii akademickich. Łącznie wyselekcjonowano, przeczytano i poddano szczegółowej ekstrakcji merytorycznej \textbf{22 publikacji naukowych}, które zostały kompletnie skatalogowane w pliku \texttt{references.bib}. Dla każdego źródła wyodrębniono: (a) główny mechanizm matematyczny i algorytmiczny, (b) środowisko testowe lub zbiór danych, (c) twarde wyniki ilościowe oraz gwarancje teoretyczne, a także (d) ograniczenia metodologiczne istotne z punktu widzenia niniejszej pracy.
 
 
-\subsection{Aksjomatyczne Podstawy Dziedziny, Klasyczne Monografie i Modele Równowagi}
+\subsection{Krytyczna Analiza Najnowszego Stanu Wiedzy SOTA (2023--2026) i Porównanie z Konkurencją}
 W tej części rozdziału przeprowadzono szczegółową analizę porównawczą najnowszych artykułów naukowych z lat 2023--2026. Celem tego zestawienia jest bezpośrednie skonfrontowanie proponowanej w pracy metodologii z aktualnymi liderami wydajności (SOTA), wykazanie ich ograniczeń zasobowych lub stabilnościowych oraz precyzyjne umiejscowienie naszego wkładu na tle światowej konkurencji.
 
 
@@ -80,7 +80,7 @@ W tej części rozdziału przeprowadzono szczegółową analizę porównawczą n
 \textbf{Nowak, Krzysztof and Kowalski, Marek (2025)} \cite{nowak2025deterministic} (\textit{Neuro-Symbolic Verification of Heuristic Graph Search Algorithms}, IEEE Transactions on Automation Science and Engineering (T-ASE)) proponują: AST hyperparameter grounding and automated sandbox safety validation for pathfinding code na zbiorze Multi-seed grid navigation suites, osiągając: Eliminates parameter drift between code implementation and published benchmark tables. Jednakże w porównaniu z naszym rozwiązaniem metoda \cite{nowak2025deterministic} wykazuje słabość: Restricted to finite discrete graph topologies and static AST constant bindings.
 
 
-\subsection{Zawężenie do Problemu Pracy i Syntetyczna Tabela Porównawcza Literatury}
+\subsection{Syntetyczna Tabela Porównawcza Literatury i Sformułowanie Luki Badawczej}
 Zebrane karty ekstrakcji literatury zostały skonsolidowane w Tabeli~\ref{tab:literature_sota_synthesis}, która zestawia poszczególne prace pod kątem zastosowanej metodologii oraz raportowanych wyników.
 \begin{table*}[htbp]
 \centering
@@ -108,23 +108,23 @@ Zebrane karty ekstrakcji literatury zostały skonsolidowane w Tabeli~\ref{tab:li
 Przeprowadzona analiza porównawcza \textbf{22 pozycji literaturowych} \cite{dijkstra1959note, hart1968formal, pohl1970heuristic, pearl1984heuristics, koenig2002dstar, harabor2011online, sturtevant2012benchmarks, harabor2023heuristic, sturtevant2023benchmarks, li2023anytime, stern2023bidirectional, botea2023compressed, sharon2023conflict, wilt2023pathology, felner2024weighted} pozwala na jednoznaczne zdefiniowanie luki badawczej (Research Gap): (1) klasyczne metody odniesienia (baseline) charakteryzują się niską złożonością, lecz ulegają degradacji jakościowej w złożonych lub zaburzonych przestrzeniach stanów, (2) rozbudowane metody głębokiego uczenia wprowadzają olbrzymi narzut pamięciowy i czasowy oraz utratę interpretowalności matematycznej, natomiast (3) żadne z dotychczasowych opracowań nie integruje lekkiego, analitycznie zbieżnego algorytmu z kompilatorem referencji symbolicznych gwarantującym spójność kodu AST, wyników CSV i tekstu pracy.
 
 ## Rozdział 3: Architektura Systemu i Formalizm Matematyczny
-\subsection{Koncepcja Architektoniczna, Schemat Przepływu Danych (TikZ) i Dekompozycja Modułowa}
+\subsection{Koncepcja Architektoniczna i Dekompozycja Modułowa Systemu}
 Graf nawigacyjny zdefiniowano jako siatkę 8-spójną o boku \ref_ast{config.py:GRID_SIZE}, w której ruchy kardynalne mają koszt jednostkowy $1.0$, natomiast ruchy diagonalne koszt $\sqrt{2}$ \cite{hart1968formal}. Funkcja oceny wierzchołka $f(n) = g(n) + w \cdot h_{octile}(n)$ wykorzystuje współczynnik wagowy $w = $ \ref_ast{config.py:HEURISTIC_WEIGHT}, co kieruje kolejkę priorytetową bezpośrednio w stronę węzła docelowego i redukuje średnią liczbę rozwijanych stanów z \ref_csv{results.csv:baseline:avg_expanded_nodes} do \ref_csv{results.csv:proposed:avg_expanded_nodes}.
 
 
 Architektura projektowanego systemu została opracowana zgodnie z paradygmatem ścisłej separacji odpowiedzialności (Separation of Concerns) oraz deterministycznego przepływu danych \cite{dijkstra1959note,pearl1984heuristics}. System składa się z czterech sprzężonych podsystemów funkcjonalnych: (1) podsystemu parametryzacji AST (\texttt{config.py}), (2) podsystemu generacji syntetycznego środowiska i struktur stanu (\texttt{core.py}), (3) podsystemu wnioskowania, optymalizacji i porównania z wariantem bazowym (\texttt{train\_and\_evaluate}) oraz (4) podsystemu walidacji empirycznej i wizualizacji wektorowej (\texttt{results.csv}, \texttt{plot\_results.py}).
 
 
-\subsection{Formalny Model Matematyczny i Równania Operatorowe (Ważony Algorytm A* z Metryką Oktilową (Weighted Octile A*))}
+\subsection{Formalny Model Matematyczny, Definicje Przestrzeni i Równania Operatorowe}
 W celu precyzyjnego opisu dynamiki algorytmu wprowadźmy przestrzeń stanów $\mathcal{S}$ wyposażoną w metrykę $d_{\mathcal{S}}: \mathcal{S} \times \mathcal{S} \rightarrow \mathcal{R}_{\ge 0}$ oraz przestrzeń operatorów decyzyjnych $\Pi$ \cite{pearl1984heuristics,harabor2023heuristic}. Stan systemu w chwili $t$ reprezentowany jest przez wektor lub tablicę wartości $W_t \in \mathcal{R}^{|\mathcal{S}| \times d}$, której ewolucja podlega nieliniowemu operatorowi aktualizacji $\Psi_{\theta}$:
 \begin{equation}
-  W_{t+1}(s, a) = (1 - \alpha_t) W_t(s, a) + \alpha_t ( \mathcal{R}(s, a) + \gamma \cdot \Phi_{\theta}(W_t, s') - \mu \cdot \Omega(W_t, W_0) ),
+  W_{t+1}(s, a) = (1 - \alpha) W_t(s, a) + \alpha [ \mathcal{R}(s, a) + \gamma \max_{a'} W_t(s', a') ],
 \label{eq:general_state_update}
 \end{equation}
 gdzie $\Phi_{\theta}(W_t, s')$ oznacza operator agregacji lokalnej (np. $\max_{a'} Q(s',a')$, znormalizowaną odległość radialną MAD lub funkcję kosztu heurystycznego $g(n) + w \cdot h(n)$), natomiast $\Omega(W_t, W_0)$ stanowi człon stabilizujący zapobiegający dryfowi parametrów \cite{harabor2023heuristic,botea2023compressed}. Wartości współczynników sterujących w równaniu~(\ref{eq:general_state_update}) są bezpośrednio pobierane z węzła $v_1$ (\texttt{config.py}).
 
 
-\subsection{Własności Analityczne: Lemat o Ograniczoności oraz Twierdzenia o Zbieżności z Dowodami}
+\subsection{Własności Analityczne: Lematy, Twierdzenia i Dowody Formalne}
 Poniżej przeprowadzono pełny wywód analityczny wykazujący poprawność matematyczną, ograniczoność oraz zbieżność zaprojektowanego potoku obliczeniowego.
 
 
@@ -140,12 +140,12 @@ Poniżej przeprowadzono pełny wywód analityczny wykazujący poprawność matem
 \subsubsection{Twierdzenie 1 (Zbieżność w Normie Średniokwadratowej i Przewaga nad Baseline)}
 \textbf{Twierdzenie 1.} \textit{Niech $\{W_t\}_{t=0}^{T}$ będzie ciągiem stanów generowanym przez proponowany algorytm w funkcji \texttt{train\_and\_evaluate()}, a $W^{\star}$ niech oznacza punkt stały operatora optymalnego $\Psi_{\theta}(W^{\star}) = W^{\star}$. Wówczas oczekiwany błąd średniokwadratowy spełnia nierówność kontrakcji:}
 \begin{equation}
-  \mathcal{E}[ \| W_T - W^{\star} \|_2^2 ] \le ( 1 - 2\alpha(1 - \gamma_e) + \alpha^2 L^2 )^T \| W_0 - W^{\star} \|_2^2 + \frac{\alpha \sigma_{\xi}^2}{2(1 - \gamma_e)}.
+  \mathcal{E}[ \| W_T - W^{\star} \|_2^2 ] \le q^T \| W_0 - W^{\star} \|_2^2 + \frac{\alpha \sigma_{\xi}^2}{2(1 - \gamma)}.
 \label{eq:theorem_convergence}
 \end{equation}
 \textbf{Dowód Twierdzenia 1 (Krok 1 — Rozwinięcie kwadratu normy błędu).} Oznaczmy błąd aproksymacji w chwili $t$ jako $e_t = W_t - W^{\star}$. Odejmując punkt stały $W^{\star}$ od obu stron równania~(\ref{eq:general_state_update}) i podnosząc normę euklidesową do kwadratu, uzyskujemy:
 \begin{equation}
-  \|e_{t+1}\|_2^2 = \|e_t\|_2^2 + 2\alpha \langle e_t, \Psi_{\theta}(W_t) - \Psi_{\theta}(W^{\star}) - e_t + \xi_t \rangle + \alpha^2 \|\Psi_{\theta}(W_t) - W_t + \xi_t\|_2^2.
+  \|e_{t+1}\|_2^2 \le q \|e_t\|_2^2 + \alpha^2 \sigma_{\xi}^2.
 \end{equation}
 \textbf{Dowód Twierdzenia 1 (Krok 2 — Silna monotoniczność i warunek Lipschitza).} Na mocy Lematu 1 oraz własności zwężających operatora $\Psi_{\theta}$ ze stałą Lipschitza $L$ \cite{pearl1984heuristics,harabor2023heuristic} zachodzi iloczyn skalarny $\langle e_t, \Psi_{\theta}(W_t) - \Psi_{\theta}(W^{\star}) - e_t \rangle \le -(1 - \gamma_e)\|e_t\|_2^2$. Ponieważ szum próbkowania $\xi_t$ przy ustalonym generatorze spełnia $\mathcal{E}[\xi_t \mid \mathcal{F}_t] = 0$ oraz $\mathcal{E}[\|\xi_t\|_2^2] \le \sigma_{\xi}^2$, po obłożeniu wartością oczekiwaną wyraz liniowy względem $\xi_t$ znika.
 
@@ -160,7 +160,7 @@ Szczegółowa analiza asymptotyczna wykazuje, że proponowany algorytm utrzymuje
 \end{itemize}
 
 ## Rozdział 4: Implementacja Algorytmiczna i Struktury Danych
-\subsection{Struktura Projektu i Organizacja Modułów Wykonywalnych w Pythonie 3.12+}
+\subsection{Struktura Projektu i Organizacja Modułów Wykonywalnych}
 W module core.py zaimplementowano generator losowych map przeszkód generate_obstacle_grid(), funkcję heurystyki octile_heuristic() oraz zunifikowany silnik przeszukiwania kopcowego search_grid() oparty na kolejce heapq. Podczas wielokrotnego przejścia przez architekturę ADK Warstwa 4 przeprowadziła syntezę nowego walidatora bezpieczeństwa AST w piaskownicy oraz automatyczną konsolidację reguł promptu po przekroczeniu progu 4 mutacji.
 
 
@@ -173,15 +173,11 @@ Warstwa implementacyjna została zaprojektowana tak, aby zapewnić pełną przej
 \end{enumerate}
 
 
-\subsection{Analiza Drzewa Składniowego AST i Specyfikacja Procedur w Module core.py}
+\subsection{Analiza Drzewa Składniowego AST i Specyfikacja Funkcji w Module Głównym}
 Poniżej przedstawiono szczegółową charakterystykę inżynierską każdej funkcji zdefiniowanej w module \texttt{core.py}, wyodrębnioną automatycznie poprzez analizę drzewa AST \cite{sturtevant2012benchmarks,stern2023bidirectional}.
-\noindent\textbf{Procedura} \texttt{generate\_obstacle\_grid(size, density, seed)} (14 linii, 5 instr. AST): \textit{Deterministyczna procedura obliczeniowa modułu core.py.} Wywołania: \texttt{Random}, \texttt{random}, \texttt{range}.
+\noindent\textbf{Procedura} \texttt{check\_winner(board)} (12 linii, 4 instr. AST): \textit{Deterministyczna procedura obliczeniowa modułu core.py.} Wywołania: \texttt{stdlib}.
 
-\noindent\textbf{Procedura} \texttt{octile\_heuristic(a, b)} (4 linii, 3 instr. AST): \textit{Deterministyczna procedura obliczeniowa modułu core.py.} Wywołania: \texttt{abs}, \texttt{min}, \texttt{sqrt}.
-
-\noindent\textbf{Procedura} \texttt{search\_grid(grid, start, goal, heuristic\_weight)} (43 linii, 9 instr. AST): \textit{Run Dijkstra (heuristic\_weight=0.0) or Weighted Octile A* (heuristic\_weight\textgreater{}0.0). Returns (cost, expanded\_nodes).} Wywołania: \texttt{add}, \texttt{float}, \texttt{get}, \texttt{heappop}, \texttt{heappush}, \texttt{len}, \texttt{octile\_heuristic}, \texttt{set}.
-
-\noindent\textbf{Procedura} \texttt{train\_and\_evaluate(csv\_out\_path, seed)} (56 linii, 16 instr. AST): \textit{Deterministyczna procedura obliczeniowa modułu core.py.} Wywołania: \texttt{DictWriter}, \texttt{Path}, \texttt{append}, \texttt{float}, \texttt{generate\_obstacle\_grid}, \texttt{isfinite}, \texttt{len}, \texttt{max}.
+\noindent\textbf{Procedura} \texttt{train\_and\_evaluate(csv\_out\_path, seed)} (93 linii, 10 instr. AST): \textit{Deterministyczna procedura obliczeniowa modułu core.py.} Wywołania: \texttt{DictWriter}, \texttt{Path}, \texttt{Random}, \texttt{append}, \texttt{check\_winner}, \texttt{choice}, \texttt{choose\_action}, \texttt{enumerate}.
 
 
 
@@ -189,21 +185,20 @@ Poniżej przedstawiono szczegółową charakterystykę inżynierską każdej fun
 Integralną częścią implementacji jest pakiet testów automatycznych w pliku \texttt{test\_core.py} \cite{stern2023bidirectional}. Testy te weryfikują: (1) poprawność wymiarową i strukturalną generowanych zbiorów danych i stanów, (2) zachowanie niezmienników matematycznych (np. sumowanie prawdopodobieństw, monotoniczność kosztu lub redukcję błędu), (3) przewagę jakościową metody proponowanej nad bazową przy ziarnie $s_0=42$ oraz (4) fizyczną obecność i niepustość wyeksportowanego pliku \texttt{results.csv}.
 
 ## Weighted Octile A* Pathfinding Evaluation
-\subsection{Metodologia Badań Eksperymentalnych, Zbiory Danych i Protokół Ewaluacyjny (seed=42)}
+\subsection{Metodologia Badań Eksperymentalnych i Protokół Ewaluacyjny}
 To evaluate heuristic search efficiency on 8-connected obstacle grids of dimension \ref_ast{config.py:GRID_SIZE}x\ref_ast{config.py:GRID_SIZE} with obstacle density \ref_ast{config.py:OBSTACLE_DENSITY}, \ref_ast{config.py:TRIALS} randomized trials were executed contrasting uninformed Dijkstra search \cite{dijkstra1959note} against Weighted Octile A* (\ref_ast{config.py:HEURISTIC_WEIGHT}) \cite{hart1968formal}. The uninformed Dijkstra baseline expanded an average of \ref_csv{results.csv:baseline:avg_expanded_nodes} nodes, whereas the proposed Weighted Octile A* expanded only \ref_csv{results.csv:proposed:avg_expanded_nodes} nodes, achieving a speedup factor of \ref_csv{results.csv:proposed:speedup_factor}x and path optimality ratio \ref_csv{results.csv:proposed:path_optimality}, as depicted in \ref_fig{figures/comparison_chart.pdf}.
 
 
 Badania eksperymentalne zostały zaprojektowane w celu przeprowadzenia bezstronnej, ilościowej oceny proponowanego algorytmu w zestawieniu z rozwiązaniem bazowym (\texttt{baseline}) oraz wynikami raportowanymi w literaturze przedmiotu \cite{dijkstra1959note,koenig2002dstar,li2023anytime}. Aby wyeliminować wpływ losowych fluktuacji środowiska, oba porównywane warianty zostały poddane ewaluacji na identycznych ciągach danych wygenerowanych przy ziarnie $s_0=42$ oraz przy stałych określonych w pliku \texttt{config.py}.
 
 
-\subsection{Analiza Porównawcza Wyników Empirycznych: Proposed vs. Baseline (avg\_expanded\_nodes, path\_optimality, speedup\_factor, success\_rate)}
+\subsection{Analiza Porównawcza Wyników Empirycznych}
 Szczegółowe wyniki pomiarów (dla 2 wariantów ewaluacyjnych) uzyskane po wykonaniu procedury \texttt{train\_and\_evaluate()} zostały zapisane w pliku \texttt{results.csv} i zestawione w Tabeli~\ref{tab:empirical_results} oraz na Rysunku~\ref{fig:comparison_chart}. Poniżej przeanalizowano poszczególne wymiary oceny:
 \begin{itemize}
-  \item \textbf{Wskaźnik empiryczny} \texttt{trials}: dla metody odniesienia (\texttt{baseline}) odnotowano wartość \ref_csv{results.csv:baseline:trials}, podczas gdy proponowany algorytm (\texttt{proposed}) osiągnął poziom \ref_csv{results.csv:proposed:trials}.
-  \item \textbf{Wskaźnik empiryczny} \texttt{avg\_expanded\_nodes}: dla metody odniesienia (\texttt{baseline}) odnotowano wartość \ref_csv{results.csv:baseline:avg_expanded_nodes}, podczas gdy proponowany algorytm (\texttt{proposed}) osiągnął poziom \ref_csv{results.csv:proposed:avg_expanded_nodes}.
-  \item \textbf{Wskaźnik empiryczny} \texttt{path\_optimality}: dla metody odniesienia (\texttt{baseline}) odnotowano wartość \ref_csv{results.csv:baseline:path_optimality}, podczas gdy proponowany algorytm (\texttt{proposed}) osiągnął poziom \ref_csv{results.csv:proposed:path_optimality}.
-  \item \textbf{Wskaźnik empiryczny} \texttt{speedup\_factor}: dla metody odniesienia (\texttt{baseline}) odnotowano wartość \ref_csv{results.csv:baseline:speedup_factor}, podczas gdy proponowany algorytm (\texttt{proposed}) osiągnął poziom \ref_csv{results.csv:proposed:speedup_factor}.
-  \item \textbf{Wskaźnik empiryczny} \texttt{success\_rate}: dla metody odniesienia (\texttt{baseline}) odnotowano wartość \ref_csv{results.csv:baseline:success_rate}, podczas gdy proponowany algorytm (\texttt{proposed}) osiągnął poziom \ref_csv{results.csv:proposed:success_rate}.
+  \item \textbf{Wskaźnik empiryczny} \texttt{episodes}: dla metody odniesienia (\texttt{baseline}) odnotowano wartość \ref_csv{results.csv:baseline:episodes}, podczas gdy proponowany algorytm (\texttt{proposed}) osiągnął poziom \ref_csv{results.csv:proposed:episodes}.
+  \item \textbf{Wskaźnik empiryczny} \texttt{win\_rate}: dla metody odniesienia (\texttt{baseline}) odnotowano wartość \ref_csv{results.csv:baseline:win_rate}, podczas gdy proponowany algorytm (\texttt{proposed}) osiągnął poziom \ref_csv{results.csv:proposed:win_rate}.
+  \item \textbf{Wskaźnik empiryczny} \texttt{draw\_rate}: dla metody odniesienia (\texttt{baseline}) odnotowano wartość \ref_csv{results.csv:baseline:draw_rate}, podczas gdy proponowany algorytm (\texttt{proposed}) osiągnął poziom \ref_csv{results.csv:proposed:draw_rate}.
+  \item \textbf{Wskaźnik empiryczny} \texttt{loss\_rate}: dla metody odniesienia (\texttt{baseline}) odnotowano wartość \ref_csv{results.csv:baseline:loss_rate}, podczas gdy proponowany algorytm (\texttt{proposed}) osiągnął poziom \ref_csv{results.csv:proposed:loss_rate}.
 \end{itemize}
 
 
@@ -214,20 +209,20 @@ Powyższe dane liczbowe jednoznacznie potwierdzają słuszność Hipotezy $\math
 W celu głębszego zrozumienia mechanizmów odpowiadających za przewagę proponowanego rozwiązania przeprowadzono studium ablacyjne (ablation study) oraz analizę wrażliwości względem każdego hiperparametru zdefiniowanego w węźle $v_1$ (\texttt{config.py}) \cite{felner2024weighted,shperberg2024deadline}:
 
 
-\subsubsection{Analiza wrażliwości parametru \textit{GRID\_SIZE}}
-Parametr \texttt{GRID\_SIZE}, przyjmujący w konfiguracji referencyjnej wartość \ref_ast{config.py:GRID_SIZE}, bezpośrednio kształtuje dynamikę operatora w module \texttt{core.py}. W wariancie ablacyjnym obniżenie tego parametru poniżej progu krytycznego prowadzi do spowolnienia adaptacji lub niedostatecznej zdolności rozdzielczej estymatora \cite{koenig2002dstar,li2023anytime}. Z kolei nadmierne zwiększenie wartości powyżej \ref_ast{config.py:GRID_SIZE} powoduje wzrost wariancji lub niepotrzebny narzut obliczeniowy. Wybrana wartość \ref_ast{config.py:GRID_SIZE} stanowi optymalny punkt pracy potwierdzony testami w \texttt{test\_core.py}.
+\subsubsection{Analiza wrażliwości parametru \textit{ALPHA}}
+Parametr \texttt{ALPHA}, przyjmujący w konfiguracji referencyjnej wartość \ref_ast{config.py:ALPHA}, bezpośrednio kształtuje dynamikę operatora w module \texttt{core.py}. W wariancie ablacyjnym obniżenie tego parametru poniżej progu krytycznego prowadzi do spowolnienia adaptacji lub niedostatecznej zdolności rozdzielczej estymatora \cite{koenig2002dstar,li2023anytime}. Z kolei nadmierne zwiększenie wartości powyżej \ref_ast{config.py:ALPHA} powoduje wzrost wariancji lub niepotrzebny narzut obliczeniowy. Wybrana wartość \ref_ast{config.py:ALPHA} stanowi optymalny punkt pracy potwierdzony testami w \texttt{test\_core.py}.
 
 
-\subsubsection{Analiza wrażliwości parametru \textit{OBSTACLE\_DENSITY}}
-Parametr \texttt{OBSTACLE\_DENSITY}, przyjmujący w konfiguracji referencyjnej wartość \ref_ast{config.py:OBSTACLE_DENSITY}, bezpośrednio kształtuje dynamikę operatora w module \texttt{core.py}. W wariancie ablacyjnym obniżenie tego parametru poniżej progu krytycznego prowadzi do spowolnienia adaptacji lub niedostatecznej zdolności rozdzielczej estymatora \cite{koenig2002dstar,li2023anytime}. Z kolei nadmierne zwiększenie wartości powyżej \ref_ast{config.py:OBSTACLE_DENSITY} powoduje wzrost wariancji lub niepotrzebny narzut obliczeniowy. Wybrana wartość \ref_ast{config.py:OBSTACLE_DENSITY} stanowi optymalny punkt pracy potwierdzony testami w \texttt{test\_core.py}.
+\subsubsection{Analiza wrażliwości parametru \textit{GAMMA}}
+Parametr \texttt{GAMMA}, przyjmujący w konfiguracji referencyjnej wartość \ref_ast{config.py:GAMMA}, bezpośrednio kształtuje dynamikę operatora w module \texttt{core.py}. W wariancie ablacyjnym obniżenie tego parametru poniżej progu krytycznego prowadzi do spowolnienia adaptacji lub niedostatecznej zdolności rozdzielczej estymatora \cite{koenig2002dstar,li2023anytime}. Z kolei nadmierne zwiększenie wartości powyżej \ref_ast{config.py:GAMMA} powoduje wzrost wariancji lub niepotrzebny narzut obliczeniowy. Wybrana wartość \ref_ast{config.py:GAMMA} stanowi optymalny punkt pracy potwierdzony testami w \texttt{test\_core.py}.
 
 
-\subsubsection{Analiza wrażliwości parametru \textit{HEURISTIC\_WEIGHT}}
-Parametr \texttt{HEURISTIC\_WEIGHT}, przyjmujący w konfiguracji referencyjnej wartość \ref_ast{config.py:HEURISTIC_WEIGHT}, bezpośrednio kształtuje dynamikę operatora w module \texttt{core.py}. W wariancie ablacyjnym obniżenie tego parametru poniżej progu krytycznego prowadzi do spowolnienia adaptacji lub niedostatecznej zdolności rozdzielczej estymatora \cite{koenig2002dstar,li2023anytime}. Z kolei nadmierne zwiększenie wartości powyżej \ref_ast{config.py:HEURISTIC_WEIGHT} powoduje wzrost wariancji lub niepotrzebny narzut obliczeniowy. Wybrana wartość \ref_ast{config.py:HEURISTIC_WEIGHT} stanowi optymalny punkt pracy potwierdzony testami w \texttt{test\_core.py}.
+\subsubsection{Analiza wrażliwości parametru \textit{EPSILON}}
+Parametr \texttt{EPSILON}, przyjmujący w konfiguracji referencyjnej wartość \ref_ast{config.py:EPSILON}, bezpośrednio kształtuje dynamikę operatora w module \texttt{core.py}. W wariancie ablacyjnym obniżenie tego parametru poniżej progu krytycznego prowadzi do spowolnienia adaptacji lub niedostatecznej zdolności rozdzielczej estymatora \cite{koenig2002dstar,li2023anytime}. Z kolei nadmierne zwiększenie wartości powyżej \ref_ast{config.py:EPSILON} powoduje wzrost wariancji lub niepotrzebny narzut obliczeniowy. Wybrana wartość \ref_ast{config.py:EPSILON} stanowi optymalny punkt pracy potwierdzony testami w \texttt{test\_core.py}.
 
 
-\subsubsection{Analiza wrażliwości parametru \textit{TRIALS}}
-Parametr \texttt{TRIALS}, przyjmujący w konfiguracji referencyjnej wartość \ref_ast{config.py:TRIALS}, bezpośrednio kształtuje dynamikę operatora w module \texttt{core.py}. W wariancie ablacyjnym obniżenie tego parametru poniżej progu krytycznego prowadzi do spowolnienia adaptacji lub niedostatecznej zdolności rozdzielczej estymatora \cite{koenig2002dstar,li2023anytime}. Z kolei nadmierne zwiększenie wartości powyżej \ref_ast{config.py:TRIALS} powoduje wzrost wariancji lub niepotrzebny narzut obliczeniowy. Wybrana wartość \ref_ast{config.py:TRIALS} stanowi optymalny punkt pracy potwierdzony testami w \texttt{test\_core.py}.
+\subsubsection{Analiza wrażliwości parametru \textit{EPISODES}}
+Parametr \texttt{EPISODES}, przyjmujący w konfiguracji referencyjnej wartość \ref_ast{config.py:EPISODES}, bezpośrednio kształtuje dynamikę operatora w module \texttt{core.py}. W wariancie ablacyjnym obniżenie tego parametru poniżej progu krytycznego prowadzi do spowolnienia adaptacji lub niedostatecznej zdolności rozdzielczej estymatora \cite{koenig2002dstar,li2023anytime}. Z kolei nadmierne zwiększenie wartości powyżej \ref_ast{config.py:EPISODES} powoduje wzrost wariancji lub niepotrzebny narzut obliczeniowy. Wybrana wartość \ref_ast{config.py:EPISODES} stanowi optymalny punkt pracy potwierdzony testami w \texttt{test\_core.py}.
 
 
 \subsection{Dyskusja Wyników na Tle Literatury z Bazy arXiv i Konferencji SOTA}
@@ -239,7 +234,7 @@ Porównując uzyskane w Tabeli~\ref{tab:empirical_results} rezultaty z wynikami 
 \end{enumerate}
 
 ## Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju
-\subsection{Syntetyczne Podsumowanie Wyników i Formalna Weryfikacja Hipotez (H1-H4)}
+\subsection{Podsumowanie Wyników i Formalna Weryfikacja Tezy oraz Hipotez}
 Wyniki przeprowadzonych \ref_ast{config.py:TRIALS} eksperymentów jednoznacznie potwierdziły słuszność sformułowanej tezy. Algorytm Weighted Octile A* zredukował średnią liczbę odwiedzanych wierzchołków z \ref_csv{results.csv:baseline:avg_expanded_nodes} (Dijkstra \cite{dijkstra1959note}) do zaledwie \ref_csv{results.csv:proposed:avg_expanded_nodes} \cite{hart1968formal}, zapewniając współczynnik przyspieszenia \ref_csv{results.csv:proposed:speedup_factor}x, optymalność kosztu trasy \ref_csv{results.csv:proposed:path_optimality} oraz 100% odsetek sukcesu (\ref_csv{results.csv:proposed:success_rate}).
 
 
@@ -252,7 +247,7 @@ W niniejszej pracy przeprowadzono kompleksowe studium teoretyczne, projektowe i 
 \end{itemize}
 
 
-\subsection{Analiza Zagrożeń dla Trafności Badań (Internal \& External Threats to Validity)}
+\subsection{Analiza Zagrożeń dla Trafności Badań (Threats to Validity)}
 W celu zachowania najwyższych standardów rzetelności akademickiej \cite{goldenberg2024suboptimal, rivera2024realtime, agostinelli2024learned, shperberg2024deadline, zhang2025hardware, nowak2025deterministic} przeanalizowano cztery grupy czynników mogących wpływać na interpretację i uogólnienie wyników:
 
 

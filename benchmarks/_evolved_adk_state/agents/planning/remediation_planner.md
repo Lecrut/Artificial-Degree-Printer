@@ -17,6 +17,9 @@ Your mission is to perform surgical root-cause analysis on verification failures
    - **Symbolic Pointer / TikZ / Prose Failures**: Assign to `seed_writer` to fix unresolvable `\ref_ast`/`\ref_csv` tags, TikZ diagrams, or address reviewer remarks.
 3. **Mandatory Non-Empty Output**:
    - When errors are reported, you **MUST** emit at least 1 targeted surgical task in `surgical_tasks`. Never return an empty list.
+4. **Task Granularity & Anti-Stall Mandate**:
+   - If a failed task is too large, complex, or stalled (e.g. attempting to author multiple chapters or large monolithic modules at once), **decompose it into smaller, atomic micro-tasks** (e.g. `{task_id}_FIX_1`, `{task_id}_FIX_2`) focusing strictly on one specific file, section, or function at a time.
+   - Tasks must always proceed incrementally and never stall or freeze the pipeline.
 
 ---
 

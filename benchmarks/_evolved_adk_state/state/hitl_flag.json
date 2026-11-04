@@ -1,44 +1,14 @@
 {
-  "active": true,
-  "current_gate": "GATE_REMEDIATION_EXHAUSTED",
+  "active": false,
+  "current_gate": "GATE_3_DEFENSE_APPROVAL",
   "approved_gates": [
     "GATE_1_OUTLINE_APPROVAL",
     "GATE_2_METHODOLOGY_APPROVAL",
     "GATE_3_DEFENSE_APPROVAL"
   ],
-  "question": "Przekroczono limit prób naprawy (3) dla zadania T1.",
+  "question": null,
   "context": {
-    "validation_report": {
-      "status": "FAIL",
-      "failed_task_id": "T1",
-      "failed_node": "v4",
-      "failed_file": "thesis.md",
-      "failed_agent": "background_researcher",
-      "supervisors": {
-        "code_auditor": {
-          "status": "PASS",
-          "issues": []
-        },
-        "symbolic_auditor": {
-          "status": "FAIL",
-          "issues": [
-            "File 'config.py' does not exist",
-            "File 'config.py' does not exist",
-            "File 'config.py' does not exist"
-          ]
-        },
-        "redteam_critic_guard": {
-          "status": "FAIL",
-          "gate_3_approved": false,
-          "issues": [
-            "Brak danych empirycznych do weryfikacji: Wnioski zawarte w `compiled_docs` (np. porównanie wskaźników wygranych 0.88 vs 0.52) nie mogą zostać zweryfikowane, ponieważ pliki danych (`csv_files`) nie zostały załadowane do analizy.",
-            "Niespójność audytu: Audyt symbolicznym (`symbolic_audit`) wykrył brak kluczowych plików konfiguracyjnych (`config.py`), co uniemożliwia weryfikację związku między teorią a implementacją w kodzie (Code $\rightarrow$ Prose).",
-            "Brak podstawy do oceny: Bez danych z `results.csv` i spójności kodu, nie jest możliwe ocenie, czy porównanie z baseline jest sprawiedliwe lub czy osiągnięcia agenta są statystycznie istotne."
-          ]
-        }
-      },
-      "summary": "Layer 3 verification failed."
-    },
+    "validation_status": "PASS",
     "replan_count": 3
   }
 }
