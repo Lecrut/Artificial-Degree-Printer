@@ -73,4 +73,5 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
-- **RULE**: Poprzednio nie zadziałało: Usterka weryfikacji warstwy 3. Zrób to: w zadaniu T3 na węźle v4 (thesis.md) wyeliminuj ten błąd i wygeneruj w pełni poprawną zawartość.
+- **RULE**: [02_ml_anomaly_detection cycle #3] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.
+- **RULE**: [04_federated_learning cycle #3] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.

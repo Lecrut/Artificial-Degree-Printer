@@ -251,7 +251,7 @@ def main() -> None:
         return
 
     if args.benchmark_suite or args.benchmark_task:
-        selected = [args.benchmark_task] if args.benchmark_task else None
+        selected = [k.strip() for k in args.benchmark_task.split(',') if k.strip()] if args.benchmark_task else None
         suite_res = run_benchmark_suite(task_keys=selected, provider=args.provider)
         print("=" * 80)
         print(

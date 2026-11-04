@@ -408,13 +408,13 @@ Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modu�
 
 \\begin{{document}}
 
-\\title{{{spec.title_en}}}
+\\title{{{_escape_latex_prose(spec.title_en)}}}
 
 \\author{{\\IEEEauthorblockN{{Neuro-Symbolic ADK Author}}
 \\IEEEauthorblockA{{\\textit{{Institute of Applied Computer Science}} \\\\
 \\textit{{Lodz University of Technology}} \\\\
 Lodz, Poland \\\\
-Domain: {spec.domain}}}}}
+Domain: {_escape_latex_prose(spec.domain)}}}}}
 
 \\maketitle
 \\thispagestyle{{plain}}

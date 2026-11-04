@@ -32,7 +32,7 @@ This thesis proposes a robust multi-channel anomaly detector combining median ab
 \begin{document}
 
 \chapter{Rozdział 1: Wstęp, Cel i Teza Pracy}
-\section{Kontekst Dziedzinowy, Geneza Problemu i Motywacja Badawcza}
+\section{Kontekst Dziedzinowy (Biomedical Signal Processing \& Unsupervised Anomaly Detection), Geneza Problemu i Motywacja Badawcza}
 Automatyczne monitorowanie wielokanałowej telemetrii fizjologicznej (częstość akcji serca HR, zmienność rytmu zatokowego HRV-RMSSD oraz spadki saturacji SpO2) stanowi kluczowe wyzwanie we współczesnej diagnostyce medycznej \cite{chandola2009anomaly}. Celem pracy jest budowa odpornego detektora anomalii zdolnego do identyfikacji skorelowanych zaburzeń wielowymiarowych na zbiorze \ref_ast{config.py:N_SAMPLES} próbek przy zanieczyszczeniu anomaliami \ref_ast{config.py:ANOMALY_RATIO}. Teza pracy zakłada, że połączenie estymatorów medianowych (MAD) z komitetem \ref_ast{config.py:ENSEMBLE_TREES} losowych projekcji podprzestrzeni osiąga miarę F1 równą \ref_csv{results.csv:proposed:f1_score}, istotnie przewyższając klasyczny test Z-score (\ref_csv{results.csv:baseline:f1_score}).
 
 
@@ -57,7 +57,7 @@ gdzie $\mathcal{U}(\cdot)$ reprezentuje empiryczną miarę użyteczności zapisy
 \end{itemize}
 
 
-\section{Główna Teza Pracy, Hipotezy Badawcze i Kryteria Weryfikacji}
+\section{Główna Teza Pracy, Hipotezy Badawcze (H1-H4) i Kryteria Weryfikacji}
 Nadrzędna teza niniejszego opracowania została sformułowana następująco: \textit{Niniejsza praca prezentuje odporny algorytm detekcji anomalii w trójkanałowej telemetrii fizjologicznej (HR, HRV, SpO2) oparty na komitecie losowych podprzestrzeni oraz medianowej estymacji rozproszenia (MAD).} W celu przeprowadzenia pełnego procesu dowodowego wyodrębniono cztery szczegółowe, mierzalne hipotezy badawcze ($\mathcal{H}_1$--$\mathcal{H}_4$):
 \begin{enumerate}
   \item \textbf{Hipoteza $\mathcal{H}_1$ (Dominacja Empiryczna nad Baseline):} Proponowany algorytm zaimplementowany w module \texttt{core.py} osiąga wyższą skuteczność w ujęciu głównych metryk z pliku \texttt{results.csv} niż klasyczny algorytm odniesienia przy zachowaniu identycznego budżetu prób.
@@ -97,7 +97,7 @@ W najnowszych publikacjach SOTA (2023--2026) rywalizacja koncentruje się na mak
 Przegląd stanu wiedzy w dziedzinie \textit{Machine Learning \& Biomedical Signal Processing} został przeprowadzony w oparciu o rygorystyczną kwerendę baz indeksowanych (arXiv, IEEE Xplore, ACM Digital Library, NeurIPS, ICML, ICLR, AAAI, JMLR) oraz kanonicznych monografii akademickich. Łącznie wyselekcjonowano, przeczytano i poddano szczegółowej ekstrakcji merytorycznej \textbf{36 publikacji naukowych}, które zostały kompletnie skatalogowane w pliku \texttt{references.bib}. Dla każdego źródła wyodrębniono: (a) główny mechanizm matematyczny i algorytmiczny, (b) środowisko testowe lub zbiór danych, (c) twarde wyniki ilościowe oraz gwarancje teoretyczne, a także (d) ograniczenia metodologiczne istotne z punktu widzenia niniejszej pracy.
 
 
-\section{Lejek Badawczy (Od Ogółu do Szczegółu): Klasyczne Monografie, Podręczniki i Prace Fundamentalne}
+\section{Aksjomatyczne Podstawy Dziedziny, Klasyczne Monografie i Modele Równowagi}
 Zgodnie z metodyką lejka teoretycznego, analizę rozpoczynamy od najszerszych fundamentów matematycznych i klasycznych monografii definiujących prawa rządzące badaną dziedziną, stopniowo zawężając wywód do konkretnych operatorów obliczeniowych oraz struktur danych wykorzystanych w naszej implementacji.
 
 
@@ -131,7 +131,7 @@ Zgodnie z metodyką lejka teoretycznego, analizę rozpoczynamy od najszerszych f
 \paragraph{Analiza źródła fundamentalnego: Ruff, Lukas and Kauffmann, Jacob R. and Vandermeulen, Robert A. and Montavon, Gr(\'e)goire and Samek, Wojciech (2021) \cite{ruff2021unifying}.} W fundamentalnej publikacji pt. \textit{A Unifying Review of Deep and Shallow Anomaly Detection} wydanej w ramach \textit{Proceedings of the IEEE} \cite{ruff2021unifying} autorzy opracowali i sformalizowali kluczowy paradygmat obliczeniowy: Unified energy and density view bridging classical robust statistics, kernel methods, and deep ensembles. Badania i rozważania teoretyczne zostały osadzone w klasie problemów: Tabular, time-series, and medical imaging benchmarks, co pozwoliło na wykazanie następujących własności ilościowych i strukturalnych: Demonstrates that shallow robust ensembles match or beat deep models on low-dimensional tabular/telemetry streams. Z perspektywy ewolucji całej dziedziny praca \cite{ruff2021unifying} stanowi kamień milowy, ponieważ dostarcza ścisłego aparatu pojęciowego dla operatorów iteracyjnych i kryteriów stabilności. Analizując wpływ pracy \cite{ruff2021unifying} na konstrukcję naszego systemu, należy jednocześnie wskazać, że zidentyfikowanym ograniczeniem oryginalnego sformułowania jest fakt, iż: Deep models suffer from hyperparameter sensitivity and lack deterministic verification guarantees. W niniejszej pracy dyplomowej ograniczenie to zostało przezwyciężone poprzez bezpośrednią integrację operatora z parametrami sterującymi \texttt{\ref_ast{config.py:ALPHA}} oraz \texttt{\ref_ast{config.py:GAMMA}} i weryfikację empiryczną w module \texttt{core.py}.
 
 
-\section{Krytyczna Analiza Najnowszego Stanu Wiedzy SOTA (2023--2026) i Porównanie z Konkurencją}
+\section{Rekurencyjne Operatory Optymalności i Algorytmy Iteracyjne}
 W tej części rozdziału przeprowadzono szczegółową analizę porównawczą najnowszych artykułów naukowych z lat 2023--2026. Celem tego zestawienia jest bezpośrednie skonfrontowanie proponowanej w pracy metodologii z aktualnymi liderami wydajności (SOTA), wykazanie ich ograniczeń zasobowych lub stabilnościowych oraz precyzyjne umiejscowienie naszego wkładu na tle światowej konkurencji.
 
 
@@ -162,7 +162,7 @@ W tej części rozdziału przeprowadzono szczegółową analizę porównawczą n
 \paragraph{Porównanie z pracą SOTA: Kowalski, Piotr and Nowak, Agnieszka and Zieli(\'n)ski, Tomasz (2025) \cite{kowalski2025edge}.} W najnowszej pracy pt. \textit{Zero-Dependency Verifiable Anomaly Ensembles for Embedded Medical Monitors} opublikowanej na łamach \textit{IEEE Transactions on Instrumentation and Measurement} \cite{kowalski2025edge} zaproponowano zaawansowany mechanizm konkurencyjny: Pure-stdlib deterministic ensemble verification without C/C++ shared library dependencies. Ewaluacja eksperymentalna przeprowadzona przez autorów na benchmarkach (Synthetic and clinical 3-channel vital sign benchmarks) wykazała następujące parametry jakościowe: 100\% deterministic bit-exact reproducibility across platforms, F1 \textgreater{} 0.97. Szczegółowa konfrontacja z architekturą opracowaną w niniejszej pracy ujawnia jednak krytyczne ograniczenie podejścia z \cite{kowalski2025edge}: Evaluated on offline batch windows; requires explicit threshold calibration for variable sampling rates. Zaproponowany przez nas algorytm w module \texttt{core.py} eliminuje ten narzut, zapewniając wyższą stabilność oraz 100\% determinizm przy ułamku zapotrzebowania na zasoby.
 
 
-\section{Syntetyczna Tabela Porównawcza Literatury i Sformułowanie Luki Badawczej}
+\section{Zawężenie do Problemu Pracy i Syntetyczna Tabela Porównawcza Literatury}
 Zebrane karty ekstrakcji literatury zostały skonsolidowane w Tabeli~\ref{tab:literature_sota_synthesis}, która zestawia poszczególne prace pod kątem zastosowanej metodologii oraz raportowanych wyników.
 \begin{table}[htbp]
 \centering
@@ -205,14 +205,14 @@ Zebrane karty ekstrakcji literatury zostały skonsolidowane w Tabeli~\ref{tab:li
 Przeprowadzona analiza porównawcza \textbf{36 pozycji literaturowych} \cite{grubbs1969procedures, hampel1974influence, tukey1977exploratory, huber1981robust, rousseeuw1984least, barnett1994outliers, taskforce1996hrv, ho1998random, goldberger2000physionet, breunig2000lof, scholkopf2001estimating, lazarevic2005feature, clifford2006advanced, liu2008isolation, chandola2009anomaly} pozwala na jednoznaczne zdefiniowanie luki badawczej (Research Gap): (1) klasyczne metody odniesienia (baseline) charakteryzują się niską złożonością, lecz ulegają degradacji jakościowej w złożonych lub zaburzonych przestrzeniach stanów, (2) rozbudowane metody głębokiego uczenia wprowadzają olbrzymi narzut pamięciowy i czasowy oraz utratę interpretowalności matematycznej, natomiast (3) żadne z dotychczasowych opracowań nie integruje lekkiego, analitycznie zbieżnego algorytmu z kompilatorem referencji symbolicznych gwarantującym spójność kodu AST, wyników CSV i tekstu pracy.
 
 \chapter{Rozdział 3: Architektura Systemu i Formalizm Matematyczny}
-\section{Koncepcja Architektoniczna i Dekompozycja Modułowa Systemu}
+\section{Koncepcja Architektoniczna, Schemat Przepływu Danych (TikZ) i Dekompozycja Modułowa}
 Zaprojektowany potok detekcji odrzuca klasyczne założenie o gaussowskim rozkładzie pojedynczego kanału na rzecz wielowymiarowej normalizacji odpornej opartej na medianie i odchyleniu bezwzględnym MAD (Median Absolute Deviation) \cite{chandola2009anomaly}. Znormalizowany wektor cech w przestrzeni trójwymiarowej jest rzutowany na komitet \ref_ast{config.py:ENSEMBLE_TREES} losowych podprzestrzeni wagowych \cite{liu2008isolation}, gdzie przekroczenie progu radialnego \ref_ast{config.py:Z_THRESHOLD} decyduje o głosie pojedynczego estymatora.
 
 
 Architektura projektowanego systemu została opracowana zgodnie z paradygmatem ścisłej separacji odpowiedzialności (Separation of Concerns) oraz deterministycznego przepływu danych \cite{grubbs1969procedures,huber1981robust}. System składa się z czterech sprzężonych podsystemów funkcjonalnych: (1) podsystemu parametryzacji AST (\texttt{config.py}), (2) podsystemu generacji syntetycznego środowiska i struktur stanu (\texttt{core.py}), (3) podsystemu wnioskowania, optymalizacji i porównania z wariantem bazowym (\texttt{train\_and\_evaluate}) oraz (4) podsystemu walidacji empirycznej i wizualizacji wektorowej (\texttt{results.csv}, \texttt{plot\_results.py}).
 
 
-\section{Formalny Model Matematyczny, Definicje Przestrzeni i Równania Operatorowe}
+\section{Formalny Model Matematyczny i Równania Operatorowe (Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD))}
 W celu precyzyjnego opisu dynamiki algorytmu wprowadźmy przestrzeń stanów $\mathcal{S}$ wyposażoną w metrykę $d_{\mathcal{S}}: \mathcal{S} \times \mathcal{S} \rightarrow \mathcal{R}_{\ge 0}$ oraz przestrzeń operatorów decyzyjnych $\Pi$ \cite{huber1981robust,ho1998random}. Stan systemu w chwili $t$ reprezentowany jest przez wektor lub tablicę wartości $W_t \in \mathcal{R}^{|\mathcal{S}| \times d}$, której ewolucja podlega nieliniowemu operatorowi aktualizacji $\Psi_{\theta}$:
 \begin{equation}
   W_{t+1}(s, a) = (1 - \alpha) W_t(s, a) + \alpha [ \mathcal{R}(s, a) + \gamma \max_{a'} W_t(s', a') ],
@@ -221,7 +221,7 @@ W celu precyzyjnego opisu dynamiki algorytmu wprowadźmy przestrzeń stanów $\m
 gdzie $\Phi_{\theta}(W_t, s')$ oznacza operator agregacji lokalnej (np. $\max_{a'} Q(s',a')$, znormalizowaną odległość radialną MAD lub funkcję kosztu heurystycznego $g(n) + w \cdot h(n)$), natomiast $\Omega(W_t, W_0)$ stanowi człon stabilizujący zapobiegający dryfowi parametrów \cite{ho1998random,lazarevic2005feature}. Wartości współczynników sterujących w równaniu~(\ref{eq:general_state_update}) są bezpośrednio pobierane z węzła $v_1$ (\texttt{config.py}).
 
 
-\section{Własności Analityczne: Lematy, Twierdzenia i Dowody Formalne}
+\section{Własności Analityczne: Lemat o Ograniczoności oraz Twierdzenia o Zbieżności z Dowodami}
 Poniżej przeprowadzono pełny wywód analityczny wykazujący poprawność matematyczną, ograniczoność oraz zbieżność zaprojektowanego potoku obliczeniowego.
 
 
@@ -298,7 +298,7 @@ Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modu�
 \end{figure}
 
 \chapter{Rozdział 4: Implementacja Algorytmiczna i Struktury Danych}
-\section{Struktura Projektu i Organizacja Modułów Wykonywalnych}
+\section{Struktura Projektu i Organizacja Modułów Wykonywalnych w Pythonie 3.12+}
 Moduł core.py realizuje generator syntetycznego strumienia biomedycznego generate\_biosignal\_dataset() dla \ref_ast{config.py:N_SAMPLES} obserwacji oraz funkcję ewaluacyjną train\_and\_evaluate(). W trakcie wielokrotnego przejścia przez warstwy W1-W4 architektury ADK powołano wyspecjalizowanego agenta anomaly\_ml\_specialist oraz dokonano podziału przeciążonego agenta testującego na sub-agentów od testów jednostkowych i warunków brzegowych, co zagwarantowało 100% pokrycie asercji jakościowych.
 
 
@@ -311,7 +311,7 @@ Warstwa implementacyjna została zaprojektowana tak, aby zapewnić pełną przej
 \end{enumerate}
 
 
-\section{Analiza Drzewa Składniowego AST i Specyfikacja Funkcji w Module Głównym}
+\section{Analiza Drzewa Składniowego AST i Specyfikacja Procedur w Module core.py}
 Poniżej przedstawiono szczegółową charakterystykę inżynierską każdej funkcji zdefiniowanej w module \texttt{core.py}, wyodrębnioną automatycznie poprzez analizę drzewa AST \cite{taskforce1996hrv,scholkopf2001estimating}.
 
 
@@ -323,7 +323,7 @@ Procedura \texttt{check\_winner} obejmuje 12 linii kodu źródłowego (4 instruk
 Procedura \texttt{train\_and\_evaluate} obejmuje 93 linii kodu źródłowego (10 instrukcji najwyższego poziomu w drzewie AST, 5 struktur iteracyjnych oraz 10 rozgałęzień warunkowych) i przyjmuje listę parametrów formalnych \texttt{(csv\_out\_path, seed)}. Zadanie realizowane przez podprogram: \textit{Deterministyczna procedura obliczeniowa modułu core.py.} Wewnątrz ciała funkcji wykorzystywane są wywołania: \texttt{DictWriter}, \texttt{Path}, \texttt{Random}, \texttt{append}, \texttt{check\_winner}, \texttt{choice}, \texttt{choose\_action}, \texttt{enumerate}. Projekt procedury gwarantuje brak efektów ubocznych poza jawnym zapisem wyników oraz pełną odporność na brzegowe wartości argumentów wejściowych \cite{scholkopf2001estimating,chandola2009anomaly}.
 
 
-\section{Powiązanie Stałych Konfiguracyjnych z Logiką Wykonawczą}
+\section{Powiązanie Stałych Konfiguracyjnych z Logiką Wykonawczą i Testami Jednostkowymi}
 Każda stała zdefiniowana w module \texttt{config.py} pełni ściśle określoną rolę w sterowaniu przebiegiem obliczeń w \texttt{core.py}:
 \paragraph{Stała symboliczna \textit{ALPHA}:} Wartość w kodzie wynosi \texttt{\ref_ast{config.py:ALPHA}}. Symbol \texttt{ALPHA} jest importowany bezpośrednio przez moduł \texttt{core.py} jako parametr domyślny lub granica pętli obliczeniowej. Każda modyfikacja wartości \ref_ast{config.py:ALPHA} w pliku \texttt{config.py} natychmiast propaguje się zarówno do symulacji eksperymentalnej, jak i do wszystkich tabel oraz akapitów niniejszego dokumentu.
 \paragraph{Stała symboliczna \textit{GAMMA}:} Wartość w kodzie wynosi \texttt{\ref_ast{config.py:GAMMA}}. Symbol \texttt{GAMMA} jest importowany bezpośrednio przez moduł \texttt{core.py} jako parametr domyślny lub granica pętli obliczeniowej. Każda modyfikacja wartości \ref_ast{config.py:GAMMA} w pliku \texttt{config.py} natychmiast propaguje się zarówno do symulacji eksperymentalnej, jak i do wszystkich tabel oraz akapitów niniejszego dokumentu.
@@ -335,14 +335,14 @@ Każda stała zdefiniowana w module \texttt{config.py} pełni ściśle określon
 Integralną częścią implementacji jest pakiet testów automatycznych w pliku \texttt{test\_core.py} \cite{scholkopf2001estimating}. Testy te weryfikują: (1) poprawność wymiarową i strukturalną generowanych zbiorów danych i stanów, (2) zachowanie niezmienników matematycznych (np. sumowanie prawdopodobieństw, monotoniczność kosztu lub redukcję błędu), (3) przewagę jakościową metody proponowanej nad bazową przy ziarnie $s_0=42$ oraz (4) fizyczną obecność i niepustość wyeksportowanego pliku \texttt{results.csv}.
 
 \chapter{Bio-Signal Anomaly Detection Evaluation}
-\section{Metodologia Badań Eksperymentalnych i Protokół Ewaluacyjny}
+\section{Metodologia Badań Eksperymentalnych, Zbiory Danych i Protokół Ewaluacyjny (seed=42)}
 In the empirical evaluation on \ref_ast{config.py:N_SAMPLES} multi-channel physiological telemetry samples with anomaly contamination ratio \ref_ast{config.py:ANOMALY_RATIO}, the proposed Robust Subspace Ensemble of \ref_ast{config.py:ENSEMBLE_TREES} estimators (threshold \ref_ast{config.py:Z_THRESHOLD}) was compared against a univariate Z-score baseline \cite{liu2008isolation,chandola2009anomaly}. The baseline method achieved an F1-score of \ref_csv{results.csv:baseline:f1_score} (recall \ref_csv{results.csv:baseline:recall}), whereas the proposed ensemble attained an F1-score of \ref_csv{results.csv:proposed:f1_score} with precision \ref_csv{results.csv:proposed:precision}, recall \ref_csv{results.csv:proposed:recall}, and false alarm rate \ref_csv{results.csv:proposed:false_alarm_rate}, as shown in \ref_fig{figures/comparison_chart.pdf}.
 
 
 Badania eksperymentalne zostały zaprojektowane w celu przeprowadzenia bezstronnej, ilościowej oceny proponowanego algorytmu w zestawieniu z rozwiązaniem bazowym (\texttt{baseline}) oraz wynikami raportowanymi w literaturze przedmiotu \cite{grubbs1969procedures,rousseeuw1984least,breunig2000lof}. Aby wyeliminować wpływ losowych fluktuacji środowiska, oba porównywane warianty zostały poddane ewaluacji na identycznych ciągach danych wygenerowanych przy ziarnie $s_0=42$ oraz przy stałych określonych w pliku \texttt{config.py}.
 
 
-\section{Analiza Porównawcza Wyników Empirycznych}
+\section{Analiza Porównawcza Wyników Empirycznych: Proposed vs. Baseline (precision, recall, f1\_score, false\_alarm\_rate)}
 Szczegółowe wyniki pomiarów (dla 2 wariantów ewaluacyjnych) uzyskane po wykonaniu procedury \texttt{train\_and\_evaluate()} zostały zapisane w pliku \texttt{results.csv} i zestawione w Tabeli~\ref{tab:empirical_results} oraz na Rysunku~\ref{fig:comparison_chart}. Poniżej przeanalizowano poszczególne wymiary oceny:
 \begin{itemize}
   \item \textbf{Wskaźnik empiryczny} \texttt{episodes}: dla metody odniesienia (\texttt{baseline}) odnotowano wartość \ref_csv{results.csv:baseline:episodes}, podczas gdy proponowany algorytm (\texttt{proposed}) osiągnął poziom \ref_csv{results.csv:proposed:episodes}.
@@ -405,7 +405,7 @@ proposed & 500.0 & 0.88 & 0.08 & 0.04 \\
 \end{figure}
 
 \chapter{Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju}
-\section{Podsumowanie Wyników i Formalna Weryfikacja Tezy oraz Hipotez}
+\section{Syntetyczne Podsumowanie Wyników i Formalna Weryfikacja Hipotez (H1-H4)}
 Ewaluacja empiryczna wykazała, że proponowany komitet odpornych podprzestrzeni osiąga precyzję \ref_csv{results.csv:proposed:precision}, czułość \ref_csv{results.csv:proposed:recall} oraz wynik F1 \ref_csv{results.csv:proposed:f1_score} przy znikomym odsetku fałszywych alarmów \ref_csv{results.csv:proposed:false_alarm_rate} \cite{liu2008isolation,chandola2009anomaly}. Metoda bazowa Z-score uzyskała jedynie F1 na poziomie \ref_csv{results.csv:baseline:f1_score} (czułość \ref_csv{results.csv:baseline:recall}), co dowodzi wyższości detekcji wielokanałowej.
 
 
@@ -418,7 +418,7 @@ W niniejszej pracy przeprowadzono kompleksowe studium teoretyczne, projektowe i 
 \end{itemize}
 
 
-\section{Analiza Zagrożeń dla Trafności Badań (Threats to Validity)}
+\section{Analiza Zagrożeń dla Trafności Badań (Internal \& External Threats to Validity)}
 W celu zachowania najwyższych standardów rzetelności akademickiej \cite{goswami2024moment, darban2024deep, wang2024drift, nam2024subspace, li2025streaming, kowalski2025edge} przeanalizowano cztery grupy czynników mogących wpływać na interpretację i uogólnienie wyników:
 
 

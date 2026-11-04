@@ -1,30 +1,72 @@
 [
   {
     "task_id": "T1",
-    "description": "Implement configuration parameters for: Build a Distributed Federated Machine Learning & Proximal Optimization module in pure Python across 10 atomic tasks: 1) in config.py define cluster hyperparameters NUM_CLIENTS = 10, DIRICHLET_ALPHA = 0.5, LOCAL_EPOCHS = 3, LEARNING_RATE = 0.05, MU_PROXIMAL = 0.01, and ROUNDS = 25; 2) in core.py implement synthetic non-IID Dirichlet partition generation generate_federated_partitions(n_samples, n_clients, alpha, seed); 3) in core.py implement local client SGD optimization with proximal loss regularizer client_local_train(weights, bias, client_X, client_y, epochs, lr, mu); 4) in core.py implement federated server aggregation train_and_evaluate(csv_out_path, seed) comparing baseline FedAvg against proposed Adaptive FedProx under 25% client straggler dropout, saving communication_rounds, final_accuracy, communication_overhead_kb, straggler_resilience_rate, and divergence_rate to results.csv; 5) in test_core.py implement invariant pytest unit tests verifying partition completeness, proximal loss reduction, and aggregation weight normalization; 6) in plot_results.py generate publication-ready dual-axis convergence and straggler comparison charts in figures/comparison_chart.pdf and .png; 7) in references.bib synthesize contemporary SOTA literature (2023-2026, min. 6-8 citations from NeurIPS, ICML, ICLR, JMLR, e.g. McMahan 2017, Li 2020 FedProx, Wang 2023, Karimireddy 2024, Kairouz 2024, Zhao 2023); 8) in thesis.md author Chapters 1-3 (Intro, SOTA taxonomy with research gap, and TikZ distributed architecture diagram); 9) in thesis.md author Chapters 4-6 with symbolic pointers \\ref_ast{config.py:NUM_CLIENTS}, \\ref_ast{config.py:DIRICHLET_ALPHA}, \\ref_ast{config.py:LOCAL_EPOCHS}, \\ref_ast{config.py:MU_PROXIMAL}, \\ref_ast{config.py:ROUNDS}, \\ref_csv{results.csv:baseline:final_accuracy}, \\ref_csv{results.csv:proposed:final_accuracy}, \\ref_csv{results.csv:proposed:straggler_resilience_rate}, and \\ref_fig{figures/comparison_chart.pdf}; 10) verify that all AST exports, CSV tables, and compiled thesis sections achieve 100% PASS in Layer 3.",
-    "target_node": "v1",
-    "assigned_agent": "seed_coder",
+    "description": "[04_federated_learning] Synthesize competitive SOTA literature discovery (2023-2026) and verified BibTeX citations in references.bib",
+    "target_node": "v4",
+    "assigned_agent": "discoverer_researcher",
     "status": "DONE"
   },
   {
     "task_id": "T2",
-    "description": "Implement core logic and unit tests for: Build a Distributed Federated Machine Learning & Proximal Optimization module in pure Python across 10 atomic tasks: 1) in config.py define cluster hyperparameters NUM_CLIENTS = 10, DIRICHLET_ALPHA = 0.5, LOCAL_EPOCHS = 3, LEARNING_RATE = 0.05, MU_PROXIMAL = 0.01, and ROUNDS = 25; 2) in core.py implement synthetic non-IID Dirichlet partition generation generate_federated_partitions(n_samples, n_clients, alpha, seed); 3) in core.py implement local client SGD optimization with proximal loss regularizer client_local_train(weights, bias, client_X, client_y, epochs, lr, mu); 4) in core.py implement federated server aggregation train_and_evaluate(csv_out_path, seed) comparing baseline FedAvg against proposed Adaptive FedProx under 25% client straggler dropout, saving communication_rounds, final_accuracy, communication_overhead_kb, straggler_resilience_rate, and divergence_rate to results.csv; 5) in test_core.py implement invariant pytest unit tests verifying partition completeness, proximal loss reduction, and aggregation weight normalization; 6) in plot_results.py generate publication-ready dual-axis convergence and straggler comparison charts in figures/comparison_chart.pdf and .png; 7) in references.bib synthesize contemporary SOTA literature (2023-2026, min. 6-8 citations from NeurIPS, ICML, ICLR, JMLR, e.g. McMahan 2017, Li 2020 FedProx, Wang 2023, Karimireddy 2024, Kairouz 2024, Zhao 2023); 8) in thesis.md author Chapters 1-3 (Intro, SOTA taxonomy with research gap, and TikZ distributed architecture diagram); 9) in thesis.md author Chapters 4-6 with symbolic pointers \\ref_ast{config.py:NUM_CLIENTS}, \\ref_ast{config.py:DIRICHLET_ALPHA}, \\ref_ast{config.py:LOCAL_EPOCHS}, \\ref_ast{config.py:MU_PROXIMAL}, \\ref_ast{config.py:ROUNDS}, \\ref_csv{results.csv:baseline:final_accuracy}, \\ref_csv{results.csv:proposed:final_accuracy}, \\ref_csv{results.csv:proposed:straggler_resilience_rate}, and \\ref_fig{figures/comparison_chart.pdf}; 10) verify that all AST exports, CSV tables, and compiled thesis sections achieve 100% PASS in Layer 3.",
-    "target_node": "v2",
-    "assigned_agent": "seed_tester",
+    "description": "[04_federated_learning] Define cluster topology and distributed hyperparameters in config.py",
+    "target_node": "v1",
+    "assigned_agent": "dyn_federated_ml_specialist",
     "status": "DONE"
   },
   {
     "task_id": "T3",
-    "description": "Document symbolic results for: Build a Distributed Federated Machine Learning & Proximal Optimization module in pure Python across 10 atomic tasks: 1) in config.py define cluster hyperparameters NUM_CLIENTS = 10, DIRICHLET_ALPHA = 0.5, LOCAL_EPOCHS = 3, LEARNING_RATE = 0.05, MU_PROXIMAL = 0.01, and ROUNDS = 25; 2) in core.py implement synthetic non-IID Dirichlet partition generation generate_federated_partitions(n_samples, n_clients, alpha, seed); 3) in core.py implement local client SGD optimization with proximal loss regularizer client_local_train(weights, bias, client_X, client_y, epochs, lr, mu); 4) in core.py implement federated server aggregation train_and_evaluate(csv_out_path, seed) comparing baseline FedAvg against proposed Adaptive FedProx under 25% client straggler dropout, saving communication_rounds, final_accuracy, communication_overhead_kb, straggler_resilience_rate, and divergence_rate to results.csv; 5) in test_core.py implement invariant pytest unit tests verifying partition completeness, proximal loss reduction, and aggregation weight normalization; 6) in plot_results.py generate publication-ready dual-axis convergence and straggler comparison charts in figures/comparison_chart.pdf and .png; 7) in references.bib synthesize contemporary SOTA literature (2023-2026, min. 6-8 citations from NeurIPS, ICML, ICLR, JMLR, e.g. McMahan 2017, Li 2020 FedProx, Wang 2023, Karimireddy 2024, Kairouz 2024, Zhao 2023); 8) in thesis.md author Chapters 1-3 (Intro, SOTA taxonomy with research gap, and TikZ distributed architecture diagram); 9) in thesis.md author Chapters 4-6 with symbolic pointers \\ref_ast{config.py:NUM_CLIENTS}, \\ref_ast{config.py:DIRICHLET_ALPHA}, \\ref_ast{config.py:LOCAL_EPOCHS}, \\ref_ast{config.py:MU_PROXIMAL}, \\ref_ast{config.py:ROUNDS}, \\ref_csv{results.csv:baseline:final_accuracy}, \\ref_csv{results.csv:proposed:final_accuracy}, \\ref_csv{results.csv:proposed:straggler_resilience_rate}, and \\ref_fig{figures/comparison_chart.pdf}; 10) verify that all AST exports, CSV tables, and compiled thesis sections achieve 100% PASS in Layer 3.",
+    "description": "[04_federated_learning] Implement synthetic Dirichlet non-IID partition generator in core.py",
+    "target_node": "v2",
+    "assigned_agent": "dyn_federated_ml_specialist",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T4",
+    "description": "[04_federated_learning] Implement local client SGD training with proximal loss regularizer in core.py",
+    "target_node": "v2",
+    "assigned_agent": "dyn_federated_ml_specialist",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T5",
+    "description": "[04_federated_learning] Implement federated server aggregation comparing FedAvg and Adaptive FedProx in core.py",
+    "target_node": "v2",
+    "assigned_agent": "dyn_federated_ml_specialist",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T6",
+    "description": "[04_federated_learning] Implement pytest unit tests verifying partition completeness, proximal loss, and weight normalization in test_core.py",
+    "target_node": "v5",
+    "assigned_agent": "seed_tester_unit_testing",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T7",
+    "description": "[04_federated_learning] Execute multi-round empirical evaluation across 25 communication rounds and write results.csv",
+    "target_node": "v3",
+    "assigned_agent": "seed_tester_unit_testing",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T8",
+    "description": "[04_federated_learning] Implement vector visualization in plot_results.py producing convergence and resilience charts in PDF and PNG",
+    "target_node": "v3",
+    "assigned_agent": "seed_tester_unit_testing",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T9",
+    "description": "[04_federated_learning] Author Chapters 1-3 of thesis (Introduction, SOTA Taxonomy, and TikZ distributed architecture diagram) in thesis.md",
     "target_node": "v4",
     "assigned_agent": "seed_writer",
     "status": "DONE"
   },
   {
-    "task_id": "T4",
-    "description": "Aktualizacja węzła v3 wymuszona promieniem rażenia hipergrafu",
-    "target_node": "v3",
-    "assigned_agent": "seed_tester",
+    "task_id": "T10",
+    "description": "[04_federated_learning] Author Chapters 4-6 of thesis with symbolic pointers \\ref_ast, \\ref_csv, and \\ref_fig in thesis.md",
+    "target_node": "v4",
+    "assigned_agent": "seed_writer",
     "status": "DONE"
   }
 ]

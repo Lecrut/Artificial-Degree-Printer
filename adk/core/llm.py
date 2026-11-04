@@ -540,7 +540,10 @@ def call_agent(
                     combined_prompt,
                     system_prompt=system_prompt.strip(),
                     user_prompt=user_only_prompt,
+                    model_tier=model_tier,
                 )
+                if api_res.get("model_used"):
+                    model_name = api_res["model_used"]
             else:
                 api_res = conn.call_ollama(
                     model_name,
@@ -562,14 +565,13 @@ def call_agent(
             call_completion_tokens = int(api_res.get("completion_tokens") or 0)
             call_total_tokens = int(api_res.get("total_tokens") or (call_prompt_tokens + call_completion_tokens))
             is_network_call = True
-        except (urllib.error.URLError, TimeoutError, RuntimeError, json.JSONDecodeError) as exc:
+        except Exception as exc:
             logger.log_step(
-                "CONNECTION_FALLBACK",
-                f"Nie udało się połączyć z '{active_provider}' ({model_name}): {exc}. Przełączam na deterministyczny fallback.",
+                "LLM_PROVIDER_ERROR",
+                f"Blad wywolania dostawcy '{active_provider}' ({model_name}): {exc}",
             )
-            parsed_output = _default_simulated_response(path.stem, system_prompt, user_payload, model_tier)
-            raw_response_str = json.dumps(parsed_output, ensure_ascii=False, indent=2)
-            effective_provider = "mock"
+            print(f"  [LLM BLAD SIECIOWY] Nie udalo sie pobrac odpowiedzi z dostawcy '{active_provider}' ({model_name}): {exc}", flush=True)
+            raise
     else:
         effective_provider = "mock"
         parsed_output = _default_simulated_response(path.stem, system_prompt, user_payload, model_tier)

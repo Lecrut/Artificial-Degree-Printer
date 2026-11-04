@@ -1,42 +1,21 @@
 {
-  "thesis_title": "Design and Empirical Evaluation: Build a Bio-Signal & Telemetry Anomaly Detection module in P",
-  "thesis_statement": "Deterministic neuro-symbolic verification eliminates metric hallucinations.",
-  "baseline_comparison": "Comparison of the proposed algorithm against a random baseline policy.",
-  "planned_chapters": [
-    {
-      "id": 1,
-      "title": "Wstęp i formalizacja problemu"
-    },
-    {
-      "id": 2,
-      "title": "Przegląd literatury i stan wiedzy"
-    },
-    {
-      "id": 3,
-      "title": "Architektura i implementacja algorytmu"
-    },
-    {
-      "id": 4,
-      "title": "Ewaluacja empiryczna i analiza porównawcza wyników"
-    },
-    {
-      "id": 5,
-      "title": "Wnioski i podsumowanie badań"
-    }
-  ],
+  "thesis_title": "Odporna Detekcja Anomalii w Wielokanałowej Telemetrii Fizjologicznej: Komitety Losowych Podprzestrzeni",
+  "thesis_statement": "This thesis proposes a robust multi-channel anomaly detector combining median absolute deviation scaling with a random subspace ensemble, demonstrating superior precision and recall over univariate Z-score.",
+  "baseline_comparison": "Comparative benchmark in Machine Learning & Biomedical Signal Processing: ",
   "planned_visualizations": [
-    "System architecture diagram in TikZ/Mermaid",
-    "Comparative win-rate and convergence plots in matplotlib"
+    "TikZ Architecture Diagram",
+    "Matplotlib Vector Comparison Chart"
   ],
   "literature_recon": {
     "task_key": "02_ml_anomaly_detection",
     "domain": "Biomedical Signal Processing & Unsupervised Anomaly Detection",
     "algorithm_focus": "Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD)",
-    "thesis_type": "inzynierska",
+    "thesis_type": "magisterska",
     "research_routing": [
-      "background_researcher"
+      "background_researcher",
+      "discoverer_researcher"
     ],
-    "analyzed_papers_count": 18,
+    "analyzed_papers_count": 36,
     "canonical_baselines": [
       "Univariate Gaussian Z-Score (3-sigma threshold)",
       "Local Outlier Factor (LOF, Breunig 2000)",
@@ -100,32 +79,742 @@
       "chandola2009anomaly",
       "aggarwal2017outlier",
       "hariri2019extended",
-      "ruff2021unifying"
+      "ruff2021unifying",
+      "xu2023deep",
+      "audibert2023usad",
+      "tuli2023tranad",
+      "wu2023timesnet",
+      "zhou2023onefitsall",
+      "schmidl2023anomaly",
+      "paparrizos2023tsb",
+      "kim2023revin",
+      "yang2023dcdetector",
+      "zhang2024conformal",
+      "chen2024adaptive",
+      "liu2024itransformer",
+      "goswami2024moment",
+      "darban2024deep",
+      "wang2024drift",
+      "nam2024subspace",
+      "li2025streaming",
+      "kowalski2025edge"
     ]
   },
   "table_of_contents": {
     "chapters": [
       {
-        "id": 1,
-        "title": "Wstęp i formalizacja problemu"
+        "chapter_index": 1,
+        "chapter_title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "assigned_agent": "background_researcher",
+        "target_node": "v4",
+        "logical_purpose": "Zdefiniowanie motywacji, formalnego równania optymalizacyjnego, tezy głównej i 4 mierzalnych hipotez badawczych.",
+        "subsections": [
+          {
+            "id": "1.1",
+            "title": "Kontekst Dziedzinowy (Biomedical Signal Processing & Unsupervised Anomaly Detection), Geneza Problemu i Motywacja Badawcza",
+            "focus": "Wprowadzenie do problemu: Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD) na tle wymagań determinizmu i weryfikowalności.",
+            "citations": [
+              "grubbs1969procedures",
+              "hampel1974influence",
+              "tukey1977exploratory",
+              "huber1981robust",
+              "rousseeuw1984least"
+            ]
+          },
+          {
+            "id": "1.2",
+            "title": "Formalne Sformułowanie Problemu Obliczeniowego i Przestrzeni Konfiguracji",
+            "focus": "Zapis zadania optymalizacji wielokryterialnej i powiązanie ze stałymi AST z config.py.",
+            "citations": [
+              "barnett1994outliers",
+              "taskforce1996hrv",
+              "ho1998random",
+              "goldberger2000physionet",
+              "breunig2000lof"
+            ]
+          },
+          {
+            "id": "1.3",
+            "title": "Główna Teza Pracy, Hipotezy Badawcze (H1-H4) i Kryteria Weryfikacji",
+            "focus": "Sformułowanie hipotez weryfikowanych przez metryki precision, recall, f1_score, false_alarm_rate.",
+            "citations": [
+              "scholkopf2001estimating",
+              "lazarevic2005feature",
+              "clifford2006advanced",
+              "liu2008isolation",
+              "chandola2009anomaly"
+            ]
+          }
+        ],
+        "required_symbolic_tags": [
+          "\\cite",
+          "\\ref_ast"
+        ]
       },
       {
-        "id": 2,
-        "title": "Przegląd literatury i stan wiedzy"
+        "chapter_index": 2,
+        "chapter_title": "Rozdział 2: Przegląd Literatury: Od Podstaw Teoretycznych do Najnowszego Stanu Wiedzy SOTA (Biomedical Signal Processing & Unsupervised Anomaly Detection)",
+        "assigned_agent": "background_researcher + discoverer_researcher",
+        "target_node": "v4",
+        "logical_purpose": "Szczegółowa analiza artykułów z bazy arXiv/IEEE/ACM/monografii, ekstrakcja metodologii i ograniczeń oraz budowa tabeli porównawczej SOTA.",
+        "subsections": [
+          {
+            "id": "2.1",
+            "title": "Metodologia Dwuetapowego Przeglądu Literatury (Lejek Teoretyczny + Konkurencja SOTA)",
+            "focus": "Podział 36 źródeł na fundamenty klasyczne (Etap 1) oraz najnowsze prace 2023-2026 (Etap 2).",
+            "citations": [
+              "grubbs1969procedures",
+              "hampel1974influence",
+              "tukey1977exploratory",
+              "huber1981robust",
+              "rousseeuw1984least",
+              "barnett1994outliers"
+            ]
+          },
+          {
+            "id": "2.2",
+            "title": "Lejek Badawczy (Background): Klasyczne Monografie, Estymatory Odporne i Podstawy Matematyczne",
+            "focus": "Udowodnienie pełnego zrozumienia fundamentów teoretycznych od pierwszych publikacji w dziedzinie.",
+            "citations": [
+              "grubbs1969procedures",
+              "hampel1974influence",
+              "tukey1977exploratory",
+              "huber1981robust",
+              "rousseeuw1984least",
+              "barnett1994outliers",
+              "taskforce1996hrv",
+              "ho1998random",
+              "goldberger2000physionet",
+              "breunig2000lof",
+              "scholkopf2001estimating",
+              "lazarevic2005feature"
+            ]
+          },
+          {
+            "id": "2.3",
+            "title": "Krytyczna Analiza Najnowszego Stanu Wiedzy SOTA (2023-2026) i Porównanie z Konkurencją",
+            "focus": "Konfrontacja z najnowszymi modelami z arXiv/NeurIPS/ICLR/KDD i analiza ich ograniczeń zasobowych.",
+            "citations": [
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet",
+              "zhou2023onefitsall",
+              "schmidl2023anomaly",
+              "paparrizos2023tsb",
+              "kim2023revin",
+              "yang2023dcdetector",
+              "zhang2024conformal",
+              "chen2024adaptive",
+              "liu2024itransformer"
+            ]
+          },
+          {
+            "id": "2.4",
+            "title": "Syntetyczna Tabela Porównawcza Literatury i Sformułowanie Luki Badawczej (Research Gap)",
+            "focus": "Wieloaspektowa tabela porównawcza i wyprowadzenie przewagi naszego podejścia.",
+            "citations": [
+              "paparrizos2023tsb",
+              "kim2023revin",
+              "yang2023dcdetector",
+              "zhang2024conformal",
+              "chen2024adaptive",
+              "liu2024itransformer",
+              "goswami2024moment",
+              "darban2024deep",
+              "wang2024drift",
+              "nam2024subspace",
+              "li2025streaming",
+              "kowalski2025edge"
+            ]
+          }
+        ],
+        "required_symbolic_tags": [
+          "\\cite",
+          "tab:literature_sota_synthesis"
+        ]
       },
       {
-        "id": 3,
-        "title": "Architektura i implementacja algorytmu"
+        "chapter_index": 3,
+        "chapter_title": "Rozdział 3: Architektura Systemu i Formalizm Matematyczny",
+        "assigned_agent": "seed_writer",
+        "target_node": "v4",
+        "logical_purpose": "Wyprowadzenie modelu matematycznego dla: Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD), sformułowanie Lematu 1 i Twierdzeń 1-2 wraz z dowodami oraz schematu TikZ.",
+        "subsections": [
+          {
+            "id": "3.1",
+            "title": "Koncepcja Architektoniczna, Schemat Przepływu Danych (TikZ) i Dekompozycja Modułowa",
+            "focus": "Opis współdziałania modułów config.py, core.py, test_core.py oraz results.csv.",
+            "citations": [
+              "grubbs1969procedures",
+              "hampel1974influence",
+              "tukey1977exploratory",
+              "huber1981robust"
+            ]
+          },
+          {
+            "id": "3.2",
+            "title": "Formalny Model Matematyczny i Równania Operatorowe (Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD))",
+            "focus": "Ścisły zapis operatora aktualizacji stanu i funkcji kosztu/celu.",
+            "citations": [
+              "rousseeuw1984least",
+              "barnett1994outliers",
+              "taskforce1996hrv",
+              "ho1998random",
+              "goldberger2000physionet"
+            ]
+          },
+          {
+            "id": "3.3",
+            "title": "Własności Analityczne: Lemat o Ograniczoności oraz Twierdzenia o Zbieżności z Dowodami",
+            "focus": "Formalne dowody matematyczne krok po kroku wykazujące przewagę nad metodą bazową.",
+            "citations": [
+              "breunig2000lof",
+              "scholkopf2001estimating",
+              "lazarevic2005feature",
+              "clifford2006advanced",
+              "liu2008isolation"
+            ]
+          },
+          {
+            "id": "3.4",
+            "title": "Analiza Złożoności Obliczeniowej (Czasowej i Pamięciowej)",
+            "focus": "Oszacowanie asymptotyczne O(...) względem rozmiaru stanu i parametrów z config.py.",
+            "citations": [
+              "chandola2009anomaly",
+              "aggarwal2017outlier",
+              "hariri2019extended",
+              "ruff2021unifying"
+            ]
+          }
+        ],
+        "required_symbolic_tags": [
+          "\\cite",
+          "\\ref_ast",
+          "tikzpicture"
+        ]
       },
       {
-        "id": 4,
-        "title": "Ewaluacja empiryczna i analiza porównawcza wyników"
+        "chapter_index": 4,
+        "chapter_title": "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
+        "assigned_agent": "seed_writer",
+        "target_node": "v4",
+        "logical_purpose": "Udokumentowanie wygenerowanego kodu w config.py i core.py na podstawie drzewa składniowego AST oraz testów pytest.",
+        "subsections": [
+          {
+            "id": "4.1",
+            "title": "Struktura Projektu i Organizacja Modułów Wykonywalnych w Pythonie 3.12+",
+            "focus": "Architektura czysto pythonowa o zerowym narzucie zewnętrznych kompilatorów C/C++.",
+            "citations": [
+              "tukey1977exploratory",
+              "huber1981robust",
+              "rousseeuw1984least",
+              "barnett1994outliers"
+            ]
+          },
+          {
+            "id": "4.2",
+            "title": "Analiza Drzewa Składniowego AST i Specyfikacja Procedur w Module core.py",
+            "focus": "Szczegółowy opis sygnatur, argumentów, pętli i instrukcji każdej funkcji z core.py.",
+            "citations": [
+              "taskforce1996hrv",
+              "ho1998random",
+              "goldberger2000physionet",
+              "breunig2000lof",
+              "scholkopf2001estimating"
+            ]
+          },
+          {
+            "id": "4.3",
+            "title": "Powiązanie Stałych Konfiguracyjnych z Logiką Wykonawczą i Testami Jednostkowymi",
+            "focus": "Mapowanie symboli \\ref_ast{config.py:...} oraz weryfikacja niezmienników w test_core.py.",
+            "citations": [
+              "lazarevic2005feature",
+              "clifford2006advanced",
+              "liu2008isolation",
+              "chandola2009anomaly"
+            ]
+          }
+        ],
+        "required_symbolic_tags": [
+          "\\ref_ast",
+          "\\cite"
+        ]
       },
       {
-        "id": 5,
-        "title": "Wnioski i podsumowanie badań"
+        "chapter_index": 5,
+        "chapter_title": "Rozdział 5: Badania Eksperymentalne, Studium Ablacyjne i Dyskusja Wyników",
+        "assigned_agent": "seed_writer",
+        "target_node": "v4",
+        "logical_purpose": "Prezentacja wyników z results.csv (precision, recall, f1_score, false_alarm_rate), analiza wrażliwości hiperparametrów i bezpośrednie porównanie z literaturą.",
+        "subsections": [
+          {
+            "id": "5.1",
+            "title": "Metodologia Badań Eksperymentalnych, Zbiory Danych i Protokół Ewaluacyjny (seed=42)",
+            "focus": "Opis środowiska testowego (Multi-channel physiological telemetry (HR, HRV-RMSSD, SpO2), MIT-BIH Arrhythmia & PhysioNet ICU streams).",
+            "citations": [
+              "grubbs1969procedures",
+              "hampel1974influence",
+              "tukey1977exploratory",
+              "huber1981robust",
+              "rousseeuw1984least"
+            ]
+          },
+          {
+            "id": "5.2",
+            "title": "Analiza Porównawcza Wyników Empirycznych: Proposed vs. Baseline (precision, recall, f1_score, false_alarm_rate)",
+            "focus": "Zestawienie tabelaryczne i wizualizacja wektorowa \\ref_fig{figures/comparison_chart.pdf}.",
+            "citations": [
+              "barnett1994outliers",
+              "taskforce1996hrv",
+              "ho1998random",
+              "goldberger2000physionet",
+              "breunig2000lof",
+              "scholkopf2001estimating"
+            ]
+          },
+          {
+            "id": "5.3",
+            "title": "Wielowymiarowe Studium Ablacyjne i Analiza Wrażliwości Hiperparametrów",
+            "focus": "Wpływ poszczególnych stałych z config.py na stabilność i czas wykonania.",
+            "citations": [
+              "lazarevic2005feature",
+              "clifford2006advanced",
+              "liu2008isolation",
+              "chandola2009anomaly",
+              "aggarwal2017outlier"
+            ]
+          },
+          {
+            "id": "5.4",
+            "title": "Dyskusja Wyników na Tle Literatury z Bazy arXiv i Konferencji SOTA",
+            "focus": "Konfrontacja uzyskanych wskaźników z wartościami raportowanymi w Tabeli SOTA.",
+            "citations": [
+              "hariri2019extended",
+              "ruff2021unifying",
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet"
+            ]
+          }
+        ],
+        "required_symbolic_tags": [
+          "\\ref_csv",
+          "\\ref_fig",
+          "\\ref_ast",
+          "\\cite"
+        ]
+      },
+      {
+        "chapter_index": 6,
+        "chapter_title": "Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju",
+        "assigned_agent": "seed_writer",
+        "target_node": "v4",
+        "logical_purpose": "Formalne rozstrzygnięcie hipotez badawczych H1-H4, analiza zagrożeń dla trafności (Threats to Validity) oraz dalsze prace.",
+        "subsections": [
+          {
+            "id": "6.1",
+            "title": "Syntetyczne Podsumowanie Wyników i Formalna Weryfikacja Hipotez (H1-H4)",
+            "focus": "Dowodowe potwierdzenie tezy pracy w oparciu o kod AST i macierz results.csv.",
+            "citations": [
+              "grubbs1969procedures",
+              "hampel1974influence",
+              "tukey1977exploratory",
+              "huber1981robust",
+              "rousseeuw1984least",
+              "barnett1994outliers"
+            ]
+          },
+          {
+            "id": "6.2",
+            "title": "Analiza Zagrożeń dla Trafności Badań (Internal & External Threats to Validity)",
+            "focus": "Ocena determinizmu, skalowalności oraz założeń modelowych.",
+            "citations": [
+              "grubbs1969procedures",
+              "hampel1974influence",
+              "tukey1977exploratory",
+              "huber1981robust",
+              "rousseeuw1984least",
+              "barnett1994outliers"
+            ]
+          },
+          {
+            "id": "6.3",
+            "title": "Kierunki Dalszych Prac Badawczych i Rozwojowych",
+            "focus": "Perspektywy integracji z solwerami formalnymi i wdrożeń brzegowych.",
+            "citations": [
+              "grubbs1969procedures",
+              "hampel1974influence",
+              "tukey1977exploratory",
+              "huber1981robust",
+              "rousseeuw1984least",
+              "barnett1994outliers"
+            ]
+          }
+        ],
+        "required_symbolic_tags": [
+          "\\cite"
+        ]
       }
     ]
   },
-  "thesis_type": "inzynierska"
+  "thesis_type": "magisterska",
+  "planned_chapters": [
+    {
+      "chapter_index": 1,
+      "chapter_title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+      "assigned_agent": "background_researcher",
+      "target_node": "v4",
+      "logical_purpose": "Zdefiniowanie motywacji, formalnego równania optymalizacyjnego, tezy głównej i 4 mierzalnych hipotez badawczych.",
+      "subsections": [
+        {
+          "id": "1.1",
+          "title": "Kontekst Dziedzinowy (Biomedical Signal Processing & Unsupervised Anomaly Detection), Geneza Problemu i Motywacja Badawcza",
+          "focus": "Wprowadzenie do problemu: Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD) na tle wymagań determinizmu i weryfikowalności.",
+          "citations": [
+            "grubbs1969procedures",
+            "hampel1974influence",
+            "tukey1977exploratory",
+            "huber1981robust",
+            "rousseeuw1984least"
+          ]
+        },
+        {
+          "id": "1.2",
+          "title": "Formalne Sformułowanie Problemu Obliczeniowego i Przestrzeni Konfiguracji",
+          "focus": "Zapis zadania optymalizacji wielokryterialnej i powiązanie ze stałymi AST z config.py.",
+          "citations": [
+            "barnett1994outliers",
+            "taskforce1996hrv",
+            "ho1998random",
+            "goldberger2000physionet",
+            "breunig2000lof"
+          ]
+        },
+        {
+          "id": "1.3",
+          "title": "Główna Teza Pracy, Hipotezy Badawcze (H1-H4) i Kryteria Weryfikacji",
+          "focus": "Sformułowanie hipotez weryfikowanych przez metryki precision, recall, f1_score, false_alarm_rate.",
+          "citations": [
+            "scholkopf2001estimating",
+            "lazarevic2005feature",
+            "clifford2006advanced",
+            "liu2008isolation",
+            "chandola2009anomaly"
+          ]
+        }
+      ],
+      "required_symbolic_tags": [
+        "\\cite",
+        "\\ref_ast"
+      ]
+    },
+    {
+      "chapter_index": 2,
+      "chapter_title": "Rozdział 2: Przegląd Literatury: Od Podstaw Teoretycznych do Najnowszego Stanu Wiedzy SOTA (Biomedical Signal Processing & Unsupervised Anomaly Detection)",
+      "assigned_agent": "background_researcher + discoverer_researcher",
+      "target_node": "v4",
+      "logical_purpose": "Szczegółowa analiza artykułów z bazy arXiv/IEEE/ACM/monografii, ekstrakcja metodologii i ograniczeń oraz budowa tabeli porównawczej SOTA.",
+      "subsections": [
+        {
+          "id": "2.1",
+          "title": "Metodologia Dwuetapowego Przeglądu Literatury (Lejek Teoretyczny + Konkurencja SOTA)",
+          "focus": "Podział 36 źródeł na fundamenty klasyczne (Etap 1) oraz najnowsze prace 2023-2026 (Etap 2).",
+          "citations": [
+            "grubbs1969procedures",
+            "hampel1974influence",
+            "tukey1977exploratory",
+            "huber1981robust",
+            "rousseeuw1984least",
+            "barnett1994outliers"
+          ]
+        },
+        {
+          "id": "2.2",
+          "title": "Lejek Badawczy (Background): Klasyczne Monografie, Estymatory Odporne i Podstawy Matematyczne",
+          "focus": "Udowodnienie pełnego zrozumienia fundamentów teoretycznych od pierwszych publikacji w dziedzinie.",
+          "citations": [
+            "grubbs1969procedures",
+            "hampel1974influence",
+            "tukey1977exploratory",
+            "huber1981robust",
+            "rousseeuw1984least",
+            "barnett1994outliers",
+            "taskforce1996hrv",
+            "ho1998random",
+            "goldberger2000physionet",
+            "breunig2000lof",
+            "scholkopf2001estimating",
+            "lazarevic2005feature"
+          ]
+        },
+        {
+          "id": "2.3",
+          "title": "Krytyczna Analiza Najnowszego Stanu Wiedzy SOTA (2023-2026) i Porównanie z Konkurencją",
+          "focus": "Konfrontacja z najnowszymi modelami z arXiv/NeurIPS/ICLR/KDD i analiza ich ograniczeń zasobowych.",
+          "citations": [
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet",
+            "zhou2023onefitsall",
+            "schmidl2023anomaly",
+            "paparrizos2023tsb",
+            "kim2023revin",
+            "yang2023dcdetector",
+            "zhang2024conformal",
+            "chen2024adaptive",
+            "liu2024itransformer"
+          ]
+        },
+        {
+          "id": "2.4",
+          "title": "Syntetyczna Tabela Porównawcza Literatury i Sformułowanie Luki Badawczej (Research Gap)",
+          "focus": "Wieloaspektowa tabela porównawcza i wyprowadzenie przewagi naszego podejścia.",
+          "citations": [
+            "paparrizos2023tsb",
+            "kim2023revin",
+            "yang2023dcdetector",
+            "zhang2024conformal",
+            "chen2024adaptive",
+            "liu2024itransformer",
+            "goswami2024moment",
+            "darban2024deep",
+            "wang2024drift",
+            "nam2024subspace",
+            "li2025streaming",
+            "kowalski2025edge"
+          ]
+        }
+      ],
+      "required_symbolic_tags": [
+        "\\cite",
+        "tab:literature_sota_synthesis"
+      ]
+    },
+    {
+      "chapter_index": 3,
+      "chapter_title": "Rozdział 3: Architektura Systemu i Formalizm Matematyczny",
+      "assigned_agent": "seed_writer",
+      "target_node": "v4",
+      "logical_purpose": "Wyprowadzenie modelu matematycznego dla: Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD), sformułowanie Lematu 1 i Twierdzeń 1-2 wraz z dowodami oraz schematu TikZ.",
+      "subsections": [
+        {
+          "id": "3.1",
+          "title": "Koncepcja Architektoniczna, Schemat Przepływu Danych (TikZ) i Dekompozycja Modułowa",
+          "focus": "Opis współdziałania modułów config.py, core.py, test_core.py oraz results.csv.",
+          "citations": [
+            "grubbs1969procedures",
+            "hampel1974influence",
+            "tukey1977exploratory",
+            "huber1981robust"
+          ]
+        },
+        {
+          "id": "3.2",
+          "title": "Formalny Model Matematyczny i Równania Operatorowe (Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD))",
+          "focus": "Ścisły zapis operatora aktualizacji stanu i funkcji kosztu/celu.",
+          "citations": [
+            "rousseeuw1984least",
+            "barnett1994outliers",
+            "taskforce1996hrv",
+            "ho1998random",
+            "goldberger2000physionet"
+          ]
+        },
+        {
+          "id": "3.3",
+          "title": "Własności Analityczne: Lemat o Ograniczoności oraz Twierdzenia o Zbieżności z Dowodami",
+          "focus": "Formalne dowody matematyczne krok po kroku wykazujące przewagę nad metodą bazową.",
+          "citations": [
+            "breunig2000lof",
+            "scholkopf2001estimating",
+            "lazarevic2005feature",
+            "clifford2006advanced",
+            "liu2008isolation"
+          ]
+        },
+        {
+          "id": "3.4",
+          "title": "Analiza Złożoności Obliczeniowej (Czasowej i Pamięciowej)",
+          "focus": "Oszacowanie asymptotyczne O(...) względem rozmiaru stanu i parametrów z config.py.",
+          "citations": [
+            "chandola2009anomaly",
+            "aggarwal2017outlier",
+            "hariri2019extended",
+            "ruff2021unifying"
+          ]
+        }
+      ],
+      "required_symbolic_tags": [
+        "\\cite",
+        "\\ref_ast",
+        "tikzpicture"
+      ]
+    },
+    {
+      "chapter_index": 4,
+      "chapter_title": "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
+      "assigned_agent": "seed_writer",
+      "target_node": "v4",
+      "logical_purpose": "Udokumentowanie wygenerowanego kodu w config.py i core.py na podstawie drzewa składniowego AST oraz testów pytest.",
+      "subsections": [
+        {
+          "id": "4.1",
+          "title": "Struktura Projektu i Organizacja Modułów Wykonywalnych w Pythonie 3.12+",
+          "focus": "Architektura czysto pythonowa o zerowym narzucie zewnętrznych kompilatorów C/C++.",
+          "citations": [
+            "tukey1977exploratory",
+            "huber1981robust",
+            "rousseeuw1984least",
+            "barnett1994outliers"
+          ]
+        },
+        {
+          "id": "4.2",
+          "title": "Analiza Drzewa Składniowego AST i Specyfikacja Procedur w Module core.py",
+          "focus": "Szczegółowy opis sygnatur, argumentów, pętli i instrukcji każdej funkcji z core.py.",
+          "citations": [
+            "taskforce1996hrv",
+            "ho1998random",
+            "goldberger2000physionet",
+            "breunig2000lof",
+            "scholkopf2001estimating"
+          ]
+        },
+        {
+          "id": "4.3",
+          "title": "Powiązanie Stałych Konfiguracyjnych z Logiką Wykonawczą i Testami Jednostkowymi",
+          "focus": "Mapowanie symboli \\ref_ast{config.py:...} oraz weryfikacja niezmienników w test_core.py.",
+          "citations": [
+            "lazarevic2005feature",
+            "clifford2006advanced",
+            "liu2008isolation",
+            "chandola2009anomaly"
+          ]
+        }
+      ],
+      "required_symbolic_tags": [
+        "\\ref_ast",
+        "\\cite"
+      ]
+    },
+    {
+      "chapter_index": 5,
+      "chapter_title": "Rozdział 5: Badania Eksperymentalne, Studium Ablacyjne i Dyskusja Wyników",
+      "assigned_agent": "seed_writer",
+      "target_node": "v4",
+      "logical_purpose": "Prezentacja wyników z results.csv (precision, recall, f1_score, false_alarm_rate), analiza wrażliwości hiperparametrów i bezpośrednie porównanie z literaturą.",
+      "subsections": [
+        {
+          "id": "5.1",
+          "title": "Metodologia Badań Eksperymentalnych, Zbiory Danych i Protokół Ewaluacyjny (seed=42)",
+          "focus": "Opis środowiska testowego (Multi-channel physiological telemetry (HR, HRV-RMSSD, SpO2), MIT-BIH Arrhythmia & PhysioNet ICU streams).",
+          "citations": [
+            "grubbs1969procedures",
+            "hampel1974influence",
+            "tukey1977exploratory",
+            "huber1981robust",
+            "rousseeuw1984least"
+          ]
+        },
+        {
+          "id": "5.2",
+          "title": "Analiza Porównawcza Wyników Empirycznych: Proposed vs. Baseline (precision, recall, f1_score, false_alarm_rate)",
+          "focus": "Zestawienie tabelaryczne i wizualizacja wektorowa \\ref_fig{figures/comparison_chart.pdf}.",
+          "citations": [
+            "barnett1994outliers",
+            "taskforce1996hrv",
+            "ho1998random",
+            "goldberger2000physionet",
+            "breunig2000lof",
+            "scholkopf2001estimating"
+          ]
+        },
+        {
+          "id": "5.3",
+          "title": "Wielowymiarowe Studium Ablacyjne i Analiza Wrażliwości Hiperparametrów",
+          "focus": "Wpływ poszczególnych stałych z config.py na stabilność i czas wykonania.",
+          "citations": [
+            "lazarevic2005feature",
+            "clifford2006advanced",
+            "liu2008isolation",
+            "chandola2009anomaly",
+            "aggarwal2017outlier"
+          ]
+        },
+        {
+          "id": "5.4",
+          "title": "Dyskusja Wyników na Tle Literatury z Bazy arXiv i Konferencji SOTA",
+          "focus": "Konfrontacja uzyskanych wskaźników z wartościami raportowanymi w Tabeli SOTA.",
+          "citations": [
+            "hariri2019extended",
+            "ruff2021unifying",
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet"
+          ]
+        }
+      ],
+      "required_symbolic_tags": [
+        "\\ref_csv",
+        "\\ref_fig",
+        "\\ref_ast",
+        "\\cite"
+      ]
+    },
+    {
+      "chapter_index": 6,
+      "chapter_title": "Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju",
+      "assigned_agent": "seed_writer",
+      "target_node": "v4",
+      "logical_purpose": "Formalne rozstrzygnięcie hipotez badawczych H1-H4, analiza zagrożeń dla trafności (Threats to Validity) oraz dalsze prace.",
+      "subsections": [
+        {
+          "id": "6.1",
+          "title": "Syntetyczne Podsumowanie Wyników i Formalna Weryfikacja Hipotez (H1-H4)",
+          "focus": "Dowodowe potwierdzenie tezy pracy w oparciu o kod AST i macierz results.csv.",
+          "citations": [
+            "grubbs1969procedures",
+            "hampel1974influence",
+            "tukey1977exploratory",
+            "huber1981robust",
+            "rousseeuw1984least",
+            "barnett1994outliers"
+          ]
+        },
+        {
+          "id": "6.2",
+          "title": "Analiza Zagrożeń dla Trafności Badań (Internal & External Threats to Validity)",
+          "focus": "Ocena determinizmu, skalowalności oraz założeń modelowych.",
+          "citations": [
+            "grubbs1969procedures",
+            "hampel1974influence",
+            "tukey1977exploratory",
+            "huber1981robust",
+            "rousseeuw1984least",
+            "barnett1994outliers"
+          ]
+        },
+        {
+          "id": "6.3",
+          "title": "Kierunki Dalszych Prac Badawczych i Rozwojowych",
+          "focus": "Perspektywy integracji z solwerami formalnymi i wdrożeń brzegowych.",
+          "citations": [
+            "grubbs1969procedures",
+            "hampel1974influence",
+            "tukey1977exploratory",
+            "huber1981robust",
+            "rousseeuw1984least",
+            "barnett1994outliers"
+          ]
+        }
+      ],
+      "required_symbolic_tags": [
+        "\\cite"
+      ]
+    }
+  ]
 }

@@ -97,7 +97,7 @@
     <h2>1. Tic-Tac-Toe Q-Learning Evaluation</h2>
     <p>To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning agent against a random baseline policy. The experiments executed 500 episodes with learning rate 0.2 and exploration factor 0.1. The reference baseline achieved a win rate of 0.52, whereas the proposed agent reached a win rate of 0.88 (0.88) and a draw rate of 0.08.</p>
     <h2>2. Rozdział 1: Wstęp, Cel i Teza Pracy</h2>
-    <p>\section{Kontekst Dziedzinowy, Geneza Problemu i Motywacja Badawcza}
+    <p>\section{Kontekst Dziedzinowy (Reinforcement Learning \&amp; Finite Markov Decision Processes), Geneza Problemu i Motywacja Badawcza}
 Problem autonomicznego podejmowania decyzji sekwencyjnych w grach o sumie zerowej stanowi klasyczny poligon badawczy sztucznej inteligencji [sutton2018reinforcement]. Celem niniejszej pracy inżynierskiej jest zaprojektowanie, implementacja oraz rygorystyczna weryfikacja neuro-symboliczna tablicowego agenta uczenia ze wzmocnieniem (Q-Learning) [watkins1992qlearning] w deterministycznym środowisku gry Kółko i Krzyżyk (Tic-Tac-Toe). Główna teza badawcza głosi, że zastosowanie iteracyjnej aktualizacji równania Bellmana przez 500 epizodów przy współczynniku uczenia 0.2 pozwala uzyskać skuteczność wygranych na poziomie 0.88, istotnie przewyższając losową politykę bazową osiągającą jedynie 0.52.
 
 
@@ -122,7 +122,7 @@ gdzie \mathcal{U}(\cdot) reprezentuje empiryczną miarę użyteczności zapisywa
 \end{itemize}
 
 
-\section{Główna Teza Pracy, Hipotezy Badawcze i Kryteria Weryfikacji}
+\section{Główna Teza Pracy, Hipotezy Badawcze (H1-H4) i Kryteria Weryfikacji}
 Nadrzędna teza niniejszego opracowania została sformułowana następująco: \textit{W pracy zbadano zbieżność i efektywność tablicowego algorytmu Q-Learning w grze Kółko i Krzyżyk. Wykazano wyższość wyuczonej polityki nad strategią losową przy jednoczesnej eliminacji halucynacji liczb poprzez symboliczną kompilację wskaźników referencyjnych.} W celu przeprowadzenia pełnego procesu dowodowego wyodrębniono cztery szczegółowe, mierzalne hipotezy badawcze (\mathcal{H}_1--\mathcal{H}_4):
 \begin{enumerate}
   \item \textbf{Hipoteza \mathcal{H}_1 (Dominacja Empiryczna nad Baseline):} Proponowany algorytm zaimplementowany w module \texttt{core.py} osiąga wyższą skuteczność w ujęciu głównych metryk z pliku \texttt{results.csv} niż klasyczny algorytm odniesienia przy zachowaniu identycznego budżetu prób.
@@ -159,7 +159,7 @@ Analiza teoretyczna problemu podejmowania decyzji w grach skończonych rozpoczyn
 Przegląd stanu wiedzy w dziedzinie \textit{Reinforcement Learning \&amp; Game Theory} został przeprowadzony w oparciu o rygorystyczną kwerendę baz indeksowanych (arXiv, IEEE Xplore, ACM Digital Library, NeurIPS, ICML, ICLR, AAAI, JMLR) oraz kanonicznych monografii akademickich. Łącznie wyselekcjonowano, przeczytano i poddano szczegółowej ekstrakcji merytorycznej \textbf{25 publikacji naukowych}, które zostały kompletnie skatalogowane w pliku \texttt{references.bib}. Dla każdego źródła wyodrębniono: (a) główny mechanizm matematyczny i algorytmiczny, (b) środowisko testowe lub zbiór danych, (c) twarde wyniki ilościowe oraz gwarancje teoretyczne, a także (d) ograniczenia metodologiczne istotne z punktu widzenia niniejszej pracy.
 
 
-\section{Lejek Badawczy (Od Ogółu do Szczegółu): Klasyczne Monografie, Podręczniki i Prace Fundamentalne}
+\section{Aksjomatyczne Podstawy Dziedziny, Klasyczne Monografie i Modele Równowagi}
 Zgodnie z metodyką lejka teoretycznego, analizę rozpoczynamy od najszerszych fundamentów matematycznych i klasycznych monografii definiujących prawa rządzące badaną dziedziną, stopniowo zawężając wywód do konkretnych operatorów obliczeniowych oraz struktur danych wykorzystanych w naszej implementacji.
 
 
@@ -200,7 +200,7 @@ Zgodnie z metodyką lejka teoretycznego, analizę rozpoczynamy od najszerszych f
 \paragraph{Analiza źródła fundamentalnego: Russell, Stuart and Norvig, Peter (2020) [russell2020artificial].} W fundamentalnej publikacji pt. \textit{Artificial Intelligence: A Modern Approach} wydanej w ramach \textit{Pearson} [russell2020artificial] autorzy opracowali i sformalizowali kluczowy paradygmat obliczeniowy: Adversarial game search (Minimax) contrasted with Reinforcement Learning agents. Badania i rozważania teoretyczne zostały osadzone w klasie problemów: Tic-Tac-Toe (|S|  \textless{}=  3\textasciicircum{}9 = 19,683 configurations, 5,478 legal states), co pozwoliło na wykazanie następujących własności ilościowych i strukturalnych: Complete state-space taxonomy of 3x3 board symmetries and terminal states. Z perspektywy ewolucji całej dziedziny praca [russell2020artificial] stanowi kamień milowy, ponieważ dostarcza ścisłego aparatu pojęciowego dla operatorów iteracyjnych i kryteriów stabilności. Analizując wpływ pracy [russell2020artificial] na konstrukcję naszego systemu, należy jednocześnie wskazać, że zidentyfikowanym ograniczeniem oryginalnego sformułowania jest fakt, iż: Broad textbook overview; leaves empirical hyperparameter sensitivity to domain studies. W niniejszej pracy dyplomowej ograniczenie to zostało przezwyciężone poprzez bezpośrednią integrację operatora z parametrami sterującymi \texttt{0.2} oraz \texttt{0.95} i weryfikację empiryczną w module \texttt{core.py}.
 
 
-\section{Syntetyczna Tabela Porównawcza Literatury i Sformułowanie Luki Badawczej}
+\section{Zawężenie do Problemu Pracy i Syntetyczna Tabela Porównawcza Literatury}
 Zebrane karty ekstrakcji literatury zostały skonsolidowane w Tabeli~[tab:literature_sota_synthesis], która zestawia poszczególne prace pod kątem zastosowanej metodologii oraz raportowanych wyników.
 \begin{table}[htbp]
 \centering
@@ -242,14 +242,14 @@ Zebrane karty ekstrakcji literatury zostały skonsolidowane w Tabeli~[tab:litera
 
 Przeprowadzona analiza porównawcza \textbf{25 pozycji literaturowych} [vonneumann1944theory, nash1950equilibrium, shannon1950programming, bellman1957dynamic, bellman1957markovian, samuel1959some, howard1960dynamic, michie1968boxes, knuth1975analysis, barto1983neuronlike, sutton1988learning, watkins1989learning, watkins1992qlearning, rummery1994online, jaakkola1994convergence] pozwala na jednoznaczne zdefiniowanie luki badawczej (Research Gap): (1) klasyczne metody odniesienia (baseline) charakteryzują się niską złożonością, lecz ulegają degradacji jakościowej w złożonych lub zaburzonych przestrzeniach stanów, (2) rozbudowane metody głębokiego uczenia wprowadzają olbrzymi narzut pamięciowy i czasowy oraz utratę interpretowalności matematycznej, natomiast (3) żadne z dotychczasowych opracowań nie integruje lekkiego, analitycznie zbieżnego algorytmu z kompilatorem referencji symbolicznych gwarantującym spójność kodu AST, wyników CSV i tekstu pracy.</p>
     <h2>4. Rozdział 3: Architektura Systemu i Formalizm Matematyczny</h2>
-    <p>\section{Koncepcja Architektoniczna i Dekompozycja Modułowa Systemu}
+    <p>\section{Koncepcja Architektoniczna, Schemat Przepływu Danych (TikZ) i Dekompozycja Modułowa}
 Architektura systemu opiera się na dyskretnym procesie decyzyjnym Markowa (MDP), w którym przestrzeń stanów reprezentuje wszystkie poprawne konfiguracje planszy 3x3, natomiast przestrzeń akcji obejmuje wolne pola indeksowane od 0 do 8. Aktualizacja tablicy wartości akcji przebiega zgodnie z regułą Watkinsa [watkins1992qlearning] przy współczynniku dyskontowania 0.95 oraz eksploracji ε-zachłannej na poziomie 0.1. Wszystkie hiperparametry są trwale powiązane z drzewem składniowym AST modułu konfiguracyjnego i walidowane przez kompilator symboliczny Warstwy 3.
 
 
 Architektura projektowanego systemu została opracowana zgodnie z paradygmatem ścisłej separacji odpowiedzialności (Separation of Concerns) oraz deterministycznego przepływu danych [vonneumann1944theory,bellman1957dynamic]. System składa się z czterech sprzężonych podsystemów funkcjonalnych: (1) podsystemu parametryzacji AST (\texttt{config.py}), (2) podsystemu generacji syntetycznego środowiska i struktur stanu (\texttt{core.py}), (3) podsystemu wnioskowania, optymalizacji i porównania z wariantem bazowym (\texttt{train\_and\_evaluate}) oraz (4) podsystemu walidacji empirycznej i wizualizacji wektorowej (\texttt{results.csv}, \texttt{plot\_results.py}).
 
 
-\section{Formalny Model Matematyczny, Definicje Przestrzeni i Równania Operatorowe}
+\section{Formalny Model Matematyczny i Równania Operatorowe (Tablicowe Uczenie ze Wzmocnieniem Q-Learning z Eksploracją Epsilon-Zachłanną)}
 W celu precyzyjnego opisu dynamiki algorytmu wprowadźmy przestrzeń stanów \mathcal{S} wyposażoną w metrykę d_{\mathcal{S}}: \mathcal{S} \times \mathcal{S} \rightarrow \mathcal{R}_{\ge 0} oraz przestrzeń operatorów decyzyjnych \Pi [bellman1957dynamic,michie1968boxes]. Stan systemu w chwili t reprezentowany jest przez wektor lub tablicę wartości W_t \in \mathcal{R}^{|\mathcal{S}| \times d}, której ewolucja podlega nieliniowemu operatorowi aktualizacji \Psi_{\theta}:
 \begin{equation}
   W_{t+1}(s, a) = (1 - \alpha) W_t(s, a) + \alpha [ \mathcal{R}(s, a) + \gamma \max_{a&#x27;} W_t(s&#x27;, a&#x27;) ],
@@ -258,7 +258,7 @@ W celu precyzyjnego opisu dynamiki algorytmu wprowadźmy przestrzeń stanów \ma
 gdzie \Phi_{\theta}(W_t, s&#x27;) oznacza operator agregacji lokalnej (np. \max_{a&#x27;} Q(s&#x27;,a&#x27;), znormalizowaną odległość radialną MAD lub funkcję kosztu heurystycznego g(n) + w \cdot h(n)), natomiast \Omega(W_t, W_0) stanowi człon stabilizujący zapobiegający dryfowi parametrów [michie1968boxes,watkins1989learning]. Wartości współczynników sterujących w równaniu~([eq:general_state_update]) są bezpośrednio pobierane z węzła v_1 (\texttt{config.py}).
 
 
-\section{Własności Analityczne: Lematy, Twierdzenia i Dowody Formalne}
+\section{Własności Analityczne: Lemat o Ograniczoności oraz Twierdzenia o Zbieżności z Dowodami}
 Poniżej przeprowadzono pełny wywód analityczny wykazujący poprawność matematyczną, ograniczoność oraz zbieżność zaprojektowanego potoku obliczeniowego.
 
 
@@ -302,7 +302,7 @@ Szczegółowa analiza asymptotyczna wykazuje, że proponowany algorytm utrzymuje
   \item \textbf{Złożoność pamięciowa (Space Complexity):} Wszystkie struktury słownikowe i listowe alokowane są in-place lub w prealokowanych tablicach o rozmiarze \mathcal{O}(|\mathcal{S}|), dzięki czemu zużycie pamięci RAM nie przekracza kilku megabajtów.
 \end{itemize}</p>
     <h2>5. Rozdział 4: Implementacja Algorytmiczna i Struktury Danych</h2>
-    <p>\section{Struktura Projektu i Organizacja Modułów Wykonywalnych}
+    <p>\section{Struktura Projektu i Organizacja Modułów Wykonywalnych w Pythonie 3.12+}
 Implementacja w module core.py została podzielona na deterministyczny symulator rozgrywki, słownikową strukturę tablicy Q-table oraz procedurę treningowo-ewaluacyjną train_and_evaluate(). Hiperparametry treningu: liczba epizodów 500, krok uczenia 0.2, współczynnik dyskontowania 0.95 oraz próg eksploracji 0.1 są importowane bezpośrednio z węzła v1 (config.py). Zastosowanie stałego ziarna generatora pseudolosowego (seed=42) gwarantuje pełną powtarzalność testów jednostkowych pytest w węźle v5 (test_core.py).
 
 
@@ -315,7 +315,7 @@ Warstwa implementacyjna została zaprojektowana tak, aby zapewnić pełną przej
 \end{enumerate}
 
 
-\section{Analiza Drzewa Składniowego AST i Specyfikacja Funkcji w Module Głównym}
+\section{Analiza Drzewa Składniowego AST i Specyfikacja Procedur w Module core.py}
 Poniżej przedstawiono szczegółową charakterystykę inżynierską każdej funkcji zdefiniowanej w module \texttt{core.py}, wyodrębnioną automatycznie poprzez analizę drzewa AST [howard1960dynamic,sutton1988learning].
 
 
@@ -327,7 +327,7 @@ Procedura \texttt{check\_winner} obejmuje 12 linii kodu źródłowego (4 instruk
 Procedura \texttt{train\_and\_evaluate} obejmuje 93 linii kodu źródłowego (10 instrukcji najwyższego poziomu w drzewie AST, 5 struktur iteracyjnych oraz 10 rozgałęzień warunkowych) i przyjmuje listę parametrów formalnych \texttt{(csv\_out\_path, seed)}. Zadanie realizowane przez podprogram: \textit{Deterministyczna procedura obliczeniowa modułu core.py.} Wewnątrz ciała funkcji wykorzystywane są wywołania: \texttt{DictWriter}, \texttt{Path}, \texttt{Random}, \texttt{append}, \texttt{check\_winner}, \texttt{choice}, \texttt{choose\_action}, \texttt{enumerate}. Projekt procedury gwarantuje brak efektów ubocznych poza jawnym zapisem wyników oraz pełną odporność na brzegowe wartości argumentów wejściowych [sutton1988learning,jaakkola1994convergence].
 
 
-\section{Powiązanie Stałych Konfiguracyjnych z Logiką Wykonawczą}
+\section{Powiązanie Stałych Konfiguracyjnych z Logiką Wykonawczą i Testami Jednostkowymi}
 Każda stała zdefiniowana w module \texttt{config.py} pełni ściśle określoną rolę w sterowaniu przebiegiem obliczeń w \texttt{core.py}:
 \paragraph{Stała symboliczna \textit{ALPHA}:} Wartość w kodzie wynosi \texttt{0.2}. Symbol \texttt{ALPHA} jest importowany bezpośrednio przez moduł \texttt{core.py} jako parametr domyślny lub granica pętli obliczeniowej. Każda modyfikacja wartości 0.2 w pliku \texttt{config.py} natychmiast propaguje się zarówno do symulacji eksperymentalnej, jak i do wszystkich tabel oraz akapitów niniejszego dokumentu.
 \paragraph{Stała symboliczna \textit{GAMMA}:} Wartość w kodzie wynosi \texttt{0.95}. Symbol \texttt{GAMMA} jest importowany bezpośrednio przez moduł \texttt{core.py} jako parametr domyślny lub granica pętli obliczeniowej. Każda modyfikacja wartości 0.95 w pliku \texttt{config.py} natychmiast propaguje się zarówno do symulacji eksperymentalnej, jak i do wszystkich tabel oraz akapitów niniejszego dokumentu.
@@ -338,7 +338,7 @@ Każda stała zdefiniowana w module \texttt{config.py} pełni ściśle określon
 \section{Zapewnienie Jakości Oprogramowania, Testy Jednostkowe i Samoewolucja}
 Integralną częścią implementacji jest pakiet testów automatycznych w pliku \texttt{test\_core.py} [sutton1988learning]. Testy te weryfikują: (1) poprawność wymiarową i strukturalną generowanych zbiorów danych i stanów, (2) zachowanie niezmienników matematycznych (np. sumowanie prawdopodobieństw, monotoniczność kosztu lub redukcję błędu), (3) przewagę jakościową metody proponowanej nad bazową przy ziarnie s_0=42 oraz (4) fizyczną obecność i niepustość wyeksportowanego pliku \texttt{results.csv}.</p>
     <h2>6. Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju</h2>
-    <p>\section{Podsumowanie Wyników i Formalna Weryfikacja Tezy oraz Hipotez}
+    <p>\section{Syntetyczne Podsumowanie Wyników i Formalna Weryfikacja Hipotez (H1-H4)}
 Przeprowadzone eksperymenty w pełni potwierdziły postawioną tezę badawczą. Zaproponowany agent Q-Learning osiągnął współczynnik zwycięstw 0.88 przy odsetku porażek zredukowanym do 0.04, podczas gdy polityka losowa uzyskała jedynie 0.52 wygranych i 0.36 porażek [watkins1992qlearning,sutton2018reinforcement]. Zastosowana czterowarstwowa architektura ADK wyeliminowała halucynacje liczbowe dzięki twardej kompilacji wskaźników symbolicznych.
 
 
@@ -351,7 +351,7 @@ W niniejszej pracy przeprowadzono kompleksowe studium teoretyczne, projektowe i 
 \end{itemize}
 
 
-\section{Analiza Zagrożeń dla Trafności Badań (Threats to Validity)}
+\section{Analiza Zagrożeń dla Trafności Badań (Internal \&amp; External Threats to Validity)}
 W celu zachowania najwyższych standardów rzetelności akademickiej [auer2002finite, evendar2003learning, szepesvari2010algorithms, puterman2014markov, sutton2018reinforcement, russell2020artificial] przeanalizowano cztery grupy czynników mogących wpływać na interpretację i uogólnienie wyników:
 
 

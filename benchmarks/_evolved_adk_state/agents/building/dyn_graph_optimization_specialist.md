@@ -35,3 +35,4 @@ Do not output conversational text or markdown wrappers outside the JSON.
 - **INVARIANT (Cycle 0)**: Execute strictly atomic operations within the `graph_optimization_specialist` specialization with full syntax and symbolic pointer validation.
 
 ## LEARNED RULES AND CONSTRAINTS
+- **RULE**: [03_graph_pathfinding cycle #1] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.

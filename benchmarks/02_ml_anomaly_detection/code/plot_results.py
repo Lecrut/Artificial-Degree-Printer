@@ -31,7 +31,7 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     rec = [float(r["recall"]) * 100 for r in rows]
     f1 = [float(r["f1_score"]) * 100 for r in rows]
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.2), dpi=180)
+    fig, ax = plt.subplots(figsize=(4.8, 3.0), dpi=180)
     x = range(len(methods))
     width = 0.24
 
@@ -40,12 +40,12 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     b3 = ax.bar([i + width for i in x], f1, width=width, label="F1-Score (%)", color="#d95f02")
 
     ax.set_xticks(list(x))
-    ax.set_xticklabels(methods, fontsize=10, fontweight="bold")
-    ax.set_ylabel("Metric Score (%)", fontsize=10)
+    ax.set_xticklabels(methods, fontsize=9, fontweight="bold")
+    ax.set_ylabel("Metric Score (%)", fontsize=9)
     ax.set_ylim(0, 110)
-    ax.set_title("Bio-Signal Anomaly Detection: Univariate Z-Score vs. Robust Subspace Ensemble", fontsize=10.5, fontweight="bold")
+    ax.set_title("Bio-Signal Anomaly Detection: Baseline vs. Ensemble", fontsize=10, fontweight="bold")
     ax.grid(axis="y", linestyle="--", alpha=0.4)
-    ax.legend(frameon=True, loc="lower right")
+    ax.legend(frameon=True, loc="lower right", fontsize=8)
 
     for bars in (b1, b2, b3):
         for bar in bars:
@@ -63,8 +63,8 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     fig.tight_layout()
     png_out = fig_dir / "comparison_chart.png"
     pdf_out = fig_dir / "comparison_chart.pdf"
-    fig.savefig(png_out, dpi=180)
-    fig.savefig(pdf_out)
+    fig.savefig(png_out, dpi=180, bbox_inches="tight")
+    fig.savefig(pdf_out, bbox_inches="tight")
     plt.close(fig)
     return [str(png_out), str(pdf_out)]
 

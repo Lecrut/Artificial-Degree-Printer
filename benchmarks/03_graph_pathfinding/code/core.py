@@ -1,113 +1,131 @@
 import csv
+import heapq
+import math
 import random
 from pathlib import Path
 import config
 
 
-def check_winner(board: list[str]) -> str | None:
-    lines = [
-        (0, 1, 2), (3, 4, 5), (6, 7, 8),
-        (0, 3, 6), (1, 4, 7), (2, 5, 8),
-        (0, 4, 8), (2, 4, 6),
+def generate_obstacle_grid(size: int = config.GRID_SIZE, density: float = config.OBSTACLE_DENSITY, seed: int = 42) -> list[list[int]]:
+    rng = random.Random(seed)
+    grid = [[0 for _ in range(size)] for _ in range(size)]
+    for r in range(size):
+        for c in range(size):
+            if (r, c) in ((0, 0), (size - 1, size - 1)):
+                continue
+            if rng.random() < density:
+                grid[r][c] = 1
+    # Guarantee a clear corridor along perimeter fallback if random seed blocks all paths
+    for i in range(size):
+        grid[0][i] = 0
+        grid[i][size - 1] = 0
+    return grid
+
+
+def octile_heuristic(a: tuple[int, int], b: tuple[int, int]) -> float:
+    dx = abs(a[0] - b[0])
+    dy = abs(a[1] - b[1])
+    return (dx + dy) + (math.sqrt(2.0) - 2.0) * min(dx, dy)
+
+
+def search_grid(
+    grid: list[list[int]],
+    start: tuple[int, int],
+    goal: tuple[int, int],
+    heuristic_weight: float = 0.0,
+) -> tuple[float, int]:
+    """Run Dijkstra (heuristic_weight=0.0) or Weighted Octile A* (heuristic_weight>0.0). Returns (cost, expanded_nodes)."""
+    n = len(grid)
+    pq: list[tuple[float, float, tuple[int, int]]] = [(0.0, 0.0, start)]
+    g_score: dict[tuple[int, int], float] = {start: 0.0}
+    closed: set[tuple[int, int]] = set()
+    expanded = 0
+
+    neighbors = [
+        (-1, 0, 1.0), (1, 0, 1.0), (0, -1, 1.0), (0, 1, 1.0),
+        (-1, -1, math.sqrt(2.0)), (-1, 1, math.sqrt(2.0)),
+        (1, -1, math.sqrt(2.0)), (1, 1, math.sqrt(2.0)),
     ]
-    for a, b, c in lines:
-        if board[a] != " " and board[a] == board[b] == board[c]:
-            return board[a]
-    if " " not in board:
-        return "DRAW"
-    return None
+
+    while pq:
+        _, g, current = heapq.heappop(pq)
+        if current in closed:
+            continue
+        closed.add(current)
+        expanded += 1
+
+        if current == goal:
+            return g, expanded
+
+        cr, cc = current
+        for dr, dc, step_cost in neighbors:
+            nr, nc = cr + dr, cc + dc
+            if 0 <= nr < n and 0 <= nc < n and grid[nr][nc] == 0:
+                nxt = (nr, nc)
+                if nxt in closed:
+                    continue
+                tentative_g = g + step_cost
+                if tentative_g < g_score.get(nxt, float("inf")):
+                    g_score[nxt] = tentative_g
+                    h = octile_heuristic(nxt, goal) * heuristic_weight
+                    heapq.heappush(pq, (tentative_g + h, tentative_g, nxt))
+
+    return float("inf"), expanded
 
 
 def train_and_evaluate(csv_out_path: str | Path | None = None, seed: int = 42) -> dict[str, float]:
-    rng = random.Random(seed)
-    q_table: dict[tuple[str, int], float] = {}
+    dijkstra_expanded_list: list[int] = []
+    astar_expanded_list: list[int] = []
+    optimality_ratios: list[float] = []
+    successes = 0
 
-    def choose_action(state: str, available: list[int], epsilon: float) -> int:
-        if rng.random() < epsilon:
-            return rng.choice(available)
-        scores = [q_table.get((state, a), 0.0) for a in available]
-        max_s = max(scores)
-        best = [a for a, s in zip(available, scores) if s == max_s]
-        return rng.choice(best)
+    start = (0, 0)
+    goal = (config.GRID_SIZE - 1, config.GRID_SIZE - 1)
 
-    for _ in range(config.EPISODES):
-        board = [" "] * 9
-        history: list[tuple[str, int]] = []
-        while True:
-            state = "".join(board)
-            avail = [i for i, v in enumerate(board) if v == " "]
-            action = choose_action(state, avail, config.EPSILON)
-            board[action] = "X"
-            history.append((state, action))
-            winner = check_winner(board)
-            if winner is not None:
-                reward = 1.0 if winner == "X" else (0.5 if winner == "DRAW" else -1.0)
-                break
-            opp_avail = [i for i, v in enumerate(board) if v == " "]
-            board[rng.choice(opp_avail)] = "O"
-            winner = check_winner(board)
-            if winner is not None:
-                reward = 1.0 if winner == "X" else (0.5 if winner == "DRAW" else -1.0)
-                break
+    for trial in range(config.TRIALS):
+        grid = generate_obstacle_grid(config.GRID_SIZE, config.OBSTACLE_DENSITY, seed=seed + trial)
+        cost_d, exp_d = search_grid(grid, start, goal, heuristic_weight=0.0)
+        cost_a, exp_a = search_grid(grid, start, goal, heuristic_weight=config.HEURISTIC_WEIGHT)
 
-        next_max = 0.0
-        for st, act in reversed(history):
-            old_q = q_table.get((st, act), 0.0)
-            new_q = old_q + config.ALPHA * (reward + config.GAMMA * next_max - old_q)
-            q_table[(st, act)] = new_q
-            next_max = new_q
+        if math.isfinite(cost_d) and math.isfinite(cost_a):
+            successes += 1
+            dijkstra_expanded_list.append(exp_d)
+            astar_expanded_list.append(exp_a)
+            optimality_ratios.append(cost_d / cost_a if cost_a > 0 else 1.0)
 
-    wins, draws, losses = 0, 0, 0
-    for _ in range(100):
-        board = [" "] * 9
-        while True:
-            state = "".join(board)
-            avail = [i for i, v in enumerate(board) if v == " "]
-            action = choose_action(state, avail, 0.0)
-            board[action] = "X"
-            winner = check_winner(board)
-            if winner is not None:
-                if winner == "X":
-                    wins += 1
-                elif winner == "DRAW":
-                    draws += 1
-                else:
-                    losses += 1
-                break
-            opp_avail = [i for i, v in enumerate(board) if v == " "]
-            board[rng.choice(opp_avail)] = "O"
-            winner = check_winner(board)
-            if winner is not None:
-                if winner == "X":
-                    wins += 1
-                elif winner == "DRAW":
-                    draws += 1
-                else:
-                    losses += 1
-                break
+    avg_d = sum(dijkstra_expanded_list) / max(1, len(dijkstra_expanded_list))
+    avg_a = sum(astar_expanded_list) / max(1, len(astar_expanded_list))
+    avg_opt = sum(optimality_ratios) / max(1, len(optimality_ratios))
+    speedup = avg_d / avg_a if avg_a > 0 else 1.0
+    succ_rate = successes / float(config.TRIALS)
 
     baseline_row = {
         "method": "baseline",
-        "episodes": float(config.EPISODES),
-        "win_rate": 0.52,
-        "draw_rate": 0.12,
-        "loss_rate": 0.36,
+        "trials": float(config.TRIALS),
+        "avg_expanded_nodes": round(avg_d, 1),
+        "path_optimality": 1.0,
+        "speedup_factor": 1.0,
+        "success_rate": round(succ_rate, 2),
     }
-    metrics = {
+    proposed_row = {
         "method": "proposed",
-        "episodes": float(config.EPISODES),
-        "win_rate": round(wins / 100.0, 2),
-        "draw_rate": round(draws / 100.0, 2),
-        "loss_rate": round(losses / 100.0, 2),
+        "trials": float(config.TRIALS),
+        "avg_expanded_nodes": round(avg_a, 1),
+        "path_optimality": round(avg_opt, 3),
+        "speedup_factor": round(speedup, 2),
+        "success_rate": round(succ_rate, 2),
     }
+
     if csv_out_path is not None:
         out_p = Path(csv_out_path)
         out_p.parent.mkdir(parents=True, exist_ok=True)
         with out_p.open("w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(
-                f, fieldnames=["method", "episodes", "win_rate", "draw_rate", "loss_rate"]
+                f,
+                fieldnames=["method", "trials", "avg_expanded_nodes", "path_optimality", "speedup_factor", "success_rate"],
             )
             writer.writeheader()
             writer.writerow(baseline_row)
-            writer.writerow(metrics)
-    return metrics
+            writer.writerow(proposed_row)
+
+    return proposed_row

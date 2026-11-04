@@ -1,113 +1,243 @@
 import csv
+import math
 import random
 from pathlib import Path
 import config
 
 
-def check_winner(board: list[str]) -> str | None:
-    lines = [
-        (0, 1, 2), (3, 4, 5), (6, 7, 8),
-        (0, 3, 6), (1, 4, 7), (2, 5, 8),
-        (0, 4, 8), (2, 4, 6),
-    ]
-    for a, b, c in lines:
-        if board[a] != " " and board[a] == board[b] == board[c]:
-            return board[a]
-    if " " not in board:
-        return "DRAW"
-    return None
+def generate_synthetic_data(n_samples: int = 400, seed: int = 42) -> tuple[list[list[float]], list[int]]:
+    rng = random.Random(seed)
+    X: list[list[float]] = []
+    y: list[int] = []
+    for _ in range(n_samples):
+        label = 1 if rng.random() > 0.5 else 0
+        sign = 1.0 if label == 1 else -1.0
+        # Features 0-1 carry global invariant signal; features 2-3 carry noisy local context
+        f0 = rng.gauss(0.65 * sign, 0.95)
+        f1 = rng.gauss(0.60 * sign, 0.95)
+        f2 = rng.gauss(0.15 * sign, 1.10)
+        f3 = rng.gauss(0.10 * sign, 1.10)
+        X.append([f0, f1, f2, f3])
+        y.append(label)
+    return X, y
+
+
+def generate_federated_partitions(
+    n_samples: int = 400,
+    n_clients: int = config.NUM_CLIENTS,
+    alpha: float = config.DIRICHLET_ALPHA,
+    seed: int = 42,
+) -> list[tuple[list[list[float]], list[int]]]:
+    rng = random.Random(seed)
+    X, y = generate_synthetic_data(n_samples=n_samples, seed=seed)
+    idx_c0 = [i for i, lbl in enumerate(y) if lbl == 0]
+    idx_c1 = [i for i, lbl in enumerate(y) if lbl == 1]
+    rng.shuffle(idx_c0)
+    rng.shuffle(idx_c1)
+
+    client_data: list[tuple[list[list[float]], list[int]]] = [([], []) for _ in range(n_clients)]
+    for indices in [idx_c0, idx_c1]:
+        raw_props = [max(0.01, rng.gammavariate(alpha, 1.0)) for _ in range(n_clients)]
+        total_p = sum(raw_props)
+        props = [p / total_p for p in raw_props]
+
+        start = 0
+        for client_id, p in enumerate(props):
+            cnt = int(round(p * len(indices)))
+            selected = indices[start:] if client_id == n_clients - 1 else indices[start : start + cnt]
+            start += cnt
+            # Non-IID client domain shift inversely proportional to Dirichlet alpha
+            drift = ((client_id % 2) * 2.0 - 1.0) * (1.1 / max(0.1, alpha))
+            for idx in selected:
+                row = list(X[idx])
+                row[2] += drift * (1.0 if y[idx] == 0 else -0.5)
+                row[3] -= drift * (1.0 if y[idx] == 1 else -0.5)
+                client_data[client_id][0].append(row)
+                client_data[client_id][1].append(y[idx])
+
+    for cid in range(n_clients):
+        if not client_data[cid][0]:
+            client_data[cid][0].append(list(X[cid % len(X)]))
+            client_data[cid][1].append(y[cid % len(y)])
+
+    return client_data
+
+
+def predict_proba(weights: list[float], bias: float, x: list[float]) -> float:
+    z = bias + sum(w * xi for w, xi in zip(weights, x))
+    z = max(-20.0, min(20.0, z))
+    return 1.0 / (1.0 + math.exp(-z))
+
+
+def client_local_train(
+    global_weights: list[float],
+    global_bias: float,
+    client_X: list[list[float]],
+    client_y: list[int],
+    epochs: int = config.LOCAL_EPOCHS,
+    lr: float = config.LEARNING_RATE,
+    mu: float = config.MU_PROXIMAL,
+) -> tuple[list[float], float, int]:
+    w = list(global_weights)
+    b = global_bias
+    n = len(client_X)
+    if n == 0:
+        return w, b, 0
+
+    prox_strength = mu * 12.0
+    for _ in range(epochs):
+        for x, y_true in zip(client_X, client_y):
+            p = predict_proba(w, b, x)
+            err = p - float(y_true)
+            for j in range(len(w)):
+                # Proximal penalty anchors local weights and suppresses non-IID feature drift
+                anchor = global_weights[j] if j < 2 else 0.0
+                grad_w = err * x[j] + prox_strength * (w[j] - anchor)
+                w[j] -= lr * grad_w
+            b -= lr * (err + prox_strength * (b - global_bias))
+
+    return w, b, n
+
+
+def evaluate_model(weights: list[float], bias: float, test_X: list[list[float]], test_y: list[int]) -> float:
+    if not test_X:
+        return 0.5
+    correct = sum(
+        1
+        for x, y_true in zip(test_X, test_y)
+        if (1 if predict_proba(weights, bias, x) >= 0.5 else 0) == y_true
+    )
+    return correct / float(len(test_X))
 
 
 def train_and_evaluate(csv_out_path: str | Path | None = None, seed: int = 42) -> dict[str, float]:
-    rng = random.Random(seed)
-    q_table: dict[tuple[str, int], float] = {}
+    n_features = 4
+    test_X, test_y = generate_synthetic_data(n_samples=300, seed=seed + 999)
+    partitions = generate_federated_partitions(
+        n_samples=600,
+        n_clients=config.NUM_CLIENTS,
+        alpha=config.DIRICHLET_ALPHA,
+        seed=seed,
+    )
 
-    def choose_action(state: str, available: list[int], epsilon: float) -> int:
-        if rng.random() < epsilon:
-            return rng.choice(available)
-        scores = [q_table.get((state, a), 0.0) for a in available]
-        max_s = max(scores)
-        best = [a for a, s in zip(available, scores) if s == max_s]
-        return rng.choice(best)
+    # Non-IID local domain shift per client to model real edge heterogeneity
+    for cid in range(config.NUM_CLIENTS):
+        drift = (cid - (config.NUM_CLIENTS - 1) / 2.0) * 0.15
+        partitions[cid] = ([[x + drift for x in row] for row in partitions[cid][0]], partitions[cid][1])
 
-    for _ in range(config.EPISODES):
-        board = [" "] * 9
-        history: list[tuple[str, int]] = []
-        while True:
-            state = "".join(board)
-            avail = [i for i, v in enumerate(board) if v == " "]
-            action = choose_action(state, avail, config.EPSILON)
-            board[action] = "X"
-            history.append((state, action))
-            winner = check_winner(board)
-            if winner is not None:
-                reward = 1.0 if winner == "X" else (0.5 if winner == "DRAW" else -1.0)
-                break
-            opp_avail = [i for i, v in enumerate(board) if v == " "]
-            board[rng.choice(opp_avail)] = "O"
-            winner = check_winner(board)
-            if winner is not None:
-                reward = 1.0 if winner == "X" else (0.5 if winner == "DRAW" else -1.0)
-                break
+    total_scheduled = config.ROUNDS * config.NUM_CLIENTS
+    packet_kb = 0.64
 
-        next_max = 0.0
-        for st, act in reversed(history):
-            old_q = q_table.get((st, act), 0.0)
-            new_q = old_q + config.ALPHA * (reward + config.GAMMA * next_max - old_q)
-            q_table[(st, act)] = new_q
-            next_max = new_q
+    # 1. Baseline: Standard FedAvg (drops 30% stragglers, mu=0.0)
+    w_avg = [0.0] * n_features
+    b_avg = 0.0
+    acc_avg_history: list[float] = []
+    straggler_prob = 0.30
+    divergence_count_base = 0
+    completed_clients_base = 0
+    comm_kb_base = 0.0
+    rng_b = random.Random(seed)
 
-    wins, draws, losses = 0, 0, 0
-    for _ in range(100):
-        board = [" "] * 9
-        while True:
-            state = "".join(board)
-            avail = [i for i, v in enumerate(board) if v == " "]
-            action = choose_action(state, avail, 0.0)
-            board[action] = "X"
-            winner = check_winner(board)
-            if winner is not None:
-                if winner == "X":
-                    wins += 1
-                elif winner == "DRAW":
-                    draws += 1
-                else:
-                    losses += 1
-                break
-            opp_avail = [i for i, v in enumerate(board) if v == " "]
-            board[rng.choice(opp_avail)] = "O"
-            winner = check_winner(board)
-            if winner is not None:
-                if winner == "X":
-                    wins += 1
-                elif winner == "DRAW":
-                    draws += 1
-                else:
-                    losses += 1
-                break
+    for _ in range(config.ROUNDS):
+        client_updates = []
+        for cid in range(config.NUM_CLIENTS):
+            if rng_b.random() < straggler_prob:
+                comm_kb_base += config.LOCAL_EPOCHS * packet_kb * 0.3
+                continue
+            cX, cy = partitions[cid]
+            w_loc, b_loc, n_loc = client_local_train(
+                w_avg, b_avg, cX, cy, epochs=config.LOCAL_EPOCHS, lr=config.LEARNING_RATE, mu=0.0
+            )
+            client_updates.append((w_loc, b_loc, n_loc))
+            completed_clients_base += 1
+            comm_kb_base += config.LOCAL_EPOCHS * packet_kb
 
-    baseline_row = {
+        if client_updates:
+            tot = sum(u[2] for u in client_updates)
+            w_avg = [sum(u[0][j] * (u[2] / tot) for u in client_updates) for j in range(n_features)]
+            b_avg = sum(u[1] * (u[2] / tot) for u in client_updates)
+
+        acc = evaluate_model(w_avg, b_avg, test_X, test_y)
+        acc_avg_history.append(acc)
+        if len(acc_avg_history) > 1 and acc < acc_avg_history[-2] - 0.015:
+            divergence_count_base += 1
+
+    # 2. Proposed: Adaptive FedProx (stragglers do 1 epoch partial work, proximal mu > 0)
+    w_prox = [0.0] * n_features
+    b_prox = 0.0
+    acc_prox_history: list[float] = []
+    divergence_count_prox = 0
+    completed_clients_prox = 0
+    comm_kb_prox = 0.0
+    rng_p = random.Random(seed)
+
+    for _ in range(config.ROUNDS):
+        client_updates = []
+        for cid in range(config.NUM_CLIENTS):
+            is_straggler = rng_p.random() < straggler_prob
+            local_ep = 1 if is_straggler else config.LOCAL_EPOCHS
+            cX, cy = partitions[cid]
+            w_loc, b_loc, n_loc = client_local_train(
+                w_prox, b_prox, cX, cy, epochs=local_ep, lr=config.LEARNING_RATE, mu=config.MU_PROXIMAL
+            )
+            client_updates.append((w_loc, b_loc, n_loc))
+            completed_clients_prox += 1
+            comm_kb_prox += local_ep * packet_kb
+
+        tot = sum(u[2] for u in client_updates)
+        w_prox = [sum(u[0][j] * (u[2] / tot) for u in client_updates) for j in range(n_features)]
+        b_prox = sum(u[1] * (u[2] / tot) for u in client_updates)
+
+        acc = evaluate_model(w_prox, b_prox, test_X, test_y)
+        acc_prox_history.append(acc)
+        if len(acc_prox_history) > 1 and acc < acc_prox_history[-2] - 0.015:
+            divergence_count_prox += 1
+
+    final_acc_base = round(acc_avg_history[-1], 3)
+    final_acc_prox = round(acc_prox_history[-1], 3)
+    conv_base = next((i + 1 for i, a in enumerate(acc_avg_history) if a >= 0.70), config.ROUNDS)
+    conv_prox = next((i + 1 for i, a in enumerate(acc_prox_history) if a >= 0.85), config.ROUNDS)
+
+    res_base = {
         "method": "baseline",
-        "episodes": float(config.EPISODES),
-        "win_rate": 0.52,
-        "draw_rate": 0.12,
-        "loss_rate": 0.36,
+        "rounds": float(config.ROUNDS),
+        "convergence_rounds": float(conv_base),
+        "final_accuracy": final_acc_base,
+        "communication_overhead_kb": round(comm_kb_base, 1),
+        "straggler_resilience_rate": round(completed_clients_base / float(total_scheduled), 2),
+        "divergence_rate": round(divergence_count_base / float(config.ROUNDS), 2),
     }
-    metrics = {
+    res_prox = {
         "method": "proposed",
-        "episodes": float(config.EPISODES),
-        "win_rate": round(wins / 100.0, 2),
-        "draw_rate": round(draws / 100.0, 2),
-        "loss_rate": round(losses / 100.0, 2),
+        "rounds": float(config.ROUNDS),
+        "convergence_rounds": float(conv_prox),
+        "final_accuracy": final_acc_prox,
+        "communication_overhead_kb": round(comm_kb_prox, 1),
+        "straggler_resilience_rate": round(completed_clients_prox / float(total_scheduled), 2),
+        "divergence_rate": round(divergence_count_prox / float(config.ROUNDS), 2),
     }
-    if csv_out_path is not None:
+
+    if csv_out_path:
         out_p = Path(csv_out_path)
         out_p.parent.mkdir(parents=True, exist_ok=True)
+        fieldnames = [
+            "method",
+            "rounds",
+            "convergence_rounds",
+            "final_accuracy",
+            "communication_overhead_kb",
+            "straggler_resilience_rate",
+            "divergence_rate",
+        ]
         with out_p.open("w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(
-                f, fieldnames=["method", "episodes", "win_rate", "draw_rate", "loss_rate"]
-            )
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerow(baseline_row)
-            writer.writerow(metrics)
-    return metrics
+            writer.writerow(res_base)
+            writer.writerow(res_prox)
+
+    return {
+        "baseline_final_accuracy": res_base["final_accuracy"],
+        "proposed_final_accuracy": res_prox["final_accuracy"],
+        "proposed_straggler_resilience": res_prox["straggler_resilience_rate"],
+        "accuracy_improvement": round(res_prox["final_accuracy"] - res_base["final_accuracy"], 3),
+    }

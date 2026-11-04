@@ -91,7 +91,7 @@ class LLMConnectionManager:
         tier_upper = model_tier.upper()
         if provider == "google":
             if tier_upper == "LRM":
-                return os.environ.get("HARNESS_GOOGLE_LRM_MODEL", "gemini-2.5-pro")
+                return os.environ.get("HARNESS_GOOGLE_LRM_MODEL", "gemini-3.6-flash")
             return os.environ.get("HARNESS_GOOGLE_SML_MODEL", "gemini-2.5-flash")
         elif provider == "ollama":
             if tier_upper == "LRM":
@@ -109,6 +109,42 @@ class LLMConnectionManager:
     def select_model_for_tier(self, tier: str, active_provider: str) -> str:
         return self.resolve_model_name(active_provider, tier)
 
+    def get_google_model_pool(self, model_tier: str | None = None, primary_model: str | None = None) -> list[str]:
+        """Return an ordered failover pool of Google models for the given tier (Series 3 for LRM, Series 2 for SML)."""
+        tier = (model_tier or "LRM").upper()
+        if tier == "LRM":
+            env_val = os.environ.get("HARNESS_GOOGLE_LRM_MODELS") or os.environ.get("HARNESS_GOOGLE_LRM_MODEL")
+            defaults = [
+                "gemini-3.6-flash",
+                "gemini-3-flash-preview",
+                "gemini-3.5-flash",
+                "gemini-3.7-flash",
+                "gemini-3.1-flash-lite",
+            ]
+        else:
+            env_val = os.environ.get("HARNESS_GOOGLE_SML_MODELS") or os.environ.get("HARNESS_GOOGLE_SML_MODEL")
+            defaults = [
+                "gemini-2.5-flash",
+                "gemini-2.5-flash-lite",
+                "gemini-flash-latest",
+            ]
+
+        pool: list[str] = []
+        if env_val:
+            for item in env_val.split(","):
+                m = item.strip()
+                if m and m not in pool:
+                    pool.append(m)
+
+        if primary_model and primary_model not in pool:
+            pool.insert(0, primary_model)
+
+        for d in defaults:
+            if d not in pool:
+                pool.append(d)
+
+        return pool
+
     def call_google_gemini(
         self,
         model_name: str,
@@ -116,16 +152,16 @@ class LLMConnectionManager:
         timeout: int = 180,
         system_prompt: str | None = None,
         user_prompt: str | None = None,
+        model_tier: str | None = None,
     ) -> dict[str, Any]:
-        """Call Google Gemini Generative Language API via standard library urllib."""
+        """Call Google Gemini API with dynamic multi-model carousel failover across candidate models on 429/503/404."""
         if not self.api_key:
             raise RuntimeError("GEMINI_API_KEY environment variable is not set")
 
-        clean_model = model_name if model_name.startswith("models/") else f"models/{model_name}"
-        url = (
-            f"https://generativelanguage.googleapis.com/v1beta/{clean_model}:generateContent"
-            f"?key={self.api_key}"
-        )
+        candidates = self.get_google_model_pool(model_tier, primary_model=model_name)
+        if model_name in candidates:
+            candidates.remove(model_name)
+            candidates.insert(0, model_name)
 
         user_content = user_prompt if user_prompt is not None else combined_prompt
         payload: dict[str, Any] = {
@@ -138,53 +174,71 @@ class LLMConnectionManager:
             "generationConfig": {
                 "temperature": 0.2,
                 "responseMimeType": "application/json",
+                "thinkingConfig": {
+                    "thinkingBudget": int(os.environ.get("HARNESS_GOOGLE_THINKING_BUDGET", "0")),
+                },
             },
         }
         if system_prompt:
             payload["systemInstruction"] = {
                 "parts": [{"text": system_prompt}],
             }
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        max_retries = 3
+        body_bytes = json.dumps(payload).encode("utf-8")
+
         last_exc: Exception | None = None
-        for attempt in range(max_retries):
-            try:
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    candidates = data.get("candidates", [])
-                    text = ""
-                    if candidates:
-                        parts = candidates[0].get("content", {}).get("parts", [])
-                        if parts:
-                            text = parts[0].get("text", "")
-                    usage = data.get("usageMetadata", {})
-                    p_tok = int(usage.get("promptTokenCount") or 0)
-                    c_tok = int(usage.get("candidatesTokenCount") or 0)
-                    t_tok = int(usage.get("totalTokenCount") or (p_tok + c_tok))
-                    return {
-                        "status": "ok",
-                        "raw_text": text,
-                        "raw_payload": data,
-                        "prompt_tokens": p_tok,
-                        "completion_tokens": c_tok,
-                        "total_tokens": t_tok,
-                    }
-            except urllib.error.HTTPError as err:
-                last_exc = err
-                # 503 Service Unavailable / 429 Too Many Requests -> retry with backoff
-                if err.code in (503, 429) and attempt < max_retries - 1:
-                    sleep_s = 2.0 * (attempt + 1)
-                    time.sleep(sleep_s)
-                    continue
-                raise
-            except Exception as err:
-                last_exc = err
-                raise
+        for pass_idx in range(2):
+            for model_candidate in candidates:
+                clean_model = model_candidate if model_candidate.startswith("models/") else f"models/{model_candidate}"
+                url = (
+                    f"https://generativelanguage.googleapis.com/v1beta/{clean_model}:generateContent"
+                    f"?key={self.api_key}"
+                )
+                req = urllib.request.Request(
+                    url,
+                    data=body_bytes,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                try:
+                    with urllib.request.urlopen(req, timeout=timeout) as resp:
+                        data = json.loads(resp.read().decode("utf-8"))
+                        candidates_list = data.get("candidates", [])
+                        text = ""
+                        if candidates_list:
+                            parts = candidates_list[0].get("content", {}).get("parts", [])
+                            if parts:
+                                text = parts[0].get("text", "")
+                        usage = data.get("usageMetadata", {})
+                        p_tok = int(usage.get("promptTokenCount") or 0)
+                        c_tok = int(usage.get("candidatesTokenCount") or 0)
+                        t_tok = int(usage.get("totalTokenCount") or (p_tok + c_tok))
+                        return {
+                            "status": "ok",
+                            "model_used": model_candidate,
+                            "raw_text": text,
+                            "raw_payload": data,
+                            "prompt_tokens": p_tok,
+                            "completion_tokens": c_tok,
+                            "total_tokens": t_tok,
+                        }
+                except urllib.error.HTTPError as err:
+                    last_exc = err
+                    if err.code in (429, 503, 404, 410):
+                        print(
+                            f"  [GEMINI CAROUSEL ROTACJA] Model '{clean_model}' zwrocil HTTP {err.code} ({err.reason}). "
+                            f"Natychmiast przelaczam na nastepny model z puli...",
+                            flush=True,
+                        )
+                        continue
+                    raise
+                except Exception as err:
+                    last_exc = err
+                    raise
+
+            if pass_idx == 0:
+                print("  [GEMINI CAROUSEL] Wyczerpano pierwsza runde puli modeli (wszystkie zwrocily 429/503). Czekam 5s przed kolejna runda...", flush=True)
+                time.sleep(5.0)
+
         if last_exc:
             raise last_exc
 
@@ -203,6 +257,7 @@ class LLMConnectionManager:
             "prompt": user_prompt if user_prompt is not None else combined_prompt,
             "stream": False,
             "format": "json",
+            "think": False,
         }
         if system_prompt:
             body_dict["system"] = system_prompt
