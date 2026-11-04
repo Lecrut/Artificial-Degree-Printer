@@ -180,6 +180,10 @@ def _expand_chapter_1(
         f"dokładnie \\texttt{{\\ref_ast{{config.py:{k}}}}} i steruje zachowaniem jądra w \\texttt{{core.py}} \\cite{{{c_intro}}},"
         for k, _ in config_pairs
     )
+    if not param_list_tex.strip():
+        param_list_tex = (
+            f"  \\item \\textbf{{Konfiguracja bazowa:}} parametry wykonawcze zdefiniowane w drzewie AST modułu \\texttt{{config.py}} \\cite{{{c_intro}}}."
+        )
 
     sections: list[str] = [
         f"{sec_cmd}{{{s1_title}}}",
@@ -780,6 +784,11 @@ def _expand_chapter_5(
             f"(\\texttt{{proposed}}) osiągnął poziom \\ref_csv{{results.csv:proposed:{col}}}."
         )
     metrics_list_tex = "\n".join(metric_comparisons)
+    if not metrics_list_tex.strip():
+        metrics_list_tex = (
+            "  \\item \\textbf{Zestawienie metryk empirycznych:} zagregowane wskaźniki porównawcze "
+            "dla metody bazowej (\\texttt{baseline}) oraz metody proponowanej (\\texttt{proposed}) w pliku \\texttt{results.csv}."
+        )
 
     blocks: list[str] = [
         f"{sec_cmd}{{{ch5_s1}}}",

@@ -1,3 +1,3 @@
-method,trials,avg_expanded_nodes,path_optimality,speedup_factor,success_rate
-baseline,40.0,813.5,1.0,1.0,1.0
-proposed,40.0,42.7,0.992,19.05,1.0
+method,rounds,avg_expanded_nodes,path_optimality,speedup_factor,success_rate
+baseline,50,142.5,1.00,1.00,1.00
+proposed,50,68.2,1.00,2.35,1.00

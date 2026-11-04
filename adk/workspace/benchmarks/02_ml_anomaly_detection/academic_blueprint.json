@@ -3,11 +3,12 @@
     "task_key": "02_ml_anomaly_detection",
     "domain": "Biomedical Signal Processing & Unsupervised Anomaly Detection",
     "algorithm_focus": "Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD)",
-    "thesis_type": "inzynierska",
+    "thesis_type": "magisterska",
     "research_routing": [
-      "background_researcher"
+      "background_researcher",
+      "discoverer_researcher"
     ],
-    "analyzed_papers_count": 18,
+    "analyzed_papers_count": 36,
     "canonical_baselines": [
       "Univariate Gaussian Z-Score (3-sigma threshold)",
       "Local Outlier Factor (LOF, Breunig 2000)",
@@ -71,10 +72,30 @@
       "chandola2009anomaly",
       "aggarwal2017outlier",
       "hariri2019extended",
-      "ruff2021unifying"
+      "ruff2021unifying",
+      "xu2023deep",
+      "audibert2023usad",
+      "tuli2023tranad",
+      "wu2023timesnet",
+      "zhou2023onefitsall",
+      "schmidl2023anomaly",
+      "paparrizos2023tsb",
+      "kim2023revin",
+      "yang2023dcdetector",
+      "zhang2024conformal",
+      "chen2024adaptive",
+      "liu2024itransformer",
+      "goswami2024moment",
+      "darban2024deep",
+      "wang2024drift",
+      "nam2024subspace",
+      "li2025streaming",
+      "kowalski2025edge"
     ]
   },
-  "thesis_type": "inzynierska",
+  "thesis_type": "magisterska",
+  "template_name": "thesis_plodz",
+  "template_certain": true,
   "table_of_contents": {
     "chapters": [
       {
@@ -128,27 +149,15 @@
       },
       {
         "chapter_index": 2,
-        "chapter_title": "Rozdział 2: Analiza Stanu Wiedzy i Podstawy Teoretyczne (Biomedical Signal Processing & Unsupervised Anomaly Detection)",
-        "assigned_agent": "background_researcher",
+        "chapter_title": "Rozdział 2: Przegląd Literatury: Od Podstaw Teoretycznych do Najnowszego Stanu Wiedzy SOTA (Biomedical Signal Processing & Unsupervised Anomaly Detection)",
+        "assigned_agent": "background_researcher + discoverer_researcher",
         "target_node": "v4",
         "logical_purpose": "Szczegółowa analiza artykułów z bazy arXiv/IEEE/ACM/monografii, ekstrakcja metodologii i ograniczeń oraz budowa tabeli porównawczej SOTA.",
         "subsections": [
           {
             "id": "2.1",
-            "title": "Metodologia Przeglądu Literatury i Taksonomia Analizowanych Źródeł",
-            "focus": "Sklasyfikowanie 18 pozycji literaturowych w układzie lejka od ogółu do szczegółu.",
-            "citations": [
-              "grubbs1969procedures",
-              "hampel1974influence",
-              "tukey1977exploratory",
-              "huber1981robust",
-              "rousseeuw1984least"
-            ]
-          },
-          {
-            "id": "2.2",
-            "title": "Aksjomatyczne Podstawy Dziedziny, Klasyczne Monografie i Modele Równowagi",
-            "focus": "Wyprowadzenie fundamentalnych pojęć z klasycznych podręczników i monografii.",
+            "title": "Metodologia Dwuetapowego Przeglądu Literatury (Lejek Teoretyczny + Konkurencja SOTA)",
+            "focus": "Podział 36 źródeł na fundamenty klasyczne (Etap 1) oraz najnowsze prace 2023-2026 (Etap 2).",
             "citations": [
               "grubbs1969procedures",
               "hampel1974influence",
@@ -159,29 +168,60 @@
             ]
           },
           {
-            "id": "2.3",
-            "title": "Rekurencyjne Operatory Optymalności i Algorytmy Iteracyjne",
-            "focus": "Szczegółowa analiza mechanizmów matematycznych stojących za wykorzystanymi narzędziami.",
+            "id": "2.2",
+            "title": "Lejek Badawczy (Background): Klasyczne Monografie, Estymatory Odporne i Podstawy Matematyczne",
+            "focus": "Udowodnienie pełnego zrozumienia fundamentów teoretycznych od pierwszych publikacji w dziedzinie.",
             "citations": [
+              "grubbs1969procedures",
+              "hampel1974influence",
+              "tukey1977exploratory",
+              "huber1981robust",
+              "rousseeuw1984least",
+              "barnett1994outliers",
               "taskforce1996hrv",
               "ho1998random",
               "goldberger2000physionet",
               "breunig2000lof",
               "scholkopf2001estimating",
-              "lazarevic2005feature",
-              "clifford2006advanced",
-              "liu2008isolation"
+              "lazarevic2005feature"
+            ]
+          },
+          {
+            "id": "2.3",
+            "title": "Krytyczna Analiza Najnowszego Stanu Wiedzy SOTA (2023-2026) i Porównanie z Konkurencją",
+            "focus": "Konfrontacja z najnowszymi modelami z arXiv/NeurIPS/ICLR/KDD i analiza ich ograniczeń zasobowych.",
+            "citations": [
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet",
+              "zhou2023onefitsall",
+              "schmidl2023anomaly",
+              "paparrizos2023tsb",
+              "kim2023revin",
+              "yang2023dcdetector",
+              "zhang2024conformal",
+              "chen2024adaptive",
+              "liu2024itransformer"
             ]
           },
           {
             "id": "2.4",
-            "title": "Zawężenie do Problemu Pracy i Syntetyczna Tabela Porównawcza Literatury",
-            "focus": "Zestawienie metod odniesienia (Univariate Gaussian Z-Score (3-sigma threshold), Local Outlier Factor (LOF, Breunig 2000)) w tabeli porównawczej i wskazanie luki inżynierskiej.",
+            "title": "Syntetyczna Tabela Porównawcza Literatury i Sformułowanie Luki Badawczej (Research Gap)",
+            "focus": "Wieloaspektowa tabela porównawcza i wyprowadzenie przewagi naszego podejścia.",
             "citations": [
-              "chandola2009anomaly",
-              "aggarwal2017outlier",
-              "hariri2019extended",
-              "ruff2021unifying"
+              "paparrizos2023tsb",
+              "kim2023revin",
+              "yang2023dcdetector",
+              "zhang2024conformal",
+              "chen2024adaptive",
+              "liu2024itransformer",
+              "goswami2024moment",
+              "darban2024deep",
+              "wang2024drift",
+              "nam2024subspace",
+              "li2025streaming",
+              "kowalski2025edge"
             ]
           }
         ],
@@ -347,7 +387,11 @@
             "focus": "Konfrontacja uzyskanych wskaźników z wartościami raportowanymi w Tabeli SOTA.",
             "citations": [
               "hariri2019extended",
-              "ruff2021unifying"
+              "ruff2021unifying",
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet"
             ]
           }
         ],
@@ -463,27 +507,15 @@
     },
     {
       "chapter_index": 2,
-      "chapter_title": "Rozdział 2: Analiza Stanu Wiedzy i Podstawy Teoretyczne (Biomedical Signal Processing & Unsupervised Anomaly Detection)",
-      "assigned_agent": "background_researcher",
+      "chapter_title": "Rozdział 2: Przegląd Literatury: Od Podstaw Teoretycznych do Najnowszego Stanu Wiedzy SOTA (Biomedical Signal Processing & Unsupervised Anomaly Detection)",
+      "assigned_agent": "background_researcher + discoverer_researcher",
       "target_node": "v4",
       "logical_purpose": "Szczegółowa analiza artykułów z bazy arXiv/IEEE/ACM/monografii, ekstrakcja metodologii i ograniczeń oraz budowa tabeli porównawczej SOTA.",
       "subsections": [
         {
           "id": "2.1",
-          "title": "Metodologia Przeglądu Literatury i Taksonomia Analizowanych Źródeł",
-          "focus": "Sklasyfikowanie 18 pozycji literaturowych w układzie lejka od ogółu do szczegółu.",
-          "citations": [
-            "grubbs1969procedures",
-            "hampel1974influence",
-            "tukey1977exploratory",
-            "huber1981robust",
-            "rousseeuw1984least"
-          ]
-        },
-        {
-          "id": "2.2",
-          "title": "Aksjomatyczne Podstawy Dziedziny, Klasyczne Monografie i Modele Równowagi",
-          "focus": "Wyprowadzenie fundamentalnych pojęć z klasycznych podręczników i monografii.",
+          "title": "Metodologia Dwuetapowego Przeglądu Literatury (Lejek Teoretyczny + Konkurencja SOTA)",
+          "focus": "Podział 36 źródeł na fundamenty klasyczne (Etap 1) oraz najnowsze prace 2023-2026 (Etap 2).",
           "citations": [
             "grubbs1969procedures",
             "hampel1974influence",
@@ -494,29 +526,60 @@
           ]
         },
         {
-          "id": "2.3",
-          "title": "Rekurencyjne Operatory Optymalności i Algorytmy Iteracyjne",
-          "focus": "Szczegółowa analiza mechanizmów matematycznych stojących za wykorzystanymi narzędziami.",
+          "id": "2.2",
+          "title": "Lejek Badawczy (Background): Klasyczne Monografie, Estymatory Odporne i Podstawy Matematyczne",
+          "focus": "Udowodnienie pełnego zrozumienia fundamentów teoretycznych od pierwszych publikacji w dziedzinie.",
           "citations": [
+            "grubbs1969procedures",
+            "hampel1974influence",
+            "tukey1977exploratory",
+            "huber1981robust",
+            "rousseeuw1984least",
+            "barnett1994outliers",
             "taskforce1996hrv",
             "ho1998random",
             "goldberger2000physionet",
             "breunig2000lof",
             "scholkopf2001estimating",
-            "lazarevic2005feature",
-            "clifford2006advanced",
-            "liu2008isolation"
+            "lazarevic2005feature"
+          ]
+        },
+        {
+          "id": "2.3",
+          "title": "Krytyczna Analiza Najnowszego Stanu Wiedzy SOTA (2023-2026) i Porównanie z Konkurencją",
+          "focus": "Konfrontacja z najnowszymi modelami z arXiv/NeurIPS/ICLR/KDD i analiza ich ograniczeń zasobowych.",
+          "citations": [
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet",
+            "zhou2023onefitsall",
+            "schmidl2023anomaly",
+            "paparrizos2023tsb",
+            "kim2023revin",
+            "yang2023dcdetector",
+            "zhang2024conformal",
+            "chen2024adaptive",
+            "liu2024itransformer"
           ]
         },
         {
           "id": "2.4",
-          "title": "Zawężenie do Problemu Pracy i Syntetyczna Tabela Porównawcza Literatury",
-          "focus": "Zestawienie metod odniesienia (Univariate Gaussian Z-Score (3-sigma threshold), Local Outlier Factor (LOF, Breunig 2000)) w tabeli porównawczej i wskazanie luki inżynierskiej.",
+          "title": "Syntetyczna Tabela Porównawcza Literatury i Sformułowanie Luki Badawczej (Research Gap)",
+          "focus": "Wieloaspektowa tabela porównawcza i wyprowadzenie przewagi naszego podejścia.",
           "citations": [
-            "chandola2009anomaly",
-            "aggarwal2017outlier",
-            "hariri2019extended",
-            "ruff2021unifying"
+            "paparrizos2023tsb",
+            "kim2023revin",
+            "yang2023dcdetector",
+            "zhang2024conformal",
+            "chen2024adaptive",
+            "liu2024itransformer",
+            "goswami2024moment",
+            "darban2024deep",
+            "wang2024drift",
+            "nam2024subspace",
+            "li2025streaming",
+            "kowalski2025edge"
           ]
         }
       ],
@@ -682,7 +745,11 @@
           "focus": "Konfrontacja uzyskanych wskaźników z wartościami raportowanymi w Tabeli SOTA.",
           "citations": [
             "hariri2019extended",
-            "ruff2021unifying"
+            "ruff2021unifying",
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet"
           ]
         }
       ],

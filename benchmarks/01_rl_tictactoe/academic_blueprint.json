@@ -79,6 +79,8 @@
     ]
   },
   "thesis_type": "inzynierska",
+  "template_name": "thesis_plodz",
+  "template_certain": true,
   "table_of_contents": {
     "chapters": [
       {

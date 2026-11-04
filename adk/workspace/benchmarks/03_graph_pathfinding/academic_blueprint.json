@@ -1,11 +1,4 @@
 {
-  "thesis_title": "Heurystyczna Optymalizacja Ścieżek na Siatkach Przestrzennych: Ważony Algorytm A* z Metryką Oktilową",
-  "thesis_statement": "This thesis evaluates Weighted Octile A* pathfinding on 8-connected obstacle grids against uninformed Dijkstra search, demonstrating over 5x reduction in vertex expansions while preserving path optimality.",
-  "baseline_comparison": "Comparative benchmark in Graph Algorithms & Heuristic Search: ",
-  "planned_visualizations": [
-    "TikZ Architecture Diagram",
-    "Matplotlib Vector Comparison Chart"
-  ],
   "literature_recon": {
     "task_key": "03_graph_pathfinding",
     "domain": "Graph Algorithms & Heuristic Search Optimization",
@@ -85,6 +78,9 @@
       "nowak2025deterministic"
     ]
   },
+  "thesis_type": "paper",
+  "template_name": "paper_ieee",
+  "template_certain": true,
   "table_of_contents": {
     "chapters": [
       {
@@ -417,7 +413,6 @@
       }
     ]
   },
-  "thesis_type": "paper",
   "planned_chapters": [
     {
       "chapter_index": 1,

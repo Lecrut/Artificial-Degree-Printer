@@ -13,6 +13,11 @@ from adk.core.connection import LLMConnectionManager
 from adk.core.llm import get_llm_telemetry, reset_llm_telemetry
 from adk.core.logger import get_process_logger
 from adk.orchestrator import NeuroSymbolicOrchestrator
+from adk.tools.building.template_manager import (
+    detect_template_from_prompt,
+    parse_template_flag,
+    prompt_user_for_template,
+)
 
 DEFAULT_BENCHMARK_TASK = TICTACTOE_BENCHMARK_PROMPT
 
@@ -105,6 +110,7 @@ def run_scenario(
     adk_root: str | Path | None = None,
     interactive_gates: bool = False,
     multi_cycle_waves: bool = False,
+    template_override: str | None = None,
 ) -> dict[str, Any]:
     """Run one of the 3 neuro-symbolic harness scenarios and return structured results."""
     if scenario_key not in SCENARIO_DEFINITIONS:
@@ -115,6 +121,18 @@ def run_scenario(
     cfg = SCENARIO_DEFINITIONS[scenario_key]
     logger = get_process_logger()
     logger.log_step("MAIN_SCENARIO", f"=== URUCHAMIANIE: {cfg['name']} (provider={provider}, multi_cycle_waves={multi_cycle_waves}) ===")
+
+    tpl_name, t_type = parse_template_flag(template_override)
+    if tpl_name == "ask":
+        tpl_name, t_type = prompt_user_for_template(context_label=cfg["name"])
+    elif tpl_name is None and cfg["include_docs"]:
+        det = detect_template_from_prompt(task_prompt)
+        if not det.get("is_certain", False):
+            tpl_name, t_type = prompt_user_for_template(
+                context_label=cfg["name"],
+                default_template=str(det.get("template_name") or "thesis_plodz"),
+                default_thesis_type=str(det.get("thesis_type") or "inzynierska"),
+            )
 
     reset_llm_telemetry()
     _reset_volatile_state(adk_root)
@@ -131,6 +149,8 @@ def run_scenario(
         simulate_first_attempt_fail=simulate_fail,
         interactive_gates=interactive_gates,
         multi_cycle_waves=multi_cycle_waves,
+        template_name=tpl_name,
+        thesis_type=t_type,
     )
     result["scenario_name"] = cfg["name"]
 
@@ -218,6 +238,18 @@ def main() -> None:
         help="Uruchom wybrane zadanie z pakietu benchmarkowego (np. '1'/'rl', '2'/'ml', '3'/'graph', '4'/'fed').",
     )
     parser.add_argument(
+        "--template",
+        "-T",
+        default=None,
+        help=(
+            "Szablon dokumentu LaTeX: "
+            "'plodz' / 'inzynierska' (Praca Inżynierska PŁ), "
+            "'magisterska' (Praca Magisterska PŁ), "
+            "'ieee' / 'paper' (Artykuł Naukowy IEEEtran), "
+            "lub 'ask' (zapytaj interaktywnie w konsoli)."
+        ),
+    )
+    parser.add_argument(
         "--verbose-llm",
         "-v",
         action="store_true",
@@ -252,7 +284,11 @@ def main() -> None:
 
     if args.benchmark_suite or args.benchmark_task:
         selected = [k.strip() for k in args.benchmark_task.split(',') if k.strip()] if args.benchmark_task else None
-        suite_res = run_benchmark_suite(task_keys=selected, provider=args.provider)
+        suite_res = run_benchmark_suite(
+            task_keys=selected,
+            provider=args.provider,
+            template_override=args.template,
+        )
         print("=" * 80)
         print(
             f"ZAKOŃCZONO PAKIET BENCHMARKÓW ADK (provider={suite_res['provider']}, "
@@ -313,6 +349,7 @@ def main() -> None:
             simulate_fail=not args.no_fail_sim,
             interactive_gates=args.interactive_gates,
             multi_cycle_waves=not args.single_cycle,
+            template_override=args.template,
         )
         print("=" * 80)
         print(f"ZAKONCZONO:   {res['scenario_name']}")

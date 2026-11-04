@@ -1,11 +1,4 @@
 {
-  "thesis_title": "Optymalizacja Uczenia Sfederowanego w Warunkach Niejednorodności Danych: Adaptacyjny FedProx",
-  "thesis_statement": "This thesis evaluates the convergence stability and straggler resilience of Adaptive FedProx under Dirichlet non-IID data heterogeneity compared to standard FedAvg across 25 communication rounds.",
-  "baseline_comparison": "Comparative benchmark in Distributed Systems & Federated Machine Learning: ",
-  "planned_visualizations": [
-    "TikZ Architecture Diagram",
-    "Matplotlib Vector Comparison Chart"
-  ],
   "literature_recon": {
     "task_key": "02_ml_anomaly_detection",
     "domain": "Biomedical Signal Processing & Unsupervised Anomaly Detection",
@@ -81,6 +74,9 @@
       "kowalski2025edge"
     ]
   },
+  "thesis_type": "paper",
+  "template_name": "paper_ieee",
+  "template_certain": true,
   "table_of_contents": {
     "chapters": [
       {
@@ -92,14 +88,14 @@
         "subsections": [
           {
             "id": "1.1",
-            "title": "Kontekst Dziedzinowy (Distributed Systems & Federated Machine Learning), Geneza Problemu i Motywacja Badawcza",
-            "focus": "Wprowadzenie do problemu: Adaptacyjna Optymalizacja Proksymalna (Adaptive FedProx) w Warunkach Non-IID i Stragglerów na tle wymagań determinizmu i weryfikowalności.",
+            "title": "Kontekst Dziedzinowy (Biomedical Signal Processing & Unsupervised Anomaly Detection), Geneza Problemu i Motywacja Badawcza",
+            "focus": "Wprowadzenie do problemu: Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD) na tle wymagań determinizmu i weryfikowalności.",
             "citations": [
-              "mcmahan2017communication",
-              "li2020federated",
-              "karimireddy2020scaffold",
-              "wang2020fednova",
-              "li2021moon"
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet",
+              "zhou2023onefitsall"
             ]
           },
           {
@@ -107,23 +103,23 @@
             "title": "Formalne Sformułowanie Problemu Obliczeniowego i Przestrzeni Konfiguracji",
             "focus": "Zapis zadania optymalizacji wielokryterialnej i powiązanie ze stałymi AST z config.py.",
             "citations": [
-              "acar2021federated",
-              "wang2023tackling",
-              "zhao2023noniid",
-              "reddi2023adaptive",
-              "jhunjhunwala2023fedexp"
+              "schmidl2023anomaly",
+              "paparrizos2023tsb",
+              "kim2023revin",
+              "yang2023dcdetector",
+              "zhang2024conformal"
             ]
           },
           {
             "id": "1.3",
             "title": "Główna Teza Pracy, Hipotezy Badawcze (H1-H4) i Kryteria Weryfikacji",
-            "focus": "Sformułowanie hipotez weryfikowanych przez metryki rounds, convergence_rounds, final_accuracy, communication_overhead_kb.",
+            "focus": "Sformułowanie hipotez weryfikowanych przez metryki precision, recall, f1_score, false_alarm_rate.",
             "citations": [
-              "mishchenko2023proxskip",
-              "huang2023federated",
-              "tan2023towards",
-              "nguyen2023fedbuff",
-              "karimireddy2024scaffold"
+              "chen2024adaptive",
+              "liu2024itransformer",
+              "goswami2024moment",
+              "darban2024deep",
+              "wang2024drift"
             ]
           }
         ],
@@ -134,7 +130,7 @@
       },
       {
         "chapter_index": 2,
-        "chapter_title": "Rozdział 2: Related Work & Competitive SOTA Analysis (2023-2026) in Distributed Systems & Federated Machine Learning",
+        "chapter_title": "Rozdział 2: Related Work & Competitive SOTA Analysis (2023-2026) in Biomedical Signal Processing & Unsupervised Anomaly Detection",
         "assigned_agent": "discoverer_researcher",
         "target_node": "v4",
         "logical_purpose": "Szczegółowa analiza artykułów z bazy arXiv/IEEE/ACM/monografii, ekstrakcja metodologii i ograniczeń oraz budowa tabeli porównawczej SOTA.",
@@ -142,16 +138,16 @@
           {
             "id": "2.1",
             "title": "Współczesne Metody Konkurencyjne, Architektury Referencyjne i Punkty Odniesienia (2023-2026)",
-            "focus": "Bezpośrednie zestawienie z konkurencyjnymi metodami (Standard Federated Averaging (FedAvg, McMahan 2017, mu = 0.0), Static FedProx (Li 2020) & SCAFFOLD Variance Reduction (Karimireddy 2020), FedNova (Wang 2020), MOON (Li 2021) & FedDyn (Acar 2021)) bez podręcznikowego wstępu.",
+            "focus": "Bezpośrednie zestawienie z konkurencyjnymi metodami (Univariate Gaussian Z-Score (3-sigma threshold), Local Outlier Factor (LOF, Breunig 2000), Isolation Forest (Liu 2008) & Deep Isolation Forest (Xu 2023)) bez podręcznikowego wstępu.",
             "citations": [
-              "mcmahan2017communication",
-              "li2020federated",
-              "karimireddy2020scaffold",
-              "wang2020fednova",
-              "li2021moon",
-              "acar2021federated",
-              "wang2023tackling",
-              "zhao2023noniid"
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet",
+              "zhou2023onefitsall",
+              "schmidl2023anomaly",
+              "paparrizos2023tsb",
+              "kim2023revin"
             ]
           },
           {
@@ -159,29 +155,23 @@
             "title": "Analiza Złożoności Obliczeniowej, Narzutu Pamięciowego i Wąskich Gardeł Metod SOTA",
             "focus": "Wykazanie ograniczeń obliczeniowych i niestabilności konkurencyjnych rozwiązań z ostatnich lat.",
             "citations": [
-              "reddi2023adaptive",
-              "jhunjhunwala2023fedexp",
-              "mishchenko2023proxskip",
-              "huang2023federated",
-              "tan2023towards",
-              "nguyen2023fedbuff",
-              "karimireddy2024scaffold",
-              "kairouz2024advances"
+              "yang2023dcdetector",
+              "zhang2024conformal",
+              "chen2024adaptive",
+              "liu2024itransformer",
+              "goswami2024moment",
+              "darban2024deep",
+              "wang2024drift",
+              "nam2024subspace"
             ]
           },
           {
             "id": "2.3",
             "title": "Syntetyczna Tabela Porównawcza SOTA i Pozycjonowanie Naszego Rozwiązania",
-            "focus": "Tabela porównawcza dla 24 prac i uzasadnienie wyższości proponowanego algorytmu.",
+            "focus": "Tabela porównawcza dla 18 prac i uzasadnienie wyższości proponowanego algorytmu.",
             "citations": [
-              "li2024fedacg",
-              "zhang2024fedala",
-              "chen2024straggler",
-              "sun2024momentum",
-              "wu2024asynchronous",
-              "malinovsky2024server",
-              "liu2025variance",
-              "kowalczyk2025zero"
+              "li2025streaming",
+              "kowalski2025edge"
             ]
           }
         ],
@@ -195,29 +185,29 @@
         "chapter_title": "Rozdział 3: Architektura Systemu i Formalizm Matematyczny",
         "assigned_agent": "seed_writer",
         "target_node": "v4",
-        "logical_purpose": "Wyprowadzenie modelu matematycznego dla: Adaptacyjna Optymalizacja Proksymalna (Adaptive FedProx) w Warunkach Non-IID i Stragglerów, sformułowanie Lematu 1 i Twierdzeń 1-2 wraz z dowodami oraz schematu TikZ.",
+        "logical_purpose": "Wyprowadzenie modelu matematycznego dla: Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD), sformułowanie Lematu 1 i Twierdzeń 1-2 wraz z dowodami oraz schematu TikZ.",
         "subsections": [
           {
             "id": "3.1",
             "title": "Koncepcja Architektoniczna, Schemat Przepływu Danych (TikZ) i Dekompozycja Modułowa",
             "focus": "Opis współdziałania modułów config.py, core.py, test_core.py oraz results.csv.",
             "citations": [
-              "mcmahan2017communication",
-              "li2020federated",
-              "karimireddy2020scaffold",
-              "wang2020fednova"
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet"
             ]
           },
           {
             "id": "3.2",
-            "title": "Formalny Model Matematyczny i Równania Operatorowe (Adaptacyjna Optymalizacja Proksymalna (Adaptive FedProx) w Warunkach Non-IID i Stragglerów)",
+            "title": "Formalny Model Matematyczny i Równania Operatorowe (Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD))",
             "focus": "Ścisły zapis operatora aktualizacji stanu i funkcji kosztu/celu.",
             "citations": [
-              "li2021moon",
-              "acar2021federated",
-              "wang2023tackling",
-              "zhao2023noniid",
-              "reddi2023adaptive"
+              "zhou2023onefitsall",
+              "schmidl2023anomaly",
+              "paparrizos2023tsb",
+              "kim2023revin",
+              "yang2023dcdetector"
             ]
           },
           {
@@ -225,11 +215,11 @@
             "title": "Własności Analityczne: Lemat o Ograniczoności oraz Twierdzenia o Zbieżności z Dowodami",
             "focus": "Formalne dowody matematyczne krok po kroku wykazujące przewagę nad metodą bazową.",
             "citations": [
-              "jhunjhunwala2023fedexp",
-              "mishchenko2023proxskip",
-              "huang2023federated",
-              "tan2023towards",
-              "nguyen2023fedbuff"
+              "zhang2024conformal",
+              "chen2024adaptive",
+              "liu2024itransformer",
+              "goswami2024moment",
+              "darban2024deep"
             ]
           },
           {
@@ -237,10 +227,10 @@
             "title": "Analiza Złożoności Obliczeniowej (Czasowej i Pamięciowej)",
             "focus": "Oszacowanie asymptotyczne O(...) względem rozmiaru stanu i parametrów z config.py.",
             "citations": [
-              "karimireddy2024scaffold",
-              "kairouz2024advances",
-              "li2024fedacg",
-              "zhang2024fedala"
+              "wang2024drift",
+              "nam2024subspace",
+              "li2025streaming",
+              "kowalski2025edge"
             ]
           }
         ],
@@ -262,10 +252,10 @@
             "title": "Struktura Projektu i Organizacja Modułów Wykonywalnych w Pythonie 3.12+",
             "focus": "Architektura czysto pythonowa o zerowym narzucie zewnętrznych kompilatorów C/C++.",
             "citations": [
-              "karimireddy2020scaffold",
-              "wang2020fednova",
-              "li2021moon",
-              "acar2021federated"
+              "tuli2023tranad",
+              "wu2023timesnet",
+              "zhou2023onefitsall",
+              "schmidl2023anomaly"
             ]
           },
           {
@@ -273,11 +263,11 @@
             "title": "Analiza Drzewa Składniowego AST i Specyfikacja Procedur w Module core.py",
             "focus": "Szczegółowy opis sygnatur, argumentów, pętli i instrukcji każdej funkcji z core.py.",
             "citations": [
-              "wang2023tackling",
-              "zhao2023noniid",
-              "reddi2023adaptive",
-              "jhunjhunwala2023fedexp",
-              "mishchenko2023proxskip"
+              "paparrizos2023tsb",
+              "kim2023revin",
+              "yang2023dcdetector",
+              "zhang2024conformal",
+              "chen2024adaptive"
             ]
           },
           {
@@ -285,10 +275,10 @@
             "title": "Powiązanie Stałych Konfiguracyjnych z Logiką Wykonawczą i Testami Jednostkowymi",
             "focus": "Mapowanie symboli \\ref_ast{config.py:...} oraz weryfikacja niezmienników w test_core.py.",
             "citations": [
-              "huang2023federated",
-              "tan2023towards",
-              "nguyen2023fedbuff",
-              "karimireddy2024scaffold"
+              "liu2024itransformer",
+              "goswami2024moment",
+              "darban2024deep",
+              "wang2024drift"
             ]
           }
         ],
@@ -302,31 +292,31 @@
         "chapter_title": "Rozdział 5: Badania Eksperymentalne, Studium Ablacyjne i Dyskusja Wyników",
         "assigned_agent": "seed_writer",
         "target_node": "v4",
-        "logical_purpose": "Prezentacja wyników z results.csv (rounds, convergence_rounds, final_accuracy, communication_overhead_kb, straggler_resilience_rate, divergence_rate), analiza wrażliwości hiperparametrów i bezpośrednie porównanie z literaturą.",
+        "logical_purpose": "Prezentacja wyników z results.csv (precision, recall, f1_score, false_alarm_rate), analiza wrażliwości hiperparametrów i bezpośrednie porównanie z literaturą.",
         "subsections": [
           {
             "id": "5.1",
             "title": "Metodologia Badań Eksperymentalnych, Zbiory Danych i Protokół Ewaluacyjny (seed=42)",
-            "focus": "Opis środowiska testowego (Dirichlet non-IID partitioned client clusters (alpha = DIRICHLET_ALPHA) with 25% straggler dropout, LEAF / Federated EMNIST / CIFAR non-IID benchmarks).",
+            "focus": "Opis środowiska testowego (Multi-channel physiological telemetry (HR, HRV-RMSSD, SpO2), MIT-BIH Arrhythmia & PhysioNet ICU streams).",
             "citations": [
-              "mcmahan2017communication",
-              "li2020federated",
-              "karimireddy2020scaffold",
-              "wang2020fednova",
-              "li2021moon"
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet",
+              "zhou2023onefitsall"
             ]
           },
           {
             "id": "5.2",
-            "title": "Analiza Porównawcza Wyników Empirycznych: Proposed vs. Baseline (rounds, convergence_rounds, final_accuracy, communication_overhead_kb)",
+            "title": "Analiza Porównawcza Wyników Empirycznych: Proposed vs. Baseline (precision, recall, f1_score, false_alarm_rate)",
             "focus": "Zestawienie tabelaryczne i wizualizacja wektorowa \\ref_fig{figures/comparison_chart.pdf}.",
             "citations": [
-              "acar2021federated",
-              "wang2023tackling",
-              "zhao2023noniid",
-              "reddi2023adaptive",
-              "jhunjhunwala2023fedexp",
-              "mishchenko2023proxskip"
+              "schmidl2023anomaly",
+              "paparrizos2023tsb",
+              "kim2023revin",
+              "yang2023dcdetector",
+              "zhang2024conformal",
+              "chen2024adaptive"
             ]
           },
           {
@@ -334,11 +324,11 @@
             "title": "Wielowymiarowe Studium Ablacyjne i Analiza Wrażliwości Hiperparametrów",
             "focus": "Wpływ poszczególnych stałych z config.py na stabilność i czas wykonania.",
             "citations": [
-              "huang2023federated",
-              "tan2023towards",
-              "nguyen2023fedbuff",
-              "karimireddy2024scaffold",
-              "kairouz2024advances"
+              "liu2024itransformer",
+              "goswami2024moment",
+              "darban2024deep",
+              "wang2024drift",
+              "nam2024subspace"
             ]
           },
           {
@@ -346,12 +336,8 @@
             "title": "Dyskusja Wyników na Tle Literatury z Bazy arXiv i Konferencji SOTA",
             "focus": "Konfrontacja uzyskanych wskaźników z wartościami raportowanymi w Tabeli SOTA.",
             "citations": [
-              "li2024fedacg",
-              "zhang2024fedala",
-              "chen2024straggler",
-              "sun2024momentum",
-              "wu2024asynchronous",
-              "malinovsky2024server"
+              "li2025streaming",
+              "kowalski2025edge"
             ]
           }
         ],
@@ -374,12 +360,12 @@
             "title": "Syntetyczne Podsumowanie Wyników i Formalna Weryfikacja Hipotez (H1-H4)",
             "focus": "Dowodowe potwierdzenie tezy pracy w oparciu o kod AST i macierz results.csv.",
             "citations": [
-              "mcmahan2017communication",
-              "li2020federated",
-              "karimireddy2020scaffold",
-              "wang2020fednova",
-              "li2021moon",
-              "acar2021federated"
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet",
+              "zhou2023onefitsall",
+              "schmidl2023anomaly"
             ]
           },
           {
@@ -387,12 +373,12 @@
             "title": "Analiza Zagrożeń dla Trafności Badań (Internal & External Threats to Validity)",
             "focus": "Ocena determinizmu, skalowalności oraz założeń modelowych.",
             "citations": [
-              "mcmahan2017communication",
-              "li2020federated",
-              "karimireddy2020scaffold",
-              "wang2020fednova",
-              "li2021moon",
-              "acar2021federated"
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet",
+              "zhou2023onefitsall",
+              "schmidl2023anomaly"
             ]
           },
           {
@@ -400,12 +386,12 @@
             "title": "Kierunki Dalszych Prac Badawczych i Rozwojowych",
             "focus": "Perspektywy integracji z solwerami formalnymi i wdrożeń brzegowych.",
             "citations": [
-              "mcmahan2017communication",
-              "li2020federated",
-              "karimireddy2020scaffold",
-              "wang2020fednova",
-              "li2021moon",
-              "acar2021federated"
+              "xu2023deep",
+              "audibert2023usad",
+              "tuli2023tranad",
+              "wu2023timesnet",
+              "zhou2023onefitsall",
+              "schmidl2023anomaly"
             ]
           }
         ],
@@ -415,7 +401,6 @@
       }
     ]
   },
-  "thesis_type": "paper",
   "planned_chapters": [
     {
       "chapter_index": 1,
@@ -426,14 +411,14 @@
       "subsections": [
         {
           "id": "1.1",
-          "title": "Kontekst Dziedzinowy (Distributed Systems & Federated Machine Learning), Geneza Problemu i Motywacja Badawcza",
-          "focus": "Wprowadzenie do problemu: Adaptacyjna Optymalizacja Proksymalna (Adaptive FedProx) w Warunkach Non-IID i Stragglerów na tle wymagań determinizmu i weryfikowalności.",
+          "title": "Kontekst Dziedzinowy (Biomedical Signal Processing & Unsupervised Anomaly Detection), Geneza Problemu i Motywacja Badawcza",
+          "focus": "Wprowadzenie do problemu: Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD) na tle wymagań determinizmu i weryfikowalności.",
           "citations": [
-            "mcmahan2017communication",
-            "li2020federated",
-            "karimireddy2020scaffold",
-            "wang2020fednova",
-            "li2021moon"
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet",
+            "zhou2023onefitsall"
           ]
         },
         {
@@ -441,23 +426,23 @@
           "title": "Formalne Sformułowanie Problemu Obliczeniowego i Przestrzeni Konfiguracji",
           "focus": "Zapis zadania optymalizacji wielokryterialnej i powiązanie ze stałymi AST z config.py.",
           "citations": [
-            "acar2021federated",
-            "wang2023tackling",
-            "zhao2023noniid",
-            "reddi2023adaptive",
-            "jhunjhunwala2023fedexp"
+            "schmidl2023anomaly",
+            "paparrizos2023tsb",
+            "kim2023revin",
+            "yang2023dcdetector",
+            "zhang2024conformal"
           ]
         },
         {
           "id": "1.3",
           "title": "Główna Teza Pracy, Hipotezy Badawcze (H1-H4) i Kryteria Weryfikacji",
-          "focus": "Sformułowanie hipotez weryfikowanych przez metryki rounds, convergence_rounds, final_accuracy, communication_overhead_kb.",
+          "focus": "Sformułowanie hipotez weryfikowanych przez metryki precision, recall, f1_score, false_alarm_rate.",
           "citations": [
-            "mishchenko2023proxskip",
-            "huang2023federated",
-            "tan2023towards",
-            "nguyen2023fedbuff",
-            "karimireddy2024scaffold"
+            "chen2024adaptive",
+            "liu2024itransformer",
+            "goswami2024moment",
+            "darban2024deep",
+            "wang2024drift"
           ]
         }
       ],
@@ -468,7 +453,7 @@
     },
     {
       "chapter_index": 2,
-      "chapter_title": "Rozdział 2: Related Work & Competitive SOTA Analysis (2023-2026) in Distributed Systems & Federated Machine Learning",
+      "chapter_title": "Rozdział 2: Related Work & Competitive SOTA Analysis (2023-2026) in Biomedical Signal Processing & Unsupervised Anomaly Detection",
       "assigned_agent": "discoverer_researcher",
       "target_node": "v4",
       "logical_purpose": "Szczegółowa analiza artykułów z bazy arXiv/IEEE/ACM/monografii, ekstrakcja metodologii i ograniczeń oraz budowa tabeli porównawczej SOTA.",
@@ -476,16 +461,16 @@
         {
           "id": "2.1",
           "title": "Współczesne Metody Konkurencyjne, Architektury Referencyjne i Punkty Odniesienia (2023-2026)",
-          "focus": "Bezpośrednie zestawienie z konkurencyjnymi metodami (Standard Federated Averaging (FedAvg, McMahan 2017, mu = 0.0), Static FedProx (Li 2020) & SCAFFOLD Variance Reduction (Karimireddy 2020), FedNova (Wang 2020), MOON (Li 2021) & FedDyn (Acar 2021)) bez podręcznikowego wstępu.",
+          "focus": "Bezpośrednie zestawienie z konkurencyjnymi metodami (Univariate Gaussian Z-Score (3-sigma threshold), Local Outlier Factor (LOF, Breunig 2000), Isolation Forest (Liu 2008) & Deep Isolation Forest (Xu 2023)) bez podręcznikowego wstępu.",
           "citations": [
-            "mcmahan2017communication",
-            "li2020federated",
-            "karimireddy2020scaffold",
-            "wang2020fednova",
-            "li2021moon",
-            "acar2021federated",
-            "wang2023tackling",
-            "zhao2023noniid"
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet",
+            "zhou2023onefitsall",
+            "schmidl2023anomaly",
+            "paparrizos2023tsb",
+            "kim2023revin"
           ]
         },
         {
@@ -493,29 +478,23 @@
           "title": "Analiza Złożoności Obliczeniowej, Narzutu Pamięciowego i Wąskich Gardeł Metod SOTA",
           "focus": "Wykazanie ograniczeń obliczeniowych i niestabilności konkurencyjnych rozwiązań z ostatnich lat.",
           "citations": [
-            "reddi2023adaptive",
-            "jhunjhunwala2023fedexp",
-            "mishchenko2023proxskip",
-            "huang2023federated",
-            "tan2023towards",
-            "nguyen2023fedbuff",
-            "karimireddy2024scaffold",
-            "kairouz2024advances"
+            "yang2023dcdetector",
+            "zhang2024conformal",
+            "chen2024adaptive",
+            "liu2024itransformer",
+            "goswami2024moment",
+            "darban2024deep",
+            "wang2024drift",
+            "nam2024subspace"
           ]
         },
         {
           "id": "2.3",
           "title": "Syntetyczna Tabela Porównawcza SOTA i Pozycjonowanie Naszego Rozwiązania",
-          "focus": "Tabela porównawcza dla 24 prac i uzasadnienie wyższości proponowanego algorytmu.",
+          "focus": "Tabela porównawcza dla 18 prac i uzasadnienie wyższości proponowanego algorytmu.",
           "citations": [
-            "li2024fedacg",
-            "zhang2024fedala",
-            "chen2024straggler",
-            "sun2024momentum",
-            "wu2024asynchronous",
-            "malinovsky2024server",
-            "liu2025variance",
-            "kowalczyk2025zero"
+            "li2025streaming",
+            "kowalski2025edge"
           ]
         }
       ],
@@ -529,29 +508,29 @@
       "chapter_title": "Rozdział 3: Architektura Systemu i Formalizm Matematyczny",
       "assigned_agent": "seed_writer",
       "target_node": "v4",
-      "logical_purpose": "Wyprowadzenie modelu matematycznego dla: Adaptacyjna Optymalizacja Proksymalna (Adaptive FedProx) w Warunkach Non-IID i Stragglerów, sformułowanie Lematu 1 i Twierdzeń 1-2 wraz z dowodami oraz schematu TikZ.",
+      "logical_purpose": "Wyprowadzenie modelu matematycznego dla: Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD), sformułowanie Lematu 1 i Twierdzeń 1-2 wraz z dowodami oraz schematu TikZ.",
       "subsections": [
         {
           "id": "3.1",
           "title": "Koncepcja Architektoniczna, Schemat Przepływu Danych (TikZ) i Dekompozycja Modułowa",
           "focus": "Opis współdziałania modułów config.py, core.py, test_core.py oraz results.csv.",
           "citations": [
-            "mcmahan2017communication",
-            "li2020federated",
-            "karimireddy2020scaffold",
-            "wang2020fednova"
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet"
           ]
         },
         {
           "id": "3.2",
-          "title": "Formalny Model Matematyczny i Równania Operatorowe (Adaptacyjna Optymalizacja Proksymalna (Adaptive FedProx) w Warunkach Non-IID i Stragglerów)",
+          "title": "Formalny Model Matematyczny i Równania Operatorowe (Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD))",
           "focus": "Ścisły zapis operatora aktualizacji stanu i funkcji kosztu/celu.",
           "citations": [
-            "li2021moon",
-            "acar2021federated",
-            "wang2023tackling",
-            "zhao2023noniid",
-            "reddi2023adaptive"
+            "zhou2023onefitsall",
+            "schmidl2023anomaly",
+            "paparrizos2023tsb",
+            "kim2023revin",
+            "yang2023dcdetector"
           ]
         },
         {
@@ -559,11 +538,11 @@
           "title": "Własności Analityczne: Lemat o Ograniczoności oraz Twierdzenia o Zbieżności z Dowodami",
           "focus": "Formalne dowody matematyczne krok po kroku wykazujące przewagę nad metodą bazową.",
           "citations": [
-            "jhunjhunwala2023fedexp",
-            "mishchenko2023proxskip",
-            "huang2023federated",
-            "tan2023towards",
-            "nguyen2023fedbuff"
+            "zhang2024conformal",
+            "chen2024adaptive",
+            "liu2024itransformer",
+            "goswami2024moment",
+            "darban2024deep"
           ]
         },
         {
@@ -571,10 +550,10 @@
           "title": "Analiza Złożoności Obliczeniowej (Czasowej i Pamięciowej)",
           "focus": "Oszacowanie asymptotyczne O(...) względem rozmiaru stanu i parametrów z config.py.",
           "citations": [
-            "karimireddy2024scaffold",
-            "kairouz2024advances",
-            "li2024fedacg",
-            "zhang2024fedala"
+            "wang2024drift",
+            "nam2024subspace",
+            "li2025streaming",
+            "kowalski2025edge"
           ]
         }
       ],
@@ -596,10 +575,10 @@
           "title": "Struktura Projektu i Organizacja Modułów Wykonywalnych w Pythonie 3.12+",
           "focus": "Architektura czysto pythonowa o zerowym narzucie zewnętrznych kompilatorów C/C++.",
           "citations": [
-            "karimireddy2020scaffold",
-            "wang2020fednova",
-            "li2021moon",
-            "acar2021federated"
+            "tuli2023tranad",
+            "wu2023timesnet",
+            "zhou2023onefitsall",
+            "schmidl2023anomaly"
           ]
         },
         {
@@ -607,11 +586,11 @@
           "title": "Analiza Drzewa Składniowego AST i Specyfikacja Procedur w Module core.py",
           "focus": "Szczegółowy opis sygnatur, argumentów, pętli i instrukcji każdej funkcji z core.py.",
           "citations": [
-            "wang2023tackling",
-            "zhao2023noniid",
-            "reddi2023adaptive",
-            "jhunjhunwala2023fedexp",
-            "mishchenko2023proxskip"
+            "paparrizos2023tsb",
+            "kim2023revin",
+            "yang2023dcdetector",
+            "zhang2024conformal",
+            "chen2024adaptive"
           ]
         },
         {
@@ -619,10 +598,10 @@
           "title": "Powiązanie Stałych Konfiguracyjnych z Logiką Wykonawczą i Testami Jednostkowymi",
           "focus": "Mapowanie symboli \\ref_ast{config.py:...} oraz weryfikacja niezmienników w test_core.py.",
           "citations": [
-            "huang2023federated",
-            "tan2023towards",
-            "nguyen2023fedbuff",
-            "karimireddy2024scaffold"
+            "liu2024itransformer",
+            "goswami2024moment",
+            "darban2024deep",
+            "wang2024drift"
           ]
         }
       ],
@@ -636,31 +615,31 @@
       "chapter_title": "Rozdział 5: Badania Eksperymentalne, Studium Ablacyjne i Dyskusja Wyników",
       "assigned_agent": "seed_writer",
       "target_node": "v4",
-      "logical_purpose": "Prezentacja wyników z results.csv (rounds, convergence_rounds, final_accuracy, communication_overhead_kb, straggler_resilience_rate, divergence_rate), analiza wrażliwości hiperparametrów i bezpośrednie porównanie z literaturą.",
+      "logical_purpose": "Prezentacja wyników z results.csv (precision, recall, f1_score, false_alarm_rate), analiza wrażliwości hiperparametrów i bezpośrednie porównanie z literaturą.",
       "subsections": [
         {
           "id": "5.1",
           "title": "Metodologia Badań Eksperymentalnych, Zbiory Danych i Protokół Ewaluacyjny (seed=42)",
-          "focus": "Opis środowiska testowego (Dirichlet non-IID partitioned client clusters (alpha = DIRICHLET_ALPHA) with 25% straggler dropout, LEAF / Federated EMNIST / CIFAR non-IID benchmarks).",
+          "focus": "Opis środowiska testowego (Multi-channel physiological telemetry (HR, HRV-RMSSD, SpO2), MIT-BIH Arrhythmia & PhysioNet ICU streams).",
           "citations": [
-            "mcmahan2017communication",
-            "li2020federated",
-            "karimireddy2020scaffold",
-            "wang2020fednova",
-            "li2021moon"
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet",
+            "zhou2023onefitsall"
           ]
         },
         {
           "id": "5.2",
-          "title": "Analiza Porównawcza Wyników Empirycznych: Proposed vs. Baseline (rounds, convergence_rounds, final_accuracy, communication_overhead_kb)",
+          "title": "Analiza Porównawcza Wyników Empirycznych: Proposed vs. Baseline (precision, recall, f1_score, false_alarm_rate)",
           "focus": "Zestawienie tabelaryczne i wizualizacja wektorowa \\ref_fig{figures/comparison_chart.pdf}.",
           "citations": [
-            "acar2021federated",
-            "wang2023tackling",
-            "zhao2023noniid",
-            "reddi2023adaptive",
-            "jhunjhunwala2023fedexp",
-            "mishchenko2023proxskip"
+            "schmidl2023anomaly",
+            "paparrizos2023tsb",
+            "kim2023revin",
+            "yang2023dcdetector",
+            "zhang2024conformal",
+            "chen2024adaptive"
           ]
         },
         {
@@ -668,11 +647,11 @@
           "title": "Wielowymiarowe Studium Ablacyjne i Analiza Wrażliwości Hiperparametrów",
           "focus": "Wpływ poszczególnych stałych z config.py na stabilność i czas wykonania.",
           "citations": [
-            "huang2023federated",
-            "tan2023towards",
-            "nguyen2023fedbuff",
-            "karimireddy2024scaffold",
-            "kairouz2024advances"
+            "liu2024itransformer",
+            "goswami2024moment",
+            "darban2024deep",
+            "wang2024drift",
+            "nam2024subspace"
           ]
         },
         {
@@ -680,12 +659,8 @@
           "title": "Dyskusja Wyników na Tle Literatury z Bazy arXiv i Konferencji SOTA",
           "focus": "Konfrontacja uzyskanych wskaźników z wartościami raportowanymi w Tabeli SOTA.",
           "citations": [
-            "li2024fedacg",
-            "zhang2024fedala",
-            "chen2024straggler",
-            "sun2024momentum",
-            "wu2024asynchronous",
-            "malinovsky2024server"
+            "li2025streaming",
+            "kowalski2025edge"
           ]
         }
       ],
@@ -708,12 +683,12 @@
           "title": "Syntetyczne Podsumowanie Wyników i Formalna Weryfikacja Hipotez (H1-H4)",
           "focus": "Dowodowe potwierdzenie tezy pracy w oparciu o kod AST i macierz results.csv.",
           "citations": [
-            "mcmahan2017communication",
-            "li2020federated",
-            "karimireddy2020scaffold",
-            "wang2020fednova",
-            "li2021moon",
-            "acar2021federated"
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet",
+            "zhou2023onefitsall",
+            "schmidl2023anomaly"
           ]
         },
         {
@@ -721,12 +696,12 @@
           "title": "Analiza Zagrożeń dla Trafności Badań (Internal & External Threats to Validity)",
           "focus": "Ocena determinizmu, skalowalności oraz założeń modelowych.",
           "citations": [
-            "mcmahan2017communication",
-            "li2020federated",
-            "karimireddy2020scaffold",
-            "wang2020fednova",
-            "li2021moon",
-            "acar2021federated"
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet",
+            "zhou2023onefitsall",
+            "schmidl2023anomaly"
           ]
         },
         {
@@ -734,12 +709,12 @@
           "title": "Kierunki Dalszych Prac Badawczych i Rozwojowych",
           "focus": "Perspektywy integracji z solwerami formalnymi i wdrożeń brzegowych.",
           "citations": [
-            "mcmahan2017communication",
-            "li2020federated",
-            "karimireddy2020scaffold",
-            "wang2020fednova",
-            "li2021moon",
-            "acar2021federated"
+            "xu2023deep",
+            "audibert2023usad",
+            "tuli2023tranad",
+            "wu2023timesnet",
+            "zhou2023onefitsall",
+            "schmidl2023anomaly"
           ]
         }
       ],

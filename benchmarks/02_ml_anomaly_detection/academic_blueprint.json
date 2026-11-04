@@ -1,11 +1,4 @@
 {
-  "thesis_title": "Odporna Detekcja Anomalii w Wielokanałowej Telemetrii Fizjologicznej: Komitety Losowych Podprzestrzeni",
-  "thesis_statement": "This thesis proposes a robust multi-channel anomaly detector combining median absolute deviation scaling with a random subspace ensemble, demonstrating superior precision and recall over univariate Z-score.",
-  "baseline_comparison": "Comparative benchmark in Machine Learning & Biomedical Signal Processing: ",
-  "planned_visualizations": [
-    "TikZ Architecture Diagram",
-    "Matplotlib Vector Comparison Chart"
-  ],
   "literature_recon": {
     "task_key": "02_ml_anomaly_detection",
     "domain": "Biomedical Signal Processing & Unsupervised Anomaly Detection",
@@ -100,6 +93,9 @@
       "kowalski2025edge"
     ]
   },
+  "thesis_type": "magisterska",
+  "template_name": "thesis_plodz",
+  "template_certain": true,
   "table_of_contents": {
     "chapters": [
       {
@@ -459,7 +455,6 @@
       }
     ]
   },
-  "thesis_type": "magisterska",
   "planned_chapters": [
     {
       "chapter_index": 1,

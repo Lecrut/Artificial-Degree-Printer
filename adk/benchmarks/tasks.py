@@ -111,7 +111,7 @@ class BenchmarkTaskSpec:
 
 
 PATHFINDING_EVOLUTION_PROMPT = (
-    "Evolve and optimize the existing graph pathfinding project in the workspace: "
+    "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)] Evolve and optimize the existing graph pathfinding project in the workspace: "
     "1) Inspect existing config.py and core.py (currently implementing only a baseline Dijkstra search); "
     "2) Evolve core.py to implement Weighted Octile A* pathfinding (with octile_heuristic) alongside Dijkstra, "
     "evaluating both in train_and_evaluate(csv_out_path, seed) across TRIALS and outputting avg_expanded_nodes, "

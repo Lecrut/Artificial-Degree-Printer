@@ -1,14 +1,43 @@
 {
-  "active": false,
-  "current_gate": "GATE_3_DEFENSE_APPROVAL",
+  "active": true,
+  "current_gate": "GATE_REMEDIATION_EXHAUSTED",
   "approved_gates": [
     "GATE_1_OUTLINE_APPROVAL",
     "GATE_2_METHODOLOGY_APPROVAL",
     "GATE_3_DEFENSE_APPROVAL"
   ],
-  "question": null,
+  "question": "Przekroczono limit prób naprawy (3) dla zadania T6.",
   "context": {
-    "validation_status": "PASS",
-    "replan_count": 3
+    "validation_report": {
+      "status": "FAIL",
+      "failed_task_id": "T6",
+      "failed_node": "v4",
+      "failed_file": "thesis.md",
+      "failed_agent": "seed_writer",
+      "supervisors": {
+        "code_auditor": {
+          "status": "PASS",
+          "issues": []
+        },
+        "symbolic_auditor": {
+          "status": "FAIL",
+          "issues": [
+            "Symbolic Pointer Resolvability Failed: Multiple symbolic tags found with malformed syntax (missing ':' separator): \\ref_ast{seed=42}",
+            "Symbolic Pointer Resolvability Failed: Multiple symbolic tags found with malformed syntax (missing ':' separator): \\ref_csv{data_preprocessing_pipeline}",
+            "Symbolic Pointer Resolvability Failed: Multiple symbolic tags found with malformed syntax (missing ':' separator): \\ref_csv{results_comparison}",
+            "Symbolic Pointer Resolvability Failed: Multiple symbolic tags found with malformed syntax (missing ':' separator): \\ref_csv{config_parameters}",
+            "Symbolic Pointer Resolvability Failed: Multiple symbolic tags found with malformed syntax (missing ':' separator): \\ref_csv{sota_table}"
+          ]
+        },
+        "redteam_critic_guard": {
+          "status": "SKIPPED_INTERMEDIATE_TASK",
+          "verdict": "PASS",
+          "gate_3_approved": false,
+          "issues": []
+        }
+      },
+      "summary": "Layer 3 verification failed."
+    },
+    "replan_count": 5
   }
 }

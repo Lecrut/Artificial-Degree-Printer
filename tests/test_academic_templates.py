@@ -246,3 +246,64 @@ def test_two_researchers_and_three_tier_routing():
     assert "xu2023deep" in merged
     assert "zhang2024conformal" in merged
 
+
+def test_detect_template_from_prompt_and_live_mock_isolation(tmp_path: Path):
+    """Verify automatic template detection, uncertainty question when ambiguous, and zero mock injection in live runs."""
+    from adk.benchmarks import BENCHMARK_TASKS
+    from adk.mocks import _make_task_mock_llm_handler, render_thesis_pdf
+    from adk.orchestrator import NeuroSymbolicOrchestrator
+    from adk.tools.building.template_manager import detect_template_from_prompt
+
+    # 1. All 4 benchmark prompts explicitly specify their template and thesis_type
+    d1 = detect_template_from_prompt(BENCHMARK_TASKS["01_rl_tictactoe"].prompt)
+    assert d1["is_certain"] is True
+    assert d1["thesis_type"] == "inzynierska"
+    assert d1["template_name"] == "thesis_plodz"
+
+    d2 = detect_template_from_prompt(BENCHMARK_TASKS["02_ml_anomaly_detection"].prompt)
+    assert d2["is_certain"] is True
+    assert d2["thesis_type"] == "magisterska"
+    assert d2["template_name"] == "thesis_plodz"
+
+    d3 = detect_template_from_prompt(BENCHMARK_TASKS["03_graph_pathfinding"].prompt)
+    assert d3["is_certain"] is True
+    assert d3["thesis_type"] == "paper"
+    assert d3["template_name"] == "paper_ieee"
+
+    d4 = detect_template_from_prompt(BENCHMARK_TASKS["04_federated_learning"].prompt)
+    assert d4["is_certain"] is True
+    assert d4["thesis_type"] == "paper"
+    assert d4["template_name"] == "paper_ieee"
+
+    # 2. Ambiguous prompt without template indicators triggers uncertainty and question
+    d_ambig = detect_template_from_prompt("Zaimplementuj algorytm sortowania w Pythonie i opisz wyniki.")
+    assert d_ambig["is_certain"] is False
+    assert d_ambig["question"] is not None
+    assert "thesis_plodz" in d_ambig["question"]
+    assert "paper_ieee" in d_ambig["question"]
+
+    # 3. Mocks and mock PDF template are isolated in adk.mocks
+    assert render_thesis_pdf.__module__ == "adk.mocks.mock_pdf_template"
+    assert _make_task_mock_llm_handler.__module__ == "adk.mocks.benchmark_mock_handlers"
+
+    # 4. Live provider mode never injects Tic-Tac-Toe mock code or mock chapters
+    orch = NeuroSymbolicOrchestrator(adk_root=tmp_path / "live_adk", provider="ollama")
+    orch.workspace_dir.mkdir(parents=True, exist_ok=True)
+    orch._materialize_workspace_artifact("config.py", {})
+    assert not (orch.workspace_dir / "config.py").exists()
+    orch._materialize_workspace_artifact(
+        "thesis.md",
+        {
+            "chapter": {
+                "title": "Autorski Rozdział LLM",
+                "content": "Własna treść wygenerowana przez model językowy.",
+                "subsections": [{"heading": "Podrozdział 1", "content": "Analiza szczegółowa."}],
+            }
+        },
+    )
+    assert not (orch.workspace_dir / "results.csv").exists()
+    md_text = (orch.workspace_dir / "thesis.md").read_text(encoding="utf-8")
+    assert "Autorski Rozdział LLM" in md_text
+    assert "Tic-Tac-Toe" not in md_text
+
+

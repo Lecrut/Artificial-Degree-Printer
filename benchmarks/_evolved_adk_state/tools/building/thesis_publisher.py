@@ -10,7 +10,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import textwrap
 import time
 from pathlib import Path
 from typing import Any
@@ -18,11 +17,13 @@ from typing import Any
 os.environ.setdefault("MPLCONFIGDIR", str(Path(tempfile.gettempdir()) / "adk_mpl_cache"))
 
 import matplotlib  # noqa: E402
-import matplotlib.image as mpimg  # noqa: E402
-import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
 
 from adk.benchmarks.tasks import BenchmarkTaskSpec  # noqa: E402
+from adk.mocks.mock_pdf_template import (  # noqa: E402
+    _clean_latex_inline,
+    _parse_compiled_sections,
+    render_thesis_pdf,
+)
 from adk.mocks.thesis_mock_expander import expand_academic_chapters  # noqa: E402
 from adk.tools.building.doc_editor import edit_document_section  # noqa: E402
 from adk.tools.building.template_manager import render_template_latex, resolve_template_name  # noqa: E402
@@ -49,10 +50,16 @@ def ensure_full_6_chapter_markdown(
     spec: BenchmarkTaskSpec,
     workspace_dir: Path,
     force_mock_expand: bool = False,
+    provider: str | None = None,
 ) -> Path:
-    """Ensure thesis.md contains all 6 canonical chapters, preserving LLM-authored chapters and only expanding missing sections."""
+    """Ensure thesis.md contains all 6 canonical chapters in mock mode, preserving LLM-authored chapters in live mode."""
     md_path = workspace_dir / "thesis.md"
     existing_md = md_path.read_text(encoding="utf-8") if md_path.exists() else ""
+
+    is_live_provider = provider is not None and str(provider).strip().lower() != "mock"
+    if is_live_provider and not force_mock_expand and existing_md.strip():
+        # In live LLM runs, never inject mock chapters into thesis.md
+        return md_path
 
     headers, rows = _read_csv_rows(workspace_dir / "results.csv")
     config_pairs = _extract_config_constants(workspace_dir / "config.py")
@@ -71,13 +78,11 @@ def ensure_full_6_chapter_markdown(
     )
     for ch_title, ch_body in expanded:
         if not force_mock_expand and existing_md:
-            # Check if this chapter was already authored by LLM or user in thesis.md
             m_idx = re.match(r"^(Rozdział\s+\d+|Chapter\s+\d+)", ch_title, re.IGNORECASE)
             prefix = m_idx.group(1) if m_idx else ch_title
             pattern = re.compile(rf"^##+\s+{re.escape(prefix)}[^\n]*\n(.*?)(?=^##+\s+|\Z)", re.MULTILINE | re.DOTALL)
             m = pattern.search(existing_md)
             if m and len(m.group(1).strip()) > 80:
-                # Chapter already authored by LLM, preserve it without overwriting
                 continue
         edit_document_section(md_path, ch_title, ch_body)
     return md_path
@@ -135,11 +140,35 @@ def _parse_bibtex_items(bib_path: Path) -> list[dict[str, str]]:
     return entries
 
 
+def _sanitize_unresolved_latex_tags(tex_text: str) -> str:
+    """Replace any remaining unresolved \\ref_ast, \\ref_csv, \\ref_fig tags and empty list blocks so XeTeX/Tectonic never fails."""
+    def _repl(m: re.Match[str]) -> str:
+        inner = m.group(1).split(":")[-1].replace("_", "\\_")
+        return f"\\texttt{{{inner}}}"
+
+    s = re.sub(r"\\ref_(?:ast|csv|fig)\{([^}]+)\}", _repl, tex_text)
+    s = re.sub(
+        r"\\begin\{(itemize|enumerate)\}\s*\\end\{\1\}",
+        r"\\begin{\1}\n  \\item Brak dodatkowych pozycji.\n\\end{\1}",
+        s,
+    )
+    return s
+
+
 def compile_latex_to_pdf(tex_path: Path, output_pdf: Path | None = None) -> bool:
     """Compile LaTeX document directly to PDF using Tectonic (primary XeTeX engine) or pdflatex/xelatex."""
     tex_file = Path(tex_path).resolve()
     if not tex_file.exists():
         return False
+
+    # Ensure no empty itemize/enumerate blocks exist in tex_file before invoking TeX engine
+    try:
+        raw_tex = tex_file.read_text(encoding="utf-8", errors="ignore")
+        sanitized_tex = _sanitize_unresolved_latex_tags(raw_tex)
+        if sanitized_tex != raw_tex:
+            tex_file.write_text(sanitized_tex, encoding="utf-8")
+    except OSError:
+        pass
 
     target_pdf = Path(output_pdf).resolve() if output_pdf else tex_file.with_suffix(".pdf")
     work_dir = tex_file.parent
@@ -204,411 +233,16 @@ def build_latex_source(
     workspace_dir: Path,
     template_name: str | None = None,
     thesis_type: str | None = None,
+    provider: str | None = None,
 ) -> Path:
     """Create complete academic LaTeX document thesis.tex with symbolic tags strictly using templates."""
-    return render_template_latex(spec, workspace_dir, template_name=template_name, thesis_type=thesis_type)
-
-
-def _clean_latex_inline(text: str) -> str:
-    cleaned = re.sub(r"\\cite\{([^}]+)\}", r"[\1]", text)
-    cleaned = re.sub(r"\\ref_ast\{([^}]+)\}", r"[\1]", cleaned)
-    cleaned = re.sub(r"\\ref_csv\{([^}]+)\}", r"[\1]", cleaned)
-    cleaned = re.sub(r"\\ref_fig\{([^}]+)\}", r"[\1]", cleaned)
-    cleaned = re.sub(r"\\ref\{([^}]+)\}", r"[\1]", cleaned)
-    cleaned = re.sub(r"\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}", "[Schemat Architektury]", cleaned, flags=re.DOTALL)
-    cleaned = (
-        cleaned.replace("$\\epsilon$", "ε")
-        .replace("$\\gamma$", "γ")
-        .replace("$\\alpha$", "α")
-        .replace("$Q(s, a)$", "Q(s, a)")
-        .replace("$h(n)$", "h(n)")
-        .replace("$\\sqrt{2}$", "√2")
-        .replace("$f(n) = g(n) + w \\cdot h_{octile}(n)$", "f(n) = g(n) + w * h_octile(n)")
-        .replace("$w = $", "w = ")
-        .replace("$1.0$", "1.0")
-        .replace("$w^t$", "w^t")
+    return render_template_latex(
+        spec,
+        workspace_dir,
+        template_name=template_name,
+        thesis_type=thesis_type,
+        provider=provider,
     )
-    # Strip remaining $ characters to ensure Matplotlib does not invoke mathtext parser on prose
-    cleaned = cleaned.replace("$", "")
-    return cleaned
-
-
-def _parse_compiled_sections(compiled_md_text: str, spec: BenchmarkTaskSpec) -> list[tuple[str, str]]:
-    """Extract compiled ## sections from thesis.compiled.md, falling back to spec chapters."""
-    sections: list[tuple[str, str]] = []
-    matches = list(re.finditer(r"^##\s+(.+?)\s*$", compiled_md_text, flags=re.MULTILINE))
-    if matches:
-        for i, m in enumerate(matches):
-            title = m.group(1).strip()
-            start = m.end()
-            end = matches[i + 1].start() if i + 1 < len(matches) else len(compiled_md_text)
-            body = compiled_md_text[start:end].strip()
-            sections.append((title, _clean_latex_inline(body)))
-    if len(sections) < 6:
-        fallback = [(t, _clean_latex_inline(b)) for t, b in _get_effective_chapters(spec)]
-        existing_titles = {t for t, _ in sections}
-        for ft, fb in fallback:
-            if ft not in existing_titles:
-                sections.append((ft, fb))
-    return sections[:6]
-
-
-def render_thesis_pdf(
-    spec: BenchmarkTaskSpec,
-    workspace_dir: Path,
-    compiled_md_text: str,
-    resolved_refs: dict[str, Any],
-    evolution_summary: dict[str, Any] | None = None,
-) -> Path:
-    """Render a 3-page A4 academic PDF (thesis.pdf) containing all 6 chapters, AST/CSV tables, plot, ADK multi-cycle trace, and bibliography."""
-    pdf_path = workspace_dir / "thesis.pdf"
-    headers, rows = _read_csv_rows(workspace_dir / "results.csv")
-    config_pairs = _extract_config_constants(workspace_dir / "config.py")
-    bib_entries = _parse_bibtex_items(workspace_dir / "references.bib")
-    chart_png = workspace_dir / "figures" / "comparison_chart.png"
-    chapters = _parse_compiled_sections(compiled_md_text, spec)
-
-    with PdfPages(pdf_path) as pdf:
-        # =====================================================================
-        # PAGE 1: Title Block, Abstracts, Chapter 1 (Intro/Thesis), Chapter 2 (SOTA), AST Config Table
-        # =====================================================================
-        fig1 = plt.figure(figsize=(8.27, 11.69), dpi=150)  # A4 Portrait
-        fig1.patch.set_facecolor("white")
-        ax1 = fig1.add_axes([0, 0, 1, 1])
-        ax1.axis("off")
-
-        ax1.add_patch(plt.Rectangle((0.06, 0.93), 0.88, 0.04, color="#1a365d"))
-        ax1.text(
-            0.50,
-            0.95,
-            "ARTIFICIAL DEGREE PRINTER (ADK) — PRACA DYPLOMOWA (6 ROZDZIAŁÓW)",
-            color="white",
-            fontsize=9.5,
-            fontweight="bold",
-            ha="center",
-            va="center",
-        )
-
-        wrapped_pl = "\n".join(textwrap.wrap(spec.title_pl, width=68))
-        wrapped_en = "\n".join(textwrap.wrap(spec.title_en, width=78))
-        ax1.text(0.50, 0.882, wrapped_pl, fontsize=12.5, fontweight="bold", color="#111827", ha="center", va="top")
-        ax1.text(0.50, 0.825, wrapped_en, fontsize=9.8, style="italic", color="#374151", ha="center", va="top")
-
-        ax1.text(
-            0.50,
-            0.785,
-            f"Zadanie: {spec.task_id}   |   Dziedzina: {spec.domain}   |   Kompilator Symboliczny: PASS ({len(resolved_refs)} referencji)",
-            fontsize=8.4,
-            color="#1f2937",
-            ha="center",
-            va="top",
-        )
-        ax1.plot([0.06, 0.94], [0.766, 0.766], color="#cbd5e1", linewidth=1.1)
-
-        # Abstracts box
-        ax1.add_patch(plt.Rectangle((0.06, 0.615), 0.88, 0.138, facecolor="#f8fafc", edgecolor="#cbd5e1", linewidth=0.9))
-        abs_pl_lines = "\n".join(textwrap.wrap("Streszczenie (PL): " + spec.abstract_pl, width=94))
-        abs_en_lines = "\n".join(textwrap.wrap("Abstract (EN): " + spec.abstract_en, width=94))
-        ax1.text(0.08, 0.742, abs_pl_lines, fontsize=8.3, color="#1e293b", ha="left", va="top")
-        ax1.text(0.08, 0.674, abs_en_lines, fontsize=8.1, style="italic", color="#334155", ha="left", va="top")
-
-        # Chapter 1: Wstęp, Cel i Teza Pracy
-        ch1_t, ch1_b = chapters[0]
-        ax1.text(0.06, 0.59, f"1. {ch1_t}", fontsize=10.5, fontweight="bold", color="#0f172a", ha="left", va="top")
-        ax1.text(
-            0.06,
-            0.564,
-            "\n".join(textwrap.wrap(ch1_b, width=96)),
-            fontsize=8.5,
-            color="#1f2937",
-            ha="left",
-            va="top",
-            linespacing=1.28,
-        )
-
-        # Chapter 2: Analiza Stanu Wiedzy (SOTA)
-        ch2_t, ch2_b = chapters[1]
-        ax1.text(0.06, 0.395, f"2. {ch2_t}", fontsize=10.5, fontweight="bold", color="#0f172a", ha="left", va="top")
-        ax1.text(
-            0.06,
-            0.369,
-            "\n".join(textwrap.wrap(ch2_b, width=96)),
-            fontsize=8.5,
-            color="#1f2937",
-            ha="left",
-            va="top",
-            linespacing=1.28,
-        )
-
-        # Table 1: Symbolic AST Hyperparameters Table
-        ax1.text(
-            0.06,
-            0.23,
-            "Tabela 1. Weryfikowana Symbolicznie Konfiguracja Drzewa AST (config.py)",
-            fontsize=9.8,
-            fontweight="bold",
-            color="#0f172a",
-            ha="left",
-            va="top",
-        )
-        if config_pairs:
-            table_ax1 = fig1.add_axes([0.08, 0.065, 0.84, 0.145])
-            table_ax1.axis("off")
-            cell_data = [[sym, val, f"ref_ast(config.py:{sym}) -> {val}"] for sym, val in config_pairs]
-            tbl1 = table_ax1.table(
-                cellText=cell_data,
-                colLabels=["Symbol w AST (config.py)", "Wartość", "Wskaźnik Neuro-Symboliczny"],
-                loc="center",
-                cellLoc="left",
-            )
-            tbl1.auto_set_font_size(False)
-            tbl1.set_fontsize(8.3)
-            tbl1.scale(1.0, 1.32)
-            for (row_i, col_i), cell in tbl1.get_celld().items():
-                if row_i == 0:
-                    cell.set_facecolor("#1e3a8a")
-                    cell.set_text_props(color="white", fontweight="bold")
-                else:
-                    cell.set_facecolor("#f1f5f9" if row_i % 2 == 0 else "white")
-
-        ax1.text(0.50, 0.028, "Strona 1 z 3 — Wygenerowano automatycznie przez Artificial-Degree-Printer ADK", fontsize=8, color="#64748b", ha="center")
-        pdf.savefig(fig1)
-        plt.close(fig1)
-
-        # =====================================================================
-        # PAGE 2: Chapter 3 (Architecture), Chapter 4 (Implementation), Chapter 5 (Evaluation), CSV Table & Chart
-        # =====================================================================
-        fig2 = plt.figure(figsize=(8.27, 11.69), dpi=150)
-        fig2.patch.set_facecolor("white")
-        ax2 = fig2.add_axes([0, 0, 1, 1])
-        ax2.axis("off")
-
-        ax2.add_patch(plt.Rectangle((0.06, 0.935), 0.88, 0.032, color="#1e293b"))
-        ax2.text(
-            0.50,
-            0.951,
-            f"ARCHITEKTURA, IMPLEMENTACJA I WYNIKI EMPIRYCZNE — {spec.title_en.upper()}",
-            color="white",
-            fontsize=8.4,
-            fontweight="bold",
-            ha="center",
-            va="center",
-        )
-
-        # Chapter 3: Architektura Systemu
-        ch3_t, ch3_b = chapters[2]
-        ax2.text(0.06, 0.91, f"3. {ch3_t}", fontsize=10.2, fontweight="bold", color="#0f172a", ha="left", va="top")
-        ax2.text(
-            0.06,
-            0.885,
-            "\n".join(textwrap.wrap(ch3_b, width=96)),
-            fontsize=8.4,
-            color="#1f2937",
-            ha="left",
-            va="top",
-            linespacing=1.25,
-        )
-
-        # Chapter 4: Implementacja Algorytmiczna
-        ch4_t, ch4_b = chapters[3]
-        ax2.text(0.06, 0.765, f"4. {ch4_t}", fontsize=10.2, fontweight="bold", color="#0f172a", ha="left", va="top")
-        ax2.text(
-            0.06,
-            0.74,
-            "\n".join(textwrap.wrap(ch4_b, width=96)),
-            fontsize=8.4,
-            color="#1f2937",
-            ha="left",
-            va="top",
-            linespacing=1.25,
-        )
-
-        # Chapter 5: Ewaluacja Empiryczna
-        ch5_t, ch5_b = chapters[4]
-        ax2.text(0.06, 0.62, f"5. {ch5_t}", fontsize=10.2, fontweight="bold", color="#0f172a", ha="left", va="top")
-        ax2.text(
-            0.06,
-            0.595,
-            "\n".join(textwrap.wrap(ch5_b, width=96)),
-            fontsize=8.4,
-            color="#1f2937",
-            ha="left",
-            va="top",
-            linespacing=1.25,
-        )
-
-        # Empirical CSV Table
-        ax2.text(
-            0.06,
-            0.46,
-            "Tabela 2. Wyniki eksperymentu porównawczego (źródło: results.csv)",
-            fontsize=9.6,
-            fontweight="bold",
-            color="#0f172a",
-            ha="left",
-            va="top",
-        )
-        if headers and rows:
-            table_ax2 = fig2.add_axes([0.06, 0.345, 0.88, 0.098])
-            table_ax2.axis("off")
-            matrix_cells = [[_clean_latex_inline(str(r.get(h, ""))) for h in headers] for r in rows]
-            tbl2 = table_ax2.table(
-                cellText=matrix_cells,
-                colLabels=[_clean_latex_inline(h.upper()) for h in headers],
-                loc="center",
-                cellLoc="center",
-            )
-            tbl2.auto_set_font_size(False)
-            tbl2.set_fontsize(8.3)
-            tbl2.scale(1.0, 1.35)
-            for (row_i, col_i), cell in tbl2.get_celld().items():
-                if row_i == 0:
-                    cell.set_facecolor("#0f172a")
-                    cell.set_text_props(color="white", fontweight="bold")
-                elif matrix_cells[row_i - 1][0].lower() == "proposed":
-                    cell.set_facecolor("#dcfce7")
-                    cell.set_text_props(fontweight="bold", color="#14532d")
-                else:
-                    cell.set_facecolor("#f8fafc")
-
-        # Embedded Matplotlib Chart Image
-        if chart_png.exists():
-            img_ax = fig2.add_axes([0.10, 0.055, 0.80, 0.28])
-            img_data = mpimg.imread(str(chart_png))
-            img_ax.imshow(img_data)
-            img_ax.axis("off")
-
-        ax2.text(0.50, 0.028, "Strona 2 z 3 — Wygenerowano automatycznie przez Artificial-Degree-Printer ADK", fontsize=8, color="#64748b", ha="center")
-        pdf.savefig(fig2)
-        plt.close(fig2)
-
-        # =====================================================================
-        # PAGE 3: Chapter 6 (Conclusions), Multi-Cycle ADK Architecture Trace (W1->W2->W3->W4->W1), Bibliography
-        # =====================================================================
-        fig3 = plt.figure(figsize=(8.27, 11.69), dpi=150)
-        fig3.patch.set_facecolor("white")
-        ax3 = fig3.add_axes([0, 0, 1, 1])
-        ax3.axis("off")
-
-        ax3.add_patch(plt.Rectangle((0.06, 0.935), 0.88, 0.032, color="#065f46"))
-        ax3.text(
-            0.50,
-            0.951,
-            "PODSUMOWANIE, WIELOCYKLICZNY ŚLAD ARCHITEKTURY (W1-W4) ORAZ BIBLIOGRAFIA",
-            color="white",
-            fontsize=8.6,
-            fontweight="bold",
-            ha="center",
-            va="center",
-        )
-
-        # Chapter 6: Podsumowanie i Wnioski
-        ch6_t, ch6_b = chapters[5]
-        ax3.text(0.06, 0.905, f"6. {ch6_t}", fontsize=10.5, fontweight="bold", color="#0f172a", ha="left", va="top")
-        ax3.text(
-            0.06,
-            0.878,
-            "\n".join(textwrap.wrap(ch6_b, width=96)),
-            fontsize=8.6,
-            color="#1f2937",
-            ha="left",
-            va="top",
-            linespacing=1.32,
-        )
-
-        # Multi-cycle ADK Architecture Trace Box
-        evo_info = evolution_summary or {}
-        evo_events = evo_info.get("events_triggered", ["WEIGHT_ESCALATED", "MUTATE_AGENT"])
-        active_agents_count = evo_info.get("active_agents_count", 4)
-        elapsed_s = evo_info.get("elapsed_seconds", 0.0)
-        arch_cycles = evo_info.get("architecture_cycles") or [
-            {
-                "cycle_number": 1,
-                "task_id": "T1",
-                "node_id": "v1",
-                "w4_action": "MUTATE_AGENT",
-                "w1_remediation_task_id": "T1_FIX",
-                "w3_post_remediation_status": "PASS",
-            },
-            {
-                "cycle_number": 2,
-                "task_id": "T3",
-                "node_id": "v3",
-                "w4_action": "SPLIT_AGENT / CREATE_TOOL",
-                "w1_remediation_task_id": "T3_FIX",
-                "w3_post_remediation_status": "PASS",
-            },
-            {
-                "cycle_number": 3,
-                "task_id": "T5",
-                "node_id": "v4",
-                "w4_action": "PROMPT_CONSOLIDATED",
-                "w1_remediation_task_id": "T5_FIX",
-                "w3_post_remediation_status": "PASS",
-            },
-        ]
-
-        ax3.add_patch(plt.Rectangle((0.06, 0.44), 0.88, 0.28, facecolor="#ecfdf5", edgecolor="#10b981", linewidth=1.1))
-        ax3.text(
-            0.08,
-            0.702,
-            "Ślad Wielokrotnych Przejść przez 4-Warstwową Architekturę ADK (W1 -> W2 -> W3 -> W4 -> W1 -> W2 -> W3):",
-            fontsize=9.3,
-            fontweight="bold",
-            color="#065f46",
-            ha="left",
-            va="top",
-        )
-        cycle_lines = [
-            f"• Liczba pełnych cykli naprawczo-ewolucyjnych (W2->W3->W4->W1->W2->W3): {len(arch_cycles)}   |   "
-            f"Aktywni agenci: {active_agents_count}   |   Czas: {elapsed_s:.2f} s",
-            f"• Zarejestrowane zdarzenia Warstwy 4: {', '.join(str(e) for e in evo_events)}",
-            "",
-        ]
-        for cyc in arch_cycles:
-            cycle_lines.append(
-                f"  [Cykl #{cyc.get('cycle_number')}] Zadanie {cyc.get('task_id')} (węzeł {cyc.get('node_id')}): "
-                f"W2(Budowa) -> W3(FAIL) -> W4({cyc.get('w4_action')}) -> "
-                f"W1(Remediacja: {cyc.get('w1_remediation_task_id')}) -> W2(Naprawa) -> W3({cyc.get('w3_post_remediation_status')})"
-            )
-        ax3.text(
-            0.08,
-            0.668,
-            "\n".join(cycle_lines),
-            fontsize=8.2,
-            color="#064e3b",
-            ha="left",
-            va="top",
-            linespacing=1.38,
-        )
-
-        # Bibliography & Verification Seal
-        ax3.text(0.06, 0.40, "7. Bibliografia (BibTeX — references.bib)", fontsize=10.2, fontweight="bold", color="#0f172a", ha="left", va="top")
-        bib_lines = []
-        for b in bib_entries:
-            bib_lines.append(
-                f"[{b.get('key')}] {b.get('author', 'Author')} ({b.get('year', '2026')}): "
-                f"\"{b.get('title', '')}\", {b.get('journal') or b.get('booktitle') or b.get('publisher', '')}."
-            )
-        bib_text = "\n".join(textwrap.fill(line, width=96) for line in bib_lines)
-        ax3.text(0.06, 0.37, bib_text, fontsize=8.4, color="#334155", ha="left", va="top", linespacing=1.3)
-
-        ax3.add_patch(plt.Rectangle((0.06, 0.065), 0.88, 0.048, facecolor="#eff6ff", edgecolor="#3b82f6", linewidth=1.0))
-        ax3.text(
-            0.50,
-            0.089,
-            "LAYER 3 NEURO-SYMBOLIC VERIFICATION SEAL: ALL 6 CHAPTERS, PYTEST, AST, CSV & BIBTEX GATES PASSED (0 HALLUCINATIONS)",
-            fontsize=8.0,
-            fontweight="bold",
-            color="#1d4ed8",
-            ha="center",
-            va="center",
-        )
-        ax3.text(0.50, 0.028, "Strona 3 z 3 — Wygenerowano automatycznie przez Artificial-Degree-Printer ADK", fontsize=8, color="#64748b", ha="center")
-        pdf.savefig(fig3)
-        plt.close(fig3)
-
-    return pdf_path
 
 
 def render_thesis_html(
@@ -888,10 +522,12 @@ def publish_workspace_thesis_bundle(
     evolution_summary: dict[str, Any] | None = None,
     template_name: str | None = None,
     thesis_type: str | None = None,
+    provider: str | None = None,
 ) -> dict[str, Any]:
     """Execute generated code & plot script, compile symbolic references in .md and .tex, and render thesis.pdf + thesis.html."""
     w_dir = Path(workspace_dir).resolve()
     w_dir.mkdir(parents=True, exist_ok=True)
+    is_live_provider = provider is not None and str(provider).strip().lower() != "mock"
 
     # 1. Write standalone runner script run_experiment.py
     write_executable_runner_script(w_dir, spec)
@@ -916,7 +552,7 @@ def publish_workspace_thesis_bundle(
         text=True,
         timeout=30,
     )
-    if exec_res.returncode != 0:
+    if exec_res.returncode != 0 and not is_live_provider:
         if not (w_dir / "results.csv").exists() or (w_dir / "results.csv").stat().st_size == 0:
             (w_dir / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
 
@@ -940,7 +576,7 @@ def publish_workspace_thesis_bundle(
                 plot_py = w_dir / "code" / "plot_results.py"
             if plot_py.exists():
                 subprocess.run([sys.executable, str(plot_py)], cwd=str(w_dir), env=exec_env, check=False, capture_output=True, timeout=30)
-            if not _is_real_pdf(chart_pdf):
+            if not _is_real_pdf(chart_pdf) and not is_live_provider:
                 mod_scope = {"__name__": "__main__", "__file__": str(w_dir / "plot_results.py")}
                 exec(spec.plot_script, mod_scope)
                 if "generate_plots" in mod_scope:
@@ -950,8 +586,6 @@ def publish_workspace_thesis_bundle(
 
     if not _is_real_pdf(chart_pdf):
         try:
-            import matplotlib
-            matplotlib.use("Agg")
             import matplotlib.pyplot as plt
             fig, ax = plt.subplots(figsize=(6, 3), dpi=150)
             ax.set_title(f"Empirical Evaluation: {spec.title_en[:45]}", fontsize=9, fontweight="bold")
@@ -970,21 +604,36 @@ def publish_workspace_thesis_bundle(
     if csv_file.exists():
         os.utime(csv_file, (now_ts, now_ts))
 
-    # 3. Ensure all 6 academic chapters exist in thesis.md, generate thesis.tex, and compile both symbolically
-    md_path = ensure_full_6_chapter_markdown(spec, w_dir)
-    tex_path = build_latex_source(spec, w_dir, template_name=template_name, thesis_type=thesis_type)
+    # 3. Ensure all chapters exist in thesis.md, generate thesis.tex, and compile both symbolically
+    md_path = ensure_full_6_chapter_markdown(spec, w_dir, provider=provider)
+    tex_path = build_latex_source(
+        spec,
+        w_dir,
+        template_name=template_name,
+        thesis_type=thesis_type,
+        provider=provider,
+    )
 
     md_comp = compile_symbolic_references(md_path, w_dir, write_compiled=True)
     tex_comp = compile_symbolic_references(tex_path, w_dir, write_compiled=True)
 
-    # 4. Render thesis.pdf: compile thesis.compiled.tex to genuine academic LaTeX PDF
+    # Always write compiled .md and .tex (sanitizing any unresolved symbolic tags so Tectonic LaTeX template compilation always succeeds)
+    compiled_md = w_dir / "thesis.compiled.md"
+    if not compiled_md.exists() and md_comp.get("compiled_text"):
+        compiled_md.write_text(md_comp["compiled_text"], encoding="utf-8")
+
     compiled_tex = w_dir / "thesis.compiled.tex"
+    sanitized_tex_text = _sanitize_unresolved_latex_tags(tex_comp.get("compiled_text", ""))
+    if sanitized_tex_text:
+        compiled_tex.write_text(sanitized_tex_text, encoding="utf-8")
+
+    # 4. Render thesis.pdf: compile thesis.compiled.tex to genuine academic LaTeX PDF (ThesisPLodz.cls or IEEEtran.cls)
     pdf_path = w_dir / "thesis.pdf"
     compiled_ok = False
     if compiled_tex.exists():
         compiled_ok = compile_latex_to_pdf(compiled_tex, output_pdf=pdf_path)
 
-    # Fallback to matplotlib only if LaTeX compilation is unavailable
+    # Fallback to mock matplotlib PDF ONLY if Tectonic/LaTeX engine is completely unavailable on the machine
     if not compiled_ok or not pdf_path.exists() or pdf_path.stat().st_size < 1000:
         pdf_path = render_thesis_pdf(
             spec=spec,
@@ -1104,7 +753,7 @@ def organize_benchmark_output_bundle(task_dir: Path | str, spec: BenchmarkTaskSp
             shutil.move(str(src), str(dest))
 
     # Clean up intermediate compiled pdf if left behind
-    for stray_pdf in list(root.glob('thesis.compiled.pdf')) + list(thesis_dir.glob('thesis.compiled.pdf')):
+    for stray_pdf in list(root.glob("thesis.compiled.pdf")) + list(thesis_dir.glob("thesis.compiled.pdf")):
         if stray_pdf.exists():
             stray_pdf.unlink()
 

@@ -181,6 +181,8 @@ def compile_symbolic_references(
             errors.append(str(val))
             return key
         resolved[key] = val
+        if d_path.suffix == ".tex":
+            return str(val).replace("_", "\\_")
         return str(val)
 
     def _replace_csv(match: re.Match[str]) -> str:
@@ -200,6 +202,8 @@ def compile_symbolic_references(
                 stale_csv_files.append(rel_file)
             errors.append(stale_msg)
         resolved[key] = val
+        if d_path.suffix == ".tex":
+            return str(val).replace("_", "\\_")
         return str(val)
 
     def _replace_fig(match: re.Match[str]) -> str:

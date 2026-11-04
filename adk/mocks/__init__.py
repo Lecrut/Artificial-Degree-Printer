@@ -8,6 +8,10 @@ Consolidates all offline mock fixtures, paper catalogs, and thesis expanders:
 
 from __future__ import annotations
 
+from adk.mocks.benchmark_mock_handlers import (
+    VALIDATOR_SYNTHESIS_CODE,
+    _make_task_mock_llm_handler,
+)
 from adk.mocks.code_fixtures import (
     ANOMALY_CORE_CODE,
     ANOMALY_TEST_CODE,
@@ -18,6 +22,7 @@ from adk.mocks.code_fixtures import (
     TICTACTOE_CORE_CODE,
     TICTACTOE_TEST_CODE,
 )
+from adk.mocks.mock_pdf_template import render_thesis_pdf
 from adk.mocks.paper_catalogs import (
     ANOMALY_DETECTION_CATALOG,
     DOMAIN_CATALOG_MAP,
@@ -42,7 +47,10 @@ __all__ = [
     "RL_TICTACTOE_CATALOG",
     "TICTACTOE_CORE_CODE",
     "TICTACTOE_TEST_CODE",
+    "VALIDATOR_SYNTHESIS_CODE",
+    "_make_task_mock_llm_handler",
     "expand_academic_chapters",
+    "render_thesis_pdf",
     "resolve_offline_catalog",
 ]
 

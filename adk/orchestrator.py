@@ -7,14 +7,6 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
-from adk.benchmarks.tictactoe import (
-    TICTACTOE_CONFIG_AST_NODES,
-    TICTACTOE_CORE_CODE,
-    TICTACTOE_DOC_SECTION_CONTENT,
-    TICTACTOE_DOC_SECTION_TITLE,
-    TICTACTOE_INITIAL_CSV,
-    TICTACTOE_TEST_CODE,
-)
 from adk.core.llm import call_agent
 from adk.core.logger import get_process_logger
 from adk.core.models import ValidationReport, read_json_state, write_json_state
@@ -23,6 +15,11 @@ from adk.tools.building import (
     edit_document_section,
     extract_hyperedge_exports,
     sync_hypergraph_matrix,
+)
+from adk.tools.building.template_manager import (
+    detect_template_from_prompt,
+    prompt_user_for_template,
+    resolve_template_name,
 )
 from adk.tools.evolution import (
     create_specialized_agent,
@@ -90,6 +87,7 @@ class NeuroSymbolicOrchestrator:
         self.max_replan_retries = max_replan_retries
         self.interactive_gates = interactive_gates
         self.gate_approval_callback = gate_approval_callback
+        self.current_user_prompt: str = ""
         self.logger = get_process_logger()
 
         self.matrix_path = self.state_dir / "hypergraph_matrix.json"
@@ -238,20 +236,51 @@ class NeuroSymbolicOrchestrator:
         """Apply LLM-generated AST, test, CSV, plot, BibTeX, and thesis edits to workspace/."""
         full_file_path = self.workspace_dir / node_path
         materialized_any = False
+        is_mock_mode = self.provider in (None, "mock")
 
         # 1. AST-level edits (from seed_coder or dynamic coding specialists)
         custom_edits = llm_output.get("ast_edits")
         if isinstance(custom_edits, list) and custom_edits:
             for item in custom_edits:
-                if not isinstance(item, dict) or "symbol" not in item or "code" not in item:
+                if not isinstance(item, dict):
+                    continue
+                sym = item.get("symbol") or item.get("name") or item.get("target")
+                code_str = item.get("code") or item.get("content") or item.get("value")
+                if not sym or code_str is None:
                     continue
                 target_rel = item.get("file") or node_path
                 target_py = self.workspace_dir / target_rel
-                edit_ast_node(target_py, str(item["symbol"]), str(item["code"]))
+                edit_ast_node(target_py, str(sym), str(code_str))
                 materialized_any = True
 
         # 2. Full module source_code (if provided alongside or instead of ast_edits)
-        source_code = llm_output.get("source_code")
+        action_code_obj = llm_output.get("action_code") if isinstance(llm_output.get("action_code"), dict) else {}
+        payload_obj = llm_output.get("payload") if isinstance(llm_output.get("payload"), dict) else {}
+        agent_obj = llm_output.get("agent") if isinstance(llm_output.get("agent"), dict) else {}
+        artifact_obj = llm_output.get("artifact") if isinstance(llm_output.get("artifact"), dict) else {}
+        files_list = llm_output.get("files") if isinstance(llm_output.get("files"), list) else []
+        for f_item in files_list:
+            if isinstance(f_item, dict):
+                f_name = str(f_item.get("filename") or f_item.get("file") or f_item.get("path") or "").strip()
+                f_body = f_item.get("content") or f_item.get("code") or f_item.get("source_code")
+                if f_name and isinstance(f_body, str) and f_body.strip():
+                    f_dest = self.workspace_dir / Path(f_name).name
+                    f_dest.parent.mkdir(parents=True, exist_ok=True)
+                    f_dest.write_text(f_body, encoding="utf-8")
+                    materialized_any = True
+
+        source_code = (
+            llm_output.get("source_code")
+            or llm_output.get("code")
+            or llm_output.get("python_code")
+            or action_code_obj.get("code")
+            or agent_obj.get("code")
+            or artifact_obj.get("code")
+            or (llm_output.get("content") if node_path.endswith(".py") else None)
+            or (payload_obj.get("content") if node_path.endswith(".py") else None)
+            or (agent_obj.get("content") if node_path.endswith(".py") else None)
+            or (artifact_obj.get("content") if node_path.endswith(".py") else None)
+        )
         if isinstance(source_code, str) and source_code.strip() and node_path.endswith(".py") and not materialized_any:
             full_file_path.parent.mkdir(parents=True, exist_ok=True)
             full_file_path.write_text(source_code, encoding="utf-8")
@@ -267,9 +296,12 @@ class NeuroSymbolicOrchestrator:
             materialized_any = True
 
         # 4. Empirical benchmark CSV data (from seed_tester)
-        csv_content = llm_output.get("csv_content")
+        params_obj = llm_output.get("parameters") if isinstance(llm_output.get("parameters"), dict) else {}
+        csv_content = llm_output.get("csv_content") or (
+            params_obj.get("content") if str(params_obj.get("file_path", "")).endswith(".csv") else None
+        )
         if isinstance(csv_content, str) and csv_content.strip():
-            csv_rel = str(llm_output.get("benchmark_file") or "results.csv")
+            csv_rel = str(llm_output.get("benchmark_file") or params_obj.get("file_path") or "results.csv")
             csv_path = self.workspace_dir / csv_rel
             csv_path.parent.mkdir(parents=True, exist_ok=True)
             csv_path.write_text(csv_content, encoding="utf-8")
@@ -323,23 +355,117 @@ class NeuroSymbolicOrchestrator:
 
         # 7. Thesis subsections (from seed_writer)
         if self.include_docs:
-            sections_list = llm_output.get("sections")
+            doc_target = full_file_path if node_path.endswith((".md", ".tex")) else (self.workspace_dir / "thesis.md")
+
+            def _extract_chapter_dict_body(ch_dict: dict[str, Any]) -> str:
+                parts_acc: list[str] = []
+                top_text = (
+                    ch_dict.get("section_content")
+                    or ch_dict.get("content")
+                    or ch_dict.get("body")
+                    or ch_dict.get("text")
+                    or ch_dict.get("summary")
+                    or ch_dict.get("focus")
+                )
+                if isinstance(top_text, str) and top_text.strip():
+                    parts_acc.append(top_text.strip())
+                elif isinstance(top_text, list):
+                    for item in top_text:
+                        if isinstance(item, dict):
+                            ih = item.get("heading") or item.get("title")
+                            ic = item.get("content") or item.get("text") or item.get("body") or item.get("focus")
+                            if ih and ic:
+                                parts_acc.append(f"### {ih}\n{ic}")
+                            elif ic:
+                                parts_acc.append(str(ic))
+                sub_items = (
+                    ch_dict.get("subsections")
+                    or ch_dict.get("sections")
+                    or ch_dict.get("structure")
+                    or []
+                )
+                if isinstance(sub_items, list):
+                    for sub in sub_items:
+                        if isinstance(sub, dict):
+                            sub_h = sub.get("heading") or sub.get("title")
+                            sub_c = (
+                                sub.get("content")
+                                or sub.get("text")
+                                or sub.get("body")
+                                or sub.get("summary")
+                                or sub.get("focus")
+                            )
+                            if sub_h and sub_c:
+                                parts_acc.append(f"### {sub_h}\n{sub_c}")
+                            elif sub_c:
+                                parts_acc.append(str(sub_c))
+                return "\n\n".join(parts_acc).strip()
+
+            thesis_struct = llm_output.get("thesis_structure") if isinstance(llm_output.get("thesis_structure"), dict) else {}
+            sections_list = (
+                llm_output.get("sections")
+                or llm_output.get("chapters")
+                or thesis_struct.get("chapters")
+            )
             if isinstance(sections_list, list) and sections_list:
-                doc_target = full_file_path if node_path.endswith((".md", ".tex")) else (self.workspace_dir / "thesis.md")
                 for sec in sections_list:
-                    if isinstance(sec, dict) and sec.get("section_title") and sec.get("section_content"):
-                        edit_document_section(doc_target, str(sec["section_title"]), str(sec["section_content"]))
+                    if isinstance(sec, dict):
+                        s_title = sec.get("section_title") or sec.get("title") or sec.get("heading")
+                        s_body = _extract_chapter_dict_body(sec)
+                        if s_title and s_body:
+                            edit_document_section(doc_target, str(s_title), str(s_body))
+                            materialized_any = True
+
+            if not materialized_any:
+                chapter_candidates: list[dict[str, Any]] = []
+                if isinstance(llm_output.get("chapter"), dict):
+                    chapter_candidates.append(llm_output["chapter"])
+                for k, v in llm_output.items():
+                    if isinstance(v, dict) and (
+                        k.startswith("chapter_")
+                        or k.startswith("thesis_chapter_")
+                        or k == "chapter_analysis"
+                    ):
+                        chapter_candidates.append(v)
+                for ch_obj in chapter_candidates:
+                    c_title = str(ch_obj.get("title") or ch_obj.get("section_title") or "Rozdział Pracy")
+                    c_body = _extract_chapter_dict_body(ch_obj)
+                    if c_body:
+                        edit_document_section(doc_target, c_title, c_body)
                         materialized_any = True
-            elif llm_output.get("section_title") and llm_output.get("section_content"):
-                doc_target = full_file_path if node_path.endswith((".md", ".tex")) else (self.workspace_dir / "thesis.md")
+
+            if not materialized_any and llm_output.get("section_title") and llm_output.get("section_content"):
                 edit_document_section(
                     doc_target,
                     str(llm_output["section_title"]),
                     str(llm_output["section_content"]),
                 )
                 materialized_any = True
+            elif node_path.endswith((".md", ".tex")) and not materialized_any:
+                raw_doc_str = (
+                    llm_output.get("content")
+                    or llm_output.get("markdown")
+                    or llm_output.get("text")
+                    or llm_output.get("summary")
+                    or payload_obj.get("content")
+                )
+                if isinstance(raw_doc_str, str) and raw_doc_str.strip():
+                    sec_t = str(llm_output.get("title") or llm_output.get("section_title") or "Sekcja Dokumentacji")
+                    edit_document_section(doc_target, sec_t, raw_doc_str.strip())
+                    materialized_any = True
 
-            if node_path.endswith((".md", ".tex")) or materialized_any:
+        # 8. Offline Mock Fallback ONLY when provider is mock/None (NEVER in live LLM runs!)
+        if is_mock_mode:
+            from adk.mocks.code_fixtures import (
+                TICTACTOE_CONFIG_AST_NODES,
+                TICTACTOE_CORE_CODE,
+                TICTACTOE_DOC_SECTION_CONTENT,
+                TICTACTOE_DOC_SECTION_TITLE,
+                TICTACTOE_INITIAL_CSV,
+                TICTACTOE_TEST_CODE,
+            )
+
+            if self.include_docs and (node_path.endswith((".md", ".tex")) or materialized_any):
                 csv_path = self.workspace_dir / "results.csv"
                 csv_path.parent.mkdir(parents=True, exist_ok=True)
                 if not csv_path.exists():
@@ -347,43 +473,39 @@ class NeuroSymbolicOrchestrator:
                 now = time.time() + 1.0
                 os.utime(csv_path, (now, now))
 
-        # 8. Fallback for custom handlers that return empty/generic dicts in unit tests
-        if not materialized_any:
-            if node_path.endswith(".py"):
-                if "config" in node_path:
-                    for sym_name, sym_code in TICTACTOE_CONFIG_AST_NODES:
-                        edit_ast_node(full_file_path, sym_name, sym_code)
-                else:
-                    full_file_path.parent.mkdir(parents=True, exist_ok=True)
-                    full_file_path.write_text(TICTACTOE_CORE_CODE, encoding="utf-8")
-                    test_file = self.workspace_dir / "test_core.py"
-                    test_file.write_text(TICTACTOE_TEST_CODE, encoding="utf-8")
+            if not materialized_any:
+                if node_path.endswith(".py"):
+                    if "config" in node_path:
+                        for sym_name, sym_code in TICTACTOE_CONFIG_AST_NODES:
+                            edit_ast_node(full_file_path, sym_name, sym_code)
+                    else:
+                        full_file_path.parent.mkdir(parents=True, exist_ok=True)
+                        full_file_path.write_text(TICTACTOE_CORE_CODE, encoding="utf-8")
+                        test_file = self.workspace_dir / "test_core.py"
+                        test_file.write_text(TICTACTOE_TEST_CODE, encoding="utf-8")
+                        csv_path = self.workspace_dir / "results.csv"
+                        csv_path.write_text(TICTACTOE_INITIAL_CSV, encoding="utf-8")
+                        now = time.time() + 1.0
+                        os.utime(csv_path, (now, now))
+                elif node_path.endswith((".md", ".tex")) and self.include_docs:
                     csv_path = self.workspace_dir / "results.csv"
-                    csv_path.write_text(TICTACTOE_INITIAL_CSV, encoding="utf-8")
+                    csv_path.parent.mkdir(parents=True, exist_ok=True)
+                    if not csv_path.exists():
+                        csv_path.write_text(TICTACTOE_INITIAL_CSV, encoding="utf-8")
                     now = time.time() + 1.0
                     os.utime(csv_path, (now, now))
-            elif node_path.endswith((".md", ".tex")) and self.include_docs:
-                csv_path = self.workspace_dir / "results.csv"
-                csv_path.parent.mkdir(parents=True, exist_ok=True)
-                if not csv_path.exists():
-                    csv_path.write_text(TICTACTOE_INITIAL_CSV, encoding="utf-8")
-                now = time.time() + 1.0
-                os.utime(csv_path, (now, now))
-                edit_document_section(full_file_path, TICTACTOE_DOC_SECTION_TITLE, TICTACTOE_DOC_SECTION_CONTENT)
+                    edit_document_section(full_file_path, TICTACTOE_DOC_SECTION_TITLE, TICTACTOE_DOC_SECTION_CONTENT)
 
     def _execute_builder_step(self, task: dict[str, Any], model_tier: str) -> dict[str, Any]:
         """Invoke Layer 2 builder agent and apply deterministic Python AST / doc tools."""
         registry = read_json_state(self.registry_path).get("agents", {})
-        agent_id = task["assigned_agent"]
-        if agent_id in registry and not registry[agent_id].get("active", True):
-            for cand_id, cand_meta in registry.items():
-                if cand_meta.get("parent_agent") == agent_id and cand_meta.get("active", True):
-                    agent_id = cand_id
-                    task["assigned_agent"] = cand_id
-                    break
+        agent_id = self._resolve_active_agent(task.get("assigned_agent"), fallback="seed_coder")
+        task["assigned_agent"] = agent_id
 
         agent_meta = registry.get(agent_id, {})
         agent_md = self.adk_root / agent_meta.get("path", f"agents/building/{agent_id}.md")
+        if not agent_md.exists():
+            agent_md = self.adk_root / "agents" / "building" / "seed_coder.md"
 
         matrix_data = read_json_state(self.matrix_path)
         node_id = task.get("target_node", "v1")
@@ -426,22 +548,36 @@ class NeuroSymbolicOrchestrator:
         }
 
         blueprint_data = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+        recon_data = blueprint_data.get("literature_recon", {}) if isinstance(blueprint_data, dict) else {}
+        is_doc_or_research_agent = (
+            node_id == "v4"
+            or node_path.endswith((".md", ".tex", ".bib"))
+            or agent_id in ("seed_writer", "background_researcher", "discoverer_researcher", "sota_researcher")
+        )
+
+        builder_payload: dict[str, Any] = {
+            "user_prompt": self.current_user_prompt,
+            "task": task,
+            "target_file": node_path,
+            "existing_content": existing_content,
+            "exports": exports_info.get("exports", {}),
+            "csv_schemas": exports_info.get("csv_schemas", {}),
+            "hypergraph_nodes": scoped_graph.get("nodes", {}),
+            "active_edges": scoped_graph.get("active_edges", {}),
+            "grounded_hypergraph_state": grounded_state,
+            "standard_metrics": recon_data.get("standard_metrics", []),
+            "canonical_baselines": recon_data.get("canonical_baselines", []),
+        }
+        if is_doc_or_research_agent:
+            builder_payload["thesis_type"] = blueprint_data.get("thesis_type", "inzynierska")
+            builder_payload["template_name"] = blueprint_data.get("template_name", "thesis_plodz")
+            builder_payload["table_of_contents"] = blueprint_data.get("table_of_contents", {})
+            builder_payload["available_citation_keys"] = recon_data.get("available_citation_keys", [])
+            builder_payload["sampled_methodologies"] = recon_data.get("sampled_methodologies", [])
 
         llm_res = call_agent(
             agent_md,
-            {
-                "task": task,
-                "target_file": node_path,
-                "existing_content": existing_content,
-                "exports": exports_info.get("exports", {}),
-                "csv_schemas": exports_info.get("csv_schemas", {}),
-                "hypergraph_nodes": scoped_graph.get("nodes", {}),
-                "active_edges": scoped_graph.get("active_edges", {}),
-                "grounded_hypergraph_state": grounded_state,
-                "academic_blueprint": blueprint_data,
-                "table_of_contents": blueprint_data.get("table_of_contents", []),
-                "literature_recon": blueprint_data.get("literature_recon", {}),
-            },
+            builder_payload,
             model_tier=model_tier,
             provider=self.provider,
         )
@@ -762,12 +898,22 @@ class NeuroSymbolicOrchestrator:
         arch_md = self.agents_dir / "evolution" / "evolution_architect.md"
         decision_out = call_agent(arch_md, enriched_payload, model_tier="LRM", provider=self.provider)["output"]
 
+        def _extract_agent_str(val: Any, default_id: str) -> str:
+            if isinstance(val, dict):
+                val = val.get("agent_id") or val.get("name") or val.get("agent") or val.get("id") or default_id
+            s = str(val or default_id).strip()
+            if not s or any(ch in s for ch in ("{", "}", ":", "'", '"', "/", "\\", " ")):
+                return default_id
+            return s
+
         # Defensive normalization of LLM keys
         if isinstance(decision_out, dict):
             if "decision" in decision_out and "action" not in decision_out:
                 decision_out["action"] = decision_out["decision"]
             if "agent" in decision_out and "agent_id" not in decision_out:
-                decision_out["agent_id"] = decision_out["agent"]
+                decision_out["agent_id"] = _extract_agent_str(decision_out["agent"], failed_agent)
+            elif "agent_id" in decision_out:
+                decision_out["agent_id"] = _extract_agent_str(decision_out["agent_id"], failed_agent)
             if "injected_rule" in decision_out and "rule" not in decision_out:
                 decision_out["rule"] = decision_out["injected_rule"]
             elif "suggested_rule" in decision_out and "rule" not in decision_out:
@@ -787,11 +933,14 @@ class NeuroSymbolicOrchestrator:
             return {"action": "HITL", "decision": "HITL", "status": "HITL_PAUSED", "hitl": hitl_state}
 
         if action == "CREATE_AGENT":
-            spec = str(
+            raw_spec = (
                 decision_out.get("specialization")
                 or enriched_payload.get("missing_specialization")
                 or "custom_specialist"
             )
+            if isinstance(raw_spec, dict):
+                raw_spec = raw_spec.get("specialization") or raw_spec.get("name") or "custom_specialist"
+            spec = re.sub(r"[^a-zA-Z0-9_]", "_", str(raw_spec)).strip("_").lower() or "custom_specialist"
             created = create_specialized_agent(
                 specialization=spec,
                 domain=str(decision_out.get("domain") or decision_out.get("layer") or "building"),
@@ -823,14 +972,24 @@ class NeuroSymbolicOrchestrator:
             return {"action": "CREATE_AGENT", "decision": "CREATE_AGENT", "details": created}
 
         if action == "SPLIT_AGENT":
-            target_agent = str(
-                decision_out.get("agent_id")
-                or enriched_payload.get("split_agent_id")
-                or failed_agent
+            raw_split_target = _extract_agent_str(
+                decision_out.get("agent_id") or enriched_payload.get("split_agent_id"),
+                failed_agent,
             )
-            sub_specs = decision_out.get("sub_specializations") or enriched_payload.get(
+            target_agent = self._resolve_active_agent(raw_split_target, fallback=failed_agent)
+            raw_sub_specs = decision_out.get("sub_specializations") or enriched_payload.get(
                 "sub_specializations", ("unit_testing", "edge_case_testing")
             )
+            if isinstance(raw_sub_specs, (list, tuple)) and len(raw_sub_specs) >= 2:
+                clean_subs = []
+                for idx_s, s_item in enumerate(raw_sub_specs[:2]):
+                    if isinstance(s_item, dict):
+                        s_item = s_item.get("name") or s_item.get("specialization") or f"sub_{idx_s + 1}"
+                    clean_s = re.sub(r"[^a-zA-Z0-9_]", "_", str(s_item)).strip("_").lower() or f"sub_{idx_s + 1}"
+                    clean_subs.append(clean_s)
+                sub_specs: tuple[str, ...] | list[str] = clean_subs
+            else:
+                sub_specs = ("unit_testing", "edge_case_testing")
             split_res = split_agent(
                 agent_id=target_agent,
                 sub_specializations=sub_specs,
@@ -884,28 +1043,43 @@ class NeuroSymbolicOrchestrator:
             )
             return {"action": "CREATE_TOOL", "decision": "CREATE_TOOL", "details": promo}
 
-        target_mut_agent = str(decision_out.get("agent_id") or failed_agent)
+        target_mut_agent = _extract_agent_str(decision_out.get("agent_id"), failed_agent)
         # Gwarancja zgodności ze stanem hipergrafu: cel mutacji musi dyscyplinować agenta, który faktycznie zawiódł
         if failed_agent and target_mut_agent != failed_agent:
             if target_mut_agent in ("seed_coder", "unknown", "") and failed_agent != "seed_coder":
                 target_mut_agent = failed_agent
         registry = read_json_state(self.registry_path).get("agents", {})
-        if target_mut_agent in registry and not registry[target_mut_agent].get("active", True):
+        if target_mut_agent not in registry and target_mut_agent != "task_planner":
+            target_mut_agent = self._resolve_active_agent(target_mut_agent, fallback=failed_agent)
+        elif target_mut_agent in registry and not registry[target_mut_agent].get("active", True):
             for cand_id, cand_meta in registry.items():
                 if cand_meta.get("parent_agent") == target_mut_agent and cand_meta.get("active", True):
                     target_mut_agent = cand_id
                     break
 
         rel_md = registry.get(target_mut_agent, {}).get("path", f"agents/building/{target_mut_agent}.md")
-        mut_res = mutate_agent_prompt(
-            agent_md_path=self.adk_root / rel_md,
-            new_rule=str(
-                decision_out.get(
-                    "rule",
-                    "Always preserve AST signature compatibility and symbolic pointer validity.",
-                )
-            ),
+        target_md_path = self.adk_root / rel_md
+        if not target_md_path.exists():
+            alt_planning = self.adk_root / "agents" / "planning" / f"{target_mut_agent}.md"
+            if alt_planning.exists():
+                target_md_path = alt_planning
+            else:
+                fallback_ag = self._resolve_active_agent(failed_agent, fallback="seed_coder")
+                fallback_rel = registry.get(fallback_ag, {}).get("path", "agents/building/seed_coder.md")
+                target_md_path = self.adk_root / fallback_rel
+                if not target_md_path.exists():
+                    target_md_path = self.adk_root / "agents" / "building" / "seed_coder.md"
 
+        raw_rule = decision_out.get(
+            "rule",
+            "Always preserve AST signature compatibility and symbolic pointer validity.",
+        )
+        if isinstance(raw_rule, (dict, list)):
+            raw_rule = json.dumps(raw_rule, ensure_ascii=False)
+
+        mut_res = mutate_agent_prompt(
+            agent_md_path=target_md_path,
+            new_rule=str(raw_rule),
             failure_context=json.dumps(payload, ensure_ascii=False),
             failure_ledger_path=self.failure_ledger_path,
             provider=self.provider,
@@ -915,18 +1089,24 @@ class NeuroSymbolicOrchestrator:
             self._record_evolution_event({"type": "PROMPT_CONSOLIDATED", "details": mut_res["compaction_details"]})
         return {"action": "MUTATE_AGENT", "decision": "MUTATE_AGENT", "details": mut_res}
 
-    def _resolve_active_agent(self, preferred: str, fallback: str = "seed_coder") -> str:
-        """Resolve an agent ID to an active registered agent (handling split parent agents or unknown LLM names)."""
+    def _resolve_active_agent(self, preferred: Any, fallback: str = "seed_coder") -> str:
+        """Resolve an agent ID to an active registered agent (handling split parent agents, dict payloads, or unknown LLM names)."""
+        if isinstance(preferred, dict):
+            preferred = preferred.get("agent_id") or preferred.get("name") or preferred.get("agent") or preferred.get("id") or ""
+        pref_str = str(preferred or "").strip()
+        if any(ch in pref_str for ch in ("{", "}", ":", "'", '"', "/", "\\", " ")):
+            pref_str = ""
+
         reg_agents = (
             read_json_state(self.registry_path).get("agents", {})
             if self.registry_path.exists()
             else {}
         )
-        if preferred in reg_agents:
-            if reg_agents[preferred].get("active", True):
-                return preferred
+        if pref_str in reg_agents:
+            if reg_agents[pref_str].get("active", True):
+                return pref_str
             for cand_id, cand_meta in reg_agents.items():
-                if cand_meta.get("parent_agent") == preferred and cand_meta.get("active", True):
+                if cand_meta.get("parent_agent") == pref_str and cand_meta.get("active", True):
                     return cand_id
         if fallback in reg_agents:
             if reg_agents[fallback].get("active", True):
@@ -935,9 +1115,11 @@ class NeuroSymbolicOrchestrator:
                 if cand_meta.get("parent_agent") == fallback and cand_meta.get("active", True):
                     return cand_id
         for cand_id, cand_meta in reg_agents.items():
-            if cand_meta.get("active", True) and cand_meta.get("layer") == "building":
+            if cand_meta.get("active", True) and (
+                cand_meta.get("domain") == "building" or cand_meta.get("layer") == "building"
+            ):
                 return cand_id
-        return preferred or fallback
+        return pref_str or fallback or "seed_coder"
 
     def _normalize_and_heal_task_plan(
         self,
@@ -956,14 +1138,52 @@ class NeuroSymbolicOrchestrator:
         disc_agent = self._resolve_active_agent("discoverer_researcher", fallback=sota_agent)
         writer_agent = self._resolve_active_agent("seed_writer", fallback="seed_coder")
 
+        spec_to_agent = {
+            "python_coding": coder_agent,
+            "coding": coder_agent,
+            "unit_testing": tester_agent,
+            "testing": tester_agent,
+            "academic_writing": writer_agent,
+            "writing": writer_agent,
+            "background_literature": bg_agent,
+            "literature_review": sota_agent,
+            "sota_discovery": disc_agent,
+        }
+
         cleaned: list[dict[str, Any]] = []
         for idx, item in enumerate(raw_tasks or []):
             if not isinstance(item, dict):
                 continue
-            node_id = str(item.get("target_node") or "v1")
+            t_id = str(item.get("task_id") or item.get("id") or f"T{idx + 1}")
+            desc_str = str(item.get("description") or "")
+            hg_nodes = item.get("hypergraph_nodes") or item.get("nodes") or []
+            first_hg_node = str(hg_nodes[0]) if isinstance(hg_nodes, list) and hg_nodes else ""
+            out_files = item.get("output_files") or []
+            first_out_file = str(out_files[0]).lower() if isinstance(out_files, list) and out_files else str(item.get("target_file") or item.get("file") or "").lower()
+
+            node_id = str(item.get("target_node") or item.get("node_id") or item.get("node") or first_hg_node or "")
             if node_id not in ("v1", "v2", "v3", "v4", "v5"):
-                node_id = "v1"
-            raw_ag = str(item.get("assigned_agent") or "")
+                hint_text = f"{first_out_file} {desc_str.lower()}"
+                if "config.py" in hint_text:
+                    node_id = "v1"
+                elif "test_core.py" in hint_text or "pytest" in hint_text or "unit test" in hint_text:
+                    node_id = "v5"
+                elif "results.csv" in hint_text or "plot_results.py" in hint_text:
+                    node_id = "v3"
+                elif "core.py" in hint_text:
+                    node_id = "v2"
+                elif "thesis.md" in hint_text or "references.bib" in hint_text or "rozdział" in hint_text:
+                    node_id = "v4"
+                else:
+                    node_id = "v1"
+
+            raw_ag = str(
+                item.get("assigned_agent")
+                or item.get("agent")
+                or item.get("agent_name")
+                or item.get("agent_id")
+                or spec_to_agent.get(str(item.get("agent_specialization") or "").strip().lower(), "")
+            )
             default_ag = (
                 writer_agent
                 if node_id == "v4"
@@ -972,8 +1192,8 @@ class NeuroSymbolicOrchestrator:
             ag = self._resolve_active_agent(raw_ag, fallback=default_ag)
             cleaned.append(
                 {
-                    "task_id": str(item.get("task_id") or f"T{idx + 1}"),
-                    "description": str(item.get("description") or f"Realizacja węzła {node_id}"),
+                    "task_id": t_id,
+                    "description": desc_str or f"Realizacja węzła {node_id}",
                     "target_node": node_id,
                     "assigned_agent": ag,
                     "status": "TODO",
@@ -1139,6 +1359,14 @@ class NeuroSymbolicOrchestrator:
         # Ensure every blast-radius affected node is covered if cleaned is missing required nodes
         covered_nodes = {t["target_node"] for t in cleaned}
         affected = [target for target in blast.get("affected_nodes", []) if target in ("v1", "v2", "v3", "v4")]
+        node_default_desc = {
+            "v1": "Zdefiniowanie hiperparametrów i stałych konfiguracyjnych w module config.py",
+            "v2": "Implementacja głównego algorytmu oraz metody bazowej (baseline) w module core.py",
+            "v3": "Ewaluacja empiryczna, wygenerowanie macierzy results.csv oraz wykresów w plot_results.py",
+            "v4": "Opracowanie sekcji i rozdziałów pracy dyplomowej ze wskaźnikami symbolicznymi w thesis.md",
+            "v5": "Implementacja testów jednostkowych pytest w module test_core.py",
+        }
+        healed_any = False
         for req_node in [blast.get("source_node", "v1"), *affected]:
             if req_node == "v4" and not self.include_docs:
                 continue
@@ -1151,13 +1379,44 @@ class NeuroSymbolicOrchestrator:
                 cleaned.append(
                     {
                         "task_id": f"T{len(cleaned) + 1}",
-                        "description": f"Aktualizacja węzła {req_node} wymuszona promieniem rażenia hipergrafu",
+                        "description": node_default_desc.get(
+                            req_node,
+                            f"Aktualizacja węzła {req_node} wymuszona promieniem rażenia hipergrafu",
+                        ),
                         "target_node": req_node,
                         "assigned_agent": ag,
                         "status": "TODO",
                     }
                 )
                 covered_nodes.add(req_node)
+                healed_any = True
+
+        if healed_any and multi_cycle_waves:
+            research_agents = {"background_researcher", "discoverer_researcher", "sota_researcher"}
+            has_research = any(t.get("assigned_agent") in research_agents for t in cleaned)
+            if self.include_docs and not has_research:
+                t_type = (thesis_type or "inzynierska").strip().lower()
+                res_ag = disc_agent if t_type in ("paper", "article", "scientific_paper") else bg_agent
+                cleaned.insert(
+                    0,
+                    {
+                        "task_id": "T0_RES",
+                        "description": "Przegląd literatury dziedzinowej i przygotowanie bibliografii w references.bib",
+                        "target_node": "v4",
+                        "assigned_agent": res_ag,
+                        "status": "TODO",
+                    },
+                )
+            node_order = {"v1": 1, "v2": 2, "v5": 3, "v3": 4, "v4": 5}
+            cleaned.sort(
+                key=lambda t: (
+                    0
+                    if t.get("assigned_agent") in research_agents
+                    else node_order.get(str(t.get("target_node", "v1")), 3)
+                )
+            )
+            for idx_t, t_item in enumerate(cleaned, 1):
+                t_item["task_id"] = f"T{idx_t}"
 
         return cleaned
 
@@ -1172,8 +1431,11 @@ class NeuroSymbolicOrchestrator:
         interactive_gates: bool | None = None,
         gate_approval_callback: Callable[[str, dict[str, Any]], bool] | None = None,
         multi_cycle_waves: bool = False,
+        template_name: str | None = None,
+        thesis_type: str | None = None,
     ) -> dict[str, Any]:
         """Execute the full Neuro-Symbolic Harness pipeline."""
+        self.current_user_prompt = user_prompt
         effective_max_retries = (
             self.max_replan_retries if max_replan_retries is None else int(max_replan_retries)
         )
@@ -1197,7 +1459,16 @@ class NeuroSymbolicOrchestrator:
             flush=True,
         )
 
-        initial_recon = scout_domain_conventions(user_prompt, thesis_type="inzynierska")
+        tpl_detection = detect_template_from_prompt(
+            user_prompt,
+            thesis_type=thesis_type,
+            requested_template=template_name,
+        )
+        detected_thesis_type = str(tpl_detection.get("thesis_type") or "inzynierska")
+        detected_template = str(tpl_detection.get("template_name") or "thesis_plodz")
+        template_is_certain = bool(tpl_detection.get("is_certain", False))
+
+        initial_recon = scout_domain_conventions(user_prompt, thesis_type=detected_thesis_type)
         suggested_sections = [
             str(p).split(":")[0].strip() if ":" in str(p) else str(p).strip()
             for p in initial_recon.get("common_structural_patterns", [])
@@ -1209,11 +1480,16 @@ class NeuroSymbolicOrchestrator:
             "standard_metrics": initial_recon.get("standard_metrics", []),
             "open_research_gaps": initial_recon.get("open_research_gaps", []),
             "suggested_sections": suggested_sections,
+            "detected_thesis_type": detected_thesis_type,
+            "detected_template_name": detected_template,
+            "template_is_certain": template_is_certain,
         }
 
         # Natychmiast zapisujemy bazowy academic_blueprint na dysk dla Layer 2 workers
         base_blueprint = {
-            "thesis_type": "inzynierska",
+            "thesis_type": detected_thesis_type,
+            "template_name": detected_template,
+            "template_certain": template_is_certain,
             "thesis_title": initial_recon.get("topic_canonical", user_prompt),
             "literature_recon": initial_recon,
         }
@@ -1229,6 +1505,7 @@ class NeuroSymbolicOrchestrator:
             "include_docs": self.include_docs,
             "missing_agent_specialization": missing_agent_specialization,
             "domain_context": domain_summary,
+            "detected_template": tpl_detection,
         }
         planner_md = self.agents_dir / "planning" / "task_planner.md"
 
@@ -1286,11 +1563,37 @@ class NeuroSymbolicOrchestrator:
                 if cand.get("tasks") and isinstance(cand.get("tasks"), list) and len(cand.get("tasks")) > 0:
                     plan_out = cand
 
-        planned_thesis_type = str(plan_out.get("thesis_type") or "inzynierska")
+        planned_thesis_type = str(
+            (detected_thesis_type if template_is_certain else None)
+            or plan_out.get("thesis_type")
+            or detected_thesis_type
+        )
+        planned_template = resolve_template_name(
+            thesis_type=planned_thesis_type,
+            requested_template=(
+                (detected_template if template_is_certain else None)
+                or plan_out.get("template_name")
+            ),
+        )
+        if not template_is_certain and not plan_out.get("template_name"):
+            tpl_question = str(tpl_detection.get("question") or "Którego szablonu użyć: 'thesis_plodz' czy 'paper_ieee'?")
+            self.logger.log_step(
+                "TEMPLATE_UNCERTAIN_HITL",
+                f"Brak jednoznacznego określenia szablonu w zapytaniu -> zapytanie użytkownika: {tpl_question}",
+                {"detected_template": tpl_detection},
+            )
+            if gate_approval_callback is None and self.gate_approval_callback is None:
+                planned_template, planned_thesis_type = prompt_user_for_template(
+                    default_template=planned_template,
+                    default_thesis_type=planned_thesis_type,
+                )
+
         recon_report = scout_domain_conventions(user_prompt, thesis_type=planned_thesis_type)
         blueprint_raw = dict(plan_out.get("academic_blueprint") or {})
         blueprint_raw["literature_recon"] = recon_report
         blueprint_raw["thesis_type"] = planned_thesis_type
+        blueprint_raw["template_name"] = planned_template
+        blueprint_raw["template_certain"] = bool(template_is_certain or plan_out.get("template_name"))
 
         # Dynamiczne rozdziały zaplanowane przez task_planner
         toc_candidate = blueprint_raw.get("table_of_contents") or plan_out.get("table_of_contents")
