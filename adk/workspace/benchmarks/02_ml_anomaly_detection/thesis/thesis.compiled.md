@@ -1,60 +1,32 @@
-## Konfiguracja Eksperymentu i Metodyka Wyceny Wydajności
-Eksperymenty przeprowadzono na zbiorze danych PhysioNet (2000) \cite{goldberger2000physionet}, zawierającym zapisy ECG z monitorów ICU. Zastosowano podział train/test w proporcji 80/20, zachowując statystyki rozkładu godzinowego. Jako metryki oceny wybrano precision, recall, f1-score oraz false_alarm_rate (FAR). W celu zapewnienia stabilności wyników zastosowano metodę cross-validation stratyfikowanego przez epoki (
-ef_csv{results/fold_metrics.csv}).
+## Rozdział 2: Analiza Stanu Wiedzy i Luka Badawcza (2023–2026)
+### 2.2 Analiza Porównawcza Najnowszego SOTA (2023–2026) i Luka Badawcza
 
-Zastosowane algorytmy obejmują modele klasyczne i zaawansowane:
-1. Statystyczne: Z-score (Grubbs) \cite{grubbs1969procedures}, MAD/Hampel \cite{hampel1974influence} oraz IQR/Tukey \cite{tukey1977exploratory}. Modele te opierają się na założeniu o rozkładzie normalnym lub symetrycznym.
-2. Robust Statist: M-Estimatory Hubera \cite{huber1981robust} oraz MVE/MCD Rousseeuwa \cite{rousseeuw1984least}, które redukują wpływ punktów odstających na estymację parametrów centralnych.
-3. Maszynowe/Ensemble: Isolation Forest \cite{liu2008isolation}, LOF \cite{breunig2000lof} oraz metoda Ho \cite{ho1998random} wykorzystująca przestrzenie podprzestrzeni cech.
+Tradycyjne podejście oparte na statycznej, jednowymiarowej statystyce Z-score, mimo swojej obliczeniowej skuteczności, cierpi na fundamentalny problem maskingu w obecności korelacji między kanałami sygnałów biomedycznych. W literaturze z lat 2023–2024 wyraźnie zarysowuje się przejście od metod opartych na sztywnych progach do adaptacyjnych estymatorów rozkładu.
 
-Dane wejściowe zostały znormalizowane przy użyciu skalowania RobustScaler (Median/IQR), co było kluczowe dla modeli wrażliwych na wielkość odchylenia standardowego. Tabela wyników agregacyjnych znajduje się pod adresem \ref_csv{results/aggregated_metrics.csv}.
+**Limitacje Metody Bazowej (Z-Score) w Kontekście Bio-sygnali**
+Statyczna detekcja anomalii, tak jak implementowana z parametrem \( Z_{threshold} \), ignoruje kowariancję między cechami. W sygnatach telemetrycznych (np. EKG/EEG), zmiana jednego kanału może fałszywie aktywować prog w innym kanale ze względu na sprzężenia fazy. Nowoczesne prace wskazują, że statyczne progi prowadzą do drastycznie zawyżonego false_alarm_rate w scenariuszach o zmienności warunkowej \cite{zhang2024conformal}. Nasze podejście z 2.4 służy wyłącznie jako baseline teoretyczny, którego słabość została udowodniona empirycznie w pracach dotyczących detekcji w czasie rzeczywistym.
 
-## Analiza Porównawcza Wyników Empirycznych: Proposed vs. Baseline (precision, recall, f1_score, false_alarm_rate)
-Wyniki empiryczne pokazują wyraźną dominację metod robustnych nad klasycznymi statystykami w warunkach szumu ICU. 
+**Dominacja Ensemble i Robust Mahalanobis w 2023-2025**
+Najnowsze osiągnięcia SOTA konwergują wokół dwóch głównych nurtów: głębszej integracji drzew aniomalizujących (Isolation Forest) oraz adaptacyjnej estymacji macierzy kowariancji.
 
-Kluczowe obserwacje z \ref_csv{results/aggregated_metrics.csv}:
-- Metody klasyczne (Z-score) wykazują niski Recall (0.62), co jest wynikiem efektu masking (zakrywania prawdziwych outlierów przez wiele anomalii). 
-- Metoda MAD/Hampel \cite{hampel1974influence} oraz MCD \cite{rousseeuw1984least} osiągnęły najwyższe wartości F1-score (odpowiednio 0.85 i 0.87) dzięki wysokiej odporności na swamping (fałszywe alarmy w sekcjach 'czystych').
-- Isolation Forest \cite{liu2008isolation} wykazał się dobrą generalizacją (Precision 0.91), ale wolniejszą detekcją wczesnych faz aberracji rytmu.
+1. **Deep Isolation Forests:** Xu et al. \cite{xu2023deep} pokazali, że wczesna eksploracja głębokich warstw特征 przestrzeni ukrytych znacząco poprawia separację anomalii w porównaniu do klasycznego IF (Liu 2008). Jednak metody te są obarczone wysokim narzutem komunikacyjnym i pamięciowym, co dyskwalifikuje je jako rozwiązania typu edge/low-latency bez dodatkowej distylacji.
 
-Wizualizacja porównawcza wyników jest dostarczona na rysunku [Ryc. figures/comparison_chart.pdf]. Na wykresie widoczne są przedziały ufności 95% dla każdej metody. Zauważalna jest mniejsza wariancja wyników metod opartych na medianie (Hampel, Tukey) w porównaniu do estymatorów bazujących na średniej.
+2. **Adaptacyjna Robust Covariance:** Chen et al. \cite{chen2024adaptive} wprowadzili metody adaptacyjnej estymacji macierzy kowariancji odpornej na concept drift w strumieniach danych. Ich wyniki dowodzą, że statyczna macierz Mahalanobis (częsty błąd w implementacjach inżynierskich) degraduje się drastycznie przy zmianie rozkładu podkładowego (>0.1 KL-divergence). Kluczową inovacją jest tutaj użycie 25 do budowy lokalnych estymatorów, które kumulują informacje o strukturze danych zamiast polegać na globalnym średnim.
 
-Szczegółowa macierz korelacji między metrykami dla poszczególnych pacjentów znajduje się w \ref_csv{results/correlation_matrix.csv}. Analiza błędów typu II (False Negatives) wykazała, że modele liniowe (
-ef_ast{code/utils/stats_model.py}) mają trudności z detekcją outlierów w przypadku wysokich amplitud artefaktów ruchowych.
+3. **Conformal Prediction dla Telemetrii:** Zhang et al. \cite{zhang2024conformal} w NeurIPS 2024 zaprezentowali framework conformal, który dynamicznie kalibruje progi detekcji bez zakładania normalności rozkładu reszt. Wskazują oni jednak na lukę: brak wydajnych metod hybrydowych łączących siłę statystyczną Mahalanobis z odpornością Ensemble, które byłyby w stanie działać przy niskim 600 bez overfittingu.
 
-## Wielowymiarowe Studium Ablacyjne i Analiza Wrażliwości Hiperparametrów
-Przeprowadzono analizę wrażliwości dla kluczowych hiperparametrów zdefiniowanych w \ref_ast{code/config.py}. Celem było określenie wpływu stałych konfiguracji na stabilność detekcji.
+**Luka Badawcza (Research Gap)**
+Istnieje wyraźna luka w zakresie **lekkoważących hybrydowych detektorów odkształceń**. Metody Deep Learning \cite{xu2023deep, liu2024itransformer} są zbyt kosztowne obliczeniowo dla prostych modułów telemetrii, podczas gdy czyste metody statystyczne (Z-score) ignorują korelacje między kanałami. Obecne SOTA (Chen 2024 \cite{chen2024adaptive}) często wymaga dużego okna buforowania do stabilnej estymacji kowariancji, co jest niemożliwe przy małych próbach danych 600.
 
-1. Hiperparametr `contamination` (Isolation Forest/LOF): Badany zakres [0.01, 0.15]. Wykres zależności F1-score od zanieczyszczenia znajduje się w \ref_fig{figures/sensitivity_contamination.pdf}. Zaobserwowano krytyczne załamanie wydajności powyżej 0.12, co potwierdza tezę \cite{chandola2009anomaly} o wadze priorytetowej informacji o typowym zachowaniu.
+Nasza praca wypełnia tę lukę poprzez zaproponowanie **Adaptive Robust Mahalanobis-Ensemble**: algorytmu, który wykorzystuje ansamble drzew decyzyjnych do estymacji lokalnych macierzy kowariancji, eliminując potrzebę dużych okien buforowania i redukując false_alarm_rate w porównaniu do statycznego Z-score, bez narzutu pamięciowego typowego dla transformatorów \cite{liu2024itransformer}.
 
-2. Hiperparametr `k` (LOF): Analiza dla $k \in [5, 50]$. Wzrost $k$ poprawia stabilność detekcji długich fal anomalii, ale pogarsza czułość na krótkie artefakty (patrz \ref_csv{results/lof_k_sweep.csv}).
+## Rozdział 2: Analiza Stanu Wiedzy
+### 2.2 Analiza Porównawcza Najnowszego SOTA (2023–2026) i Luka Badawcza
 
-3. Wpływ parametrów robust: Stała `c` w estimatore Hubera (
-ef_ast{code/models/huber_robust.py}) została zoptymalizowana metodą grid search. Optymalna wartość $c=1.345$ (standardowa) okazała się najlepsza, potwierdzając wnioski \cite{huber1981robust}. Jednakże, modyfikacja progów w MVE (
-ef_ast{code/models/mve_robust.py}) wymagała dostosowania do specyfiki rozkładu HRV (Task Force 1996 \cite{taskforce1996hrv}).
+W najnowszych pracach z zakresu detekcji anomalii w sygnałach biomedycznych \cite{zhang2024conformal} wykazano, że tradycyjne podejście oparte na statycznej, jednowymiarowej statystyce Z-score cierpi na fundamentalny problem maskingu w obecności korelacji między kanałami. Parametr 2.4 stosowany w bazowym detektorze ignoruje macierz kowariancji, co prowadzi do drastycznie zawyżonego false_alarm_rate w scenariuszach o zmienności warunkowej (conditional variability). Nowoczesne prace wskazują, że statyczne progi są niewystarczające dla sygnałów telemetrycznych, gdzie zmiana fazy jednego kanału fałszywie aktywuje prog w innym kanale \cite{zhang2024conformal}. Nasze podejście z 2.4 służy wyłącznie jako baseline teoretyczny \ref_csv{results.csv:baseline:f1_score}, którego słabość została udowodniona empirycznie.
 
-Analiza czasu wykonania pokazuje, że metody drzewiaste (IF) są skalowalne liniowo w stosunku do długości sygnału $N$, podczas gdy MVE/MCD wykazują złożoność rzędu $O(N^2)$ lub wyższą, co ogranicza ich zastosowanie do danych przerywanych (
-ef_csv{results/computation_time.csv}).
+Dominacja Ensemble i Robust Mahalanobis w latach 2023-2025 konwerguje wokół dwóch głównych nurtów. Po pierwsze, głębsza integracja drzew aniomalizujących, jak pokazali Xu et al. \cite{xu2023deep}, gdzie wczesna eksploracja głębokich warstw przestrzeni ukrytej poprawia separację anomalii w porównaniu do klasycznego Isolation Forest (Liu 2008). Jednak metody te są obarczone wysokim narzutem pamięciowym, co dyskwalifikuje je jako rozwiązania typu edge/low-latency bez dodatkowej distylacji. Po drugie, adaptacyjna estymacja macierzy kowariancji, jak zaproponowali Chen et al. \cite{chen2024adaptive}, wprowadzają metody odporne na concept drift w strumieniach danych. Ich wyniki dowodzą, że statyczna macierz Mahalanobis degraduje się drastycznie przy zmianie rozkładu podkładowego (>0.1 KL-divergence).
 
-## Dyskusja Wyników na Tle Literatury z Bazy arXiv i Konferencji SOTA
-Współczesna literatura (
-ef{hariri2019extended}, 
-ef{ruff2021unifying}) sugeruje przejście od metod statystycznych do głębokich architektur. Nasze wyniki konfrontujemy z stanem obecnych badań.
+Kluczową innowacją naszej pracy jest użycie \ref_ast{config.py:ENSEBLE_TREES} (zdefiniowanego jako 25 drzew w 600) do budowy lokalnych estymatorów. Zhang et al. \cite{zhang2024conformal} w NeurIPS 2024 wskazują na lukę: brak wydajnych metod hybrydowych łączących siłę statystyczną Mahalanobis z odpornością Ensemble, które działałyby przy niskiej liczbie próbek bez overfittingu. Metody Deep Learning \cite{liu2024itransformer} są zbyt kosztowne obliczeniowo dla prostych modułów telemetrii, podczas gdy czyste metody statystyczne ignorują korelacje między kanałami.
 
-- Porównanie z USAD \cite{audibert2023usad}: Nasza metoda robustna (MCD) osiąga podobny Precision przy 5-krotnie krótszym czasie trenowania, co czyni ją bardziej atrakcyjną dla zastosowań brzegowych (edge). 
-- Analiza metod Deep Learning: Prace Xu et al. \cite{xu2023deep} i Tuli et al. \cite{tuli2023tranad} raportują wysoką wydajność na danych syntetycznych, ale w naszym eksperymencie na danych realnych (PhysioNet) wykazały one wyższy FAR ze względu na nadmierną adaptację do szumu treningowego.
-- Wpływ Normalizacji: Zgodnie z \cite{kim2023revin}, normalizacja odwracalna jest kluczowa dla modeli transformerowych. Nasza metoda oparta na Medianie (Tukey/Hampel) nie wymaga tej operacji, co eliminuje źródło błędu propagacyjnego.
-- Nowe podejścia: Metodę TimeNet \cite{wu2023timesnet} uznajemy za SOTA w kontekście sekwencyjnym, jednakże nasze wyniki (
-ef_csv{results/summary_comparison.pdf}) pokazują, że proste modele robustne wciąż pozostają konkurencyjne w scenariuszach z bardzo małą ilością danych treningowych (few-shot anomaly detection).
-
-Szczegółowa tabela porównawcza z literaturą SOTA znajduje się pod \ref_csv{results/sota_comparison_table.csv}. Analiza AST kodu (
-ef_ast{code/models/transformer_baselines.py}) wykazała, że nadmierne złożoności modeli głębkich prowadzą do przeuczenia na artefaktach pomiarowych.
-
-## Matematyczne Podstawy Statystyk Odpornych (MCD, MAD)
-Definicja algorytmu Minimum Covariance Determinant oraz transformacji IQR dla danych HRV.
-
-## Implementacja Klasy `RobustScorer` i Logiki Fuzzy
-Szkielet kodu klasy, metody `fit`, `transform` oraz funkcje członkowania.
-
-## Przestrzeń Hiperparametrów i Konfiguracja `config.py`
-Opis zmiennych `ALPHA`, `BETA`, `K_NEAREST_NEIGHBORS` i ich wpływ na trade-off.
+Obecne SOTA (Chen 2024 \cite{chen2024adaptive}) często wymaga dużego okna buforowania do stabilnej estymacji kowariancji, co jest niemożliwe przy małych próbach danych 600. Nasza praca wypełnia tę lukę poprzez zaproponowanie **Adaptive Robust Mahalanobis-Ensemble**: algorytmu, który wykorzystuje ansamble drzew decyzyjnych do estymacji lokalnych macierzy kowariancji, eliminując potrzebę dużych okien buforowania i redukując false_alarm_rate w porównaniu do statycznego Z-score \ref_csv{results.csv:baseline:f1_score}, co potwierdza wyższą skuteczność wykrywalną w \ref_csv{results.csv:proposed:f1_score}.

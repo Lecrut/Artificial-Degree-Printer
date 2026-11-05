@@ -258,6 +258,10 @@ class LLMConnectionManager:
             "stream": False,
             "format": "json",
             "think": False,
+            "options": {
+                "num_ctx": int(os.environ.get("OLLAMA_NUM_CTX", "8192")),
+                "num_predict": int(os.environ.get("OLLAMA_NUM_PREDICT", "4096")),
+            },
         }
         if system_prompt:
             body_dict["system"] = system_prompt

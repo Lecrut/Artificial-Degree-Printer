@@ -15,6 +15,38 @@ def _strip_duplicate_leading_heading(content: str, section_title: str) -> str:
     return cleaned.strip()
 
 
+def _sort_markdown_chapters(text: str) -> str:
+    """Ensure chapters with canonical numbering (Rozdział 1..6 or Chapter 1..6) appear in ascending order."""
+    matches = list(re.finditer(r"(^##\s+[^\n]+)", text, flags=re.MULTILINE))
+    if not matches:
+        return text
+    preamble = text[:matches[0].start()]
+    sections: list[tuple[int, int, str]] = []
+    has_numbered_chapters = False
+    for i, m in enumerate(matches):
+        start = m.start()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        header = m.group(1).strip()
+        body = text[start:end].strip()
+        m_num = re.search(r"(?:rozdzia[łl]|chapter)\s+(\d+)", header, re.IGNORECASE)
+        if m_num:
+            ch_num = int(m_num.group(1))
+            has_numbered_chapters = True
+        else:
+            ch_num = 900 + i
+        sections.append((ch_num, i, body))
+
+    if not has_numbered_chapters:
+        return text
+
+    sections.sort(key=lambda s: (s[0], s[1]))
+    res = preamble.strip()
+    if res:
+        res += "\n\n"
+    res += "\n\n".join(s[2] for s in sections) + "\n"
+    return res
+
+
 def edit_document_section(
     file_path: str | Path,
     section_title: str,
@@ -64,6 +96,7 @@ def edit_document_section(
             sep = "\n" if existing.endswith("\n") else "\n\n"
             updated = f"{existing}{sep}## {section_title}\n{normalized_body}\n"
             action = "appended"
+        updated = _sort_markdown_chapters(updated)
     else:
         pattern = re.compile(
             rf"(\\(?:sub)*section\{{{re.escape(section_title)}\}})(.*?)(?=\\(?:sub)*section\{{|\Z)",

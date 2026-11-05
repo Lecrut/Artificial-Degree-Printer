@@ -333,6 +333,86 @@ def _parse_markdown_sections(md_file: Path) -> list[tuple[str, str]]:
     return sections
 
 
+def _build_canonical_6_chapters(
+    base_chapters: list[tuple[str, str]],
+    existing_chapters: dict[str, str],
+    is_live_llm: bool = False,
+    mock_chapters: list[tuple[str, str]] | None = None,
+) -> list[tuple[str, str]]:
+    """Build chapters dynamically from authentic authored text or base specs without truncation or mock leakage."""
+    if not existing_chapters:
+        if not is_live_llm and mock_chapters:
+            return list(mock_chapters)
+        return list(base_chapters) if base_chapters else [("Wstęp", "")]
+
+    # If existing_chapters already has enough or more chapters than base, preserve all of them directly!
+    if len(existing_chapters) >= len(base_chapters):
+        return [(k, v) for k, v in existing_chapters.items()]
+
+    target_len = max(len(base_chapters), len(existing_chapters))
+    kw_map = {
+        0: ("1", "wstęp", "wstep", "cel", "teza", "intro"),
+        1: ("2", "sota", "stan wiedzy", "literatur", "przegląd", "przeglad", "related", "background"),
+        2: ("3", "architektur", "formalizm", "matematyczn", "system", "design", "model"),
+        3: ("4", "implementacj", "algorytm", "struktury", "implementation", "ast"),
+        4: ("5", "wyniki", "ewaluacj", "eksperyment", "badani", "evaluation", "metodologia", "empirical", "results"),
+        5: ("6", "podsumowan", "wnioski", "conclusi", "kierunki", "summary"),
+    }
+    assigned: dict[int, tuple[str, str]] = {}
+    used_keys: set[str] = set()
+
+    for idx in range(target_len):
+        prefix_pl = f"rozdział {idx + 1}"
+        prefix_pl_alt = f"rozdzia\u0142 {idx + 1}"
+        prefix_en = f"chapter {idx + 1}"
+        for k, v in existing_chapters.items():
+            if k in used_keys:
+                continue
+            kl = k.lower()
+            if kl.startswith(prefix_pl) or kl.startswith(prefix_pl_alt) or kl.startswith(prefix_en):
+                assigned[idx] = (k, v)
+                used_keys.add(k)
+                break
+
+    for idx in range(target_len):
+        if idx in assigned:
+            continue
+        kws = kw_map.get(idx, ())
+        for k, v in existing_chapters.items():
+            if k in used_keys:
+                continue
+            kl = k.lower()
+            if any(w in kl for w in kws):
+                assigned[idx] = (k, v)
+                used_keys.add(k)
+                break
+
+    remaining = [k for k in existing_chapters if k not in used_keys]
+    for idx in range(target_len):
+        if idx not in assigned and remaining:
+            k = remaining.pop(0)
+            assigned[idx] = (k, existing_chapters[k])
+
+    final_chapters: list[tuple[str, str]] = []
+    for idx in range(target_len):
+        if idx in assigned:
+            final_chapters.append(assigned[idx])
+        elif not is_live_llm and mock_chapters and idx < len(mock_chapters):
+            final_chapters.append(mock_chapters[idx])
+        elif idx < len(base_chapters):
+            final_chapters.append(base_chapters[idx])
+        else:
+            final_chapters.append((f"Rozdział {idx + 1}", ""))
+
+    for k in remaining:
+        final_chapters.append((k, existing_chapters[k]))
+
+    return final_chapters
+
+
+_build_canonical_chapters = _build_canonical_6_chapters
+
+
 def render_template_latex(
     spec: BenchmarkTaskSpec,
     workspace_dir: Path,
@@ -363,47 +443,39 @@ def render_template_latex(
     headers, rows = _read_csv_rows(workspace_dir / "results.csv")
     config_pairs = _extract_config_constants(workspace_dir / "config.py")
     base_chapters = _get_effective_chapters(spec)
-    chapters = expand_academic_chapters(
-        spec=spec,
-        base_chapters=base_chapters,
-        workspace_dir=workspace_dir,
-        config_pairs=config_pairs,
-        headers=headers,
-        rows=rows,
-        is_ieee=(chosen_template == "paper_ieee"),
-    )
 
-    # If thesis.md already contains LLM-authored chapters, load and prefer them over mock fallback
+    is_live_llm = provider is not None and provider.strip().lower() != "mock"
     md_file = workspace_dir / "thesis.md"
+    existing_chapters: dict[str, str] = {}
     if md_file.exists():
         raw_md = md_file.read_text(encoding="utf-8", errors="ignore")
         matches = list(re.finditer(r"^##\s+(.+?)\s*$", raw_md, flags=re.MULTILINE))
-        existing_chapters: dict[str, str] = {}
         for i, m in enumerate(matches):
             t = m.group(1).strip()
             start = m.end()
             end = matches[i + 1].start() if i + 1 < len(matches) else len(raw_md)
             b = raw_md[start:end].strip()
-            if len(b) > 80:
+            if len(b) > 20:
                 existing_chapters[t] = b
 
-        if existing_chapters:
-            real_chapters: list[tuple[str, str]] = []
-            for ch_t, mock_body in chapters:
-                m_idx = re.match(r"^(Rozdział\s+\d+|Chapter\s+\d+)", ch_t, re.IGNORECASE)
-                prefix = m_idx.group(1).lower() if m_idx else ch_t.lower()
-                matched_body = None
-                matched_title = ch_t
-                for et, eb in existing_chapters.items():
-                    if et.lower().startswith(prefix) or et.lower() == ch_t.lower():
-                        matched_body = eb
-                        matched_title = et
-                        break
-                if matched_body is not None:
-                    real_chapters.append((matched_title, matched_body))
-                else:
-                    real_chapters.append((ch_t, mock_body))
-            chapters = real_chapters
+    mock_ch = None
+    if not is_live_llm:
+        mock_ch = expand_academic_chapters(
+            spec=spec,
+            base_chapters=base_chapters,
+            workspace_dir=workspace_dir,
+            config_pairs=config_pairs,
+            headers=headers,
+            rows=rows,
+            is_ieee=(chosen_template == "paper_ieee"),
+        )
+
+    chapters = _build_canonical_6_chapters(
+        base_chapters=base_chapters,
+        existing_chapters=existing_chapters,
+        is_live_llm=is_live_llm,
+        mock_chapters=mock_ch,
+    )
 
     # LaTeX table for CSV metrics
     if headers and rows:
@@ -437,12 +509,32 @@ def render_template_latex(
         for sym, _ in config_pairs
     ) or "\\texttt{CONFIG} & \\texttt{DEFAULT} \\\\"
 
-    ch1_title, ch1_body = _escape_latex_prose(chapters[0][0]), _escape_latex_prose(chapters[0][1])
-    ch2_title, ch2_body = _escape_latex_prose(chapters[1][0]), _escape_latex_prose(chapters[1][1])
-    ch3_title, ch3_body = _escape_latex_prose(chapters[2][0]), _escape_latex_prose(chapters[2][1])
-    ch4_title, ch4_body = _escape_latex_prose(chapters[3][0]), _escape_latex_prose(chapters[3][1])
-    ch5_title, ch5_body = _escape_latex_prose(chapters[4][0]), _escape_latex_prose(chapters[4][1])
-    ch6_title, ch6_body = _escape_latex_prose(chapters[5][0]), _escape_latex_prose(chapters[5][1])
+    # Determine which chapter hosts the architecture TikZ & config AST table
+    arch_idx = -1
+    for i, (ch_title, _) in enumerate(chapters):
+        ch_l = ch_title.lower()
+        if any(w in ch_l for w in ("architektur", "formalizm", "matematyczn", "system", "design", "model", "methodology", "metod")):
+            arch_idx = i
+            break
+    if arch_idx == -1:
+        arch_idx = min(2, len(chapters) - 1)
+
+    # Determine which chapter hosts the empirical results CSV table & comparison chart
+    results_idx = -1
+    for i, (ch_title, _) in enumerate(chapters):
+        ch_l = ch_title.lower()
+        if any(w in ch_l for w in ("wynik", "ewaluacj", "eksperyment", "badani", "evaluation", "results", "empirical")):
+            results_idx = i
+            break
+    if results_idx == -1:
+        results_idx = max(0, len(chapters) - 2) if len(chapters) >= 3 else len(chapters) - 1
+
+    if arch_idx == results_idx and len(chapters) > 1:
+        if arch_idx > 0:
+            arch_idx -= 1
+        elif results_idx < len(chapters) - 1:
+            results_idx += 1
+
     esc_abstract_pl = _escape_latex_prose(spec.abstract_pl)
     esc_abstract_en = _escape_latex_prose(spec.abstract_en)
 
@@ -455,7 +547,48 @@ def render_template_latex(
         deg_val = "inzynierska"
 
     if chosen_template == "thesis_plodz":
-        # Politechnika Łódzka ThesisPLodz template
+        # Politechnika Łódzka ThesisPLodz template with dynamic N chapters
+        rendered_chapters: list[str] = []
+        for i, (c_title, c_body) in enumerate(chapters):
+            esc_t = _escape_latex_prose(c_title)
+            esc_b = _escape_latex_prose(c_body)
+            c_parts = [f"\\chapter{{{esc_t}}}\n{esc_b}"]
+            if i == arch_idx:
+                c_parts.append(
+                    "Na Rysunku~\\ref{fig:arch_tikz} przedstawiono potok obliczeniowy zaprojektowany przez system ADK.\n"
+                    "Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modułu \\texttt{config.py}:\n\n"
+                    "\\begin{table}[htbp]\n"
+                    "\\centering\n"
+                    "\\caption{Weryfikowane symbolicznie stałe konfiguracyjne (\\texttt{config.py})}\n"
+                    "\\begin{tabular}{ll}\n"
+                    "\\toprule\n"
+                    "\\textbf{Symbol AST} & \\textbf{Wartość w kodzie} \\\\\n"
+                    "\\midrule\n"
+                    f"{config_rows_tex}\n"
+                    "\\bottomrule\n"
+                    "\\end{tabular}\n"
+                    "\\label{tab:config_constants}\n"
+                    "\\end{table}\n\n"
+                    "\\begin{figure}[htbp]\n"
+                    "\\centering\n"
+                    f"{spec.architecture_tikz}\n"
+                    "\\caption{Schemat architektury obliczeniowej modułu \\texttt{core.py}.}\n"
+                    "\\label{fig:arch_tikz}\n"
+                    "\\end{figure}"
+                )
+            if i == results_idx:
+                c_parts.append(
+                    f"{csv_table_tex}\n\n"
+                    "\\begin{figure}[htbp]\n"
+                    "\\centering\n"
+                    "\\includegraphics[width=0.86\\textwidth]{figures/comparison_chart.pdf}\n"
+                    "\\caption{Wizualizacja wyników eksperymentalnych wygenerowana przez \\texttt{plot\\_results.py}.}\n"
+                    "\\label{fig:comparison_chart}\n"
+                    "\\end{figure}"
+                )
+            rendered_chapters.append("\n\n".join(c_parts))
+        chapters_body_tex = "\n\n".join(rendered_chapters)
+
         tex_content = f"""% Szablon Pracy Dyplomowej Politechniki Łódzkiej (Zarządzenie Nr 6/2025 Rektora PŁ)
 \\documentclass[W2, polski]{{ThesisPLodz}}
 
@@ -484,60 +617,15 @@ def render_template_latex(
 }}
 \\keywordssecondary{{artificial intelligence, machine learning, neuro-symbolic systems, empirical verification}}
 
-\\renewcommand{{\\texttt}}[1]{{{{\\normalfont\\ttfamily #1}}}}
+\\renewcommand{{\\texttt}}[1]{{\\ifmmode\\mathtt{{#1}}\\else{{\\normalfont\\ttfamily #1}}\\fi}}
 \\DeclareFontShape{{OMS}}{{cmsy}}{{m}}{{n}}{{<-> cmsy10}}{{}}
+\\DeclareFontShape{{OML}}{{cmm}}{{m}}{{it}}{{<-> cmmi10}}{{}}
+\\DeclareFontShape{{OT1}}{{cmr}}{{m}}{{n}}{{<-> cmr10}}{{}}
+\\DeclareFontShape{{OMX}}{{cmex}}{{m}}{{n}}{{<-> cmsy10}}{{}}
 
 \\begin{{document}}
 
-\\chapter{{{ch1_title}}}
-{ch1_body}
-
-\\chapter{{{ch2_title}}}
-{ch2_body}
-
-\\chapter{{{ch3_title}}}
-{ch3_body}
-
-Na Rysunku~\\ref{{fig:arch_tikz}} przedstawiono potok obliczeniowy zaprojektowany przez system ADK.
-Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modułu \\texttt{{config.py}}:
-
-\\begin{{table}}[htbp]
-\\centering
-\\caption{{Weryfikowane symbolicznie stałe konfiguracyjne (\\texttt{{config.py}})}}
-\\begin{{tabular}}{{ll}}
-\\toprule
-\\textbf{{Symbol AST}} & \\textbf{{Wartość w kodzie}} \\\\
-\\midrule
-{config_rows_tex}
-\\bottomrule
-\\end{{tabular}}
-\\label{{tab:config_constants}}
-\\end{{table}}
-
-\\begin{{figure}}[htbp]
-\\centering
-{spec.architecture_tikz}
-\\caption{{Schemat architektury obliczeniowej modułu \\texttt{{core.py}}.}}
-\\label{{fig:arch_tikz}}
-\\end{{figure}}
-
-\\chapter{{{ch4_title}}}
-{ch4_body}
-
-\\chapter{{{ch5_title}}}
-{ch5_body}
-
-{csv_table_tex}
-
-\\begin{{figure}}[htbp]
-\\centering
-\\includegraphics[width=0.86\\textwidth]{{figures/comparison_chart.pdf}}
-\\caption{{Wizualizacja wyników eksperymentalnych wygenerowana przez \\texttt{{plot\\_results.py}}.}}
-\\label{{fig:comparison_chart}}
-\\end{{figure}}
-
-\\chapter{{{ch6_title}}}
-{ch6_body}
+{chapters_body_tex}
 
 \\nocite{{*}}
 \\bibliographystyle{{plain}}
@@ -563,7 +651,48 @@ Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modu�
 \\end{{document}}
 """
     else:
-        # IEEEtran Scientific Paper template
+        # IEEEtran Scientific Paper template with dynamic N sections
+        rendered_sections: list[str] = []
+        for i, (c_title, c_body) in enumerate(chapters):
+            esc_t = _escape_latex_prose(c_title)
+            esc_b = _escape_latex_prose(c_body)
+            s_parts = [f"\\section{{{esc_t}}}\n{esc_b}"]
+            if i == arch_idx:
+                s_parts.append(
+                    "Figure~\\ref{fig:arch_tikz} illustrates the neural-symbolic data processing pipeline.\n"
+                    "The experimental hyperparameters are grounded directly in the abstract syntax tree of \\texttt{config.py}:\n\n"
+                    "\\begin{table}[htbp]\n"
+                    "\\centering\n"
+                    "\\caption{Symbolically Grounded Hyperparameters (\\texttt{config.py})}\n"
+                    "\\begin{tabular}{ll}\n"
+                    "\\toprule\n"
+                    "\\textbf{AST Symbol} & \\textbf{Grounding Value} \\\\\n"
+                    "\\midrule\n"
+                    f"{config_rows_tex}\n"
+                    "\\bottomrule\n"
+                    "\\end{tabular}\n"
+                    "\\label{tab:config_hyperparameters}\n"
+                    "\\end{table}\n\n"
+                    "\\begin{figure}[htbp]\n"
+                    "\\centering\n"
+                    f"{spec.architecture_tikz}\n"
+                    "\\caption{Architectural schematic of the \\texttt{core.py} processing engine.}\n"
+                    "\\label{fig:arch_tikz}\n"
+                    "\\end{figure}"
+                )
+            if i == results_idx:
+                s_parts.append(
+                    f"{csv_table_tex}\n\n"
+                    "\\begin{figure}[htbp]\n"
+                    "\\centering\n"
+                    "\\includegraphics[width=\\columnwidth,keepaspectratio]{figures/comparison_chart.pdf}\n"
+                    "\\caption{Empirical benchmark comparison generated by \\texttt{plot\\_results.py}.}\n"
+                    "\\label{fig:comparison_chart}\n"
+                    "\\end{figure}"
+                )
+            rendered_sections.append("\n\n".join(s_parts))
+        sections_body_tex = "\n\n".join(rendered_sections)
+
         tex_content = f"""% IEEE Scientific Conference Paper Template (IEEEtran)
 \\documentclass[conference]{{IEEEtran}}
 \\usepackage{{iftex}}
@@ -593,11 +722,15 @@ Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modu�
   \\def\\@oddfoot{{\\normalfont\\footnotesize\\hfil\\thepage\\hfil}}%
   \\def\\@evenfoot{{\\normalfont\\footnotesize\\hfil\\thepage\\hfil}}%
 }}
+\\def\\chapter{{\\@ifstar\\section\\section}}
 \\makeatother
 \\pagestyle{{plain}}
 
-\\renewcommand{{\\texttt}}[1]{{{{\\normalfont\\ttfamily #1}}}}
+\\renewcommand{{\\texttt}}[1]{{\\ifmmode\\mathtt{{#1}}\\else{{\\normalfont\\ttfamily #1}}\\fi}}
 \\DeclareFontShape{{OMS}}{{cmsy}}{{m}}{{n}}{{<-> cmsy10}}{{}}
+\\DeclareFontShape{{OML}}{{cmm}}{{m}}{{it}}{{<-> cmmi10}}{{}}
+\\DeclareFontShape{{OT1}}{{cmr}}{{m}}{{n}}{{<-> cmr10}}{{}}
+\\DeclareFontShape{{OMX}}{{cmex}}{{m}}{{n}}{{<-> cmsy10}}{{}}
 
 \\begin{{document}}
 
@@ -620,55 +753,7 @@ Domain: {_escape_latex_prose(spec.domain)}}}}}
 neuro-symbolic systems, empirical verification, abstract syntax tree, automated thesis synthesis, machine learning
 \\end{{IEEEkeywords}}
 
-\\section{{{ch1_title}}}
-{ch1_body}
-
-\\section{{{ch2_title}}}
-{ch2_body}
-
-\\section{{{ch3_title}}}
-{ch3_body}
-
-Figure~\\ref{{fig:arch_tikz}} illustrates the neural-symbolic data processing pipeline.
-The experimental hyperparameters are grounded directly in the abstract syntax tree of \\texttt{{config.py}}:
-
-\\begin{{table}}[htbp]
-\\centering
-\\caption{{Symbolically Grounded Hyperparameters (\\texttt{{config.py}})}}
-\\begin{{tabular}}{{ll}}
-\\toprule
-\\textbf{{AST Symbol}} & \\textbf{{Grounding Value}} \\\\
-\\midrule
-{config_rows_tex}
-\\bottomrule
-\\end{{tabular}}
-\\label{{tab:config_hyperparameters}}
-\\end{{table}}
-
-\\begin{{figure}}[htbp]
-\\centering
-{spec.architecture_tikz}
-\\caption{{Architectural schematic of the \\texttt{{core.py}} processing engine.}}
-\\label{{fig:arch_tikz}}
-\\end{{figure}}
-
-\\section{{{ch4_title}}}
-{ch4_body}
-
-\\section{{{ch5_title}}}
-{ch5_body}
-
-{csv_table_tex}
-
-\\begin{{figure}}[htbp]
-\\centering
-\\includegraphics[width=\\columnwidth,keepaspectratio]{{figures/comparison_chart.pdf}}
-\\caption{{Empirical benchmark comparison generated by \\texttt{{plot\\_results.py}}.}}
-\\label{{fig:comparison_chart}}
-\\end{{figure}}
-
-\\section{{{ch6_title}}}
-{ch6_body}
+{sections_body_tex}
 
 \\nocite{{*}}
 \\bibliographystyle{{IEEEtran}}

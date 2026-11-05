@@ -557,9 +557,41 @@ def call_agent(
             if isinstance(extracted, dict):
                 parsed_output = extracted
             else:
-                fallback = _default_simulated_response(path.stem, system_prompt, user_payload, model_tier)
-                fallback["llm_raw_text"] = raw_response_str
-                parsed_output = fallback
+                # In live LLM runs (Ollama, Gemini), NEVER inject simulated mock responses!
+                # Surface genuine LLM raw text so Layer 3 supervisors can evaluate real output.
+                parsed_output = {
+                    "raw_response": raw_response_str,
+                    "error": "Failed to parse JSON from LLM response",
+                    "status": "FAIL",
+                    "issues": [f"Model returned non-JSON format: {raw_response_str[:120]}..."],
+                }
+                stem = path.stem.lower()
+                if any(w in stem for w in ("writer", "researcher", "sota")):
+                    # Only accept raw response if it is actual markdown prose and not broken JSON
+                    stripped_raw = raw_response_str.strip()
+                    if stripped_raw and not stripped_raw.startswith(("{", "[")):
+                        parsed_output["section_content"] = stripped_raw
+                        parsed_output["content"] = stripped_raw
+                        parsed_output["status"] = "PASS"
+                elif any(c in stem for c in ("coder", "tester")):
+                    # Try to extract valid python code from markdown fences ```python ... ```
+                    code_match = re.search(
+                        r"```(?:python)?\s*\n(.*?)```",
+                        raw_response_str,
+                        flags=re.DOTALL | re.IGNORECASE,
+                    )
+                    candidate_code = code_match.group(1).strip() if code_match else None
+                    if candidate_code:
+                        try:
+                            import ast
+                            ast.parse(candidate_code)
+                            parsed_output["source_code"] = candidate_code
+                            parsed_output["status"] = "PASS"
+                            parsed_output.pop("error", None)
+                            parsed_output.pop("issues", None)
+                        except Exception:
+                            # Not valid Python - remains FAIL so Layer 3 / Gate 3 catches it
+                            pass
 
             call_prompt_tokens = int(api_res.get("prompt_tokens") or 0)
             call_completion_tokens = int(api_res.get("completion_tokens") or 0)

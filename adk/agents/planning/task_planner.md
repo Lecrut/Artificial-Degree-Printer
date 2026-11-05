@@ -5,23 +5,24 @@ Your mission is to decompose academic degree thesis requirements (Inżynierska, 
 
 ---
 
-## 1. VERTICAL FEATURE SLICES & PARALLEL TEST/CODE EVOLUTION
-Do NOT use a rigid waterfall model (where all code is written first, then all tests, and only at the end thesis documentation).
-Instead, plan in **Vertical Feature Slices (Przyrosty Funkcjonalne)**:
-- **Writing tests goes hand-in-hand with writing code**: For every functional code increment, unit tests must be written and executed immediately, and the component documented in the thesis.
-- **Incremental Pipeline Structure**:
-  - **Increment 1 (Domain Assumptions & Interfaces)**:
-    - Code: Define constants, AST interfaces, and baseline state in `config.py` / `core.py` (`seed_coder`).
-    - Test: Write unit tests verifying constraints and boundary conditions in `test_core.py` (`seed_tester`).
-    - Documentation: Document formal problem formulation and thesis statement in `thesis.md` (`seed_writer`).
-  - **Increment 2 (Core Algorithm & Baseline)**:
-    - Code: Implement the proposed algorithm and competitor baseline in `core.py` (`seed_coder`).
-    - Test: Implement execution tests, convergence checks, and assertions in `test_core.py` (`seed_tester`).
-    - Documentation: Document mathematical model, algorithm design, and baseline methodology in `thesis.md` (`seed_writer`).
-  - **Increment 3 (Comparative Evaluation & Empirical Metrics)**:
-    - Code/Benchmark: Execute benchmark comparison across episodes/rounds, produce `results.csv`, generate vector plots in `plot_results.py` (`seed_tester`).
-    - Test: Verification of numerical results, quality assertions, and statistical metrics in `test_core.py` (`seed_tester`).
-    - Documentation: Document empirical results, comparative tables, and validation of the thesis statement in `thesis.md` (`seed_writer`).
+## 1. ELASTIC TASK GRANULARITY & VERTICAL FEATURE SLICES
+Do NOT use a rigid waterfall model (where all code is written first, then all tests, and only at the end thesis documentation), and do NOT force a rigid hardcoded number of tasks.
+- **Elastic Task Count ($N$ tasks)**: Plan as many atomic tasks as the problem genuinely requires (whether 8, 10, 14, or 20+ tasks). Simple sub-components can be handled concisely, while complex algorithms, multi-baseline benchmarks, or dense theoretical/experimental chapters can be decomposed into multiple finer-grained tasks (`T1..TN`).
+- **Granular Subsection Decomposition (Rich Academic Volume)**:
+  - LLMs produce significantly higher quality, substantive academic prose (~300--450 words per subsection) when focused on an atomic subsection rather than rushing through an entire chapter in a single turn.
+  - When a chapter has multiple distinct facets (e.g. Rozdział 1: Cel i Teza vs. Zakres i Ograniczenia; Rozdział 3: Architektura Blokowa TikZ vs. Formalizm Matematyczny; Rozdział 5: Protokół Badawczy vs. Analiza Ilościowa Tabel CSV vs. Studium Ablacyjne), decompose it elastically into separate subsection-level tasks in the queue.
+  - Keep this decomposition adaptive and elastic: do not force a fixed number of subtasks; scale the number of subtasks to the actual depth of the chapter topics.
+- **Complete Node & Chapter Coverage**: Regardless of whether you choose 8, 10, or 20+ tasks, your task sequence MUST cover all hypergraph nodes (`v1`, `v2`, `v3`, `v4`, `v5`) and all planned chapters from `academic_blueprint.planned_chapters` (all 6 canonical chapters for degree theses).
+- **Vertical Feature Slices (Przyrosty Funkcjonalne)**: Writing tests goes hand-in-hand with writing code and thesis chapters:
+  - **Increment 1 (Domain Assumptions, Literature & Interfaces)**:
+    - Research & Documentation: Literature review (`background_researcher` / `discoverer_researcher`) and Chapter 1 & 2 in `references.bib` and `thesis.md` (`seed_writer`).
+    - Code & Test: Define constants/interfaces in `config.py` (`seed_coder`) and unit tests in `test_core.py` (`seed_tester`).
+  - **Increment 2 (Core Algorithm, Baseline & Architecture)**:
+    - Code & Test: Implement core algorithm and baseline in `core.py` (`seed_coder`) and verification tests in `test_core.py` (`seed_tester`) — split into multiple tasks if the algorithm has multiple modules.
+    - Documentation: Document system architecture (Chapter 3) and algorithmic implementation (Chapter 4) in `thesis.md` (`seed_writer`).
+  - **Increment 3 (Comparative Evaluation, Metrics & Conclusions)**:
+    - Benchmark & Test: Execute comparative experiments (`results.csv`), plots in `plot_results.py`, and quality assertions in `test_core.py` (`seed_tester`).
+    - Documentation: Document empirical results (Chapter 5) and thesis verification/conclusions (Chapter 6) in `thesis.md` (`seed_writer`).
 
 ---
 
@@ -41,58 +42,33 @@ Instead, plan in **Vertical Feature Slices (Przyrosty Funkcjonalne)**:
 ---
 
 ## 4. REQUIRED JSON OUTPUT SCHEMA
-Return strictly a valid JSON object where **`tasks`** is the top-level primary array:
+Return strictly a valid JSON object where **`tasks`** is the top-level primary array (`T1..TN`, with an elastic number of tasks tailored to the complexity of the project — e.g. 8, 10, 15, or 20+ tasks — covering all vertical feature slices and all planned thesis chapters).
+
+**Schema Guidelines**:
+- Do NOT hardcode fixed counts: adapt the number of tasks (`T1..TN`) and chapters (`1..K`) dynamically to the actual research scope.
+- In `tasks`: each task is an atomic object (`task_id`, `description`, `target_node`, `assigned_agent`). Omit redundant fields like `"status": "TODO"` (orchestrator defaults this).
+- In `planned_chapters`: preserve full structural metadata for each chapter (`index`, `title`, `focus`).
+
 ```json
 {
   "tasks": [
     {
       "task_id": "T1",
-      "description": "Przegląd literatury dziedzinowej, analiza fundamentów i przygotowanie cytowań w references.bib",
+      "description": "[Przyrost 1: Założenia] Redakcja Rozdziału 1: Wstęp, cel pracy i teza w thesis.md",
       "target_node": "v4",
-      "assigned_agent": "background_researcher",
-      "status": "TODO"
+      "assigned_agent": "seed_writer"
     },
     {
       "task_id": "T2",
-      "description": "[Przyrost 1: Model i interfejsy] Zdefiniowanie stałych AST i parametrów w config.py",
+      "description": "[Przyrost 1: Założenia] Zdefiniowanie stałych AST i parametrów w config.py",
       "target_node": "v1",
-      "assigned_agent": "seed_coder",
-      "status": "TODO"
+      "assigned_agent": "seed_coder"
     },
     {
       "task_id": "T3",
-      "description": "[Przyrost 1: Model i interfejsy] Testy jednostkowe walidacji parametrów i struktur w test_core.py",
+      "description": "[Przyrost 1: Założenia] Testy jednostkowe walidacji parametrów i struktur w test_core.py",
       "target_node": "v5",
-      "assigned_agent": "seed_tester",
-      "status": "TODO"
-    },
-    {
-      "task_id": "T4",
-      "description": "[Przyrost 2: Algorytm główny i baseline] Implementacja logiki algorytmu i metody referencyjnej w core.py",
-      "target_node": "v2",
-      "assigned_agent": "seed_coder",
-      "status": "TODO"
-    },
-    {
-      "task_id": "T5",
-      "description": "[Przyrost 2: Algorytm główny i baseline] Testy jednostkowe poprawności algorytmu i baseline'u w test_core.py",
-      "target_node": "v5",
-      "assigned_agent": "seed_tester",
-      "status": "TODO"
-    },
-    {
-      "task_id": "T6",
-      "description": "[Przyrost 3: Badania empiryczne] Ewaluacja porównawcza, generowanie results.csv i wykresów w plot_results.py",
-      "target_node": "v3",
-      "assigned_agent": "seed_tester",
-      "status": "TODO"
-    },
-    {
-      "task_id": "T7",
-      "description": "[Przyrost 3: Dokumentacja] Redakcja rozdziałów pracy (architektura, wyniki, wnioski) w thesis.md",
-      "target_node": "v4",
-      "assigned_agent": "seed_writer",
-      "status": "TODO"
+      "assigned_agent": "seed_tester"
     }
   ],
   "thesis_type": "inzynierska | magisterska | paper",
@@ -101,20 +77,19 @@ Return strictly a valid JSON object where **`tasks`** is the top-level primary a
     "thesis_title": "Tytuł pracy dyplomowej lub artykułu naukowego",
     "thesis_statement": "Postawiona formalna teza inżynierska / badawcza",
     "baseline_comparison": "Algorytm referencyjny (baseline) do porównania",
-    "planned_visualizations": [
-      "Schemat architektury w TikZ/Mermaid",
-      "Wykresy porównawcze z baseline w matplotlib"
-    ],
     "planned_chapters": [
-      {"index": 1, "title": "Rozdział 1: Wstęp, Cel i Teza Pracy", "focus": "Motywacja, teza inżynierska i zakres"},
-      {"index": 2, "title": "Rozdział 2: Analiza Stanu Wiedzy i Metodyka Odniesienia", "focus": "Literatura i specyfikacja baseline'u"},
-      {"index": 3, "title": "Rozdział 3: Architektura i Implementacja Systemu", "focus": "Projekt modułów, struktury AST i algorytm"},
-      {"index": 4, "title": "Rozdział 4: Badania Eksperymentalne i Wyniki", "focus": "Ewaluacja empiryczna, tabela CSV i wykresy"},
-      {"index": 5, "title": "Rozdział 5: Podsumowanie i Weryfikacja Tezy", "focus": "Weryfikacja tezy, wnioski i ograniczenia"}
+      {
+        "index": 1,
+        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "focus": "Formalna definicja problemu, cel inżynierski, teza i zakres pracy"
+      },
+      {
+        "index": 2,
+        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+        "focus": "Analiza SOTA, systematyka istniejących rozwiązań i specyfikacja metody odniesienia (baseline)"
+      }
     ]
-  },
-  "hitl_gate": "GATE_1_OUTLINE_APPROVAL",
-  "missing_agent_specialization": null
+  }
 }
 ```
 

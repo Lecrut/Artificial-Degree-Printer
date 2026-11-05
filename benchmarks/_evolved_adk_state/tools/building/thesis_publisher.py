@@ -22,7 +22,6 @@ from adk.benchmarks.tasks import BenchmarkTaskSpec  # noqa: E402
 from adk.mocks.mock_pdf_template import (  # noqa: E402
     _clean_latex_inline,
     _parse_compiled_sections,
-    render_thesis_pdf,
 )
 from adk.mocks.thesis_mock_expander import expand_academic_chapters  # noqa: E402
 from adk.tools.building.doc_editor import edit_document_section  # noqa: E402
@@ -52,13 +51,14 @@ def ensure_full_6_chapter_markdown(
     force_mock_expand: bool = False,
     provider: str | None = None,
 ) -> Path:
-    """Ensure thesis.md contains all 6 canonical chapters in mock mode, preserving LLM-authored chapters in live mode."""
+    """Ensure thesis.md contains all 6 canonical chapters, preserving LLM-authored chapters and only expanding missing sections."""
     md_path = workspace_dir / "thesis.md"
     existing_md = md_path.read_text(encoding="utf-8") if md_path.exists() else ""
 
-    is_live_provider = provider is not None and str(provider).strip().lower() != "mock"
-    if is_live_provider and not force_mock_expand and existing_md.strip():
-        # In live LLM runs, never inject mock chapters into thesis.md
+    # When running with a live LLM provider (Ollama, OpenAI, Gemini), NEVER silently inject mock chapters.
+    # Preserve authentic LLM-authored chapters so Layer 3 / Gate 3 can audit real work.
+    is_live_llm = provider is not None and provider.strip().lower() != "mock"
+    if is_live_llm and not force_mock_expand:
         return md_path
 
     headers, rows = _read_csv_rows(workspace_dir / "results.csv")
@@ -141,17 +141,48 @@ def _parse_bibtex_items(bib_path: Path) -> list[dict[str, str]]:
 
 
 def _sanitize_unresolved_latex_tags(tex_text: str) -> str:
-    """Replace any remaining unresolved \\ref_ast, \\ref_csv, \\ref_fig tags and empty list blocks so XeTeX/Tectonic never fails."""
+    """Replace any remaining unresolved \\ref_ast, \\ref_csv, \\ref_fig tags, unescaped underscores in text macros, and empty list blocks so XeTeX/Tectonic never fails."""
     def _repl(m: re.Match[str]) -> str:
         inner = m.group(1).split(":")[-1].replace("_", "\\_")
         return f"\\texttt{{{inner}}}"
 
+    def _esc_macro(m: re.Match[str]) -> str:
+        cmd = m.group(1)
+        arg = re.sub(r"(?<!\\)_", r"\\_", m.group(2))
+        arg = re.sub(r"(?<!\\)&", r"\\&", arg)
+        arg = re.sub(r"(?<!\\)%", r"\\%", arg)
+        arg = re.sub(r"(?<!\\)#", r"\\#", arg)
+        return f"\\{cmd}{{{arg}}}"
+
     s = re.sub(r"\\ref_(?:ast|csv|fig)\{([^}]+)\}", _repl, tex_text)
+    s = re.sub(r"\\(texttt|textbf|textit|section|subsection|subsubsection|chapter|paragraph)\{([^{}]*)\}", _esc_macro, s)
     s = re.sub(
         r"\\begin\{(itemize|enumerate)\}\s*\\end\{\1\}",
         r"\\begin{\1}\n  \\item Brak dodatkowych pozycji.\n\\end{\1}",
         s,
     )
+    if "\\bibliography{" in s and "\\nocite{*}" not in s:
+        s = s.replace("\\bibliography{", "\\nocite{*}\n\\bibliography{", 1)
+    return s
+
+
+def _inline_safe_bibliography(tex_text: str, work_dir: Path) -> str:
+    """Replace BibTeX \\bibliography{...} with a guaranteed valid inline \\begin{thebibliography}{99} block if BibTeX failed."""
+    entries = _parse_bibtex_items(work_dir / "references.bib")
+    items_tex: list[str] = []
+    for e in entries[:40]:
+        key = re.sub(r"[^a-zA-Z0-9_:-]", "", e.get("key", "ref1")) or "ref1"
+        author = e.get("author", "Autor").replace("&", "\\&").replace("_", "\\_").replace("%", "\\%")
+        title = e.get("title", "Publikacja naukowa").replace("&", "\\&").replace("_", "\\_").replace("%", "\\%")
+        year = re.sub(r"[^0-9]", "", e.get("year", "2024"))[:4] or "2024"
+        items_tex.append(f"  \\bibitem{{{key}}} {author}, \\textit{{{title}}}, {year}.")
+    if not items_tex:
+        items_tex.append("  \\bibitem{adk2025} Neuro-Symbolic ADK, \\textit{Dokumentacja i literatura przedmiotowa}, 2025.")
+    bib_block = "\\begin{thebibliography}{99}\n" + "\n".join(items_tex) + "\n\\end{thebibliography}"
+    s = re.sub(r"\\nocite\{\*\}\s*", "", tex_text)
+    s = re.sub(r"\\bibliographystyle\{[^}]+\}\s*", "", s)
+    if "\\bibliography{" in s:
+        s = re.sub(r"\\bibliography\{[^}]+\}", lambda _: bib_block, s, count=1)
     return s
 
 
@@ -203,6 +234,28 @@ def compile_latex_to_pdf(tex_path: Path, output_pdf: Path | None = None) -> bool
                     return True
             except (subprocess.SubprocessError, OSError):
                 pass
+
+        # Self-healing retry: inline the bibliography directly so malformed .bib or citation mismatches never block PDF output
+        try:
+            current_tex = tex_file.read_text(encoding="utf-8", errors="ignore")
+            healed_tex = _inline_safe_bibliography(current_tex, work_dir)
+            if healed_tex != current_tex:
+                tex_file.write_text(healed_tex, encoding="utf-8")
+                subprocess.run(
+                    [str(tectonic_bin), "-C", tex_file.name],
+                    cwd=str(work_dir),
+                    env=env,
+                    check=False,
+                    capture_output=True,
+                    timeout=60,
+                )
+                generated_pdf = tex_file.with_suffix(".pdf")
+                if generated_pdf.exists() and generated_pdf.stat().st_size > 1000:
+                    if generated_pdf.resolve() != target_pdf.resolve():
+                        shutil.move(str(generated_pdf), str(target_pdf))
+                    return True
+        except (subprocess.SubprocessError, OSError):
+            pass
 
     # 2. Secondary fallback: xelatex / pdflatex
     for engine in ("xelatex", "pdflatex"):
@@ -552,8 +605,8 @@ def publish_workspace_thesis_bundle(
         text=True,
         timeout=30,
     )
-    if exec_res.returncode != 0 and not is_live_provider:
-        if not (w_dir / "results.csv").exists() or (w_dir / "results.csv").stat().st_size == 0:
+    if exec_res.returncode != 0:
+        if not is_live_provider and (not (w_dir / "results.csv").exists() or (w_dir / "results.csv").stat().st_size == 0):
             (w_dir / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
 
     # Ensure real vector and raster plots are generated (never broken placeholder)
@@ -576,7 +629,7 @@ def publish_workspace_thesis_bundle(
                 plot_py = w_dir / "code" / "plot_results.py"
             if plot_py.exists():
                 subprocess.run([sys.executable, str(plot_py)], cwd=str(w_dir), env=exec_env, check=False, capture_output=True, timeout=30)
-            if not _is_real_pdf(chart_pdf) and not is_live_provider:
+            if not is_live_provider and not _is_real_pdf(chart_pdf):
                 mod_scope = {"__name__": "__main__", "__file__": str(w_dir / "plot_results.py")}
                 exec(spec.plot_script, mod_scope)
                 if "generate_plots" in mod_scope:
@@ -584,7 +637,7 @@ def publish_workspace_thesis_bundle(
         except Exception:
             pass
 
-    if not _is_real_pdf(chart_pdf):
+    if not is_live_provider and not _is_real_pdf(chart_pdf):
         try:
             import matplotlib.pyplot as plt
             fig, ax = plt.subplots(figsize=(6, 3), dpi=150)
@@ -605,54 +658,65 @@ def publish_workspace_thesis_bundle(
         os.utime(csv_file, (now_ts, now_ts))
 
     # 3. Ensure all chapters exist in thesis.md, generate thesis.tex, and compile both symbolically
-    md_path = ensure_full_6_chapter_markdown(spec, w_dir, provider=provider)
-    tex_path = build_latex_source(
-        spec,
-        w_dir,
-        template_name=template_name,
-        thesis_type=thesis_type,
-        provider=provider,
-    )
-
-    md_comp = compile_symbolic_references(md_path, w_dir, write_compiled=True)
-    tex_comp = compile_symbolic_references(tex_path, w_dir, write_compiled=True)
-
-    # Always write compiled .md and .tex (sanitizing any unresolved symbolic tags so Tectonic LaTeX template compilation always succeeds)
-    compiled_md = w_dir / "thesis.compiled.md"
-    if not compiled_md.exists() and md_comp.get("compiled_text"):
-        compiled_md.write_text(md_comp["compiled_text"], encoding="utf-8")
-
-    compiled_tex = w_dir / "thesis.compiled.tex"
-    sanitized_tex_text = _sanitize_unresolved_latex_tags(tex_comp.get("compiled_text", ""))
-    if sanitized_tex_text:
-        compiled_tex.write_text(sanitized_tex_text, encoding="utf-8")
-
-    # 4. Render thesis.pdf: compile thesis.compiled.tex to genuine academic LaTeX PDF (ThesisPLodz.cls or IEEEtran.cls)
+    tex_path = w_dir / "thesis.tex"
     pdf_path = w_dir / "thesis.pdf"
-    compiled_ok = False
-    if compiled_tex.exists():
-        compiled_ok = compile_latex_to_pdf(compiled_tex, output_pdf=pdf_path)
+    html_path = w_dir / "thesis.html"
+    md_comp: dict[str, Any] = {"status": "SKIPPED", "resolved_references": {}}
+    tex_comp: dict[str, Any] = {"status": "SKIPPED", "resolved_references": {}}
 
-    # Fallback to mock matplotlib PDF ONLY if Tectonic/LaTeX engine is completely unavailable on the machine
-    if not compiled_ok or not pdf_path.exists() or pdf_path.stat().st_size < 1000:
-        pdf_path = render_thesis_pdf(
+    try:
+        md_path = ensure_full_6_chapter_markdown(spec, w_dir, provider=provider)
+        tex_path = build_latex_source(
+            spec,
+            w_dir,
+            template_name=template_name,
+            thesis_type=thesis_type,
+            provider=provider,
+        )
+
+        md_comp = compile_symbolic_references(md_path, w_dir, write_compiled=True)
+        tex_comp = compile_symbolic_references(tex_path, w_dir, write_compiled=True)
+
+        # Always write compiled .md and .tex (sanitizing any unresolved symbolic tags so Tectonic LaTeX template compilation always succeeds)
+        compiled_md = w_dir / "thesis.compiled.md"
+        if not compiled_md.exists() and md_comp.get("compiled_text"):
+            compiled_md.write_text(md_comp["compiled_text"], encoding="utf-8")
+
+        compiled_tex = w_dir / "thesis.compiled.tex"
+        sanitized_tex_text = _sanitize_unresolved_latex_tags(tex_comp.get("compiled_text", ""))
+        if sanitized_tex_text:
+            compiled_tex.write_text(sanitized_tex_text, encoding="utf-8")
+
+        # 4. Render thesis.pdf: compile thesis.compiled.tex to genuine academic LaTeX PDF (ThesisPLodz.cls or IEEEtran.cls)
+        compiled_ok = False
+        if compiled_tex.exists():
+            compiled_ok = compile_latex_to_pdf(compiled_tex, output_pdf=pdf_path)
+
+        # Fallback: if the primary template failed to compile, re-render on the IEEEtran scientific paper template (NEVER use Matplotlib PDF)
+        if not compiled_ok or not pdf_path.exists() or pdf_path.stat().st_size < 1000:
+            fallback_tex = build_latex_source(
+                spec,
+                w_dir,
+                template_name="paper_ieee",
+                thesis_type="paper",
+                provider=provider,
+            )
+            fallback_comp = compile_symbolic_references(fallback_tex, w_dir, write_compiled=True)
+            fallback_sanitized = _sanitize_unresolved_latex_tags(fallback_comp.get("compiled_text", ""))
+            if fallback_sanitized:
+                compiled_tex.write_text(fallback_sanitized, encoding="utf-8")
+            compile_latex_to_pdf(compiled_tex, output_pdf=pdf_path)
+
+        html_path = render_thesis_html(
             spec=spec,
             workspace_dir=w_dir,
             compiled_md_text=md_comp.get("compiled_text", ""),
             resolved_refs=md_comp.get("resolved_references", {}),
             evolution_summary=evolution_summary,
         )
-
-    html_path = render_thesis_html(
-        spec=spec,
-        workspace_dir=w_dir,
-        compiled_md_text=md_comp.get("compiled_text", ""),
-        resolved_refs=md_comp.get("resolved_references", {}),
-        evolution_summary=evolution_summary,
-    )
-
-    # 5. Organize output artifacts into clean subdirectories: code/, thesis/, results/, logs/
-    organized = organize_benchmark_output_bundle(w_dir, spec)
+    finally:
+        # 5. Always organize output artifacts into clean subdirectories: code/, thesis/, results/, logs/
+        organized = organize_benchmark_output_bundle(w_dir, spec)
 
     return {
         "workspace_dir": str(w_dir),

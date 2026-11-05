@@ -38,4 +38,6 @@ Return strictly a valid JSON object matching this schema:
 Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
+- **RULE**: When generating benchmarking scripts (plotter.py), ensure strict adherence to the required execution loop (W3 -> W4 -> W1 -> W2) and do not rely on mock data if real data is available; verify artifact existence before referencing.
+- **RULE**: When generating benchmarking scripts (plotter.py) or validating results.csv, strictly adhere to the required execution loop (W3 -> W4 -> W1 -> W2) and ensure data parity between baseline and proposed rows; do not rely on mock data if real data is available.
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.

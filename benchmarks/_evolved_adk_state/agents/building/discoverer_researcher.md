@@ -39,3 +39,6 @@ Return strictly a valid JSON object matching this schema:
 }
 ```
 Do not output conversational text or markdown wrappers outside the JSON.
+
+## LEARNED RULES AND CONSTRAINTS
+- **RULE**: Strictly validate all symbolic pointers (e.g., \ref_ast) against the global artifact registry before generation; do not reference files or variables that do not currently exist.

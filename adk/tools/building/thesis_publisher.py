@@ -55,6 +55,12 @@ def ensure_full_6_chapter_markdown(
     md_path = workspace_dir / "thesis.md"
     existing_md = md_path.read_text(encoding="utf-8") if md_path.exists() else ""
 
+    # When running with a live LLM provider (Ollama, OpenAI, Gemini), NEVER silently inject mock chapters.
+    # Preserve authentic LLM-authored chapters so Layer 3 / Gate 3 can audit real work.
+    is_live_llm = provider is not None and provider.strip().lower() != "mock"
+    if is_live_llm and not force_mock_expand:
+        return md_path
+
     headers, rows = _read_csv_rows(workspace_dir / "results.csv")
     config_pairs = _extract_config_constants(workspace_dir / "config.py")
     chosen_template = resolve_template_name(
@@ -118,6 +124,45 @@ def _extract_config_constants(config_path: Path) -> list[tuple[str, str]]:
     return pairs
 
 
+def _balance_braces(s: str) -> str:
+    diff = s.count("{") - s.count("}")
+    if diff > 0:
+        s += "}" * diff
+    elif diff < 0:
+        s = "{" * (-diff) + s
+    return s
+
+
+def _extract_bibtex_fields(body: str) -> dict[str, str]:
+    fields: dict[str, str] = {}
+    for fm in re.finditer(r"(\w+)\s*=\s*", body):
+        f_name = fm.group(1).lower()
+        rest = body[fm.end():].lstrip()
+        if not rest:
+            continue
+        val = ""
+        if rest[0] == '"':
+            end_idx = rest.find('"', 1)
+            val = rest[1:end_idx] if end_idx != -1 else rest[1:]
+        elif rest[0] == '{':
+            depth = 0
+            for i, ch in enumerate(rest):
+                if ch == '{':
+                    depth += 1
+                elif ch == '}':
+                    depth -= 1
+                    if depth == 0:
+                        val = rest[1:i]
+                        break
+            else:
+                val = rest[1:]
+        else:
+            m_val = re.match(r"[^,\s}]+", rest)
+            val = m_val.group(0) if m_val else ""
+        fields[f_name] = val.strip()
+    return fields
+
+
 def _parse_bibtex_items(bib_path: Path) -> list[dict[str, str]]:
     if not bib_path.exists():
         return []
@@ -128,28 +173,36 @@ def _parse_bibtex_items(bib_path: Path) -> list[dict[str, str]]:
         cite_key = match.group(2)
         body = match.group(3)
         fields: dict[str, str] = {"type": entry_type, "key": cite_key}
-        for fm in re.finditer(r"(\w+)\s*=\s*\{([^}]*)\}", body):
-            fields[fm.group(1).lower()] = fm.group(2).strip()
+        fields.update(_extract_bibtex_fields(body))
         entries.append(fields)
     return entries
 
 
 def _sanitize_unresolved_latex_tags(tex_text: str) -> str:
-    """Replace any remaining unresolved \\ref_ast, \\ref_csv, \\ref_fig tags, unescaped underscores in text macros, and empty list blocks so XeTeX/Tectonic never fails."""
+    """Replace any remaining unresolved \ref_ast, \ref_csv, \ref_fig tags, unescaped underscores in text macros, and empty list blocks so XeTeX/Tectonic never fails."""
     def _repl(m: re.Match[str]) -> str:
-        inner = m.group(1).split(":")[-1].replace("_", "\\_")
+        inner = m.group(1).split(":")[-1]
+        inner = re.sub(r"\\+_", "_", inner)
+        inner = inner.replace("_", "\\_")
         return f"\\texttt{{{inner}}}"
 
     def _esc_macro(m: re.Match[str]) -> str:
         cmd = m.group(1)
-        arg = re.sub(r"(?<!\\)_", r"\\_", m.group(2))
+        arg = re.sub(r"\\+_", "_", m.group(2))
+        arg = re.sub(r"(?<!\\)_", r"\\_", arg)
         arg = re.sub(r"(?<!\\)&", r"\\&", arg)
         arg = re.sub(r"(?<!\\)%", r"\\%", arg)
         arg = re.sub(r"(?<!\\)#", r"\\#", arg)
         return f"\\{cmd}{{{arg}}}"
 
-    s = re.sub(r"\\ref_(?:ast|csv|fig)\{([^}]+)\}", _repl, tex_text)
+    s = tex_text
+    # If IEEEtran class, translate \chapter to \section so XeTeX never crashes on \chapter in article classes
+    if "{IEEEtran}" in s:
+        s = re.sub(r"\\chapter\*?\{([^}]+)\}", r"\\section{\1}", s)
+
+    s = re.sub(r"\\ref_(?:ast|csv|fig)\{([^}]+)\}", _repl, s)
     s = re.sub(r"\\(texttt|textbf|textit|section|subsection|subsubsection|chapter|paragraph)\{([^{}]*)\}", _esc_macro, s)
+    s = re.sub(r"\\{2,}_", r"\\_", s)
     s = re.sub(
         r"\\begin\{(itemize|enumerate)\}\s*\\end\{\1\}",
         r"\\begin{\1}\n  \\item Brak dodatkowych pozycji.\n\\end{\1}",
@@ -166,8 +219,12 @@ def _inline_safe_bibliography(tex_text: str, work_dir: Path) -> str:
     items_tex: list[str] = []
     for e in entries[:40]:
         key = re.sub(r"[^a-zA-Z0-9_:-]", "", e.get("key", "ref1")) or "ref1"
-        author = e.get("author", "Autor").replace("&", "\\&").replace("_", "\\_").replace("%", "\\%")
-        title = e.get("title", "Publikacja naukowa").replace("&", "\\&").replace("_", "\\_").replace("%", "\\%")
+        author = _balance_braces(e.get("author", "Autor").replace("&", "\\&").replace("%", "\\%"))
+        author = re.sub(r"\\+_", "_", author)
+        author = re.sub(r"(?<!\\)_", r"\\_", author)
+        title = _balance_braces(e.get("title", "Publikacja naukowa").replace("&", "\\&").replace("%", "\\%"))
+        title = re.sub(r"\\+_", "_", title)
+        title = re.sub(r"(?<!\\)_", r"\\_", title)
         year = re.sub(r"[^0-9]", "", e.get("year", "2024"))[:4] or "2024"
         items_tex.append(f"  \\bibitem{{{key}}} {author}, \\textit{{{title}}}, {year}.")
     if not items_tex:
@@ -208,6 +265,10 @@ def compile_latex_to_pdf(tex_path: Path, output_pdf: Path | None = None) -> bool
 
     if tectonic_bin.exists():
         cache_dir = repo_root / "cache" / "tectonic"
+        if not cache_dir.exists() and (repo_root.parent / "adk" / "cache" / "tectonic").exists():
+            cache_dir = repo_root.parent / "adk" / "cache" / "tectonic"
+        elif not cache_dir.exists() and (repo_root / "adk" / "cache" / "tectonic").exists():
+            cache_dir = repo_root / "adk" / "cache" / "tectonic"
         cache_dir.mkdir(parents=True, exist_ok=True)
         env = os.environ.copy()
         env["TECTONIC_CACHE_DIR"] = str(cache_dir.resolve())
@@ -600,7 +661,7 @@ def publish_workspace_thesis_bundle(
         timeout=30,
     )
     if exec_res.returncode != 0:
-        if not (w_dir / "results.csv").exists() or (w_dir / "results.csv").stat().st_size == 0:
+        if not is_live_provider and (not (w_dir / "results.csv").exists() or (w_dir / "results.csv").stat().st_size == 0):
             (w_dir / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
 
     # Ensure real vector and raster plots are generated (never broken placeholder)
@@ -623,10 +684,17 @@ def publish_workspace_thesis_bundle(
                 plot_py = w_dir / "code" / "plot_results.py"
             if plot_py.exists():
                 subprocess.run([sys.executable, str(plot_py)], cwd=str(w_dir), env=exec_env, check=False, capture_output=True, timeout=30)
+                if not _is_real_pdf(chart_pdf):
+                    mod_scope = {"__name__": "__main__", "__file__": str(plot_py)}
+                    exec(plot_py.read_text(encoding="utf-8"), mod_scope)
+                    if "generate_plots" in mod_scope and callable(mod_scope["generate_plots"]):
+                        mod_scope["generate_plots"](str(w_dir))
+                    elif "main" in mod_scope and callable(mod_scope["main"]):
+                        mod_scope["main"]()
             if not _is_real_pdf(chart_pdf):
                 mod_scope = {"__name__": "__main__", "__file__": str(w_dir / "plot_results.py")}
                 exec(spec.plot_script, mod_scope)
-                if "generate_plots" in mod_scope:
+                if "generate_plots" in mod_scope and callable(mod_scope["generate_plots"]):
                     mod_scope["generate_plots"](str(w_dir))
         except Exception:
             pass
@@ -652,59 +720,65 @@ def publish_workspace_thesis_bundle(
         os.utime(csv_file, (now_ts, now_ts))
 
     # 3. Ensure all chapters exist in thesis.md, generate thesis.tex, and compile both symbolically
-    md_path = ensure_full_6_chapter_markdown(spec, w_dir, provider=provider)
-    tex_path = build_latex_source(
-        spec,
-        w_dir,
-        template_name=template_name,
-        thesis_type=thesis_type,
-        provider=provider,
-    )
-
-    md_comp = compile_symbolic_references(md_path, w_dir, write_compiled=True)
-    tex_comp = compile_symbolic_references(tex_path, w_dir, write_compiled=True)
-
-    # Always write compiled .md and .tex (sanitizing any unresolved symbolic tags so Tectonic LaTeX template compilation always succeeds)
-    compiled_md = w_dir / "thesis.compiled.md"
-    if not compiled_md.exists() and md_comp.get("compiled_text"):
-        compiled_md.write_text(md_comp["compiled_text"], encoding="utf-8")
-
-    compiled_tex = w_dir / "thesis.compiled.tex"
-    sanitized_tex_text = _sanitize_unresolved_latex_tags(tex_comp.get("compiled_text", ""))
-    if sanitized_tex_text:
-        compiled_tex.write_text(sanitized_tex_text, encoding="utf-8")
-
-    # 4. Render thesis.pdf: compile thesis.compiled.tex to genuine academic LaTeX PDF (ThesisPLodz.cls or IEEEtran.cls)
+    tex_path = w_dir / "thesis.tex"
     pdf_path = w_dir / "thesis.pdf"
-    compiled_ok = False
-    if compiled_tex.exists():
-        compiled_ok = compile_latex_to_pdf(compiled_tex, output_pdf=pdf_path)
+    html_path = w_dir / "thesis.html"
+    md_comp: dict[str, Any] = {"status": "SKIPPED", "resolved_references": {}}
+    tex_comp: dict[str, Any] = {"status": "SKIPPED", "resolved_references": {}}
 
-    # Fallback: if the primary template failed to compile, re-render on the IEEEtran scientific paper template (NEVER use Matplotlib PDF)
-    if not compiled_ok or not pdf_path.exists() or pdf_path.stat().st_size < 1000:
-        fallback_tex = build_latex_source(
+    try:
+        md_path = ensure_full_6_chapter_markdown(spec, w_dir, provider=provider)
+        tex_path = build_latex_source(
             spec,
             w_dir,
-            template_name="paper_ieee",
-            thesis_type="paper",
+            template_name=template_name,
+            thesis_type=thesis_type,
             provider=provider,
         )
-        fallback_comp = compile_symbolic_references(fallback_tex, w_dir, write_compiled=True)
-        fallback_sanitized = _sanitize_unresolved_latex_tags(fallback_comp.get("compiled_text", ""))
-        if fallback_sanitized:
-            compiled_tex.write_text(fallback_sanitized, encoding="utf-8")
-        compile_latex_to_pdf(compiled_tex, output_pdf=pdf_path)
 
-    html_path = render_thesis_html(
-        spec=spec,
-        workspace_dir=w_dir,
-        compiled_md_text=md_comp.get("compiled_text", ""),
-        resolved_refs=md_comp.get("resolved_references", {}),
-        evolution_summary=evolution_summary,
-    )
+        md_comp = compile_symbolic_references(md_path, w_dir, write_compiled=True)
+        tex_comp = compile_symbolic_references(tex_path, w_dir, write_compiled=True)
 
-    # 5. Organize output artifacts into clean subdirectories: code/, thesis/, results/, logs/
-    organized = organize_benchmark_output_bundle(w_dir, spec)
+        # Always write compiled .md and .tex (sanitizing any unresolved symbolic tags so Tectonic LaTeX template compilation always succeeds)
+        compiled_md = w_dir / "thesis.compiled.md"
+        if not compiled_md.exists() and md_comp.get("compiled_text"):
+            compiled_md.write_text(md_comp["compiled_text"], encoding="utf-8")
+
+        compiled_tex = w_dir / "thesis.compiled.tex"
+        sanitized_tex_text = _sanitize_unresolved_latex_tags(tex_comp.get("compiled_text", ""))
+        if sanitized_tex_text:
+            compiled_tex.write_text(sanitized_tex_text, encoding="utf-8")
+
+        # 4. Render thesis.pdf: compile thesis.compiled.tex to genuine academic LaTeX PDF (ThesisPLodz.cls or IEEEtran.cls)
+        compiled_ok = False
+        if compiled_tex.exists():
+            compiled_ok = compile_latex_to_pdf(compiled_tex, output_pdf=pdf_path)
+
+        # Fallback: if the primary template failed to compile, re-render on the IEEEtran scientific paper template (NEVER use Matplotlib PDF)
+        if not compiled_ok or not pdf_path.exists() or pdf_path.stat().st_size < 1000:
+            fallback_tex = build_latex_source(
+                spec,
+                w_dir,
+                template_name="paper_ieee",
+                thesis_type="paper",
+                provider=provider,
+            )
+            fallback_comp = compile_symbolic_references(fallback_tex, w_dir, write_compiled=True)
+            fallback_sanitized = _sanitize_unresolved_latex_tags(fallback_comp.get("compiled_text", ""))
+            if fallback_sanitized:
+                compiled_tex.write_text(fallback_sanitized, encoding="utf-8")
+            compile_latex_to_pdf(compiled_tex, output_pdf=pdf_path)
+
+        html_path = render_thesis_html(
+            spec=spec,
+            workspace_dir=w_dir,
+            compiled_md_text=md_comp.get("compiled_text", ""),
+            resolved_refs=md_comp.get("resolved_references", {}),
+            evolution_summary=evolution_summary,
+        )
+    finally:
+        # 5. Always organize output artifacts into clean subdirectories: code/, thesis/, results/, logs/
+        organized = organize_benchmark_output_bundle(w_dir, spec)
 
     return {
         "workspace_dir": str(w_dir),

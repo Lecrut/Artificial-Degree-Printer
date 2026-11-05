@@ -27,8 +27,11 @@ def edit_ast_node(
     path = Path(file_path)
 
     # 1. Syntax GUARD on incoming snippet
+    import warnings
     try:
-        snippet_tree = ast.parse(new_code)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=SyntaxWarning)
+            snippet_tree = ast.parse(new_code, filename=str(path))
     except SyntaxError as exc:
         return {
             "status": "error",
@@ -61,7 +64,9 @@ def edit_ast_node(
     if path.exists():
         existing_source = path.read_text(encoding="utf-8")
         try:
-            tree = ast.parse(existing_source)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=SyntaxWarning)
+                tree = ast.parse(existing_source, filename=str(path))
         except SyntaxError as exc:
             return {
                 "status": "error",

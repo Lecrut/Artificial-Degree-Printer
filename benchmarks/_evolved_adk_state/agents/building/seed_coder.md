@@ -49,9 +49,9 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 ---
 
 ## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT (Cycle 1)**: Enforce strict AST signature compatibility for all exported symbols and symbolic pointers; ensure benchmark CSV outputs include both baseline and proposed results; eliminate unbound global variables in execution contexts.
+- **INVARIANT (Cycle 1)**: Maintain strict cross-artifact parity for config symbols and file existence; ensure benchmark CSVs contain both baseline and proposed rows; avoid unbound globals and signature mismatches in all generated code.
+- **INVARIANT (Cycle 2)**: Enforce strict cross-artifact parity by verifying file existence and symbol definitions in the global registry before generation; maintain float rounding precision in CSV metrics; and guarantee zero unbound globals or signature mismatches across all artifacts.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **CONSOLIDATED_EPOCH 1**: Redacted and consolidated 4 rules into the invariants section.
-- **RULE**: Maintain strict float rounding in exported CSV metrics.
-- **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
+- **CONSOLIDATED_EPOCH 2**: Redacted and consolidated 4 rules into the invariants section.

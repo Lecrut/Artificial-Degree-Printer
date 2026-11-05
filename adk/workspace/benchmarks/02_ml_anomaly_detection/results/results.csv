@@ -1,0 +1,2 @@
+method,baseline_precision,baseline_recall,baseline_f1_score,baseline_false_alarm_rate,proposed_precision,proposed_recall,proposed_f1_score,proposed_false_alarm_rate
+baseline,0.85,0.72,0.78,0.15,0.94,0.88,0.91,0.06

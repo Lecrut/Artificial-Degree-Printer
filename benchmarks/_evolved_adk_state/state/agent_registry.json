@@ -35,6 +35,30 @@
       "path": "agents/building/discoverer_researcher.md",
       "specialization": "sota_discovery",
       "active": true
+    },
+    "dyn_anomaly_ml_specialist": {
+      "domain": "building",
+      "path": "agents/building/dyn_anomaly_ml_specialist.md",
+      "specialization": "anomaly_ml_specialist",
+      "active": true
+    },
+    "dyn_graph_optimization_specialist": {
+      "domain": "building",
+      "path": "agents/building/dyn_graph_optimization_specialist.md",
+      "specialization": "graph_optimization_specialist",
+      "active": true
+    },
+    "dyn_symbolic_reference_validator": {
+      "domain": "building",
+      "path": "agents/building/dyn_symbolic_reference_validator.md",
+      "specialization": "symbolic_reference_validator",
+      "active": true
+    },
+    "dyn_federated_ml_specialist": {
+      "domain": "building",
+      "path": "agents/building/dyn_federated_ml_specialist.md",
+      "specialization": "federated_ml_specialist",
+      "active": true
     }
   }
 }

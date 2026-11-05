@@ -71,5 +71,17 @@ Return strictly a valid JSON object matching one of these forms:
 ```
 Do not output conversational text or markdown wrappers outside the JSON.
 
+---
+
+## CONSOLIDATED EVOLUTIONARY INVARIANTS
+- **INVARIANT (Cycle 1)**: Enforce zero-hallucination symbolic grounding: validate all \ref_ast, \ref_csv, and \ref_fig pointers against the global artifact registry before insertion, ensuring target files/variables/columns exist.
+- **INVARIANT (Cycle 2)**: Enforce zero-hallucination symbolic grounding: strictly query the global artifact registry to verify existence of all referenced files and CSV columns (e.g., 'win_rate', 'final_accuracy') before generation; halt and request dependency resolution if artifacts are missing.
+- **INVARIANT (Cycle 3)**: Enforce rigorous symbolic grounding: validate all \ref_ast, \ref_csv, and \ref_fig pointers against the global registry to verify file/variable existence; strictly format CSV references as {file:column} with no bare filenames or markdown wrapping.
+- **INVARIANT (Cycle 4)**: Enforce rigorous zero-hallucination symbolic grounding: strictly query the global artifact registry to verify existence of all files and columns referenced in \ref_ast, \ref_csv, and \ref_fig pointers before generation; halt immediately if artifacts are missing.
+
 ## LEARNED RULES AND CONSTRAINTS
+- **CONSOLIDATED_EPOCH 1**: Redacted and consolidated 4 rules into the invariants section.
+- **CONSOLIDATED_EPOCH 2**: Redacted and consolidated 4 rules into the invariants section.
+- **CONSOLIDATED_EPOCH 3**: Redacted and consolidated 4 rules into the invariants section.
+- **CONSOLIDATED_EPOCH 4**: Redacted and consolidated 4 rules into the invariants section.
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.

@@ -44,6 +44,40 @@ def test_doc_editor_preserves_other_sections(tmp_path: Path):
     assert "\\ref_ast{config.py:LEARNING_RATE}" in content
 
 
+def test_doc_editor_canonical_chapters_and_subsections(tmp_path: Path):
+    doc_md = tmp_path / "thesis_sub.md"
+    # 1. Two-stage literature review (2.1 then 2.2 under slightly different Chapter 2 titles)
+    edit_document_section(
+        doc_md,
+        "Rozdział 2: Analiza Stanu Wiedzy i Podstawy",
+        "### 2.1 Fundamenty Teoretyczne\nTekst 2.1 z cytowaniem \\cite{bellman1957}.",
+    )
+    edit_document_section(
+        doc_md,
+        "Rozdział 2: Analiza Stanu Wiedzy",
+        "### 2.2 Najnowsze Osiągnięcia SOTA\nTekst 2.2 z cytowaniem \\cite{wang2024}.",
+    )
+    text = doc_md.read_text(encoding="utf-8")
+    assert text.count("## Rozdział 2") == 1
+    assert "### 2.1 Fundamenty Teoretyczne" in text
+    assert "### 2.2 Najnowsze Osiągnięcia SOTA" in text
+
+    # 2. Granular subsection tasks (3.1 and 3.2) grouped under Rozdział 3
+    edit_document_section(doc_md, "3.1 Architektura Systemu", "Opis modułów architektury.")
+    edit_document_section(doc_md, "3.2 Formalizm Matematyczny", "Równania modelu.")
+    text = doc_md.read_text(encoding="utf-8")
+    assert "## Rozdział 3" in text
+    assert "### 3.1 Architektura Systemu" in text
+    assert "### 3.2 Formalizm Matematyczny" in text
+
+    # 3. Replacing a subsection on retry (3.2_FIX) without wiping 3.1
+    edit_document_section(doc_md, "3.2 Formalizm Matematyczny", "Poprawione równania modelu.")
+    text = doc_md.read_text(encoding="utf-8")
+    assert "### 3.1 Architektura Systemu" in text
+    assert "Poprawione równania modelu." in text
+    assert "Równania modelu." not in text.replace("Poprawione równania modelu.", "")
+
+
 def test_bridges_import_and_hypergraph_sync(tmp_path: Path):
     ws = tmp_path / "workspace"
     ws.mkdir()

@@ -3,58 +3,48 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 def generate_plots(output_dir='.'):
-    # Ensure output directory exists
     fig_dir = Path(output_dir) / 'figures'
     fig_dir.mkdir(parents=True, exist_ok=True)
     
-    pdf_p = fig_dir / 'comparison_chart.pdf'
-    png_p = fig_dir / 'comparison_chart.png'
-    
-    # Read CSV data manually without pandas
+    # Load data
+    rows = []
     with open('results.csv', 'r') as f:
         reader = csv.DictReader(f)
         rows = list(reader)
     
     methods = [r['method'] for r in rows]
     accuracies = [float(r['final_accuracy']) for r in rows]
-    latencies = [float(r['latency_ms']) for r in rows]
-    stragglers = [float(r['straggler_resilience_rate']) for r in rows]
-
-    # Dual-axis chart configuration
+    resilience = [float(r['straggler_resilience_rate']) for r in rows]
+    
     fig, ax1 = plt.subplots(figsize=(8, 5))
     
+    # Bar chart for accuracy
     x = range(len(methods))
-    bar_width = 0.35
-    
-    # Plot Accuracy (Primary Axis - Bars)
-    color_acc = '#2c3e50'
-    ax1.bar(x, accuracies, width=bar_width, label='Final Accuracy', color=color_acc, alpha=0.8)
-    ax1.set_ylabel('Final Accuracy (Accuracy)', color=color_acc)
-    ax1.tick_params(axis='y', labelcolor=color_acc)
-    
-    # Plot Straggler Resilience (Secondary Axis - Line)
-    ax2 = ax1.twinx()
-    color_strag = '#c0392b'
-    line_pos = [pos + bar_width/2 for pos in x]
-    ax2.plot(line_pos, stragglers, marker='o', color=color_strag, label='Straggler Resilience Rate')
-    ax2.set_ylabel('Straggler Resilience Rate (Rate)', color=color_strag)
-    ax2.tick_params(axis='y', labelcolor=color_strag)
-    
-    # Formatting
-    ax1.set_title('Federated Learning: Performance & Robustness Comparison', fontsize=14, fontweight='bold')
-    ax1.set_xticks([pos + bar_width/2 for pos in x])
+    bars = ax1.bar(x, accuracies, color=['#94a3b8', '#0284c7'], width=0.6, label='Final Accuracy')
+    ax1.set_xlabel('Method')
+    ax1.set_ylabel('Final Accuracy', color='#0284c7')
+    ax1.set_xticks(x)
     ax1.set_xticklabels([m.capitalize() for m in methods])
+    ax1.tick_params(axis='y', labelcolor='#0284c7')
     
-    # Combine legends
-    lines_1, labels_1 = ax1.get_legend_handles_labels()
-    lines_2, labels_2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='lower right')
+    # Add value labels on bars
+    for bar, val in zip(bars, accuracies):
+        ax1.text(bar.get_x() + bar.get_width() / 2., bar.get_height() + 0.005,
+                 f'{val:.4f}', ha='center', va='bottom', fontsize=10)
     
-    plt.tight_layout()
+    # Secondary axis for resilience
+    ax2 = ax1.twinx()
+    ax2.bar(x, resilience, color=['#cbd5e1', '#38bdf8'], width=0.6, alpha=0.4, label='Resilience')
+    ax2.set_ylabel('Straggler Resilience Rate', color='#38bdf8')
+    ax2.tick_params(axis='y', labelcolor='#38bdf8')
     
-    # Save outputs
-    fig.savefig(pdf_p, format='pdf', bbox_inches='tight')
-    fig.savefig(png_p, format='png', dpi=300, bbox_inches='tight')
+    fig.tight_layout()
+    
+    pdf_p = fig_dir / 'comparison_chart.pdf'
+    png_p = fig_dir / 'comparison_chart.png'
+    
+    fig.savefig(pdf_p)
+    fig.savefig(png_p, dpi=150)
     plt.close(fig)
     
     return [str(pdf_p), str(png_p)]

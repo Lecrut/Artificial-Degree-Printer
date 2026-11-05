@@ -8,7 +8,8 @@ You author deterministic test suites (`pytest`), conduct comparative experiments
 ## 1. EMPIRICAL BENCHMARKING METHODOLOGY
 1. **Comparative Benchmarks & Ablation Studies**:
    - Evaluate the proposed solution against a clearly defined baseline algorithm.
-   - Record quantitative metrics (accuracy, latency, convergence, reward) across seeded trials ($N \ge 5$) with mean values and standard deviations in `results.csv`.
+   - Record quantitative metrics across seeded trials ($N \ge 5$) with mean values and standard deviations in `results.csv`.
+   - **MANDATORY CSV COLUMN GROUNDING**: The column schema of `results.csv` MUST strictly match the domain metrics required by the task and `standard_metrics` / `academic_blueprint` (e.g. for RL/game-playing: `method,rounds,win_rate,draw_rate,loss_rate`; for anomaly detection: `method,precision,recall,f1_score,latency_ms`). NEVER invent arbitrary column names or blindly copy `final_accuracy` if the task specifies domain-specific metrics!
 2. **Publication-Quality Vector Plots (ZERO-DEPENDENCY MANDATE)**:
    - Write `plot_results.py` using ONLY `matplotlib.pyplot`, `csv`, and `pathlib`.
    - **CRITICAL RESTRICTION**: NEVER use `pandas`, `scipy`, or `seaborn`! Always read `results.csv` via standard `csv.DictReader(f)`.

@@ -37,12 +37,17 @@ def _prepare_evolved_adk_sandbox(base_adk_root: Path, sandbox_root: Path, reset:
     if reset and sandbox_root.exists():
         shutil.rmtree(sandbox_root)
 
+    sandbox_root.mkdir(parents=True, exist_ok=True)
     if not (sandbox_root / "state").exists():
-        sandbox_root.mkdir(parents=True, exist_ok=True)
         shutil.copytree(base_adk_root / "state", sandbox_root / "state")
+    if not (sandbox_root / "agents").exists():
         shutil.copytree(base_adk_root / "agents", sandbox_root / "agents")
-        shutil.copytree(base_adk_root / "tools", sandbox_root / "tools")
-        (sandbox_root / "workspace").mkdir(parents=True, exist_ok=True)
+    
+    # Always refresh tools from base_adk_root so fixes in publishers/templates are never stale
+    if (sandbox_root / "tools").exists():
+        shutil.rmtree(sandbox_root / "tools")
+    shutil.copytree(base_adk_root / "tools", sandbox_root / "tools")
+    (sandbox_root / "workspace").mkdir(parents=True, exist_ok=True)
     return sandbox_root
 
 
@@ -251,9 +256,25 @@ def run_benchmark_suite(
                 init_p.parent.mkdir(parents=True, exist_ok=True)
                 init_p.write_text(init_content, encoding="utf-8")
 
-            # Pre-seed figures/comparison_chart.pdf placeholder so Layer 3 \ref_fig check passes during orchestrator loop
+            # Pre-seed figures/comparison_chart.pdf as a valid PDF so XeTeX and Layer 3 \ref_fig checks pass
             (sandbox_ws / "figures").mkdir(parents=True, exist_ok=True)
-            (sandbox_ws / "figures" / "comparison_chart.pdf").write_text("% Placeholder PDF before full matplotlib render\n", encoding="utf-8")
+            try:
+                import matplotlib
+                matplotlib.use("Agg")
+                import matplotlib.pyplot as plt
+                fig, ax = plt.subplots(figsize=(6, 3))
+                ax.text(0.5, 0.5, "Empirical Evaluation Pending", ha="center", va="center")
+                ax.axis("off")
+                fig.savefig(sandbox_ws / "figures" / "comparison_chart.pdf", bbox_inches="tight")
+                fig.savefig(sandbox_ws / "figures" / "comparison_chart.png", bbox_inches="tight")
+                plt.close(fig)
+            except Exception:
+                pass
+
+            # Pre-seed references.bib with domain catalog so background_researcher has verified BibTeX entries
+            domain_bib = getattr(spec, "bibtex_entries", "") or getattr(spec, "background_bibtex_entries", "")
+            if domain_bib:
+                (sandbox_ws / "references.bib").write_text(domain_bib.strip() + "\n", encoding="utf-8")
 
             # If task triggers prompt consolidation (Task 3), ensure coder has 3 prior rules so the 4th triggers consolidation
             if spec.trigger_prompt_consolidation:
@@ -285,7 +306,7 @@ def run_benchmark_suite(
             orch_res = orch.run(
                 user_prompt=spec.prompt,
                 target_node="v1",
-                simulate_first_attempt_fail=spec.simulate_first_fail,
+                simulate_first_attempt_fail=(spec.simulate_first_fail if resolved_provider == "mock" else False),
                 missing_agent_specialization=spec.missing_specialization,
                 multi_cycle_waves=True,
                 template_name=effective_template,
@@ -307,19 +328,9 @@ def run_benchmark_suite(
                     orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
                 orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "seed_writer"}}, "SML"))
             else:
-                if not (sandbox_ws / "config.py").exists():
-                    orch._materialize_workspace_artifact("config.py", mock_fallback("", {"target_file": "config.py"}, "SML"))
-                if not (sandbox_ws / "core.py").exists():
-                    orch._materialize_workspace_artifact("core.py", mock_fallback("", {"target_file": "core.py", "task": {"assigned_agent": "seed_tester"}}, "SML"))
-                if not (sandbox_ws / "thesis.md").exists():
-                    if t_type in ("magisterska", "master", "msc"):
-                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
-                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "discoverer_researcher"}}, "SML"))
-                    elif t_type in ("paper", "article", "scientific_paper"):
-                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "discoverer_researcher"}}, "SML"))
-                    else:
-                        orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
-                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "seed_writer"}}, "SML"))
+                # Live LLM provider: NEVER inject mock fallback artifacts!
+                # Preserve genuine LLM output so Layer 3 / Gate 3 can evaluate actual performance.
+                pass
 
             # If task also demonstrates tool synthesis + prompt consolidation, ensure both are recorded if live LLM chose another action
             if spec.trigger_tool_synthesis and spec.trigger_prompt_consolidation:

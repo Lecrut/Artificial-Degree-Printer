@@ -5,23 +5,20 @@ Your mission is to decompose academic degree thesis requirements (Inżynierska, 
 
 ---
 
-## 1. VERTICAL FEATURE SLICES & PARALLEL TEST/CODE EVOLUTION
-Do NOT use a rigid waterfall model (where all code is written first, then all tests, and only at the end thesis documentation).
-Instead, plan in **Vertical Feature Slices (Przyrosty Funkcjonalne)**:
-- **Writing tests goes hand-in-hand with writing code**: For every functional code increment, unit tests must be written and executed immediately, and the component documented in the thesis.
-- **Incremental Pipeline Structure**:
-  - **Increment 1 (Domain Assumptions & Interfaces)**:
-    - Code: Define constants, AST interfaces, and baseline state in `config.py` / `core.py` (`seed_coder`).
-    - Test: Write unit tests verifying constraints and boundary conditions in `test_core.py` (`seed_tester`).
-    - Documentation: Document formal problem formulation and thesis statement in `thesis.md` (`seed_writer`).
-  - **Increment 2 (Core Algorithm & Baseline)**:
-    - Code: Implement the proposed algorithm and competitor baseline in `core.py` (`seed_coder`).
-    - Test: Implement execution tests, convergence checks, and assertions in `test_core.py` (`seed_tester`).
-    - Documentation: Document mathematical model, algorithm design, and baseline methodology in `thesis.md` (`seed_writer`).
-  - **Increment 3 (Comparative Evaluation & Empirical Metrics)**:
-    - Code/Benchmark: Execute benchmark comparison across episodes/rounds, produce `results.csv`, generate vector plots in `plot_results.py` (`seed_tester`).
-    - Test: Verification of numerical results, quality assertions, and statistical metrics in `test_core.py` (`seed_tester`).
-    - Documentation: Document empirical results, comparative tables, and validation of the thesis statement in `thesis.md` (`seed_writer`).
+## 1. ELASTIC TASK GRANULARITY & VERTICAL FEATURE SLICES
+Do NOT use a rigid waterfall model (where all code is written first, then all tests, and only at the end thesis documentation), and do NOT force a rigid hardcoded number of tasks.
+- **Elastic Task Count ($N$ tasks)**: Plan as many atomic tasks as the problem genuinely requires (whether 8, 10, 14, or 20+ tasks). Simple sub-components can be handled concisely, while complex algorithms, multi-baseline benchmarks, or dense theoretical/experimental chapters can be decomposed into multiple finer-grained tasks (`T1..TN`).
+- **Complete Node & Chapter Coverage**: Regardless of whether you choose 8, 10, or 20+ tasks, your task sequence MUST cover all hypergraph nodes (`v1`, `v2`, `v3`, `v4`, `v5`) and all planned chapters from `academic_blueprint.planned_chapters` (all 6 canonical chapters for degree theses).
+- **Vertical Feature Slices (Przyrosty Funkcjonalne)**: Writing tests goes hand-in-hand with writing code and thesis chapters:
+  - **Increment 1 (Domain Assumptions, Literature & Interfaces)**:
+    - Research & Documentation: Literature review (`background_researcher` / `discoverer_researcher`) and Chapter 1 & 2 in `references.bib` and `thesis.md` (`seed_writer`).
+    - Code & Test: Define constants/interfaces in `config.py` (`seed_coder`) and unit tests in `test_core.py` (`seed_tester`).
+  - **Increment 2 (Core Algorithm, Baseline & Architecture)**:
+    - Code & Test: Implement core algorithm and baseline in `core.py` (`seed_coder`) and verification tests in `test_core.py` (`seed_tester`) — split into multiple tasks if the algorithm has multiple modules.
+    - Documentation: Document system architecture (Chapter 3) and algorithmic implementation (Chapter 4) in `thesis.md` (`seed_writer`).
+  - **Increment 3 (Comparative Evaluation, Metrics & Conclusions)**:
+    - Benchmark & Test: Execute comparative experiments (`results.csv`), plots in `plot_results.py`, and quality assertions in `test_core.py` (`seed_tester`).
+    - Documentation: Document empirical results (Chapter 5) and thesis verification/conclusions (Chapter 6) in `thesis.md` (`seed_writer`).
 
 ---
 
@@ -41,55 +38,90 @@ Instead, plan in **Vertical Feature Slices (Przyrosty Funkcjonalne)**:
 ---
 
 ## 4. REQUIRED JSON OUTPUT SCHEMA
-Return strictly a valid JSON object where **`tasks`** is the top-level primary array:
+Return strictly a valid JSON object where **`tasks`** is the top-level primary array (`T1..TN`, with an elastic number of tasks tailored to the complexity of the project — e.g. 8, 10, 15, or 20+ tasks — covering all vertical feature slices and all planned thesis chapters):
 ```json
 {
   "tasks": [
     {
       "task_id": "T1",
-      "description": "Przegląd literatury dziedzinowej, analiza fundamentów i przygotowanie cytowań w references.bib",
+      "description": "[Przyrost 1: Założenia i model] Redakcja Rozdziału 1: Wstęp, formalny cel pracy, definicja problemu i postawienie tezy inżynierskiej w thesis.md",
+      "target_node": "v4",
+      "assigned_agent": "seed_writer",
+      "status": "TODO"
+    },
+    {
+      "task_id": "T2",
+      "description": "[Przyrost 1: Założenia i model] Redakcja Rozdziału 2: Przegląd literatury dziedzinowej, analiza fundamentów i stan wiedzy (SOTA) w references.bib i thesis.md",
       "target_node": "v4",
       "assigned_agent": "background_researcher",
       "status": "TODO"
     },
     {
-      "task_id": "T2",
-      "description": "[Przyrost 1: Model i interfejsy] Zdefiniowanie stałych AST i parametrów w config.py",
+      "task_id": "T3",
+      "description": "[Przyrost 1: Założenia i model] Zdefiniowanie stałych AST i parametrów w config.py",
       "target_node": "v1",
       "assigned_agent": "seed_coder",
       "status": "TODO"
     },
     {
-      "task_id": "T3",
-      "description": "[Przyrost 1: Model i interfejsy] Testy jednostkowe walidacji parametrów i struktur w test_core.py",
+      "task_id": "T4",
+      "description": "[Przyrost 1: Założenia i model] Testy jednostkowe walidacji parametrów i struktur w test_core.py",
       "target_node": "v5",
       "assigned_agent": "seed_tester",
       "status": "TODO"
     },
     {
-      "task_id": "T4",
-      "description": "[Przyrost 2: Algorytm główny i baseline] Implementacja logiki algorytmu i metody referencyjnej w core.py",
+      "task_id": "T5",
+      "description": "[Przyrost 2: Algorytm i implementacja] Implementacja logiki algorytmu i metody referencyjnej w core.py",
       "target_node": "v2",
       "assigned_agent": "seed_coder",
       "status": "TODO"
     },
     {
-      "task_id": "T5",
-      "description": "[Przyrost 2: Algorytm główny i baseline] Testy jednostkowe poprawności algorytmu i baseline'u w test_core.py",
+      "task_id": "T6",
+      "description": "[Przyrost 2: Algorytm i implementacja] Testy jednostkowe poprawności algorytmu i baseline'u w test_core.py",
       "target_node": "v5",
       "assigned_agent": "seed_tester",
       "status": "TODO"
     },
     {
-      "task_id": "T6",
+      "task_id": "T7",
+      "description": "[Przyrost 2: Algorytm i implementacja] Redakcja Rozdziału 3: Architektura systemu, schemat blokowy TikZ/Mermaid oraz formalizm matematyczny w thesis.md",
+      "target_node": "v4",
+      "assigned_agent": "seed_writer",
+      "status": "TODO"
+    },
+    {
+      "task_id": "T8",
+      "description": "[Przyrost 2: Algorytm i implementacja] Redakcja Rozdziału 4: Implementacja algorytmiczna, struktury danych i powiązania z kodem AST w thesis.md",
+      "target_node": "v4",
+      "assigned_agent": "seed_writer",
+      "status": "TODO"
+    },
+    {
+      "task_id": "T9",
       "description": "[Przyrost 3: Badania empiryczne] Ewaluacja porównawcza, generowanie results.csv i wykresów w plot_results.py",
       "target_node": "v3",
       "assigned_agent": "seed_tester",
       "status": "TODO"
     },
     {
-      "task_id": "T7",
-      "description": "[Przyrost 3: Dokumentacja] Redakcja rozdziałów pracy (architektura, wyniki, wnioski) w thesis.md",
+      "task_id": "T10",
+      "description": "[Przyrost 3: Badania empiryczne] Testy asercji jakościowych wyników empirycznych i zbieżności w test_core.py",
+      "target_node": "v5",
+      "assigned_agent": "seed_tester",
+      "status": "TODO"
+    },
+    {
+      "task_id": "T11",
+      "description": "[Przyrost 3: Dokumentacja] Redakcja Rozdziału 5: Badania eksperymentalne, protokół pomiarowy, analiza wyników z tabelami CSV i wykresami w thesis.md",
+      "target_node": "v4",
+      "assigned_agent": "seed_writer",
+      "status": "TODO"
+    },
+    {
+      "task_id": "T12",
+      "description": "[Przyrost 3: Dokumentacja] Redakcja Rozdziału 6: Podsumowanie, formalna weryfikacja tezy, wnioski i kierunki rozwoju w thesis.md",
       "target_node": "v4",
       "assigned_agent": "seed_writer",
       "status": "TODO"
@@ -107,10 +139,11 @@ Return strictly a valid JSON object where **`tasks`** is the top-level primary a
     ],
     "planned_chapters": [
       {"index": 1, "title": "Rozdział 1: Wstęp, Cel i Teza Pracy", "focus": "Motywacja, teza inżynierska i zakres"},
-      {"index": 2, "title": "Rozdział 2: Analiza Stanu Wiedzy i Metodyka Odniesienia", "focus": "Literatura i specyfikacja baseline'u"},
-      {"index": 3, "title": "Rozdział 3: Architektura i Implementacja Systemu", "focus": "Projekt modułów, struktury AST i algorytm"},
-      {"index": 4, "title": "Rozdział 4: Badania Eksperymentalne i Wyniki", "focus": "Ewaluacja empiryczna, tabela CSV i wykresy"},
-      {"index": 5, "title": "Rozdział 5: Podsumowanie i Weryfikacja Tezy", "focus": "Weryfikacja tezy, wnioski i ograniczenia"}
+      {"index": 2, "title": "Rozdział 2: Stan Badań i Przegląd Literatury SOTA", "focus": "Literatura, fundamenty i luka badawcza"},
+      {"index": 3, "title": "Rozdział 3: Architektura Systemu i Formalizacja Matematyczna", "focus": "Dekompozycja modułowa, diagram TikZ i model formalny"},
+      {"index": 4, "title": "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych", "focus": "Procedury, struktury AST i powiązania z kodem"},
+      {"index": 5, "title": "Rozdział 5: Badania Eksperymentalne, Studium Ablacyjne i Dyskusja Wyników", "focus": "Ewaluacja empiryczna, tabela CSV i wykresy"},
+      {"index": 6, "title": "Rozdział 6: Podsumowanie, Weryfikacja Tezy i Wnioski", "focus": "Weryfikacja tezy, ograniczenia i dalsze prace"}
     ]
   },
   "hitl_gate": "GATE_1_OUTLINE_APPROVAL",

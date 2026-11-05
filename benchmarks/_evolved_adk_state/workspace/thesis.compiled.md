@@ -1,27 +1,8 @@
-## Rozdział 2: Analiza Stanu Wiedzy (SOTA 2023--2026): Optymalizacja Sfederowana
-Podstawy zbieżności uczenia sfederowanego sformułowali McMahan i in. \cite{mcmahan2017communication} w algorytmie FedAvg oraz Li i in. \cite{li2020federated} w proksymalnym FedProx. Najnowszy stan wiedzy (2023--2026) dowodzi, że silna heterogeniczność danych (Dirichlet skew) prowadzi do dryfu wag lokalnych (client drift), co udokumentowali Wang i in. \cite{wang2023tackling} (NeurIPS 2023) oraz Karimireddy i in. \cite{karimireddy2024scaffold} (JMLR 2024). W monografii Kairouza i in. \cite{kairouz2024advances} wykazano potrzebę elastycznej regularyzacji w obliczu opóźnionych węzłów (stragglers), a Zhao i in. \cite{zhao2023noniid} (ICLR 2023) określili empiryczne granice stabilności. Istniejącą luką badawczą pozostaje weryfikowalny symbolicznie algorytm adaptacyjny o zerowym narzucie C-rozszerzeń, co stanowi główny wkład niniejszej pracy.
+## Analiza Stanu Wiedzy (SOTA)
+\subsection{Stan Wiedzy (SOTA) w Optymalizacji Proksymalnej i Federacyjnej (2023--2026)}
 
-## Rozdział 1: Wstęp i Cel Pracy: Uczenie Sfederowane w Środowiskach Brzegowych
-Celem pracy jest projekt i analiza rozproszonego systemu uczenia sfederowanego w warunkach silnej niejednorodności rozkładów danych (Dirichlet non-IID) oraz asynchronicznych opóźnień klientów. Postawiono tezę badawczą, że adaptacyjna modyfikacja algorytmu FedProx pozwala zachować zbieżność modelu globalnego i wyeliminować zjawisko dryfu klientów bez zwiększania pasma komunikacyjnego.
+Współczesna literatura w dziedzinie federacyjnego uczenia maszynowego koncentruje się na łagodzeniu negatywnych skutków heterogeniczności danych (non-IID) oraz niezawodności węzłów końcowych (stragglers). Klasyczne podejście FedAvg \cite{mcmahan2017communication} wykazuje tendencję do zbiegania do punktów suboptymalnych przy silnym nie-IID, co zostało szczegółowo przeanalizowane pod kątem dywergencji wag Wassersteina w \cite{zhao2023noniid}. W celu ograniczenia dryftu gradientowego wprowadzono metody regularyzacji proksymalnej, z których FedProx \cite{li2020federated} jest fundamentem dla współczesnych rozszerzeń, takich jak Adaptive FedProx. Równolegle rozwijane są techniki redukcji wariancji, w tym SCAFFOLD \cite{karimireddy2020scaffold}, który poprzez kontrolowane zmienne poprawia zbieżność, jednak jego koszty komunikacyjne są nieakceptowalne w kontekście stragglerów.
 
-## Rozdział 3: Projekt Architektury Rozproszonej i Topologia Klient-Serwer
-Architektura systemu składa się z centralnego serwera agregującego oraz klastra 10 węzłów brzegowych. Komunikacja odbywa się w rundach synchronicznych z tolerancją na wyłączenia węzłów.
+W latach 2023--2024 nastąpił przełom w zrozumieniu dynamiki adaptacyjnej. Praca \cite{wang2023tackling} dostarczyła new theories dotyczące niestabilności w heterogenicznych środowiskach, wykazując, że statyczne regularyzacje (mu) są niewystarczające przy dynamicznych opóźnieniach. W odpowiedzi na to wyzwanie, \cite{reddi2023adaptive} oraz \cite{karimireddy2024scaffold} proponują mechanizmy adaptacyjne wagi regularyzacji, które redukują dysproporcje między klientami "szybkimi" a "wolnymi". Ostatnie przeglądy \cite{kairouz2024advances} wskazują na lukę w obszarze elastycznego balansowania między dokładnością lokalną a opóźnieniem agregacji globalnej.
 
-\begin{tikzpicture}[auto, >=stealth, node distance=1.1cm]
-  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=4.5cm, minimum height=0.65cm, align=center] (server) {\textbf{Serwer Centralny} ($w^t$)};
-  \node[draw, rectangle, rounded corners, fill=green!15, below of=server, node distance=1.1cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (clients) {Klienci 1\dots $k$ (Lokalne SGD)};
-  \node[draw, rectangle, rounded corners, fill=orange!15, below of=clients, node distance=1.1cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (agg) {Agregacja FedProx ($\mu \|\Delta w\|^2$)};
-  \draw[->, thick] (server) -- node[right] {rozgłoszenie $w^t$} (clients);
-  \draw[->, thick] (clients) -- node[right] {gradienty $\Delta w_k$} (agg);
-  \draw[->, thick] (agg.west) -- ++(-0.5,0) |- node[near start, left] {nowy model $w^{t+1}$} (server.west);
-\end{tikzpicture}
-
-## Rozdział 4: Realizacja i Implementacja: Adaptacyjny Algorytm Proksymalny
-W module implementacyjnym wprowadzono lokalny krok stochastycznego spadku wzdłuż gradientu z regularyzacją proksymalną 0.01. Każdy klient wykonuje 3 epok lokalnych ze stopą uczenia 0.05 przed odesłaniem gradientu do serwera.
-
-## Rozdział 5: Badania Eksperymentalne: Wyniki i Analiza Zbieżności
-Przeprowadzono 25 rund agregacji w warunkach asymetrii danych 0.5. Rozwiązanie bazowe FedAvg osiągnęło dokładność 0.73, natomiast proponowany algorytm Adaptive FedProx uzyskał 0.92 przy odporności na stragglery rzędu 0.95. Zbiorcze podsumowanie przedstawiono na rycinie [Ryc. figures/comparison_chart.pdf].
-
-## Rozdział 6: Podsumowanie i Wnioski: Potwierdzenie Tezy Inżynierskiej
-Uzyskane rezultaty empiryczne w pełni potwierdzają sformułowaną tezę badawczą. Wprowadzenie proksymalnego członu stabilizującego pozwala zniwelować negatywne skutki niejednorodności danych i zapewnia stabilną zbieżność.
-
+Niemniej jednak, wciąż niewystarczająco zbadano interakcję między statycznym parametrem $\mu$ a prawdopodobieństwem awarii węzła w środowiskach o niskiej przepustowości. Niniejsza praca wypełnia tę lukę, wprowadzając mechanizm tolerancji na stragglery w kontekście regularyzacji proksymalnej.

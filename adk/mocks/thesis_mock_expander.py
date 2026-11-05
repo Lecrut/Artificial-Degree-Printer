@@ -397,37 +397,33 @@ def _expand_chapter_2(
             if not chunk:
                 continue
             blocks.append(f"\n\n{sub_cmd}{{{g_title}}}")
-            for p in chunk:
-                key = p["key"]
-                auth = _escape_tex_cell(p["author"])
-                title = _escape_tex_cell(p["title"])
-                year = _escape_tex_cell(p["year"])
-                venue = _escape_tex_cell(p.get("venue") or p.get("publisher") or "Academic Press")
-                meth = _escape_tex_cell(p.get("methodology", ""))
-                ds = _escape_tex_cell(p.get("dataset", ""))
-                metr = _escape_tex_cell(p.get("reported_metrics", ""))
-                lim = _escape_tex_cell(p.get("limitation", ""))
-                if is_ieee:
-                    blocks.append(
-                        f"W pracy \\textbf{{{auth} ({year})}} \\cite{{{key}}} (\\textit{{{title}}}, {venue}) "
-                        f"wprowadzono: {meth} (środowisko: {ds}; wyniki: {metr}). "
-                        f"Ograniczenie względem naszego podejścia: {lim}."
-                    )
-                else:
-                    blocks.append(
-                        f"\\paragraph{{Analiza źródła fundamentalnego: {auth} ({year}) \\cite{{{key}}}.}} "
-                        f"W fundamentalnej publikacji pt. \\textit{{{title}}} wydanej w ramach \\textit{{{venue}}} \\cite{{{key}}} "
-                        f"autorzy opracowali i sformalizowali kluczowy paradygmat obliczeniowy: {meth}. "
-                        f"Badania i rozważania teoretyczne zostały osadzone w klasie problemów: {ds}, "
-                        f"co pozwoliło na wykazanie następujących własności ilościowych i strukturalnych: {metr}. "
-                        f"Z perspektywy ewolucji całej dziedziny praca \\cite{{{key}}} stanowi kamień milowy, ponieważ "
-                        f"dostarcza ścisłego aparatu pojęciowego dla operatorów iteracyjnych i kryteriów stabilności. "
-                        f"Analizując wpływ pracy \\cite{{{key}}} na konstrukcję naszego systemu, należy jednocześnie wskazać, "
-                        f"że zidentyfikowanym ograniczeniem oryginalnego sformułowania jest fakt, iż: {lim}. "
-                        f"W niniejszej pracy dyplomowej ograniczenie to zostało przezwyciężone poprzez bezpośrednią "
-                        f"integrację operatora z parametrami sterującymi \\texttt{{\\ref_ast{{config.py:{first_param}}}}} "
-                        f"oraz \\texttt{{\\ref_ast{{config.py:{second_param}}}}} i weryfikację empiryczną w module \\texttt{{core.py}}."
-                    )
+            # Narrative academic synthesis grouping the chunk rather than copy-pasting 25 identical paragraphs
+            c_keys = ", ".join(f"\\cite{{{p['key']}}}" for p in chunk)
+            p_lead = chunk[0]
+            p_auth = _escape_tex_cell(p_lead["author"])
+            p_year = _escape_tex_cell(p_lead["year"])
+            p_title = _escape_tex_cell(p_lead["title"])
+            p_meth = _escape_tex_cell(p_lead.get("methodology", ""))
+            p_lim = _escape_tex_cell(p_lead.get("limitation", ""))
+            
+            blocks.append(
+                f"W ramach niniejszego podobszaru teoretycznego kluczowe znaczenie poznawcze mają prace {c_keys}. "
+                f"Szczególną rolę odgrywają badania {p_auth} ({p_year}) opublikowane w monografii \\textit{{{p_title}}}, "
+                f"w których wprowadzono fundament obliczeniowy: {p_meth}. "
+                f"Rozważania te dostarczyły formalnego aparatu pojęciowego dla operatorów decyzyjnych oraz warunków stabilności procesów stochastycznych."
+            )
+            if len(chunk) > 1:
+                p_next = chunk[1]
+                n_auth = _escape_tex_cell(p_next["author"])
+                n_year = _escape_tex_cell(p_next["year"])
+                n_meth = _escape_tex_cell(p_next.get("methodology", ""))
+                blocks.append(
+                    f"Koncepcje te były następnie rozwijane przez kolejnych badaczy, w tym m.in. {n_auth} ({n_year}) "
+                    f"\\cite{{{p_next['key']}}}, którzy rozszerzyli aparat analityczny o {n_meth}. "
+                    f"Wspólnym mianownikiem analizowanych podejść klasycznych pozostaje jednak konieczność równoważenia złożoności: {p_lim}. "
+                    f"W niniejszym projekcie powyższe zasady teoretyczne zaimplementowano bezpośrednio w module \\texttt{{core.py}}, "
+                    f"gdzie dynamika procesu sterowana jest stałymi \\texttt{{\\ref_ast{{config.py:{first_param}}}}} oraz \\texttt{{\\ref_ast{{config.py:{second_param}}}}}."
+                )
 
     if disc_papers:
         blocks.append(
@@ -450,34 +446,23 @@ def _expand_chapter_2(
             if not chunk:
                 continue
             blocks.append(f"\n\n{sub_cmd}{{{g_title}}}")
-            for p in chunk:
-                key = p["key"]
-                auth = _escape_tex_cell(p["author"])
-                title = _escape_tex_cell(p["title"])
-                year = _escape_tex_cell(p["year"])
-                venue = _escape_tex_cell(p.get("venue") or "arXiv")
-                meth = _escape_tex_cell(p.get("methodology", ""))
-                ds = _escape_tex_cell(p.get("dataset", ""))
-                metr = _escape_tex_cell(p.get("reported_metrics", ""))
-                lim = _escape_tex_cell(p.get("limitation", ""))
-                if is_ieee:
-                    blocks.append(
-                        f"\\textbf{{{auth} ({year})}} \\cite{{{key}}} (\\textit{{{title}}}, {venue}) "
-                        f"proponują: {meth} na zbiorze {ds}, osiągając: {metr}. "
-                        f"Jednakże w porównaniu z naszym rozwiązaniem metoda \\cite{{{key}}} wykazuje słabość: {lim}."
-                    )
-                else:
-                    blocks.append(
-                        f"\\paragraph{{Porównanie z pracą SOTA: {auth} ({year}) \\cite{{{key}}}.}} "
-                        f"W najnowszej pracy pt. \\textit{{{title}}} opublikowanej na łamach \\textit{{{venue}}} \\cite{{{key}}} "
-                        f"zaproponowano zaawansowany mechanizm konkurencyjny: {meth}. "
-                        f"Ewaluacja eksperymentalna przeprowadzona przez autorów na benchmarkach ({ds}) "
-                        f"wykazała następujące parametry jakościowe: {metr}. "
-                        f"Szczegółowa konfrontacja z architekturą opracowaną w niniejszej pracy ujawnia jednak "
-                        f"krytyczne ograniczenie podejścia z \\cite{{{key}}}: {lim}. "
-                        f"Zaproponowany przez nas algorytm w module \\texttt{{core.py}} eliminuje ten narzut, "
-                        f"zapewniając wyższą stabilność oraz 100\\% determinizm przy ułamku zapotrzebowania na zasoby."
-                    )
+            c_keys = ", ".join(f"\\cite{{{p['key']}}}" for p in chunk)
+            lead = chunk[0]
+            l_auth = _escape_tex_cell(lead["author"])
+            l_year = _escape_tex_cell(lead["year"])
+            l_title = _escape_tex_cell(lead["title"])
+            l_venue = _escape_tex_cell(lead.get("venue") or "arXiv")
+            l_meth = _escape_tex_cell(lead.get("methodology", ""))
+            l_metr = _escape_tex_cell(lead.get("reported_metrics", ""))
+            l_lim = _escape_tex_cell(lead.get("limitation", ""))
+            blocks.append(
+                f"W grupie metod konkurencyjnych analizowanych pod kątem tego zagadnienia szczególną uwagę zwracają pozycje {c_keys}. "
+                f"W publikacji autorstwa {l_auth} ({l_year}) pt. \\textit{{{l_title}}} ({l_venue}) zaproponowano {l_meth}, "
+                f"raportując wskaźniki na poziomie: {l_metr}. "
+                f"Analiza krytyczna wykazuje jednak istotną podatność tego podejścia: {l_lim}. "
+                f"Implementacja zaprezentowana w niniejszej pracy w module \\texttt{{core.py}} pozwala uniknąć tego narzutu "
+                f"dzięki deterministycznej strukturze decyzyjnej i rygorystycznemu powiązaniu parametrów ze środowiskiem testowym."
+            )
 
     blocks.append(f"\n\n{sec_cmd}{{{ch2_s4}}}")
     blocks.append(

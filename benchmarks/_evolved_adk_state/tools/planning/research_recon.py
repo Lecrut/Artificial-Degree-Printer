@@ -19,59 +19,7 @@ from adk.tools.building.literature_engine import get_domain_papers
 def _detect_domain_profile(topic_or_task_id: str) -> dict[str, Any]:
     """Detect domain metadata, canonical baselines, and standard metrics from prompt or task_id."""
     q = (topic_or_task_id or "").lower()
-    if any(k in q for k in ("02", "anomaly", "biosignal", "hrv", "spo2", "isolation", "mad")):
-        return {
-            "task_key": "02_ml_anomaly_detection",
-            "domain": "Biomedical Signal Processing & Unsupervised Anomaly Detection",
-            "algorithm_focus": "Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD)",
-            "canonical_baselines": [
-                "Univariate Gaussian Z-Score (3-sigma threshold)",
-                "Local Outlier Factor (LOF, Breunig 2000)",
-                "Isolation Forest (Liu 2008) & Deep Isolation Forest (Xu 2023)",
-                "Anomaly Transformer / PatchTST / TimesNet (2023-2025)",
-            ],
-            "standard_metrics": ["precision", "recall", "f1_score", "false_alarm_rate"],
-            "standard_datasets": [
-                "Multi-channel physiological telemetry (HR, HRV-RMSSD, SpO2)",
-                "MIT-BIH Arrhythmia & PhysioNet ICU streams",
-                "TSB-AD / SMD multivariate time-series benchmarks",
-            ],
-            "common_structural_patterns": [
-                "Rozdział 1: Motywacja kliniczna, model zaburzeń wielokanałowych, formalna teza i 4 hipotezy",
-                "Rozdział 2: Dwuetapowy przegląd literatury — (2.1) lejek statystyki odpornej (Huber, Hampel, Rousseeuw) oraz (2.2) porównanie z modelami SOTA 2023-2026 i tabela syntetyczna",
-                "Rozdział 3: Wyprowadzenie punktu załamania (breakdown point 50%) estymatora MAD oraz redukcji wariancji komitetu podprzestrzeni",
-                "Rozdział 4: Specyfikacja AST generatora sygnałów biomedycznych i detektora w core.py",
-                "Rozdział 5: Ewaluacja precyzji, czułości, miary F1 i odsetka fałszywych alarmów wraz ze studium ablacyjnym",
-                "Rozdział 6: Wnioski kliniczno-inżynierskie, Threats to Validity i wdrożenie w systemach Edge-ICU",
-            ],
-        }
-    if any(k in q for k in ("03", "pathfinding", "graph", "octile", "dijkstra", "grid", "a*")):
-        return {
-            "task_key": "03_graph_pathfinding",
-            "domain": "Graph Algorithms & Heuristic Search Optimization",
-            "algorithm_focus": "Ważony Algorytm A* z Metryką Oktilową (Weighted Octile A*)",
-            "canonical_baselines": [
-                "Uninformed Dijkstra Shortest Path (w = 0.0, Dijkstra 1959)",
-                "Unweighted A* Search (w = 1.0, Hart, Nilsson & Raphael 1968)",
-                "Jump Point Search (JPS, Harabor & Grastien 2011) & Anytime Repairing A* (ARA*)",
-                "Neural A* / ViT-A* / Focal Search (2023-2025)",
-            ],
-            "standard_metrics": ["avg_expanded_nodes", "path_optimality", "speedup_factor", "success_rate"],
-            "standard_datasets": [
-                "8-connected 2D spatial obstacle grids (GRID_SIZE x GRID_SIZE, obstacle density rho)",
-                "MovingAI 2D Grid Pathfinding Benchmarks",
-                "Randomized obstacle navigation maps (seed=42)",
-            ],
-            "common_structural_patterns": [
-                "Section I: Problem formulation on 8-connected spatial grids and suboptimality-speedup tradeoff",
-                "Section II: Competitive SOTA analysis (2023-2026 neural vs. symbolic search) & comparative table",
-                "Section III: Octile metric admissibility, w-admissibility theorem, and heap complexity analysis",
-                "Section IV: Pure-Python heapq implementation and AST parameter grounding",
-                "Section V: Multi-trial empirical evaluation of node expansions, speedup factor, and path optimality",
-                "Section VI: Conclusions, formal hypothesis verification, and real-time robotics outlook",
-            ],
-        }
-    if any(k in q for k in ("04", "federated", "fedprox", "fedavg", "dirichlet", "straggler")):
+    if any(k in q for k in ("04_federated", "federated", "fedprox", "fedavg", "dirichlet", "straggler")):
         return {
             "task_key": "04_federated_learning",
             "domain": "Distributed Systems & Federated Machine Learning",
@@ -101,6 +49,58 @@ def _detect_domain_profile(topic_or_task_id: str) -> dict[str, Any]:
                 "Section IV: Distributed server-client AST implementation and partial-epoch aggregation",
                 "Section V: Convergence rounds, final accuracy, communication overhead, and ablation analysis",
                 "Section VI: Conclusions, Threats to Validity, and edge deployment perspectives",
+            ],
+        }
+    if any(k in q for k in ("03_graph", "pathfinding", "octile", "dijkstra", "a*")):
+        return {
+            "task_key": "03_graph_pathfinding",
+            "domain": "Graph Algorithms & Heuristic Search Optimization",
+            "algorithm_focus": "Ważony Algorytm A* z Metryką Oktilową (Weighted Octile A*)",
+            "canonical_baselines": [
+                "Uninformed Dijkstra Shortest Path (w = 0.0, Dijkstra 1959)",
+                "Unweighted A* Search (w = 1.0, Hart, Nilsson & Raphael 1968)",
+                "Jump Point Search (JPS, Harabor & Grastien 2011) & Anytime Repairing A* (ARA*)",
+                "Neural A* / ViT-A* / Focal Search (2023-2025)",
+            ],
+            "standard_metrics": ["avg_expanded_nodes", "path_optimality", "speedup_factor", "success_rate"],
+            "standard_datasets": [
+                "8-connected 2D spatial obstacle grids (GRID_SIZE x GRID_SIZE, obstacle density rho)",
+                "MovingAI 2D Grid Pathfinding Benchmarks",
+                "Randomized obstacle navigation maps (seed=42)",
+            ],
+            "common_structural_patterns": [
+                "Section I: Problem formulation on 8-connected spatial grids and suboptimality-speedup tradeoff",
+                "Section II: Competitive SOTA analysis (2023-2026 neural vs. symbolic search) & comparative table",
+                "Section III: Octile metric admissibility, w-admissibility theorem, and heap complexity analysis",
+                "Section IV: Pure-Python heapq implementation and AST parameter grounding",
+                "Section V: Multi-trial empirical evaluation of node expansions, speedup factor, and path optimality",
+                "Section VI: Conclusions, formal hypothesis verification, and real-time robotics outlook",
+            ],
+        }
+    if any(k in q for k in ("02_ml", "anomaly", "biosignal", "hrv", "spo2", "isolation")):
+        return {
+            "task_key": "02_ml_anomaly_detection",
+            "domain": "Biomedical Signal Processing & Unsupervised Anomaly Detection",
+            "algorithm_focus": "Komitet Losowych Podprzestrzeni z Odporną Normalizacją Medianową (MAD)",
+            "canonical_baselines": [
+                "Univariate Gaussian Z-Score (3-sigma threshold)",
+                "Local Outlier Factor (LOF, Breunig 2000)",
+                "Isolation Forest (Liu 2008) & Deep Isolation Forest (Xu 2023)",
+                "Anomaly Transformer / PatchTST / TimesNet (2023-2025)",
+            ],
+            "standard_metrics": ["precision", "recall", "f1_score", "false_alarm_rate"],
+            "standard_datasets": [
+                "Multi-channel physiological telemetry (HR, HRV-RMSSD, SpO2)",
+                "MIT-BIH Arrhythmia & PhysioNet ICU streams",
+                "TSB-AD / SMD multivariate time-series benchmarks",
+            ],
+            "common_structural_patterns": [
+                "Rozdział 1: Motywacja kliniczna, model zaburzeń wielokanałowych, formalna teza i 4 hipotezy",
+                "Rozdział 2: Dwuetapowy przegląd literatury — (2.1) lejek statystyki odpornej (Huber, Hampel, Rousseeuw) oraz (2.2) porównanie z modelami SOTA 2023-2026 i tabela syntetyczna",
+                "Rozdział 3: Wyprowadzenie punktu załamania (breakdown point 50%) estymatora MAD oraz redukcji wariancji komitetu podprzestrzeni",
+                "Rozdział 4: Specyfikacja AST generatora sygnałów biomedycznych i detektora w core.py",
+                "Rozdział 5: Ewaluacja precyzji, czułości, miary F1 i odsetka fałszywych alarmów wraz ze studium ablacyjnym",
+                "Rozdział 6: Wnioski kliniczno-inżynierskie, Threats to Validity i wdrożenie w systemach Edge-ICU",
             ],
         }
     return {

@@ -47,4 +47,4 @@ Return strictly a valid JSON object matching one of these two forms:
 Do not include conversational filler or explanatory prose outside the JSON object.
 
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: Unikaj niezgodności sygnatur wykrytych w zadaniu T1
+- **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.

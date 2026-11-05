@@ -220,3 +220,44 @@ def test_reflexive_prompt_evolution_recovers_empty_tasks(tmp_path: Path) -> None
     assert saved_queue[0]["task_id"] == "T1"
     assert saved_queue[1]["task_id"] == "T2"
 
+
+def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_chapters(tmp_path: Path) -> None:
+    """Verify that _normalize_and_heal_task_plan never forces a rigid 12-task count, preserving 9 or 16 tasks or injecting only missing chapters."""
+    orch = _setup_test_orchestrator(tmp_path)
+    blast = {"source_node": "v1", "affected_nodes": ["v2", "v3", "v4"]}
+
+    # 1. A 9-task plan that already covers all nodes and chapters 1..6 -> stays 9 tasks!
+    nine_tasks = [
+        {"task_id": "T1", "description": "Rozdział 2: Przegląd literatury SOTA", "target_node": "v4", "assigned_agent": "background_researcher"},
+        {"task_id": "T2", "description": "Rozdział 1: Wstęp, cel i teza pracy", "target_node": "v4", "assigned_agent": "seed_writer"},
+        {"task_id": "T3", "description": "Parametry w config.py", "target_node": "v1", "assigned_agent": "seed_coder"},
+        {"task_id": "T4", "description": "Algorytm w core.py", "target_node": "v2", "assigned_agent": "seed_coder"},
+        {"task_id": "T5", "description": "Rozdział 3: Architektura systemu", "target_node": "v4", "assigned_agent": "seed_writer"},
+        {"task_id": "T6", "description": "Rozdział 4: Implementacja algorytmu", "target_node": "v4", "assigned_agent": "seed_writer"},
+        {"task_id": "T7", "description": "Ewaluacja results.csv i test_core.py", "target_node": "v3", "assigned_agent": "seed_tester"},
+        {"task_id": "T8", "description": "Rozdział 5: Badania eksperymentalne i wyniki", "target_node": "v4", "assigned_agent": "seed_writer"},
+        {"task_id": "T9", "description": "Rozdział 6: Podsumowanie i wnioski", "target_node": "v4", "assigned_agent": "seed_writer"},
+    ]
+    healed_9 = orch._normalize_and_heal_task_plan(
+        nine_tasks, blast=blast, user_prompt="Test 9 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
+    )
+    assert len(healed_9) == 9
+
+    # 2. A 16-task granular plan -> stays 16 tasks!
+    sixteen_tasks = nine_tasks + [
+        {"task_id": f"T_EXTRA_{i}", "description": f"Dodatkowy podmoduł algorytmu #{i} w core.py", "target_node": "v2", "assigned_agent": "seed_coder"}
+        for i in range(1, 8)
+    ]
+    healed_16 = orch._normalize_and_heal_task_plan(
+        sixteen_tasks, blast=blast, user_prompt="Test 16 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
+    )
+    assert len(healed_16) == 16
+
+    # 3. A 7-task plan missing Chapters 5 and 6 -> only the 2 missing chapters are added (7 + 2 = 9 tasks, NOT 12)!
+    seven_tasks_missing_5_6 = nine_tasks[:7]
+    healed_7_to_9 = orch._normalize_and_heal_task_plan(
+        seven_tasks_missing_5_6, blast=blast, user_prompt="Test 7 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
+    )
+    assert len(healed_7_to_9) == 9
+
+

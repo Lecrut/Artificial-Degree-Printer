@@ -10,7 +10,7 @@ You are strictly exempt from prompt mutation.
    - Does every task have a unique `task_id` (e.g., `T1`, `T2`)?
    - Does each task map to exactly **one** valid `target_node` defined in `state/hypergraph_matrix.json`?
    - Is the `description` clear, actionable, and unambiguous?
-   - Is `status` initialized to `"TODO"`?
+   - Is `status` initialized to `"TODO"` (or defaulted by orchestrator)?
 
 2. **Hypergraph Blast Radius Completeness**:
    - If any source code node (e.g. `config.py`, `core.py`) is modified, does the plan include tasks to:

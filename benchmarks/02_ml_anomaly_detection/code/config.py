@@ -1,4 +1,9 @@
-N_SAMPLES = 600
-ANOMALY_RATIO = 0.08
-Z_THRESHOLD = 2.4
-ENSEMBLE_TREES = 25
+"""
+Module: config.py
+Description: Hyperparameters and constants for Bio-Signal & Telemetry Anomaly Detection.
+"""
+
+N_SAMPLES: int = 600
+ANOMALY_RATIO: float = 0.08
+Z_THRESHOLD: float = 2.4
+ENSEMBLE_TREES: int = 25

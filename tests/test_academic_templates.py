@@ -307,3 +307,60 @@ def test_detect_template_from_prompt_and_live_mock_isolation(tmp_path: Path):
     assert "Tic-Tac-Toe" not in md_text
 
 
+def test_dynamic_arbitrary_chapter_counts_in_latex_rendering(tmp_path: Path):
+    """Verify that template_manager dynamically supports arbitrary chapter counts (e.g. 10 chapters or 4 sections) without truncation or crash."""
+    spec = get_benchmark_task("01_rl_tictactoe")
+
+    # 1. Test 10 chapters in thesis_plodz
+    ws_10 = tmp_path / "ws_10_chapters"
+    ws_10.mkdir(parents=True, exist_ok=True)
+    config_src = "".join(code for _, code in spec.config_ast_nodes)
+    (ws_10 / "config.py").write_text(config_src, encoding="utf-8")
+    (ws_10 / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
+    (ws_10 / "references.bib").write_text(spec.bibtex_entries, encoding="utf-8")
+
+    md_10_content = "\n\n".join(
+        f"## Rozdział {i}: Dziedzinowa sekcja numer {i}\nTreść rozdziału {i} ze wskaźnikiem \\ref_ast{{config.py:ALPHA}} i wynikiem \\ref_csv{{results.csv:win_rate}}."
+        for i in range(1, 11)
+    )
+    (ws_10 / "thesis.md").write_text(md_10_content, encoding="utf-8")
+
+    tex_10 = render_template_latex(spec=spec, workspace_dir=ws_10, template_name="thesis_plodz", provider="live")
+    assert tex_10.exists()
+    tex_10_content = tex_10.read_text(encoding="utf-8")
+
+    # Must contain all 10 \chapter directives!
+    for i in range(1, 11):
+        assert f"\\chapter{{Rozdział {i}: Dziedzinowa sekcja numer {i}}}" in tex_10_content
+
+    # Verify symbolic compilation passes
+    comp_10 = compile_symbolic_references(tex_10, ws_10, write_compiled=True)
+    assert comp_10["status"] == "PASS"
+
+    # 2. Test 4 sections in paper_ieee
+    ws_4 = tmp_path / "ws_4_sections"
+    ws_4.mkdir(parents=True, exist_ok=True)
+    (ws_4 / "config.py").write_text(config_src, encoding="utf-8")
+    (ws_4 / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
+    (ws_4 / "references.bib").write_text(spec.bibtex_entries, encoding="utf-8")
+
+    md_4_content = "\n\n".join(
+        f"## Section {i}: Focused Paper Segment {i}\nDetailed methodology segment {i} using \\ref_ast{{config.py:GAMMA}}."
+        for i in range(1, 5)
+    )
+    (ws_4 / "thesis.md").write_text(md_4_content, encoding="utf-8")
+
+    tex_4 = render_template_latex(spec=spec, workspace_dir=ws_4, template_name="paper_ieee", provider="live")
+    assert tex_4.exists()
+    tex_4_content = tex_4.read_text(encoding="utf-8")
+
+    # Must contain all 4 \section directives and no phantom sections
+    for i in range(1, 5):
+        assert f"\\section{{Section {i}: Focused Paper Segment {i}}}" in tex_4_content
+    assert "\\section{Section 5" not in tex_4_content
+
+    comp_4 = compile_symbolic_references(tex_4, ws_4, write_compiled=True)
+    assert comp_4["status"] == "PASS"
+
+
+

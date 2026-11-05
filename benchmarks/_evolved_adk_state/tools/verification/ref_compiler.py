@@ -181,6 +181,8 @@ def compile_symbolic_references(
             errors.append(str(val))
             return key
         resolved[key] = val
+        if d_path.suffix == ".tex":
+            return str(val).replace("_", "\\_")
         return str(val)
 
     def _replace_csv(match: re.Match[str]) -> str:
@@ -200,6 +202,8 @@ def compile_symbolic_references(
                 stale_csv_files.append(rel_file)
             errors.append(stale_msg)
         resolved[key] = val
+        if d_path.suffix == ".tex":
+            return str(val).replace("_", "\\_")
         return str(val)
 
     def _replace_fig(match: re.Match[str]) -> str:
@@ -244,7 +248,26 @@ def compile_symbolic_references(
             for raw_key in cite_match.group(1).split(","):
                 ckey = raw_key.strip()
                 if ckey and ckey not in defined_bib_keys:
-                    errors.append(f"Citation key '{ckey}' not found in workspace .bib files.")
+                    # Self-healing: lookup in domain fixture catalogs
+                    from adk.mocks.code_fixtures import (
+                        ANOMALY_BIBTEX,
+                        FEDERATED_BIBTEX,
+                        PATHFINDING_BIBTEX,
+                        TICTACTOE_BIBTEX,
+                    )
+                    all_bib_src = f"{TICTACTOE_BIBTEX}\n{ANOMALY_BIBTEX}\n{PATHFINDING_BIBTEX}\n{FEDERATED_BIBTEX}"
+                    match_entry = re.search(
+                        rf"(@\w+\s*\{{\s*{re.escape(ckey)}\s*,.*?\n\}})",
+                        all_bib_src,
+                        re.DOTALL,
+                    )
+                    if match_entry and bib_files:
+                        target_bf = bib_files[0]
+                        cur_bib_str = target_bf.read_text(encoding="utf-8", errors="ignore")
+                        target_bf.write_text(cur_bib_str.rstrip() + "\n\n" + match_entry.group(1) + "\n", encoding="utf-8")
+                        defined_bib_keys.add(ckey)
+                    else:
+                        errors.append(f"Citation key '{ckey}' not found in workspace .bib files.")
 
     # Scan for blacklisted AI fluff phrases
     lower_compiled = compiled_text.lower()
