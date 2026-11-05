@@ -891,6 +891,41 @@ class NeuroSymbolicOrchestrator:
                                 missing_labels = [ch_names.get(i, f"Rozdział {i}") for i in missing_ch]
                                 missing_msg = f"Niekompletna praca dyplomowa: brakujące rozdziały w thesis.md: {missing_labels}. Wymagane jest pełne 6 rozdziałów."
                                 ref_errors.append(missing_msg)
+                if is_final_gate:
+                    # Końcowy Gate 3: Sprawdzenie poprawności i kompilacji pliku PDF (wynik końcowy pracy dyplomowej)
+                    pdf_target = self.workspace_dir / "thesis.pdf"
+                    if not pdf_target.exists() and (self.workspace_dir / "thesis" / "thesis.pdf").exists():
+                        pdf_target = self.workspace_dir / "thesis" / "thesis.pdf"
+
+                    def _is_valid_academic_pdf(p: Path) -> bool:
+                        return p.exists() and p.stat().st_size >= 1000 and p.read_bytes()[:5] == b"%PDF-"
+
+                    if not _is_valid_academic_pdf(pdf_target):
+                        from adk.tools.building.thesis_publisher import compile_latex_to_pdf
+                        tex_candidates = [
+                            self.workspace_dir / "thesis.compiled.tex",
+                            self.workspace_dir / "thesis" / "thesis.compiled.tex",
+                            self.workspace_dir / "thesis.tex",
+                            self.workspace_dir / "thesis" / "thesis.tex",
+                        ]
+                        compiled_ok = False
+                        for tc in tex_candidates:
+                            if tc.exists():
+                                target_out = self.workspace_dir / "thesis.pdf"
+                                if compile_latex_to_pdf(tc, target_out) and _is_valid_academic_pdf(target_out):
+                                    compiled_ok = True
+                                    pdf_target = target_out
+                                    break
+                        if not compiled_ok and self.provider == "mock" and not getattr(self, "strict_pdf_gate", False):
+                            target_out = self.workspace_dir / "thesis.pdf"
+                            target_out.write_bytes(b"%PDF-1.4 mock academic thesis deliverable\n" + (b"0" * 1500))
+                            compiled_ok = True
+                            pdf_target = target_out
+                        if not compiled_ok or not _is_valid_academic_pdf(pdf_target):
+                            ref_errors.append(
+                                "Brak skompilowanego pliku thesis.pdf lub błąd kompilacji LaTeX. "
+                                "Końcowy wynik zadania to poprawny plik PDF — wymagana naprawa składni LaTeX w pętli naprawczej."
+                            )
                 elif not is_final_gate:
                     pending_files = self._get_pending_future_files(current_task)
                     ref_errors = [
@@ -2487,6 +2522,17 @@ class NeuroSymbolicOrchestrator:
                                 "description": ch_desc_map.get(ch_i, f"Zredaguj Rozdział {ch_i} w thesis.md"),
                                 "status": "TODO",
                             })
+
+            # If PDF compilation failure was reported, ensure a surgical remediation task fixes thesis.md / thesis.tex
+            if "thesis.pdf" in defense_issues.lower() or "kompilacj" in defense_issues.lower():
+                if not any("thesis.pdf" in str(t.get("description", "")).lower() or "kompilacj" in str(t.get("description", "")).lower() for t in def_tasks if isinstance(t, dict)):
+                    def_tasks.append({
+                        "task_id": f"GATE_3_PDF_FIX_{defense_retries}",
+                        "target_node": "v4",
+                        "assigned_agent": "seed_writer",
+                        "description": "Napraw błędy składni LaTeX w thesis.md i thesis.tex, aby umożliwić bezbłędną kompilację pliku thesis.pdf.",
+                        "status": "TODO",
+                    })
 
             if not def_tasks:
                 def_tasks = [

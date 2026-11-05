@@ -1,41 +1,37 @@
 {
-  "thesis_title": "Implementacja i ewaluacja agenta Q-Learning w grze Tic-Tac-Toe",
-  "thesis_statement": "Zastosowanie algorytmu Q-Learning pozwala na naukę optymalnej strategii gry w Tic-Tac-Toe, prowadząc do wysokich wskaźników remisów i wygrywania przeciwko losowemu przeciwnikowi po odpowiedniej liczbie epizodów.",
-  "baseline_comparison": "Uniformly Random Legal Move Policy (Baseline)",
-  "planned_visualizations": [
-    "Wykres zbieżności Q-Values lub funkcji wartości w zależności od numeru epizodu",
-    "Porównanie win_rate i draw_rate po zakończeniu treningu"
-  ],
+  "thesis_title": "Implementacja czysto Pythonowej modułu Tic-Tac-Toe z agenty Q-Learning dla analizy Markowskiego Decyzji Procesu",
+  "thesis_statement": "Zaprojektowanie i wdrożenie efektywnego algorytmu uczącego się na podstawie nagród (Q-Learning) do gry w kółko i krzyżyk, demonstrujący konwergencję do optymalnej polityki przy użyciu czystego Pythona bez zależności zewnętrznych.",
+  "baseline_comparison": "Uniformly Random Legal Move Policy (Baseline Monte Carlo)",
   "planned_chapters": [
     {
       "index": 1,
       "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-      "focus": "Motywacja uczenia maszynowego w grach, teza o skuteczności Q-Learning"
+      "focus": "Formalna definicja problemu w kontekście RL, cel inżynierski (czysty Python), teza pracy i zakres badawczy"
     },
     {
       "index": 2,
       "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-      "focus": "MDP, algorytmy RL, historia Tic-Tac-Toe jako problemu dla AI"
+      "focus": "Analiza SOTA dla Tic-Tac-Toe, systematyka rozwiązań (Minimax vs RL) i specyfikacja metody odniesienia (baseline)"
     },
     {
       "index": 3,
-      "title": "Rozdział 3: Architektura Systemu i Formalizacja Matematyczna",
-      "focus": "Definicja stanu, akcji i nagrody; model MDP dla Tic-Tac-Toe"
+      "title": "Rozdział 3: Architektura Systemu",
+      "focus": "Projekt modułowy w czystym Pythonie, definicja stanu Markowa i przestrzeni akcji dla Tic-Tac-Toe"
     },
     {
       "index": 4,
-      "title": "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
-      "focus": "Tabela Q, epsilon-greedy strategia, logika aktualizacji wagi"
+      "title": "Rozdział 4: Implementacja Algorytmu Q-Learning",
+      "focus": "Szczegółowy opis implementacji funkcji aktualizacji Q-Table, eksploracji (epsilon-greedy) i ewaluacji w core.py"
     },
     {
       "index": 5,
-      "title": "Rozdział 5: Badania Eksperymentalne, Studium Ablacyjne i Dyskusja Wyników",
-      "focus": "Wpływ hiperparametrów (ALPHA, GAMMA) na wynik, tabela wyników"
+      "title": "Rozdział 5: Wyniki Eksperymentów",
+      "focus": "Prezentacja metryk konwergencji (win_rate, draw_rate) z results.csv oraz analiza wpływu hyperparametrów (ALPHA, GAMMA)"
     },
     {
       "index": 6,
-      "title": "Rozdział 6: Podsumowanie, Weryfikacja Tezy i Wnioski",
-      "focus": "Weryfikacja tezy, stabilność nauki, kierunki rozwoju"
+      "title": "Rozdział 6: Wnioski",
+      "focus": "Podsumowanie badań, ocena skuteczności algorytmu w porównaniu do baseline oraz perspektywy rozwoju"
     }
   ],
   "literature_recon": {
@@ -125,32 +121,32 @@
       {
         "index": 1,
         "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-        "focus": "Motywacja uczenia maszynowego w grach, teza o skuteczności Q-Learning"
+        "focus": "Formalna definicja problemu w kontekście RL, cel inżynierski (czysty Python), teza pracy i zakres badawczy"
       },
       {
         "index": 2,
         "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-        "focus": "MDP, algorytmy RL, historia Tic-Tac-Toe jako problemu dla AI"
+        "focus": "Analiza SOTA dla Tic-Tac-Toe, systematyka rozwiązań (Minimax vs RL) i specyfikacja metody odniesienia (baseline)"
       },
       {
         "index": 3,
-        "title": "Rozdział 3: Architektura Systemu i Formalizacja Matematyczna",
-        "focus": "Definicja stanu, akcji i nagrody; model MDP dla Tic-Tac-Toe"
+        "title": "Rozdział 3: Architektura Systemu",
+        "focus": "Projekt modułowy w czystym Pythonie, definicja stanu Markowa i przestrzeni akcji dla Tic-Tac-Toe"
       },
       {
         "index": 4,
-        "title": "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
-        "focus": "Tabela Q, epsilon-greedy strategia, logika aktualizacji wagi"
+        "title": "Rozdział 4: Implementacja Algorytmu Q-Learning",
+        "focus": "Szczegółowy opis implementacji funkcji aktualizacji Q-Table, eksploracji (epsilon-greedy) i ewaluacji w core.py"
       },
       {
         "index": 5,
-        "title": "Rozdział 5: Badania Eksperymentalne, Studium Ablacyjne i Dyskusja Wyników",
-        "focus": "Wpływ hiperparametrów (ALPHA, GAMMA) na wynik, tabela wyników"
+        "title": "Rozdział 5: Wyniki Eksperymentów",
+        "focus": "Prezentacja metryk konwergencji (win_rate, draw_rate) z results.csv oraz analiza wpływu hyperparametrów (ALPHA, GAMMA)"
       },
       {
         "index": 6,
-        "title": "Rozdział 6: Podsumowanie, Weryfikacja Tezy i Wnioski",
-        "focus": "Weryfikacja tezy, stabilność nauki, kierunki rozwoju"
+        "title": "Rozdział 6: Wnioski",
+        "focus": "Podsumowanie badań, ocena skuteczności algorytmu w porównaniu do baseline oraz perspektywy rozwoju"
       }
     ]
   }

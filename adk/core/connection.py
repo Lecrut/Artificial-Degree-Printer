@@ -250,7 +250,7 @@ class LLMConnectionManager:
         system_prompt: str | None = None,
         user_prompt: str | None = None,
     ) -> dict[str, Any]:
-        """Call local Ollama /api/generate endpoint."""
+        """Call local Ollama /api/generate endpoint with failover on HTTP 500 context errors."""
         ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
         body_dict: dict[str, Any] = {
             "model": model_name,
@@ -259,8 +259,8 @@ class LLMConnectionManager:
             "format": "json",
             "think": False,
             "options": {
-                "num_ctx": int(os.environ.get("OLLAMA_NUM_CTX", "8192")),
-                "num_predict": int(os.environ.get("OLLAMA_NUM_PREDICT", "4096")),
+                "num_ctx": int(os.environ.get("OLLAMA_NUM_CTX", "32768")),
+                "num_predict": int(os.environ.get("OLLAMA_NUM_PREDICT", "8192")),
             },
         }
         if system_prompt:
@@ -272,19 +272,54 @@ class LLMConnectionManager:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw_resp = json.loads(resp.read().decode("utf-8"))
-            p_tok = int(raw_resp.get("prompt_eval_count") or 0)
-            c_tok = int(raw_resp.get("eval_count") or 0)
-            t_tok = p_tok + c_tok
-            return {
-                "status": "ok",
-                "raw_text": raw_resp.get("response", "{}"),
-                "raw_payload": raw_resp,
-                "prompt_tokens": p_tok,
-                "completion_tokens": c_tok,
-                "total_tokens": t_tok,
-            }
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw_resp = json.loads(resp.read().decode("utf-8"))
+                p_tok = int(raw_resp.get("prompt_eval_count") or 0)
+                c_tok = int(raw_resp.get("eval_count") or 0)
+                t_tok = p_tok + c_tok
+                return {
+                    "status": "ok",
+                    "raw_text": raw_resp.get("response", "{}"),
+                    "raw_payload": raw_resp,
+                    "prompt_tokens": p_tok,
+                    "completion_tokens": c_tok,
+                    "total_tokens": t_tok,
+                }
+        except urllib.error.HTTPError as err:
+            err_body = ""
+            try:
+                err_body = err.read().decode("utf-8", errors="ignore")
+            except Exception:
+                pass
+            print(f"  [OLLAMA HTTP {err.code}] {err.reason}: {err_body}", flush=True)
+            # Automatic recovery: retry using the model's native Modelfile context window if 500 error was raised
+            if err.code == 500 and "options" in body_dict:
+                print("  [OLLAMA RECOVERY] Próba ponowna z natywnym kontekstem modelu (bez restrictive options)...", flush=True)
+                body_fallback = dict(body_dict)
+                body_fallback.pop("options", None)
+                req_fallback = urllib.request.Request(
+                    ollama_url,
+                    data=json.dumps(body_fallback).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                try:
+                    with urllib.request.urlopen(req_fallback, timeout=timeout) as resp:
+                        raw_resp = json.loads(resp.read().decode("utf-8"))
+                        p_tok = int(raw_resp.get("prompt_eval_count") or 0)
+                        c_tok = int(raw_resp.get("eval_count") or 0)
+                        return {
+                            "status": "ok",
+                            "raw_text": raw_resp.get("response", "{}"),
+                            "raw_payload": raw_resp,
+                            "prompt_tokens": p_tok,
+                            "completion_tokens": c_tok,
+                            "total_tokens": p_tok + c_tok,
+                        }
+                except Exception:
+                    pass
+            raise
 
     def check_llm_access(self) -> dict[str, Any]:
         """Verify availability of Google Gemini API, local Ollama server, and Mock fallback without running benchmarks."""

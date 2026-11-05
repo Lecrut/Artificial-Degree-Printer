@@ -1,41 +1,37 @@
 {
-  "thesis_title": "Adaptive Robust Mahalanobis-Ensemble Detector for Bio-Signal Telemetry Anomaly Detection: Comparative Analysis with Univariate Z-Score Baseline",
-  "thesis_statement": "Zastosowanie wielowymiarowego, adaptacyjnego detektora Mahalanobis z metodą ansamblową (Ensemble) znacząco poprawia precyzję wykrywania anomalii w sygnałach biomedycznych oraz redukuje częstotliwość fałszywych alarmów w porównaniu do klasycznego, statycznego modelu Z-score.",
-  "baseline_comparison": "Univariate Gaussian Z-Score (statyczny próg 2.4 sigma)",
-  "planned_visualizations": [
-    "Schemat architektury systemu (generowanie -> detekcja ensemble) w Mermaid/TikZ",
-    "Wykresy rozrzutu sygnału z zaznaczonymi anomaliemi oraz porównawcze wykresy metryk (F1, False Alarm Rate) między Baseline a Proposed Method"
-  ],
+  "thesis_title": "Porównawcza Analiza Wykrywania Anomalii w Sygnałach Biomedycznych: Static Z-Score vs. Adaptive Robust Mahalanobis-Ensemble",
+  "thesis_statement": "Hipoteza badawcza stwierdza, że wielowymiarowy detektor ensemblowy oparty na odległości Mahalanobisa osiąga istotnie wyższą czułość (recall) i niższy wskaźnik fałszywych alarmów w porównaniu do statycznego uniwariacyjnego progu Z-score przy detekcji anomalii w syntetycznych strumieniach sygnałów biomedycznych.",
+  "baseline_comparison": "Static Univariate Gaussian Z-Score (Threshold=2.4)",
   "planned_chapters": [
     {
       "index": 1,
       "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-      "focus": "Motywacja (telemetria medyczna), problem fałszywych alarmów, teza o przewadze detektora ansamblowego"
+      "focus": "Kontekst problemu detekcji anomalii w telemedycynie, formalna definicja zadania, postawiona teza porównawcza oraz zakres prac badawczych."
     },
     {
       "index": 2,
-      "title": "Rozdział 2: Stan Badań i Przegląd Literatury SOTA",
-      "focus": "Teoria Z-score, Detekcja anomalii w sygnałach biomedycznych, przegląd najnowszych metod Ensemble/Deep Learning (2023-2026)"
+      "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+      "focus": "Systematyka metod wykrywania anomalii w sygnałach biomedycznych, analiza metod klasycznych (Z-score) versus zaawansowane podejścia ensemblowe oraz przegląd literatury z lat 2023-2026."
     },
     {
       "index": 3,
-      "title": "Rozdział 3: Architektura Systemu i Formalizacja Matematyczna",
-      "focus": "Model formalny dystrybucji Mahalanobis, definicja ansamblu drzew(decision trees), diagramy architektury"
+      "title": "Rozdział 3: Projekt Systemu i Metodologia",
+      "focus": "Specyfikacja generatora danych syntetycznych, definicja parametrów konfiguracyjnych (config.py), architektura porównania oraz dobór metryk oceny wydajności."
     },
     {
       "index": 4,
-      "title": "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
-      "focus": "Kod w core.py, konfiguracja w config.py, algorytm generacji danych syntetycznych"
+      "title": "Rozdział 4: Implementacja Algorytmu",
+      "focus": "Szczegółowy opis matematyczny algorytmu Adaptive Robust Mahalanobis-Ensemble, implementacja generatora strumienia oraz mechanizmów agregacji wyników (core.py)."
     },
     {
       "index": 5,
-      "title": "Rozdział 5: Badania Eksperymentalne, Studium Ablacyjne i Dyskusja Wyników",
-      "focus": "Porównanie Z-score vs Mahalanobis-Ensemble na zbiorze N=600, analiza metryk (F1, Precision, Recall), implikacje kliniczne"
+      "title": "Rozdział 5: Eksperymenty i Wyniki",
+      "focus": "Opis scenariuszy badawczych, prezentacja wynik w postaci tabel CSV i wykresów (results.csv), analiza statystyczna poprawności detekcji anomalii."
     },
     {
       "index": 6,
-      "title": "Rozdział 6: Podsumowanie, Weryfikacja Tezy i Wnioski",
-      "focus": "Weryfikacja poprawności tezy, ograniczenia symulacji, kierunki rozwoju (real-time processing)"
+      "title": "Rozdział 6: Wnioski",
+      "focus": "Weryfikacja tezy pracy, analiza ograniczeń metody ensemblowej (np. koszt obliczeniowy) oraz sugestie dla przyszłych prac badawczych."
     }
   ],
   "literature_recon": {
@@ -140,32 +136,32 @@
       {
         "index": 1,
         "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-        "focus": "Motywacja (telemetria medyczna), problem fałszywych alarmów, teza o przewadze detektora ansamblowego"
+        "focus": "Kontekst problemu detekcji anomalii w telemedycynie, formalna definicja zadania, postawiona teza porównawcza oraz zakres prac badawczych."
       },
       {
         "index": 2,
-        "title": "Rozdział 2: Stan Badań i Przegląd Literatury SOTA",
-        "focus": "Teoria Z-score, Detekcja anomalii w sygnałach biomedycznych, przegląd najnowszych metod Ensemble/Deep Learning (2023-2026)"
+        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+        "focus": "Systematyka metod wykrywania anomalii w sygnałach biomedycznych, analiza metod klasycznych (Z-score) versus zaawansowane podejścia ensemblowe oraz przegląd literatury z lat 2023-2026."
       },
       {
         "index": 3,
-        "title": "Rozdział 3: Architektura Systemu i Formalizacja Matematyczna",
-        "focus": "Model formalny dystrybucji Mahalanobis, definicja ansamblu drzew(decision trees), diagramy architektury"
+        "title": "Rozdział 3: Projekt Systemu i Metodologia",
+        "focus": "Specyfikacja generatora danych syntetycznych, definicja parametrów konfiguracyjnych (config.py), architektura porównania oraz dobór metryk oceny wydajności."
       },
       {
         "index": 4,
-        "title": "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
-        "focus": "Kod w core.py, konfiguracja w config.py, algorytm generacji danych syntetycznych"
+        "title": "Rozdział 4: Implementacja Algorytmu",
+        "focus": "Szczegółowy opis matematyczny algorytmu Adaptive Robust Mahalanobis-Ensemble, implementacja generatora strumienia oraz mechanizmów agregacji wyników (core.py)."
       },
       {
         "index": 5,
-        "title": "Rozdział 5: Badania Eksperymentalne, Studium Ablacyjne i Dyskusja Wyników",
-        "focus": "Porównanie Z-score vs Mahalanobis-Ensemble na zbiorze N=600, analiza metryk (F1, Precision, Recall), implikacje kliniczne"
+        "title": "Rozdział 5: Eksperymenty i Wyniki",
+        "focus": "Opis scenariuszy badawczych, prezentacja wynik w postaci tabel CSV i wykresów (results.csv), analiza statystyczna poprawności detekcji anomalii."
       },
       {
         "index": 6,
-        "title": "Rozdział 6: Podsumowanie, Weryfikacja Tezy i Wnioski",
-        "focus": "Weryfikacja poprawności tezy, ograniczenia symulacji, kierunki rozwoju (real-time processing)"
+        "title": "Rozdział 6: Wnioski",
+        "focus": "Weryfikacja tezy pracy, analiza ograniczeń metody ensemblowej (np. koszt obliczeniowy) oraz sugestie dla przyszłych prac badawczych."
       }
     ]
   }
