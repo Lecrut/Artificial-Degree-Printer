@@ -77,6 +77,15 @@ def test_doc_editor_canonical_chapters_and_subsections(tmp_path: Path):
     assert "Poprawione równania modelu." in text
     assert "Równania modelu." not in text.replace("Poprawione równania modelu.", "")
 
+    edit_document_section(
+        doc_md,
+        "Rozdział 5: Wyniki Eksperymentów",
+        "## Rozdział 5: Wyniki Eksperymentów\nPierwsza wersja.\n\n## Rozdział 5: Wyniki Eksperymentów\nDruga wersja.",
+    )
+    text = doc_md.read_text(encoding="utf-8")
+    assert sum(1 for line in text.splitlines() if line.startswith("## Rozdział 5")) == 1
+    assert "Druga wersja." in text
+
 
 def test_bridges_import_and_hypergraph_sync(tmp_path: Path):
     ws = tmp_path / "workspace"
@@ -117,3 +126,18 @@ def test_bridges_import_and_hypergraph_sync(tmp_path: Path):
     sync_res = sync_hypergraph_matrix(ws, matrix_file)
     assert sync_res["status"] == "ok"
     assert sync_res["degrees"]["v1"] >= 2
+
+
+def test_doc_editor_drops_refs_missing_from_csv_and_ast(tmp_path: Path):
+    (tmp_path / "config.py").write_text("ALPHA = 0.2\n", encoding="utf-8")
+    (tmp_path / "results.csv").write_text("method,win_rate\nbaseline_random,0.4\n", encoding="utf-8")
+    doc = tmp_path / "thesis.md"
+    edit_document_section(
+        doc,
+        "Wyniki",
+        "Stare \\ref_csv{results.csv:baseline:win_rate} i dobre \\ref_csv{results.csv:baseline_random:win_rate} oraz \\ref_ast{config.py:ALPHA}.",
+    )
+    text = doc.read_text(encoding="utf-8")
+    assert "baseline:win_rate" not in text
+    assert "baseline_random:win_rate" in text
+    assert "config.py:ALPHA" in text

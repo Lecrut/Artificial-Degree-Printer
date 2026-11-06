@@ -14,6 +14,20 @@ from adk.core.models import resolve_adk_path
 BUILTIN_VERIFICATION_MODULES = {"__init__.py", "test_runner.py", "ref_compiler.py"}
 
 
+def iter_workspace_python_files(w_dir: Path) -> list[Path]:
+    """Python sources inside the workspace. A parent folder named benchmarks does not hide them."""
+    if not w_dir.exists():
+        return []
+    found: list[Path] = []
+    for path in w_dir.rglob("*.py"):
+        if "__pycache__" in path.parts:
+            continue
+        if "benchmarks" in path.relative_to(w_dir).parts:
+            continue
+        found.append(path)
+    return found
+
+
 def run_isolated_tests(
     workspace_dir: str | Path = "workspace",
     use_docker: bool = False,
@@ -23,11 +37,7 @@ def run_isolated_tests(
     """Run pytest, ruff, and any dynamically promoted Layer 4 validators on workspace_dir."""
     w_dir = resolve_adk_path(workspace_dir)
 
-    py_files = (
-        [p for p in w_dir.rglob("*.py") if "__pycache__" not in p.parts and "benchmarks" not in p.parts]
-        if w_dir.exists()
-        else []
-    )
+    py_files = iter_workspace_python_files(w_dir)
     if not py_files:
         return {
             "status": "PASS",

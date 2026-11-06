@@ -25,6 +25,7 @@ from adk.mocks.mock_pdf_template import (  # noqa: E402
 )
 from adk.mocks.thesis_mock_expander import expand_academic_chapters  # noqa: E402
 from adk.tools.building.doc_editor import edit_document_section  # noqa: E402
+from adk.tools.building.experiment_runner import execute_workspace_experiment  # noqa: E402
 from adk.tools.building.template_manager import render_template_latex, resolve_template_name  # noqa: E402
 from adk.tools.verification.ref_compiler import compile_symbolic_references  # noqa: E402
 
@@ -302,6 +303,36 @@ def compile_latex_to_pdf(tex_path: Path, output_pdf: Path | None = None) -> bool
 
     target_pdf = Path(output_pdf).resolve() if output_pdf else tex_file.with_suffix(".pdf")
     work_dir = tex_file.parent
+    engine_log: list[str] = []
+
+    def _finish(ok: bool) -> bool:
+        log_dir = work_dir / "logs"
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+            text = "\n".join(engine_log).strip()
+            if not text:
+                text = "PDF written.\n" if ok else "PDF compile failed and the engine produced no output.\n"
+            (log_dir / "tectonic.log").write_text(text + "\n", encoding="utf-8")
+        except OSError:
+            pass
+        return ok
+
+    def _run_engine(cmd: list[str], env: dict[str, str] | None, timeout: int) -> None:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(work_dir),
+            env=env,
+            check=False,
+            capture_output=True,
+            timeout=timeout,
+        )
+        engine_log.append(f"$ {' '.join(cmd)} -> exit {proc.returncode}")
+        output = (proc.stdout or b"").decode("utf-8", errors="replace")
+        errors = (proc.stderr or b"").decode("utf-8", errors="replace")
+        if output.strip():
+            engine_log.append(output.strip())
+        if errors.strip():
+            engine_log.append(errors.strip())
 
     # Ensure all referenced PDF/PNG figures exist and are genuine PDF/PNG (never corrupt text placeholders)
     for fig_dir in (work_dir / "figures", work_dir.parent / "figures", work_dir.parent / "results" / "figures"):
@@ -347,21 +378,14 @@ def compile_latex_to_pdf(tex_path: Path, output_pdf: Path | None = None) -> bool
         env["TECTONIC_CACHE_DIR"] = str(cache_dir.resolve())
         for args in (["-C", tex_file.name], [tex_file.name]):
             try:
-                subprocess.run(
-                    [str(tectonic_bin), *args],
-                    cwd=str(work_dir),
-                    env=env,
-                    check=False,
-                    capture_output=True,
-                    timeout=60,
-                )
+                _run_engine([str(tectonic_bin), *args], env, timeout=180)
                 generated_pdf = tex_file.with_suffix(".pdf")
                 if generated_pdf.exists() and generated_pdf.stat().st_size > 1000:
                     if generated_pdf.resolve() != target_pdf.resolve():
                         shutil.move(str(generated_pdf), str(target_pdf))
-                    return True
-            except (subprocess.SubprocessError, OSError):
-                pass
+                    return _finish(True)
+            except (subprocess.SubprocessError, OSError) as exc:
+                engine_log.append(f"tectonic invocation failed: {exc}")
 
         # Self-healing retry: inline the bibliography directly so malformed .bib or citation mismatches never block PDF output
         try:
@@ -369,21 +393,14 @@ def compile_latex_to_pdf(tex_path: Path, output_pdf: Path | None = None) -> bool
             healed_tex = _inline_safe_bibliography(current_tex, work_dir)
             if healed_tex != current_tex:
                 tex_file.write_text(healed_tex, encoding="utf-8")
-                subprocess.run(
-                    [str(tectonic_bin), "-C", tex_file.name],
-                    cwd=str(work_dir),
-                    env=env,
-                    check=False,
-                    capture_output=True,
-                    timeout=60,
-                )
+                _run_engine([str(tectonic_bin), "-C", tex_file.name], env, timeout=180)
                 generated_pdf = tex_file.with_suffix(".pdf")
                 if generated_pdf.exists() and generated_pdf.stat().st_size > 1000:
                     if generated_pdf.resolve() != target_pdf.resolve():
                         shutil.move(str(generated_pdf), str(target_pdf))
-                    return True
-        except (subprocess.SubprocessError, OSError):
-            pass
+                    return _finish(True)
+        except (subprocess.SubprocessError, OSError) as exc:
+            engine_log.append(f"tectonic bibliography retry failed: {exc}")
 
     # 2. Secondary fallback: xelatex / pdflatex
     for engine in ("xelatex", "pdflatex"):
@@ -391,22 +408,22 @@ def compile_latex_to_pdf(tex_path: Path, output_pdf: Path | None = None) -> bool
         if engine_bin:
             try:
                 for _ in range(2):
-                    subprocess.run(
+                    _run_engine(
                         [engine_bin, "-interaction=nonstopmode", "-output-directory", str(work_dir), tex_file.name],
-                        cwd=str(work_dir),
-                        check=False,
-                        capture_output=True,
-                        timeout=45,
+                        None,
+                        timeout=90,
                     )
                 generated_pdf = tex_file.with_suffix(".pdf")
                 if generated_pdf.exists() and generated_pdf.stat().st_size > 1000:
                     if generated_pdf.resolve() != target_pdf.resolve():
                         shutil.move(str(generated_pdf), str(target_pdf))
-                    return True
-            except (subprocess.SubprocessError, OSError):
-                pass
+                    return _finish(True)
+            except (subprocess.SubprocessError, OSError) as exc:
+                engine_log.append(f"{engine} invocation failed: {exc}")
 
-    return False
+    if not tectonic_bin.exists() and not any(shutil.which(engine) for engine in ("xelatex", "pdflatex")):
+        engine_log.append("No tectonic, xelatex, or pdflatex executable was found.")
+    return _finish(False)
 
 
 def build_latex_source(
@@ -713,27 +730,11 @@ def publish_workspace_thesis_bundle(
     # 1. Write standalone runner script run_experiment.py
     write_executable_runner_script(w_dir, spec)
 
-    # 2. Execute core.train_and_evaluate(results.csv) and plot_results.generate_plots() in subprocess
+    # 2. Execute core.train_and_evaluate so results.csv is whatever the function just wrote.
     exec_env = os.environ.copy()
     exec_env["PYTHONPATH"] = str(w_dir) + os.pathsep + str(w_dir / "code") + os.pathsep + exec_env.get("PYTHONPATH", "")
-    exec_res = subprocess.run(
-        [
-            sys.executable if "sys" in globals() else "python",
-            "-c",
-            (
-                "import core, plot_results; "
-                "core.train_and_evaluate('results.csv', seed=42); "
-                "plot_results.generate_plots('.')"
-            ),
-        ],
-        cwd=str(w_dir),
-        env=exec_env,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    if exec_res.returncode != 0:
+    experiment = execute_workspace_experiment(w_dir)
+    if not experiment.get("ok") or experiment.get("skipped"):
         if not is_live_provider and (not (w_dir / "results.csv").exists() or (w_dir / "results.csv").stat().st_size == 0):
             (w_dir / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
 
@@ -764,7 +765,7 @@ def publish_workspace_thesis_bundle(
                         mod_scope["generate_plots"](str(w_dir))
                     elif "main" in mod_scope and callable(mod_scope["main"]):
                         mod_scope["main"]()
-            if not _is_real_pdf(chart_pdf):
+            if not _is_real_pdf(chart_pdf) and not is_live_provider:
                 mod_scope = {"__name__": "__main__", "__file__": str(w_dir / "plot_results.py")}
                 exec(spec.plot_script, mod_scope)
                 if "generate_plots" in mod_scope and callable(mod_scope["generate_plots"]):
@@ -772,7 +773,7 @@ def publish_workspace_thesis_bundle(
         except Exception:
             pass
 
-    if not _is_real_pdf(chart_pdf):
+    if not _is_real_pdf(chart_pdf) and not is_live_provider:
         try:
             import matplotlib.pyplot as plt
             fig, ax = plt.subplots(figsize=(6, 3), dpi=150)
@@ -786,11 +787,13 @@ def publish_workspace_thesis_bundle(
         except Exception:
             pass
 
-    # Ensure CSV and figure mtimes are strictly newer than Python files for Layer 3 freshness check
-    now_ts = time.time() + 2.0
-    csv_file = w_dir / "results.csv"
-    if csv_file.exists():
-        os.utime(csv_file, (now_ts, now_ts))
+    # A live run keeps the CSV that train_and_evaluate just wrote. Touching mtime
+    # without a successful run made a hand-written table look fresh.
+    if experiment.get("ok") and not experiment.get("skipped"):
+        now_ts = time.time() + 2.0
+        csv_file = w_dir / "results.csv"
+        if csv_file.exists():
+            os.utime(csv_file, (now_ts, now_ts))
 
     # 3. Ensure all chapters exist in thesis.md, generate thesis.tex, and compile both symbolically
     tex_path = w_dir / "thesis.tex"

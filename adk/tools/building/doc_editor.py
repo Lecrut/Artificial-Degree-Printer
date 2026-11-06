@@ -12,6 +12,15 @@ def _strip_duplicate_leading_heading(content: str, section_title: str) -> str:
     tex_prefix = re.compile(rf"^\\(?:sub)*section\{{{re.escape(section_title)}\}}\s*\n+", re.IGNORECASE)
     cleaned = md_prefix.sub("", cleaned, count=1)
     cleaned = tex_prefix.sub("", cleaned, count=1)
+    chapter_num = _extract_canonical_chapter_num(section_title)
+    if chapter_num is not None:
+        cleaned = re.sub(
+            rf"^##+\s+(?:rozdzia[łl]|chapter)\s+{chapter_num}\b[^\n]*\n+",
+            "",
+            cleaned,
+            count=1,
+            flags=re.IGNORECASE,
+        )
     return cleaned.strip()
 
 
@@ -86,6 +95,11 @@ def _sort_markdown_chapters(text: str) -> str:
     return res
 
 
+def _demote_embedded_h2(body: str) -> str:
+    """A section body must not contain ## headings. Those become extra chapters on the next edit."""
+    return re.sub(r"^##(?=\s)", "###", body, flags=re.MULTILINE)
+
+
 def _merge_or_replace_chapter_body(existing_body: str, new_body: str) -> str:
     """If new_body is a single numbered subsection (e.g. ### 2.2) and existing_body has other subsections (e.g. ### 2.1), merge cleanly."""
     new_subs = list(re.finditer(r"^###\s+([^\n]+)", new_body.strip(), flags=re.MULTILINE))
@@ -105,6 +119,14 @@ def _merge_or_replace_chapter_body(existing_body: str, new_body: str) -> str:
     return new_body.strip()
 
 
+def _drop_dangling_refs(path: Path, suffix: str) -> None:
+    workspace = path.parent
+    if suffix == ".md" and ((workspace / "results.csv").exists() or (workspace / "config.py").exists()):
+        from adk.tools.verification.ref_compiler import strip_dangling_symbolic_tags
+
+        strip_dangling_symbolic_tags(path, workspace)
+
+
 def edit_document_section(
     file_path: str | Path,
     section_title: str,
@@ -121,6 +143,8 @@ def edit_document_section(
         }
 
     normalized_body = _strip_duplicate_leading_heading(new_content, section_title)
+    if suffix == ".md":
+        normalized_body = _demote_embedded_h2(normalized_body)
     sub_info = _extract_subsection_nums(section_title) if suffix == ".md" else None
 
     if not path.exists():
@@ -134,6 +158,7 @@ def edit_document_section(
         else:
             initial = f"## {section_title}\n{normalized_body}\n"
         path.write_text(initial, encoding="utf-8")
+        _drop_dangling_refs(path, suffix)
         return {
             "status": "ok",
             "file": str(path),
@@ -230,6 +255,7 @@ def edit_document_section(
             action = "appended"
 
     path.write_text(updated, encoding="utf-8")
+    _drop_dangling_refs(path, suffix)
     return {
         "status": "ok",
         "file": str(path),

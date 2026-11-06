@@ -36,7 +36,7 @@ from adk.tools.planning import (
     select_model_tier,
     synthesize_table_of_contents,
 )
-from adk.tools.verification import compile_symbolic_references, run_isolated_tests
+from adk.tools.verification import compile_symbolic_references, iter_workspace_python_files, run_isolated_tests
 
 
 def _merge_bibtex_entries(existing_bib: str, new_bib: str) -> str:
@@ -62,6 +62,15 @@ def _merge_bibtex_entries(existing_bib: str, new_bib: str) -> str:
             entries_by_key[raw_key] = source_text.strip()
 
     return "\n\n".join(entries_by_key[k] for k in ordered_keys) + "\n"
+
+
+def _issue_signature(report: dict[str, Any]) -> str:
+    """Stable identity of a verification failure. The same text twice means the repair did not move."""
+    issues = report.get("issues") or []
+    if not isinstance(issues, list):
+        issues = [issues]
+    lines = sorted(str(item).strip() for item in issues if str(item).strip())
+    return "\n".join(lines)
 
 
 
@@ -100,6 +109,7 @@ class NeuroSymbolicOrchestrator:
         self.evolution_history_path = self.state_dir / "evolution_history.json"
         self.hitl_flag_path = self.state_dir / "hitl_flag.json"
         self.blueprint_path = self.state_dir / "academic_blueprint.json"
+        self._last_experiment_error = ""
 
     def _record_evolution_event(self, event: dict[str, Any]) -> None:
         history = (
@@ -798,11 +808,7 @@ class NeuroSymbolicOrchestrator:
 
         # For data/experiment node v3 (edge E2), verify mtime freshness of CSV files against Python sources
         if is_data_scope and self.workspace_dir.exists():
-            py_files = [
-                p
-                for p in self.workspace_dir.rglob("*.py")
-                if "__pycache__" not in p.parts and "benchmarks" not in p.parts
-            ]
+            py_files = iter_workspace_python_files(self.workspace_dir)
             latest_py_mtime = max((p.stat().st_mtime for p in py_files), default=0.0)
             for csv_file in self.workspace_dir.glob("*.csv"):
                 if latest_py_mtime > 0 and csv_file.stat().st_mtime + 1e-6 < latest_py_mtime:
@@ -810,6 +816,13 @@ class NeuroSymbolicOrchestrator:
                     if stale_err not in test_res["errors"]:
                         test_res["errors"].append(stale_err)
                     test_res["status"] = "FAIL"
+
+        if self._last_experiment_error and not is_doc_scope:
+            experiment_err = self._last_experiment_error[:4000]
+            if experiment_err not in test_res["errors"]:
+                test_res["errors"].append(experiment_err)
+            test_res["status"] = "FAIL"
+            test_res["pytest_passed"] = False
 
         if is_doc_scope and not is_final_gate:
             code_audit = {
@@ -891,42 +904,7 @@ class NeuroSymbolicOrchestrator:
                                 missing_labels = [ch_names.get(i, f"Rozdział {i}") for i in missing_ch]
                                 missing_msg = f"Niekompletna praca dyplomowa: brakujące rozdziały w thesis.md: {missing_labels}. Wymagane jest pełne 6 rozdziałów."
                                 ref_errors.append(missing_msg)
-                if is_final_gate:
-                    # Końcowy Gate 3: Sprawdzenie poprawności i kompilacji pliku PDF (wynik końcowy pracy dyplomowej)
-                    pdf_target = self.workspace_dir / "thesis.pdf"
-                    if not pdf_target.exists() and (self.workspace_dir / "thesis" / "thesis.pdf").exists():
-                        pdf_target = self.workspace_dir / "thesis" / "thesis.pdf"
-
-                    def _is_valid_academic_pdf(p: Path) -> bool:
-                        return p.exists() and p.stat().st_size >= 1000 and p.read_bytes()[:5] == b"%PDF-"
-
-                    if not _is_valid_academic_pdf(pdf_target):
-                        from adk.tools.building.thesis_publisher import compile_latex_to_pdf
-                        tex_candidates = [
-                            self.workspace_dir / "thesis.compiled.tex",
-                            self.workspace_dir / "thesis" / "thesis.compiled.tex",
-                            self.workspace_dir / "thesis.tex",
-                            self.workspace_dir / "thesis" / "thesis.tex",
-                        ]
-                        compiled_ok = False
-                        for tc in tex_candidates:
-                            if tc.exists():
-                                target_out = self.workspace_dir / "thesis.pdf"
-                                if compile_latex_to_pdf(tc, target_out) and _is_valid_academic_pdf(target_out):
-                                    compiled_ok = True
-                                    pdf_target = target_out
-                                    break
-                        if not compiled_ok and self.provider == "mock" and not getattr(self, "strict_pdf_gate", False):
-                            target_out = self.workspace_dir / "thesis.pdf"
-                            target_out.write_bytes(b"%PDF-1.4 mock academic thesis deliverable\n" + (b"0" * 1500))
-                            compiled_ok = True
-                            pdf_target = target_out
-                        if not compiled_ok or not _is_valid_academic_pdf(pdf_target):
-                            ref_errors.append(
-                                "Brak skompilowanego pliku thesis.pdf lub błąd kompilacji LaTeX. "
-                                "Końcowy wynik zadania to poprawny plik PDF — wymagana naprawa składni LaTeX w pętli naprawczej."
-                            )
-                elif not is_final_gate:
+                if not is_final_gate:
                     pending_files = self._get_pending_future_files(current_task)
                     ref_errors = [
                         err for err in ref_errors
@@ -1753,6 +1731,278 @@ class NeuroSymbolicOrchestrator:
 
         return cleaned
 
+    def _audit_factual_state(self, report: dict[str, Any]) -> dict[str, Any]:
+        """Read the workspace as it is. The next queue is built from this, not from the abandoned plan."""
+        test_res = run_isolated_tests(
+            self.workspace_dir,
+            use_docker=False,
+            verification_dir=self.adk_root / "tools" / "verification",
+        )
+        files: list[str] = []
+        if self.workspace_dir.exists():
+            for path in sorted(self.workspace_dir.rglob("*")):
+                if path.is_file() and "__pycache__" not in path.parts and ".compiled." not in path.name:
+                    files.append(path.relative_to(self.workspace_dir).as_posix())
+
+        chapters_present: list[int] = []
+        thesis = self.workspace_dir / "thesis.md"
+        if thesis.exists():
+            for match in re.finditer(r"^##\s+.*?(\d+)", thesis.read_text(encoding="utf-8"), flags=re.MULTILINE):
+                number = int(match.group(1))
+                if 1 <= number <= 6 and number not in chapters_present:
+                    chapters_present.append(number)
+        chapters_missing = [n for n in range(1, 7) if n not in chapters_present] if self.include_docs else []
+
+        symbolic_errors: list[str] = []
+        if thesis.exists() and self.include_docs:
+            compiled = compile_symbolic_references(thesis, self.workspace_dir)
+            symbolic_errors = [str(err) for err in compiled.get("errors", [])][:12]
+
+        csv_columns: list[str] = []
+        csv_path = self.workspace_dir / "results.csv"
+        if csv_path.exists():
+            header = csv_path.read_text(encoding="utf-8", errors="replace").splitlines()
+            csv_columns = [part.strip() for part in header[0].split(",")] if header else []
+
+        trigger_issues = report.get("issues") or []
+        if not isinstance(trigger_issues, list):
+            trigger_issues = [trigger_issues]
+        audit = {
+            "files": files,
+            "pytest_status": test_res.get("status"),
+            "pytest_errors": [str(err) for err in test_res.get("errors", [])][:8],
+            "chapters_present": chapters_present,
+            "chapters_missing": chapters_missing,
+            "symbolic_errors": symbolic_errors,
+            "csv_columns": csv_columns,
+            "trigger_issues": [str(item) for item in trigger_issues],
+        }
+        write_json_state(self.state_dir / "factual_audit.json", audit)
+        return audit
+
+    def _refresh_experiment_after_code(self, node_id: str) -> None:
+        """After a code or test task, results.csv is whatever train_and_evaluate just wrote."""
+        if str(self.provider).strip().lower() == "mock" or node_id not in {"v2", "v3"}:
+            return
+        core = self.workspace_dir / "core.py"
+        if not core.exists():
+            core = self.workspace_dir / "code" / "core.py"
+        if not core.exists():
+            self._last_experiment_error = ""
+            return
+        from adk.tools.building.experiment_runner import execute_workspace_experiment
+
+        print("  [EKSPERYMENT] train_and_evaluate zapisuje results.csv", flush=True)
+        result = execute_workspace_experiment(self.workspace_dir)
+        if result.get("skipped") or result.get("ok"):
+            self._last_experiment_error = ""
+            return
+        self._last_experiment_error = str(result.get("error") or "train_and_evaluate nie zapisało results.csv")
+
+    def _pdf_failure_report(self) -> dict[str, Any] | None:
+        """Compile the thesis. A live failure comes back as a queue-rebuild reason. Mock stays out of this path."""
+        if str(self.provider).strip().lower() == "mock":
+            return None
+        thesis_md = self.workspace_dir / "thesis.md"
+        if not thesis_md.exists():
+            return {"status": "FAIL", "issues": ["Brak thesis.md, nie ma czego kompilować do PDF."]}
+        try:
+            from adk.benchmarks.tasks import BenchmarkTaskSpec
+            from adk.tools.building.thesis_publisher import build_latex_source, compile_latex_to_pdf
+
+            blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+            spec = BenchmarkTaskSpec(
+                task_id=str(blueprint.get("task_id") or "live"),
+                slug=str(blueprint.get("slug") or "live"),
+                title_pl=str(blueprint.get("title_pl") or blueprint.get("title") or "Praca dyplomowa"),
+                title_en=str(blueprint.get("title_en") or blueprint.get("title_pl") or "Thesis"),
+                domain=str(blueprint.get("domain") or "general"),
+                prompt=self.current_user_prompt,
+                thesis_type=str(getattr(self, "planned_thesis_type", None) or blueprint.get("thesis_type") or "inzynierska"),
+                template_name=blueprint.get("template_name"),
+            )
+            tex_path = build_latex_source(
+                spec,
+                self.workspace_dir,
+                template_name=spec.template_name,
+                thesis_type=spec.thesis_type,
+                provider=self.provider,
+            )
+            pdf_path = self.workspace_dir / "thesis.pdf"
+            compiled = compile_latex_to_pdf(tex_path, pdf_path)
+        except Exception as exc:
+            return {"status": "FAIL", "issues": [f"Kompilacja PDF nie powiodła się: {exc}"]}
+        if compiled and pdf_path.exists() and pdf_path.read_bytes()[:5] == b"%PDF-":
+            return None
+        log_path = self.workspace_dir / "logs" / "tectonic.log"
+        log_text = (
+            log_path.read_text(encoding="utf-8", errors="replace")[-4000:]
+            if log_path.exists()
+            else "brak logs/tectonic.log"
+        )
+        return {"status": "FAIL", "issues": [f"Kompilacja PDF nie powiodła się.\n{log_text}"]}
+
+    def _tasks_from_audit(self, audit: dict[str, Any], generation: int) -> list[dict[str, Any]]:
+        """Turn the factual audit into the only tasks still worth doing."""
+        prefix = f"Q{generation}"
+        tasks: list[dict[str, Any]] = []
+        if audit.get("pytest_status") != "PASS" or audit.get("pytest_errors"):
+            detail = "; ".join(audit.get("pytest_errors") or []) or "pytest nie przechodzi"
+            tasks.append(
+                {
+                    "task_id": f"{prefix}_CODE",
+                    "description": f"Napraw kod tak, żeby pytest przeszedł. Stan faktyczny: {detail}",
+                    "target_node": "v2",
+                    "assigned_agent": "seed_coder",
+                    "status": "TODO",
+                }
+            )
+            tasks.append(
+                {
+                    "task_id": f"{prefix}_TESTS",
+                    "description": "Uruchom train_and_evaluate i zapisz results.csv zgodny z tym, co funkcja zwraca. Testy mają wołać kod, a nie sprawdzać wklejone liczby.",
+                    "target_node": "v3",
+                    "assigned_agent": "seed_tester",
+                    "status": "TODO",
+                }
+            )
+        elif not audit.get("csv_columns"):
+            tasks.append(
+                {
+                    "task_id": f"{prefix}_CSV",
+                    "description": "Wygeneruj results.csv przez train_and_evaluate. Pliku wynikowego nie ma.",
+                    "target_node": "v3",
+                    "assigned_agent": "seed_tester",
+                    "status": "TODO",
+                }
+            )
+        for number in audit.get("chapters_missing") or []:
+            tasks.append(
+                {
+                    "task_id": f"{prefix}_CH{number}",
+                    "description": f"Napisz Rozdział {number} w thesis.md. Zastąp sekcję, nie doklejaj drugiej kopii.",
+                    "target_node": "v4",
+                    "assigned_agent": "seed_writer",
+                    "status": "TODO",
+                }
+            )
+        trigger_text = " ".join(str(item) for item in (audit.get("trigger_issues") or [])).lower()
+        if any(token in trigger_text for token in ("pdf", "tectonic", "latex")):
+            tasks.append(
+                {
+                    "task_id": f"{prefix}_PDF",
+                    "description": (
+                        "Kompilacja thesis.pdf nie przeszła. Popraw thesis.md i kod tak, "
+                        f"żeby LaTeX się zbudował. Log: {trigger_text[:1500]}"
+                    ),
+                    "target_node": "v4",
+                    "assigned_agent": "seed_writer",
+                    "status": "TODO",
+                }
+            )
+        if audit.get("symbolic_errors"):
+            detail = "; ".join(audit["symbolic_errors"])
+            tasks.append(
+                {
+                    "task_id": f"{prefix}_REFS",
+                    "description": f"Popraw thesis.md tak, aby zostały tylko wskaźniki istniejące w plikach. Błędy: {detail}",
+                    "target_node": "v4",
+                    "assigned_agent": "seed_writer",
+                    "status": "TODO",
+                }
+            )
+        if not tasks:
+            detail = "; ".join(audit.get("trigger_issues") or []) or "bramka końcowa nie przeszła"
+            tasks.append(
+                {
+                    "task_id": f"{prefix}_CLOSE",
+                    "description": f"Domykanie pracy na podstawie audytu. Do usunięcia: {detail}",
+                    "target_node": "v4",
+                    "assigned_agent": "seed_writer",
+                    "status": "TODO",
+                }
+            )
+        return tasks
+
+    def _shout_problem_stop(self, reason: str) -> None:
+        """Console and process log. A stop because of a problem must be impossible to miss."""
+        banner = "\n".join(
+            [
+                "",
+                "PPPP   RRRR   ZZZZZ  EEEEE  RRRR   Y   Y  W   W   AAA   M   M",
+                "P   P  R   R     Z   E      R   R   Y Y   W   W  A   A  MM MM",
+                "PPPP   RRRR     Z    EEEE   RRRR     Y    W W W  AAAAA  M M M",
+                "P      R  R    Z     E      R  R     Y    WW WW  A   A  M   M",
+                "P      R   R  ZZZZZ  EEEEE  R   R    Y    W   W  A   A  M   M",
+                "",
+                "BBBB    OOO        JJJ  EEEEE  SSSSS  TTTTT",
+                "B   B  O   O         J  E      S        T",
+                "BBBB   O   O         J  EEEE   SSSSS    T",
+                "B   B  O   O     J   J  E          S    T",
+                "BBBB    OOO       JJJ   EEEEE  SSSSS    T",
+                "",
+                "PPPP   RRRR    OOO   BBBBB  L      EEEEE  M   M",
+                "P   P  R   R  O   O  B   B  L      E      MM MM",
+                "PPPP   RRRR   O   O  BBBBB  L      EEEE   M M M",
+                "P      R  R   O   O  B   B  L      E      M   M",
+                "P      R   R   OOO   BBBBB  LLLLL  EEEEE  M   M",
+                "",
+                reason,
+                "",
+            ]
+        )
+        print(banner, flush=True)
+        self.logger.log_step("PRZERWANIE", banner, {"reason": reason})
+
+    def _rebuild_queue(self, report: dict[str, Any], generation: int, last_signature: str | None) -> dict[str, Any]:
+        """After 3 failed repairs, drop the old queue and return a new one, or a terminal payload."""
+        audit = self._audit_factual_state(report)
+        signature = _issue_signature(
+            {
+                "issues": audit.get("pytest_errors", [])
+                + [f"missing-chapter-{n}" for n in audit.get("chapters_missing", [])]
+                + audit.get("symbolic_errors", [])
+                + audit.get("trigger_issues", [])
+            }
+        )
+        print(
+            f"\n  [AUDYT STANU] pytest={audit.get('pytest_status')}, "
+            f"brak rozdziałów={audit.get('chapters_missing')}, "
+            f"błędy symboliczne={len(audit.get('symbolic_errors') or [])}",
+            flush=True,
+        )
+        if signature == last_signature or generation >= 3:
+            if signature == last_signature:
+                reason = "AUDYT PLIKOW SIE NIE ZMIENIL. KOLEJNA PRZEBUDOWA KOLEJKI NIC NIE DA."
+            else:
+                reason = "WYCZERPANO TRZY PRZEBUDOWY KOLEJKI. STAN PRACY NADAL JEST ZLY."
+            self._shout_problem_stop(reason)
+            self._update_hitl_gate(
+                gate_name="GATE_QUEUE_REBUILD_EXHAUSTED",
+                active=True,
+                question="Trzy przebudowy kolejki nie zmieniły stanu plików albo limit przebudów został wyczerpany.",
+                context={"audit": audit, "generation": generation},
+            )
+            return {
+                "stop": {
+                    "status": "HITL_PAUSED",
+                    "reason": "QUEUE_REBUILD_EXHAUSTED",
+                    "gate": "GATE_QUEUE_REBUILD_EXHAUSTED",
+                    "hitl": read_json_state(self.hitl_flag_path),
+                    "audit": audit,
+                }
+            }
+        tasks = self._tasks_from_audit(audit, generation + 1)
+        write_json_state(self.task_queue_path, tasks)
+        print(
+            f"  [NOWA KOLEJKA {generation + 1}/3] {len(tasks)} zadań z audytu, stara kolejka przerwana.",
+            flush=True,
+        )
+        self._record_evolution_event(
+            {"type": "QUEUE_REBUILT", "generation": generation + 1, "task_ids": [t["task_id"] for t in tasks]}
+        )
+        return {"tasks": tasks, "signature": signature}
+
     def run(
         self,
         user_prompt: str,
@@ -2124,450 +2374,325 @@ class NeuroSymbolicOrchestrator:
         else:
             wave_fail_indices = set()
 
-        for idx, task in enumerate(tasks):
-            task["status"] = "IN_PROGRESS"
-            write_json_state(self.task_queue_path, tasks)
-
-            node_id = str(task.get("target_node", "v1"))
-            node_file = matrix_nodes.get(node_id, {}).get("path", node_id)
-            tier = select_model_tier(node_id, self.matrix_path)
-            t_id = str(task.get("task_id", f"T{idx + 1}"))
-            t_desc = str(task.get("description", "Brak opisu"))
-            t_agent = str(task.get("assigned_agent", "seed_coder"))
-
-            print(
-                f"\n>>> [ZADANIE {t_id}] ({idx + 1}/{len(tasks)}): {t_desc}\n"
-                f"    Plik/Wezel: {node_file} ({node_id}) | Agent: {t_agent} | Model Tier: {tier}",
-                flush=True,
-            )
-
-            print(
-                f"  [WARSTWA 2: BUDOWANIE] Generowanie implementacji przez agenta '{t_agent}'...",
-                flush=True,
-            )
-
-            self._execute_builder_step(task, model_tier=tier)
-
-            should_fail = idx in wave_fail_indices
-            print(
-                f"  [WARSTWA 3: WERYFIKACJA] Audyt zadania {t_id} (pytest + ruff + kompilator symboliczny)...",
-                flush=True,
-            )
-            report = self._run_verification_step(
-                task,
-                include_docs=self.include_docs,
-                is_final_gate=False,
-                inject_failure=should_fail,
-            )
-
-            task_retries = 0
-            while report["status"] != "PASS" and task_retries < effective_max_retries:
-                task["status"] = "FAILED"
+        execution_generation = 0
+        last_audit_signature: str | None = None
+        while True:
+            exhausted_report: dict[str, Any] | None = None
+            for idx, task in enumerate(tasks):
+                task["status"] = "IN_PROGRESS"
                 write_json_state(self.task_queue_path, tasks)
-                task_retries += 1
-                replan_count += 1
 
-                # EvoRoute: dynamically escalate node difficulty weight w(v) on failure
-                esc_res = escalate_node_weight(node_id, delta=0.4, matrix_path=self.matrix_path)
-                self._record_evolution_event({"type": "WEIGHT_ESCALATED", "details": esc_res})
-
-                failed_agent = str(task.get("assigned_agent", "seed_coder"))
-                run_agent_failures[failed_agent] = run_agent_failures.get(failed_agent, 0) + 1
-
-                cycle_trace: dict[str, Any] = {
-                    "cycle_number": replan_count,
-                    "task_id": task.get("task_id"),
-                    "node_id": node_id,
-                    "failed_agent": failed_agent,
-                    "w3_initial_status": "FAIL",
-                    "w4_action": "NONE",
-                    "w1_remediation_task_id": f"{task.get('task_id', 'T1')}_FIX",
-                    "w3_post_remediation_status": "PENDING",
-                }
+                node_id = str(task.get("target_node", "v1"))
+                node_file = matrix_nodes.get(node_id, {}).get("path", node_id)
+                tier = select_model_tier(node_id, self.matrix_path)
+                t_id = str(task.get("task_id", f"T{idx + 1}"))
+                t_desc = str(task.get("description", "Brak opisu"))
+                t_agent = str(task.get("assigned_agent", "seed_coder"))
 
                 print(
-                    f"  [WARSTWA 3 -> BLAD] Wykryto usterke w zadaniu {t_id} na wezle {node_id} ({node_file})!\n"
-                    f"    Eskalacja wagi EvoRoute w({node_id}) -> {esc_res.get('new_weight')}",
+                    f"\n>>> [ZADANIE {t_id}] ({idx + 1}/{len(tasks)}): {t_desc}\n"
+                    f"    Plik/Wezel: {node_file} ({node_id}) | Agent: {t_agent} | Model Tier: {tier}",
                     flush=True,
                 )
 
-                issues_list = report.get("issues", [])
-                issues_summary = "; ".join(issues_list) if issues_list else "Usterka weryfikacji warstwy 3"
-                remediation_directive = (
-                    f"Poprzednio nie zadziałało: {issues_summary}. "
-                    f"Zrób to: w zadaniu {t_id} na węźle {node_id} ({node_file}) wyeliminuj ten błąd i wygeneruj w pełni poprawną zawartość."
-                )
-
-                if self.enable_layer4:
-                    print(
-                        f"  [WARSTWA 4: SAMOEWOLUCJA] Uruchomienie Architekta Ewolucji (cykl #{replan_count}, agent: {failed_agent})...",
-                        flush=True,
-                    )
-                    evo_res = self._run_evolution_step(
-                        {
-                            "validation_report": report,
-                            "failed_agent": failed_agent,
-                            "agent_failure_count": run_agent_failures[failed_agent],
-                            "cycle_index": replan_count,
-                            "task_id": task.get("task_id"),
-                            "target_node": node_id,
-                            "suggested_rule": remediation_directive,
-                        },
-                        tasks_in_memory=tasks,
-                    )
-                    cycle_trace["w4_action"] = str(evo_res.get("action") or evo_res.get("decision") or "MUTATE_AGENT")
-                    print(
-                        f"  [WARSTWA 4 -> DECYZJA] Wykonano akcje ewolucyjna: {cycle_trace['w4_action']}",
-                        flush=True,
-                    )
-                    if evo_res.get("action") == "HITL" or evo_res.get("decision") == "HITL":
-                        if not self.interactive_gates and self.gate_approval_callback is None:
-                            print(
-                                f"  [WARSTWA 4: AUTONOMICZNA KONTYNUACJA] Agent ewolucyjny zasugerował HITL dla {failed_agent}, "
-                                f"ale tryb jest nieinteraktywny (interactive_gates=False). Kontynuuję autonomiczne próby naprawy...",
-                                flush=True,
-                            )
-                            self._record_evolution_event(
-                                {
-                                    "type": "HITL_AUTO_BYPASS",
-                                    "failed_agent": failed_agent,
-                                    "task_id": task.get("task_id"),
-                                    "reason": "Non-interactive autonomous mode active",
-                                }
-                            )
-                        else:
-                            return {
-                                "status": "HITL_PAUSED",
-                                "layer4": evo_res,
-                                "tasks": tasks,
-                                "replan_count": replan_count,
-                                "architecture_cycles": architecture_cycles,
-                            }
-
-                remediation_agent = self.agents_dir / "planning" / "remediation_planner.md"
-
                 print(
-                    f"  [POWROT DO WARSTWY 1: REMEDIACJA] Planowanie chirurgicznej naprawy dla zadania {t_id}...",
+                    f"  [WARSTWA 2: BUDOWANIE] Generowanie implementacji przez agenta '{t_agent}'...",
                     flush=True,
                 )
 
-                failure_ledger = (
-                    read_json_state(self.failure_ledger_path)
-                    if self.failure_ledger_path.exists()
-                    else {"failures": []}
-                )
-                remediation_blast = calculate_blast_radius(node_id, self.matrix_path)
-                remediation_scoped_graph = get_scoped_hypergraph_context(
-                    self.matrix_path, blast_radius=remediation_blast
-                )
-                remediation_out = call_agent(
-                    remediation_agent,
-                    {
-                        "user_prompt": user_prompt,
-                        "error_report": report,
-                        "failed_task": task,
-                        "remediation_directive": remediation_directive,
-                        "failure_ledger": failure_ledger,
-                        "agent_registry": read_json_state(self.registry_path),
-                        "blast_radius": remediation_blast,
-                        "hypergraph": remediation_scoped_graph,
-                        "hypergraph_matrix": remediation_scoped_graph,
-                        "include_docs": self.include_docs,
-                    },
-                    model_tier="LRM",
-                    provider=self.provider,
-                )["output"]
+                self._execute_builder_step(task, model_tier=tier)
+                self._refresh_experiment_after_code(node_id)
 
-                # Update remaining TODO tasks (and append any newly spawned tasks) if remediation_planner emitted updated_pending_tasks
-                updated_pending = remediation_out.get("updated_pending_tasks")
-                if isinstance(updated_pending, list) and updated_pending:
-                    existing_ids = {str(t.get("task_id", "")) for t in tasks if isinstance(t, dict)}
-                    updates_by_id = {
-                        str(ut["task_id"]): ut
-                        for ut in updated_pending
-                        if isinstance(ut, dict) and ut.get("task_id")
-                    }
-                    for pending_t in tasks[idx + 1 :]:
-                        if pending_t.get("status") == "TODO":
-                            t_id = str(pending_t.get("task_id", ""))
-                            if t_id in updates_by_id:
-                                u_item = updates_by_id[t_id]
-                                if u_item.get("description"):
-                                    pending_t["description"] = str(u_item["description"])
-                                if u_item.get("assigned_agent"):
-                                    pending_t["assigned_agent"] = self._resolve_active_agent(
-                                        str(u_item["assigned_agent"]),
-                                        fallback=str(pending_t.get("assigned_agent", "seed_coder")),
-                                    )
-                                if u_item.get("target_node"):
-                                    pending_t["target_node"] = str(u_item["target_node"])
-                    for ut in updated_pending:
-                        if not isinstance(ut, dict):
-                            continue
-                        ut_id = str(ut.get("task_id") or f"T{len(tasks) + 1}_DYN")
-                        if ut_id not in existing_ids and ut.get("description"):
-                            ut_node = str(ut.get("target_node") or node_id)
-                            if ut_node not in ("v1", "v2", "v3", "v4", "v5"):
-                                ut_node = node_id
-                            ut_ag = self._resolve_active_agent(
-                                str(ut.get("assigned_agent") or "seed_coder"),
-                                fallback="seed_writer" if ut_node == "v4" else "seed_coder",
-                            )
-                            tasks.append(
-                                {
-                                    "task_id": ut_id,
-                                    "description": str(ut.get("description")),
-                                    "target_node": ut_node,
-                                    "assigned_agent": ut_ag,
-                                    "status": "TODO",
-                                }
-                            )
-                            existing_ids.add(ut_id)
-
-                    write_json_state(self.task_queue_path, tasks)
-                    todo_slice = [t for t in tasks[idx + 1 :] if t.get("status") == "TODO"]
-                    if todo_slice:
-                        guard_recheck = call_agent(
-                            self.agents_dir / "planning" / "task_critic_guard.md",
-                            {
-                                "tasks": todo_slice,
-                                "agent_registry": read_json_state(self.registry_path),
-                                "blast_radius": remediation_blast,
-                                "hypergraph": remediation_scoped_graph,
-                                "hypergraph_matrix": remediation_scoped_graph,
-                                "include_docs": self.include_docs,
-                            },
-                            model_tier="SML",
-                            provider=self.provider,
-                        )["output"]
-                        if guard_recheck.get("status") != "PASS":
-                            # Heal remaining TODO tasks instead of aborting mid-architecture
-                            for pt in todo_slice:
-                                pt["assigned_agent"] = self._resolve_active_agent(
-                                    str(pt.get("assigned_agent", "seed_coder"))
-                                )
-                            write_json_state(self.task_queue_path, tasks)
-
-                surgical_tasks = remediation_out.get("surgical_tasks") or remediation_out.get("tasks") or []
-                if not (isinstance(surgical_tasks, list) and surgical_tasks):
-                    surgical_tasks = [
-                        {
-                            "task_id": f"{task.get('task_id', 'T1')}_FIX",
-                            "target_node": node_id,
-                            "assigned_agent": failed_agent,
-                            "description": f"Poprzednio nie zadziałało: {issues_summary}. Zrób to: napraw węzeł {node_id} ({node_file}) i wyeliminuj błędy.",
-                            "status": "TODO",
-                        }
-                    ]
-
-                for stask in surgical_tasks:
-                    if not isinstance(stask, dict):
-                        continue
-                    stask.setdefault("target_node", node_id)
-                    stask["assigned_agent"] = self._resolve_active_agent(
-                        str(stask.get("assigned_agent") or failed_agent or task.get("assigned_agent", "seed_coder")),
-                        fallback=str(failed_agent or task.get("assigned_agent", "seed_coder")),
-                    )
-                    stask.setdefault("task_id", f"{task.get('task_id', 'T1')}_FIX")
-                    orig_desc = str(task.get("description", "")).strip()
-                    st_desc = str(stask.get("description", "")).strip()
-                    if stask.get("target_node") == "v4" and orig_desc and orig_desc[:30].lower() not in st_desc.lower():
-                        stask["description"] = f"[Kontekst sekcji: {orig_desc}] {st_desc}"
-                    cycle_trace["w1_remediation_task_id"] = str(stask["task_id"])
-                    st_node = str(stask.get("target_node", node_id))
-                    st_file = matrix_nodes.get(st_node, {}).get("path", st_node)
-                    st_tier = select_model_tier(st_node, self.matrix_path)
-                    print(
-                        f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE] Zadanie chirurgiczne {stask['task_id']} "
-                        f"[{st_file}] przez agenta '{stask['assigned_agent']}' (Tier: {st_tier})...",
-                        flush=True,
-                    )
-                    self._execute_builder_step(stask, model_tier=st_tier)
-
+                should_fail = execution_generation == 0 and idx in wave_fail_indices
                 print(
-                    f"  [WARSTWA 3: RE-WERYFIKACJA] Ponowny audyt zadania {t_id} po petli W4 -> W1 -> W2...",
+                    f"  [WARSTWA 3: WERYFIKACJA] Audyt zadania {t_id} (pytest + ruff + kompilator symboliczny)...",
                     flush=True,
                 )
                 report = self._run_verification_step(
                     task,
                     include_docs=self.include_docs,
                     is_final_gate=False,
-                    inject_failure=False,
-                )
-                cycle_trace["w3_post_remediation_status"] = report["status"]
-                architecture_cycles.append(cycle_trace)
-                print(
-                    f"  [CYKL #{replan_count} ZAKONCZONY] W2 -> W3(FAIL) -> W4({cycle_trace['w4_action']}) -> "
-                    f"W1({cycle_trace['w1_remediation_task_id']}) -> W2 -> W3({report['status']})",
-                    flush=True,
+                    inject_failure=should_fail,
                 )
 
-            if report["status"] == "PASS":
-                task["status"] = "DONE"
-                write_json_state(self.task_queue_path, tasks)
-                print(
-                    f"  [ZADANIE {t_id} ZATWIERDZONE] Status: DONE (Weryfikacja zakonczona sukcesem)",
-                    flush=True,
-                )
-            else:
-                if not self.interactive_gates:
-                    # Non-interactive mode (e.g. autonomous benchmark execution):
-                    # Do NOT abort the entire pipeline mid-flight! Mark the task done with remarks and proceed with the remaining tasks!
+                task_retries = 0
+                while report["status"] != "PASS" and task_retries < effective_max_retries:
+                    task["status"] = "FAILED"
+                    write_json_state(self.task_queue_path, tasks)
+                    task_retries += 1
+                    replan_count += 1
+
+                    # EvoRoute: dynamically escalate node difficulty weight w(v) on failure
+                    esc_res = escalate_node_weight(node_id, delta=0.4, matrix_path=self.matrix_path)
+                    self._record_evolution_event({"type": "WEIGHT_ESCALATED", "details": esc_res})
+
+                    failed_agent = str(task.get("assigned_agent", "seed_coder"))
+                    run_agent_failures[failed_agent] = run_agent_failures.get(failed_agent, 0) + 1
+
+                    cycle_trace: dict[str, Any] = {
+                        "cycle_number": replan_count,
+                        "task_id": task.get("task_id"),
+                        "node_id": node_id,
+                        "failed_agent": failed_agent,
+                        "w3_initial_status": "FAIL",
+                        "w4_action": "NONE",
+                        "w1_remediation_task_id": f"{task.get('task_id', 'T1')}_FIX",
+                        "w3_post_remediation_status": "PENDING",
+                    }
+
+                    print(
+                        f"  [WARSTWA 3 -> BLAD] Wykryto usterke w zadaniu {t_id} na wezle {node_id} ({node_file})!\n"
+                        f"    Eskalacja wagi EvoRoute w({node_id}) -> {esc_res.get('new_weight')}",
+                        flush=True,
+                    )
+
+                    issues_list = report.get("issues", [])
+                    issues_summary = "; ".join(issues_list) if issues_list else "Usterka weryfikacji warstwy 3"
+                    remediation_directive = (
+                        f"Poprzednio nie zadziałało: {issues_summary}. "
+                        f"Zrób to: w zadaniu {t_id} na węźle {node_id} ({node_file}) wyeliminuj ten błąd i wygeneruj w pełni poprawną zawartość."
+                    )
+
+                    if self.enable_layer4:
+                        print(
+                            f"  [WARSTWA 4: SAMOEWOLUCJA] Uruchomienie Architekta Ewolucji (cykl #{replan_count}, agent: {failed_agent})...",
+                            flush=True,
+                        )
+                        evo_res = self._run_evolution_step(
+                            {
+                                "validation_report": report,
+                                "failed_agent": failed_agent,
+                                "agent_failure_count": run_agent_failures[failed_agent],
+                                "cycle_index": replan_count,
+                                "task_id": task.get("task_id"),
+                                "target_node": node_id,
+                                "suggested_rule": remediation_directive,
+                            },
+                            tasks_in_memory=tasks,
+                        )
+                        cycle_trace["w4_action"] = str(evo_res.get("action") or evo_res.get("decision") or "MUTATE_AGENT")
+                        print(
+                            f"  [WARSTWA 4 -> DECYZJA] Wykonano akcje ewolucyjna: {cycle_trace['w4_action']}",
+                            flush=True,
+                        )
+                        if evo_res.get("action") == "HITL" or evo_res.get("decision") == "HITL":
+                            if not self.interactive_gates and self.gate_approval_callback is None:
+                                print(
+                                    f"  [WARSTWA 4: AUTONOMICZNA KONTYNUACJA] Agent ewolucyjny zasugerował HITL dla {failed_agent}, "
+                                    f"ale tryb jest nieinteraktywny (interactive_gates=False). Kontynuuję autonomiczne próby naprawy...",
+                                    flush=True,
+                                )
+                                self._record_evolution_event(
+                                    {
+                                        "type": "HITL_AUTO_BYPASS",
+                                        "failed_agent": failed_agent,
+                                        "task_id": task.get("task_id"),
+                                        "reason": "Non-interactive autonomous mode active",
+                                    }
+                                )
+                            else:
+                                return {
+                                    "status": "HITL_PAUSED",
+                                    "layer4": evo_res,
+                                    "tasks": tasks,
+                                    "replan_count": replan_count,
+                                    "architecture_cycles": architecture_cycles,
+                                }
+
+                    remediation_agent = self.agents_dir / "planning" / "remediation_planner.md"
+
+                    print(
+                        f"  [POWROT DO WARSTWY 1: REMEDIACJA] Planowanie chirurgicznej naprawy dla zadania {t_id}...",
+                        flush=True,
+                    )
+
+                    failure_ledger = (
+                        read_json_state(self.failure_ledger_path)
+                        if self.failure_ledger_path.exists()
+                        else {"failures": []}
+                    )
+                    remediation_blast = calculate_blast_radius(node_id, self.matrix_path)
+                    remediation_scoped_graph = get_scoped_hypergraph_context(
+                        self.matrix_path, blast_radius=remediation_blast
+                    )
+                    remediation_out = call_agent(
+                        remediation_agent,
+                        {
+                            "user_prompt": user_prompt,
+                            "error_report": report,
+                            "failed_task": task,
+                            "remediation_directive": remediation_directive,
+                            "failure_ledger": failure_ledger,
+                            "agent_registry": read_json_state(self.registry_path),
+                            "blast_radius": remediation_blast,
+                            "hypergraph": remediation_scoped_graph,
+                            "hypergraph_matrix": remediation_scoped_graph,
+                            "include_docs": self.include_docs,
+                        },
+                        model_tier="LRM",
+                        provider=self.provider,
+                    )["output"]
+
+                    # Update remaining TODO tasks (and append any newly spawned tasks) if remediation_planner emitted updated_pending_tasks
+                    updated_pending = remediation_out.get("updated_pending_tasks")
+                    if isinstance(updated_pending, list) and updated_pending:
+                        existing_ids = {str(t.get("task_id", "")) for t in tasks if isinstance(t, dict)}
+                        updates_by_id = {
+                            str(ut["task_id"]): ut
+                            for ut in updated_pending
+                            if isinstance(ut, dict) and ut.get("task_id")
+                        }
+                        for pending_t in tasks[idx + 1 :]:
+                            if pending_t.get("status") == "TODO":
+                                t_id = str(pending_t.get("task_id", ""))
+                                if t_id in updates_by_id:
+                                    u_item = updates_by_id[t_id]
+                                    if u_item.get("description"):
+                                        pending_t["description"] = str(u_item["description"])
+                                    if u_item.get("assigned_agent"):
+                                        pending_t["assigned_agent"] = self._resolve_active_agent(
+                                            str(u_item["assigned_agent"]),
+                                            fallback=str(pending_t.get("assigned_agent", "seed_coder")),
+                                        )
+                                    if u_item.get("target_node"):
+                                        pending_t["target_node"] = str(u_item["target_node"])
+                        for ut in updated_pending:
+                            if not isinstance(ut, dict):
+                                continue
+                            ut_id = str(ut.get("task_id") or f"T{len(tasks) + 1}_DYN")
+                            if ut_id not in existing_ids and ut.get("description"):
+                                ut_node = str(ut.get("target_node") or node_id)
+                                if ut_node not in ("v1", "v2", "v3", "v4", "v5"):
+                                    ut_node = node_id
+                                ut_ag = self._resolve_active_agent(
+                                    str(ut.get("assigned_agent") or "seed_coder"),
+                                    fallback="seed_writer" if ut_node == "v4" else "seed_coder",
+                                )
+                                tasks.append(
+                                    {
+                                        "task_id": ut_id,
+                                        "description": str(ut.get("description")),
+                                        "target_node": ut_node,
+                                        "assigned_agent": ut_ag,
+                                        "status": "TODO",
+                                    }
+                                )
+                                existing_ids.add(ut_id)
+
+                        write_json_state(self.task_queue_path, tasks)
+                        todo_slice = [t for t in tasks[idx + 1 :] if t.get("status") == "TODO"]
+                        if todo_slice:
+                            guard_recheck = call_agent(
+                                self.agents_dir / "planning" / "task_critic_guard.md",
+                                {
+                                    "tasks": todo_slice,
+                                    "agent_registry": read_json_state(self.registry_path),
+                                    "blast_radius": remediation_blast,
+                                    "hypergraph": remediation_scoped_graph,
+                                    "hypergraph_matrix": remediation_scoped_graph,
+                                    "include_docs": self.include_docs,
+                                },
+                                model_tier="SML",
+                                provider=self.provider,
+                            )["output"]
+                            if guard_recheck.get("status") != "PASS":
+                                # Heal remaining TODO tasks instead of aborting mid-architecture
+                                for pt in todo_slice:
+                                    pt["assigned_agent"] = self._resolve_active_agent(
+                                        str(pt.get("assigned_agent", "seed_coder"))
+                                    )
+                                write_json_state(self.task_queue_path, tasks)
+
+                    surgical_tasks = remediation_out.get("surgical_tasks") or remediation_out.get("tasks") or []
+                    if not (isinstance(surgical_tasks, list) and surgical_tasks):
+                        surgical_tasks = [
+                            {
+                                "task_id": f"{task.get('task_id', 'T1')}_FIX",
+                                "target_node": node_id,
+                                "assigned_agent": failed_agent,
+                                "description": f"Poprzednio nie zadziałało: {issues_summary}. Zrób to: napraw węzeł {node_id} ({node_file}) i wyeliminuj błędy.",
+                                "status": "TODO",
+                            }
+                        ]
+
+                    for stask in surgical_tasks:
+                        if not isinstance(stask, dict):
+                            continue
+                        stask.setdefault("target_node", node_id)
+                        stask["assigned_agent"] = self._resolve_active_agent(
+                            str(stask.get("assigned_agent") or failed_agent or task.get("assigned_agent", "seed_coder")),
+                            fallback=str(failed_agent or task.get("assigned_agent", "seed_coder")),
+                        )
+                        stask.setdefault("task_id", f"{task.get('task_id', 'T1')}_FIX")
+                        orig_desc = str(task.get("description", "")).strip()
+                        st_desc = str(stask.get("description", "")).strip()
+                        if stask.get("target_node") == "v4" and orig_desc and orig_desc[:30].lower() not in st_desc.lower():
+                            stask["description"] = f"[Kontekst sekcji: {orig_desc}] {st_desc}"
+                        cycle_trace["w1_remediation_task_id"] = str(stask["task_id"])
+                        st_node = str(stask.get("target_node", node_id))
+                        st_file = matrix_nodes.get(st_node, {}).get("path", st_node)
+                        st_tier = select_model_tier(st_node, self.matrix_path)
+                        print(
+                            f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE] Zadanie chirurgiczne {stask['task_id']} "
+                            f"[{st_file}] przez agenta '{stask['assigned_agent']}' (Tier: {st_tier})...",
+                            flush=True,
+                        )
+                        self._execute_builder_step(stask, model_tier=st_tier)
+
+                    print(
+                        f"  [WARSTWA 3: RE-WERYFIKACJA] Ponowny audyt zadania {t_id} po petli W4 -> W1 -> W2...",
+                        flush=True,
+                    )
+                    report = self._run_verification_step(
+                        task,
+                        include_docs=self.include_docs,
+                        is_final_gate=False,
+                        inject_failure=False,
+                    )
+                    cycle_trace["w3_post_remediation_status"] = report["status"]
+                    architecture_cycles.append(cycle_trace)
+                    print(
+                        f"  [CYKL #{replan_count} ZAKONCZONY] W2 -> W3(FAIL) -> W4({cycle_trace['w4_action']}) -> "
+                        f"W1({cycle_trace['w1_remediation_task_id']}) -> W2 -> W3({report['status']})",
+                        flush=True,
+                    )
+
+                if report["status"] == "PASS":
                     task["status"] = "DONE"
                     write_json_state(self.task_queue_path, tasks)
                     print(
-                        f"  [WARSTWA 3: AUTONOMICZNA KONTYNUACJA] Zadanie {t_id} wyczerpało {effective_max_retries} prób naprawy, "
-                        f"ale tryb jest nieinteraktywny (interactive_gates=False). Kontynuuję realizację pozostałych zadań potoku ({idx + 1}/{len(tasks)})...",
+                        f"  [ZADANIE {t_id} ZATWIERDZONE] Status: DONE (Weryfikacja zakonczona sukcesem)",
                         flush=True,
                     )
-                    continue
-
-                self._update_hitl_gate(
-                    gate_name="GATE_REMEDIATION_EXHAUSTED",
-                    active=True,
-                    question=f"Przekroczono limit prób naprawy ({effective_max_retries}) dla zadania {task.get('task_id')}.",
-                    context={"validation_report": report, "replan_count": replan_count},
-                )
-                self._record_evolution_event(
-                    {
-                        "type": "HITL_TRIGGERED",
-                        "gate": "GATE_REMEDIATION_EXHAUSTED",
-                        "question": f"Wyczerpano {effective_max_retries} prób naprawy zadania {task.get('task_id')}.",
-                    }
-                )
-                return {
-                    "status": "HITL_PAUSED",
-                    "reason": "MAX_REPLAN_RETRIES_EXCEEDED",
-                    "tasks": tasks,
-                    "replan_count": replan_count,
-                    "architecture_cycles": architecture_cycles,
-                    "validation_report": report,
-                }
-
-        # 4. Final Defense Verification & Gate 3 Promotor Checkpoint (W3 -> W1 -> W2 -> W3 Remediation Loop)
-        defense_target_task = tasks[-1] if tasks else {"target_node": "v4", "task_id": "FINAL_DEFENSE"}
-        print(
-            "\n  [WARSTWA 3: BRAMKA KONCOWA OBRONY PRACY (GATE_3_DEFENSE_APPROVAL)] Pelna walidacja kodu, CSV i 6 rozdzialow pracy...",
-            flush=True,
-        )
-        final_report = self._run_verification_step(
-            defense_target_task,
-            include_docs=self.include_docs,
-            is_final_gate=True,
-            inject_failure=False,
-        )
-
-        defense_retries = 0
-        while final_report.get("status") != "PASS" and defense_retries < effective_max_retries:
-            defense_retries += 1
-            replan_count += 1
-            defense_issues = "; ".join(final_report.get("issues", [])) or "Usterka obrony pracy (Gate 3)"
-            print(
-                f"\n  [WARSTWA 3 -> ODRZUCENIE OBRONY GATE 3] Proba naprawy #{defense_retries}: {defense_issues}\n"
-                f"  [POWROT DO WARSTWY 1: REMEDIACJA OBRONY] Synteza zadan naprawczych dla Gate 3...",
-                flush=True,
-            )
-            def_node = str(final_report.get("failed_file") or "v4")
-            if not def_node.startswith("v"):
-                def_node = next(
-                    (nid for nid, nmeta in matrix_nodes.items() if nmeta.get("path") == def_node),
-                    "v4",
-                )
-            remediation_agent = self.agents_dir / "planning" / "remediation_planner.md"
-            def_remed_out = call_agent(
-                remediation_agent,
-                {
-                    "user_prompt": user_prompt,
-                    "error_report": final_report,
-                    "failed_task": {
-                        "task_id": f"GATE_3_FIX_{defense_retries}",
-                        "target_node": def_node,
-                        "assigned_agent": "seed_writer" if def_node == "v4" else "seed_coder",
-                    },
-                    "remediation_directive": f"Poprzednio nie zadziałało podczas obrony Gate 3: {defense_issues}. Zrób to: usun usterki i doprowadz prace do pelnej zgodnosci.",
-                    "failure_ledger": read_json_state(self.failure_ledger_path) if self.failure_ledger_path.exists() else {"failures": []},
-                    "agent_registry": read_json_state(self.registry_path),
-                    "blast_radius": calculate_blast_radius(def_node, self.matrix_path),
-                    "hypergraph": get_scoped_hypergraph_context(self.matrix_path, blast_radius=calculate_blast_radius(def_node, self.matrix_path)),
-                    "hypergraph_matrix": get_scoped_hypergraph_context(self.matrix_path, blast_radius=calculate_blast_radius(def_node, self.matrix_path)),
-                    "include_docs": self.include_docs,
-                },
-                model_tier="LRM",
-                provider=self.provider,
-            )["output"]
-
-            def_tasks = def_remed_out.get("surgical_tasks") or def_remed_out.get("tasks") or []
-            if not isinstance(def_tasks, list):
-                def_tasks = []
-
-            # If missing chapters were reported, ensure surgical tasks cover each missing chapter explicitly
-            missing_ch_match = re.search(r"brakujące rozdziały.*?\[(.*?)\]", defense_issues)
-            if missing_ch_match:
-                raw_missing = missing_ch_match.group(1).lower()
-                for ch_i in range(1, 7):
-                    if f"rozdział {ch_i}" in raw_missing or f"rozdzia\u0142 {ch_i}" in raw_missing:
-                        ch_desc_map = {
-                            1: "Zredaguj Rozdział 1: Wstęp, cel pracy i sformalizowaną tezę inżynierską w thesis.md",
-                            2: "Zredaguj Rozdział 2: Stan wiedzy, lejek literatury teoretycznej i analizę SOTA w references.bib i thesis.md",
-                            3: "Zredaguj Rozdział 3: Architektura systemu, schemat TikZ i formalizm matematyczny w thesis.md",
-                            4: "Zredaguj Rozdział 4: Implementacja algorytmiczna i struktury AST w thesis.md",
-                            5: "Zredaguj Rozdział 5: Badania eksperymentalne, protokół pomiarowy i dyskusja wyników z results.csv w thesis.md",
-                            6: "Zredaguj Rozdział 6: Podsumowanie, formalna weryfikacja tezy i wnioski końcowe w thesis.md",
-                        }
-                        if not any(f"rozdział {ch_i}" in str(t.get("description", "")).lower() for t in def_tasks if isinstance(t, dict)):
-                            def_tasks.append({
-                                "task_id": f"GATE_3_CH{ch_i}_FIX",
-                                "target_node": "v4",
-                                "assigned_agent": "seed_writer",
-                                "description": ch_desc_map.get(ch_i, f"Zredaguj Rozdział {ch_i} w thesis.md"),
-                                "status": "TODO",
-                            })
-
-            # If PDF compilation failure was reported, ensure a surgical remediation task fixes thesis.md / thesis.tex
-            if "thesis.pdf" in defense_issues.lower() or "kompilacj" in defense_issues.lower():
-                if not any("thesis.pdf" in str(t.get("description", "")).lower() or "kompilacj" in str(t.get("description", "")).lower() for t in def_tasks if isinstance(t, dict)):
-                    def_tasks.append({
-                        "task_id": f"GATE_3_PDF_FIX_{defense_retries}",
-                        "target_node": "v4",
-                        "assigned_agent": "seed_writer",
-                        "description": "Napraw błędy składni LaTeX w thesis.md i thesis.tex, aby umożliwić bezbłędną kompilację pliku thesis.pdf.",
-                        "status": "TODO",
-                    })
-
-            if not def_tasks:
-                def_tasks = [
-                    {
-                        "task_id": f"GATE_3_FIX_{defense_retries}",
-                        "target_node": def_node,
-                        "assigned_agent": "seed_writer" if def_node == "v4" else "seed_coder",
-                        "description": f"Poprzednio nie zadziałało: {defense_issues}. Zrób to: usun bledy obrony pracy.",
-                        "status": "TODO",
-                    }
-                ]
-
-            for dtask in def_tasks:
-                if not isinstance(dtask, dict):
-                    continue
-                dt_node = str(dtask.get("target_node") or def_node)
-                dtask["target_node"] = dt_node
-                dtask["assigned_agent"] = self._resolve_active_agent(
-                    str(dtask.get("assigned_agent") or "seed_writer"),
-                    fallback="seed_writer",
-                )
-                dt_tier = select_model_tier(dt_node, self.matrix_path)
-                print(
-                    f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE DLA GATE 3] Zadanie {dtask.get('task_id')} "
-                    f"na wezle {dt_node} przez agenta '{dtask['assigned_agent']}'...",
-                    flush=True,
-                )
-                self._execute_builder_step(dtask, model_tier=dt_tier)
-                dtask["status"] = "DONE"
-                if multi_cycle_waves:
-                    tasks.append(dtask)
+                else:
+                    task["status"] = "FAILED"
                     write_json_state(self.task_queue_path, tasks)
+                    print(
+                        f"  [KOLEJKA PRZERWANA] Zadanie {t_id} nie zostało naprawione w {task_retries} próbach. "
+                        "Reszta tej kolejki nie rusza. Audyt stanu i nowa kolejka.",
+                        flush=True,
+                    )
+                    exhausted_report = report
+                    break
 
+            if exhausted_report is not None:
+                rebuilt = self._rebuild_queue(exhausted_report, execution_generation, last_audit_signature)
+                if 'stop' in rebuilt:
+                    stop = rebuilt['stop']
+                    stop['tasks'] = tasks
+                    stop['replan_count'] = replan_count
+                    stop['architecture_cycles'] = architecture_cycles
+                    stop['validation_report'] = exhausted_report
+                    return stop
+                tasks = rebuilt['tasks']
+                last_audit_signature = rebuilt['signature']
+                execution_generation += 1
+                continue
+
+            # 4. Final Defense Verification & Gate 3 Promotor Checkpoint (W3 -> W1 -> W2 -> W3 Remediation Loop)
+            defense_target_task = tasks[-1] if tasks else {"target_node": "v4", "task_id": "FINAL_DEFENSE"}
             print(
-                f"  [WARSTWA 3: RE-AUDYT GATE 3] Ponowna weryfikacja obrony po naprawie #{defense_retries}...",
+                "\n  [WARSTWA 3: BRAMKA KONCOWA OBRONY PRACY (GATE_3_DEFENSE_APPROVAL)] Pelna walidacja kodu, CSV i 6 rozdzialow pracy...",
                 flush=True,
             )
             final_report = self._run_verification_step(
@@ -2577,58 +2702,190 @@ class NeuroSymbolicOrchestrator:
                 inject_failure=False,
             )
 
-        defense_ok = final_report.get("status") == "PASS"
-        if not defense_ok:
-            self._update_hitl_gate(
-                gate_name="GATE_DEFENSE_FAILED",
-                active=True,
-                question=f"Obrona końcowa Gate 3 zakończona niepowodzeniem po {defense_retries} próbach naprawy: {final_report.get('issues', [])}",
-                context={"validation_report": final_report, "replan_count": replan_count},
+            defense_retries = 0
+            while final_report.get("status") != "PASS" and defense_retries < effective_max_retries:
+                defense_retries += 1
+                replan_count += 1
+                defense_issues = "; ".join(final_report.get("issues", [])) or "Usterka obrony pracy (Gate 3)"
+                print(
+                    f"\n  [WARSTWA 3 -> ODRZUCENIE OBRONY GATE 3] Proba naprawy #{defense_retries}: {defense_issues}\n"
+                    f"  [POWROT DO WARSTWY 1: REMEDIACJA OBRONY] Synteza zadan naprawczych dla Gate 3...",
+                    flush=True,
+                )
+                def_node = str(final_report.get("failed_file") or "v4")
+                if not def_node.startswith("v"):
+                    def_node = next(
+                        (nid for nid, nmeta in matrix_nodes.items() if nmeta.get("path") == def_node),
+                        "v4",
+                    )
+                remediation_agent = self.agents_dir / "planning" / "remediation_planner.md"
+                def_remed_out = call_agent(
+                    remediation_agent,
+                    {
+                        "user_prompt": user_prompt,
+                        "error_report": final_report,
+                        "failed_task": {
+                            "task_id": f"GATE_3_FIX_{defense_retries}",
+                            "target_node": def_node,
+                            "assigned_agent": "seed_writer" if def_node == "v4" else "seed_coder",
+                        },
+                        "remediation_directive": f"Poprzednio nie zadziałało podczas obrony Gate 3: {defense_issues}. Zrób to: usun usterki i doprowadz prace do pelnej zgodnosci.",
+                        "failure_ledger": read_json_state(self.failure_ledger_path) if self.failure_ledger_path.exists() else {"failures": []},
+                        "agent_registry": read_json_state(self.registry_path),
+                        "blast_radius": calculate_blast_radius(def_node, self.matrix_path),
+                        "hypergraph": get_scoped_hypergraph_context(self.matrix_path, blast_radius=calculate_blast_radius(def_node, self.matrix_path)),
+                        "hypergraph_matrix": get_scoped_hypergraph_context(self.matrix_path, blast_radius=calculate_blast_radius(def_node, self.matrix_path)),
+                        "include_docs": self.include_docs,
+                    },
+                    model_tier="LRM",
+                    provider=self.provider,
+                )["output"]
+
+                def_tasks = def_remed_out.get("surgical_tasks") or def_remed_out.get("tasks") or []
+                if not isinstance(def_tasks, list):
+                    def_tasks = []
+
+                # If missing chapters were reported, ensure surgical tasks cover each missing chapter explicitly
+                missing_ch_match = re.search(r"brakujące rozdziały.*?\[(.*?)\]", defense_issues)
+                if missing_ch_match:
+                    raw_missing = missing_ch_match.group(1).lower()
+                    for ch_i in range(1, 7):
+                        if f"rozdział {ch_i}" in raw_missing or f"rozdzia\u0142 {ch_i}" in raw_missing:
+                            ch_desc_map = {
+                                1: "Zredaguj Rozdział 1: Wstęp, cel pracy i sformalizowaną tezę inżynierską w thesis.md",
+                                2: "Zredaguj Rozdział 2: Stan wiedzy, lejek literatury teoretycznej i analizę SOTA w references.bib i thesis.md",
+                                3: "Zredaguj Rozdział 3: Architektura systemu, schemat TikZ i formalizm matematyczny w thesis.md",
+                                4: "Zredaguj Rozdział 4: Implementacja algorytmiczna i struktury AST w thesis.md",
+                                5: "Zredaguj Rozdział 5: Badania eksperymentalne, protokół pomiarowy i dyskusja wyników z results.csv w thesis.md",
+                                6: "Zredaguj Rozdział 6: Podsumowanie, formalna weryfikacja tezy i wnioski końcowe w thesis.md",
+                            }
+                            if not any(f"rozdział {ch_i}" in str(t.get("description", "")).lower() for t in def_tasks if isinstance(t, dict)):
+                                def_tasks.append({
+                                    "task_id": f"GATE_3_CH{ch_i}_FIX",
+                                    "target_node": "v4",
+                                    "assigned_agent": "seed_writer",
+                                    "description": ch_desc_map.get(ch_i, f"Zredaguj Rozdział {ch_i} w thesis.md"),
+                                    "status": "TODO",
+                                })
+
+                if not def_tasks:
+                    def_tasks = [
+                        {
+                            "task_id": f"GATE_3_FIX_{defense_retries}",
+                            "target_node": def_node,
+                            "assigned_agent": "seed_writer" if def_node == "v4" else "seed_coder",
+                            "description": f"Poprzednio nie zadziałało: {defense_issues}. Zrób to: usun bledy obrony pracy.",
+                            "status": "TODO",
+                        }
+                    ]
+
+                for dtask in def_tasks:
+                    if not isinstance(dtask, dict):
+                        continue
+                    dt_node = str(dtask.get("target_node") or def_node)
+                    dtask["target_node"] = dt_node
+                    dtask["assigned_agent"] = self._resolve_active_agent(
+                        str(dtask.get("assigned_agent") or "seed_writer"),
+                        fallback="seed_writer",
+                    )
+                    dt_tier = select_model_tier(dt_node, self.matrix_path)
+                    print(
+                        f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE DLA GATE 3] Zadanie {dtask.get('task_id')} "
+                        f"na wezle {dt_node} przez agenta '{dtask['assigned_agent']}'...",
+                        flush=True,
+                    )
+                    self._execute_builder_step(dtask, model_tier=dt_tier)
+                    self._refresh_experiment_after_code(dt_node)
+                    dtask["status"] = "DONE"
+                    if multi_cycle_waves:
+                        tasks.append(dtask)
+                        write_json_state(self.task_queue_path, tasks)
+
+                print(
+                    f"  [WARSTWA 3: RE-AUDYT GATE 3] Ponowna weryfikacja obrony po naprawie #{defense_retries}...",
+                    flush=True,
+                )
+                final_report = self._run_verification_step(
+                    defense_target_task,
+                    include_docs=self.include_docs,
+                    is_final_gate=True,
+                    inject_failure=False,
+                )
+
+            defense_ok = final_report.get("status") == "PASS"
+            if defense_ok:
+                pdf_report = self._pdf_failure_report()
+                if pdf_report is not None:
+                    print(
+                        "  [PDF] Kompilacja nie przeszła. Audyt stanu i nowa kolejka.",
+                        flush=True,
+                    )
+                    rebuilt = self._rebuild_queue(pdf_report, execution_generation, last_audit_signature)
+                    if "stop" in rebuilt:
+                        stop = rebuilt["stop"]
+                        stop["tasks"] = tasks
+                        stop["replan_count"] = replan_count
+                        stop["architecture_cycles"] = architecture_cycles
+                        stop["validation_report"] = pdf_report
+                        return stop
+                    tasks = rebuilt["tasks"]
+                    last_audit_signature = rebuilt["signature"]
+                    execution_generation += 1
+                    continue
+            if not defense_ok:
+                print(
+                    f"  [KOLEJKA PRZERWANA] Obrona Gate 3 nie przeszła po {defense_retries} próbach. "
+                    "Audyt stanu i nowa kolejka.",
+                    flush=True,
+                )
+                exhausted_report = final_report
+                rebuilt = self._rebuild_queue(exhausted_report, execution_generation, last_audit_signature)
+                if "stop" in rebuilt:
+                    stop = rebuilt["stop"]
+                    stop["tasks"] = tasks
+                    stop["replan_count"] = replan_count
+                    stop["architecture_cycles"] = architecture_cycles
+                    stop["validation_report"] = final_report
+                    return stop
+                tasks = rebuilt["tasks"]
+                last_audit_signature = rebuilt["signature"]
+                execution_generation += 1
+                continue
+
+            if not self._check_hitl_gate(
+                gate_name="GATE_3_DEFENSE_APPROVAL",
+                context_payload={"validation_status": "PASS", "replan_count": replan_count},
+                interactive_gates=interactive_gates,
+                gate_approval_callback=gate_approval_callback,
+            ):
+                return {
+                    "status": "HITL_PAUSED",
+                    "gate": "GATE_3_DEFENSE_APPROVAL",
+                    "hitl": read_json_state(self.hitl_flag_path),
+                    "tasks": tasks,
+                    "replan_count": replan_count,
+                    "architecture_cycles": architecture_cycles,
+                    "validation_report": final_report,
+                }
+
+            status_label = "COMPLETED"
+            self.logger.log_step(
+                "ORCHESTRATOR_DONE",
+                f"Zakończono scenariusz ze statusem {status_label} (replan_count={replan_count}, cycles={len(architecture_cycles)}).",
             )
             return {
-                "status": "HITL_PAUSED",
-                "gate": "GATE_DEFENSE_FAILED",
-                "hitl": read_json_state(self.hitl_flag_path),
+                "status": status_label,
+                "mode": {
+                    "enable_layer4": self.enable_layer4,
+                    "include_docs": self.include_docs,
+                    "multi_cycle_waves": multi_cycle_waves,
+                },
                 "tasks": tasks,
                 "replan_count": replan_count,
                 "architecture_cycles": architecture_cycles,
                 "validation_report": final_report,
+                "log_files": {
+                    "process_log": str(self.logger.text_log_path),
+                    "agent_trace_jsonl": str(self.logger.trace_jsonl_path),
+                },
             }
-
-        if not self._check_hitl_gate(
-            gate_name="GATE_3_DEFENSE_APPROVAL",
-            context_payload={"validation_status": "PASS", "replan_count": replan_count},
-            interactive_gates=interactive_gates,
-            gate_approval_callback=gate_approval_callback,
-        ):
-            return {
-                "status": "HITL_PAUSED",
-                "gate": "GATE_3_DEFENSE_APPROVAL",
-                "hitl": read_json_state(self.hitl_flag_path),
-                "tasks": tasks,
-                "replan_count": replan_count,
-                "architecture_cycles": architecture_cycles,
-                "validation_report": final_report,
-            }
-
-        status_label = "COMPLETED"
-        self.logger.log_step(
-            "ORCHESTRATOR_DONE",
-            f"Zakończono scenariusz ze statusem {status_label} (replan_count={replan_count}, cycles={len(architecture_cycles)}).",
-        )
-        return {
-            "status": status_label,
-            "mode": {
-                "enable_layer4": self.enable_layer4,
-                "include_docs": self.include_docs,
-                "multi_cycle_waves": multi_cycle_waves,
-            },
-            "tasks": tasks,
-            "replan_count": replan_count,
-            "architecture_cycles": architecture_cycles,
-            "validation_report": final_report,
-            "log_files": {
-                "process_log": str(self.logger.text_log_path),
-                "agent_trace_jsonl": str(self.logger.trace_jsonl_path),
-            },
-        }

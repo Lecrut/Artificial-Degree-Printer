@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from adk.core.models import resolve_adk_path
+from adk.tools.verification.test_runner import iter_workspace_python_files
 
 
 def _lookup_ast_value(py_file: Path, symbol_name: str) -> tuple[bool, Any]:
@@ -93,6 +94,58 @@ def _lookup_csv_value(csv_file: Path, column_spec: str) -> tuple[bool, Any]:
         return True, last_row[column_spec]
 
 
+def _csv_path(workspace: Path, rel_file: str) -> Path:
+    direct = workspace / rel_file
+    if direct.exists():
+        return direct
+    nested = workspace / "results" / Path(rel_file).name
+    return nested if nested.exists() else direct
+
+
+def _py_path(workspace: Path, rel_file: str) -> Path:
+    direct = workspace / rel_file
+    if direct.exists():
+        return direct
+    nested = workspace / "code" / Path(rel_file).name
+    return nested if nested.exists() else direct
+
+
+def strip_dangling_symbolic_tags(doc_path: str | Path, workspace_dir: str | Path) -> int:
+    """Remove \\ref_ast / \\ref_csv tags that do not resolve against the current files."""
+    doc = Path(doc_path)
+    workspace = Path(workspace_dir)
+    if not doc.exists():
+        return 0
+    text = doc.read_text(encoding="utf-8")
+    removed = 0
+
+    def drop_csv(match: re.Match[str]) -> str:
+        nonlocal removed
+        ok, _val = _lookup_csv_value(_csv_path(workspace, match.group(1).strip()), match.group(2).strip())
+        if ok:
+            return match.group(0)
+        removed += 1
+        return ""
+
+    def drop_ast(match: re.Match[str]) -> str:
+        nonlocal removed
+        ok, _val = _lookup_ast_value(_py_path(workspace, match.group(1).strip()), match.group(2).strip())
+        if ok:
+            return match.group(0)
+        removed += 1
+        return ""
+
+    updated = re.sub(r"\\ref_csv\{([^:}]+):([^}]+)\}", drop_csv, text)
+    updated = re.sub(r"\\ref_ast\{([^:}]+):([^}]+)\}", drop_ast, updated)
+    malformed = list(re.finditer(r"\\ref_(?:ast|csv)\{[^:}]+\}", updated))
+    if malformed:
+        removed += len(malformed)
+        updated = re.sub(r"\\ref_(?:ast|csv)\{[^:}]+\}", "", updated)
+    if updated != text:
+        doc.write_text(updated, encoding="utf-8")
+    return removed
+
+
 FIGURE_EXTENSIONS: tuple[str, ...] = (".pdf", ".png", ".svg", ".tex", ".eps", ".jpg", ".jpeg", ".py")
 
 
@@ -165,11 +218,7 @@ def compile_symbolic_references(
     resolved: dict[str, Any] = {}
     stale_csv_files: list[str] = []
 
-    py_files = [
-        p
-        for p in w_dir.rglob("*.py")
-        if "__pycache__" not in p.parts and "benchmarks" not in p.parts
-    ]
+    py_files = iter_workspace_python_files(w_dir)
     latest_py_mtime = max((p.stat().st_mtime for p in py_files), default=0.0)
 
     def _replace_ast(match: re.Match[str]) -> str:

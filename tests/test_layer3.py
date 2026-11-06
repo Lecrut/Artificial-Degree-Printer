@@ -8,6 +8,17 @@ from adk.core.llm import call_agent
 from adk.tools.verification import compile_symbolic_references, run_isolated_tests
 
 
+def test_runner_sees_sources_when_workspace_lives_under_benchmarks(tmp_path: Path):
+    ws = tmp_path / "adk" / "workspace" / "benchmarks" / "_evolved_adk_state" / "workspace"
+    ws.mkdir(parents=True)
+    (ws / "core.py").write_text("def value() -> int:\n    return 1\n", encoding="utf-8")
+    (ws / "test_core.py").write_text("from core import value\ndef test_value():\n    assert value() == 1\n", encoding="utf-8")
+
+    res = run_isolated_tests(ws, use_docker=False)
+    assert res["pytest_passed"] is True
+    assert "No Python files" not in res["stdout"]
+
+
 def test_isolated_test_runner_pass_and_fail(tmp_path: Path):
     ws = tmp_path / "workspace"
     ws.mkdir()
@@ -98,8 +109,8 @@ def test_ref_compiler_resolves_ref_fig_tags(tmp_path: Path):
     assert any("nonexistent_chart.png" in err for err in comp_missing["errors"])
 
 
-def test_gate_3_requires_valid_compiled_pdf_and_triggers_remediation(tmp_path: Path):
-    """Verify that Gate 3 final verification fails if thesis.pdf is missing or invalid, requiring PDF remediation."""
+def test_gate_3_does_not_send_a_missing_pdf_back_to_the_writer(tmp_path: Path):
+    """A missing thesis.pdf is the publisher's job. Gate 3 must not fail the thesis over it."""
     import shutil
     from adk.orchestrator import NeuroSymbolicOrchestrator
 
@@ -128,20 +139,36 @@ def test_gate_3_requires_valid_compiled_pdf_and_triggers_remediation(tmp_path: P
     )
 
     orch = NeuroSymbolicOrchestrator(adk_root=dst_adk, enable_layer4=False, include_docs=True, provider="mock")
-    orch.strict_pdf_gate = True
     defense_task = {"task_id": "GATE_3_DEFENSE", "target_node": "v4", "assigned_agent": "seed_writer"}
 
-    # Case 1: No thesis.pdf exists and compilation fails -> MUST FAIL
-    rep_fail = orch._run_verification_step(defense_task, include_docs=True, is_final_gate=True)
-    assert rep_fail["status"] == "FAIL"
-    all_issues = " ".join(rep_fail.get("issues", [])) + " " + str(rep_fail.get("supervisors", {}))
-    assert "thesis.pdf" in all_issues.lower() or "kompilacj" in all_issues.lower()
+    report = orch._run_verification_step(defense_task, include_docs=True, is_final_gate=True)
+    assert report["status"] == "PASS"
+    all_issues = " ".join(report.get("issues", []))
+    assert "thesis.pdf" not in all_issues.lower()
 
-    # Case 2: Valid thesis.pdf provided (>1000 bytes starting with %PDF-) -> MUST PASS
-    valid_pdf_bytes = b"%PDF-1.4 mock academic degree thesis content " + (b"0" * 2000)
-    (ws / "thesis.pdf").write_bytes(valid_pdf_bytes)
 
-    rep_pass = orch._run_verification_step(defense_task, include_docs=True, is_final_gate=True)
-    assert rep_pass["status"] == "PASS"
+def test_experiment_overwrites_pasted_results_csv(tmp_path: Path):
+    from adk.tools.building.experiment_runner import execute_workspace_experiment
+
+    (tmp_path / "core.py").write_text(
+        "def train_and_evaluate(csv_out_path='results.csv'):\n"
+        "    from pathlib import Path\n"
+        "    Path(csv_out_path).write_text('method,win_rate\\nproposed,0.5\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "results.csv").write_text("method,win_rate\nbaseline,0.1\n", encoding="utf-8")
+
+    result = execute_workspace_experiment(tmp_path)
+    written = (tmp_path / "results.csv").read_text(encoding="utf-8")
+    assert result["ok"] is True
+    assert "proposed,0.5" in written
+    assert "baseline,0.1" not in written
+
+
+def test_mock_queue_does_not_compile_pdf(tmp_path: Path):
+    from adk.orchestrator import NeuroSymbolicOrchestrator
+
+    orch = NeuroSymbolicOrchestrator(adk_root=tmp_path, enable_layer4=False, provider="mock")
+    assert orch._pdf_failure_report() is None
 
 
