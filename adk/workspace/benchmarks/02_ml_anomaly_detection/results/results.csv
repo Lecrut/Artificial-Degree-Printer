@@ -1,3 +1,0 @@
-method,precision,recall,f1_score,false_alarm_rate
-baseline,0.6543,0.7210,0.6860,0.1250
-proposed,0.9120,0.8950,0.9034,0.0210

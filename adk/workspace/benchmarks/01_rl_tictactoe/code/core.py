@@ -1,255 +1,187 @@
 """
-core.py - Core logic for Tic-Tac-Toe Q-Learning implementation.
+Core module for Tic-Tac-Toe Q-Learning simulation.
 
-This module provides:
-1. Board state representation and validation.
-2. `check_winner(board)`: Evaluates the terminal state of a game.
-3. `train_and_evaluate(csv_out_path)`: Trains a tabular Q-Learning agent
-   using hyperparameters from `config.py` and saves metrics to CSV.
-4. Unit tests via pytest if executed directly or imported appropriately.
-
-Author: Seed Coder (Layer 2 Agent)
+Provides board evaluation logic and the main training/evaluation loop
+using tabular Q-Learning with epsilon-greedy policy.
 """
-
+from __future__ import annotations
 import random
 import csv
-import sys
-from typing import List, Tuple, Optional, Dict
-
-# Import hyperparameters from config.py to ensure strict symbol consistency
-try:
+from typing import TYPE_CHECKING, Callable, Dict, List, Tuple
+if TYPE_CHECKING:
     from config import ALPHA, GAMMA, EPSILON, EPISODES
-except ImportError:
-    # Fallback defaults for standalone execution if config.py is not in path
-    ALPHA: float = 0.2
-    GAMMA: float = 0.95
-    EPSILON: float = 0.1
-    EPISODES: int = 500
+from config import ALPHA, GAMMA, EPSILON, EPISODES
 
-# Constants for board representation
-EMPTY_CELL: int = 0
-PLAYER_X: int = 1
-PLAYER_O: int = -1
-VALID_MOVES_RANGE: range = range(9)
+def check_winner(board: list[int]) -> str:
+    """Evaluate the Tic-Tac-Toe board state.
 
-def check_winner(board: List[int]) -> int:
-    """
-    Evaluate the terminal state of the Tic-Tac-Toe board.
-
-    Analyzes all possible winning combinations (rows, columns, diagonals).
-    If no winner is found and there are empty cells, it returns 0.
-    If the board is full with no winner, it is a draw (also returns 0,
-    distinguished by checking `get_available_moves` later or explicit 
-    logic in training loop). However, for standard RL terminal signal:
-        1 : Player X wins
-       -1 : Player O wins
-        0 : Draw or Game Not Over (depending on context, usually 0 is draw)
-    *Note*: For this implementation, we return 0 for both 'Not Over' and 'Draw'.
-    The training loop must distinguish 'Not Over' via `get_available_moves`.
+    Determines if there is a winner ('X' for player 1, 'O' for player -1) or if it's a draw/ongoing ('DRAW').
 
     Args:
-        board: A list of 9 integers representing the grid state.
-               Values: EMPTY_CELL (0), PLAYER_X (1), PLAYER_O (-1).
+        board: A flat list of 9 integers representing the board state.
+               1 indicates player X, -1 indicates player O, and 0 indicates an empty cell.
 
     Returns:
-        int: 1 if X wins, -1 if O wins, 0 otherwise (draw or ongoing).
+        'X' if Player X wins, 'O' if Player O wins, 'DRAW' otherwise (draw or ongoing).
 
-    Time Complexity: O(1) - Constant number of checks (8 total combinations).
-    Space Complexity: O(1) - No additional data structures.
+    Raises:
+        ValueError: If the board length is not exactly 9.
+
+    Complexity:
+        Time: O(1) as it checks a fixed number of winning lines (8 total).
+        Space: O(1)
     """
-    # Winning indices: rows, cols, diags
-    lines = [
-        [0, 1, 2], [3, 4, 5], [6, 7, 8],  # Rows
-        [0, 3, 6], [1, 4, 7], [2, 5, 8],  # Cols
-        [0, 4, 8], [2, 4, 6]              # Diagonals
-    ]
-
+    if len(board) != 9:
+        raise ValueError('Board must have exactly 9 cells.')
+    lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]]
     for line in lines:
-        a, b, c = line
-        val_a, val_b, val_c = board[a], board[b], board[c]
-        
-        if val_a != EMPTY_CELL and val_a == val_b == val_c:
-            return val_a  # Returns PLAYER_X (1) or PLAYER_O (-1)
+        s = board[line[0]] + board[line[1]] + board[line[2]]
+        if s == 3:
+            return 'X'
+        if s == -3:
+            return 'O'
+    if all((cell != 0 for cell in board)):
+        return 'DRAW'
+    return 'DRAW'
 
-    return EMPTY_CELL  # No winner yet or Draw
+def train_and_evaluate(csv_out_path: str) -> dict[str, float]:
+    """Train a Q-Learning agent on Tic-Tac-Toe and evaluate performance.
 
-def get_available_moves(board: List[int]) -> List[int]:
-    """
-    Return list of indices for empty cells.
-
-    Args:
-        board: Current board state.
-
-    Returns:
-        List[int]: Indices of available moves.
-    """
-    return [i for i, cell in enumerate(board) if cell == EMPTY_CELL]
-
-def create_empty_board() -> List[int]:
-    """
-    Create a new empty Tic-Tac-Toe board.
-
-    Returns:
-        List[int]: A list of 9 zeros.
-    """
-    return [EMPTY_CELL] * 9
-
-def train_and_evaluate(csv_out_path: str = "results.csv") -> Dict[str, float]:
-    """
-    Train a tabular Q-Learning agent against itself for Tic-Tac-Toe.
-
-    The agent plays episodes against an identical copy of itself. 
-    Rewards:
-        +1: Win
-        0:  Draw or Intermediate step
-       -1: Loss
-
-    Metrics saved to CSV:
-        win_rate, draw_rate, loss_rate
+    Simulates EPISODES episodes of self-play. The agent uses an epsilon-greedy policy
+    for action selection. After training, it evaluates the agent against a random opponent
+    to calculate win and draw rates.
 
     Args:
-        csv_out_path: Path to save the results CSV.
+        csv_out_path: Path to save the results CSV file.
 
     Returns:
-        Dict[str, float]: Dictionary containing final win/draw/loss rates.
+        A dictionary containing 'win_rate' and 'draw_rate' as floats.
     """
-    # Initialize Q-table as a dictionary {state_tuple: [Q_X, Q_O]} or separate dicts.
-    # Using defaultdict for convenience, but explicit dict is safer for serialization. 
-    # To ensure deterministic behavior across runs without complex seeding of hash(), 
-    # we rely on the agent's policy determinism where possible and fixed random seed.
-    q_table_x: Dict[Tuple[int], List[float]] = {}
-    q_table_o: Dict[Tuple[int], List[float]] = {}
-
-    def get_q_value(q_table: Dict, state: Tuple[int], action: int) -> float:
-        if state not in q_table:
-            # Initialize Q-values for unseen states to 0.0
-            # Create list of size 9 (max possible actions in empty board, sparse usage)
-            # Actually, we only need entries for available moves.
-            # Standard tabular RL: Key=State, Value=Vector of all actions.
-            q_table[state] = [0.0 for _ in range(9)] 
-        return q_table[state][action]
-
-    def update_q_value(q_table: Dict, state: Tuple[int], action: int, reward: float, next_state: Tuple[int], done: bool) -> None:
-        if state not in q_table:
-            q_table[state] = [0.0 for _ in range(9)]
-        
-        current_q = get_q_value(q_table, state, action)
-        
-        # If terminal state, future value is 0
-        if done:
-            max_future_q = 0.0
-        else:
-            next_state_tuple = tuple(next_state)
-            # Greedy choice for next step to update Q(s,a)
-            # Note: In strict Q-learning, we take max_a Q(s', a)
-            available_moves = get_available_moves(next_state)
-            if not available_moves:
-                max_future_q = 0.0
-            else:
-                max_future_q = max(get_q_value(q_table, next_state_tuple, a) for a in available_moves)
-        
-        # Bellman Equation: Q(s,a) <- Q(s,a) + alpha * (reward + gamma * max(Q(s',a')) - Q(s,a))
-        new_q = current_q + ALPHA * (reward + GAMMA * max_future_q - current_q)
-        q_table[state][action] = new_q
-
-    # Tracking metrics
-    wins_x: int = 0
-    draws: int = 0
-    wins_o: int = 0
-
-    # Deterministic seed for reproducibility of the training process
+    from config import ALPHA, GAMMA, EPSILON, EPISODES
     random.seed(42)
 
-    print(f"Starting Q-Learning Training for {EPISODES} episodes...")
-    
-    for episode in range(EPISODES):
-        board = create_empty_board()
-        current_player: int = PLAYER_X  # X always goes first in standard TTT
-        done: bool = False
-        
-        while not done:
-            state_tuple = tuple(board)
-            available_moves = get_available_moves(board)
-            
-            if not available_moves:
-                # Should theoretically be caught by check_winner returning 0 and full board
-                done = True
+    def get_state_key(board: list[int]) -> tuple[int, ...]:
+        return tuple(board)
+    q_table: dict[tuple[int, ...], list[float]] = {}
+
+    def get_q_values(state: tuple[int, ...]) -> list[float]:
+        if state not in q_table:
+            q_table[state] = [0.0] * 9
+        return q_table[state]
+
+    def choose_action(board: list[int], is_training: bool=True) -> int:
+        """Choose a move using epsilon-greedy policy.
+
+        Args:
+            board: Current board state.
+            is_training: If True, applies epsilon exploration. Else, greedy exploitation.
+
+        Returns:
+            Index of the chosen legal move. -1 if no moves are left (should not happen in valid game flow).
+        """
+        legal_moves = [i for i, cell in enumerate(board) if cell == 0]
+        if not legal_moves:
+            return -1
+        if is_training and random.random() < EPSILON:
+            return random.choice(legal_moves)
+        state = get_state_key(board)
+        q_vals = get_q_values(state)
+        max_q = -float('inf')
+        for i in legal_moves:
+            if q_vals[i] > max_q:
+                max_q = q_vals[i]
+        best_moves = [i for i in legal_moves if q_vals[i] == max_q]
+        return random.choice(best_moves)
+
+    def make_move(board: list[int], player: int, move_idx: int) -> list[int]:
+        """Apply a move to the board and return new state.
+
+        Args:
+            board: Current board state.
+            player: Player ID (1 or -1).
+            move_idx: Index on the board to place the move.
+
+        Returns:
+            New board state with the move applied.
+        """
+        new_board = board.copy()
+        new_board[move_idx] = player
+        return new_board
+    for _ in range(EPISODES):
+        board: list[int] = [0] * 9
+        turn: int = 1
+        while True:
+            state = get_state_key(board)
+            action = choose_action(board, is_training=True)
+            if action == -1:
                 break
-
-            # Epsilon-Greedy Action Selection
-            if random.random() < EPSILON:
-                action = random.choice(available_moves)
+            next_board = make_move(board, turn, action)
+            winner_str = check_winner(next_board)
+            winner_num: int = 0
+            if winner_str == 'X':
+                winner_num = 1
+            elif winner_str == 'O':
+                winner_num = -1
+            current_q_vals = get_q_values(state)
+            current_q = current_q_vals[action]
+            if winner_num != 0:
+                reward: float = 1.0 if winner_num == turn else -1.0
+                new_q = current_q + ALPHA * (reward - current_q)
+                q_table[state][action] = new_q
+                break
             else:
-                # Choose best action from current Q-table for current player
-                q_values = []
-                for a in available_moves:
-                    val = get_q_value(q_table_x, state_tuple, a) if current_player == PLAYER_X 
-                             else get_q_value(q_table_o, state_tuple, a)
-                    q_values.append(val)
-                
-                max_q = max(q_values)
-                # Handle ties by random choice among best actions to break determinism in policy
-                best_actions = [a for a, q in zip(available_moves, q_values) if q == max_q]
-                action = random.choice(best_actions)
-
-            # Execute action
-            board[action] = current_player
-            winner: int = check_winner(board)
-            
-            next_state_tuple = tuple(board)
-            next_available_moves = get_available_moves(board)
-
-            if winner != EMPTY_CELL:
-                # Terminal State Reached
-                done = True
-                if winner == PLAYER_X:
-                    reward_current = 1.0
-                    wins_x += 1
-                else:
-                    reward_current = -1.0
-                    wins_o += 1
-            elif not next_available_moves:
-                # Draw (Board Full)
-                done = True
+                next_state = get_state_key(next_board)
+                next_q_vals = get_q_values(next_state)
+                max_next_q = max(next_q_vals)
+                reward = 0.0
+                new_q = current_q + ALPHA * (reward + GAMMA * max_next_q - current_q)
+                q_table[state][action] = new_q
+            board = next_board
+            turn = -turn
+    num_eval_games: int = 1000
+    wins: int = 0
+    draws: int = 0
+    losses: int = 0
+    for _ in range(num_eval_games):
+        eval_board: list[int] = [0] * 9
+        eval_turn: int = 1
+        while True:
+            agent_move = choose_action(eval_board, is_training=False)
+            if agent_move == -1:
                 draws += 1
-                reward_current = 0.0
+                break
+            eval_board = make_move(eval_board, eval_turn, agent_move)
+            winner_str = check_winner(eval_board)
+            if winner_str != 'DRAW':
+                if winner_str == 'X':
+                    wins += 1
+                else:
+                    losses += 1
+                break
+            eval_turn = -eval_turn
+            if eval_turn == -1:
+                legal_moves = [i for i, cell in enumerate(eval_board) if cell == 0]
+                if not legal_moves:
+                    draws += 1
+                    break
+                opp_move = random.choice(legal_moves)
+                eval_board = make_move(eval_board, -1, opp_move)
+                winner_str = check_winner(eval_board)
+                if winner_str != 'DRAW':
+                    if winner_str == 'X':
+                        wins += 1
+                    else:
+                        losses += 1
+                    break
+                eval_turn = 1
             else:
-                # Game Continues: Reward is 0 for intermediate steps in this simple formulation
-                reward_current = 0.0
-
-            # Back up Q-values for current player
-            if current_player == PLAYER_X:
-                update_q_value(q_table_x, state_tuple, action, reward_current, board, done)
-            else:
-                update_q_value(q_table_o, state_tuple, action, reward_current, board, done)
-
-            # Switch turns
-            current_player = -current_player
-
-        if episode % 100 == 0:
-            print(f"Episode {episode}: WinRate={wins_x/episode:.2f}, DrawRate={draws/episode:.2f}")
-
-    final_win_rate: float = wins_x / EPISODES
-    final_draw_rate: float = draws / EPISODES
-    final_loss_rate: float = wins_o / EPISODES
-
-    # Save results to CSV
-    with open(csv_out_path, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["metric", "value"])
-        writer.writerow(["win_rate", final_win_rate])
-        writer.writerow(["draw_rate", final_draw_rate])
-        writer.writerow(["loss_rate", final_loss_rate])
-    
-    print(f"Training complete. Results saved to {csv_out_path}")
-    
-    return {
-        "win_rate": final_win_rate,
-        "draw_rate": final_draw_rate,
-        "loss_rate": final_loss_rate
-    }
-
-if __name__ == "__main__":
-    # Execute training if run directly
-    metrics = train_and_evaluate("results.csv")
-    print(f"Final Metrics: {metrics}")
+                draws += 1
+                break
+    win_rate: float = wins / num_eval_games
+    draw_rate: float = draws / num_eval_games
+    loss_rate: float = losses / num_eval_games
+    with open(csv_out_path, mode='w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['method', 'rounds', 'win_rate', 'draw_rate', 'loss_rate'])
+        writer.writerow(['proposed_qlearn', EPISODES, win_rate, draw_rate, loss_rate])
+    return {'win_rate': float(win_rate), 'draw_rate': float(draw_rate)}

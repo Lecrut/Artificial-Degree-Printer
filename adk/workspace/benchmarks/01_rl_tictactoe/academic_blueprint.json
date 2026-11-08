@@ -1,37 +1,37 @@
 {
-  "thesis_title": "Implementacja czysto Pythonowej modułu Tic-Tac-Toe z agenty Q-Learning dla analizy Markowskiego Decyzji Procesu",
-  "thesis_statement": "Zaprojektowanie i wdrożenie efektywnego algorytmu uczącego się na podstawie nagród (Q-Learning) do gry w kółko i krzyżyk, demonstrujący konwergencję do optymalnej polityki przy użyciu czystego Pythona bez zależności zewnętrznych.",
+  "thesis_title": "Implementacja czysto Pythonowej Modułu Gry Kółko i Krzyżyk z Agentem Uczenia Się Q-Learning",
+  "thesis_statement": "Prezentacja i weryfikacja efektywności czysto Pythonowej implementacji algorytmu Q-Learning w prostym środowisku gry o pełnej informacjii (Tic-Tac-Toe) oraz analiza zależności między hiperparametrami a szybkością zbieżności strategii optymalnej.",
   "baseline_comparison": "Uniformly Random Legal Move Policy (Baseline Monte Carlo)",
   "planned_chapters": [
     {
       "index": 1,
       "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-      "focus": "Formalna definicja problemu w kontekście RL, cel inżynierski (czysty Python), teza pracy i zakres badawczy"
+      "focus": "Formalna definicja problemu uczenia się przez wzmacnianie w grach, cel inżynierski implementacji oraz postawiona teza dotycząca zbieżności Q-Learning w pełnej informacji."
     },
     {
       "index": 2,
       "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-      "focus": "Analiza SOTA dla Tic-Tac-Toe, systematyka rozwiązań (Minimax vs RL) i specyfikacja metody odniesienia (baseline)"
+      "focus": "Analiza teorii MDP (Markov Decision Processes), algorytmu Q-Learning oraz porównanie z metodami bazowymi (Minimax, Random) w kontekście Tic-Tac-Toe."
     },
     {
       "index": 3,
       "title": "Rozdział 3: Architektura Systemu",
-      "focus": "Projekt modułowy w czystym Pythonie, definicja stanu Markowa i przestrzeni akcji dla Tic-Tac-Toe"
+      "focus": "Projekt modułowy aplikacji: definicja stanu gry, interfejs agenta oraz architektura pętli treningowej zdefiniowana w config.py i strukturach danych."
     },
     {
       "index": 4,
-      "title": "Rozdział 4: Implementacja Algorytmu Q-Learning",
-      "focus": "Szczegółowy opis implementacji funkcji aktualizacji Q-Table, eksploracji (epsilon-greedy) i ewaluacji w core.py"
+      "title": "Rozdział 4: Implementacja Algorytmu",
+      "focus": "Szczegółowy opis implementacji core.py, algorytmu aktualizacji Q-Table oraz mechanizmu Epsilon-Greedy."
     },
     {
       "index": 5,
-      "title": "Rozdział 5: Wyniki Eksperymentów",
-      "focus": "Prezentacja metryk konwergencji (win_rate, draw_rate) z results.csv oraz analiza wpływu hyperparametrów (ALPHA, GAMMA)"
+      "title": "Rozdział 5: Analiza Wyników Eksperymentów",
+      "focus": "Prezentacja wyników z results.csv (win_rate, draw_rate), analiza wpływu hiperparametrów (ALPHA, GAMMA) na stabilność nauki."
     },
     {
       "index": 6,
-      "title": "Rozdział 6: Wnioski",
-      "focus": "Podsumowanie badań, ocena skuteczności algorytmu w porównaniu do baseline oraz perspektywy rozwoju"
+      "title": "Rozdział 6: Wnioski i Perspektywy",
+      "focus": "Werdykt pracy, zweryfikowanie tezy inżynierskiej oraz sugestie rozwoju w kierunku gier o niepełnej informacji."
     }
   ],
   "literature_recon": {
@@ -121,32 +121,32 @@
       {
         "index": 1,
         "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-        "focus": "Formalna definicja problemu w kontekście RL, cel inżynierski (czysty Python), teza pracy i zakres badawczy"
+        "focus": "Formalna definicja problemu uczenia się przez wzmacnianie w grach, cel inżynierski implementacji oraz postawiona teza dotycząca zbieżności Q-Learning w pełnej informacji."
       },
       {
         "index": 2,
         "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-        "focus": "Analiza SOTA dla Tic-Tac-Toe, systematyka rozwiązań (Minimax vs RL) i specyfikacja metody odniesienia (baseline)"
+        "focus": "Analiza teorii MDP (Markov Decision Processes), algorytmu Q-Learning oraz porównanie z metodami bazowymi (Minimax, Random) w kontekście Tic-Tac-Toe."
       },
       {
         "index": 3,
         "title": "Rozdział 3: Architektura Systemu",
-        "focus": "Projekt modułowy w czystym Pythonie, definicja stanu Markowa i przestrzeni akcji dla Tic-Tac-Toe"
+        "focus": "Projekt modułowy aplikacji: definicja stanu gry, interfejs agenta oraz architektura pętli treningowej zdefiniowana w config.py i strukturach danych."
       },
       {
         "index": 4,
-        "title": "Rozdział 4: Implementacja Algorytmu Q-Learning",
-        "focus": "Szczegółowy opis implementacji funkcji aktualizacji Q-Table, eksploracji (epsilon-greedy) i ewaluacji w core.py"
+        "title": "Rozdział 4: Implementacja Algorytmu",
+        "focus": "Szczegółowy opis implementacji core.py, algorytmu aktualizacji Q-Table oraz mechanizmu Epsilon-Greedy."
       },
       {
         "index": 5,
-        "title": "Rozdział 5: Wyniki Eksperymentów",
-        "focus": "Prezentacja metryk konwergencji (win_rate, draw_rate) z results.csv oraz analiza wpływu hyperparametrów (ALPHA, GAMMA)"
+        "title": "Rozdział 5: Analiza Wyników Eksperymentów",
+        "focus": "Prezentacja wyników z results.csv (win_rate, draw_rate), analiza wpływu hiperparametrów (ALPHA, GAMMA) na stabilność nauki."
       },
       {
         "index": 6,
-        "title": "Rozdział 6: Wnioski",
-        "focus": "Podsumowanie badań, ocena skuteczności algorytmu w porównaniu do baseline oraz perspektywy rozwoju"
+        "title": "Rozdział 6: Wnioski i Perspektywy",
+        "focus": "Werdykt pracy, zweryfikowanie tezy inżynierskiej oraz sugestie rozwoju w kierunku gier o niepełnej informacji."
       }
     ]
   }

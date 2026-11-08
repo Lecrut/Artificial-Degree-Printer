@@ -1,19 +1,27 @@
 """
-Configuration constants for Bio-Signal & Telemetry Anomaly Detection.
+Hyperparameter configuration for Bio-Signal & Telemetry Anomaly Detection module.
 
-This module defines hyperparameters and global constants required by the
-core detection algorithms, testing suite, and visualization scripts.
+This module defines global constants used for synthetic data generation, 
+baseline thresholds, and ensemble model hyperparameters. These values 
+are referenced symbolically in the thesis documentation via tags such as 
+\\ref_ast{config.py:N_SAMPLES}.
+
+Complexity:
+    Space: O(1) constant memory overhead.
 """
-from typing import Final
+from __future__ import annotations
 
-# Hyperparameter: Number of synthetic samples per class/segment
-N_SAMPLES: Final[int] = 600
+# Data Generation Parameters
+N_SAMPLES: int = 600
+"""Total number of samples to generate for the synthetic bio-signal dataset."""
 
-# Hyperparameter: Ratio of anomalous data points within the dataset
-ANOMALY_RATIO: Final[float] = 0.08
+ANOMALY_RATIO: float = 0.08
+"""Fraction of the dataset expected to be anomalous (0.0 to 1.0)."""
 
-# Hyperparameter: Z-score threshold for static baseline detection
-Z_THRESHOLD: Final[float] = 2.4
+# Detection Thresholds
+Z_THRESHOLD: float = 2.4
+"""Z-score threshold for the static univariate baseline detection."""
 
-# Hyperparameter: Number of trees in the Robust Mahalanobis Ensemble
-ENSEMBLE_TREES: Final[int] = 25
+# Ensemble Model Hyperparameters
+ENSEMBLE_TREES: int = 25
+"""Number of trees in the Adaptive Robust Mahalanobis-Ensemble detector."""

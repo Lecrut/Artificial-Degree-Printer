@@ -1,3 +1,2 @@
 method,rounds,win_rate,draw_rate,loss_rate
-baseline_random,500,0.18,0.75,0.07
-q_learning_proposed,500,0.92,0.06,0.02
+proposed_qlearn,500,0.649,0.11,0.241
