@@ -1,0 +1,59 @@
+{
+  "status": "FAIL",
+  "failed_task_id": "Q3_CODE",
+  "failed_node": "v2",
+  "failed_file": "core.py",
+  "failed_agent": "seed_coder",
+  "supervisors": {
+    "code_auditor": {
+      "status": "FAIL",
+      "issues": [
+        "Syntax error in core.py:   File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py\", line 1\n    \"\"\"\\nCore logic for Tic-Tac-Toe Q-Learning Agent.\\n\\nThis module implements the game state representation, board evaluation,\\na tabular Q-learning agent for adversarial search, and a deterministic\\nevaluation pipeline that exports metrics to CSV.\\n\"\"\"\\nfrom __future__ import annotations\\nimport csv\\nimport random\\nfrom typing import Final\\nfrom config import ALPHA, GAMMA, EPSILON, EPISODES\\n\\nBOARD_SIZE: Final[int] = 3\\nEMPTY_SYMBOL: Final[str] = ' '\\nPLAYER_X: Final[str] = 'X'\\nPLAYER_O: Final[str] = 'O'\\nWIN_LENGTH: Final[int] = 3\\n\\n\\ndef check_winner(board: list[list[str]] | list[str]) -> str | None:\\n    \\\"\\\"\\\"Evaluate the board state to determine the game outcome.\\n\\n    Checks all rows, columns, and diagonals for a winner. Returns\\n    the winning player's symbol ('X' or 'O'), or None if no winner\\n    exists yet. If the board is full and no winner exists, it returns\\n    'D' (Draw). Handles both 2D (list[list[str]]) and 1D (list[str])\\n    representations by normalizing to a f\n                                                                                                                                                                                                                                                                ^\nSyntaxError: unexpected character after line continuation character",
+        "Import error in core.py: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import core\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py\", line 1\n    \"\"\"\\nCore logic for Tic-Tac-Toe Q-Learning Agent.\\n\\nThis module implements the game state representation, board evaluation,\\na tabular Q-learning agent for adversarial search, and a deterministic\\nevaluation pipeline that exports metrics to CSV.\\\"\"\"\\nfrom __future__ import annotations\\nimport csv\\nimport random\\nfrom typing import Final\\nfrom config import ALPHA, GAMMA, EPSILON, EPISODES\\n\\nBOARD_SIZE: Final[int] = 3\\nEMPTY_SYMBOL: Final[str] = ' '\\nPLAYER_X: Final[str] = 'X'\\nPLAYER_O: Final[str] = 'O'\\nWIN_LENGTH: Final[int] = 3\\n\\n\\ndef check_winner(board: list[list[str]] | list[str]) -> str | None:\\n    \\\"\\\"\\\"Evaluate the board state to determine the game outcome.\\n\\n    Checks all rows, columns, and diagonals for a winner. Returns\\n    the winning player's symbol ('X' or 'O'), or None if no winner\\n    exists yet. If the board is full and no winner exists, it returns\\n    'D' (Draw). Handles both 2D (list[list[str]]) and 1D (list[str])\\n    representations by normalizing to a f\n                                                                                                                                                                                                                                                                ^\nSyntaxError: unexpected character after line continuation character",
+        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:252",
+        "Ruff lint failure: invalid-syntax: Simple statements must be separated by newlines or semicolons\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:259",
+        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:270",
+        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:288",
+        "Ruff lint failure: invalid-syntax: Expected `,`, found identifier\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:297",
+        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:300",
+        "Ruff lint failure: invalid-syntax: Expected `,`, found identifier\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:309",
+        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:315",
+        "Ruff lint failure: invalid-syntax: Expected `,`, found identifier\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:322",
+        "Ruff lint failure: invalid-syntax: Simple statements must be separated by newlines or semicolons\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:329",
+        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:341",
+        "Ruff lint failure: invalid-syntax: Expected `,`, found identifier\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:348",
+        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:355",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:393",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:395",
+        "Ruff lint failure: invalid-syntax: Expected `,`, found identifier\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:407",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:414",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:423",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:455",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:483",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:511",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:539",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:541",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:543",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:549",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:567",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:598",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:612",
+        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:618",
+        "Ruff lint failure: invalid-syntax: missing closing quote in string literal\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:619"
+      ]
+    },
+    "symbolic_auditor": {
+      "status": "SKIPPED_OUT_OF_EDGE_SCOPE",
+      "verdict": "PASS",
+      "skipped": "SKIPPED_OUT_OF_EDGE_SCOPE",
+      "issues": []
+    },
+    "redteam_critic_guard": {
+      "status": "SKIPPED_OUT_OF_EDGE_SCOPE",
+      "verdict": "PASS",
+      "skipped": "SKIPPED_OUT_OF_EDGE_SCOPE",
+      "issues": []
+    }
+  },
+  "summary": "Layer 3 verification failed."
+}

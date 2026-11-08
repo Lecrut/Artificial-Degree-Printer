@@ -250,6 +250,9 @@ def _sanitize_unresolved_latex_tags(tex_text: str) -> str:
     if "{IEEEtran}" in s:
         s = re.sub(r"(?<!\\def)\\chapter\*?\{([^}]+)\}", r"\\section{\1}", s)
 
+    # Fix accidental line break before bracketed text or citations (e.g. \\[cite] or \\ [cite]) which XeTeX misparses as \\[dimen]
+    s = re.sub(r"\\\\(?:\s*|\n\s*)\[", r"\\\\ \\relax [", s)
+
     s = re.sub(r"\\ref_(?:ast|csv|fig)\{([^}]+)\}", _repl, s)
     s = re.sub(r"\\(texttt|textbf|textit|section|subsection|subsubsection|chapter|paragraph)\{([^{}]*)\}", _esc_macro, s)
     s = re.sub(r"\\{2,}_", r"\\_", s)

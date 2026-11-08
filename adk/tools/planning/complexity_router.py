@@ -16,7 +16,14 @@ def select_model_tier(
     matrix: dict[str, dict[str, int]] = data.get("matrix", {})
 
     if node_id not in nodes and node_id not in matrix:
-        raise KeyError(f"Node '{node_id}' not found in hypergraph_matrix.json.")
+        for n_key, n_meta in nodes.items():
+            if n_meta.get("path") == node_id or Path(str(n_meta.get("path", ""))).name == Path(node_id).name:
+                node_id = n_key
+                break
+
+    if node_id not in nodes and node_id not in matrix:
+        # Graceful fallback: return LRM for unknown nodes to be safe and never crash
+        return "LRM"
 
     node_meta = nodes.get(node_id, {})
     row = matrix.get(node_id, {})
@@ -40,7 +47,16 @@ def escalate_node_weight(
     matrix: dict[str, dict[str, int]] = data.get("matrix", {})
 
     if node_id not in nodes and node_id not in matrix:
-        raise KeyError(f"Node '{node_id}' not found in hypergraph_matrix.json.")
+        for n_key, n_meta in nodes.items():
+            if n_meta.get("path") == node_id or Path(str(n_meta.get("path", ""))).name == Path(node_id).name:
+                node_id = n_key
+                break
+
+    if node_id not in nodes and node_id not in matrix:
+        nodes.setdefault(node_id, {"path": f"{node_id}.py", "degree": 0, "weight": 1.0})
+        matrix.setdefault(node_id, {})
+        data["nodes"] = nodes
+        data["matrix"] = matrix
 
     old_tier = select_model_tier(node_id, matrix_path)
     node_meta = nodes.setdefault(node_id, {"path": f"{node_id}.py", "degree": 0, "weight": 1.0})

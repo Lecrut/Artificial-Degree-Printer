@@ -84,9 +84,29 @@ def edit_ast_node(
     }
     deduped_imports = [imp for imp in extra_imports if ast.dump(imp) not in existing_import_dumps]
 
+    # Preserve leading module docstring and any `from __future__` imports before new imports
+    prefix_nodes: list[ast.stmt] = []
+    rest_nodes: list[ast.stmt] = []
+    idx = 0
+    if tree.body and isinstance(tree.body[0], ast.Expr):
+        val = getattr(tree.body[0], "value", None)
+        if isinstance(val, ast.Constant) and isinstance(val.value, str):
+            prefix_nodes.append(tree.body[0])
+            idx = 1
+
+    while idx < len(tree.body):
+        stmt = tree.body[idx]
+        if isinstance(stmt, ast.ImportFrom) and stmt.module == "__future__":
+            prefix_nodes.append(stmt)
+            idx += 1
+        else:
+            break
+
+    rest_nodes = list(tree.body[idx:])
+
     replaced = False
-    new_body: list[ast.stmt] = list(deduped_imports)
-    for node in tree.body:
+    new_body: list[ast.stmt] = list(prefix_nodes) + list(deduped_imports)
+    for node in rest_nodes:
         node_name = _extract_stmt_name(node)
         if node_name == target_name and not replaced:
             new_body.append(new_node)

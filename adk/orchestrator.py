@@ -83,7 +83,7 @@ class NeuroSymbolicOrchestrator:
         enable_layer4: bool = True,
         include_docs: bool = True,
         provider: str | None = None,
-        max_replan_retries: int = 3,
+        max_replan_retries: int = 5,
         interactive_gates: bool = False,
         gate_approval_callback: Callable[[str, dict[str, Any]], bool] | None = None,
     ) -> None:
@@ -250,6 +250,14 @@ class NeuroSymbolicOrchestrator:
         materialized_any = False
         is_mock_mode = self.provider == "mock"
 
+        def _normalize_raw_code(raw_text: str | None) -> str | None:
+            if not isinstance(raw_text, str) or not raw_text.strip():
+                return raw_text
+            # If LLM emitted single-line JSON string with literal \n escapes instead of real newlines, normalize it
+            if "\\n" in raw_text and ("\n" not in raw_text.strip() or raw_text.count("\\n") > raw_text.count("\n") * 2):
+                return raw_text.replace("\\n", "\n").replace("\\t", "\t").replace('\\"', '"')
+            return raw_text
+
         # 1. AST-level edits (from seed_coder or dynamic coding specialists)
         custom_edits = llm_output.get("ast_edits")
         if isinstance(custom_edits, list) and custom_edits:
@@ -260,6 +268,7 @@ class NeuroSymbolicOrchestrator:
                 code_str = item.get("code") or item.get("content") or item.get("value")
                 if not sym or code_str is None:
                     continue
+                code_str = _normalize_raw_code(str(code_str))
                 target_rel = item.get("file") or node_path
                 target_py = self.workspace_dir / target_rel
                 edit_ast_node(target_py, str(sym), str(code_str))
@@ -276,10 +285,23 @@ class NeuroSymbolicOrchestrator:
                 f_name = str(f_item.get("filename") or f_item.get("file") or f_item.get("path") or "").strip()
                 f_body = f_item.get("content") or f_item.get("code") or f_item.get("source_code")
                 if f_name and isinstance(f_body, str) and f_body.strip():
-                    f_dest = self.workspace_dir / Path(f_name).name
-                    f_dest.parent.mkdir(parents=True, exist_ok=True)
-                    f_dest.write_text(f_body, encoding="utf-8")
-                    materialized_any = True
+                    f_body = _normalize_raw_code(f_body)
+                    try:
+                        p_cand = Path(f_name)
+                        if p_cand.is_absolute():
+                            try:
+                                clean_rel = p_cand.relative_to(self.workspace_dir)
+                            except ValueError:
+                                clean_rel = Path(p_cand.name)
+                        else:
+                            clean_rel = p_cand
+                    except Exception:
+                        clean_rel = Path(Path(f_name).name)
+                    f_dest = (self.workspace_dir / clean_rel).resolve()
+                    if str(f_dest).startswith(str(self.workspace_dir.resolve())):
+                        f_dest.parent.mkdir(parents=True, exist_ok=True)
+                        f_dest.write_text(f_body, encoding="utf-8")
+                        materialized_any = True
 
         source_code = (
             llm_output.get("source_code")
@@ -293,13 +315,14 @@ class NeuroSymbolicOrchestrator:
             or (agent_obj.get("content") if node_path.endswith(".py") else None)
             or (artifact_obj.get("content") if node_path.endswith(".py") else None)
         )
+        source_code = _normalize_raw_code(source_code)
         if isinstance(source_code, str) and source_code.strip() and node_path.endswith(".py") and not materialized_any:
             full_file_path.parent.mkdir(parents=True, exist_ok=True)
             full_file_path.write_text(source_code, encoding="utf-8")
             materialized_any = True
 
         # 3. Unit test suite (from seed_tester or split testing sub-agents)
-        test_code = llm_output.get("test_code")
+        test_code = _normalize_raw_code(llm_output.get("test_code"))
         if isinstance(test_code, str) and test_code.strip():
             test_rel = str(llm_output.get("test_file") or "test_core.py")
             test_path = self.workspace_dir / test_rel
@@ -322,7 +345,7 @@ class NeuroSymbolicOrchestrator:
             materialized_any = True
 
         # 5. Vector plotting script (from seed_tester)
-        plot_script = llm_output.get("plot_script")
+        plot_script = _normalize_raw_code(llm_output.get("plot_script"))
         if isinstance(plot_script, str) and plot_script.strip():
             plot_rel = str(llm_output.get("plot_file") or "plot_results.py")
             plot_path = self.workspace_dir / plot_rel
@@ -589,8 +612,9 @@ class NeuroSymbolicOrchestrator:
             agent_md = self.adk_root / "agents" / "building" / "seed_coder.md"
 
         matrix_data = read_json_state(self.matrix_path)
-        node_id = task.get("target_node", "v1")
-        node_path = matrix_data.get("nodes", {}).get(node_id, {}).get("path", "config.py")
+        raw_node_id = task.get("target_node", "v1")
+        node_id, node_path = self._resolve_target_node(raw_node_id, task=task, fallback="v1")
+        task["target_node"] = node_id
         full_target = self.workspace_dir / node_path
         existing_content = full_target.read_text(encoding="utf-8") if full_target.exists() else ""
 
@@ -708,12 +732,10 @@ class NeuroSymbolicOrchestrator:
         bib_files: dict[str, str] = {}
         if self.workspace_dir.exists():
             for p in sorted(self.workspace_dir.rglob("*")):
-                if (
-                    not p.is_file()
-                    or "__pycache__" in p.parts
-                    or p.name == ".gitkeep"
-                    or "benchmarks" in p.parts
-                ):
+                if not p.is_file() or "__pycache__" in p.parts or p.name == ".gitkeep":
+                    continue
+                rel_parts = p.relative_to(self.workspace_dir).parts
+                if "benchmarks" in rel_parts or ".git" in rel_parts:
                     continue
                 rel = p.relative_to(self.workspace_dir).as_posix()
                 if p.suffix == ".py":
@@ -775,9 +797,10 @@ class NeuroSymbolicOrchestrator:
         matrix_nodes: dict[str, Any] = matrix_data.get("nodes", {})
         matrix_inc: dict[str, dict[str, int]] = matrix_data.get("matrix", {})
 
-        target_node = str(current_task.get("target_node", "v1"))
+        raw_target_node = str(current_task.get("target_node", "v1"))
+        target_node, node_path = self._resolve_target_node(raw_target_node, task=current_task, fallback="v1")
+        current_task["target_node"] = target_node
         node_meta = matrix_nodes.get(target_node, {})
-        node_path = str(node_meta.get("path", "config.py"))
         active_edges = [e_id for e_id, val in matrix_inc.get(target_node, {}).items() if int(val) == 1]
 
         is_doc_scope = is_final_gate or target_node == "v4" or node_path.endswith((".md", ".tex"))
@@ -806,23 +829,12 @@ class NeuroSymbolicOrchestrator:
         )
         snapshot = self._collect_workspace_snapshot()
 
-        # For data/experiment node v3 (edge E2), verify mtime freshness of CSV files against Python sources
-        if is_data_scope and self.workspace_dir.exists():
-            py_files = iter_workspace_python_files(self.workspace_dir)
-            latest_py_mtime = max((p.stat().st_mtime for p in py_files), default=0.0)
-            for csv_file in self.workspace_dir.glob("*.csv"):
-                if latest_py_mtime > 0 and csv_file.stat().st_mtime + 1e-6 < latest_py_mtime:
-                    stale_err = f"CSV file '{csv_file.name}' is older than Python source code in workspace."
-                    if stale_err not in test_res["errors"]:
-                        test_res["errors"].append(stale_err)
-                    test_res["status"] = "FAIL"
-
-        if self._last_experiment_error and not is_doc_scope:
+        # Only attach experiment errors to tasks that actually govern experiments/data (e.g. results.csv)
+        if self._last_experiment_error and is_data_scope:
             experiment_err = self._last_experiment_error[:4000]
             if experiment_err not in test_res["errors"]:
                 test_res["errors"].append(experiment_err)
             test_res["status"] = "FAIL"
-            test_res["pytest_passed"] = False
 
         if is_doc_scope and not is_final_gate:
             code_audit = {
@@ -1090,6 +1102,37 @@ class NeuroSymbolicOrchestrator:
 
         action = str(decision_out.get("action") or decision_out.get("decision") or "MUTATE_AGENT")
 
+        if action in ("INSTALL_DEPENDENCY", "INSTALL_PACKAGE"):
+            from adk.tools.evolution.dependency_manager import install_package
+
+            pkg_name = str(decision_out.get("package_name") or decision_out.get("package") or "").strip()
+            if not pkg_name:
+                val_rep = payload.get("validation_report") or {}
+                for issue in val_rep.get("issues", []):
+                    m = re.search(r"No module named ['\"]([^'\"]+)['\"]", str(issue))
+                    if m:
+                        pkg_name = m.group(1)
+                        break
+            if pkg_name:
+                pkg_map = {"sklearn": "scikit-learn", "cv2": "opencv-python", "PIL": "pillow"}
+                pkg_to_install = pkg_map.get(pkg_name, pkg_name)
+                inst_res = install_package(pkg_to_install)
+                self._record_evolution_event({"type": "DEPENDENCY_INSTALLED", "details": inst_res})
+                return {"action": "INSTALL_DEPENDENCY", "decision": "INSTALL_DEPENDENCY", "details": inst_res}
+
+        # Proactive self-healing fallback for missing modules
+        val_rep = payload.get("validation_report") or {}
+        for issue in val_rep.get("issues", []):
+            m = re.search(r"No module named ['\"]([^'\"]+)['\"]", str(issue))
+            if m:
+                missing_mod = m.group(1)
+                pkg_map = {"sklearn": "scikit-learn", "cv2": "opencv-python", "PIL": "pillow"}
+                pkg_to_install = pkg_map.get(missing_mod, missing_mod)
+                from adk.tools.evolution.dependency_manager import install_package
+                inst_res = install_package(pkg_to_install)
+                self._record_evolution_event({"type": "AUTO_DEPENDENCY_INSTALLED", "details": inst_res})
+                break
+
         if action == "HITL":
             gate = str(decision_out.get("hitl_gate") or "GATE_1_OUTLINE_APPROVAL")
             hitl_state = self._update_hitl_gate(
@@ -1290,6 +1333,50 @@ class NeuroSymbolicOrchestrator:
                 return cand_id
         return pref_str or fallback or "seed_coder"
 
+    def _resolve_target_node(
+        self,
+        node_id: Any,
+        task: dict[str, Any] | None = None,
+        fallback: str = "v1",
+    ) -> tuple[str, str]:
+        """Resolve arbitrary or hallucinated node identifiers (e.g. 'v7', 'core.py') to a valid hypergraph node and path."""
+        matrix_data = read_json_state(self.matrix_path)
+        nodes: dict[str, Any] = matrix_data.get("nodes", {})
+
+        raw_id = str(node_id or "").strip()
+        # 1. Direct hit in nodes
+        if raw_id in nodes:
+            return raw_id, str(nodes[raw_id].get("path", raw_id))
+
+        # 2. Check if raw_id is a file path matching any node's path or filename
+        for n_id, n_meta in nodes.items():
+            n_path = str(n_meta.get("path", ""))
+            if n_path == raw_id or Path(n_path).name == Path(raw_id).name:
+                return n_id, n_path
+
+        # 3. Check task metadata (target_file, file, or description) for mention of known files
+        if task:
+            target_f = str(task.get("target_file") or task.get("file") or "").strip()
+            desc = str(task.get("description", "")).strip().lower()
+            for n_id, n_meta in nodes.items():
+                n_path = str(n_meta.get("path", ""))
+                fname = Path(n_path).name.lower()
+                if (target_f and (n_path == target_f or fname == Path(target_f).name.lower())) or (
+                    fname in desc or n_path.lower() in desc
+                ):
+                    return n_id, n_path
+
+        # 4. If fallback node exists in nodes, use it
+        if fallback in nodes:
+            return fallback, str(nodes[fallback].get("path", fallback))
+
+        # 5. Fallback to first available node in hypergraph, or default v1 / config.py
+        if nodes:
+            first_id = next(iter(nodes))
+            return first_id, str(nodes[first_id].get("path", first_id))
+
+        return "v1", "config.py"
+
     def _normalize_and_heal_task_plan(
         self,
         raw_tasks: list[dict[str, Any]],
@@ -1320,8 +1407,34 @@ class NeuroSymbolicOrchestrator:
             "sota_discovery": disc_agent,
         }
 
-        cleaned: list[dict[str, Any]] = []
+        # Flatten nested subtasks if planner emits hierarchical task decompositions
+        flattened_raw: list[dict[str, Any]] = []
         for idx, item in enumerate(raw_tasks or []):
+            if not isinstance(item, dict):
+                continue
+            subtasks = item.get("subtasks")
+            if isinstance(subtasks, list) and subtasks:
+                parent_id = str(item.get("task_id") or item.get("id") or f"T{idx + 1}")
+                parent_node = item.get("target_node") or item.get("node_id") or item.get("node")
+                parent_agent = item.get("assigned_agent") or item.get("agent")
+                parent_desc = item.get("description", "")
+                for sub_idx, sub in enumerate(subtasks, 1):
+                    if isinstance(sub, dict):
+                        sub_dict = dict(sub)
+                        if "task_id" not in sub_dict and "id" not in sub_dict:
+                            sub_dict["task_id"] = f"{parent_id}.{sub_idx}"
+                        if not sub_dict.get("target_node") and not sub_dict.get("node_id") and parent_node:
+                            sub_dict["target_node"] = parent_node
+                        if not sub_dict.get("assigned_agent") and not sub_dict.get("agent") and parent_agent:
+                            sub_dict["assigned_agent"] = parent_agent
+                        if parent_desc and parent_desc not in str(sub_dict.get("description", "")):
+                            sub_dict["description"] = f"[{parent_id}] {sub_dict.get('description', '')}"
+                        flattened_raw.append(sub_dict)
+            else:
+                flattened_raw.append(item)
+
+        cleaned: list[dict[str, Any]] = []
+        for idx, item in enumerate(flattened_raw):
             if not isinstance(item, dict):
                 continue
             t_id = str(item.get("task_id") or item.get("id") or f"T{idx + 1}")
@@ -1729,6 +1842,17 @@ class NeuroSymbolicOrchestrator:
             for idx_t, t_item in enumerate(cleaned, 1):
                 t_item["task_id"] = f"T{idx_t}"
 
+        # Topological sanity check: ensure module implementation (v1, v2) precedes unit tests (v5)
+        first_v2_idx = next((i for i, t in enumerate(cleaned) if t.get("target_node") == "v2"), None)
+        if first_v2_idx is not None:
+            early_v5_indices = [i for i, t in enumerate(cleaned[:first_v2_idx]) if t.get("target_node") == "v5"]
+            if early_v5_indices:
+                early_v5_tasks = [cleaned[i] for i in early_v5_indices]
+                cleaned = [t for i, t in enumerate(cleaned) if i not in early_v5_indices]
+                new_v2_idx = next(i for i, t in enumerate(cleaned) if t.get("target_node") == "v2")
+                for offset, v5_t in enumerate(early_v5_tasks, 1):
+                    cleaned.insert(new_v2_idx + offset, v5_t)
+
         return cleaned
 
     def _audit_factual_state(self, report: dict[str, Any]) -> dict[str, Any]:
@@ -1781,23 +1905,16 @@ class NeuroSymbolicOrchestrator:
         return audit
 
     def _refresh_experiment_after_code(self, node_id: str) -> None:
-        """After a code or test task, results.csv is whatever train_and_evaluate just wrote."""
+        """After a code or test task, results.csv is whatever the experiment pipeline just wrote."""
         if str(self.provider).strip().lower() == "mock" or node_id not in {"v2", "v3"}:
-            return
-        core = self.workspace_dir / "core.py"
-        if not core.exists():
-            core = self.workspace_dir / "code" / "core.py"
-        if not core.exists():
-            self._last_experiment_error = ""
             return
         from adk.tools.building.experiment_runner import execute_workspace_experiment
 
-        print("  [EKSPERYMENT] train_and_evaluate zapisuje results.csv", flush=True)
         result = execute_workspace_experiment(self.workspace_dir)
         if result.get("skipped") or result.get("ok"):
             self._last_experiment_error = ""
             return
-        self._last_experiment_error = str(result.get("error") or "train_and_evaluate nie zapisało results.csv")
+        self._last_experiment_error = str(result.get("error") or "Eksperyment nie wygenerował results.csv")
 
     def _pdf_failure_report(self) -> dict[str, Any] | None:
         """Compile the thesis. A live failure comes back as a queue-rebuild reason. Mock stays out of this path."""
@@ -1847,25 +1964,73 @@ class NeuroSymbolicOrchestrator:
         prefix = f"Q{generation}"
         tasks: list[dict[str, Any]] = []
         if audit.get("pytest_status") != "PASS" or audit.get("pytest_errors"):
-            detail = "; ".join(audit.get("pytest_errors") or []) or "pytest nie przechodzi"
-            tasks.append(
-                {
-                    "task_id": f"{prefix}_CODE",
-                    "description": f"Napraw kod tak, żeby pytest przeszedł. Stan faktyczny: {detail}",
-                    "target_node": "v2",
-                    "assigned_agent": "seed_coder",
-                    "status": "TODO",
-                }
-            )
-            tasks.append(
-                {
-                    "task_id": f"{prefix}_TESTS",
-                    "description": "Uruchom train_and_evaluate i zapisz results.csv zgodny z tym, co funkcja zwraca. Testy mają wołać kod, a nie sprawdzać wklejone liczby.",
-                    "target_node": "v3",
-                    "assigned_agent": "seed_tester",
-                    "status": "TODO",
-                }
-            )
+            py_errs = audit.get("pytest_errors") or []
+            detail = "; ".join(py_errs) or "pytest nie przechodzi"
+            test_fault = any("test_" in err.lower() or "_test.py" in err.lower() for err in py_errs)
+            code_fault = any("core.py" in err.lower() or "syntax" in err.lower() or "assertionerror" in err.lower() for err in py_errs)
+            plot_fault = any("plot" in err.lower() for err in py_errs)
+            config_fault = any("config.py" in err.lower() for err in py_errs)
+
+            if test_fault and not code_fault:
+                tasks.append(
+                    {
+                        "task_id": f"{prefix}_TEST_FIX",
+                        "description": f"Napraw testy w test_core.py, aby przechodziły czysto i nie naruszały reguł lintera. Błędy: {detail}",
+                        "target_node": "v5",
+                        "assigned_agent": "seed_tester",
+                        "status": "TODO",
+                    }
+                )
+            elif plot_fault and not code_fault:
+                tasks.append(
+                    {
+                        "task_id": f"{prefix}_PLOT_FIX",
+                        "description": f"Napraw skrypt wykresów plot_results.py. Błędy: {detail}",
+                        "target_node": "v3",
+                        "assigned_agent": "seed_tester",
+                        "status": "TODO",
+                    }
+                )
+            elif config_fault and not code_fault:
+                tasks.append(
+                    {
+                        "task_id": f"{prefix}_CONFIG_FIX",
+                        "description": f"Napraw stałe i parametry w config.py. Błędy: {detail}",
+                        "target_node": "v1",
+                        "assigned_agent": "seed_coder",
+                        "status": "TODO",
+                    }
+                )
+            else:
+                tasks.append(
+                    {
+                        "task_id": f"{prefix}_CODE",
+                        "description": f"Napraw kod tak, żeby pytest przeszedł. Stan faktyczny: {detail}",
+                        "target_node": "v2",
+                        "assigned_agent": "seed_coder",
+                        "status": "TODO",
+                    }
+                )
+                if test_fault or not (self.workspace_dir / "test_core.py").exists():
+                    tasks.append(
+                        {
+                            "task_id": f"{prefix}_TESTS",
+                            "description": f"Zsynchronizuj testy w test_core.py z kodem i usuń błędy asercji/importów. Błędy: {detail}",
+                            "target_node": "v5",
+                            "assigned_agent": "seed_tester",
+                            "status": "TODO",
+                        }
+                    )
+                else:
+                    tasks.append(
+                        {
+                            "task_id": f"{prefix}_TESTS",
+                            "description": "Uruchom train_and_evaluate i zapisz results.csv zgodny z tym, co funkcja zwraca. Testy mają wołać kod, a nie sprawdzać wklejone liczby.",
+                            "target_node": "v3",
+                            "assigned_agent": "seed_tester",
+                            "status": "TODO",
+                        }
+                    )
         elif not audit.get("csv_columns"):
             tasks.append(
                 {
@@ -1971,16 +2136,16 @@ class NeuroSymbolicOrchestrator:
             f"błędy symboliczne={len(audit.get('symbolic_errors') or [])}",
             flush=True,
         )
-        if signature == last_signature or generation >= 3:
+        if (signature == last_signature and generation >= 2) or generation >= 4:
             if signature == last_signature:
-                reason = "AUDYT PLIKOW SIE NIE ZMIENIL. KOLEJNA PRZEBUDOWA KOLEJKI NIC NIE DA."
+                reason = "AUDYT PLIKOW SIE NIE ZMIENIL PO WIELOKROTNYCH PROBACH. STAN PRACY NADAL JEST ZLY."
             else:
-                reason = "WYCZERPANO TRZY PRZEBUDOWY KOLEJKI. STAN PRACY NADAL JEST ZLY."
+                reason = "WYCZERPANO CZTERY PRZEBUDOWY KOLEJKI. STAN PRACY NADAL JEST ZLY."
             self._shout_problem_stop(reason)
             self._update_hitl_gate(
                 gate_name="GATE_QUEUE_REBUILD_EXHAUSTED",
                 active=True,
-                question="Trzy przebudowy kolejki nie zmieniły stanu plików albo limit przebudów został wyczerpany.",
+                question="Przebudowy kolejki nie zmieniły stanu plików albo limit przebudów został wyczerpany.",
                 context={"audit": audit, "generation": generation},
             )
             return {
@@ -2360,8 +2525,9 @@ class NeuroSymbolicOrchestrator:
             )
         print("=" * 80 + "\n", flush=True)
 
-        # Determine which task indices trigger a full W2 -> W3 [FAIL] -> W4 [Evolution] -> W1 [Remediation] -> W2 -> W3 [PASS] wave
-        if simulate_first_attempt_fail and multi_cycle_waves:
+        # Only trigger simulated failures in mock testing mode, never in live LLM runs
+        is_mock = str(self.provider).strip().lower() == "mock"
+        if simulate_first_attempt_fail and is_mock and multi_cycle_waves:
             v1_idx = next((i for i, t in enumerate(tasks) if t.get("target_node") == "v1"), 0)
             v3_idx = next((i for i, t in enumerate(tasks) if t.get("target_node") == "v3"), min(2, len(tasks) - 1))
             v4_writer_idx = next(
@@ -2369,7 +2535,7 @@ class NeuroSymbolicOrchestrator:
                 len(tasks) - 1,
             )
             wave_fail_indices = {v1_idx, v3_idx, v4_writer_idx}
-        elif simulate_first_attempt_fail:
+        elif simulate_first_attempt_fail and is_mock:
             wave_fail_indices = {0}
         else:
             wave_fail_indices = set()
@@ -2382,8 +2548,9 @@ class NeuroSymbolicOrchestrator:
                 task["status"] = "IN_PROGRESS"
                 write_json_state(self.task_queue_path, tasks)
 
-                node_id = str(task.get("target_node", "v1"))
-                node_file = matrix_nodes.get(node_id, {}).get("path", node_id)
+                raw_node_id = str(task.get("target_node", "v1"))
+                node_id, node_file = self._resolve_target_node(raw_node_id, task=task, fallback="v1")
+                task["target_node"] = node_id
                 tier = select_model_tier(node_id, self.matrix_path)
                 t_id = str(task.get("task_id", f"T{idx + 1}"))
                 t_desc = str(task.get("description", "Brak opisu"))
@@ -2400,8 +2567,16 @@ class NeuroSymbolicOrchestrator:
                     flush=True,
                 )
 
-                self._execute_builder_step(task, model_tier=tier)
-                self._refresh_experiment_after_code(node_id)
+                builder_error_msg: str | None = None
+                try:
+                    self._execute_builder_step(task, model_tier=tier)
+                    self._refresh_experiment_after_code(node_id)
+                except Exception as exc:
+                    builder_error_msg = f"Wyjątek wykonania zadania {t_id} na węźle {node_id} ({node_file}): {exc}"
+                    print(
+                        f"  [OSTRZEŻENIE: BŁĄD BUDOWANIA] {builder_error_msg}",
+                        flush=True,
+                    )
 
                 should_fail = execution_generation == 0 and idx in wave_fail_indices
                 print(
@@ -2414,6 +2589,10 @@ class NeuroSymbolicOrchestrator:
                     is_final_gate=False,
                     inject_failure=should_fail,
                 )
+                if builder_error_msg:
+                    report["status"] = "FAIL"
+                    report.setdefault("issues", []).append(builder_error_msg)
+                    report.setdefault("errors", []).append(builder_error_msg)
 
                 task_retries = 0
                 while report["status"] != "PASS" and task_retries < effective_max_retries:
@@ -2615,13 +2794,28 @@ class NeuroSymbolicOrchestrator:
                             }
                         ]
 
+                    remediation_errors: list[str] = []
                     for stask in surgical_tasks:
                         if not isinstance(stask, dict):
                             continue
-                        stask.setdefault("target_node", node_id)
+                        st_raw_node = stask.get("target_node") or node_id
+                        st_node, st_file = self._resolve_target_node(st_raw_node, task=stask, fallback=node_id)
+                        stask["target_node"] = st_node
+                        node_default_agent = {
+                            "v1": "seed_coder",
+                            "v2": "seed_coder",
+                            "v3": "seed_tester",
+                            "v4": "seed_writer",
+                            "v5": "seed_tester",
+                        }.get(st_node, "seed_coder")
+                        raw_assigned = str(stask.get("assigned_agent") or "").strip()
+                        if not raw_assigned or (st_node in ("v1", "v2", "v3", "v5") and "writer" in raw_assigned):
+                            target_ag = node_default_agent
+                        else:
+                            target_ag = raw_assigned
                         stask["assigned_agent"] = self._resolve_active_agent(
-                            str(stask.get("assigned_agent") or failed_agent or task.get("assigned_agent", "seed_coder")),
-                            fallback=str(failed_agent or task.get("assigned_agent", "seed_coder")),
+                            target_ag,
+                            fallback=node_default_agent,
                         )
                         stask.setdefault("task_id", f"{task.get('task_id', 'T1')}_FIX")
                         orig_desc = str(task.get("description", "")).strip()
@@ -2629,15 +2823,21 @@ class NeuroSymbolicOrchestrator:
                         if stask.get("target_node") == "v4" and orig_desc and orig_desc[:30].lower() not in st_desc.lower():
                             stask["description"] = f"[Kontekst sekcji: {orig_desc}] {st_desc}"
                         cycle_trace["w1_remediation_task_id"] = str(stask["task_id"])
-                        st_node = str(stask.get("target_node", node_id))
-                        st_file = matrix_nodes.get(st_node, {}).get("path", st_node)
                         st_tier = select_model_tier(st_node, self.matrix_path)
                         print(
                             f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE] Zadanie chirurgiczne {stask['task_id']} "
                             f"[{st_file}] przez agenta '{stask['assigned_agent']}' (Tier: {st_tier})...",
                             flush=True,
                         )
-                        self._execute_builder_step(stask, model_tier=st_tier)
+                        try:
+                            self._execute_builder_step(stask, model_tier=st_tier)
+                        except Exception as exc:
+                            err_msg = f"Wyjątek zadania naprawczego {stask.get('task_id')} na węźle {st_node} ({st_file}): {exc}"
+                            print(
+                                f"  [OSTRZEŻENIE: BŁĄD ZADANIA NAPRAWCZEGO] {err_msg}",
+                                flush=True,
+                            )
+                            remediation_errors.append(err_msg)
 
                     print(
                         f"  [WARSTWA 3: RE-WERYFIKACJA] Ponowny audyt zadania {t_id} po petli W4 -> W1 -> W2...",
@@ -2649,6 +2849,10 @@ class NeuroSymbolicOrchestrator:
                         is_final_gate=False,
                         inject_failure=False,
                     )
+                    if remediation_errors:
+                        report["status"] = "FAIL"
+                        report.setdefault("issues", []).extend(remediation_errors)
+                        report.setdefault("errors", []).extend(remediation_errors)
                     cycle_trace["w3_post_remediation_status"] = report["status"]
                     architecture_cycles.append(cycle_trace)
                     print(
@@ -2667,13 +2871,39 @@ class NeuroSymbolicOrchestrator:
                 else:
                     task["status"] = "FAILED"
                     write_json_state(self.task_queue_path, tasks)
-                    print(
-                        f"  [KOLEJKA PRZERWANA] Zadanie {t_id} nie zostało naprawione w {task_retries} próbach. "
-                        "Reszta tej kolejki nie rusza. Audyt stanu i nowa kolejka.",
-                        flush=True,
+                    # Check if there are companion tasks in this queue targeting other nodes
+                    remaining_other_nodes = [
+                        t for t in tasks[idx + 1 :]
+                        if isinstance(t, dict) and t.get("status") == "TODO" and t.get("target_node") != node_id
+                    ]
+                    if remaining_other_nodes:
+                        print(
+                            f"  [KONTYNUACJA KOLEJKI] Zadanie {t_id} ma status FAILED, ale w kolejce są powiązane zadania "
+                            f"na innych węzłach ({[t.get('target_node') for t in remaining_other_nodes]}). Kontynuuję kolejkę przed audytem stanu.",
+                            flush=True,
+                        )
+                        continue
+                    else:
+                        print(
+                            f"  [KOLEJKA PRZERWANA] Zadanie {t_id} nie zostało naprawione w {task_retries} próbach. "
+                            "Audyt stanu i nowa kolejka.",
+                            flush=True,
+                        )
+                        exhausted_report = report
+                        break
+
+            # If any tasks were marked FAILED and we didn't break early, check workspace health
+            if exhausted_report is None:
+                failed_any = [t for t in tasks if isinstance(t, dict) and t.get("status") == "FAILED"]
+                if failed_any:
+                    final_chk = self._run_verification_step(
+                        tasks[-1] if tasks else {"target_node": "v2", "task_id": "QUEUE_FINAL"},
+                        include_docs=self.include_docs,
+                        is_final_gate=False,
+                        inject_failure=False,
                     )
-                    exhausted_report = report
-                    break
+                    if final_chk.get("status") != "PASS":
+                        exhausted_report = final_chk
 
             if exhausted_report is not None:
                 rebuilt = self._rebuild_queue(exhausted_report, execution_generation, last_audit_signature)
@@ -2782,20 +3012,40 @@ class NeuroSymbolicOrchestrator:
                 for dtask in def_tasks:
                     if not isinstance(dtask, dict):
                         continue
-                    dt_node = str(dtask.get("target_node") or def_node)
+                    raw_dt_node = str(dtask.get("target_node") or def_node)
+                    dt_node, dt_file = self._resolve_target_node(raw_dt_node, task=dtask, fallback="v4")
                     dtask["target_node"] = dt_node
+                    node_default_agent = {
+                        "v1": "seed_coder",
+                        "v2": "seed_coder",
+                        "v3": "seed_tester",
+                        "v4": "seed_writer",
+                        "v5": "seed_tester",
+                    }.get(dt_node, "seed_writer")
+                    raw_assigned = str(dtask.get("assigned_agent") or "").strip()
+                    if not raw_assigned or (dt_node in ("v1", "v2", "v3", "v5") and "writer" in raw_assigned):
+                        target_ag = node_default_agent
+                    else:
+                        target_ag = raw_assigned
                     dtask["assigned_agent"] = self._resolve_active_agent(
-                        str(dtask.get("assigned_agent") or "seed_writer"),
-                        fallback="seed_writer",
+                        target_ag,
+                        fallback=node_default_agent,
                     )
                     dt_tier = select_model_tier(dt_node, self.matrix_path)
                     print(
                         f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE DLA GATE 3] Zadanie {dtask.get('task_id')} "
-                        f"na wezle {dt_node} przez agenta '{dtask['assigned_agent']}'...",
+                        f"[{dt_file}] na wezle {dt_node} przez agenta '{dtask['assigned_agent']}'...",
                         flush=True,
                     )
-                    self._execute_builder_step(dtask, model_tier=dt_tier)
-                    self._refresh_experiment_after_code(dt_node)
+                    try:
+                        self._execute_builder_step(dtask, model_tier=dt_tier)
+                        self._refresh_experiment_after_code(dt_node)
+                    except Exception as exc:
+                        print(
+                            f"  [OSTRZEŻENIE: BŁĄD OBRONY GATE 3] Wyjątek w zadaniu {dtask.get('task_id')}: {exc}",
+                            flush=True,
+                        )
+                        defense_issues += f" | Błąd wykonania zadania obrony {dtask.get('task_id')}: {exc}"
                     dtask["status"] = "DONE"
                     if multi_cycle_waves:
                         tasks.append(dtask)

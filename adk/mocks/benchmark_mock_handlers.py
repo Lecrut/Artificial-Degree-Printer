@@ -131,7 +131,7 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
             return {"status": "PASS", "approved": True, "issues": []}
 
         # 3. Layer 1: Remediation Planner
-        if "Remediation" in system_prompt or "error_report" in payload:
+        if "Remediation Planner" in system_prompt or "remediation_planner" in system_prompt or "error_report" in payload:
             err_rep = payload.get("error_report") or {}
             failed_task = payload.get("failed_task") or {}
             failed_id = err_rep.get("failed_task_id") or failed_task.get("task_id", "T1")

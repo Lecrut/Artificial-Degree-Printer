@@ -1,0 +1,37 @@
+[
+  {
+    "task_id": "T1",
+    "description": "[01_rl_tictactoe] Background Research (I stopień - Inżynierska): Foundational funnel from classical monographs to thesis problem in references.bib",
+    "target_node": "v4",
+    "assigned_agent": "background_researcher",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T2",
+    "description": "[01_rl_tictactoe] Implement AST hyperparameters in config.py for Tabular Q-Learning Policy Optimization in Finite-State Tic-Tac-Toe Environments",
+    "target_node": "v1",
+    "assigned_agent": "seed_coder",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T3",
+    "description": "[01_rl_tictactoe] Implement core algorithm and train_and_evaluate() in core.py",
+    "target_node": "v2",
+    "assigned_agent": "seed_coder",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T4",
+    "description": "[01_rl_tictactoe] Implement unit tests, CSV benchmark, and plots for Tabular Q-Learning Policy Optimization in Finite-State Tic-Tac-Toe Environments",
+    "target_node": "v3",
+    "assigned_agent": "seed_tester",
+    "status": "DONE"
+  },
+  {
+    "task_id": "T5",
+    "description": "[01_rl_tictactoe] Author all 6 chapters of thesis/paper following Table of Contents with \\ref_ast, \\ref_csv, and \\ref_fig pointers",
+    "target_node": "v4",
+    "assigned_agent": "seed_writer",
+    "status": "DONE"
+  }
+]

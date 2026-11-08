@@ -35,6 +35,10 @@
 
 \begin{document}
 
+
+
+
+
 \title{Heuristic Pathfinding Optimization on Spatial Grids: Weighted Octile A* vs. Dijkstra}
 
 \author{\IEEEauthorblockN{Neuro-Symbolic ADK Author}
@@ -43,7 +47,7 @@
 Lodz, Poland \\
 Domain: Graph Algorithms \& Heuristic Search}}
 
-\maketitle
+
 \thispagestyle{plain}
 
 \begin{abstract}
@@ -227,14 +231,13 @@ The primary metric for efficiency is the average number of expanded nodes ($\tex
     \centering
     \caption{Comparison of Baseline Dijkstra and Proposed Weighted A* on Grid Maps}
     \label{tab:results}
-    \resizebox{\columnwidth}{!}{\%  \% Adjust width to fit single IEEE column
+    \%  \% Adjust width to fit single IEEE column
         \begin{tabular}{l|c|c|c|c}
             \hline
             \textbf{Method} & \textbf{Avg. Expanded Nodes} & \textbf{Path Optimality} & \textbf{Speedup Factor} & \textbf{Success Rate} \\ \hline
             Baseline (Dijkstra) & \texttt{avg\_expanded\_nodes} & $\ge 1.0$ & $1.0$ & \texttt{success\_rate} \\ \hline
             Proposed (Weighted A*) & N/A & \texttt{path\_optimality} & \texttt{speedup\_factor} & \texttt{success\_rate} \\ \hline
         \end{tabular}\%
-    }
 \end{table}
 
 The results indicate a substantial reduction in the search space exploration. The baseline algorithm, being uninformed, had to explore a large portion of the grid to guarantee optimality. The proposed method achieved a speedup factor of \texttt{speedup\_factor}, meaning it found a valid path \texttt{speedup\_factor} times faster than Dijkstra in terms of node expansion and memory operations.
@@ -344,14 +347,13 @@ The primary metric for efficiency is the average number of expanded nodes ($\tex
     \centering
     \caption{Comparison of Baseline Dijkstra and Proposed Weighted A* on Grid Maps}
     \label{tab:results}
-    \resizebox{\columnwidth}{!}{\%  \% Adjust width to fit single IEEE column
+    \%  \% Adjust width to fit single IEEE column
         \begin{tabular}{l|c|c|c|c}
             \hline
             \textbf{Method} & \textbf{Avg. Expanded Nodes} & \textbf{Path Optimality} & \textbf{Speedup Factor} & \textbf{Success Rate} \\ \hline
             Baseline (Dijkstra) & \texttt{avg\_expanded\_nodes} & $\ge 1.0$ & $1.0$ & \texttt{success\_rate} \\ \hline
             Proposed (Weighted A*) & N/A & \texttt{path\_optimality} & \texttt{speedup\_factor} & \texttt{success\_rate} \\ \hline
         \end{tabular}\%
-    }
 \end{table}
 
 The results indicate a substantial reduction in the search space exploration. The baseline algorithm, being uninformed, had to explore a large portion of the grid to guarantee optimality. The proposed method achieved a speedup factor of \texttt{speedup\_factor}, meaning it found a valid path \texttt{speedup\_factor} times faster than Dijkstra in terms of node expansion and memory operations.
@@ -388,14 +390,13 @@ The primary metric for efficiency is the average number of expanded nodes ($\tex
     \centering
     \caption{Comparison of Baseline Dijkstra and Proposed Weighted A* on Grid Maps}
     \label{tab:results}
-    \resizebox{\columnwidth}{!}{\%  \% Adjust width to fit single IEEE column
+    \%  \% Adjust width to fit single IEEE column
         \begin{tabular}{l|c|c|c|c}
             \hline
             \textbf{Method} & \textbf{Avg. Expanded Nodes} & \textbf{Path Optimality} & \textbf{Speedup Factor} & \textbf{Success Rate} \\ \hline
             Baseline (Dijkstra) & \texttt{avg\_expanded\_nodes} & $\ge 1.0$ & $1.0$ & \texttt{success\_rate} \\ \hline
             Proposed (Weighted A*) & N/A & \texttt{path\_optimality} & \texttt{speedup\_factor} & \texttt{success\_rate} \\ \hline
         \end{tabular}\%
-    }
 \end{table}
 
 The results indicate a substantial reduction in the search space exploration. The proposed method achieved a speedup factor of \texttt{speedup\_factor}, meaning it found a valid path \texttt{speedup\_factor} times faster than Dijkstra in terms of node expansion and memory operations.
@@ -428,7 +429,7 @@ The experimental data confirms the hypothesis that applying a heuristic weight $
   \bibitem{harabor2023heuristic} Harabor, Daniel and Grastien, Alban and Botea, Adi, \textit{Advances in Fast Grid Pathfinding and Octile Metric Symmetry Breaking}, 2023.
   \bibitem{sturtevant2023benchmarks} Sturtevant, Nathan R. and Chen, Jiaoyang, \textit{Benchmarking Modern 8-Connected Grid Navigation: Heuristics, Optimality, and Speedup Bounds}, 2023.
   \bibitem{li2023anytime} Li, Jiaoyang and Ruml, Wheeler and Koenig, Sven, \textit{Tighter Empirical Suboptimality Bounds for Weighted A* on Grid Topologies}, 2023.
-  \bibitem{stern2023bidirectional} Stern, Roni and Alc{\'a, \textit{Bidirectional vs. Unidirectional Weighted Heuristic Search on Sparse and Dense Grids}, 2023.
+  \bibitem{stern2023bidirectional} Stern, Roni and Alc{\'a}zar, Vidal and Felner, Ariel, \textit{Bidirectional vs. Unidirectional Weighted Heuristic Search on Sparse and Dense Grids}, 2023.
   \bibitem{botea2023compressed} Botea, Adi and Harabor, Daniel and Stuckey, Peter J., \textit{Compressed Path Databases vs. Online Heuristic Search in Dynamic Grid Environments}, 2023.
   \bibitem{sharon2023conflict} Sharon, Guni and Stern, Roni and Felner, Ariel and Sturtevant, Nathan R., \textit{Low-Level Single-Agent Grid Search Bottlenecks in Multi-Agent Path Finding}, 2023.
   \bibitem{wilt2023pathology} Wilt, Christopher M. and Ruml, Wheeler, \textit{When Does Weighted A* Fail? Analyzing Heuristic Depression Regions on Grids}, 2023.

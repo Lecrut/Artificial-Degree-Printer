@@ -296,3 +296,28 @@ def test_interactive_gates_callback_and_weight_escalation_in_orchestrator(tmp_pa
     assert "GATE_1_OUTLINE_APPROVAL" in visited_gates
     assert "GATE_2_METHODOLOGY_APPROVAL" in visited_gates
 
+
+def test_orchestrator_resolve_target_node(tmp_path: Path):
+    adk_dir = _clone_adk_env(tmp_path)
+    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
+
+    # 1. Direct node ID hit
+    nid, npath = orch._resolve_target_node("v2")
+    assert nid == "v2"
+    assert npath == "core.py"
+
+    # 2. File path hit
+    nid, npath = orch._resolve_target_node("core.py")
+    assert nid == "v2"
+
+    # 3. Unknown node with task context pointing to core.py
+    task_hint = {"task_id": "T3_FIX", "description": "Fix winner logic in core.py"}
+    nid, npath = orch._resolve_target_node("v7", task=task_hint)
+    assert nid == "v2"
+    assert npath == "core.py"
+
+    # 4. Unknown node with no hints falls back safely to default
+    nid, npath = orch._resolve_target_node("v99", fallback="v1")
+    assert nid == "v1"
+
+

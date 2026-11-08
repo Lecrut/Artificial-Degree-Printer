@@ -1,0 +1,794 @@
+{
+  "events": [
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v1",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 16,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Preserve strict AST, CSV and symbolic reference parity in task T1 (v1).",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v3",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 18,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
+        "injected_rule": "Preserve strict AST, CSV and symbolic reference parity in task T3 (v3).",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 1.6,
+        "new_weight": 2.0,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_writer.md",
+        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 2.0,
+        "new_weight": 2.4,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 2.4,
+        "new_weight": 2.8,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 2.8,
+        "new_weight": 3.2,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "HITL_TRIGGERED",
+      "gate": "GATE_REMEDIATION_EXHAUSTED",
+      "question": "Wyczerpano 3 prób naprawy zadania T1."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 3.2,
+        "new_weight": 3.6,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 3.6,
+        "new_weight": 4.0,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 4.0,
+        "new_weight": 4.4,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "HITL_TRIGGERED",
+      "gate": "GATE_REMEDIATION_EXHAUSTED",
+      "question": "Wyczerpano 3 prób naprawy zadania T1."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 4.4,
+        "new_weight": 4.8,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 4.8,
+        "new_weight": 5.2,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 5.2,
+        "new_weight": 5.6,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "HITL_TRIGGERED",
+      "gate": "GATE_REMEDIATION_EXHAUSTED",
+      "question": "Wyczerpano 3 prób naprawy zadania T4."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 5.6,
+        "new_weight": 6.0,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 6.0,
+        "new_weight": 6.4,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 6.4,
+        "new_weight": 6.8,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "HITL_TRIGGERED",
+      "gate": "GATE_REMEDIATION_EXHAUSTED",
+      "question": "Wyczerpano 3 prób naprawy zadania T1."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 6.8,
+        "new_weight": 7.2,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 7.2,
+        "new_weight": 7.6,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 7.6,
+        "new_weight": 8.0,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "HITL_TRIGGERED",
+      "gate": "GATE_REMEDIATION_EXHAUSTED",
+      "question": "Wyczerpano 3 prób naprawy zadania T1."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 8.0,
+        "new_weight": 8.4,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 8.4,
+        "new_weight": 8.8,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 8.8,
+        "new_weight": 9.2,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "HITL_TRIGGERED",
+      "gate": "GATE_REMEDIATION_EXHAUSTED",
+      "question": "Wyczerpano 3 prób naprawy zadania T4."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v1",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 16,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "[01_rl_tictactoe cycle #1] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v3",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 18,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_tester",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
+        "injected_rule": "[01_rl_tictactoe cycle #2] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 9.2,
+        "new_weight": 9.6,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+        "injected_rule": "[01_rl_tictactoe cycle #3] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 9.6,
+        "new_weight": 10.0,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "background_researcher",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\background_researcher.md",
+        "injected_rule": "Ensure all symbolic references (\\ref_*) in thesis.md strictly match symbols and files defined in config.py and results.csv before generation.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 10.0,
+        "new_weight": 10.4,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "background_researcher",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\background_researcher.md",
+        "injected_rule": "Strictly validate that all \\\\ref_ast, \\\\ref_csv, and citation keys exist in their target files (config.py, results.csv, .bib) before outputting any thesis content to prevent 'Malformed symbolic tag' and 'File not found' errors.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 10.4,
+        "new_weight": 10.8,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "background_researcher",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\background_researcher.md",
+        "injected_rule": "Mandatory Pre-flight: Before generating any thesis content, execute a script to verify that all target symbols (config.py keys, results.csv columns) and files exist. If validation fails or tags are malformed, abort generation. Do not output hypothetical citations.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "QUEUE_REBUILT",
+      "generation": 1,
+      "task_ids": [
+        "Q1_CH5"
+      ]
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 10.8,
+        "new_weight": 11.2,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 11.2,
+        "new_weight": 11.6,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+        "injected_rule": "Enforce strict AST, CSV and symbolic reference parity: resolve all \\ref_ast, \\ref_csv pointers to existing symbols in config.py/results.csv; abort generation if any file or symbol is missing.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v4",
+        "old_weight": 11.6,
+        "new_weight": 12.0,
+        "delta": 0.4,
+        "degree": 1,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+        "injected_rule": "Before generating thesis content, strictly verify existence of all symbols in config.py and columns/files in results.csv; abort if unresolved pointers or missing references are detected.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "seed_writer",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+          "cycle": 1,
+          "rules_consolidated": 4,
+          "consolidated_invariant": "Enforce strict zero-hallucination grounding for all \\ref_ast and \\ref_csv symbolic pointers by verifying existence in grounded_hypergraph_state (available_ast_symbols, available_csv_columns) prior to generation; abort immediately if any reference targets missing files or symbols."
+        }
+      }
+    },
+    {
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
+        "cycle": 1,
+        "rules_consolidated": 4,
+        "consolidated_invariant": "Enforce strict zero-hallucination grounding for all \\ref_ast and \\ref_csv symbolic pointers by verifying existence in grounded_hypergraph_state (available_ast_symbols, available_csv_columns) prior to generation; abort immediately if any reference targets missing files or symbols."
+      }
+    },
+    {
+      "type": "QUEUE_REBUILT",
+      "generation": 2,
+      "task_ids": [
+        "Q2_CODE",
+        "Q2_TESTS",
+        "Q2_REFS"
+      ]
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v2",
+        "old_weight": 1.2,
+        "new_weight": 1.6,
+        "delta": 0.4,
+        "degree": 4,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Never output raw docstrings containing escaped newlines (\\n) on a single line; ensure all Python syntax is strictly valid, newline-separated, and free of literal backslash-n sequences within source code blocks.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v2",
+        "old_weight": 1.6,
+        "new_weight": 2.0,
+        "delta": 0.4,
+        "degree": 4,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Never output raw docstrings containing escaped newlines (\\n) on a single line; ensure all Python syntax is strictly valid, newline-separated, and free of literal backslash-n sequences within source code blocks. Always implement exactly the functions tested in test_core.py (e.g., check_winner, train_and_evaluate).",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "seed_coder",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+          "cycle": 1,
+          "rules_consolidated": 4,
+          "consolidated_invariant": "Maintain strict type signature parity for all exported symbols and ensure deterministic execution via seed=42; strictly format source code and docstrings to avoid literal \\n escape sequences, ensuring syntactically valid Python 3.12+ with complete, operational implementations matching test requirements."
+        }
+      }
+    },
+    {
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "cycle": 1,
+        "rules_consolidated": 4,
+        "consolidated_invariant": "Maintain strict type signature parity for all exported symbols and ensure deterministic execution via seed=42; strictly format source code and docstrings to avoid literal \\n escape sequences, ensuring syntactically valid Python 3.12+ with complete, operational implementations matching test requirements."
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v2",
+        "old_weight": 2.0,
+        "new_weight": 2.4,
+        "delta": 0.4,
+        "degree": 4,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Strictly implement check_winner(board) to handle variable-length inputs without IndexError (validate len==9 or slice safely) and ensure train_and_evaluate accepts 'seed' parameter for deterministic Q-learning reproducibility.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "QUEUE_REBUILT",
+      "generation": 3,
+      "task_ids": [
+        "Q3_CODE",
+        "Q3_TESTS",
+        "Q3_REFS"
+      ]
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v2",
+        "old_weight": 2.4,
+        "new_weight": 2.8,
+        "delta": 0.4,
+        "degree": 4,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "CRITICAL: Ensure valid Python syntax by never merging multi-line docstrings or code into a single line; always separate statements with newlines and avoid literal backslash-n sequences in source code output.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v2",
+        "old_weight": 2.8,
+        "new_weight": 3.2,
+        "delta": 0.4,
+        "degree": 4,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Strictly align implementation logic with test assertions: `check_winner` must return 'D' for a draw (full board, no winner) and `None` only if the game is ongoing; remove any unused variables in helper scripts like `plot_results.py` to satisfy Ruff linting.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "v2",
+        "old_weight": 3.2,
+        "new_weight": 3.6,
+        "delta": 0.4,
+        "degree": 4,
+        "old_tier": "LRM",
+        "new_tier": "LRM",
+        "tier": "LRM"
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
+        "injected_rule": "Strictly align implementation logic with test assertions: `check_winner` must return 'D' for a draw (full board, no winner) and `None` only if the game is ongoing; remove any unused variables in helper scripts like `plot_results.py` to satisfy Ruff linting.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    }
+  ]
+}

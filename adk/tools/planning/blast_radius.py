@@ -16,7 +16,20 @@ def calculate_blast_radius(
     matrix: dict[str, dict[str, int]] = data.get("matrix", {})
 
     if modified_node_id not in matrix:
-        raise KeyError(f"Node '{modified_node_id}' not found in hypergraph incidence matrix.")
+        for n_key, n_meta in nodes.items():
+            if n_meta.get("path") == modified_node_id or Path(str(n_meta.get("path", ""))).name == Path(modified_node_id).name:
+                modified_node_id = n_key
+                break
+
+    if modified_node_id not in matrix:
+        return {
+            "modified_node_id": modified_node_id,
+            "modified_file": nodes.get(modified_node_id, {}).get("path", modified_node_id),
+            "degree": 0,
+            "active_edges": [],
+            "affected_nodes": [modified_node_id],
+            "affected_files": [nodes.get(modified_node_id, {}).get("path", modified_node_id)],
+        }
 
     node_row = matrix[modified_node_id]
     active_edges = [edge_id for edge_id, val in node_row.items() if int(val) == 1]

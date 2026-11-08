@@ -1,2 +1,0 @@
-method,rounds,win_rate,draw_rate,loss_rate
-proposed_qlearn,500,0.649,0.11,0.241

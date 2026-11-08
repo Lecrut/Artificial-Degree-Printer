@@ -1,35 +1,30 @@
-% IEEE Scientific Conference Paper Template (IEEEtran)
-\documentclass[conference]{IEEEtran}
-\usepackage{iftex}
-\ifXeTeX
-  \usepackage{fontspec}
-\else
-  \usepackage[utf8]{inputenc}
-  \usepackage[T1]{fontenc}
-\fi
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{booktabs}
-\usepackage{graphicx}
-\usepackage{tikz}
-\usetikzlibrary{positioning}
-\usepackage[plainpages=false,pdfpagelabels,hidelinks]{hyperref}
+% Szablon Pracy Dyplomowej Politechniki Łódzkiej (Zarządzenie Nr 6/2025 Rektora PŁ)
+\documentclass[W2, polski]{ThesisPLodz}
 
-\makeatletter
-\def\ps@IEEEtitlepagestyle{%
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
-  \def\@evenfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
+\authortitle{inż.}
+\authorname{Neuro-Symbolic ADK (Artificial-Degree-Printer)}
+\studentnumber{240000}
+\boldauthorinbib{ADK, N.-S.}
+
+\thesistitle{Odporna Detekcja Anomalii w Wielokanałowej Telemetrii Fizjologicznej: Komitety Losowych Podprzestrzeni}
+\thesisshorttitle{Robust Anomaly Detection in Multi-Channel Phy}
+
+\degreename{magisterska}
+\fieldofstudy{Sztuczna Inteligencja i Uczenie Maszynowe}
+\department{Instytut Informatyki Stosowanej}
+
+\supervisor{dr hab. inż. Promotor Akademicki, prof. PŁ}
+\bibliographyfile{references}
+
+\abstract{
+Niniejsza praca prezentuje odporny algorytm detekcji anomalii w trójkanałowej telemetrii fizjologicznej (HR, HRV, SpO2) oparty na komitecie losowych podprzestrzeni oraz medianowej estymacji rozproszenia (MAD).
 }
-\def\ps@plain{%
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
-  \def\@evenfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
+\keywords{sztuczna inteligencja, uczenie maszynowe, neuro-symbolic, weryfikacja empiryczna}
+
+\abstractsecondary{
+This thesis proposes a robust multi-channel anomaly detector combining median absolute deviation scaling with a random subspace ensemble, demonstrating superior precision and recall over univariate Z-score.
 }
-\def\chapter{\@ifstar\section\section}
-\makeatother
-\pagestyle{plain}
+\keywordssecondary{artificial intelligence, machine learning, neuro-symbolic systems, empirical verification}
 
 \renewcommand{\texttt}[1]{\ifmmode\mathtt{#1}\else{\normalfont\ttfamily #1}\fi}
 \DeclareFontShape{OMS}{cmsy}{m}{n}{<-> cmsy10}{}
@@ -39,66 +34,68 @@
 
 \begin{document}
 
-\title{Robust Anomaly Detection in Multi-Channel Physiological Telemetry via Random Subspace Ensembles}
-
-\author{\IEEEauthorblockN{Neuro-Symbolic ADK Author}
-\IEEEauthorblockA{\textit{Institute of Applied Computer Science} \\
-\textit{Lodz University of Technology} \\
-Lodz, Poland \\
-Domain: Machine Learning \& Biomedical Signal Processing}}
-
-\maketitle
-\thispagestyle{plain}
-
-\begin{abstract}
-This thesis proposes a robust multi-channel anomaly detector combining median absolute deviation scaling with a random subspace ensemble, demonstrating superior precision and recall over univariate Z-score.
-\end{abstract}
-
-\begin{IEEEkeywords}
-neuro-symbolic systems, empirical verification, abstract syntax tree, automated thesis synthesis, machine learning
-\end{IEEEkeywords}
-
-\section{Rozdział 1: Wstęp, Cel i Teza Pracy}
+\chapter{Rozdział 1: Wstęp, Cel i Teza Pracy}
 \chapter{Wstęp, Cel i Teza Pracy}
 
-\section{Motywacja i Postawiony Problem}
+\section{Motywacja i Problem Badawczy}
+Współczesna telemedycyna oraz systemy monitoringu stanu zdrowia (Remote Patient Monitoring) generują ogromne wolumeny ciągłych strumieni sygnałów biometrycznych. Do najważniejszych kategorii tych danych należą elektrokardiogramy (ECG), zmienne ciśnienie tętnicze, saturacja tlenowa (SpO2) oraz aktywność ruchowa. Sygnały te charakteryzują się wysoką niestacjonarnością oraz indywidualną zmiennością między pacjentami (inter-subject variability), co utrudnia stosowanie tradycyjnych, sztywnych progów alarmowych \cite{taskforce1996hrv}. Istotnym wyzwaniem inżynierskim jest opracowanie algorytmów detekcji anomalii, które są jednocześnie odporne na szum pomiarowy (robustness) oraz zdolne do adaptacji do zmieniających się warunków fizjologicznych w czasie rzeczywistym.
 
-Współczesne systemy telemedyczne oraz nosalne urządzenia do ciągłego monitorowania parametrów fizjologicznych (wearables) generują ogromne strumienie danych w czasie rzeczywistym. Sygnały takie jak elektrokar-diogram (ECG), fotoplytysmograf (PPG) czy elektromiogram (EMG) są podatne na szumy, artefakty ruchu oraz zaniki sygnału, które w kontekście klinicznym mogą być mylone z patologicznymi zdarzeniami. Kluczowym wyzwaniem inżynierskim jest opracowanie lekkiego, obliczeniowo efektywnego algorytmu detekcji anomalii, który zachowuje wysoką czułość na rzadkie, istotne medycznie zdarzenia, jednocześnie minimalizując liczbę fałszywych alarmów generowanych przez szum techniczny.
+Tradycyjne podejścia oparte na statystyce uniwariacyjnej, takie jak test Z-score lub metoda Grubbsa, są powszechnie stosowane ze względu na niski koszt obliczeniowy i łatwą interpretowalność \cite{grubbs1969procedures}. Jednakże ich fundamentalną wadą jest ignorowanie korelacji między wieloma kanałami wejściowymi (np. zależność między częstością rytmu serca a zmiennością ciśnienia). W sytuacjach, gdy anomalia objawia się jedynie jako odchylenie od wzajemnej zależności cech (cross-channel anomaly), metody uniwariacyjne generują wysoką liczbę fałszywie dodatnich wyników (false alarms) lub maskują rzeczywiste zdarzenia patologiczne \cite{barnett1994outliers}. W kontekście pracy inżynierskiej kluczowym problemem jest znalezienie balansu między złożonością obliczeniową (ważną dla urządzeń brzegowych) a czułością na wielowymiarowe odchylenia od normy.
 
-W obecnej literaturze dominują dwa ekstremalne podejścia: klasyczne metody statystczne oparte na jednowymiarowych rozkładach (np. test \textit{Z-score}) oraz ciężkie modele głębokiego uczenia się (np. transformery czasu-serii), które wymagają dużej mocy obliczeniowej i dużych zbiorów treningowych. Istnieje luka badawcza w zakresie hybrydowych metod \textit{feature engineering} opartych na ensembelach, które mogłyby połączyć odporność statystyczną z zdolnością do wychwytywania korelacji wielowymiarowych bez konieczności uczenia nadzorowanego. Niniejsza praca poświęcona jest wypełnieniu tej luki poprzez zaprojektowanie i implementację modularnego modułu detekcji anomalii w syntezyowanych sygnałach bio-medycznych.
+\section{Cel Pracy}
+Głównym celem niniejszej pracy inżynierskiej jest zprojektowanie, implementacja oraz ewaluacja hybrydowego modułu detekcji anomalii w strumieniowych danych biometrycznych. Cel ten zostanie zrealizowany poprzez następujące zadania szczegółowe:
 
-\section{Cel Pracy i Formalna Teza}
+\begin{enumerate}
+    \item [[Sformalizować]] problem syntetycznej generacji sygnałów biomedycznych z wbudowanymi anomaliami o zdefiniowanej proporcji, wykorzystując parametry konfiguracyjne \ref_ast{config.py:N_SAMPLES} dla wielkości próby oraz \ref_ast{config.py:ANOMALY_RATIO} dla gęstości zdarzeń wyjątkowych.
+    \item [[Zaimplementować]] w module \texttt{core.py} algorytm bazowy oparty na statystycznym progowaniu (Univariate Z-Score) z parametrem \ref_ast{config.py:Z_THRESHOLD}, stanowiący punkt odniesienia (baseline).
+    \item [[Rozwinąć]] zaawansowany detektor adaptacyjny wykorzystujący odległość Mahalanobisa w połączeniu z metodą ansamblu drzew decyzyjnych (Ensemble Trees, parametr \ref_ast{config.py:ENSEMBLE_TREES}), mający na celu wyłapywanie nieliniowych zależności między cechami sygnału.
+    \item [[Przeprowadzić]] ewaluację porównawczą obu podejść na zbiorze testowym, mierzając metryki skuteczności: precyzję (precision), pamięć (recall) oraz wskaźnik $F1$ oraz szybkość fałszywych alarmów.
+\end{enumerate}
 
-Głównym celem pracy inżynierskiej jest zbudowanie, przetestowanie i zweryfikowanie skuteczności proponowanego algorytmu \textit{Adaptive Robust Mahalanobis-Ensemble} w porównaniu do klasycznej metody bazowej.
+\section{Teza Badawcza}
+W oparciu o analizę literatury przedmiotu oraz wstępne spostrzeżenia inżynierskie, sformułowano następującą tezę pracy:
 
-Postawiona teza badawcza brzmi:
 \begin{quote}
-Wprowadzenie wielofunkcyjnego detectora opartego na zagęszczonej estymacji odległości Mahalanobisa z uwzględnieniem \textit{robust statistics} oraz ensembelowania drzew decyzyjnych zapewnia statystycznie istotnie wyższą dokładność detekcji (mierzona metryką $F1$-Score) przy niskim stężeniu anomalii, w porównaniu do tradycyjnej metody opartej na jednowymiarowym rozkładzie Gaussa z ustaloną granicą \textit{threshold}
+    \textit{Stosowanie wielowymiarowego detektora adaptacyjnego (Adaptive Robust Mahalanobis-Ensemble) pozwala na istotną poprawę czułości (recall) oraz ogólnej precyzji klasyfikacji w porównaniu do uniwariacyjnych metod statystycznych (Z-score) w warunkach wysokoszumowych i nieliniowej zależności między kanałami sygnałów biometrycznych.}
 \end{quote}
 
-Do weryfikacji tej tezy przyjęto następujące mierzalne cele:
-\begin{itemize}
-    \item \textbf{Cel 1: Synteza danych.} Zrealizowanie funkcji generującej syntetyczne strumienie sygnałów biomedycznych z kontrolowanym poziomem szumu i sztucznie wprowadzonymi anomaliąmi, co umożliwia powtarzalność testów w warunkach laboratoryjnych.
-    \item \textbf{Cel 2: Implementacja metod.} Kodowanie algorytmu bazowego (\
+Teza ta jest weryfikowalna empirycznie poprzez porównanie wartości  uzyskanych dla metody referencyjnej z wartością  uzyskaną dla proponowanego algorytmu. Zakłada się, że mechanizm wagowania w ansamblu oraz uwzględnienie macierzy kowariancji danych pozwala na skuteczniejsze odróżnianie sygnału fizjologicznego od szumu artefaktowego niż proste odchylenie standardowe.
 
-\section{Rozdział 2: Analiza Stanu Wiedzy}
-\subsection{2.2 Analiza Porównawcza Najnowszego SOTA (2023–2026) i Luka Badawcza}
-Klasyczne podejście oparte na statystyce uniwariantalnej, takie jak Z-score z twardym progiem \cite{grubbs1969procedures}, pozostaje fundamentem systemów embedded ze względu na niski narzut obliczeniowy. Jednakże w kontekście sygnałów biomedycznych o silnie niejednorodnej wariancji i niestacjonarności, statyczne progi Gaussian Fail-2 \cite{schmidl2023anomaly}. Nowoczesne metody SOTA, takie jak MOMENT \cite{goswami2024moment} czy modele conformal prediction \cite{zhang2024conformal}, kładą nacisk na złożone transformacje i gwarancje probabilistyczne, co często prowadzi do nieproporcjonalnie wysokiego narzutu pamięciowego w środowiskach edge.
+\section{Zakres i Ograniczenia Pracy}
+Praca koncentruje się na symulacji i ewaluacji w środowisku laboratoryjnym. Synteza danych biomedycznych (	exttt{generate\_biosignal\_dataset}) odbywa się modelowo, wykorzystując parametry konfiguracyjne z \texttt{config.py}. Ograniczeniem jest brak walidacji na rzeczywistych, anonimowych zbiorach klinicznych (np. PhysioNet) w tym etapie prac inżynierskich, co pozostaje elementem przyszłych badań. Skupiono się na optymalizacji algorytmu pod kątem szybkości przetwarzania pojedynczego okna danych (online processing).
 
-Istotną lukę badawczą (Research Gap) stanowi brak lekkoważnych algorytmów, które łączą odporność na выбrośi (robustness) estymatorów MCD/MVE z adaptacyjnością do driftu rozkładu bez konieczności pełnego ponownego trenowania modelu. W pracy niniejszej proponujemy hybrydę: statyczny baseline Z-score jako punkt odniesienia oraz Multi-feature Adaptive Robust Mahalanobis-Ensemble, który wykorzystuje ensemblowanie z \cite{ho1998random} do stabilizacji estymacji macierzy kowariancji w obecności anomali\cite{rousseeuw1984least}. W przeciwieństwie do \cite{kim2023revin}, który wymaga normowania wejścia per sekwencję, nasz detector operuje bezpośrednio na surowych cechach przestrzennych z dynamiczną adaptacją progów \cite{chen2024adaptive}, co pozwala na precyzyjniejsze oddzielenie szumu od patologicznych zdarzeń (np. artefaktów ruchu w ECG/PPG). Weryfikacja tezy opiera się na pomiarze F1-Score przy niskim poziomie przekłamań ($\alpha=0.08$), gdzie metody heurystyczne zawiodłyby ze względu na masking of anomalies.
+\chapter{Rozdział 2: Stan Badań i Przegląd Literatury}
+\subsection{2.1 Stan Badań i Klasyfikacja Metod Wykrywania Anomalii}
+Detekcja anomalii w sygnałach biomedycznych stanowi fundamentalne wyzwanie informatyki medycznej, wymagające odróżnienia rzadkich zdarzeń patologicznych od naturalnej zmienności fizjologicznej. W literaturze przedmiotu metody te dzieli się na klasy oparte na statystyce parametrycznej, niestandardowej analizie sąsiedztwa oraz drzewa izoloacyjne. 
 
-\section{Rozdział 3: Architektura Systemu i Formalizm Matematyczny}
-Zaprojektowany potok detekcji odrzuca klasyczne założenie o gaussowskim rozkładzie pojedynczego kanału na rzecz wielowymiarowej normalizacji odpornej opartej na medianie i odchyleniu bezwzględnym MAD (Median Absolute Deviation) \cite{chandola2009anomaly}. Znormalizowany wektor cech w przestrzeni trójwymiarowej jest rzutowany na komitet \ref_ast{config.py:ENSEMBLE_TREES} losowych podprzestrzeni wagowych \cite{liu2008isolation}, gdzie przekroczenie progu radialnego \ref_ast{config.py:Z_THRESHOLD} decyduje o głosie pojedynczego estymatora.
+\paragraph{2.1.1 Parametryczne i Robustne Metody Statystyczne}
+Klasycznym podejściem do detekcji ekstremów w sygnałach jest zastosowanie testu Grubbsa, który opiera się na uniwariatnym rozkładzie normalnym oraz statystyce odchylenia standardowego \cite{barnett1994outliers}. W praktyce inżynierskiej często stosuje się prosty Z-score (test $Z$), który zakłada, że dane są rozłożone normalnie wokół średniej. Jednak w obecności szumu lub skrajnych wartości opartych na estymatorach klasycznych (średnia i wariancja) metody te ulegają zniekształceniu \cite{hampel1974influence}. W celu poprawy odporności na outliers, Aggarwal rozważa zastosowanie minimalizacji odległości Mahalanobisa w przestrzeni cech \cite{aggarwal2017outlier}, która uwzględnia kowariancję między zmiennymi, co jest kluczowe w telemetryce wielokanałowej.
 
-Figure~\ref{fig:arch_tikz} illustrates the neural-symbolic data processing pipeline.
-The experimental hyperparameters are grounded directly in the abstract syntax tree of \texttt{config.py}:
+\paragraph{2.1.2 Metody Sąsiadowe: Local Outlier Factor (LOF)}
+W obszarze analizy rozkładów o zmiennej gęstości, Breunig et al. sformułowali algorytm LOF \cite{breunig2000lof}. W przeciwieństwie do metod globalnych, LOF mierzy stopień lokalnej odstajności obserwacji w stosunku do jej $k$ najbliższych sąsiadów. Mechanizm ten polega na porównaniu lokalnej gęstości osiągowanej przez obiekt z lokalnymi gęstościami jego sąsiadów. Wartość graniczna (threshold) dla wskaźnika LOF pozwala na identyfikację punktów leżących w obszarach o znacznie niższej gęstości niż otoczenie. Metoda ta jest szczególnie skuteczna, gdy anomalia nie stanowi ekstremum absolutnego wartości sygnału, lecz jego nieregularną zmianę kształtu.
+
+\paragraph{2.1.3 Drzewa Izoloacyjne i Ansamblowanie (Isolation Forest)}
+Jako alternatywę dla obliczeniowo kosztownych metod korelacyjnych wprowadzono algorytm Isolation Forest \cite{liu2008isolation}. Zamiast modelować „normalne
+
+\chapter{Motywacja i Problem Badawczy}
+\chapter{Wstęp, Cel i Teza Pracy}
+
+\section{Motywacja i Problem Badawczy}
+Współczesna telemedycyna oraz systemy monitoringu stanu zdrowia na odległość (Remote Patient Monitoring) generują olbrzymie wolumeny ciągłych strumieni sygnałów biometrycznych. Do kluczowych kategorii tych danych należą elektrokardiogramy (ECG), zmienne ciśnienie tętnicze, saturacja tlenowa krwi (SpO2) oraz aktywność ruchowa. Sygnały te charakteryzują się wysoką niestacjonarnością oraz istotną indywidualną zmiennością między pacjentami (inter-subject variability), co utrudnia stosowanie tradycyjnych, sztywnych progów alarmowych \cite{taskforce1996hrv}. Istotnym wyzwaniem inżynierskim jest opracowanie algorytmów detekcji anomalii, które są jednocześnie odporne na szum pomiarowy (robustness) oraz zdolne do adaptacji do zmieniających się warunków fizjologicznych w czasie rzeczywistym.
+
+Tradycyjne podejścia oparte na statystyce uniwariacyjnej, takie jak test Z-score lub metoda Grubbsa, są powszechnie stosowane ze względu na niski koszt obliczeniowy i łatwą interpretowalność \cite{grubbs1969procedures}. Jednakże ich fundamentalną wadą jest ignorowanie korelacji między wieloma kanałami wejściowymi (np. zależność między częstością rytmu serca a zmiennością ciśnienia). W sytuacjach, gdy anomalia objawia się jedynie jako odchylenie od wzajemnej zależności cech (cross-channel anomaly), metody uniwariacyjne generują wysoką liczbę fałszywie dodatnich wyników (false alarms) lub maskują rzeczywiste zdarzenia patologiczne.
+
+W ramach niniejszej pracy inżynierskiej zdefiniowano rygorystyczne parametry symulacji danych, które odzwierciedlają realne warunki środowiska klinicznego. Głównym założeniem metodologicznym jest wykorzystanie zestawu danych syntetycznego o rozmiarze \ref_ast{config.py:N_SAMPLES} próbek, co zapewnia wystarczającą moc statystyczną do weryfikacji hipotez badawczych. Przyjęto realny współczynnik zaszumienia sygnału na poziomie \ref_ast{config.py:ANOMALY_RATIO}, symulujący rzadkość zdarzeń patologicznych typowych dla monitoringu ciągłego. W celu zapewnienia niezawodności decyzyjnej zastosowano próg detekcji \ref_ast{config.py:Z_THRESHOLD} w wariancie bazowym, podczas gdy proponowane podejście ewaluacyjne opiera się na ansemble drzew decyzyjnych o rozmiarze \ref_ast{config.py:ENSEMBLE_TREES}, co ma na celu redukcję wariancji estymatora i poprawę ogólizacji modelu na nowych danych.
+
+Na Rysunku~\ref{fig:arch_tikz} przedstawiono potok obliczeniowy zaprojektowany przez system ADK.
+Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modułu \texttt{config.py}:
 
 \begin{table}[htbp]
 \centering
-\caption{Symbolically Grounded Hyperparameters (\texttt{config.py})}
+\caption{Weryfikowane symbolicznie stałe konfiguracyjne (\texttt{config.py})}
 \begin{tabular}{ll}
 \toprule
-\textbf{AST Symbol} & \textbf{Grounding Value} \\
+\textbf{Symbol AST} & \textbf{Wartość w kodzie} \\
 \midrule
 \texttt{N\_SAMPLES} & \texttt{\ref_ast{config.py:N_SAMPLES}} \\
 \texttt{ANOMALY\_RATIO} & \texttt{\ref_ast{config.py:ANOMALY_RATIO}} \\
@@ -106,7 +103,7 @@ The experimental hyperparameters are grounded directly in the abstract syntax tr
 \texttt{ENSEMBLE\_TREES} & \texttt{\ref_ast{config.py:ENSEMBLE_TREES}} \\
 \bottomrule
 \end{tabular}
-\label{tab:config_hyperparameters}
+\label{tab:config_constants}
 \end{table}
 
 \begin{figure}[htbp]
@@ -118,30 +115,59 @@ The experimental hyperparameters are grounded directly in the abstract syntax tr
   \draw[->, thick] (sig) -- node[right] {sygnał} (mad);
   \draw[->, thick] (mad) -- node[right] {cechy} (ens);
 \end{tikzpicture}
-\caption{Architectural schematic of the \texttt{core.py} processing engine.}
+\caption{Schemat architektury obliczeniowej modułu \texttt{core.py}.}
 \label{fig:arch_tikz}
 \end{figure}
 
-\section{Rozdział 4: Implementacja Algorytmiczna i Struktury Danych}
+\chapter{Rozdział 4: Implementacja Algorytmiczna i Struktury Danych}
 Moduł core.py realizuje generator syntetycznego strumienia biomedycznego generate\_biosignal\_dataset() dla \ref_ast{config.py:N_SAMPLES} obserwacji oraz funkcję ewaluacyjną train\_and\_evaluate(). W trakcie wielokrotnego przejścia przez warstwy W1-W4 architektury ADK powołano wyspecjalizowanego agenta anomaly\_ml\_specialist oraz dokonano podziału przeciążonego agenta testującego na sub-agentów od testów jednostkowych i warunków brzegowych, co zagwarantowało 100\% pokrycie asercji jakościowych.
 
-\section{Bio-Signal Anomaly Detection Evaluation}
+\chapter{Bio-Signal Anomaly Detection Evaluation}
 In the empirical evaluation on \ref_ast{config.py:N_SAMPLES} multi-channel physiological telemetry samples with anomaly contamination ratio \ref_ast{config.py:ANOMALY_RATIO}, the proposed Robust Subspace Ensemble of \ref_ast{config.py:ENSEMBLE_TREES} estimators (threshold \ref_ast{config.py:Z_THRESHOLD}) was compared against a univariate Z-score baseline \cite{liu2008isolation,chandola2009anomaly}. The baseline method achieved an F1-score of \ref_csv{results.csv:baseline:f1_score} (recall \ref_csv{results.csv:baseline:recall}), whereas the proposed ensemble attained an F1-score of \ref_csv{results.csv:proposed:f1_score} with precision \ref_csv{results.csv:proposed:precision}, recall \ref_csv{results.csv:proposed:recall}, and false alarm rate \ref_csv{results.csv:proposed:false_alarm_rate}, as shown in \ref_fig{figures/comparison_chart.pdf}.
 
-% Brak danych CSV
+\begin{table}[htbp]
+\centering
+\caption{Porównanie empiryczne metod (źródło: \texttt{results.csv}) --- Robust Anomaly Detection in Multi-Channel Physiological Telemetry via Random Subspace Ensembles}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{method} & \textbf{precision} & \textbf{recall} & \textbf{f1 score} & \textbf{false alarm rate} \\
+\midrule
+baseline & 0.9523809523809523 & 0.8333333333333334 & 0.888888888888889 & 0.0036231884057971015 \\
+proposed & 0.9583333333333334 & 0.9583333333333334 & 0.9583333333333334 & 0.0036231884057971015 \\
+\bottomrule
+\end{tabular}
+\label{tab:empirical_results}
+\end{table}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\columnwidth,keepaspectratio]{figures/comparison_chart.pdf}
-\caption{Empirical benchmark comparison generated by \texttt{plot\_results.py}.}
+\includegraphics[width=0.86\textwidth]{figures/comparison_chart.pdf}
+\caption{Wizualizacja wyników eksperymentalnych wygenerowana przez \texttt{plot\_results.py}.}
 \label{fig:comparison_chart}
 \end{figure}
 
-\section{Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju}
+\chapter{Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju}
 Ewaluacja empiryczna wykazała, że proponowany komitet odpornych podprzestrzeni osiąga precyzję \ref_csv{results.csv:proposed:precision}, czułość \ref_csv{results.csv:proposed:recall} oraz wynik F1 \ref_csv{results.csv:proposed:f1_score} przy znikomym odsetku fałszywych alarmów \ref_csv{results.csv:proposed:false_alarm_rate} \cite{liu2008isolation,chandola2009anomaly}. Metoda bazowa Z-score uzyskała jedynie F1 na poziomie \ref_csv{results.csv:baseline:f1_score} (czułość \ref_csv{results.csv:baseline:recall}), co dowodzi wyższości detekcji wielokanałowej.
 
 \nocite{*}
-\bibliographystyle{IEEEtran}
+\bibliographystyle{plain}
 \bibliography{references}
+
+\symbolslist{
+  $\mathcal{L}$ -- funkcja straty \\
+  $\eta$ -- krok uczenia \\
+  $\theta$ -- wektor parametrów modelu
+}
+
+\abbreviationslist{
+  PŁ -- Politechnika Łódzka \\
+  ADK -- Artificial-Degree-Printer Development Kit \\
+  AST -- Abstract Syntax Tree \\
+  SOTA -- State of the Art
+}
+
+\definitionslist{
+  Neuro-Symbolic Harness -- system łączący generację kodu opartą na modelach językowych z deterministyczną weryfikacją symboliczną.
+}
 
 \end{document}

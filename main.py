@@ -299,11 +299,11 @@ def main() -> None:
             f"Odpytania LLM: {suite_res.get('total_llm_calls', 0)} (w tym sieciowe do LLM: {suite_res.get('total_live_network_calls', 0)})"
         )
         print(f"Zbiorczy raport PDF: {suite_res['master_summary_pdf']}")
-        print(f"Stan po ewolucji W4: {suite_res['evolved_adk_state_dir']}")
+        print("Stan ewolucji W4   : zapisany autonomicznie w każdym folderze zadania (.\\benchmarks\\<zadanie>\\evolved_adk\\)")
         print("=" * 80)
         print("LOKALIZACJA WYNIKÓW (KAŻDE ZADANIE W OSOBNYM PODKATALOGU, NIC SIĘ NIE NADPISUJE):")
         print("  * Główny folder w repozytorium : .\\benchmarks\\")
-        print("  * Folder w przestrzeni ADK     : .\\adk\\workspace\\benchmarks\\")
+        print("  * Wyewoluowany ADK per zadanie : .\\benchmarks\\<zadanie>\\evolved_adk\\")
         print("=" * 80)
         for t_res in suite_res["tasks"]:
             art = t_res["artifacts"]

@@ -1,17 +1,25 @@
+"""Hyperparameters for the Tic-Tac-Toe Q-Learning Agent.
+
+This module defines constants required by `core.py` for deterministic training
+and evaluation of the reinforcement learning agent. All symbols are exported
+to support AST pointer resolution in thesis documentation.
 """
-Configuration constants for Tic-Tac-Toe Q-Learning agent.
+from typing import Final
 
-This module defines hyperparameters required for the training process,
-amplifying modularity and reproducibility as per standard academic software practices.
+# Learning rate (alpha)
+ALPHA: Final[float] = 0.2
 
-Constants:
-    ALPHA (float): Learning rate for the Q-value update rule.
-    GAMMA (float): Discount factor for future rewards.
-    EPSILON (float): Exploration rate (epsilon-greedy strategy).
-    EPISODES (int): Total number of training episodes to execute.
-"""
+# Discount factor (gamma)
+GAMMA: Final[float] = 0.95
 
-ALPHA: float = 0.2
-GAMMA: float = 0.95
-EPSILON: float = 0.1
-EPISODES: int = 500
+# Exploration rate (epsilon)
+EPSILON: Final[float] = 0.1
+
+# Total number of training episodes
+EPISODES: Final[int] = 500
+
+# Sample size for Monte Carlo estimation in baseline/benchmarking
+SAMPLE_SIZE: Final[int] = 1000
+
+# Default learning rate for any auxiliary optimizers or fallbacks
+LEARNING_RATE: Final[float] = 0.01

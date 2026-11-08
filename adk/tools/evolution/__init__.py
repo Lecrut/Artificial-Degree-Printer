@@ -3,12 +3,14 @@
 from adk.tools.evolution.agent_creator import create_specialized_agent
 from adk.tools.evolution.agent_mutator import consolidate_agent_prompt, mutate_agent_prompt
 from adk.tools.evolution.agent_splitter import split_agent
+from adk.tools.evolution.dependency_manager import install_package
 from adk.tools.evolution.sandbox_verifier import evaluate_and_promote_validator
 
 __all__ = [
     "consolidate_agent_prompt",
     "create_specialized_agent",
     "evaluate_and_promote_validator",
+    "install_package",
     "mutate_agent_prompt",
     "split_agent",
 ]

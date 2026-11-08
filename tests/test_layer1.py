@@ -43,6 +43,16 @@ def test_blast_radius_and_complexity_router():
     assert select_model_tier("v1", matrix_path) == "LRM"
     assert select_model_tier("v4", matrix_path) == "LRM"
 
+    # Unknown node robustness: select_model_tier returns LRM fallback and does not raise KeyError
+    assert select_model_tier("v7", matrix_path) == "LRM"
+    assert select_model_tier("core.py", matrix_path) in ("LRM", "SML")
+
+    # Unknown node in calculate_blast_radius returns safe fallback dict
+    blast_unknown = calculate_blast_radius("v7", matrix_path)
+    assert blast_unknown["modified_node_id"] == "v7"
+    assert blast_unknown["degree"] == 0
+    assert "v7" in blast_unknown["affected_nodes"]
+
 
 def test_call_planning_agents():
     planner_res = call_agent(

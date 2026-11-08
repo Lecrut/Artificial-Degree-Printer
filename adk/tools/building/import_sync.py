@@ -53,14 +53,28 @@ def extract_hyperedge_exports(
                 continue
 
             functions: list[str] = []
+            signatures: dict[str, str] = {}
+            docstrings: dict[str, str] = {}
             classes: list[str] = []
             variables: list[str] = []
 
             for node in tree.body:
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_"):
                     functions.append(node.name)
+                    try:
+                        args_unparsed = ast.unparse(node.args) if hasattr(ast, "unparse") else ""
+                        ret_unparsed = f" -> {ast.unparse(node.returns)}" if getattr(node, "returns", None) else ""
+                        signatures[node.name] = f"def {node.name}({args_unparsed}){ret_unparsed}"
+                    except Exception:
+                        signatures[node.name] = f"def {node.name}(...)"
+                    doc = ast.get_docstring(node)
+                    if doc:
+                        docstrings[node.name] = doc[:300]
                 elif isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
                     classes.append(node.name)
+                    doc = ast.get_docstring(node)
+                    if doc:
+                        docstrings[node.name] = doc[:300]
                 elif isinstance(node, ast.Assign):
                     for target in node.targets:
                         if isinstance(target, ast.Name) and not target.id.startswith("_"):
@@ -71,6 +85,8 @@ def extract_hyperedge_exports(
 
             exports_by_file[rel_path] = {
                 "functions": functions,
+                "signatures": signatures,
+                "docstrings": docstrings,
                 "classes": classes,
                 "variables": variables,
             }

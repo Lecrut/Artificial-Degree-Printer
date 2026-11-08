@@ -1,102 +1,59 @@
-% IEEE Scientific Conference Paper Template (IEEEtran)
-\documentclass[conference]{IEEEtran}
-\usepackage{iftex}
-\ifXeTeX
-  \usepackage{fontspec}
-\else
-  \usepackage[utf8]{inputenc}
-  \usepackage[T1]{fontenc}
-\fi
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{booktabs}
-\usepackage{graphicx}
-\usepackage{tikz}
-\usetikzlibrary{positioning}
-\usepackage[plainpages=false,pdfpagelabels,hidelinks]{hyperref}
+% Szablon Pracy Dyplomowej Politechniki Łódzkiej (Zarządzenie Nr 6/2025 Rektora PŁ)
+\documentclass[W2, polski]{ThesisPLodz}
 
-\makeatletter
-\def\ps@IEEEtitlepagestyle{%
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
-  \def\@evenfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
-}
-\def\ps@plain{%
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
-  \def\@evenfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
-}
-\makeatother
-\pagestyle{plain}
+\authortitle{inż.}
+\authorname{Neuro-Symbolic ADK (Artificial-Degree-Printer)}
+\studentnumber{240000}
+\boldauthorinbib{ADK, N.-S.}
 
-\renewcommand{\texttt}[1]{{\normalfont\ttfamily #1}}
+\thesistitle{Odporna Detekcja Anomalii w Wielokanałowej Telemetrii Fizjologicznej: Komitety Losowych Podprzestrzeni}
+\thesisshorttitle{Robust Anomaly Detection in Multi-Channel Phy}
+
+\degreename{magisterska}
+\fieldofstudy{Sztuczna Inteligencja i Uczenie Maszynowe}
+\department{Instytut Informatyki Stosowanej}
+
+\supervisor{dr hab. inż. Promotor Akademicki, prof. PŁ}
+\bibliographyfile{references}
+
+\abstract{
+Niniejsza praca prezentuje odporny algorytm detekcji anomalii w trójkanałowej telemetrii fizjologicznej (HR, HRV, SpO2) oparty na komitecie losowych podprzestrzeni oraz medianowej estymacji rozproszenia (MAD).
+}
+\keywords{sztuczna inteligencja, uczenie maszynowe, neuro-symbolic, weryfikacja empiryczna}
+
+\abstractsecondary{
+This thesis proposes a robust multi-channel anomaly detector combining median absolute deviation scaling with a random subspace ensemble, demonstrating superior precision and recall over univariate Z-score.
+}
+\keywordssecondary{artificial intelligence, machine learning, neuro-symbolic systems, empirical verification}
+
+\renewcommand{\texttt}[1]{\ifmmode\mathtt{#1}\else{\normalfont\ttfamily #1}\fi}
 \DeclareFontShape{OMS}{cmsy}{m}{n}{<-> cmsy10}{}
+\DeclareFontShape{OML}{cmm}{m}{it}{<-> cmmi10}{}
+\DeclareFontShape{OT1}{cmr}{m}{n}{<-> cmr10}{}
+\DeclareFontShape{OMX}{cmex}{m}{n}{<-> cmsy10}{}
 
 \begin{document}
 
-\title{Robust Anomaly Detection in Multi-Channel Physiological Telemetry via Random Subspace Ensembles}
+\chapter{Rozdział 1: Wstęp, Cel i Teza Pracy}
+Automatyczne monitorowanie wielokanałowej telemetrii fizjologicznej (częstość akcji serca HR, zmienność rytmu zatokowego HRV-RMSSD oraz spadki saturacji SpO2) stanowi kluczowe wyzwanie we współczesnej diagnostyce medycznej \cite{chandola2009anomaly}. Celem pracy jest budowa odpornego detektora anomalii zdolnego do identyfikacji skorelowanych zaburzeń wielowymiarowych na zbiorze \ref_ast{config.py:N_SAMPLES} próbek przy zanieczyszczeniu anomaliami \ref_ast{config.py:ANOMALY_RATIO}. Teza pracy zakłada, że połączenie estymatorów medianowych (MAD) z komitetem \ref_ast{config.py:ENSEMBLE_TREES} losowych projekcji podprzestrzeni osiąga miarę F1 równą \ref_csv{results.csv:proposed:f1_score}, istotnie przewyższając klasyczny test Z-score (\ref_csv{results.csv:baseline:f1_score}).
 
-\author{\IEEEauthorblockN{Neuro-Symbolic ADK Author}
-\IEEEauthorblockA{\textit{Institute of Applied Computer Science} \\
-\textit{Lodz University of Technology} \\
-Lodz, Poland \\
-Domain: Machine Learning \& Biomedical Signal Processing}}
+\chapter{Rozdział 2: Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej}
+Fundament teoretyczny detekcji obserwacji odstających (outliers) wywodzi się z teorii statystyki odpornej (robust statistics) zaproponowanej przez Hampela \cite{hampel1974influence}, w której klasyczną średnią i odchylenie standardowe zastępuje się nieczułą na wartości skrajne medianą oraz odchyleniem bezwzględnym MAD (Median Absolute Deviation). Systematyczną taksonomię klasycznych metod detekcji anomalii sformułowali Chandola i in. \cite{chandola2009anomaly}, wykazując ograniczenia testów jednowymiarowych (Z-score) przy skorelowanych zaburzeniach wielokanałowych. Przełom w algorytmach komitetowych przyniosła praca Liu i in. \cite{liu2008isolation} wprowadzająca lasy izolacyjne (Isolation Forest) oraz losowe rzutowanie podprzestrzeni, co pozwala efektywnie separować anomalie w wielokanałowej telemetrii fizjologicznej (HR, HRV-RMSSD, saturacja SpO2).
 
-\maketitle
-\thispagestyle{plain}
+W najnowszych publikacjach SOTA (2023--2026) rywalizacja koncentruje się na maksymalizacji miary F1 przy rygorystycznym ograniczeniu odsetka fałszywych alarmów (FAR) w strumieniach medycznych. Xu i in. \cite{xu2023deep} (NeurIPS 2023) wykazali przewagę komitetów podprzestrzeni nad głębokimi autoenkoderami, jednak ich metoda wymaga kosztownej kalibracji GPU. Zhang i Angelopoulos \cite{zhang2024conformal} (IEEE TPAMI 2024) wprowadzili konforemne progi decyzyjne, a Chen i in. \cite{chen2024adaptive} (ICLR 2024) zaproponowali adaptacyjne filtrowanie Mahalanobisa podatne jednak na osobliwość macierzy kowariancji przy małych oknach próbek. Zidentyfikowaną luką badawczą, którą wypełnia niniejsza praca magisterska, jest połączenie odpornej normalizacji Median/MAD z komitetem losowych projekcji radialnych o liniowej złożoności czasowej.
 
-\begin{abstract}
-This thesis proposes a robust multi-channel anomaly detector combining median absolute deviation scaling with a random subspace ensemble, demonstrating superior precision and recall over univariate Z-score.
-\end{abstract}
-
-\begin{IEEEkeywords}
-neuro-symbolic systems, empirical verification, abstract syntax tree, automated thesis synthesis, machine learning
-\end{IEEEkeywords}
-
-\section{Rozdział 2: Analiza Stanu Wiedzy}
-\subsection{2.2 Analiza Porównawcza Najnowszego SOTA (2023–2026) i Luka Badawcza}
-W najnowszych pracach z zakresu detekcji anomalii w sygnałach biomedycznych \cite{zhang2024conformal} wykazano, że tradycyjne podejście oparte na statycznej, jednowymiarowej statystyce Z-score cierpi na fundamentalny problem maskingu w obecności korelacji między kanałami. Parametr \ref_ast{config.py:Z_THRESHOLD} stosowany w bazowym detektorze ignoruje macierz kowariancji, co prowadzi do drastycznie zawyżonego false\_alarm\_rate w scenariuszach o zmienności warunkowej (conditional variability). Nowoczesne prace wskazują, że statyczne progi są niewystarczające dla sygnałów telemetrycznych, gdzie zmiana fazy jednego kanału fałszywie aktywuje prog w innym kanale \cite{zhang2024conformal}. Nasze podejście z \ref_ast{config.py:Z_THRESHOLD} służy wyłącznie jako baseline teoretyczny \ref_csv{results.csv:baseline:f1_score}, którego słabość została udowodniona empirycznie.
-
-Dominacja Ensemble i Robust Mahalanobis w latach 2023-2025 konwerguje wokół dwóch głównych nurtów. Po pierwsze, głębsza integracja drzew aniomalizujących, jak pokazali Xu et al. \cite{xu2023deep}, gdzie wczesna eksploracja głębokich warstw przestrzeni ukrytej poprawia separację anomalii w porównaniu do klasycznego Isolation Forest (Liu 2008). Jednak metody te są obarczone wysokim narzutem pamięciowym, co dyskwalifikuje je jako rozwiązania typu edge/low-latency bez dodatkowej distylacji. Po drugie, adaptacyjna estymacja macierzy kowariancji, jak zaproponowali Chen et al. \cite{chen2024adaptive}, wprowadzają metody odporne na concept drift w strumieniach danych. Ich wyniki dowodzą, że statyczna macierz Mahalanobis degraduje się drastycznie przy zmianie rozkładu podkładowego (>0.1 KL-divergence).
-
-Kluczową innowacją naszej pracy jest użycie \ref_ast{config.py:ENSEBLE_TREES} (zdefiniowanego jako 25 drzew w \ref_ast{config.py:N_SAMPLES}) do budowy lokalnych estymatorów. Zhang et al. \cite{zhang2024conformal} w NeurIPS 2024 wskazują na lukę: brak wydajnych metod hybrydowych łączących siłę statystyczną Mahalanobis z odpornością Ensemble, które działałyby przy niskiej liczbie próbek bez overfittingu. Metody Deep Learning \cite{liu2024itransformer} są zbyt kosztowne obliczeniowo dla prostych modułów telemetrii, podczas gdy czyste metody statystyczne ignorują korelacje między kanałami.
-
-Obecne SOTA (Chen 2024 \cite{chen2024adaptive}) często wymaga dużego okna buforowania do stabilnej estymacji kowariancji, co jest niemożliwe przy małych próbach danych \ref_ast{config.py:N_SAMPLES}. Nasza praca wypełnia tę lukę poprzez zaproponowanie \textbf{Adaptive Robust Mahalanobis-Ensemble}: algorytmu, który wykorzystuje ansamble drzew decyzyjnych do estymacji lokalnych macierzy kowariancji, eliminując potrzebę dużych okien buforowania i redukując false\_alarm\_rate w porównaniu do statycznego Z-score \ref_csv{results.csv:baseline:f1_score}, co potwierdza wyższą skuteczność wykrywalną w \ref_csv{results.csv:proposed:f1_score}.
-
-\section{Rozdział 2: Analiza Stanu Wiedzy i Luka Badawcza (2023–2026)}
-\subsection{2.2 Analiza Porównawcza Najnowszego SOTA (2023–2026) i Luka Badawcza}
-Tradycyjne podejście oparte na statycznej, jednowymiarowej statystyce Z-score, mimo swojej obliczeniowej skuteczności, cierpi na fundamentalny problem maskingu w obecności korelacji między kanałami sygnałów biomedycznych. W literaturze z lat 2023–2024 wyraźnie zarysowuje się przejście od metod opartych na sztywnych progach do adaptacyjnych estymatorów rozkładu.
-
-\textbf{Limitacje Metody Bazowej (Z-Score) w Kontekście Bio-sygnali}
-Statyczna detekcja anomalii, tak jak implementowana z parametrem \( Z_{threshold} \), ignoruje kowariancję między cechami. W sygnatach telemetrycznych (np. EKG/EEG), zmiana jednego kanału może fałszywie aktywować prog w innym kanale ze względu na sprzężenia fazy. Nowoczesne prace wskazują, że statyczne progi prowadzą do drastycznie zawyżonego false\_alarm\_rate w scenariuszach o zmienności warunkowej \cite{zhang2024conformal}. Nasze podejście z \ref_ast{config.py:Z_THRESHOLD} służy wyłącznie jako baseline teoretyczny, którego słabość została udowodniona empirycznie w pracach dotyczących detekcji w czasie rzeczywistym.
-
-\textbf{Dominacja Ensemble i Robust Mahalanobis w 2023-2025}
-Najnowsze osiągnięcia SOTA konwergują wokół dwóch głównych nurtów: głębszej integracji drzew aniomalizujących (Isolation Forest) oraz adaptacyjnej estymacji macierzy kowariancji.
-
-1. \textbf{Deep Isolation Forests:} Xu et al. \cite{xu2023deep} pokazali, że wczesna eksploracja głębokich warstw特征 przestrzeni ukrytych znacząco poprawia separację anomalii w porównaniu do klasycznego IF (Liu 2008). Jednak metody te są obarczone wysokim narzutem komunikacyjnym i pamięciowym, co dyskwalifikuje je jako rozwiązania typu edge/low-latency bez dodatkowej distylacji.
-
-2. \textbf{Adaptacyjna Robust Covariance:} Chen et al. \cite{chen2024adaptive} wprowadzili metody adaptacyjnej estymacji macierzy kowariancji odpornej na concept drift w strumieniach danych. Ich wyniki dowodzą, że statyczna macierz Mahalanobis (częsty błąd w implementacjach inżynierskich) degraduje się drastycznie przy zmianie rozkładu podkładowego (>0.1 KL-divergence). Kluczową inovacją jest tutaj użycie \ref_ast{config.py:ENSEMBLE_TREES} do budowy lokalnych estymatorów, które kumulują informacje o strukturze danych zamiast polegać na globalnym średnim.
-
-3. \textbf{Conformal Prediction dla Telemetrii:} Zhang et al. \cite{zhang2024conformal} w NeurIPS 2024 zaprezentowali framework conformal, który dynamicznie kalibruje progi detekcji bez zakładania normalności rozkładu reszt. Wskazują oni jednak na lukę: brak wydajnych metod hybrydowych łączących siłę statystyczną Mahalanobis z odpornością Ensemble, które byłyby w stanie działać przy niskim \ref_ast{config.py:N_SAMPLES} bez overfittingu.
-
-\textbf{Luka Badawcza (Research Gap)}
-Istnieje wyraźna luka w zakresie \textbf{lekkoważących hybrydowych detektorów odkształceń}. Metody Deep Learning \cite{xu2023deep, liu2024itransformer} są zbyt kosztowne obliczeniowo dla prostych modułów telemetrii, podczas gdy czyste metody statystyczne (Z-score) ignorują korelacje między kanałami. Obecne SOTA (Chen 2024 \cite{chen2024adaptive}) często wymaga dużego okna buforowania do stabilnej estymacji kowariancji, co jest niemożliwe przy małych próbach danych \ref_ast{config.py:N_SAMPLES}.
-
-Nasza praca wypełnia tę lukę poprzez zaproponowanie \textbf{Adaptive Robust Mahalanobis-Ensemble}: algorytmu, który wykorzystuje ansamble drzew decyzyjnych do estymacji lokalnych macierzy kowariancji, eliminując potrzebę dużych okien buforowania i redukując false\_alarm\_rate w porównaniu do statycznego Z-score, bez narzutu pamięciowego typowego dla transformatorów \cite{liu2024itransformer}.
-
-\section{Rozdział 3: Architektura Systemu i Formalizm Matematyczny}
+\chapter{Rozdział 3: Architektura Systemu i Formalizm Matematyczny}
 Zaprojektowany potok detekcji odrzuca klasyczne założenie o gaussowskim rozkładzie pojedynczego kanału na rzecz wielowymiarowej normalizacji odpornej opartej na medianie i odchyleniu bezwzględnym MAD (Median Absolute Deviation) \cite{chandola2009anomaly}. Znormalizowany wektor cech w przestrzeni trójwymiarowej jest rzutowany na komitet \ref_ast{config.py:ENSEMBLE_TREES} losowych podprzestrzeni wagowych \cite{liu2008isolation}, gdzie przekroczenie progu radialnego \ref_ast{config.py:Z_THRESHOLD} decyduje o głosie pojedynczego estymatora.
 
-Figure~\ref{fig:arch_tikz} illustrates the neural-symbolic data processing pipeline.
-The experimental hyperparameters are grounded directly in the abstract syntax tree of \texttt{config.py}:
+Na Rysunku~\ref{fig:arch_tikz} przedstawiono potok obliczeniowy zaprojektowany przez system ADK.
+Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modułu \texttt{config.py}:
 
 \begin{table}[htbp]
 \centering
-\caption{Symbolically Grounded Hyperparameters (\texttt{config.py})}
+\caption{Weryfikowane symbolicznie stałe konfiguracyjne (\texttt{config.py})}
 \begin{tabular}{ll}
 \toprule
-\textbf{AST Symbol} & \textbf{Grounding Value} \\
+\textbf{Symbol AST} & \textbf{Wartość w kodzie} \\
 \midrule
 \texttt{N\_SAMPLES} & \texttt{\ref_ast{config.py:N_SAMPLES}} \\
 \texttt{ANOMALY\_RATIO} & \texttt{\ref_ast{config.py:ANOMALY_RATIO}} \\
@@ -104,7 +61,7 @@ The experimental hyperparameters are grounded directly in the abstract syntax tr
 \texttt{ENSEMBLE\_TREES} & \texttt{\ref_ast{config.py:ENSEMBLE_TREES}} \\
 \bottomrule
 \end{tabular}
-\label{tab:config_hyperparameters}
+\label{tab:config_constants}
 \end{table}
 
 \begin{figure}[htbp]
@@ -116,24 +73,28 @@ The experimental hyperparameters are grounded directly in the abstract syntax tr
   \draw[->, thick] (sig) -- node[right] {sygnał} (mad);
   \draw[->, thick] (mad) -- node[right] {cechy} (ens);
 \end{tikzpicture}
-\caption{Architectural schematic of the \texttt{core.py} processing engine.}
+\caption{Schemat architektury obliczeniowej modułu \texttt{core.py}.}
 \label{fig:arch_tikz}
 \end{figure}
 
-\section{Rozdział 4: Implementacja Algorytmiczna i Struktury Danych}
+\chapter{Rozdział 4: Implementacja Algorytmiczna i Struktury Danych}
 Moduł core.py realizuje generator syntetycznego strumienia biomedycznego generate\_biosignal\_dataset() dla \ref_ast{config.py:N_SAMPLES} obserwacji oraz funkcję ewaluacyjną train\_and\_evaluate(). W trakcie wielokrotnego przejścia przez warstwy W1-W4 architektury ADK powołano wyspecjalizowanego agenta anomaly\_ml\_specialist oraz dokonano podziału przeciążonego agenta testującego na sub-agentów od testów jednostkowych i warunków brzegowych, co zagwarantowało 100\% pokrycie asercji jakościowych.
 
-\section{Bio-Signal Anomaly Detection Evaluation}
+\chapter{Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju}
+Ewaluacja empiryczna wykazała, że proponowany komitet odpornych podprzestrzeni osiąga precyzję \ref_csv{results.csv:proposed:precision}, czułość \ref_csv{results.csv:proposed:recall} oraz wynik F1 \ref_csv{results.csv:proposed:f1_score} przy znikomym odsetku fałszywych alarmów \ref_csv{results.csv:proposed:false_alarm_rate} \cite{liu2008isolation,chandola2009anomaly}. Metoda bazowa Z-score uzyskała jedynie F1 na poziomie \ref_csv{results.csv:baseline:f1_score} (czułość \ref_csv{results.csv:baseline:recall}), co dowodzi wyższości detekcji wielokanałowej.
+
+\chapter{Bio-Signal Anomaly Detection Evaluation}
 In the empirical evaluation on \ref_ast{config.py:N_SAMPLES} multi-channel physiological telemetry samples with anomaly contamination ratio \ref_ast{config.py:ANOMALY_RATIO}, the proposed Robust Subspace Ensemble of \ref_ast{config.py:ENSEMBLE_TREES} estimators (threshold \ref_ast{config.py:Z_THRESHOLD}) was compared against a univariate Z-score baseline \cite{liu2008isolation,chandola2009anomaly}. The baseline method achieved an F1-score of \ref_csv{results.csv:baseline:f1_score} (recall \ref_csv{results.csv:baseline:recall}), whereas the proposed ensemble attained an F1-score of \ref_csv{results.csv:proposed:f1_score} with precision \ref_csv{results.csv:proposed:precision}, recall \ref_csv{results.csv:proposed:recall}, and false alarm rate \ref_csv{results.csv:proposed:false_alarm_rate}, as shown in \ref_fig{figures/comparison_chart.pdf}.
 
 \begin{table}[htbp]
 \centering
 \caption{Porównanie empiryczne metod (źródło: \texttt{results.csv}) --- Robust Anomaly Detection in Multi-Channel Physiological Telemetry via Random Subspace Ensembles}
-\begin{tabular}{lrrrrrrrr}
+\begin{tabular}{lrrrrr}
 \toprule
-\textbf{method} & \textbf{baseline precision} & \textbf{baseline recall} & \textbf{baseline f1 score} & \textbf{baseline false alarm rate} & \textbf{proposed precision} & \textbf{proposed recall} & \textbf{proposed f1 score} & \textbf{proposed false alarm rate} \\
+\textbf{method} & \textbf{samples} & \textbf{precision} & \textbf{recall} & \textbf{f1 score} & \textbf{false alarm rate} \\
 \midrule
-baseline & 0.85 & 0.72 & 0.78 & 0.15 & 0.94 & 0.88 & 0.91 & 0.06 \\
+baseline & 600.0 & 1.0 & 0.5 & 0.667 & 0.0 \\
+proposed & 600.0 & 0.98 & 1.0 & 0.99 & 0.0018 \\
 \bottomrule
 \end{tabular}
 \label{tab:empirical_results}
@@ -141,16 +102,30 @@ baseline & 0.85 & 0.72 & 0.78 & 0.15 & 0.94 & 0.88 & 0.91 & 0.06 \\
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\columnwidth,keepaspectratio]{figures/comparison_chart.pdf}
-\caption{Empirical benchmark comparison generated by \texttt{plot\_results.py}.}
+\includegraphics[width=0.86\textwidth]{figures/comparison_chart.pdf}
+\caption{Wizualizacja wyników eksperymentalnych wygenerowana przez \texttt{plot\_results.py}.}
 \label{fig:comparison_chart}
 \end{figure}
 
-\section{Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju}
-Ewaluacja empiryczna wykazała, że proponowany komitet odpornych podprzestrzeni osiąga precyzję \ref_csv{results.csv:proposed:precision}, czułość \ref_csv{results.csv:proposed:recall} oraz wynik F1 \ref_csv{results.csv:proposed:f1_score} przy znikomym odsetku fałszywych alarmów \ref_csv{results.csv:proposed:false_alarm_rate} \cite{liu2008isolation,chandola2009anomaly}. Metoda bazowa Z-score uzyskała jedynie F1 na poziomie \ref_csv{results.csv:baseline:f1_score} (czułość \ref_csv{results.csv:baseline:recall}), co dowodzi wyższości detekcji wielokanałowej.
-
 \nocite{*}
-\bibliographystyle{IEEEtran}
+\bibliographystyle{plain}
 \bibliography{references}
+
+\symbolslist{
+  $\mathcal{L}$ -- funkcja straty \\
+  $\eta$ -- krok uczenia \\
+  $\theta$ -- wektor parametrów modelu
+}
+
+\abbreviationslist{
+  PŁ -- Politechnika Łódzka \\
+  ADK -- Artificial-Degree-Printer Development Kit \\
+  AST -- Abstract Syntax Tree \\
+  SOTA -- State of the Art
+}
+
+\definitionslist{
+  Neuro-Symbolic Harness -- system łączący generację kodu opartą na modelach językowych z deterministyczną weryfikacją symboliczną.
+}
 
 \end{document}

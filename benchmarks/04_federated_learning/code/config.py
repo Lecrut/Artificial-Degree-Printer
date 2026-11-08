@@ -22,7 +22,7 @@ LEARNING_RATE: float = 0.05
 """Base learning rate for local SGD optimization."""
 
 MU_PROXIMAL: float = 0.01
-"""Proximal term coefficient (\mu) for FedProx regularization."""
+r"""Proximal term coefficient (\mu) for FedProx regularization."""
 
 # --- Data Partitioning ---
 DIRICHLET_ALPHA: float = 0.5

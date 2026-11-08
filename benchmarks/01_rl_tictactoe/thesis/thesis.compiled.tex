@@ -34,8 +34,10 @@ This thesis presents a pure-Python reinforcement learning agent applying tabular
 
 \begin{document}
 
+
+
 \chapter{Rozdział 1: Wstęp, Cel i Teza Pracy}
-Problem autonomicznego podejmowania decyzji sekwencyjnych w grach o sumie zerowej stanowi klasyczny poligon badawczy sztucznej inteligencji \cite{sutton2018reinforcement}. Celem niniejszej pracy inżynierskiej jest zaprojektowanie, implementacja oraz rygorystyczna weryfikacja neuro-symboliczna tablicowego agenta uczenia ze wzmocnieniem (Q-Learning) \cite{watkins1992qlearning} w deterministycznym środowisku gry Kółko i Krzyżyk (Tic-Tac-Toe). Główna teza badawcza głosi, że zastosowanie iteracyjnej aktualizacji równania Bellmana przez 500 epizodów przy współczynniku uczenia 0.2 pozwala uzyskać skuteczność wygranych na poziomie \texttt{win\_rate}, istotnie przewyższając losową politykę bazową osiągającą jedynie \texttt{win\_rate}.
+Problem autonomicznego podejmowania decyzji sekwencyjnych w grach o sumie zerowej stanowi klasyczny poligon badawczy sztucznej inteligencji \cite{sutton2018reinforcement}. Celem niniejszej pracy inżynierskiej jest zaprojektowanie, implementacja oraz rygorystyczna weryfikacja neuro-symboliczna tablicowego agenta uczenia ze wzmocnieniem (Q-Learning) \cite{watkins1992qlearning} w deterministycznym środowisku gry Kółko i Krzyżyk (Tic-Tac-Toe). Główna teza badawcza głosi, że zastosowanie iteracyjnej aktualizacji równania Bellmana przez 500 epizodów przy współczynniku uczenia 0.2 pozwala uzyskać skuteczność wygranych na poziomie 0.83, istotnie przewyższając losową politykę bazową osiągającą jedynie 0.52.
 
 \chapter{Rozdział 2: Analiza Stanu Wiedzy i Podstawy Teoretyczne: Od Teorii Gier do Tablicowego Q-Learningu}
 Analiza teoretyczna problemu podejmowania decyzji w grach skończonych rozpoczyna się od klasycznej teorii gier o sumie zerowej sformułowanej w monografii von Neumanna i Morgensterna \cite{vonneumann1944theory}, definiującej istnienie strategii równowagi w skończonych drzewach decyzyjnych. Matematycznym fundamentem wyznaczania polityk optymalnych w procesach wieloetapowych jest zasada optymalności oraz programowanie dynamiczne wprowadzone przez Bellmana \cite{bellman1957dynamic}. W przypadku braku jawnego modelu przejść środowiska przełomem okazały się metody różnic czasowych (Temporal-Difference Learning) zaproponowane przez Suttona \cite{sutton1988learning}, łączące próbkowanie Monte Carlo z rekurencyjną aktualizacją estymat wartości stanów. Zawężając lejek badawczy bezpośrednio do sterowania bezmodelowego (off-policy control), Watkins i Dayan \cite{watkins1992qlearning} udowodnili zbieżność tablicowego algorytmu Q-Learning z prawdopodobieństwem 1 w skończonych przestrzeniach stanów-akcji, co zostało kompleksowo usystematyzowane w podręczniku Suttona i Barto \cite{sutton2018reinforcement}. W niniejszej pracy inżynierskiej opisany aparat matematyczny zostaje zaadaptowany bezpośrednio do dyskretnej przestrzeni planszy $3\times 3$ gry Kółko i Krzyżyk z polityką eksploracji $\epsilon$-zachłannej.
@@ -53,7 +55,10 @@ Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modu�
 \toprule
 \textbf{Symbol AST} & \textbf{Wartość w kodzie} \\
 \midrule
-\texttt{CONFIG} & \texttt{DEFAULT} \\
+\texttt{ALPHA} & \texttt{0.2} \\
+\texttt{GAMMA} & \texttt{0.95} \\
+\texttt{EPSILON} & \texttt{0.1} \\
+\texttt{EPISODES} & \texttt{500} \\
 \bottomrule
 \end{tabular}
 \label{tab:config_constants}
@@ -76,18 +81,21 @@ Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modu�
 \chapter{Rozdział 4: Implementacja Algorytmiczna i Struktury Danych}
 Implementacja w module core.py została podzielona na deterministyczny symulator rozgrywki, słownikową strukturę tablicy Q-table oraz procedurę treningowo-ewaluacyjną train\_and\_evaluate(). Hiperparametry treningu: liczba epizodów 500, krok uczenia 0.2, współczynnik dyskontowania 0.95 oraz próg eksploracji 0.1 są importowane bezpośrednio z węzła v1 (config.py). Zastosowanie stałego ziarna generatora pseudolosowego (seed=42) gwarantuje pełną powtarzalność testów jednostkowych pytest w węźle v5 (test\_core.py).
 
+\chapter{Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju}
+Przeprowadzone eksperymenty w pełni potwierdziły postawioną tezę badawczą. Zaproponowany agent Q-Learning osiągnął współczynnik zwycięstw 0.83 przy odsetku porażek zredukowanym do 0.11, podczas gdy polityka losowa uzyskała jedynie 0.52 wygranych i 0.36 porażek \cite{watkins1992qlearning,sutton2018reinforcement}. Zastosowana czterowarstwowa architektura ADK wyeliminowała halucynacje liczbowe dzięki twardej kompilacji wskaźników symbolicznych.
+
 \chapter{Tic-Tac-Toe Q-Learning Evaluation}
-To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning agent against a random baseline policy \cite{watkins1992qlearning,sutton2018reinforcement}. The experiments executed 500 episodes with learning rate 0.2, discount factor 0.95, and exploration factor 0.1. The reference baseline achieved a win rate of \texttt{win\_rate}, whereas the proposed agent reached a win rate of \texttt{win\_rate} (0.75) and a draw rate of 0.25, as illustrated in \ref{fig:comparison_chart}.
+To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning agent against a random baseline policy \cite{watkins1992qlearning,sutton2018reinforcement}. The experiments executed 500 episodes with learning rate 0.2, discount factor 0.95, and exploration factor 0.1. The reference baseline achieved a win rate of 0.52, whereas the proposed agent reached a win rate of 0.83 (0.83) and a draw rate of 0.06, as illustrated in \ref{fig:comparison_chart}.
 
 \begin{table}[htbp]
 \centering
 \caption{Porównanie empiryczne metod (źródło: \texttt{results.csv}) --- Tabular Q-Learning Policy Optimization in Finite-State Tic-Tac-Toe Environments}
-\begin{tabular}{lrrrrr}
+\begin{tabular}{lrrrr}
 \toprule
-\textbf{method} & \textbf{rounds} & \textbf{final accuracy} & \textbf{latency ms} & \textbf{win rate} & \textbf{draw rate} \\
+\textbf{method} & \textbf{episodes} & \textbf{win rate} & \textbf{draw rate} & \textbf{loss rate} \\
 \midrule
-baseline\_random & 500 & 0.48 & 120.5 & 0.48 & 0.48 \\
-proposed\_qlearning & 500 & 0.95 & 115.3 & 0.75 & 0.25 \\
+baseline & 500.0 & 0.52 & 0.12 & 0.36 \\
+proposed & 500.0 & 0.83 & 0.06 & 0.11 \\
 \bottomrule
 \end{tabular}
 \label{tab:empirical_results}
@@ -99,9 +107,6 @@ proposed\_qlearning & 500 & 0.95 & 115.3 & 0.75 & 0.25 \\
 \caption{Wizualizacja wyników eksperymentalnych wygenerowana przez \texttt{plot\_results.py}.}
 \label{fig:comparison_chart}
 \end{figure}
-
-\chapter{Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju}
-Przeprowadzone eksperymenty w pełni potwierdziły postawioną tezę badawczą. Zaproponowany agent Q-Learning osiągnął współczynnik zwycięstw \texttt{win\_rate} przy odsetku porażek zredukowanym do \texttt{loss\_rate}, podczas gdy polityka losowa uzyskała jedynie \texttt{win\_rate} wygranych i \texttt{loss\_rate} porażek \cite{watkins1992qlearning,sutton2018reinforcement}. Zastosowana czterowarstwowa architektura ADK wyeliminowała halucynacje liczbowe dzięki twardej kompilacji wskaźników symbolicznych.
 
 \nocite{*}
 \bibliographystyle{plain}

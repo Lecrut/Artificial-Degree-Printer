@@ -381,6 +381,12 @@ def run_benchmark_suite(
                 shutil.rmtree(task_dest_dir)
             shutil.copytree(sandbox_ws, task_dest_dir)
 
+            # Snapshot the exact evolved ADK state (agents + state) for THIS specific benchmark
+            task_adk_dest = task_dest_dir / "evolved_adk"
+            task_adk_dest.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(evolved_adk_dir / "agents", task_adk_dest / "agents", dirs_exist_ok=True)
+            shutil.copytree(evolved_adk_dir / "state", task_adk_dest / "state", dirs_exist_ok=True)
+
             # Inspect ADK evolution state after this task
             evo_hist = read_json_state(evolved_adk_dir / "state" / "evolution_history.json").get("events", [])
             new_events = [e.get("type", "UNKNOWN") for e in evo_hist[prev_events_count:]]
@@ -411,6 +417,7 @@ def run_benchmark_suite(
             )
             pub_res.setdefault("llm_interactions_md", str(task_dest_dir / "logs" / "llm_interactions.md"))
             pub_res.setdefault("llm_interactions_jsonl", str(task_dest_dir / "logs" / "llm_interactions.jsonl"))
+            pub_res["evolved_adk_dir"] = str(task_adk_dest)
             pub_elapsed_ms = (time.perf_counter() - pub_t0) * 1000.0
             total_task_ms = (time.perf_counter() - t_start) * 1000.0
 
@@ -494,6 +501,8 @@ def run_benchmark_suite(
     if output_root is None and bench_out_root.resolve() != root_benchmarks.resolve():
         root_benchmarks.mkdir(parents=True, exist_ok=True)
         for item in bench_out_root.glob("*"):
+            if item.name == "_evolved_adk_state":
+                continue
             dest_item = root_benchmarks / item.name
             if item.is_dir():
                 shutil.copytree(item, dest_item, dirs_exist_ok=True)

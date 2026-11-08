@@ -120,7 +120,7 @@ def client_local_train(
     lr: float = LEARNING_RATE,
     mu: float = MU_PROXIMAL
 ) -> Tuple[np.ndarray, float]:
-    """
+    r"""
     Perform local Stochastic Gradient Descent (SGD) optimization with Proximal Loss regularization.
 
     This function simulates the client-side training step in a Federated Learning round.

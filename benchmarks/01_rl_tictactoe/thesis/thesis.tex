@@ -53,7 +53,10 @@ Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modu�
 \toprule
 \textbf{Symbol AST} & \textbf{Wartość w kodzie} \\
 \midrule
-\texttt{CONFIG} & \texttt{DEFAULT} \\
+\texttt{ALPHA} & \texttt{\ref_ast{config.py:ALPHA}} \\
+\texttt{GAMMA} & \texttt{\ref_ast{config.py:GAMMA}} \\
+\texttt{EPSILON} & \texttt{\ref_ast{config.py:EPSILON}} \\
+\texttt{EPISODES} & \texttt{\ref_ast{config.py:EPISODES}} \\
 \bottomrule
 \end{tabular}
 \label{tab:config_constants}
@@ -76,18 +79,21 @@ Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modu�
 \chapter{Rozdział 4: Implementacja Algorytmiczna i Struktury Danych}
 Implementacja w module core.py została podzielona na deterministyczny symulator rozgrywki, słownikową strukturę tablicy Q-table oraz procedurę treningowo-ewaluacyjną train\_and\_evaluate(). Hiperparametry treningu: liczba epizodów \ref_ast{config.py:EPISODES}, krok uczenia \ref_ast{config.py:ALPHA}, współczynnik dyskontowania \ref_ast{config.py:GAMMA} oraz próg eksploracji \ref_ast{config.py:EPSILON} są importowane bezpośrednio z węzła v1 (config.py). Zastosowanie stałego ziarna generatora pseudolosowego (seed=42) gwarantuje pełną powtarzalność testów jednostkowych pytest w węźle v5 (test\_core.py).
 
+\chapter{Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju}
+Przeprowadzone eksperymenty w pełni potwierdziły postawioną tezę badawczą. Zaproponowany agent Q-Learning osiągnął współczynnik zwycięstw \ref_csv{results.csv:proposed:win_rate} przy odsetku porażek zredukowanym do \ref_csv{results.csv:proposed:loss_rate}, podczas gdy polityka losowa uzyskała jedynie \ref_csv{results.csv:baseline:win_rate} wygranych i \ref_csv{results.csv:baseline:loss_rate} porażek \cite{watkins1992qlearning,sutton2018reinforcement}. Zastosowana czterowarstwowa architektura ADK wyeliminowała halucynacje liczbowe dzięki twardej kompilacji wskaźników symbolicznych.
+
 \chapter{Tic-Tac-Toe Q-Learning Evaluation}
 To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning agent against a random baseline policy \cite{watkins1992qlearning,sutton2018reinforcement}. The experiments executed \ref_ast{config.py:EPISODES} episodes with learning rate \ref_ast{config.py:ALPHA}, discount factor \ref_ast{config.py:GAMMA}, and exploration factor \ref_ast{config.py:EPSILON}. The reference baseline achieved a win rate of \ref_csv{results.csv:baseline:win_rate}, whereas the proposed agent reached a win rate of \ref_csv{results.csv:proposed:win_rate} (\ref_csv{results.csv:win_rate}) and a draw rate of \ref_csv{results.csv:draw_rate}, as illustrated in \ref_fig{figures/comparison_chart.pdf}.
 
 \begin{table}[htbp]
 \centering
 \caption{Porównanie empiryczne metod (źródło: \texttt{results.csv}) --- Tabular Q-Learning Policy Optimization in Finite-State Tic-Tac-Toe Environments}
-\begin{tabular}{lrrrrr}
+\begin{tabular}{lrrrr}
 \toprule
-\textbf{method} & \textbf{rounds} & \textbf{final accuracy} & \textbf{latency ms} & \textbf{win rate} & \textbf{draw rate} \\
+\textbf{method} & \textbf{episodes} & \textbf{win rate} & \textbf{draw rate} & \textbf{loss rate} \\
 \midrule
-baseline\_random & 500 & 0.48 & 120.5 & 0.48 & 0.48 \\
-proposed\_qlearning & 500 & 0.95 & 115.3 & 0.75 & 0.25 \\
+baseline & 500.0 & 0.52 & 0.12 & 0.36 \\
+proposed & 500.0 & 0.83 & 0.06 & 0.11 \\
 \bottomrule
 \end{tabular}
 \label{tab:empirical_results}
@@ -99,9 +105,6 @@ proposed\_qlearning & 500 & 0.95 & 115.3 & 0.75 & 0.25 \\
 \caption{Wizualizacja wyników eksperymentalnych wygenerowana przez \texttt{plot\_results.py}.}
 \label{fig:comparison_chart}
 \end{figure}
-
-\chapter{Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju}
-Przeprowadzone eksperymenty w pełni potwierdziły postawioną tezę badawczą. Zaproponowany agent Q-Learning osiągnął współczynnik zwycięstw \ref_csv{results.csv:proposed:win_rate} przy odsetku porażek zredukowanym do \ref_csv{results.csv:proposed:loss_rate}, podczas gdy polityka losowa uzyskała jedynie \ref_csv{results.csv:baseline:win_rate} wygranych i \ref_csv{results.csv:baseline:loss_rate} porażek \cite{watkins1992qlearning,sutton2018reinforcement}. Zastosowana czterowarstwowa architektura ADK wyeliminowała halucynacje liczbowe dzięki twardej kompilacji wskaźników symbolicznych.
 
 \nocite{*}
 \bibliographystyle{plain}

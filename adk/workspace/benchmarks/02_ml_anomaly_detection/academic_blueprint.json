@@ -1,37 +1,37 @@
 {
-  "thesis_title": "Porównawcza Analiza Wykrywania Anomalii w Sygnałach Biomedycznych: Od Statystycznego Z-Score do Adaptacyjnego Mahalanobisa-Ensemble",
-  "thesis_statement": "W pracy hipotezujemy, że wielowymiarowy Detektor Mahalanobisa-Wiara (Ensemble) przewyższa statyczny jednowymiarowy próg Z-score w wykrywaniu anomalii w sygnałach biomedycznych, szczególnie w warunkach wysokiej szumowości i korelacji międzykanałowej.",
-  "baseline_comparison": "Univariate Gaussian Z-Score (3-sigma threshold) vs Adaptive Robust Mahalanobis-Ensemble",
+  "thesis_title": "Adaptive Robust Mahalanobis-Ensemble Detector for Bio-Signal Telemetry Anomaly Detection",
+  "thesis_statement": "Wdrożenie i ewaluacja wielowymiarowego, adaptacyjnego detektora anomalii opartego na ansamblu metod statystycznych (Mahalanobis/Isolation Forest) wykazuje wyższą odporność na szum i zmienną korelację sygnału biomedycznego w porównaniu do tradycyjnego jednowymiarowego detektora Z-score.",
+  "baseline_comparison": "Static Univariate Gaussian Z-Score",
   "planned_chapters": [
     {
       "index": 1,
       "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-      "focus": "Definicja problemu detekcji anomalii w sygnałach biomedycznych, cel inżynierski pracy, formalna teza oraz zakres badań."
+      "focus": "Formalna definicja problemu detekcji anomalii w telemetryce medycznej, cel inżynierski budowy detektora oraz teza o wyższej skuteczności adaptacyjnych metod ensemblingowych"
     },
     {
       "index": 2,
       "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-      "focus": "Synteza klasycznych metod (Z-score), współczesnych podejść statystycznych (Mahalanobis) oraz przegląd SOTA (Isolation Forest, Transformer-based) w kontekście przetwarzania sygnałów."
+      "focus": "Systematyka metod wykrywania anomalii w sygnałach biomedycznych, analiza SOTA (2023-2026), specyfikacja metod referencyjnych (Z-score) i proponowanych (Mahalanobis-Ensemble)"
     },
     {
       "index": 3,
-      "title": "Rozdział 3: Architektura Systemu i Metodologia",
-      "focus": "Opis architektoniczny modułu detekcji, definicja syntezy danych bio-sygnalnych oraz dobór parametrów konfiguracyjnych."
+      "title": "Rozdział 3: Architektura Systemu",
+      "focus": "Opis architektury modułowej (config, core, results), przepływ danych od syntezy do ewaluacji oraz interfejsy API między modułami"
     },
     {
       "index": 4,
-      "title": "Rozdział 4: Implementacja Algorytmu",
-      "focus": "Szczegółowy opis matematyczny i implementacyjny modelu Mahalanobis-Ensemble oraz jego zestawienie z baseline Z-score."
+      "title": "Rozdział 4: Formalizm Matematyczny i Implementacja",
+      "focus": "Wyprowadzenie wzorów na odległość Mahalanobisa, wagowanie drzew w ansamblu oraz szczegółowy opis algorytmu detekcji adaptacyjnej"
     },
     {
       "index": 5,
-      "title": "Rozdział 5: Analiza Wyników i Ewaluacja",
-      "focus": "Prezentacja wyników eksperymentów (wyniki.csv), analiza wizualna (plot_results.py) oraz statystyczna ocena skuteczności detekcji anomalii."
+      "title": "Rozdział 5: Wyniki Eksperymentalne i Analiza",
+      "focus": "Prezentacja wyników porównawczych (precision, recall, f1_score), analiza wrażliwości na próg Z_THRESHOLD oraz wizualizacja wykrytych anomalii"
     },
     {
       "index": 6,
-      "title": "Rozdział 6: Zakończenie i Wnioski",
-      "focus": "Podsumowanie pracy, weryfikacja postawionej tezy, wnioski praktyczne dla systemów telemedycznych oraz kierunki przyszłych prac."
+      "title": "Rozdział 6: Wnioski",
+      "focus": "Weryfikacja postawionej tezy inżynierskiej, implikacje kliniczne metody oraz kierunki przyszłych badań"
     }
   ],
   "literature_recon": {
@@ -136,32 +136,32 @@
       {
         "index": 1,
         "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-        "focus": "Definicja problemu detekcji anomalii w sygnałach biomedycznych, cel inżynierski pracy, formalna teza oraz zakres badań."
+        "focus": "Formalna definicja problemu detekcji anomalii w telemetryce medycznej, cel inżynierski budowy detektora oraz teza o wyższej skuteczności adaptacyjnych metod ensemblingowych"
       },
       {
         "index": 2,
         "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-        "focus": "Synteza klasycznych metod (Z-score), współczesnych podejść statystycznych (Mahalanobis) oraz przegląd SOTA (Isolation Forest, Transformer-based) w kontekście przetwarzania sygnałów."
+        "focus": "Systematyka metod wykrywania anomalii w sygnałach biomedycznych, analiza SOTA (2023-2026), specyfikacja metod referencyjnych (Z-score) i proponowanych (Mahalanobis-Ensemble)"
       },
       {
         "index": 3,
-        "title": "Rozdział 3: Architektura Systemu i Metodologia",
-        "focus": "Opis architektoniczny modułu detekcji, definicja syntezy danych bio-sygnalnych oraz dobór parametrów konfiguracyjnych."
+        "title": "Rozdział 3: Architektura Systemu",
+        "focus": "Opis architektury modułowej (config, core, results), przepływ danych od syntezy do ewaluacji oraz interfejsy API między modułami"
       },
       {
         "index": 4,
-        "title": "Rozdział 4: Implementacja Algorytmu",
-        "focus": "Szczegółowy opis matematyczny i implementacyjny modelu Mahalanobis-Ensemble oraz jego zestawienie z baseline Z-score."
+        "title": "Rozdział 4: Formalizm Matematyczny i Implementacja",
+        "focus": "Wyprowadzenie wzorów na odległość Mahalanobisa, wagowanie drzew w ansamblu oraz szczegółowy opis algorytmu detekcji adaptacyjnej"
       },
       {
         "index": 5,
-        "title": "Rozdział 5: Analiza Wyników i Ewaluacja",
-        "focus": "Prezentacja wyników eksperymentów (wyniki.csv), analiza wizualna (plot_results.py) oraz statystyczna ocena skuteczności detekcji anomalii."
+        "title": "Rozdział 5: Wyniki Eksperymentalne i Analiza",
+        "focus": "Prezentacja wyników porównawczych (precision, recall, f1_score), analiza wrażliwości na próg Z_THRESHOLD oraz wizualizacja wykrytych anomalii"
       },
       {
         "index": 6,
-        "title": "Rozdział 6: Zakończenie i Wnioski",
-        "focus": "Podsumowanie pracy, weryfikacja postawionej tezy, wnioski praktyczne dla systemów telemedycznych oraz kierunki przyszłych prac."
+        "title": "Rozdział 6: Wnioski",
+        "focus": "Weryfikacja postawionej tezy inżynierskiej, implikacje kliniczne metody oraz kierunki przyszłych badań"
       }
     ]
   }

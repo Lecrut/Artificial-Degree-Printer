@@ -1,0 +1,44 @@
+[
+  {
+    "task_id": "Q3_CODE",
+    "description": "Napraw kod tak, żeby pytest przeszedł. Stan faktyczny: Ruff lint failure: E402 Module level import not at top of file\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:8:1\n  |\n6 | current_dir = Path(__file__).parent\n7 | sys.path.insert(0, str(current_dir))\n8 | import config\n  | ^^^^^^^^^^^^^\n9 | import core\n  |\nhelp: Move module level imports to top of file\n\nE402 Module level import not at top of file\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:9:1\n   |\n 7 | sys.path.insert(0, str(current_dir))\n 8 | import config\n 9 | import core\n   | ^^^^^^^^^^^\n10 |\n11 | class TestConfigConstants:\n   |\nhelp: Move module level imports to top of file\n\nF811 Redefinition of unused `generate_comparison_plot` from line 86\n   --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:116:5\n    |\n114 |     plt.close()\n115 |\n116 | def generate_comparison_plot(csv_path: str='results.csv', out_path: str='figures/comparison_chart.png') -> None:\n    |     ^^^^^^^^^^^^^^^^^^^^^^^^ `generate_comparison_plot` redefined here\n117 |     \"\"\"Generate comparison chart from evaluation results.\n    |\n   ::: adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:86:5\n    |\n 84 |         assert proposed_f1 >= baseline_f1, f'Proposed F1 ({proposed_f1}) should be >= Baseline F1 ({baseline_f1})'\n 85 |\n 86 | def generate_comparison_plot(csv_path: str='results.csv', out_path: str='figures/comparison_chart.png') -> None:\n    |     ------------------------ previous definition of `generate_comparison_plot` here\n 87 |     \"\"\"Generate comparison chart from evaluation results.\n    |\nhelp: Remove definition: `generate_comparison_plot`\n\nFound 3 errors.",
+    "target_node": "v2",
+    "assigned_agent": "seed_coder",
+    "status": "FAILED"
+  },
+  {
+    "task_id": "Q3_TESTS",
+    "description": "Uruchom train_and_evaluate i zapisz results.csv zgodny z tym, co funkcja zwraca. Testy mają wołać kod, a nie sprawdzać wklejone liczby.",
+    "target_node": "v3",
+    "assigned_agent": "seed_tester",
+    "status": "TODO"
+  },
+  {
+    "task_id": "Q3_CH3",
+    "description": "Napisz Rozdział 3 w thesis.md. Zastąp sekcję, nie doklejaj drugiej kopii.",
+    "target_node": "v4",
+    "assigned_agent": "seed_writer",
+    "status": "TODO"
+  },
+  {
+    "task_id": "Q3_CH4",
+    "description": "Napisz Rozdział 4 w thesis.md. Zastąp sekcję, nie doklejaj drugiej kopii.",
+    "target_node": "v4",
+    "assigned_agent": "seed_writer",
+    "status": "TODO"
+  },
+  {
+    "task_id": "Q3_CH5",
+    "description": "Napisz Rozdział 5 w thesis.md. Zastąp sekcję, nie doklejaj drugiej kopii.",
+    "target_node": "v4",
+    "assigned_agent": "seed_writer",
+    "status": "TODO"
+  },
+  {
+    "task_id": "Q3_CH6",
+    "description": "Napisz Rozdział 6 w thesis.md. Zastąp sekcję, nie doklejaj drugiej kopii.",
+    "target_node": "v4",
+    "assigned_agent": "seed_writer",
+    "status": "TODO"
+  }
+]
