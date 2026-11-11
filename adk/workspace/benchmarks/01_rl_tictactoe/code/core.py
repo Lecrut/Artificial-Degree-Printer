@@ -1,235 +1,230 @@
-"""
-Core logic for Tic-Tac-Toe Q-Learning Agent.
+"""Core logic for Tic-Tac-Toe Q-Learning Agent.
 
-This module implements the game state representation, board evaluation,
-a tabular Q-learning agent for adversarial search, and a deterministic
-evaluation pipeline that exports metrics to CSV.
+Provides board evaluation, state representation, and a Tabular Q-Learning agent
+for training against a random opponent.
 """
 from __future__ import annotations
 import csv
 import random
-from typing import Final
-from config import ALPHA, GAMMA, EPSILON, EPISODES
+from dataclasses import dataclass, field
+from typing import Any
+from config import ALPHA as LEARNING_RATE
+from config import EPISODES as NUM_EPISODES
+from config import GAMMA as DISCOUNT_FACTOR
+from config import EPSILON as EXPLORATION_RATE
 
-BOARD_SIZE: Final[int] = 3
-EMPTY_SYMBOL: Final[str] = ' '
-PLAYER_X: Final[str] = 'X'
-PLAYER_O: Final[str] = 'O'
-WIN_LENGTH: Final[int] = 3
+def check_winner(board: list[int]) -> int:
+    """Evaluate the Tic-Tac-Toe board state.
 
-
-def check_winner(board: list[list[str]] | list[str]) -> str | None:
-    """Evaluate the board state to determine the game outcome.
-
-    Checks all rows, columns, and diagonals for a winner. Returns
-    the winning player's symbol ('X' or 'O'), or None if no winner
-    exists yet. If the board is full and no winner exists, it returns
-    'D' (Draw). Handles both 2D (list[list[str]]) and 1D (list[str])
-    representations by normalizing to a flattened view for logic.
+    Determines if there is a winner or if the game is a draw.
 
     Args:
-        board: A 3x3 list of lists OR a flat list of 9 strings representing
-            the board state. Rows represent horizontal lines if 2D,
-            columns vertical. If 1D, indices correspond to standard
-            row-major flattening (0-8).
+        board: A flat list of length 9 representing the board cells.
+            0 = empty, 1 = X (agent), -1 = O (opponent).
 
     Returns:
-        The winning symbol ('X', 'O'), 'D' for draw, or None for ongoing.
-
-    Raises:
-        ValueError: If board dimensions are not exactly 3x3 (or length 9).
-
-    Complexity:
-        Time: O(1) - Fixed board size implies constant number of checks.
-        Space: O(1)
+        1 if player 'X' wins,
+        -1 if player 'O' wins,
+        0 if the game is a draw or ongoing.
     """
-    # Normalize to 1D representation for easier indexing
-    flat_board: list[str]
-    if len(board) == BOARD_SIZE:
-        if any(len(row) != BOARD_SIZE for row in board):
-            raise ValueError(f'Board rows must have length {BOARD_SIZE}')
-        flat_board = [cell for row in board for cell in row]
-    elif len(board) == BOARD_SIZE ** 2:
-        flat_board = list(board)
-    else:
-        raise ValueError(f'Board must have {BOARD_SIZE**2} cells, got {len(board)}')
+    winning_lines: tuple[tuple[int, ...], ...] = ((0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6))
+    for a, b, c in winning_lines:
+        if board[a] != 0 and board[a] == board[b] == board[c]:
+            return board[a]
+    return 0
 
-    # Check rows (indices: 0,1,2; 3,4,5; 6,7,8)
-    for i in range(0, 9, 3):
-        if flat_board[i] == flat_board[i+1] == flat_board[i+2] != EMPTY_SYMBOL:
-            return flat_board[i]
+def _q_table_state_key(board: list[int]) -> tuple[int, ...]:
+    """Convert a board state list to a hashable tuple key for the Q-table.
 
-    # Check columns (indices: 0,3,6; 1,4,7; 2,5,8)
-    for i in range(3):
-        if flat_board[i] == flat_board[i+3] == flat_board[i+6] != EMPTY_SYMBOL:
-            return flat_board[i]
+    Args:
+        board: Current board state as a list of integers.
 
-    # Check diagonals (0,4,8 and 2,4,6)
-    if flat_board[0] == flat_board[4] == flat_board[8] != EMPTY_SYMBOL:
-        return flat_board[0]
-    if flat_board[2] == flat_board[4] == flat_board[6] != EMPTY_SYMBOL:
-        return flat_board[2]
+    Returns:
+        A tuple representing the board state.
+    """
+    return tuple(board)
 
-    # Check for draw (if no empty spaces)
-    if EMPTY_SYMBOL not in flat_board:
-        return 'D'
+def _get_legal_moves(board: list[int]) -> list[int]:
+    """Retrieve indices of empty cells (legal moves).
 
-    # Game ongoing - return None explicitly
-    return None
+    Args:
+        board: Current board state.
 
+    Returns:
+        List of integer indices corresponding to empty cells.
+    """
+    return [i for i, cell in enumerate(board) if cell == 0]
 
+@dataclass(frozen=True)
 class QLearningAgent:
-    """Tabular Q-Learning Agent for Tic-Tac-Toe.
+    """A Tabular Q-Learning agent for Tic-Tac-Toe.
 
-    Uses an epsilon-greedy policy to explore the state space and
-    updates Q-values via the temporal difference learning rule:
-    Q(s, a) <- Q(s, a) + alpha * (r + gamma * max(Q(s', a')) - Q(s, a))
+    Attributes:
+        q_table: Dictionary mapping states (tuples) to action values.
+        alpha: Learning rate.
+        gamma: Discount factor.
+        epsilon: Exploration rate.
     """
+    q_table: dict[tuple[int, ...], dict[int, float]] = field(default_factory=dict)
+    alpha: float = LEARNING_RATE
+    gamma: float = DISCOUNT_FACTOR
+    epsilon: float = EXPLORATION_RATE
 
-    def __init__(self, alpha: float = ALPHA, gamma: float = GAMMA, epsilon: float = EPSILON, seed: int = 42) -> None:
-        """
-        Args:
-            alpha: Learning rate (default: from config).
-            gamma: Discount factor (default: from config).
-            epsilon: Exploration rate (default: from config).
-            seed: Random seed for reproducibility.
-        """
-        self.alpha = alpha
-        self.gamma = gamma
-        self.epsilon = epsilon
-        self.rng = random.Random(seed)
-        self.q_table: dict[tuple[str, ...], list[float]] = {}
-
-    def get_q_values(self, state: tuple[str, ...]) -> list[float]:
-        """Retrieve or initialize Q-values for a given state.
+    def choose_action(self, state_key: tuple[int, ...], legal_moves: list[int]) -> int:
+        """Select an action using the epsilon-greedy policy.
 
         Args:
-            state: A flattened 1D tuple representing the board state.
+            state_key: The current board state as a tuple.
+            legal_moves: List of available move indices.
 
         Returns:
-            A list of 9 floats corresponding to Q-values for each cell.
+            The chosen action index.
         """
-        if state not in self.q_table:
-            self.q_table[state] = [0.0] * BOARD_SIZE ** 2
-        return self.q_table[state]
+        if random.random() < self.epsilon:
+            return random.choice(legal_moves)
+        if state_key not in self.q_table:
+            self.q_table[state_key] = {i: 0.0 for i in range(9)}
+        q_vals = self.q_table[state_key]
+        best_val = max((q_vals[m] for m in legal_moves))
+        best_actions = [m for m in legal_moves if q_vals[m] == best_val]
+        return random.choice(best_actions)
 
-    def choose_action(self, state: tuple[str, ...], available_moves: list[int]) -> int | None:
-        """
-        Select an action using epsilon-greedy policy.
+    def update(self, state_key: tuple[int, ...], action: int, reward: float, next_state_key: tuple[int, ...]) -> None:
+        """Update the Q-value for a state-action pair.
 
         Args:
-            state: Current flattened board state.
-            available_moves: List of indices (0-8) where moves are valid.
+            state_key: The previous board state.
+            action: The action taken.
+            reward: The immediate reward received.
+            next_state_key: The resulting board state after the action.
+        """
+        if state_key not in self.q_table:
+            self.q_table[state_key] = {i: 0.0 for i in range(9)}
+        current_q = self.q_table[state_key][action]
+        if next_state_key not in self.q_table:
+            self.q_table[next_state_key] = {i: 0.0 for i in range(9)}
+        max_next_q = max(self.q_table[next_state_key].values())
+        self.q_table[state_key][action] = current_q + self.alpha * (reward + self.gamma * max_next_q - current_q)
+
+    def get_legal_moves(self, board: list[int]) -> list[int]:
+        """Alias for _get_legal_moves to support polymorphic agent interfaces if needed.
+
+        Args:
+            board: Current board state.
 
         Returns:
-            An index from available_moves, or None if no moves remain.
+            List of available move indices.
         """
-        if not available_moves:
-            return None
-        if self.rng.random() < self.epsilon:
-            return self.rng.choice(available_moves)
-        else:
-            q_values = self.get_q_values(state)
-            max_q = max((q_values[m] for m in available_moves))
-            best_actions = [m for m in available_moves if abs(q_values[m] - max_q) < 1e-09]
-            return self.rng.choice(best_actions)
+        return _get_legal_moves(board)
 
-    def update(self, state: tuple[str, ...], action: int, reward: float, next_state: tuple[str, ...]) -> None:
-        """
-        Update Q-value for state-action pair using TD error.
+    def get_q_values(self, state_key: tuple[int, ...]) -> dict[int, float]:
+        """Retrieve Q-values for a given state.
 
         Args:
-            state: The state before the action.
-            action: The index of the chosen action.
-            reward: Immediate reward received (1 for win, -1 for loss, 0 otherwise).
-            next_state: The state after the action.
-        """
-        q_values = self.get_q_values(state)
-        next_q_values = self.get_q_values(next_state)
-        max_next_q = max(next_q_values) if next_q_values else 0.0
-        td_target = reward + self.gamma * max_next_q
-        q_values[action] += self.alpha * (td_target - q_values[action])
-
-    def train_against_random(self, episodes: int = EPISODES, seed: int = 42) -> dict[str, float]:
-        """
-        Train the agent by playing against a random move opponent.
-
-        Args:
-            episodes: Number of training games (default: from config).
-            seed: Random seed for reproducibility.
+            state_key: The board state tuple.
 
         Returns:
-            Dictionary containing 'win_rate' and 'draw_rate' metrics.
+            Dictionary mapping moves to Q-values. Initializes if not present.
         """
-        train_rng = random.Random(seed)
-        wins = 0
-        draws = 0
-        losses = 0
-        for _ in range(episodes):
-            board: list[list[str]] = [[EMPTY_SYMBOL] * BOARD_SIZE for _ in range(BOARD_SIZE)]
-            current_player: str = PLAYER_X
-            game_over = False
-            while not game_over:
-                state = tuple(cell for row in board for cell in row)
-                available_moves = [i for i, cell in enumerate(state) if cell == EMPTY_SYMBOL]
-                if not available_moves:
-                    game_over = True
-                    break
+        if state_key not in self.q_table:
+            self.q_table[state_key] = {i: 0.0 for i in range(9)}
+        return self.q_table[state_key]
 
-                if current_player == PLAYER_X:
-                    action = self.choose_action(state, available_moves)
-                else:
-                    action = train_rng.choice(available_moves)
+def train_and_evaluate(csv_out_path: str = 'results.csv', n_runs: int = 50, seed: int = 42) -> dict[str, float]:
+    """Train Q-Learning agent against a random opponent and evaluate performance.
 
-                row_idx, col_idx = divmod(action, BOARD_SIZE)
-                board[row_idx][col_idx] = current_player
-                winner = check_winner(board)
-
-                if winner is not None:
-                    game_over = True
-                    if winner == PLAYER_X:
-                        wins += 1
-                        reward = 1.0
-                    elif winner == PLAYER_O:
-                        losses += 1
-                        reward = -1.0
-                    else:
-                        draws += 1
-                        reward = 0.0
-
-                    # Update Q-value for the player who just moved (usually X in this setup)
-                    if current_player == PLAYER_X:
-                        self.update(state, action, reward, state)
-                    break
-
-                # Switch player
-                current_player = PLAYER_O if current_player == PLAYER_X else PLAYER_X
-
-        total_games = wins + draws + losses
-        win_rate = wins / total_games if total_games > 0 else 0.0
-        draw_rate = draws / total_games if total_games > 0 else 0.0
-        return {'win_rate': win_rate, 'draw_rate': draw_rate}
-
-
-def train_and_evaluate(csv_out_path: str = 'results.csv', seed: int = 42) -> dict[str, float]:
-    """Execute deterministic training and evaluation of the Q-Learning agent.
-
-    Trains the agent against a random opponent for EPISODES steps,
-    then evaluates performance. Saves results to a CSV file.
+    Runs the training process `n_runs` times to average out stochasticity,
+    then saves aggregated metrics to a CSV file matching standard schema.
 
     Args:
-        csv_out_path: Destination path for empirical benchmark metrics.
-            Default is 'results.csv'.
-        seed: Deterministic RNG seed (default: 42).
+        csv_out_path: Path to the output CSV file for benchmarking results.
+        n_runs: Number of independent training runs to average over (default 50).
+        seed: Random seed for reproducibility (default 42).
 
     Returns:
-        Dictionary containing 'win_rate' and 'draw_rate' as floats.
+        Dictionary containing averaged 'win_rate', 'draw_rate', and 'loss_rate'.
     """
-    agent = QLearningAgent(alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, seed=seed)
-    metrics = agent.train_against_random(episodes=EPISODES, seed=seed)
-    with open(csv_out_path, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=['metric_name', 'value'])
+    from config import ALPHA as LEARNING_RATE
+    from config import GAMMA as DISCOUNT_FACTOR
+    from config import EPSILON as EXPLORATION_RATE
+    
+    cumulative_win_rates: list[float] = []
+    cumulative_draw_rates: list[float] = []
+    cumulative_loss_rates: list[float] = []
+    
+    for run in range(n_runs):
+        agent = QLearningAgent()
+        random.seed(seed + run)
+        win_count: int = 0
+        draw_count: int = 0
+        loss_count: int = 0
+        
+        for _ in range(NUM_EPISODES):
+            board: list[int] = [0] * 9
+            turn: int = 1
+            final_reward: float = 0.0
+            terminated: bool = False
+            
+            while not terminated:
+                state_key: tuple[int, ...] = _q_table_state_key(board)
+                legal_moves: list[int] = _get_legal_moves(board)
+                
+                if not legal_moves:
+                    final_reward = 0.0
+                    terminated = True
+                    break
+                
+                if turn == 1:
+                    action = agent.choose_action(state_key, legal_moves)
+                    board[action] = 1
+                    winner = check_winner(board)
+                    if winner != 0:
+                        final_reward = float(winner)
+                        terminated = True
+                        break
+                    else:
+                        next_state_key = _q_table_state_key(board)
+                        agent.update(state_key, action, 0.0, next_state_key)
+                        turn = -1
+                else:
+                    action = random.choice(legal_moves)
+                    board[action] = -1
+                    winner = check_winner(board)
+                    if winner != 0:
+                        final_reward = float(winner)
+                        terminated = True
+                        break
+                    else:
+                        turn = 1
+            
+            if final_reward == 1.0:
+                win_count += 1
+            elif final_reward == -1.0:
+                loss_count += 1
+            else:
+                draw_count += 1
+        
+        cumulative_win_rates.append(win_count / NUM_EPISODES)
+        cumulative_draw_rates.append(draw_count / NUM_EPISODES)
+        cumulative_loss_rates.append(loss_count / NUM_EPISODES)
+        
+    n: int = len(cumulative_win_rates)
+    mean_win: float = sum(cumulative_win_rates) / n if n > 0 else 0.0
+    std_dev_win: float = (sum(((x - mean_win) ** 2 for x in cumulative_win_rates)) / max(n - 1, 1)) ** 0.5 if n > 1 else 0.0
+    
+    mean_draw: float = sum(cumulative_draw_rates) / n if n > 0 else 0.0
+    std_dev_draw: float = (sum(((x - mean_draw) ** 2 for x in cumulative_draw_rates)) / max(n - 1, 1)) ** 0.5 if n > 1 else 0.0
+    
+    mean_loss: float = sum(cumulative_loss_rates) / n if n > 0 else 0.0
+    std_dev_loss: float = (sum(((x - mean_loss) ** 2 for x in cumulative_loss_rates)) / max(n - 1, 1)) ** 0.5 if n > 1 else 0.0
+    
+    avg_metrics: dict[str, float] = {'win_rate': mean_win, 'draw_rate': mean_draw, 'loss_rate': mean_loss}
+    
+    with open(csv_out_path, mode='w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=['metric', 'mean', 'std_dev'])
         writer.writeheader()
-        for metric_name, value in metrics.items():
-            writer.writerow({'metric_name': metric_name, 'value': value})
-    return metrics
+        writer.writerow({'metric': 'win_rate', 'mean': mean_win, 'std_dev': std_dev_win})
+        writer.writerow({'metric': 'draw_rate', 'mean': mean_draw, 'std_dev': std_dev_draw})
+        writer.writerow({'metric': 'loss_rate', 'mean': mean_loss, 'std_dev': std_dev_loss})
+    
+    return avg_metrics

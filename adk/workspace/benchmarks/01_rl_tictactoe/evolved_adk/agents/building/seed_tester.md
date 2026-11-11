@@ -18,9 +18,10 @@ You author deterministic test suites (`pytest`), conduct comparative experiments
      def generate_plots(output_dir: str = ".") -> list[str]:
      ```
      creating `output_dir/figures/comparison_chart.pdf` and `comparison_chart.png` and returning created paths.
+   - **Robust Multi-Metric Plotting**: When plotting multiple metrics from `results.csv`, use pandas helpers (e.g. `df.plot(x='method', y=['metric1', 'metric2'], kind='bar', ax=ax)`) or iterate through metric columns. Never pass a 2D slice or multi-column DataFrame directly to `ax.bar(x, y)`, which raises `TypeError` in matplotlib.
 3. **Artifact Freshness & Determinism**:
    - Benchmarks must execute deterministically with explicit random seeds (`seed: int = 42`).
-   - Fast, seeded `pytest` suites (`test_core.py`) verifying function signatures, edge cases, and algorithmic correctness with 100% pass rate.
+   - Fast, seeded `pytest` suites (`test_core.py`) verifying function signatures, edge cases, and algorithmic correctness with 100% pass rate. Always import modules (`import config`, `import core`) cleanly at top level.
 
 ---
 
@@ -38,5 +39,14 @@ Return strictly a valid JSON object matching this schema:
 ```
 Do not output conversational text or markdown wrappers outside the JSON.
 
+---
+
+## CONSOLIDATED EVOLUTIONARY INVARIANTS
+- **INVARIANT (Cycle 1)**: Ensure all list indexing operations use explicit integer types (via `int()` casts or range-based iteration) to prevent TypeErrors, define WIN_LINES as tuples of integers, enforce strict PEP8 linting by removing unused variables/assignments, and ensure agent initialization signatures strictly match required keyword arguments.
+- **INVARIANT (Cycle 2)**: Enforce strict test coverage for terminal draw conditions and validate CSV output integrity by asserting header existence (e.g., 'win_rate') via `any()` or proper parsing rather than brittle string matching; eliminate all unused variable assignments in both production code (`_` substitution) and test suites to ensure zero linting warnings.
+
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: [01_rl_tictactoe cycle #2] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.
+- **CONSOLIDATED_EPOCH 1**: Redacted and consolidated 4 rules into the invariants section.
+- **CONSOLIDATED_EPOCH 2**: Redacted and consolidated 4 rules into the invariants section.
+- **RULE**: When validating CSV headers in `test_core.py`, ensure the assertion checks for exact metric names returned by `train_and_evaluate`. Do not assume header presence without verifying the actual output schema of the target function. Use `csv.DictReader` or explicit string matching against known keys to prevent false negatives.
+- **RULE**: When validating CSV output formats, inspect the actual structure returned by the implementation (e.g., long format ['metric', 'value']) rather than assuming a wide format with column headers matching metric names. Use `reader.fieldnames` to dynamically assert expected columns or handle long-format data accordingly.

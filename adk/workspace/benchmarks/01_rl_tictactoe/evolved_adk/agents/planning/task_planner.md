@@ -8,20 +8,30 @@ Your mission is to decompose academic degree thesis requirements (Inżynierska, 
 ## 1. ELASTIC TASK GRANULARITY & VERTICAL FEATURE SLICES
 Do NOT use a rigid waterfall model (where all code is written first, then all tests, and only at the end thesis documentation), and do NOT force a rigid hardcoded number of tasks.
 - **Elastic Task Count ($N$ tasks)**: Plan as many atomic tasks as the problem genuinely requires (whether 8, 10, 14, or 20+ tasks). Simple sub-components can be handled concisely, while complex algorithms, multi-baseline benchmarks, or dense theoretical/experimental chapters can be decomposed into multiple finer-grained tasks (`T1..TN`).
+- **MANDATORY TOPOLOGICAL ORDERING (Code Before Unit Tests)**:
+  - Every verification task (`target_node: "v5"` / `seed_tester`) executes `pytest` immediately upon completion.
+  - Therefore, **NEVER** schedule a unit test task (`v5`) before the target module being tested has been authored!
+  - `config.py` (`v1`) and `core.py` (`v2`) MUST precede `test_core.py` (`v5`). If a test task runs before `core.py` is written, `pytest` will fail immediately with `ModuleNotFoundError: No module named 'core'`.
+  - Always sequence: Module implementation (`v1`, `v2`) $\rightarrow$ Module verification tests (`v5`).
+- **HIERARCHICAL TASK DECOMPOSITION (WBS & Atomic Granularity)**:
+  - Complex modules (e.g. `core.py` with environment simulation, model architectures, baseline algorithms, training loops, and evaluation pipelines) MUST be decomposed into smaller, atomic subtasks or sequential focused steps (e.g. `T2.1: Model & Baseline classes`, `T2.2: Training loop & Evaluation pipeline` or sequential tasks `T2`, `T3`).
+  - Keep each code generation task bounded to ~50–150 lines of target implementation. Never force a single coder task to generate the entire monolithic application at once, which causes token truncation, escaping errors, and cognitive overload.
+  - You may emit sequential tasks (`T1`, `T2`, `T3`, ...) or hierarchical subtasks (`T2.1`, `T2.2`), ensuring each task has a single `target_node` and clearly bounded responsibility.
 - **Granular Subsection Decomposition (Rich Academic Volume)**:
   - LLMs produce significantly higher quality, substantive academic prose (~300--450 words per subsection) when focused on an atomic subsection rather than rushing through an entire chapter in a single turn.
   - When a chapter has multiple distinct facets (e.g. Rozdział 1: Cel i Teza vs. Zakres i Ograniczenia; Rozdział 3: Architektura Blokowa TikZ vs. Formalizm Matematyczny; Rozdział 5: Protokół Badawczy vs. Analiza Ilościowa Tabel CSV vs. Studium Ablacyjne), decompose it elastically into separate subsection-level tasks in the queue.
   - Keep this decomposition adaptive and elastic: do not force a fixed number of subtasks; scale the number of subtasks to the actual depth of the chapter topics.
 - **Complete Node & Chapter Coverage**: Regardless of whether you choose 8, 10, or 20+ tasks, your task sequence MUST cover all hypergraph nodes (`v1`, `v2`, `v3`, `v4`, `v5`) and all planned chapters from `academic_blueprint.planned_chapters` (all 6 canonical chapters for degree theses).
-- **Vertical Feature Slices (Przyrosty Funkcjonalne)**: Writing tests goes hand-in-hand with writing code and thesis chapters:
+- **Vertical Feature Slices (Przyrosty Funkcjonalne)**:
   - **Increment 1 (Domain Assumptions, Literature & Interfaces)**:
     - Research & Documentation: Literature review (`background_researcher` / `discoverer_researcher`) and Chapter 1 & 2 in `references.bib` and `thesis.md` (`seed_writer`).
-    - Code & Test: Define constants/interfaces in `config.py` (`seed_coder`) and unit tests in `test_core.py` (`seed_tester`).
+    - Code: Define constants, hyperparameters, and domain interfaces in `config.py` (`seed_coder`).
   - **Increment 2 (Core Algorithm, Baseline & Architecture)**:
-    - Code & Test: Implement core algorithm and baseline in `core.py` (`seed_coder`) and verification tests in `test_core.py` (`seed_tester`) — split into multiple tasks if the algorithm has multiple modules.
+    - Code: Implement core algorithm and baseline in `core.py` (`seed_coder`) — decomposed into atomic steps or subtasks for complex logic.
+    - Verification: Unit tests verifying `config.py` and `core.py` in `test_core.py` (`seed_tester`).
     - Documentation: Document system architecture (Chapter 3) and algorithmic implementation (Chapter 4) in `thesis.md` (`seed_writer`).
   - **Increment 3 (Comparative Evaluation, Metrics & Conclusions)**:
-    - Benchmark & Test: Execute comparative experiments (`results.csv`), plots in `plot_results.py`, and quality assertions in `test_core.py` (`seed_tester`).
+    - Benchmark & Empirical Proof: Execute comparative experiments (`results.csv`), plots in `plot_results.py`, and quality assertions in `test_core.py` (`seed_tester`).
     - Documentation: Document empirical results (Chapter 5) and thesis verification/conclusions (Chapter 6) in `thesis.md` (`seed_writer`).
 
 ---

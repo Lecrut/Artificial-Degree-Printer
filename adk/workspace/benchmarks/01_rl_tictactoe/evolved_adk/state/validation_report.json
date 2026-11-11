@@ -1,58 +1,31 @@
 {
   "status": "FAIL",
-  "failed_task_id": "Q3_CODE",
-  "failed_node": "v2",
-  "failed_file": "core.py",
-  "failed_agent": "seed_coder",
+  "failed_task_id": "Q4_PLOT_FIX",
+  "failed_node": "v3",
+  "failed_file": "results.csv",
+  "failed_agent": "seed_tester",
   "supervisors": {
     "code_auditor": {
       "status": "FAIL",
       "issues": [
-        "Syntax error in core.py:   File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py\", line 1\n    \"\"\"\\nCore logic for Tic-Tac-Toe Q-Learning Agent.\\n\\nThis module implements the game state representation, board evaluation,\\na tabular Q-learning agent for adversarial search, and a deterministic\\nevaluation pipeline that exports metrics to CSV.\\n\"\"\"\\nfrom __future__ import annotations\\nimport csv\\nimport random\\nfrom typing import Final\\nfrom config import ALPHA, GAMMA, EPSILON, EPISODES\\n\\nBOARD_SIZE: Final[int] = 3\\nEMPTY_SYMBOL: Final[str] = ' '\\nPLAYER_X: Final[str] = 'X'\\nPLAYER_O: Final[str] = 'O'\\nWIN_LENGTH: Final[int] = 3\\n\\n\\ndef check_winner(board: list[list[str]] | list[str]) -> str | None:\\n    \\\"\\\"\\\"Evaluate the board state to determine the game outcome.\\n\\n    Checks all rows, columns, and diagonals for a winner. Returns\\n    the winning player's symbol ('X' or 'O'), or None if no winner\\n    exists yet. If the board is full and no winner exists, it returns\\n    'D' (Draw). Handles both 2D (list[list[str]]) and 1D (list[str])\\n    representations by normalizing to a f\n                                                                                                                                                                                                                                                                ^\nSyntaxError: unexpected character after line continuation character",
-        "Import error in core.py: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import core\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py\", line 1\n    \"\"\"\\nCore logic for Tic-Tac-Toe Q-Learning Agent.\\n\\nThis module implements the game state representation, board evaluation,\\na tabular Q-learning agent for adversarial search, and a deterministic\\nevaluation pipeline that exports metrics to CSV.\\\"\"\"\\nfrom __future__ import annotations\\nimport csv\\nimport random\\nfrom typing import Final\\nfrom config import ALPHA, GAMMA, EPSILON, EPISODES\\n\\nBOARD_SIZE: Final[int] = 3\\nEMPTY_SYMBOL: Final[str] = ' '\\nPLAYER_X: Final[str] = 'X'\\nPLAYER_O: Final[str] = 'O'\\nWIN_LENGTH: Final[int] = 3\\n\\n\\ndef check_winner(board: list[list[str]] | list[str]) -> str | None:\\n    \\\"\\\"\\\"Evaluate the board state to determine the game outcome.\\n\\n    Checks all rows, columns, and diagonals for a winner. Returns\\n    the winning player's symbol ('X' or 'O'), or None if no winner\\n    exists yet. If the board is full and no winner exists, it returns\\n    'D' (Draw). Handles both 2D (list[list[str]]) and 1D (list[str])\\n    representations by normalizing to a f\n                                                                                                                                                                                                                                                                ^\nSyntaxError: unexpected character after line continuation character",
-        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:252",
-        "Ruff lint failure: invalid-syntax: Simple statements must be separated by newlines or semicolons\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:259",
-        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:270",
-        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:288",
-        "Ruff lint failure: invalid-syntax: Expected `,`, found identifier\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:297",
-        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:300",
-        "Ruff lint failure: invalid-syntax: Expected `,`, found identifier\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:309",
-        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:315",
-        "Ruff lint failure: invalid-syntax: Expected `,`, found identifier\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:322",
-        "Ruff lint failure: invalid-syntax: Simple statements must be separated by newlines or semicolons\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:329",
-        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:341",
-        "Ruff lint failure: invalid-syntax: Expected `,`, found identifier\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:348",
-        "Ruff lint failure: invalid-syntax: Expected a newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:355",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:393",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:395",
-        "Ruff lint failure: invalid-syntax: Expected `,`, found identifier\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:407",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:414",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:423",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:455",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:483",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:511",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:539",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:541",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:543",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:549",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:567",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:598",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:612",
-        "Ruff lint failure: invalid-syntax: Expected newline after line continuation character\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:618",
-        "Ruff lint failure: invalid-syntax: missing closing quote in string literal\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\core.py:1:619"
+        "Ruff lint failure: F841 Local variable `plot_df` is assigned to but never used\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\plot_results.py:17:9\n   |\n15 |         df = pd.read_csv(csv_path)\n16 |         # Pivot long format to wide format for plotting\n17 |         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n   |         ^^^^^^^\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n19 |         data = {row['metric']: row['mean'] for _, row in df.iterrows()}\n   |\nhelp: Remove assignment to unused variable `plot_df`\n   |\n16 |         # Pivot long format to wide format for plotting\n   -         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n17 +         df.set_index('metric')['mean'].unstack() if 'unstack' else None\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n   |\nnote: This is an unsafe fix and may change runtime behavior\n\nFound 1 error.\n1 unsafe fix available with `--fix --unsafe-fixes`.",
+        "Ruff lint failure: F841 Local variable `plot_df` is assigned to but never used\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\plot_results.py:17:9\n   |\n15 |         df = pd.read_csv(csv_path)\n16 |         # Pivot long format to wide format for plotting\n17 |         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n   |         ^^^^^^^\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n19 |         data = {row['metric']: row['mean'] for _, row in df.iterrows()}\n   |\nhelp: Remove assignment to unused variable `plot_df`\n   |\n16 |         # Pivot long format to wide format for plotting\n   -         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n17 +         df.set_index('metric')['mean'].unstack() if 'unstack' else None\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n   |\nnote: This is an unsafe fix and may change runtime behavior"
       ]
     },
     "symbolic_auditor": {
-      "status": "SKIPPED_OUT_OF_EDGE_SCOPE",
-      "verdict": "PASS",
-      "skipped": "SKIPPED_OUT_OF_EDGE_SCOPE",
+      "status": "PASS",
       "issues": []
     },
     "redteam_critic_guard": {
-      "status": "SKIPPED_OUT_OF_EDGE_SCOPE",
-      "verdict": "PASS",
-      "skipped": "SKIPPED_OUT_OF_EDGE_SCOPE",
-      "issues": []
+      "status": "FAIL",
+      "gate_3_approved": false,
+      "issues": [
+        "Krytyczny błąd w kodzie (`plot_results.py`): Wykryto zmienną lokalną `plot_df`, która jest przypisana, lecz nigdy nie używana (Ruff F841). Jest to naruszenie standardów czystości kodu (PEP 8) i wymaga usunięcia lub wykorzystania zmiennej przed kompilacją.",
+        "Niespójność danych empirycznych vs teza badawcza: W Rozdziale 5 autor twierdzi, że agent osiąga 'znaczący próg skuteczności' i wysoki odsetek remisów. Jednak plik `results.csv` wskazuje średnią stopy remisów na poziomie 0.1264 (ok. 12.6%), co jest niską wartością w kontekście gry rozwiązanej w remisie, a nie 'wysokim' jak sugeruje tekst. Tekst nie odnosi się do tej niskiej wartości jako ograniczenia konwergencji przy tylko 500 epizodach.",
+        "Podwójna/lukowa prezentacja wyników: W sekcji analizy wyników występują luki w formatowaniu LaTeX (`wskaźnik zwycięstw na poziomie .` oraz `remisów na poziomie .`). Brak konkretnych liczb w kluczowych stwierdzeniach analitycznych jest niedopuszczalne w pracy dyplomowej.",
+        "Sugerowanie niestandardowego działania: W kodzie `plot_results.py` użyto warunku `if 'unstack'`, który zawsze zwraca True (bool), co powoduje wykonanie operacji `.unstack()` na Seriesie (co może rzucić błąm lub zwrócić nieprawidłowy format w zależności od wersji Pandas) zamiast logicznego sprawdzania kolumn. To sugeruje brak testów jednostkowych dla modułu raportowania.",
+        "Niedostateczna wiarygodność statystyczna: Choć kod (`core.py`) wykonuje 50 powtórzeń i oblicza odchylenie standardowe, tekst w Rozdziale 6 (Sekcja 'Ograniczenia Metodologiczne') błędnie twierdzi, że brak jest powtórzeń eksperymentu. Jest to sprzeczność między kodem a tekstem pracy."
+      ]
     }
   },
   "summary": "Layer 3 verification failed."

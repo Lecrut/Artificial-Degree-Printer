@@ -50,10 +50,12 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 ---
 
 ## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT (Cycle 1)**: Maintain strict type signature parity for all exported symbols and ensure deterministic execution via seed=42; strictly format source code and docstrings to avoid literal \n escape sequences, ensuring syntactically valid Python 3.12+ with complete, operational implementations matching test requirements.
+- **INVARIANT (Cycle 1)**: Enforce strict AST signature compatibility for all exported symbols and strictly eliminate unused local variables (Ruff F841) by removing dead assignments or using the `_` placeholder for side-effect-only evaluations.
+- **INVARIANT (Cycle 2)**: Ensure all method implementations explicitly match caller signatures and handle semantic edge cases (e.g., draws vs. wins), while strictly enforcing Ruff F841 compliance by eliminating unused variables in both core logic and test harnesses.
+- **INVARIANT (Cycle 3)**: Guarantee strict symbol parity by defining all referenced functions and classes in core.py before invocation to satisfy import contracts, and enforce CSV schema compliance with 'metric'/'mean' keys; ensure test suites correctly implement inheritance or fixtures for valid execution.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **CONSOLIDATED_EPOCH 1**: Redacted and consolidated 4 rules into the invariants section.
-- **RULE**: Strictly implement check_winner(board) to handle variable-length inputs without IndexError (validate len==9 or slice safely) and ensure train_and_evaluate accepts 'seed' parameter for deterministic Q-learning reproducibility.
-- **RULE**: CRITICAL: Ensure valid Python syntax by never merging multi-line docstrings or code into a single line; always separate statements with newlines and avoid literal backslash-n sequences in source code output.
-- **RULE**: Strictly align implementation logic with test assertions: `check_winner` must return 'D' for a draw (full board, no winner) and `None` only if the game is ongoing; remove any unused variables in helper scripts like `plot_results.py` to satisfy Ruff linting.
+- **CONSOLIDATED_EPOCH 2**: Redacted and consolidated 4 rules into the invariants section.
+- **CONSOLIDATED_EPOCH 3**: Redacted and consolidated 4 rules into the invariants section.
+- **RULE**: Ensure all methods inside a pytest class (e.g., TestBenchmarkAndCSV) that require instance attributes (self.csv_file_path) are properly defined within a class inheriting from object or using @pytest.mark.usefixtures if not using setup. If writing standalone functions, remove 'self' argument and pass state explicitly. Never generate method signatures with 'self' for standalone functions.

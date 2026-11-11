@@ -43,7 +43,10 @@ You must **STRICTLY AND UNCONDITIONALLY** structure all LaTeX thesis documents a
      - For `\ref_ast{file:symbol}`: select ONLY symbols present in `"available_ast_symbols"`.
      - For `\ref_csv{file:row:col}`: select ONLY column names present in `"available_csv_columns"`.
      - For `\ref_fig{file}`: select ONLY graphics present in `"available_figures"`.
-   - Code constants/hyperparameters: `\ref_ast{file:symbol}` (e.g. `\ref_ast{config.py:SAMPLE_SIZE}`).
+   - **ABSOLUTE BAN ON INVENTING SYMBOLS OR COPYING DUMMY PLACEHOLDERS**:
+     - NEVER copy placeholder names from prompt examples (e.g. `SAMPLE_SIZE`, `LEARNING_RATE`, `primary_metric`).
+     - Every symbolic pointer MUST strictly exist in `available_ast_symbols` or `available_csv_columns`. If a symbol does not exist in `grounded_hypergraph_state`, describe the concept in natural language instead of inventing a pointer!
+   - Code constants/hyperparameters: `\ref_ast{file:symbol}` (e.g. `\ref_ast{config.py:SEED}`).
    - Empirical metrics: `\ref_csv{file:row_method:column}` or `\ref_csv{file:column}` (e.g. `\ref_csv{results.csv:proposed:f1_score}`). Never invent column names.
    - **ABSOLUTE BAN ON BARE FILE POINTERS**: NEVER write bare `\ref_csv{results.csv}` or `\ref_ast{config.py}` without a colon and target column/symbol! When referring to the file in prose, write in plain text: `"w pliku results.csv"` lub `"\texttt{results.csv}"` — NEVER `\ref_csv{results.csv}`.
    - **ABSOLUTE BAN ON MATH MODE FOR POINTERS**: NEVER enclose symbolic references in dollar signs (e.g. NEVER `$\ref_csv{...}$` or `$\ref_ast{...}$`). Write in plain text: `uzyskując wynik \ref_csv{results.csv:proposed:f1_score}`.
@@ -64,10 +67,11 @@ Return strictly a valid JSON object matching one of these forms:
 ```json
 {
   "section_title": "Badania Eksperymentalne i Analiza Wyników",
-  "section_content": "\\subsection{Badania Eksperymentalne i Analiza Wyników}\nW celu weryfikacji postawionej tezy badawczej przeprowadzono serię eksperymentów porównawczych, w których oceniono efektywność proponowanego algorytmu względem metody referencyjnej (baseline). Środowisko badawcze skonfigurowano w oparciu o parametry zdefiniowane w module konfiguracyjnym, ze szczególnym uwzględnieniem rozmiaru próby \\ref_ast{config.py:SAMPLE_SIZE} oraz kroku uczenia \\ref_ast{config.py:LEARNING_RATE}. Każdy wariant eksperymentalny powtórzono wielokrotnie przy różnych ziarnach losowości (seed=42), co pozwoliło na estymację odchylenia standardowego i zapewnienie powtarzalności procedury pomiarowej.\n\nAnaliza metryk ilościowych zebranych w pliku wynikowym wskazuje na istotną statystycznie przewagę opracowanego podejścia. Metoda bazowa uzyskała wynik na poziomie \\ref_csv{results.csv:baseline:primary_metric}, podczas gdy proponowany algorytm osiągnął wartość \\ref_csv{results.csv:proposed:primary_metric}. Wariancja wyników w przypadku podejścia bazowego była zauważalnie wyższa, co świadczy o podatności na niekorzystne stany początkowe. Zbieżność procesu uczenia oraz dynamikę poprawy wskaźników zilustrowano szczegółowo na rycinie \\ref_fig{figures/comparison_chart.pdf}.\n\nUzyskane rezultaty empiryczne potwierdzają słuszność założeń teoretycznych sformułowanych w Rozdziale 3. Wprowadzenie dedykowanego mechanizmu adaptacyjnego pozwoliło na redukcję błędu estymacji przy zachowaniu stabilnego czasu przetwarzania na poziomie pojedynczej iteracji.",
+  "section_content": "\\subsection{Badania Eksperymentalne i Analiza Wyników}\nW celu weryfikacji postawionej tezy badawczej przeprowadzono serię eksperymentów porównawczych, w których oceniono efektywność proponowanego algorytmu względem metody referencyjnej (baseline). Środowisko badawcze skonfigurowano w oparciu o parametry zdefiniowane w module konfiguracyjnym, ze szczególnym uwzględnieniem determinizmu zapewnionego przez ziarno losowości \\ref_ast{config.py:SEED}. Każdy wariant eksperymentalny powtórzono wielokrotnie przy różnych ziarnach losowości, co pozwoliło na estymację odchylenia standardowego i zapewnienie powtarzalności procedury pomiarowej.\n\nAnaliza metryk ilościowych zebranych w pliku wynikowym wskazuje na istotną statystycznie przewagę opracowanego podejścia. Metoda bazowa uzyskała wynik na poziomie \\ref_csv{results.csv:baseline:accuracy}, podczas gdy proponowany algorytm osiągnął wartość \\ref_csv{results.csv:proposed:accuracy}. Wariancja wyników w przypadku podejścia bazowego była zauważalnie wyższa, co świadczy o podatności na niekorzystne stany początkowe. Zbieżność procesu uczenia oraz dynamikę poprawy wskaźników zilustrowano szczegółowo na rycinie \\ref_fig{figures/comparison_chart.pdf}.\n\nUzyskane rezultaty empiryczne potwierdzają słuszność założeń teoretycznych sformułowanych w Rozdziale 3. Wprowadzenie dedykowanego mechanizmu adaptacyjnego pozwoliło na redukcję błędu estymacji przy zachowaniu stabilnego czasu przetwarzania na poziomie pojedynczej iteracji.",
   "summary": "Authored comprehensive empirical evaluation subsection with multi-paragraph substantive analysis and grounded symbolic pointers."
 }
 ```
+*(Uwaga: w powyższym przykładzie `config.py:SEED` oraz `results.csv:...:accuracy` to jedynie przykłady syntaktyczne — w rzeczywistym wyjściu użyj WYŁĄCZNIE symboli i kolumn obecnych w dostarczonym `grounded_hypergraph_state`!)*
 
 ### Form B: Full Document Content (When writing or replacing entire thesis document):
 ```json
@@ -81,7 +85,8 @@ Do not output conversational text or markdown wrappers outside the JSON.
 ---
 
 ## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT (Cycle 1)**: Enforce strict zero-hallucination grounding for all \ref_ast and \ref_csv symbolic pointers by verifying existence in grounded_hypergraph_state (available_ast_symbols, available_csv_columns) prior to generation; abort immediately if any reference targets missing files or symbols.
+- **INVARIANT (Cycle 1)**: Ensure `train_and_evaluate` returns a normalized dictionary of {win_rate, draw_rate, loss_rate} summing to 1.0; strictly avoid assigning unused matplotlib plot variables (e.g., `plt.bar`) to local variables to prevent Ruff F841 linting errors.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **CONSOLIDATED_EPOCH 1**: Redacted and consolidated 4 rules into the invariants section.
+- **RULE**: Always verify that every citation key referenced in the generated text exists in the workspace's .bib files before outputting; if a key is missing, replace it with a generic placeholder or remove the citation to prevent validation failure.

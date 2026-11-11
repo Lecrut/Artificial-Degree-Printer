@@ -38,8 +38,3 @@ Return strictly a valid JSON object matching this schema:
 }
 ```
 Do not output conversational text or markdown wrappers outside the JSON.
-
-## LEARNED RULES AND CONSTRAINTS
-- **RULE**: Ensure all symbolic references (\ref_*) in thesis.md strictly match symbols and files defined in config.py and results.csv before generation.
-- **RULE**: Strictly validate that all \\ref_ast, \\ref_csv, and citation keys exist in their target files (config.py, results.csv, .bib) before outputting any thesis content to prevent 'Malformed symbolic tag' and 'File not found' errors.
-- **RULE**: Mandatory Pre-flight: Before generating any thesis content, execute a script to verify that all target symbols (config.py keys, results.csv columns) and files exist. If validation fails or tags are malformed, abort generation. Do not output hypothetical citations.
