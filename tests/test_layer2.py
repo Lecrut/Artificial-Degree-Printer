@@ -141,3 +141,42 @@ def test_doc_editor_drops_refs_missing_from_csv_and_ast(tmp_path: Path):
     assert "baseline:win_rate" not in text
     assert "baseline_random:win_rate" in text
     assert "config.py:ALPHA" in text
+
+
+def test_sync_drops_single_member_edges_and_avoids_id_collisions(tmp_path: Path):
+    ws = tmp_path / "workspace"
+    ws.mkdir()
+    (ws / "config.py").write_text("ALPHA = 0.1\n", encoding="utf-8")
+    (ws / "core.py").write_text("import config\n", encoding="utf-8")
+    (ws / "test_core.py").write_text("import core\n", encoding="utf-8")
+    (ws / "plot.py").write_text("import core\n", encoding="utf-8")  # new file -> new node + new edge
+
+    matrix_file = tmp_path / "hypergraph_matrix.json"
+    matrix_file.write_text(
+        json.dumps(
+            {
+                # Gapped ids: len()+1 would give 'v3' / 'E3', which already exist.
+                "nodes": {
+                    "v1": {"path": "config.py", "degree": 0, "weight": 1.0},
+                    "v3": {"path": "core.py", "degree": 0, "weight": 1.0},
+                },
+                "edges": {"E1": ["v1", "v3"], "E3": ["v1"]},
+                "matrix": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    sync_hypergraph_matrix(ws, matrix_file)
+    data = json.loads(matrix_file.read_text(encoding="utf-8"))
+
+    paths = {meta["path"] for meta in data["nodes"].values()}
+    assert paths == {"config.py", "core.py", "test_core.py", "plot.py"}
+    assert data["nodes"]["v3"]["path"] == "core.py"
+    assert all(len(set(members)) >= 2 for members in data["edges"].values())
+    assert data["edges"]["E1"] == ["v1", "v3"]
+    by_path = {meta["path"]: n_id for n_id, meta in data["nodes"].items()}
+    edge_sets = [set(m) for m in data["edges"].values()]
+    assert {by_path["test_core.py"], "v3"} in edge_sets
+    assert {by_path["plot.py"], "v3"} in edge_sets
+    assert data["nodes"]["v3"]["degree"] == 3

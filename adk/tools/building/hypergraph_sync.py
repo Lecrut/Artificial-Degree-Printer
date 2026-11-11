@@ -18,6 +18,12 @@ EXCLUDED_WORKSPACE_PARTS = {
 }
 
 
+def _next_index(ids: dict[str, Any]) -> int:
+    """Next free numeric suffix for ids like 'E12' / 'v7'; len()+1 collided after removals left gaps."""
+    nums = [int(i[1:]) for i in ids if i[1:].isdigit()]
+    return max(nums, default=0) + 1
+
+
 def sync_hypergraph_matrix(
     workspace_dir: str | Path = "workspace",
     matrix_path: str | Path = "state/hypergraph_matrix.json",
@@ -80,7 +86,7 @@ def sync_hypergraph_matrix(
                 continue
             rel = file_path.relative_to(w_dir).as_posix()
             if rel not in path_to_node:
-                new_id = f"v{len(nodes) + 1}"
+                new_id = f"v{_next_index(nodes)}"
                 nodes[new_id] = {"path": rel, "degree": 0, "weight": 1.0}
                 matrix[new_id] = {e_id: 0 for e_id in edges}
                 path_to_node[rel] = new_id
@@ -138,9 +144,14 @@ def sync_hypergraph_matrix(
                 matched_edge = edge_id
                 break
         if matched_edge is None:
-            matched_edge = f"E{len(edges) + 1}"
+            matched_edge = f"E{_next_index(edges)}"
             edges[matched_edge] = sorted(pair_set)
             edge_meta[matched_edge] = {"dynamic": True}
+
+    # A hyperedge couples at least two files; single-member edges (left behind by node pruning) only
+    # inflated d(v), forcing those nodes onto the LRM tier and widening the blast radius.
+    edges = {e_id: members for e_id, members in edges.items() if len(set(members)) >= 2}
+    edge_meta = {e_id: meta for e_id, meta in edge_meta.items() if e_id in edges}
 
     # Rebuild the incidence matrix entirely from current edge memberships so stale entries from
     # removed couplings do not linger (previously `row[e_id]` preserved old values for non-members).

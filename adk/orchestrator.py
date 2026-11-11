@@ -36,7 +36,12 @@ from adk.tools.planning import (
     select_model_tier,
     synthesize_table_of_contents,
 )
-from adk.tools.verification import compile_symbolic_references, iter_workspace_python_files, run_isolated_tests
+from adk.tools.verification import (
+    check_test_contract,
+    compile_symbolic_references,
+    iter_workspace_python_files,
+    run_isolated_tests,
+)
 
 
 def _merge_bibtex_entries(existing_bib: str, new_bib: str) -> str:
@@ -72,6 +77,16 @@ def _issue_signature(report: dict[str, Any]) -> str:
     lines = sorted(str(item).strip() for item in issues if str(item).strip())
     return "\n".join(lines)
 
+
+def _collect_report_issues(report: dict[str, Any]) -> list[str]:
+    """All issues of a verification report: builder exceptions (top-level `issues`) plus every supervisor's
+    `issues`. ValidationReport keeps pytest/ruff/ref errors under `supervisors.*.issues`, not at top level."""
+    raw = report.get("issues") or []
+    items = list(raw) if isinstance(raw, list) else [raw]
+    for supervisor in (report.get("supervisors") or {}).values():
+        if isinstance(supervisor, dict):
+            items.extend(supervisor.get("issues") or [])
+    return list(dict.fromkeys(str(item).strip() for item in items if str(item).strip()))
 
 
 class NeuroSymbolicOrchestrator:
@@ -827,6 +842,11 @@ class NeuroSymbolicOrchestrator:
             use_docker=False,
             verification_dir=self.adk_root / "tools" / "verification",
         )
+        # Hyperedge contract (test <-> module): deterministic, precise, and listed before pytest's tracebacks.
+        contract_violations = check_test_contract(self.workspace_dir, self.matrix_path)
+        if contract_violations:
+            test_res["errors"] = contract_violations + list(test_res.get("errors") or [])
+            test_res["status"] = "FAIL"
         snapshot = self._collect_workspace_snapshot()
 
         # Only attach experiment errors to tasks that actually govern experiments/data (e.g. results.csv)
@@ -988,13 +1008,12 @@ class NeuroSymbolicOrchestrator:
         )
         if deterministic_code_fail:
             code_audit["status"] = "FAIL"
-            if not code_audit.get("issues"):
-                code_audit["issues"] = list(
-                    test_res.get("errors")
-                    or [
-                        f"Wykryto niezgodność kontraktu w zadaniu {current_task.get('task_id')} na węźle {target_node} (wymagana pętla W3 -> W4 -> W1 -> W2)."
-                    ]
-                )
+            # Real pytest/ruff errors always come first; the LLM's issues only supplement them.
+            real_errors = [str(err) for err in (test_res.get("errors") or [])]
+            llm_issues = [str(i) for i in (code_audit.get("issues") or []) if str(i) not in real_errors]
+            code_audit["issues"] = real_errors + llm_issues or [
+                f"Wykryto niezgodność kontraktu w zadaniu {current_task.get('task_id')} na węźle {target_node} (wymagana pętla W3 -> W4 -> W1 -> W2)."
+            ]
         elif code_audit.get("status") != "PASS":
             code_audit["status"] = "PASS"
             code_audit["issues"] = []
@@ -1046,9 +1065,25 @@ class NeuroSymbolicOrchestrator:
             },
             summary="All Layer 3 gates passed." if overall_pass else "Layer 3 verification failed.",
         ).to_dict()
+        if contract_violations and not overall_pass:
+            report["contract_violations"] = contract_violations
 
         write_json_state(self.validation_report_path, report)
         return report
+
+    def _workspace_module_stems(self) -> set[str]:
+        return {p.stem for p in self.workspace_dir.rglob("*.py")} if self.workspace_dir.exists() else set()
+
+    def _missing_third_party_modules(self, report: dict[str, Any]) -> list[str]:
+        """`No module named X` names from a report, excluding the workspace's own modules: a missing `core`
+        or `config` is a path/contract problem, and pip-installing that name from PyPI would be wrong."""
+        local = self._workspace_module_stems()
+        found: list[str] = []
+        for issue in _collect_report_issues(report):
+            for name in re.findall(r"No module named ['\"]([^'\"]+)['\"]", issue):
+                if name.split(".")[0] not in local and name not in found:
+                    found.append(name)
+        return found
 
     def _run_evolution_step(
         self,
@@ -1056,11 +1091,8 @@ class NeuroSymbolicOrchestrator:
         tasks_in_memory: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Invoke Layer 4 Evolution Architect to create/split/mutate agents, promote validators, or trigger HITL."""
-        failure_ledger = (
-            read_json_state(self.failure_ledger_path)
-            if self.failure_ledger_path.exists()
-            else {"failures": []}
-        )
+        # Only the current failure (in `payload`) is sent: past decisions already live in agents' LEARNED RULES;
+        # failure_ledger.json stays on disk as an audit log only (re-sending it cost ~20k tokens per call).
         agent_registry = (
             read_json_state(self.registry_path)
             if self.registry_path.exists()
@@ -1069,7 +1101,6 @@ class NeuroSymbolicOrchestrator:
         failed_agent = str(payload.get("failed_agent", "seed_coder"))
 
         enriched_payload: dict[str, Any] = {
-            "failure_ledger": failure_ledger,
             "agent_registry": agent_registry,
             "agent_failure_count": int(payload.get("agent_failure_count", 1)),
             **payload,
@@ -1107,13 +1138,9 @@ class NeuroSymbolicOrchestrator:
 
             pkg_name = str(decision_out.get("package_name") or decision_out.get("package") or "").strip()
             if not pkg_name:
-                val_rep = payload.get("validation_report") or {}
-                for issue in val_rep.get("issues", []):
-                    m = re.search(r"No module named ['\"]([^'\"]+)['\"]", str(issue))
-                    if m:
-                        pkg_name = m.group(1)
-                        break
-            if pkg_name:
+                missing = self._missing_third_party_modules(payload.get("validation_report") or {})
+                pkg_name = missing[0] if missing else ""
+            if pkg_name and pkg_name.split(".")[0] not in self._workspace_module_stems():
                 pkg_map = {"sklearn": "scikit-learn", "cv2": "opencv-python", "PIL": "pillow"}
                 pkg_to_install = pkg_map.get(pkg_name, pkg_name)
                 inst_res = install_package(pkg_to_install)
@@ -1121,17 +1148,13 @@ class NeuroSymbolicOrchestrator:
                 return {"action": "INSTALL_DEPENDENCY", "decision": "INSTALL_DEPENDENCY", "details": inst_res}
 
         # Proactive self-healing fallback for missing modules
-        val_rep = payload.get("validation_report") or {}
-        for issue in val_rep.get("issues", []):
-            m = re.search(r"No module named ['\"]([^'\"]+)['\"]", str(issue))
-            if m:
-                missing_mod = m.group(1)
-                pkg_map = {"sklearn": "scikit-learn", "cv2": "opencv-python", "PIL": "pillow"}
-                pkg_to_install = pkg_map.get(missing_mod, missing_mod)
-                from adk.tools.evolution.dependency_manager import install_package
-                inst_res = install_package(pkg_to_install)
-                self._record_evolution_event({"type": "AUTO_DEPENDENCY_INSTALLED", "details": inst_res})
-                break
+        for missing_mod in self._missing_third_party_modules(payload.get("validation_report") or {}):
+            pkg_map = {"sklearn": "scikit-learn", "cv2": "opencv-python", "PIL": "pillow"}
+            pkg_to_install = pkg_map.get(missing_mod, missing_mod)
+            from adk.tools.evolution.dependency_manager import install_package
+            inst_res = install_package(pkg_to_install)
+            self._record_evolution_event({"type": "AUTO_DEPENDENCY_INSTALLED", "details": inst_res})
+            break
 
         if action == "HITL":
             gate = str(decision_out.get("hitl_gate") or "GATE_1_OUTLINE_APPROVAL")
@@ -1888,9 +1911,7 @@ class NeuroSymbolicOrchestrator:
             header = csv_path.read_text(encoding="utf-8", errors="replace").splitlines()
             csv_columns = [part.strip() for part in header[0].split(",")] if header else []
 
-        trigger_issues = report.get("issues") or []
-        if not isinstance(trigger_issues, list):
-            trigger_issues = [trigger_issues]
+        trigger_issues = _collect_report_issues(report)
         audit = {
             "files": files,
             "pytest_status": test_res.get("status"),
@@ -2248,7 +2269,6 @@ class NeuroSymbolicOrchestrator:
             "user_prompt": user_prompt,
             "target_node": target_node,
             "blast_radius": blast,
-            "hypergraph": scoped_graph,
             "hypergraph_matrix": scoped_graph,
             "agent_registry": read_json_state(self.registry_path),
             "include_docs": self.include_docs,
@@ -2463,7 +2483,6 @@ class NeuroSymbolicOrchestrator:
                 "tasks": tasks,
                 "agent_registry": registry_data,
                 "blast_radius": blast,
-                "hypergraph": scoped_graph,
                 "hypergraph_matrix": scoped_graph,
                 "include_docs": self.include_docs,
             },
@@ -2595,6 +2614,8 @@ class NeuroSymbolicOrchestrator:
                     report.setdefault("errors", []).append(builder_error_msg)
 
                 task_retries = 0
+                last_contract_fix: list[str] | None = None
+                last_evo_signature: str | None = None
                 while report["status"] != "PASS" and task_retries < effective_max_retries:
                     task["status"] = "FAILED"
                     write_json_state(self.task_queue_path, tasks)
@@ -2625,14 +2646,60 @@ class NeuroSymbolicOrchestrator:
                         flush=True,
                     )
 
-                    issues_list = report.get("issues", [])
-                    issues_summary = "; ".join(issues_list) if issues_list else "Usterka weryfikacji warstwy 3"
+                    issues_list = _collect_report_issues(report)
+                    # Capped: this text also feeds `suggested_rule`, which may be written into agent prompts.
+                    issues_summary = "; ".join(issues_list)[:800] if issues_list else "Usterka weryfikacji warstwy 3"
                     remediation_directive = (
                         f"Poprzednio nie zadziałało: {issues_summary}. "
                         f"Zrób to: w zadaniu {t_id} na węźle {node_id} ({node_file}) wyeliminuj ten błąd i wygeneruj w pełni poprawną zawartość."
                     )
 
-                    if self.enable_layer4:
+                    # Fast path: a hyperedge contract violation is deterministic and self-describing, so the same
+                    # builder is re-run with the exact message, skipping W4 + W1 (two LRM calls). A repeated
+                    # identical violation falls through to the full W4 -> W1 loop.
+                    contract_violations = report.get("contract_violations") or []
+                    if contract_violations and contract_violations != last_contract_fix:
+                        last_contract_fix = contract_violations
+                        contract_task = {
+                            **task,
+                            "task_id": f"{t_id}_CONTRACT_FIX",
+                            "description": f"{t_desc}\nNAPRAW KONTRAKT HIPERGRAFU: " + " ".join(contract_violations),
+                        }
+                        print(
+                            f"  [KONTRAKT HIPERKRAWĘDZI] {' '.join(contract_violations)}\n"
+                            f"  [WARSTWA 2: SZYBKA NAPRAWA] Ponowne budowanie {node_file} bez W4/W1...",
+                            flush=True,
+                        )
+                        self._record_evolution_event(
+                            {"type": "CONTRACT_FAST_FIX", "task_id": t_id, "violations": contract_violations}
+                        )
+                        try:
+                            self._execute_builder_step(contract_task, model_tier=select_model_tier(node_id, self.matrix_path))
+                            self._refresh_experiment_after_code(node_id)
+                        except Exception as exc:
+                            print(f"  [OSTRZEŻENIE: BŁĄD SZYBKIEJ NAPRAWY] {exc}", flush=True)
+                        report = self._run_verification_step(
+                            task, include_docs=self.include_docs, is_final_gate=False, inject_failure=False
+                        )
+                        cycle_trace["w4_action"] = "CONTRACT_FAST_FIX"
+                        cycle_trace["w1_remediation_task_id"] = contract_task["task_id"]
+                        cycle_trace["w3_post_remediation_status"] = report["status"]
+                        architecture_cycles.append(cycle_trace)
+                        continue
+
+                    # W4 only for a new failure: retrying the same error produced near-identical MUTATE rules
+                    # at one LRM call each. Digits are masked so pytest timings/line numbers don't change it.
+                    evo_signature = _issue_signature({"issues": [re.sub(r"\d+", "#", i)[:300] for i in issues_list]})
+                    run_evolution = self.enable_layer4 and evo_signature != last_evo_signature
+                    if self.enable_layer4 and not run_evolution:
+                        cycle_trace["w4_action"] = "SKIPPED_SAME_FAILURE"
+                        print(
+                            "  [WARSTWA 4: POMINIĘTA] Ten sam błąd co w poprzedniej próbie; decyzja ewolucyjna już podjęta.",
+                            flush=True,
+                        )
+                    last_evo_signature = evo_signature
+
+                    if run_evolution:
                         print(
                             f"  [WARSTWA 4: SAMOEWOLUCJA] Uruchomienie Architekta Ewolucji (cykl #{replan_count}, agent: {failed_agent})...",
                             flush=True,
@@ -2685,11 +2752,6 @@ class NeuroSymbolicOrchestrator:
                         flush=True,
                     )
 
-                    failure_ledger = (
-                        read_json_state(self.failure_ledger_path)
-                        if self.failure_ledger_path.exists()
-                        else {"failures": []}
-                    )
                     remediation_blast = calculate_blast_radius(node_id, self.matrix_path)
                     remediation_scoped_graph = get_scoped_hypergraph_context(
                         self.matrix_path, blast_radius=remediation_blast
@@ -2701,10 +2763,8 @@ class NeuroSymbolicOrchestrator:
                             "error_report": report,
                             "failed_task": task,
                             "remediation_directive": remediation_directive,
-                            "failure_ledger": failure_ledger,
                             "agent_registry": read_json_state(self.registry_path),
                             "blast_radius": remediation_blast,
-                            "hypergraph": remediation_scoped_graph,
                             "hypergraph_matrix": remediation_scoped_graph,
                             "include_docs": self.include_docs,
                         },
@@ -2767,7 +2827,6 @@ class NeuroSymbolicOrchestrator:
                                     "tasks": todo_slice,
                                     "agent_registry": read_json_state(self.registry_path),
                                     "blast_radius": remediation_blast,
-                                    "hypergraph": remediation_scoped_graph,
                                     "hypergraph_matrix": remediation_scoped_graph,
                                     "include_docs": self.include_docs,
                                 },
@@ -2936,7 +2995,8 @@ class NeuroSymbolicOrchestrator:
             while final_report.get("status") != "PASS" and defense_retries < effective_max_retries:
                 defense_retries += 1
                 replan_count += 1
-                defense_issues = "; ".join(final_report.get("issues", [])) or "Usterka obrony pracy (Gate 3)"
+                defense_issues_full = "; ".join(_collect_report_issues(final_report))
+                defense_issues = defense_issues_full[:800] or "Usterka obrony pracy (Gate 3)"
                 print(
                     f"\n  [WARSTWA 3 -> ODRZUCENIE OBRONY GATE 3] Proba naprawy #{defense_retries}: {defense_issues}\n"
                     f"  [POWROT DO WARSTWY 1: REMEDIACJA OBRONY] Synteza zadan naprawczych dla Gate 3...",
@@ -2949,6 +3009,7 @@ class NeuroSymbolicOrchestrator:
                         "v4",
                     )
                 remediation_agent = self.agents_dir / "planning" / "remediation_planner.md"
+                def_blast = calculate_blast_radius(def_node, self.matrix_path)
                 def_remed_out = call_agent(
                     remediation_agent,
                     {
@@ -2960,11 +3021,9 @@ class NeuroSymbolicOrchestrator:
                             "assigned_agent": "seed_writer" if def_node == "v4" else "seed_coder",
                         },
                         "remediation_directive": f"Poprzednio nie zadziałało podczas obrony Gate 3: {defense_issues}. Zrób to: usun usterki i doprowadz prace do pelnej zgodnosci.",
-                        "failure_ledger": read_json_state(self.failure_ledger_path) if self.failure_ledger_path.exists() else {"failures": []},
                         "agent_registry": read_json_state(self.registry_path),
-                        "blast_radius": calculate_blast_radius(def_node, self.matrix_path),
-                        "hypergraph": get_scoped_hypergraph_context(self.matrix_path, blast_radius=calculate_blast_radius(def_node, self.matrix_path)),
-                        "hypergraph_matrix": get_scoped_hypergraph_context(self.matrix_path, blast_radius=calculate_blast_radius(def_node, self.matrix_path)),
+                        "blast_radius": def_blast,
+                        "hypergraph_matrix": get_scoped_hypergraph_context(self.matrix_path, blast_radius=def_blast),
                         "include_docs": self.include_docs,
                     },
                     model_tier="LRM",
@@ -2976,7 +3035,7 @@ class NeuroSymbolicOrchestrator:
                     def_tasks = []
 
                 # If missing chapters were reported, ensure surgical tasks cover each missing chapter explicitly
-                missing_ch_match = re.search(r"brakujące rozdziały.*?\[(.*?)\]", defense_issues)
+                missing_ch_match = re.search(r"brakujące rozdziały.*?\[(.*?)\]", defense_issues_full)
                 if missing_ch_match:
                     raw_missing = missing_ch_match.group(1).lower()
                     for ch_i in range(1, 7):

@@ -11,7 +11,7 @@ from typing import Any
 from adk.core.models import resolve_adk_path
 
 
-BUILTIN_VERIFICATION_MODULES = {"__init__.py", "test_runner.py", "ref_compiler.py"}
+BUILTIN_VERIFICATION_MODULES = {"__init__.py", "test_runner.py", "ref_compiler.py", "contract_check.py"}
 
 
 def iter_workspace_python_files(w_dir: Path) -> list[Path]:

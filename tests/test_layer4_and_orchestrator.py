@@ -321,3 +321,90 @@ def test_orchestrator_resolve_target_node(tmp_path: Path):
     assert nid == "v1"
 
 
+
+
+def test_collect_report_issues_reads_supervisor_issues():
+    from adk.orchestrator import _collect_report_issues
+
+    report = {
+        "status": "FAIL",
+        "supervisors": {
+            "code_auditor": {"status": "FAIL", "issues": ["Pytest failure: AttributeError: module 'core' has no attribute 'x'"]},
+            "symbolic_auditor": {"status": "SKIPPED_OUT_OF_EDGE_SCOPE", "issues": []},
+            "redteam_critic_guard": {"status": "FAIL", "issues": ["Pytest failure: AttributeError: module 'core' has no attribute 'x'"]},
+        },
+        "issues": ["builder crashed"],
+    }
+    assert _collect_report_issues(report) == [
+        "builder crashed",
+        "Pytest failure: AttributeError: module 'core' has no attribute 'x'",
+    ]
+    assert _collect_report_issues({"status": "PASS"}) == []
+
+
+def test_real_pytest_errors_come_first_in_code_audit(tmp_path: Path, monkeypatch):
+    import adk.orchestrator as orch_mod
+
+    real_call_agent = orch_mod.call_agent
+
+    def fake_call_agent(agent_md, payload, *args, **kwargs):
+        if "code_auditor" in str(agent_md):
+            return {"output": {"status": "FAIL", "issues": ["LLM paraphrase of the failure"]}}
+        return real_call_agent(agent_md, payload, *args, **kwargs)
+
+    monkeypatch.setattr(orch_mod, "call_agent", fake_call_agent)
+    adk_dir = _clone_adk_env(tmp_path)
+    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, enable_layer4=True, include_docs=True, provider="mock")
+    ws = adk_dir / "workspace"
+    (ws / "core.py").write_text("def get_board():\n    return []\n", encoding="utf-8")
+    (ws / "test_core.py").write_text(
+        "import core\n\n\ndef test_missing():\n    assert core.is_terminal([])\n", encoding="utf-8"
+    )
+    task = {"task_id": "T5", "target_node": "v5", "assigned_agent": "seed_tester", "status": "IN_PROGRESS"}
+
+    report = orch._run_verification_step(task, include_docs=True, is_final_gate=False)
+
+    assert report["status"] == "FAIL"
+    issues = report["supervisors"]["code_auditor"]["issues"]
+    assert "is_terminal" in issues[0]
+    assert "LLM paraphrase of the failure" in issues
+    # The hyperedge contract (E4: core.py <-> test_core.py) names the exact violation.
+    assert any("core.is_terminal" in v for v in report["contract_violations"])
+
+
+def test_evolution_runs_once_per_distinct_failure(tmp_path: Path):
+    adk_dir = _clone_adk_env(tmp_path)
+    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, enable_layer4=True, include_docs=False, provider="mock")
+
+    real_verify = orch._run_verification_step
+    real_evolve = orch._run_evolution_step
+    calls = {"verify": 0, "evolve": 0}
+
+    def same_failure_three_times(task, *args, **kwargs):
+        calls["verify"] += 1
+        if calls["verify"] <= 3:
+            return {
+                "status": "FAIL",
+                "failed_task_id": task.get("task_id"),
+                "failed_node": "v1",
+                "failed_file": "config.py",
+                "failed_agent": "seed_coder",
+                # Differing timings must not make it look like a new failure.
+                "supervisors": {"code_auditor": {"status": "FAIL", "issues": [f"Pytest failure: 1 failed in 0.{calls['verify']}s"]}},
+                "summary": "Layer 3 verification failed.",
+            }
+        return real_verify(task, *args, **kwargs)
+
+    def counting_evolve(*args, **kwargs):
+        calls["evolve"] += 1
+        return real_evolve(*args, **kwargs)
+
+    orch._run_verification_step = same_failure_three_times
+    orch._run_evolution_step = counting_evolve
+
+    res = orch.run("Zbuduj moduł walidacji parametrów")
+
+    assert calls["evolve"] == 1
+    actions = [c["w4_action"] for c in res.get("architecture_cycles", [])]
+    # 3 failing verifications -> 3 retry iterations: W4 on the first, skipped on the two identical repeats.
+    assert actions[:3] == ["MUTATE_AGENT", "SKIPPED_SAME_FAILURE", "SKIPPED_SAME_FAILURE"]
