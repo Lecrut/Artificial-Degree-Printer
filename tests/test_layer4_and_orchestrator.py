@@ -277,7 +277,7 @@ def test_interactive_gates_callback_and_weight_escalation_in_orchestrator(tmp_pa
     history = json.loads((adk_dir / "state" / "evolution_history.json").read_text(encoding="utf-8"))
     assert any(e["type"] == "WEIGHT_ESCALATED" for e in history["events"])
     matrix_after = json.loads((adk_dir / "state" / "hypergraph_matrix.json").read_text(encoding="utf-8"))
-    assert matrix_after["nodes"]["v1"]["weight"] >= 1.4
+    assert max(meta["weight"] for meta in matrix_after["nodes"].values()) >= 1.4
 
     # 2. Verify gate_approval_callback can pause execution at GATE_2_METHODOLOGY_APPROVAL
     visited_gates: list[str] = []
@@ -301,24 +301,29 @@ def test_orchestrator_resolve_target_node(tmp_path: Path):
     adk_dir = _clone_adk_env(tmp_path)
     orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
 
-    # 1. Direct node ID hit
-    nid, npath = orch._resolve_target_node("v2")
-    assert nid == "v2"
+    # 1. A legacy role alias resolves to the file playing the role; the node id is opaque.
+    core_id, npath = orch._resolve_target_node("v2")
     assert npath == "core.py"
+    assert not core_id.startswith("v")
 
-    # 2. File path hit
+    # 2. File path hit returns the same node
     nid, npath = orch._resolve_target_node("core.py")
-    assert nid == "v2"
+    assert nid == core_id
 
     # 3. Unknown node with task context pointing to core.py
     task_hint = {"task_id": "T3_FIX", "description": "Fix winner logic in core.py"}
     nid, npath = orch._resolve_target_node("v7", task=task_hint)
-    assert nid == "v2"
+    assert nid == core_id
     assert npath == "core.py"
 
-    # 4. Unknown node with no hints falls back safely to default
+    # 4. Unknown node with no hints falls back to the declared fallback role
     nid, npath = orch._resolve_target_node("v99", fallback="v1")
-    assert nid == "v1"
+    assert npath == "config.py"
+
+    # 5. A role is played by what the system created: a declared entrypoint becomes the core file.
+    orch.blueprint_path.write_text(json.dumps({"entrypoint": "src/train.py:main"}), encoding="utf-8")
+    _nid, npath = orch._resolve_target_node("v2")
+    assert npath == "src/train.py"
 
 
 
@@ -406,5 +411,343 @@ def test_evolution_runs_once_per_distinct_failure(tmp_path: Path):
 
     assert calls["evolve"] == 1
     actions = [c["w4_action"] for c in res.get("architecture_cycles", [])]
-    # 3 failing verifications -> 3 retry iterations: W4 on the first, skipped on the two identical repeats.
-    assert actions[:3] == ["MUTATE_AGENT", "SKIPPED_SAME_FAILURE", "SKIPPED_SAME_FAILURE"]
+    # W4 on the first failure, skipped on the first identical repeat; the second repeat means the prompt change
+    # did not help, so the failure is reported as a suspected harness defect instead of burning more retries.
+    assert actions[:3] == ["MUTATE_AGENT", "SKIPPED_SAME_FAILURE", "REPORT_HARNESS_BUG"]
+    history = json.loads((adk_dir / "state" / "evolution_history.json").read_text(encoding="utf-8"))
+    assert any(e.get("type") == "HARNESS_BUG_REPORTED" for e in history["events"])
+
+
+def _grounding_fixture(tmp_path: Path) -> tuple[Path, Path]:
+    ws = tmp_path / "workspace"
+    ws.mkdir()
+    (ws / "config.py").write_text("ALPHA = 0.1\nEPISODES: int = 10\n", encoding="utf-8")
+    (ws / "core.py").write_text("import config\n\ndef train_and_evaluate():\n    return config.ALPHA\n", encoding="utf-8")
+    (ws / "results.csv").write_text("method,metric,value\nproposed,win_rate,0.5\n", encoding="utf-8")
+    (ws / "ablation.csv").write_text("method,metric,value\nbaseline,loss_rate,0.2\n", encoding="utf-8")
+    matrix_file = tmp_path / "hypergraph_matrix.json"
+    matrix_file.write_text(json.dumps({"nodes": {}, "edges": {}, "matrix": {}}), encoding="utf-8")
+    from adk.tools.building import sync_hypergraph_matrix
+
+    sync_hypergraph_matrix(ws, matrix_file)
+    return ws, matrix_file
+
+
+def test_grounded_state_exposes_real_ast_symbols(tmp_path: Path):
+    from adk.orchestrator import build_grounded_symbols
+    from adk.tools.building import extract_hyperedge_exports
+
+    ws, matrix_file = _grounding_fixture(tmp_path)
+    grounded = build_grounded_symbols(extract_hyperedge_exports("ALL", matrix_file, ws))
+    assert "config.py:ALPHA" in grounded["available_ast_symbols"]
+    assert "config.py:EPISODES" in grounded["available_ast_symbols"]
+    assert "core.py:train_and_evaluate" in grounded["available_ast_symbols"]
+    assert "config.py" not in grounded["available_ast_symbols"]
+
+
+def test_grounded_state_exposes_real_csv_columns(tmp_path: Path):
+    from adk.orchestrator import build_grounded_symbols
+    from adk.tools.building import extract_hyperedge_exports
+
+    ws, matrix_file = _grounding_fixture(tmp_path)
+    grounded = build_grounded_symbols(extract_hyperedge_exports("ALL", matrix_file, ws))
+    assert "results.csv:value" in grounded["available_csv_columns"]
+    assert "columns" not in grounded["available_csv_columns"]
+    assert "row_selectors" not in grounded["available_csv_columns"]
+
+
+def test_grounded_state_covers_every_csv_in_graph(tmp_path: Path):
+    from adk.orchestrator import build_grounded_symbols
+    from adk.tools.building import extract_hyperedge_exports
+
+    ws, matrix_file = _grounding_fixture(tmp_path)
+    grounded = build_grounded_symbols(extract_hyperedge_exports("ALL", matrix_file, ws))
+    assert "ablation.csv:value" in grounded["available_csv_columns"]
+
+
+_RUFF_F841 = (
+    "Ruff lint failure: F841 Local variable `{name}` is assigned to but never used\n"
+    "  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\plot_results.py:{line}:9\n"
+)
+
+
+def test_issue_signature_ignores_renamed_identifiers_and_line_numbers():
+    from adk.orchestrator import _issue_signature
+
+    sigs = {
+        _issue_signature({"issues": [_RUFF_F841.format(name=name, line=line)]})
+        for name, line in (("width", 19), ("bars", 24), ("plot_df", 17))
+    }
+    assert sigs == {"plot_results.py:F841"}
+
+
+def test_issue_signature_distinguishes_files_and_rules():
+    from adk.orchestrator import _issue_signature
+
+    a = _issue_signature({"issues": [_RUFF_F841.format(name="x", line=1)]})
+    b = _issue_signature({"issues": [_RUFF_F841.format(name="x", line=1).replace("plot_results.py", "core.py")]})
+    assert a != b
+
+
+def test_rebuild_queue_detects_oscillating_failures(tmp_path: Path):
+    adk_dir = _clone_adk_env(tmp_path)
+    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
+    audits = iter(
+        [
+            {"pytest_status": "FAIL", "pytest_errors": [_RUFF_F841.format(name="width", line=19)]},
+            {"pytest_status": "FAIL", "pytest_errors": ["FAILED test_core.py::test_draw - AssertionError"]},
+            {"pytest_status": "FAIL", "pytest_errors": [_RUFF_F841.format(name="plot_df", line=17)]},
+        ]
+    )
+    orch._audit_factual_state = lambda _report: next(audits)
+    seen: list[str] = []
+    assert "tasks" in orch._rebuild_queue({}, 0, seen)
+    assert "tasks" in orch._rebuild_queue({}, 1, seen)
+    # Third audit repeats the first one under another variable name: A -> B -> A is a repeat.
+    assert "stop" in orch._rebuild_queue({}, 2, seen)
+
+
+def test_mechanical_lint_is_fixed_by_tool_not_reported_as_failure(tmp_path: Path):
+    ws = tmp_path / "workspace"
+    ws.mkdir()
+    (ws / "plot_results.py").write_text(
+        "def plot(values):\n    width = 0.35\n    return sum(values)\n", encoding="utf-8"
+    )
+    res = run_isolated_tests(ws, verification_dir=tmp_path / "no_validators")
+    assert res["ruff_passed"] is True
+    assert not any("F841" in err for err in res["errors"])
+    assert "width" not in (ws / "plot_results.py").read_text(encoding="utf-8")
+
+
+def test_blocking_lint_still_fails_verification(tmp_path: Path):
+    ws = tmp_path / "workspace"
+    ws.mkdir()
+    (ws / "core.py").write_text("def run():\n    return undefined_name + 1\n", encoding="utf-8")
+    res = run_isolated_tests(ws, verification_dir=tmp_path / "no_validators")
+    assert res["ruff_passed"] is False
+    assert any("F821" in err for err in res["errors"])
+
+
+def test_materialization_raises_when_agent_content_lands_nowhere(tmp_path: Path):
+    import pytest
+
+    from adk.orchestrator import MaterializationError
+
+    adk_dir = _clone_adk_env(tmp_path)
+    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
+    orch.provider = "ollama"  # the guard is disabled for the mock fallback path
+    with pytest.raises(MaterializationError):
+        orch._materialize_workspace_artifact("results.csv", {"source_code": "def plot():\n    return 1\n"})
+
+
+def test_materialization_accepts_files_list_for_any_path(tmp_path: Path):
+    adk_dir = _clone_adk_env(tmp_path)
+    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
+    orch.provider = "ollama"
+    orch._materialize_workspace_artifact(
+        "results.csv", {"files": [{"filename": "plot_results.py", "content": "def plot():\n    return 1\n"}]}
+    )
+    assert (adk_dir / "workspace" / "plot_results.py").exists()
+
+
+def _orch_with_workspace(tmp_path: Path, files: dict[str, str]) -> NeuroSymbolicOrchestrator:
+    from adk.tools.building import sync_hypergraph_matrix
+
+    adk_dir = _clone_adk_env(tmp_path)
+    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
+    for rel, body in files.items():
+        (orch.workspace_dir / rel).parent.mkdir(parents=True, exist_ok=True)
+        (orch.workspace_dir / rel).write_text(body, encoding="utf-8")
+    sync_hypergraph_matrix(orch.workspace_dir, orch.matrix_path)
+    return orch
+
+
+def test_audit_routes_lint_error_to_the_file_that_failed(tmp_path: Path):
+    orch = _orch_with_workspace(tmp_path, {"plot_results.py": "X = 1\n", "core.py": "Y = 1\n"})
+    ws = str(orch.workspace_dir).replace("/", "\\")
+    err = (
+        "Ruff lint failure: F841 Local variable `plot_df` is assigned to but never used\n"
+        f"  --> {ws}\\plot_results.py:17:9\n"
+    )
+    tasks = orch._tasks_from_audit({"pytest_status": "FAIL", "pytest_errors": [err]}, 1)
+    assert [t["target_node"] for t in tasks] == ["plot_results.py"]
+    node_id, node_path = orch._resolve_target_node(tasks[0]["target_node"], task=tasks[0])
+    assert node_path == "plot_results.py"
+
+
+def test_audit_redirects_derived_artifact_to_its_producer(tmp_path: Path):
+    orch = _orch_with_workspace(
+        tmp_path,
+        {
+            "core.py": "def run():\n    import csv\n    open('results.csv', 'w').write('a')\n",
+            "results.csv": "method,metric,value\n",
+        },
+    )
+    tasks = orch._tasks_from_audit(
+        {"pytest_status": "FAIL", "pytest_errors": ['File "results.csv", line 1\n  bad', "FAILED results.py"]}, 1
+    )
+    targets = {t["target_node"] for t in tasks}
+    assert "results.csv" not in targets
+
+
+def test_unknown_file_target_becomes_a_new_node_not_config(tmp_path: Path):
+    orch = _orch_with_workspace(tmp_path, {})
+    node_id, node_path = orch._resolve_target_node("src/models/dqn.py")
+    assert node_path == "src/models/dqn.py"
+    nodes = json.loads(orch.matrix_path.read_text(encoding="utf-8"))["nodes"]
+    assert nodes[node_id]["path"] == "src/models/dqn.py"
+
+
+def test_exhausted_budget_delivers_work_with_listed_gaps(tmp_path: Path):
+    orch = _orch_with_workspace(tmp_path, {"thesis.md": "## Rozdział 1: Wstęp\n\nTekst.\n"})
+    orch._audit_factual_state = lambda _report: {
+        "pytest_status": "FAIL",
+        "pytest_errors": ["FAILED test_core.py::test_draw - AssertionError"],
+        "chapters_missing": [6],
+        "trigger_issues": ["Wskaźnik remisów 12,6% opisano jako wysoki."],
+    }
+    res = orch._rebuild_queue({"status": "FAIL"}, 4, [])
+    stop = res["stop"]
+    assert stop["status"] == "COMPLETED_WITH_GAPS"
+    kinds = {g["kind"] for g in stop["gaps"]}
+    assert {"kod", "rozdział", "ustalenie weryfikacji"} <= kinds
+
+    thesis = (orch.workspace_dir / "thesis.md").read_text(encoding="utf-8")
+    assert "Braki i ograniczenia realizacji" in thesis
+    assert "Brak rozdziału 6" in thesis
+    report = json.loads(orch.validation_report_path.read_text(encoding="utf-8"))
+    assert len(report["gaps"]) == len(stop["gaps"])
+    hitl = json.loads(orch.hitl_flag_path.read_text(encoding="utf-8")) if orch.hitl_flag_path.exists() else {}
+    assert hitl.get("current_gate") != "GATE_QUEUE_REBUILD_EXHAUSTED"
+
+
+def test_critic_findings_become_tasks_with_ids(tmp_path: Path):
+    orch = _orch_with_workspace(tmp_path, {"plot_results.py": "X = 1\n", "thesis.md": "## A\n"})
+    tasks = orch._tasks_from_audit(
+        {
+            "pytest_status": "PASS",
+            "csv_columns": ["method", "metric", "value"],
+            "trigger_issues": [
+                "W pliku plot_results.py warunek if 'unstack' jest zawsze prawdziwy.",
+                "Rozdział 6 twierdzi, że nie było powtórzeń, a kod robi 50.",
+                "Brak liczb w zdaniach o wynikach.",
+            ],
+        },
+        2,
+    )
+    by_target = {t["target_node"]: t for t in tasks}
+    assert "plot_results.py" in by_target
+    critic = next(t for t in tasks if t["task_id"].endswith("_CRITIC"))
+    assert "[K1]" in critic["description"] and "[K2]" in critic["description"]
+    assert critic["assigned_agent"] == "seed_writer"
+
+
+def test_findings_are_fitted_whole_with_a_count_note():
+    from adk.orchestrator import _fit_items
+
+    items = ["a" * 50, "b" * 50, "c" * 50]
+    shown = _fit_items(items, max_chars=110)
+    assert shown[:2] == items[:2]
+    assert shown[-1].startswith("[pokazano 2 z 3")
+
+
+def _evolution_with_decision(tmp_path: Path, decision: dict) -> tuple[NeuroSymbolicOrchestrator, dict]:
+    from adk.core.llm import set_llm_handler
+
+    adk_dir = _clone_adk_env(tmp_path)
+    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
+    set_llm_handler(lambda *_args: decision)
+    try:
+        res = orch._run_evolution_step({"failed_agent": "seed_coder", "validation_report": {}})
+    finally:
+        set_llm_handler(None)
+    return orch, res
+
+
+def test_rule_naming_one_incident_is_not_written_into_the_prompt(tmp_path: Path):
+    orch, res = _evolution_with_decision(
+        tmp_path, {"action": "MUTATE_AGENT", "agent_id": "seed_coder", "rule": "Unikaj niezgodności w zadaniu T1 na węźle v1."}
+    )
+    assert res["action"] == "MUTATION_SKIPPED"
+    coder = (orch.agents_dir / "building" / "seed_coder.md").read_text(encoding="utf-8")
+    assert "zadaniu T1" not in coder
+
+
+def test_missing_rule_does_not_inject_a_filler(tmp_path: Path):
+    _orch, res = _evolution_with_decision(tmp_path, {"action": "MUTATE_AGENT", "agent_id": "seed_coder"})
+    assert res["action"] == "MUTATION_SKIPPED"
+
+
+def test_unusable_install_decision_is_not_laundered_into_a_mutation(tmp_path: Path):
+    _orch, res = _evolution_with_decision(tmp_path, {"action": "INSTALL_DEPENDENCY"})
+    assert res["action"] == "INSTALL_DEPENDENCY_SKIPPED"
+
+
+def test_unknown_evolution_action_is_reported(tmp_path: Path):
+    _orch, res = _evolution_with_decision(tmp_path, {"action": "REWRITE_EVERYTHING"})
+    assert res["action"] == "UNKNOWN"
+
+
+def test_install_package_skips_importable_module():
+    from adk.tools.evolution.dependency_manager import install_package
+
+    assert install_package("json")["status"] == "skipped"
+
+
+def test_role_alias_never_collides_with_a_discovered_node(tmp_path: Path):
+    """With an empty seed, discovered files get opaque ids. The legacy alias v4 must still mean the thesis,
+    even when the graph already holds four or more nodes."""
+    orch = _orch_with_workspace(
+        tmp_path,
+        {
+            "config.py": "A = 1\n",
+            "core.py": "import config\n",
+            "plot_results.py": "X = 1\n",
+            "thesis.compiled.md": "## A\n",
+            "thesis.md": "## A\n",
+        },
+    )
+    nodes = json.loads(orch.matrix_path.read_text(encoding="utf-8"))["nodes"]
+    assert len(nodes) >= 5
+    assert not any(node_id.startswith("v") for node_id in nodes)
+    _nid, path = orch._resolve_target_node("v4")
+    assert path == "thesis.md"
+
+
+def test_role_is_played_by_the_file_the_system_created(tmp_path: Path):
+    orch = _orch_with_workspace(tmp_path, {"settings.py": "SEED = 1\n", "test_agent.py": "def test_x():\n    pass\n"})
+    assert orch._role_file("config") == "settings.py"
+    assert orch._role_file("tests") == "test_agent.py"
+    assert orch._role_file("core") == "core.py"  # nothing plays it yet: the default name
+
+
+def test_unverified_bibtex_from_a_model_is_dropped(tmp_path: Path):
+    adk_dir = _clone_adk_env(tmp_path)
+    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
+    orch.provider = "ollama"
+    orch.blueprint_path.write_text(
+        json.dumps({"literature_recon": {"citation_source": "arxiv", "available_citation_keys": ["real2023paper"]}}),
+        encoding="utf-8",
+    )
+    bib = (
+        "@article{real2023paper,\n  title = {Real},\n  year = {2023}\n}\n\n"
+        "@article{invented2024paper,\n  title = {Hallucinated},\n  year = {2024}\n}"
+    )
+    orch._materialize_workspace_artifact("references.bib", {"bibtex_entries": bib})
+    written = (adk_dir / "workspace" / "references.bib").read_text(encoding="utf-8")
+    assert "real2023paper" in written
+    assert "invented2024paper" not in written
+
+
+def test_declared_metrics_are_compared_with_what_was_measured(tmp_path: Path):
+    from adk.orchestrator import _declared_vs_measured_metrics
+
+    (tmp_path / "results.csv").write_text(
+        "method,metric,value\nproposed,win_rate,0.6\nproposed,episode_length,7\n", encoding="utf-8"
+    )
+    findings = _declared_vs_measured_metrics(["win_rate", "draw_rate"], tmp_path)
+    assert any("'draw_rate'" in f and "nie została zmierzona" in f for f in findings)
+    assert any("'episode_length'" in f and "nie była zadeklarowana" in f for f in findings)
+    assert not any("'win_rate'" in f for f in findings)
+    # Before the experiment has run there is nothing to compare yet.
+    assert _declared_vs_measured_metrics(["win_rate"], tmp_path / "empty") == []

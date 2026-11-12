@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+import importlib.util
 import re
 import shutil
 import subprocess
@@ -9,11 +9,22 @@ from pathlib import Path
 from typing import Any
 
 
-def install_package(package_name: str, timeout: int = 120) -> dict[str, Any]:
-    """Safely install a Python package into the active virtual environment using uv or pip."""
+def install_package(package_name: str, timeout: int = 120, import_name: str | None = None) -> dict[str, Any]:
+    """Install a Python package into the active virtual environment using uv or pip.
+
+    The name comes from a model, so an already importable module is never re-installed: each call is a chance
+    for a hallucinated or typo-squatted name to reach PyPI. Isolation of this environment is deferred (Docker).
+    """
     clean_pkg = re.sub(r"[^a-zA-Z0-9_\-\.\=\<\>\~\!]", "", package_name.strip())
     if not clean_pkg:
         return {"status": "error", "error": "Empty or invalid package name."}
+    module = (import_name or clean_pkg).split(".")[0].replace("-", "_")
+    try:
+        already = importlib.util.find_spec(module) is not None
+    except (ImportError, ValueError):
+        already = False
+    if already:
+        return {"status": "skipped", "package": clean_pkg, "message": f"Module '{module}' is already importable."}
 
     # Locate python or uv executable in active venv
     venv_dir = Path(sys.executable).parent

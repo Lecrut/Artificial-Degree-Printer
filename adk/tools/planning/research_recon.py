@@ -13,7 +13,23 @@ from __future__ import annotations
 
 from typing import Any
 
-from adk.tools.building.literature_engine import get_domain_papers
+from adk.mocks.paper_catalogs import format_bibtex
+from adk.tools.building.literature_engine import get_domain_papers, search_arxiv_only
+
+
+# An unrecognised topic gets no profile at all. It used to get the Tic-Tac-Toe Q-learning profile (metrics,
+# baselines and a chapter list with a Bellman contraction proof) through an unconditional fallback.
+_EMPTY_PROFILE: dict[str, Any] = {
+    "task_key": "",
+    "domain": "",
+    "algorithm_focus": "",
+    "canonical_baselines": [],
+    "standard_metrics": [],
+    "standard_datasets": [],
+    "common_structural_patterns": [],
+}
+# What the system must choose itself in a live run; prescribed only for the offline (mock) fixtures.
+_METHODOLOGY_KEYS = ("canonical_baselines", "standard_metrics", "standard_datasets", "common_structural_patterns")
 
 
 def _detect_domain_profile(topic_or_task_id: str) -> dict[str, Any]:
@@ -66,7 +82,7 @@ def _detect_domain_profile(topic_or_task_id: str) -> dict[str, Any]:
             "standard_datasets": [
                 "8-connected 2D spatial obstacle grids (GRID_SIZE x GRID_SIZE, obstacle density rho)",
                 "MovingAI 2D Grid Pathfinding Benchmarks",
-                "Randomized obstacle navigation maps (seed=42)",
+                "Randomized obstacle navigation maps",
             ],
             "common_structural_patterns": [
                 "Section I: Problem formulation on 8-connected spatial grids and suboptimality-speedup tradeoff",
@@ -103,6 +119,8 @@ def _detect_domain_profile(topic_or_task_id: str) -> dict[str, Any]:
                 "Rozdział 6: Wnioski kliniczno-inżynierskie, Threats to Validity i wdrożenie w systemach Edge-ICU",
             ],
         }
+    if not any(k in q for k in ("01_rl", "tic-tac-toe", "tictactoe", "kółko", "q-learning", "qlearning")):
+        return dict(_EMPTY_PROFILE)
     return {
         "task_key": "01_rl_tictactoe",
         "domain": "Reinforcement Learning & Finite Markov Decision Processes",
@@ -115,7 +133,7 @@ def _detect_domain_profile(topic_or_task_id: str) -> dict[str, Any]:
         "standard_metrics": ["win_rate", "draw_rate", "loss_rate"],
         "standard_datasets": [
             "Finite-state 3x3 Tic-Tac-Toe zero-sum Markov Decision Process",
-            "Repeated multi-episode self-play and evaluation rollouts (seed=42)",
+            "Repeated multi-episode self-play and evaluation rollouts",
         ],
         "common_structural_patterns": [
             "Rozdział 1: Geneza problemu decyzyjnego, równanie optymalizacyjne MDP, teza pracy i 4 hipotezy",
@@ -131,9 +149,16 @@ def _detect_domain_profile(topic_or_task_id: str) -> dict[str, Any]:
 def scout_domain_conventions(
     topic_or_task_id: str,
     thesis_type: str = "inzynierska",
+    prescribe_methodology: bool = True,
 ) -> dict[str, Any]:
-    """Scout how existing papers and theses in the domain are built before planning tasks and sections."""
+    """Scout how existing papers and theses in the domain are built before planning tasks and sections.
+
+    With `prescribe_methodology=False` (live runs) only curated literature is returned; metrics, baselines,
+    datasets and chapter structure are left for the system to choose and declare in its plan.
+    """
     profile = _detect_domain_profile(topic_or_task_id)
+    if not prescribe_methodology:
+        profile = {**profile, **{key: [] for key in _METHODOLOGY_KEYS}}
     t_type = (thesis_type or "inzynierska").strip().lower()
 
     if t_type in ("inzynierska", "licencjacka", "bachelor", "engineering"):
@@ -149,7 +174,15 @@ def scout_domain_conventions(
         stage_filter = None
         research_routing = ["background_researcher", "discoverer_researcher"]
 
-    papers = get_domain_papers(profile["task_key"], stage=stage_filter)
+    if prescribe_methodology:
+        papers = get_domain_papers(profile["task_key"], stage=stage_filter) if profile["task_key"] else []
+    else:
+        # Live run: every citation must be checkable, so the literature comes from arXiv only (with arXiv ids).
+        stages = [stage_filter] if stage_filter else ["background", "discoverer"]
+        papers = []
+        for stage in stages:
+            known = {p["key"] for p in papers}
+            papers.extend(p for p in search_arxiv_only(topic_or_task_id, stage=stage) if p["key"] not in known)
     cite_keys = [p["key"] for p in papers]
     limitations = [
         f"{p['author']} ({p['year']}) [{p['key']}]: {p.get('limitation', '')}"
@@ -176,6 +209,8 @@ def scout_domain_conventions(
         "sampled_methodologies": methodologies,
         "key_limitations_to_overcome": limitations,
         "available_citation_keys": cite_keys,
+        "citation_source": "catalog" if prescribe_methodology else "arxiv",
+        "verified_bibtex": "" if prescribe_methodology else "\n\n".join(format_bibtex(p) for p in papers),
     }
 
 
@@ -188,11 +223,12 @@ def synthesize_table_of_contents(
     """Build a logical, domain-grounded Table of Contents (spis treści i sekcje) from the reconnaissance report."""
     recon = recon_report or scout_domain_conventions(topic_or_task_id, thesis_type=thesis_type)
     norm_type = recon["thesis_type"]
-    domain = recon["domain"]
-    algo_focus = recon["algorithm_focus"]
+    # Neutral wording when nothing is prescribed: the plan declares the domain specifics itself.
+    domain = recon["domain"] or "badanej dziedziny"
+    algo_focus = recon["algorithm_focus"] or "proponowanej metody"
     c_keys = recon.get("available_citation_keys", [])
-    metrics = recon.get("standard_metrics", [])
-    baselines = recon.get("canonical_baselines", [])
+    metrics = recon.get("standard_metrics") or ["metryki zadeklarowane w planie"]
+    baselines = recon.get("canonical_baselines") or ["metody odniesienia wybrane w planie"]
 
     def _slice_keys(start: int, count: int = 5) -> list[str]:
         if not c_keys:
@@ -390,7 +426,7 @@ def synthesize_table_of_contents(
             "subsections": [
                 {
                     "id": "5.1",
-                    "title": "Metodologia Badań Eksperymentalnych, Zbiory Danych i Protokół Ewaluacyjny (seed=42)",
+                    "title": "Metodologia Badań Eksperymentalnych, Zbiory Danych i Protokół Ewaluacyjny",
                     "focus": f"Opis środowiska testowego ({', '.join(recon['standard_datasets_or_environments'][:2])}).",
                     "citations": _slice_keys(0, 5),
                 },

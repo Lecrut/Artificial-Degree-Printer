@@ -1,4 +1,4 @@
-"""Run the workspace experiment so results.csv comes from train_and_evaluate, not from pasted text."""
+"""Run the workspace experiment so results come from the experiment entrypoint, not from pasted text."""
 
 from __future__ import annotations
 
@@ -8,8 +8,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# The entrypoint is called WITHOUT arguments: every parameter (seed, number of runs, output path) is a symbol of
+# the workspace configuration and the function reads it itself. The harness runs the experiment, it does not
+# configure it.
 _SNIPPET = """
+import importlib.util
 import inspect
+import os
+import sys
 import traceback
 from pathlib import Path
 
@@ -19,39 +25,48 @@ notes = []
 code = 0
 try:
     fn = None
-    target_mod = None
-    candidate_funcs = ["train_and_evaluate", "run_experiment", "run_benchmark", "evaluate", "train", "main", "run"]
-    for mod_name in ["core", "main", "train", "run_experiment", "pipeline", "model"]:
-        try:
-            m = __import__(mod_name)
-            for func_name in candidate_funcs:
-                candidate = getattr(m, func_name, None)
-                if callable(candidate):
-                    fn = candidate
-                    target_mod = m
-                    break
-            if fn is not None:
-                break
-        except Exception:
-            notes.append(traceback.format_exc())
-
-    if fn is None:
-        csv_file = Path("results.csv")
-        if csv_file.exists() and csv_file.stat().st_size > 10:
-            notes.append("No runnable entrypoint found, but valid results.csv already exists.")
-            code = 0
-        else:
-            notes.append("No train_and_evaluate or runnable entrypoint found in workspace modules and results.csv is missing.")
+    declared = os.environ.get("ADK_ENTRYPOINT", "")
+    if declared:
+        file_part, _, func_name = declared.rpartition(":") if declared.count(":") > 1 else declared.partition(":")
+        entry_path = Path(file_part)
+        sys.path.insert(0, str(entry_path.parent))
+        spec = importlib.util.spec_from_file_location(entry_path.stem, entry_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        fn = getattr(module, func_name or "main", None)
+        if not callable(fn):
+            notes.append(f"Zadeklarowany punkt wejscia '{declared}' nie wskazuje funkcji.")
             code = 1
     else:
-        sig = inspect.signature(fn)
-        kwargs = {}
-        for p_name, param in sig.parameters.items():
-            if p_name in {"csv_out_path", "csv_path", "path", "out_path", "output_path", "output_csv"}:
-                kwargs[p_name] = "results.csv"
-            elif p_name in {"seed", "random_seed", "random_state"}:
-                kwargs[p_name] = 42
-        fn(**kwargs)
+        notes.append("Brak zadeklarowanego punktu wejscia w planie; szukam po konwencji nazw.")
+        candidate_funcs = ["train_and_evaluate", "run_experiment", "run_benchmark", "evaluate", "train", "main", "run"]
+        for mod_name in ["core", "main", "train", "run_experiment", "pipeline", "model"]:
+            try:
+                m = __import__(mod_name)
+            except Exception:
+                notes.append(traceback.format_exc())
+                continue
+            fn = next((getattr(m, f) for f in candidate_funcs if callable(getattr(m, f, None))), None)
+            if fn is not None:
+                break
+        if fn is None:
+            notes.append("Nie znaleziono punktu wejscia eksperymentu.")
+            code = 1
+
+    if callable(fn):
+        required = [
+            p.name
+            for p in inspect.signature(fn).parameters.values()
+            if p.default is p.empty and p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
+        ]
+        if required:
+            notes.append(
+                f"Punkt wejscia {fn.__name__} wymaga argumentow {required}. Zadeklaruj je jako symbole konfiguracji "
+                "i czytaj je w funkcji; harness wywoluje punkt wejscia bez argumentow."
+            )
+            code = 1
+        else:
+            fn()
 except Exception:
     code = 1
     notes.append(traceback.format_exc())
@@ -71,39 +86,49 @@ log_body = "\\n".join(notes) if notes else "EXPERIMENT_SUCCESS\\n"
 raise SystemExit(code)
 """
 
+_CONVENTION_ENTRY_FILES = (
+    "core.py",
+    "code/core.py",
+    "main.py",
+    "train.py",
+    "run_experiment.py",
+    "pipeline.py",
+    "src/core.py",
+    "src/train.py",
+    "src/main.py",
+    "src/pipeline.py",
+    "code/train.py",
+    "code/main.py",
+)
 
-def execute_workspace_experiment(workspace_dir: str | Path, timeout: int = 180) -> dict[str, Any]:
-    """Overwrite results.csv by executing workspace experiment pipeline. Supports core.py, main.py, train.py, or modular packages."""
+
+def execute_workspace_experiment(
+    workspace_dir: str | Path,
+    timeout: int = 180,
+    entrypoint: str | None = None,
+) -> dict[str, Any]:
+    """Run the experiment. `entrypoint` is the plan's declaration `path/to/file.py:function` (function defaults to
+    `main`); without it the entry file is found by naming convention."""
     workspace = Path(workspace_dir).resolve()
-    candidates = [
-        workspace / "core.py",
-        workspace / "code" / "core.py",
-        workspace / "main.py",
-        workspace / "train.py",
-        workspace / "run_experiment.py",
-        workspace / "pipeline.py",
-        workspace / "src" / "core.py",
-        workspace / "src" / "train.py",
-        workspace / "src" / "main.py",
-        workspace / "src" / "pipeline.py",
-        workspace / "code" / "train.py",
-        workspace / "code" / "main.py",
-    ]
-    entry_file = next((f for f in candidates if f.exists()), None)
-    if not entry_file:
-        return {"ok": True, "skipped": True, "error": ""}
-
     env = os.environ.copy()
-    env["PYTHONPATH"] = (
-        str(workspace)
-        + os.pathsep
-        + str(workspace / "code")
-        + os.pathsep
-        + str(workspace / "src")
-        + os.pathsep
-        + str(entry_file.parent)
-        + os.pathsep
-        + env.get("PYTHONPATH", "")
+    if entrypoint:
+        file_part, _, func_name = entrypoint.partition(":")
+        entry_file = (workspace / file_part).resolve()
+        if not entry_file.is_file() or workspace not in entry_file.parents:
+            return {
+                "ok": False,
+                "skipped": False,
+                "error": f"Zadeklarowany punkt wejścia '{entrypoint}' nie istnieje w workspace.",
+            }
+        env["ADK_ENTRYPOINT"] = f"{entry_file}:{func_name or 'main'}"
+    else:
+        entry_file = next((workspace / rel for rel in _CONVENTION_ENTRY_FILES if (workspace / rel).exists()), None)
+        if not entry_file:
+            return {"ok": True, "skipped": True, "error": ""}
+        env.pop("ADK_ENTRYPOINT", None)
+
+    env["PYTHONPATH"] = os.pathsep.join(
+        [str(workspace), str(workspace / "code"), str(workspace / "src"), str(entry_file.parent), env.get("PYTHONPATH", "")]
     )
     pasted = workspace / "results.csv"
     if pasted.exists():

@@ -32,14 +32,26 @@ from adk.tools.building.thesis_publisher import publish_workspace_thesis_bundle 
 matplotlib.use("Agg")
 
 
+_RUNTIME_STATE = {
+    "failure_ledger.json": {"failures": []},
+    "evolution_history.json": {"events": []},
+    "task_queue.json": [],
+    "validation_report.json": {},
+    "hitl_flag.json": {"active": False, "approved_gates": []},
+}
+
+
 def _prepare_evolved_adk_sandbox(base_adk_root: Path, sandbox_root: Path, reset: bool = False) -> Path:
-    """Create or reuse an isolated ADK root where Layer 4 self-evolution accumulates across benchmark tasks."""
+    """Create an isolated ADK root (state, agents, tools, workspace) for one benchmark task."""
     if reset and sandbox_root.exists():
         shutil.rmtree(sandbox_root)
 
     sandbox_root.mkdir(parents=True, exist_ok=True)
     if not (sandbox_root / "state").exists():
         shutil.copytree(base_adk_root / "state", sandbox_root / "state")
+        # Run logs start empty: the repository copies of these files carry entries from earlier runs and tests.
+        for name, empty in _RUNTIME_STATE.items():
+            write_json_state(sandbox_root / "state" / name, empty)
     if not (sandbox_root / "agents").exists():
         shutil.copytree(base_adk_root / "agents", sandbox_root / "agents")
     
@@ -198,11 +210,7 @@ def run_benchmark_suite(
     sml_model = conn.resolve_model_name(resolved_provider, "SML")
     lrm_model = conn.resolve_model_name(resolved_provider, "LRM")
 
-    evolved_adk_dir = _prepare_evolved_adk_sandbox(
-        base_adk_root=base_adk,
-        sandbox_root=bench_out_root / "_evolved_adk_state",
-        reset=True,
-    )
+    sandbox_parent = bench_out_root / "_evolved_adk_state"
 
     selected_specs: list[BenchmarkTaskSpec] = (
         [get_benchmark_task(k) for k in task_keys]
@@ -212,7 +220,6 @@ def run_benchmark_suite(
 
     suite_start = time.perf_counter()
     results_per_task: list[dict[str, Any]] = []
-    prev_events_count = 0
     total_llm_calls = 0
     total_live_network_calls = 0
     override_tpl, override_type = parse_template_flag(template_override)
@@ -244,11 +251,13 @@ def run_benchmark_suite(
             )
             print("=" * 80, flush=True)
 
-            # Reset sandbox workspace for the current task while keeping evolved agents/state/validators!
+            # A fresh, isolated sandbox per task: workspace, hypergraph, agents, failure ledger and evolution history.
+            evolved_adk_dir = _prepare_evolved_adk_sandbox(
+                base_adk_root=base_adk,
+                sandbox_root=sandbox_parent / spec.task_id,
+                reset=True,
+            )
             sandbox_ws = evolved_adk_dir / "workspace"
-            if sandbox_ws.exists():
-                shutil.rmtree(sandbox_ws)
-            sandbox_ws.mkdir(parents=True, exist_ok=True)
 
             # Seed brownfield initial workspace files if task_type == "evolution"
             for rel_f, init_content in (spec.initial_workspace_files or {}).items():
@@ -273,7 +282,8 @@ def run_benchmark_suite(
 
             # Pre-seed references.bib with domain catalog so background_researcher has verified BibTeX entries
             domain_bib = getattr(spec, "bibtex_entries", "") or getattr(spec, "background_bibtex_entries", "")
-            if domain_bib:
+            if domain_bib and resolved_provider == "mock":
+                # Live runs get their bibliography from arXiv during planning (verified records only).
                 (sandbox_ws / "references.bib").write_text(domain_bib.strip() + "\n", encoding="utf-8")
 
             # If task triggers prompt consolidation (Task 3), ensure coder has 3 prior rules so the 4th triggers consolidation
@@ -389,8 +399,7 @@ def run_benchmark_suite(
 
             # Inspect ADK evolution state after this task
             evo_hist = read_json_state(evolved_adk_dir / "state" / "evolution_history.json").get("events", [])
-            new_events = [e.get("type", "UNKNOWN") for e in evo_hist[prev_events_count:]]
-            prev_events_count = len(evo_hist)
+            new_events = [e.get("type", "UNKNOWN") for e in evo_hist]
 
             reg_agents = read_json_state(evolved_adk_dir / "state" / "agent_registry.json").get("agents", {})
             active_agents = [k for k, v in reg_agents.items() if v.get("active", True)]
@@ -480,7 +489,7 @@ def run_benchmark_suite(
         "total_tokens": sum(t.get("llm_telemetry", {}).get("total_tokens", 0) for t in results_per_task),
         "total_elapsed_ms": round(suite_elapsed_ms, 2),
         "total_elapsed_seconds": round(suite_elapsed_ms / 1000.0, 3),
-        "evolved_adk_state_dir": str(evolved_adk_dir),
+        "evolved_adk_state_dir": str(sandbox_parent),
         "tasks": results_per_task,
     }
 

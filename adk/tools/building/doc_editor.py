@@ -119,14 +119,6 @@ def _merge_or_replace_chapter_body(existing_body: str, new_body: str) -> str:
     return new_body.strip()
 
 
-def _drop_dangling_refs(path: Path, suffix: str) -> None:
-    workspace = path.parent
-    if suffix == ".md" and ((workspace / "results.csv").exists() or (workspace / "config.py").exists()):
-        from adk.tools.verification.ref_compiler import strip_dangling_symbolic_tags
-
-        strip_dangling_symbolic_tags(path, workspace)
-
-
 def edit_document_section(
     file_path: str | Path,
     section_title: str,
@@ -158,7 +150,6 @@ def edit_document_section(
         else:
             initial = f"## {section_title}\n{normalized_body}\n"
         path.write_text(initial, encoding="utf-8")
-        _drop_dangling_refs(path, suffix)
         return {
             "status": "ok",
             "file": str(path),
@@ -255,7 +246,6 @@ def edit_document_section(
             action = "appended"
 
     path.write_text(updated, encoding="utf-8")
-    _drop_dangling_refs(path, suffix)
     return {
         "status": "ok",
         "file": str(path),

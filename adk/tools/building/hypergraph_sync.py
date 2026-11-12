@@ -8,14 +8,119 @@ from typing import Any
 from adk.core.models import read_json_state, resolve_adk_path, write_json_state
 
 
+# Scope of the "every file is a node" invariant: what the agent created, what its scripts produced and what goes
+# into the thesis. Caches, environments, logs and vendored LaTeX classes are out of scope.
 EXCLUDED_WORKSPACE_PARTS = {
     "benchmarks",
     "__pycache__",
     ".git",
     ".venv",
+    "venv",
     ".pytest_cache",
     ".ruff_cache",
+    ".mypy_cache",
+    "logs",
 }
+EXCLUDED_SUFFIXES = {".pyc", ".cls", ".sty", ".bst", ".log", ".aux"}
+# Node ids carry no meaning. They are never v1..v5, which remain input aliases of roles (see orchestrator).
+NODE_ID_PREFIX = "n"
+
+# Artifacts produced by running code or compiling the document. An agent never edits these directly;
+# a repair goes to the file that produces them.
+DERIVED_SUFFIXES = {".csv", ".png", ".pdf", ".svg", ".jpg", ".jpeg", ".html"}
+_WRITE_CALLS = {"to_csv", "savefig", "write_text", "write_bytes", "writerow", "writerows", "dump"}
+
+
+def is_in_scope(rel_path: str) -> bool:
+    p = Path(rel_path)
+    if not p.parts or p.name == ".gitkeep" or p.suffix.lower() in EXCLUDED_SUFFIXES:
+        return False
+    return not any(part in EXCLUDED_WORKSPACE_PARTS for part in p.parts)
+
+
+def node_kind(rel_path: str, all_paths: set[str]) -> str:
+    """'derived' for artifacts produced by code or by compiling a document, otherwise 'authored'."""
+    p = Path(rel_path)
+    if p.suffix.lower() in DERIVED_SUFFIXES or ".compiled." in p.name:
+        return "derived"
+    if p.suffix.lower() == ".tex" and p.with_suffix(".md").as_posix() in all_paths:
+        return "derived"
+    return "authored"
+
+
+def _document_source(rel_path: str, all_paths: set[str]) -> str | None:
+    """thesis.compiled.md / thesis.tex / thesis.pdf / thesis.html are produced from thesis.md."""
+    p = Path(rel_path)
+    source = (p.parent / f"{p.name.split('.')[0]}.md").as_posix()
+    return source if source != rel_path and source in all_paths else None
+
+
+def _declared_paths(tree: ast.Module) -> tuple[dict[str, str], set[int]]:
+    """Module-level `NAME = "some/path"` declarations, and the ids of their literal nodes.
+
+    Declaring an output path (e.g. in the configuration module) is not producing the file.
+    """
+    names: dict[str, str] = {}
+    literal_ids: set[int] = set()
+    for node in tree.body:
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, ast.AnnAssign) else []
+        value = getattr(node, "value", None)
+        if isinstance(value, ast.Constant) and isinstance(value.value, str):
+            for target in targets:
+                if isinstance(target, ast.Name):
+                    names[target.id] = value.value
+                    literal_ids.add(id(value))
+    return names, literal_ids
+
+
+def _literal_refs(tree: ast.AST, declared: dict[str, str], own_declarations: set[int]) -> tuple[set[str], set[str]]:
+    """File names a module refers to (string literals and references to declared path constants), and the subset
+    used inside a file-writing call. The module's own path declarations do not count as references."""
+
+    def _refs(root: ast.AST) -> set[str]:
+        found: set[str] = set()
+        for sub in ast.walk(root):
+            if isinstance(sub, ast.Constant) and isinstance(sub.value, str) and id(sub) not in own_declarations:
+                found.add(sub.value)
+            elif isinstance(sub, ast.Attribute) and sub.attr in declared:
+                found.add(declared[sub.attr])
+            elif isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Load) and sub.id in declared:
+                found.add(declared[sub.id])
+        return found
+
+    every = _refs(tree)
+    written: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        name = func.attr if isinstance(func, ast.Attribute) else func.id if isinstance(func, ast.Name) else ""
+        modes = [a.value for a in node.args[1:2] if isinstance(a, ast.Constant)]
+        modes += [k.value.value for k in node.keywords if k.arg == "mode" and isinstance(k.value, ast.Constant)]
+        opens_for_write = name == "open" and any(isinstance(m, str) and ("w" in m or "a" in m) for m in modes)
+        if name in _WRITE_CALLS or opens_for_write:
+            written |= _refs(node)
+    return every, written
+
+
+def _mentions(literals: set[str], rel_path: str) -> bool:
+    name = Path(rel_path).name
+    stem = Path(rel_path).stem
+    return any(name in lit or (len(stem) >= 4 and stem in lit) for lit in literals)
+
+
+def ensure_node(rel_path: str, matrix_path: str | Path = "state/hypergraph_matrix.json") -> str:
+    """Node id for `rel_path`, creating the node when the file is a planned artifact not on disk yet."""
+    data = read_json_state(matrix_path)
+    nodes: dict[str, dict[str, Any]] = data.setdefault("nodes", {})
+    for node_id, meta in nodes.items():
+        if meta.get("path") == rel_path:
+            return node_id
+    new_id = f"{NODE_ID_PREFIX}{_next_index(nodes)}"
+    nodes[new_id] = {"path": rel_path, "degree": 0, "weight": 1.0}
+    data.setdefault("matrix", {})[new_id] = {e_id: 0 for e_id in data.get("edges", {})}
+    write_json_state(matrix_path, data)
+    return new_id
 
 
 def _next_index(ids: dict[str, Any]) -> int:
@@ -48,7 +153,7 @@ def sync_hypergraph_matrix(
     excluded_node_ids: set[str] = set()
     for node_id, meta in nodes.items():
         rel_path = meta.get("path", "")
-        if any(part in EXCLUDED_WORKSPACE_PARTS for part in Path(rel_path).parts):
+        if not is_in_scope(rel_path):
             excluded_node_ids.add(node_id)
         else:
             valid_nodes[node_id] = meta
@@ -78,15 +183,13 @@ def sync_hypergraph_matrix(
 
     if w_dir.exists():
         for file_path in sorted(w_dir.rglob("*")):
-            if (
-                not file_path.is_file()
-                or file_path.name == ".gitkeep"
-                or any(part in EXCLUDED_WORKSPACE_PARTS for part in file_path.parts)
-            ):
-                continue
+            # Relative path only: the benchmark sandbox itself lives under a 'benchmarks' directory,
+            # so matching absolute parts excluded every file of the workspace.
             rel = file_path.relative_to(w_dir).as_posix()
+            if not file_path.is_file() or not is_in_scope(rel):
+                continue
             if rel not in path_to_node:
-                new_id = f"v{_next_index(nodes)}"
+                new_id = f"{NODE_ID_PREFIX}{_next_index(nodes)}"
                 nodes[new_id] = {"path": rel, "degree": 0, "weight": 1.0}
                 matrix[new_id] = {e_id: 0 for e_id in edges}
                 path_to_node[rel] = new_id
@@ -136,6 +239,49 @@ def sync_hypergraph_matrix(
                     if bib_rel.endswith(".bib") and bib_node != src_node:
                         dynamic_couplings.append((src_node, bib_node))
 
+    # "produces" couplings: a derived artifact is coupled to the file that makes it, so it is not an orphan and
+    # a repair aimed at it can be redirected to its producer.
+    all_paths = set(path_to_node)
+    py_trees: dict[str, ast.Module] = {}
+    for rel_path in all_paths:
+        if rel_path.endswith(".py") and not Path(rel_path).name.startswith("test_") and (w_dir / rel_path).exists():
+            try:
+                py_trees[rel_path] = ast.parse((w_dir / rel_path).read_text(encoding="utf-8"))
+            except (SyntaxError, UnicodeDecodeError):
+                continue
+    declarations = {rel: _declared_paths(tree) for rel, tree in py_trees.items()}
+    declared_names: dict[str, str] = {}
+    for names, _ids in declarations.values():
+        declared_names.update(names)
+    py_literals = {
+        rel: _literal_refs(tree, declared_names, declarations[rel][1]) for rel, tree in py_trees.items()
+    }
+    produces: list[tuple[str, str]] = []
+    for rel_path, node_id in path_to_node.items():
+        meta = nodes[node_id]
+        meta["kind"] = node_kind(rel_path, all_paths)
+        meta.pop("producer", None)
+        if meta["kind"] != "derived":
+            continue
+        doc_source = _document_source(rel_path, all_paths)
+        if doc_source:
+            candidates, writers = [doc_source], [doc_source]
+        else:
+            candidates = [py for py, (every, _) in py_literals.items() if _mentions(every, rel_path)]
+            writers = [py for py, (_, written) in py_literals.items() if _mentions(written, rel_path)]
+        chosen = writers[0] if len(writers) == 1 else candidates[0] if len(candidates) == 1 else None
+        if chosen:
+            meta["producer"] = path_to_node[chosen]
+        produces.extend((path_to_node[c], node_id) for c in candidates)
+
+    for producer_id, artifact_id in produces:
+        pair = sorted({producer_id, artifact_id})
+        known = any(edges.get(e_id) == pair and m.get("kind") == "produces" for e_id, m in edge_meta.items())
+        if not known:
+            e_id = f"E{_next_index(edges)}"
+            edges[e_id] = pair
+            edge_meta[e_id] = {"dynamic": True, "kind": "produces", "producer": producer_id}
+
     for node_a, node_b in dynamic_couplings:
         pair_set = {node_a, node_b}
         matched_edge = None
@@ -160,6 +306,11 @@ def sync_hypergraph_matrix(
     for n_id, meta in nodes.items():
         meta["degree"] = sum(int(v) for v in matrix[n_id].values())
 
+    # Invariant warnings (warn, not block, in this iteration): an existing file without a hyperedge, and nodes
+    # whose file does not exist yet (seeded role anchors are legitimate planned artifacts until written).
+    orphans = sorted(m["path"] for m in nodes.values() if m["degree"] == 0 and (w_dir / m["path"]).exists())
+    missing = sorted(m["path"] for m in nodes.values() if not (w_dir / m["path"]).exists())
+
     write_json_state(
         matrix_path,
         {
@@ -174,5 +325,7 @@ def sync_hypergraph_matrix(
         "nodes_count": len(nodes),
         "edges_count": len(edges),
         "degrees": {n_id: meta["degree"] for n_id, meta in nodes.items()},
+        "orphans": orphans,
+        "missing_files": missing,
     }
 

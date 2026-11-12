@@ -79,9 +79,6 @@ class BenchmarkTaskSpec:
             "thesis.md",
         ]
     )
-    expected_symbols: list[str] = field(default_factory=list)
-    expected_csv_columns: list[str] = field(default_factory=list)
-    acceptance_criteria: dict[str, Any] = field(default_factory=dict)
     abstract_pl: str = ""
     abstract_en: str = ""
     architecture_tikz: str = ""
@@ -111,15 +108,17 @@ class BenchmarkTaskSpec:
 
 
 PATHFINDING_EVOLUTION_PROMPT = (
-    "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)] Evolve and optimize the existing graph pathfinding project in the workspace: "
-    "1) Inspect existing config.py and core.py (currently implementing only a baseline Dijkstra search); "
-    "2) Evolve core.py to implement Weighted Octile A* pathfinding (with octile_heuristic) alongside Dijkstra, "
-    "evaluating both in train_and_evaluate(csv_out_path, seed) across TRIALS and outputting avg_expanded_nodes, "
-    "path_optimality, speedup_factor, and success_rate to results.csv; "
-    "3) Update test_core.py with regression unit tests, plot_results.py for visual comparison, and document the "
-    "evolutionary optimization in thesis.md using symbolic references \\ref_ast{config.py:GRID_SIZE}, "
-    "\\ref_ast{config.py:HEURISTIC_WEIGHT}, \\ref_csv{results.csv:baseline:avg_expanded_nodes}, "
-    "and \\ref_csv{results.csv:proposed:speedup_factor}."
+    '[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | '
+    'template_name=paper_ieee (IEEEtran.cls)] The workspace already contains a graph pathfinding project '
+    'with a baseline Dijkstra search; read it before changing anything and keep the baseline working. '
+    'Research question: does a weighted A* pathfinding search with an admissible octile heuristic expand '
+    'fewer nodes than the baseline on 8-connected obstacle grids, and at what cost in path optimality? '
+    'Design the experiment yourself: choose the parameters, training or search budget, number of '
+    'repetitions and seeds, the metrics you will report and the success criterion, and declare the '
+    'metrics and the experiment entrypoint in the plan before running anything. Implement the solution as '
+    'small, single-purpose modules with unit tests, produce every result by running the declared '
+    'entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or '
+    'to a results file.'
 )
 
 
@@ -133,9 +132,6 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
         prompt=TICTACTOE_BENCHMARK_PROMPT,
         task_type="greenfield",
         initial_workspace_files={},
-        expected_symbols=["check_winner", "train_and_evaluate", "ALPHA", "GAMMA", "EPSILON", "EPISODES"],
-        expected_csv_columns=["method", "win_rate", "draw_rate", "loss_rate"],
-        acceptance_criteria={"min_win_rate_proposed": 0.70, "deterministic_seed": 42},
         config_ast_nodes=TICTACTOE_CONFIG_AST_NODES,
         core_code=TICTACTOE_CORE_CODE,
         test_code=TICTACTOE_TEST_CODE,
@@ -176,9 +172,6 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
         prompt=ANOMALY_PROMPT,
         task_type="greenfield",
         initial_workspace_files={},
-        expected_symbols=["generate_biosignal_dataset", "train_and_evaluate", "N_SAMPLES", "ANOMALY_RATIO"],
-        expected_csv_columns=["method", "precision", "recall", "f1_score", "false_alarm_rate"],
-        acceptance_criteria={"f1_proposed_greater_than_baseline": True, "max_false_alarm_rate": 0.05},
         config_ast_nodes=ANOMALY_CONFIG_AST_NODES,
         core_code=ANOMALY_CORE_CODE,
         test_code=ANOMALY_TEST_CODE,
@@ -223,9 +216,6 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
             "config.py": PATHFINDING_BASELINE_CONFIG_CODE,
             "core.py": PATHFINDING_BASELINE_CORE_CODE,
         },
-        expected_symbols=["generate_obstacle_grid", "octile_heuristic", "search_grid", "train_and_evaluate"],
-        expected_csv_columns=["method", "avg_expanded_nodes", "path_optimality", "speedup_factor", "success_rate"],
-        acceptance_criteria={"min_speedup_factor": 1.5, "backward_compatibility": True},
         config_ast_nodes=PATHFINDING_CONFIG_AST_NODES,
         core_code=PATHFINDING_CORE_CODE,
         test_code=PATHFINDING_TEST_CODE,
@@ -265,9 +255,6 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
         prompt=FEDERATED_BENCHMARK_PROMPT,
         task_type="greenfield",
         initial_workspace_files={},
-        expected_symbols=["generate_federated_partitions", "client_local_train", "train_and_evaluate"],
-        expected_csv_columns=["method", "rounds", "final_accuracy", "straggler_resilience_rate"],
-        acceptance_criteria={"accuracy_proposed_greater_than_baseline": True},
         config_ast_nodes=FEDERATED_CONFIG_AST_NODES,
         core_code=FEDERATED_CORE_CODE,
         test_code=FEDERATED_TEST_CODE,

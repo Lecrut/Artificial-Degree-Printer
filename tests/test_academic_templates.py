@@ -294,13 +294,21 @@ def test_detect_template_from_prompt_and_live_mock_isolation(tmp_path: Path):
     orch._materialize_workspace_artifact(
         "thesis.md",
         {
-            "chapter": {
-                "title": "Autorski Rozdział LLM",
-                "content": "Własna treść wygenerowana przez model językowy.",
-                "subsections": [{"heading": "Podrozdział 1", "content": "Analiza szczegółowa."}],
-            }
+            "sections": [
+                {
+                    "section_title": "Autorski Rozdział LLM",
+                    "section_content": "Własna treść wygenerowana przez model językowy.\n\n### Podrozdział 1\nAnaliza szczegółowa.",
+                }
+            ]
         },
     )
+    # A shape outside the output schema is reported back to the agent instead of being guessed at or dropped.
+    import pytest
+
+    from adk.orchestrator import MaterializationError
+
+    with pytest.raises(MaterializationError):
+        orch._materialize_workspace_artifact("thesis.md", {"chapter": {"title": "X", "content": "Y"}})
     assert not (orch.workspace_dir / "results.csv").exists()
     md_text = (orch.workspace_dir / "thesis.md").read_text(encoding="utf-8")
     assert "Autorski Rozdział LLM" in md_text

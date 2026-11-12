@@ -151,6 +151,8 @@ def _parse_arxiv_atom_xml(xml_data: bytes | str, stage: str | None = None) -> li
         title_raw = title_el.text if title_el is not None and title_el.text else ""
         summary_raw = summary_el.text if summary_el is not None and summary_el.text else ""
         year = pub_el.text[:4] if pub_el is not None and pub_el.text else "2024"
+        id_el = entry.find("atom:id", ns)
+        abs_url = id_el.text.strip() if id_el is not None and id_el.text else ""
         card = extract_paper_card_from_abstract(
             title=title_raw,
             abstract=summary_raw,
@@ -161,8 +163,66 @@ def _parse_arxiv_atom_xml(xml_data: bytes | str, stage: str | None = None) -> li
             index=idx,
             entry_type="article",
         )
+        # The arXiv identifier makes every citation checkable: eprint + url go into the BibTeX entry.
+        match = re.search(r"arxiv\.org/abs/([^\s/]+?)(?:v\d+)?$", abs_url)
+        if match:
+            card["eprint"] = match.group(1)
+            card["url"] = f"https://arxiv.org/abs/{match.group(1)}"
         cards.append(card)
     return cards
+
+
+_ARXIV_CACHE: dict[str, list[dict[str, Any]]] = {}
+_QUERY_STOPWORDS = {
+    "does", "with", "than", "that", "this", "from", "into", "more", "less", "over", "under", "their", "there",
+    "which", "what", "when", "where", "while", "well", "against", "compare", "compared", "research", "question",
+    "design", "experiment", "yourself", "reliably", "robustly", "uniformly", "random", "learn", "play",
+}
+
+
+def arxiv_keywords(topic: str, limit: int = 5) -> list[str]:
+    """Search terms from a task prompt: the research question if there is one, without format tags and stopwords."""
+    text = re.sub(r"\[DOCUMENT FORMAT:[^\]]*\]", " ", str(topic or ""))
+    question = re.search(r"Research question[^:]*:\s*(.+?)(?:\?|$)", text, re.DOTALL)
+    focus = question.group(1) if question else text
+    words: list[str] = []
+    for word in re.findall(r"[A-Za-z][A-Za-z\-]{3,}", focus):
+        low = word.lower().strip("-")
+        if low not in _QUERY_STOPWORDS and low not in words:
+            words.append(low)
+    return words[:limit]
+
+
+def search_arxiv_only(topic: str, stage: str | None = None, max_results: int = 20, timeout: float = 10.0) -> list[dict[str, Any]]:
+    """Verifiable literature: arXiv records only, each with its arXiv identifier. No OpenAlex, no offline catalog;
+    an unreachable arXiv yields an empty list rather than a substitute. The query is broadened step by step."""
+    terms = arxiv_keywords(topic)
+    sort = "submittedDate" if stage == "discoverer" else "relevance"
+    for size in sorted({len(terms), 3, 2}, reverse=True):
+        if size < 1 or size > len(terms):
+            continue
+        query = "+AND+".join(f"all:{urllib.parse.quote(term)}" for term in terms[:size])
+        url = (
+            f"http://export.arxiv.org/api/query?search_query={query}&start=0&max_results={max_results}"
+            f"&sortBy={sort}&sortOrder=descending"
+        )
+        if url not in _ARXIV_CACHE:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Artificial-Degree-Printer-ADK/2.0"})
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    _ARXIV_CACHE[url] = _parse_arxiv_atom_xml(resp.read(), stage=stage)
+            except Exception:
+                _ARXIV_CACHE[url] = []
+        cards = [dict(card) for card in _ARXIV_CACHE[url] if card.get("eprint")]
+        if cards:
+            seen: dict[str, int] = {}
+            for card in cards:  # unique citation keys (same author, year and title word happen)
+                base = card["key"]
+                seen[base] = seen.get(base, 0) + 1
+                if seen[base] > 1:
+                    card["key"] = f"{base}{chr(ord('a') + seen[base] - 2)}"
+            return cards
+    return []
 
 
 def _parse_openalex_json(payload: dict[str, Any], stage: str | None = None) -> list[dict[str, Any]]:

@@ -1624,6 +1624,11 @@ def format_bibtex(entry: dict[str, Any]) -> str:
         lines.append(f"  volume = {{{volume}}},")
     if pages:
         lines.append(f"  pages = {{{pages}}},")
+    if entry.get("eprint"):
+        lines.append(f"  eprint = {{{entry['eprint']}}},")
+        lines.append("  archivePrefix = {arXiv},")
+    if entry.get("url"):
+        lines.append(f"  url = {{{entry['url']}}},")
     lines.append(f"  year = {{{year}}}")
     lines.append("}")
     return "\n".join(lines)

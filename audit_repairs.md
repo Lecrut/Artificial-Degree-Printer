@@ -6,6 +6,7 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 |---|---|---|---|
 | 2026-11-08 | **Audyt I** | benchmarki 01 i 02: fiksacja na monolicie `core.py`, struktura pętli faili, ziarnistość zadań, crash XeTeX | **niewdrożone** — nawrót udokumentowany w Audycie II §II.1.1 |
 | 2026-11-11 | **Audyt II + plan napraw** | post-mortem 01 (3 h zegara, jeden błąd F841), dług techniczny `orchestrator.py`, błędy warstwy 4 (ewolucja) | w realizacji; pozycje `P1–P15`, `D1–D6`, `E1–E7`; wszystkie decyzje rozstrzygnięte, §II.10 |
+| 2026-11-11 | **Realizacja planu → §II.11** | wdrożenie fal 0–5 na `main`, bez commitów | zrobione z odstępstwami opisanymi w §II.11; 106/106 testów, ruff czysty |
 | 2026-11-11 | **Uwaga recenzenta → §II.2.3, P1, P8** | niezmiennik: każdy plik musi mieć węzeł i przyporządkowaną hiperkrawędź | przyjęta; ujawniła, że `hypergraph_sync` wyklucza 100% workspace'u sandboxa — P1 przepisane, dodane P8 i Q5 |
 
 ---
@@ -1384,3 +1385,136 @@ Czego mock **nie** ma już robić: udawać sensownej treści naukowej, trzymać 
 - **Uruchamianie benchmarku nie jest moją częścią.** Moja weryfikacja kończy się na `pytest` i na testach zachowania z mockiem (P13). Przebieg na Ollamie odpala recenzent po zakończeniu prac. W praktyce znaczy to, że **każda pozycja planu musi mieć kryterium sprawdzalne testem**, a nie „widać w logu po przebiegu" — co i tak jest zdrowsze.
 - §II.6 i §II.7 należy czytać jako **instrukcję dla przebiegu recenzenta**: czego szukać w logach i z czym porównać, nie jako moje kroki.
 - Praca na `main`, **bez commitów**. Całość do przeglądu jako zmiany w drzewie roboczym. Konsekwencja: zmiany muszą być czytelne w `git diff` bez podziału na commity, więc trzymam pozycje planu rozdzielnie w czasie i nie mieszam refaktoru z poprawkami zachowania.
+
+---
+
+## II.11. Realizacja (2026-11-11)
+
+Wdrożone na `main`, bez commitów. Weryfikacja: `pytest` **110 zielonych** (było 70; +40 nowych testów), także przy zablokowanej sieci (zero prób połączenia), `ruff check adk tests main.py` czysty, zasiew `adk/state/hypergraph_matrix.json` nietknięty po pełnym przebiegu testów. Benchmarku na modelu nie uruchamiałem (Q10).
+
+### Stan pozycji
+
+| poz. | stan | co dokładnie |
+|---|---|---|
+| **P1** | zrobione (A domknięte w drugiej turze) | zasiew pusty; identyfikatory węzłów nieprzezroczyste (`n1, n2…`); `v1..v5` tylko jako aliasy ról na wejściu; rolę gra plik stworzony przez system (np. zadeklarowany punkt wejścia = `core`); filtr ścieżki w `hypergraph_sync` na ścieżce względnej; `ensure_node` dla nieznanych plików; `_resolve_target_node` bez fallbacku `config.py`; biała lista `v1..v5` usunięta; `_tasks_from_audit` routuje po ścieżce z diagnostyki; prompty planera bez zamkniętej listy węzłów |
+| **P2** | zrobione, z odstępstwem B | `files` udokumentowane w promptach koder/tester jako preferowane |
+| **P3** | zrobione | sygnatura = odciski `plik:reguła`; `seen` zamiast `last` dla audytu i ewolucji |
+| **P4** | zrobione | materializer 109 linii zamiast ~310; 10 kształtów zmierzonych na 392 prawdziwych wywołaniach; niezgodna odpowiedź → `MaterializationError` z listą dozwolonych pól |
+| **P5** | zrobione | brak cichego wycinania wskaźników (`doc_editor`); błąd przy niezapisanej odpowiedzi; awaria szybkiej naprawy zapisywana |
+| **P6** | zrobione | ustalenia krytyka → zadanie dla pliku, który nazywają, albo zbiorcze zadanie pisarza z identyfikatorami `[K1]…`; nienaprawione trafiają do listy braków |
+| **P7** | zrobione | `_fit_items` / `_clip_log`: całe ustalenia + „pokazano N z M"; budżet 6000 znaków |
+| **P8** | zrobione, z odstępstwem C | `kind: authored/derived`, krawędzie `produces`, zakres (logi, cache, `.venv`, `*.cls` poza), sieroty jako ostrzeżenia; zadania z audytu nie celują w węzeł `derived` |
+| **P9** | zrobione, z odstępstwem D | dereferencja `available_ast_symbols`/`available_csv_columns`/`available_csv_rows`; prompty zadań bez dyktowanych plików, wartości, metryk i wskaźników; kontrola parametrów punktu wejścia; ostrzeżenia domknięcia; `seed=42` usunięty z tekstu metodologii |
+| **P10** | zrobione (E rozstrzygnięte w drugiej turze) | fallback na kółko i krzyżyk usunięty w profilu domeny **i** w katalogu literatury; w trybie live harness nie podaje metryk, baseline'ów ani struktury rozdziałów |
+| **P11** | zrobione | `ruff --fix` (+ `--unsafe-fixes` dla F841) przed audytem; blokują tylko `E9,F63,F7,F82`; reszta jako `lint_warnings` |
+| **P12** | zrobione | selektor `metoda+metryka` w `_lookup_csv_value`; wiersze tidy w `import_sync`; prompty opisują schemat `method,metric,value` |
+| **P13** | zrobione (F domknięte w drugiej turze) | testy zachowania dopisane; gałąź „mock fallback” (wstrzykiwała treść kółka i krzyżyk do każdego zadania w trybie mock) usunięta z orkiestratora — kod produkcyjny nie importuje fixtur; strażnik niezapisanej odpowiedzi działa też dla mocków; martwa fixtura `PATHFINDING_PROMPT` usunięta |
+| **P14** | zrobione | `entrypoint` w blueprincie (walidowany), import po ścieżce, wołanie bez argumentów, brak wstrzykiwania `seed=42`/`results.csv`; fixtury czytają `config.RESULTS_PATH`/`config.SEED` |
+| **P15** | zrobione | `COMPLETED_WITH_GAPS` zamiast `HITL_PAUSED`; sekcja „Braki i ograniczenia realizacji" z danych; `break` zastąpiony blokowaniem zadań tylko na tym samym pliku |
+| **D1** | zrobione (G domknięte w drugiej turze) | `run()` ma 117 linii i złożoność 15 (było 1009 i 83); `_plan_phase`, `_RunState`, `_execute_task`, `_repair_task`, `_next_generation`, `_defend`; **wspólny `_repair_cycle`** dla naprawy zadania i obrony Gate 3 |
+| **D2** | zrobione | gałąź `updated_pending_tasks` usunięta razem z bugiem `t_id`, także z mocków |
+| **D3** | zrobione | nadpisanie węzła planera logowane jako `PLAN_OVERRIDE` |
+| **D4** | zrobione | `ruff.toml`; usterki F401/F841 w `adk/` usunięte (5 miejsc); CI nie dodane (Q11) |
+| **D5** | zrobione (H rozstrzygnięte w drugiej turze) | osobny sandbox na zadanie: `_evolved_adk_state/<task_id>/` ze świeżym stanem, agentami, rejestrem i historią ewolucji |
+| **D6** | zrobione | trzy martwe pola usunięte ze specyfikacji |
+| **E1** | zrobione | `INSTALL_DEPENDENCY_SKIPPED` i `UNKNOWN` zamiast spadania do mutacji |
+| **E2** | zrobione | brak reguły = brak mutacji |
+| **E3** | zrobione | `suggested_rule` nie staje się regułą; filtr reguł z `T1`, `v3`, `Q4`, `cycle #`; mocki poprawione |
+| **E5** | zrobione | wybór architekta respektowany, nadpisanie logowane jako `EVOLUTION_OVERRIDE` |
+| **E6** | zrobione | akcja `REPORT_HARNESS_BUG` w prompcie architekta i w kodzie; deterministycznie: trzecie wystąpienie tego samego błędu tego samego agenta przerywa naprawy zadania z diagnozą |
+| **E7** | zrobione | `find_spec` przed instalacją; proaktywna pętla usunięta |
+
+### Odstępstwa od planu — do recenzji
+
+**A. [DOMKNIĘTE w drugiej turze — patrz wiersz P1]** ~~Zasiane węzły `v1..v6` zostały.~~ Pierwotny opis: `orchestrator.py` ma ~100 miejsc nadających znaczenie numerom (`v4` = praca, `v2` = kod), a testy odwołują się do nich ~100 razy. Wyczyszczenie zasiewu do zera (Etap 0 pkt 3) rozsypałoby te role. Zrobione zamiast tego: zasiane węzły są **domyślnymi kotwicami ról**, ale nie ograniczają — każdy inny plik dostaje własny węzeł i jest adresowalny po ścieżce. Pełne zniesienie ról to osobna, duża zmiana.
+
+**B. Bramka `.py` dla `source_code` została.** Plan kazał ją zdjąć. Po naprawie routingu bramka jest poprawnym zabezpieczeniem (kod nie ląduje w CSV ani w pracy); defektem było kierowanie zadania na zły plik i cisza. Oba usunięte (P1, P5).
+
+**C. Producent artefaktu wykrywany heurystycznie.** Literał nazwy pliku albo odwołanie do zadeklarowanej stałej ścieżki w module, z pierwszeństwem dla wywołań zapisujących (`to_csv`, `savefig`, `open(..., "w")`). Deklaracja ścieżki w konfiguracji nie jest produkcją. Pośrednie przekazanie przez zmienną nie jest wykrywane — wtedy producent zostaje pusty, a krawędzie powstają do wszystkich kandydatów.
+
+**D. Zakaz liczbowych domyślnych argumentów egzekwowany tylko dla punktu wejścia.** Plan mówił o wszystkich funkcjach publicznych. Punkt wejścia jest wołany bez argumentów, więc tylko tam literał domyślny **jest** ustawieniem eksperymentu; w zwykłych funkcjach to normalny Python. Kontrola domknięcia (parametr zadeklarowany i nieużyty) zostaje ostrzeżeniem.
+
+**E. Katalog literatury zostaje dla rozpoznanych tematów.** Plan kazał zostawić katalog wyłącznie w trybie mock. Zrobione: w trybie live katalog podaje **tylko cytowania**, bez metryk, baseline'ów i struktury rozdziałów; nierozpoznany temat nie dostaje niczego. Usunięcie zweryfikowanych cytowań zwiększyłoby ryzyko zmyślonych referencji, a zarzut dotyczył narzucania metodologii, nie literatury.
+
+**F. [DOMKNIĘTE w drugiej turze — patrz wiersz P13]** ~~Fixtury mocków nie odchudzone.~~ Pierwotny opis: Zgodnie z P13 chudną dopiero po powstaniu odpowiadających im asercji. Asercje na zachowanie są; odchudzenie 4,5 tys. linii fixtur to osobna praca bez zysku dla przebiegu na modelu.
+
+**G. [DOMKNIĘTE w drugiej turze — patrz wiersz D1]** ~~Wspólny `_repair_cycle` niezrobiony.~~ Pierwotny opis: Unifikacja dwóch pętli naprawczych w 1000-liniowym `run()` bez możliwości sprawdzenia na modelu niesie największe ryzyko regresji przy najmniejszym zysku funkcjonalnym. `run()` ma po zmianach 3256 linii pliku (było 3200) — dodane mechanizmy P15/E6 zjadły oszczędność z D2 i materializera.
+
+**H. D5 zrobione inaczej niż w planie.** Diagnoza z §II.4 D5 była częściowo błędna: runner **już** czyścił workspace przed każdym zadaniem i kopiował artefakty do katalogu zadania; w sandboxie widać po prostu ostatnie zadanie. Między zadaniami przeciekał tylko **hipergraf**. Naprawione resetem hipergrafu przy starcie zadania; wspólne pozostają agenci, rejestr i historia ewolucji, żeby samoewolucja dalej kumulowała się między zadaniami.
+
+### Druga tura (2026-11-11): A, F, G domknięte
+
+- **Kolizja aliasu z identyfikatorem.** Przy pustym zasiewie nowe węzły dostawałyby `v1, v2…` w kolejności odkrycia, więc alias `v4` (praca) trafiałby w przypadkowy plik — ten sam typ błędu, który naprawiamy. Stąd prefiks `n` dla identyfikatorów i aliasy rozwiązywane do pliku roli. Test: `test_role_alias_never_collides_with_a_discovered_node`.
+- **Kontrakt test↔moduł zależał od zasiewu.** Działał dzięki zasianej krawędzi `E4`. Teraz `_run_verification_step` synchronizuje graf z workspace przed weryfikacją, więc kontrakt wynika z importów, nie z zasiewu.
+- **Gałąź „mock fallback” była martwa.** Po jej usunięciu wszystkie testy przeszły bez zmian — ukrywała tylko niepełne odpowiedzi mocków.
+- Pozostają odstępstwa **B, C, D, E, H** — świadome decyzje projektowe opisane wyżej; B i E czekają na decyzję recenzenta.
+
+### Decyzje recenzenta po drugiej turze (2026-11-11)
+
+| odstępstwo | decyzja | stan |
+|---|---|---|
+| **B** bramka `.py` | **zostaje** | bez zmian |
+| **D** liczbowe argumenty domyślne | **tylko punkt wejścia** | bez zmian |
+| **E** literatura w trybie live | **„szukać artykułów tylko na arXiv, przez co cytowania będą na pewno pewne”** | wdrożone, niżej |
+| **H** sandbox | **osobny sandbox na zadanie** | wdrożone, niżej |
+
+**E — literatura wyłącznie z arXiv (tryb live).**
+- `literature_engine.search_arxiv_only`: tylko API arXiv (bez OpenAlex i bez katalogu offline), zapytanie z pytania badawczego zadania, stopniowo poszerzane; niedostępny arXiv daje pustą listę, **nie** zastępstwo.
+- Każdy rekord niesie identyfikator arXiv; BibTeX ma `eprint`, `archivePrefix = {arXiv}` i `url`, więc każde cytowanie da się sprawdzić.
+- Bibliografię zakłada harness: podczas planowania zapisuje `references.bib` z rekordów arXiv. Runner zasiewa katalog offline już tylko w trybie mock.
+- Wpisy BibTeX napisane przez model, których klucza nie ma wśród zweryfikowanych, są odrzucane (`UNVERIFIED_CITATIONS_DROPPED`); `\cite{}` spoza zbioru i tak oblewa audyt cytowań.
+- Prompty badaczy: „cytuj tylko klucze z `available_citation_keys`, nie wymyślaj referencji” zamiast „każde `\cite{}` musi mieć wpis BibTeX w `bibtex_entries`”.
+- Tryb mock bez zmian (katalog offline), więc testy nie dotykają sieci.
+
+**H — osobny sandbox na zadanie.** `_evolved_adk_state/<task_id>/` powstaje od zera dla każdego zadania (stan, agenci, rejestr, historia ewolucji, narzędzia, workspace). Konsekwencja przyjęta świadomie: ewolucja promptów agentów nie przenosi się już między zadaniami pakietu.
+
+### Zmiany zachowania, które zobaczysz w przebiegu
+
+- Przebiegi kończą się `COMPLETED_WITH_GAPS` z listą braków zamiast `HITL_PAUSED` bez PDF.
+- Błędy lintera typu F841 znikają przed audytem i nie generują zadań.
+- Hipergraf startuje pusty i rośnie z plików (identyfikatory `n1, n2…`); liczba węzłów wzrośnie z 6 do kilkunastu; `select_model_tier` przełącza na LRM przy `degree >= 2`, więc część zadań pójdzie na droższy model.
+- Wskaźnik nierozwiązywalny nie znika z tekstu, tylko oblewa audyt symboliczny — wcześniej „przechodzące" przebiegi mogą jawnie failować.
+- Odpowiedź agenta w kształcie spoza schematu dostaje błąd z listą dozwolonych pól.
+- Trzecie wystąpienie tego samego błędu tego samego agenta przerywa naprawy zadania z wpisem `HARNESS_BUG_REPORTED`.
+
+### Znalezione przy okazji, nienaprawione (poza zakresem)
+
+- `orchestrator.py` (komunikat o niespójności wskaźników symbolicznych) i `thesis_publisher.py:182`: tekst zawiera `\ref_ast` z **pojedynczym** ukośnikiem w zwykłym literale Pythona, więc `\r` jest interpretowane jako znak powrotu karetki — komunikat zawiera CR + `ef_ast` zamiast `\ref_ast`. Trafia do treści komunikatów i promptów.
+- Testy w `test_architectural_phases.py` pisały do prawdziwego `adk/state/hypergraph_matrix.json` (fixture nie przekierowywała `matrix_path`). **Naprawione**, bo nowy sync zmieniał zasiew przy każdym uruchomieniu testów.
+
+### Trzecia tura (2026-11-11): uniwersalne prompty i deklaracja metryk
+
+- **Prompty agentów bez kierunku.** 13 plików w `adk/agents/`: zero nazw plików, metryk, hiperparametrów i `seed=42`; przykłady wyłącznie jako `<...>`. Usunięte przykłady z jednej dziedziny (Sutton & Barto, Bellman, FedProx) i nastawienie wniosków („udowodnij wyższość”, „dlaczego nasze podejście wygrywa”) — badacze ustalają lukę, eksperyment rozstrzyga wynik. Zostały tylko kontrakty harnessu: `thesis.md`, `test_*.py`, `plot_results.py:generate_plots`, schemat `method,metric,value`.
+- **Niezgodność naprawiona przy okazji:** forma B pisarza zwracała `thesis_content`, którego nie ma w schemacie materializera — teraz `sections`.
+- **Prerejestracja metryk domknięta.** Zadeklarowane `academic_blueprint.metrics` były czytane tylko przy budowaniu ładunku agentów. Teraz `_declared_vs_measured_metrics` porównuje deklarację z kolumną `metric` plików wyników (ostrzeżenie w raporcie), a redteam dostaje `declared_metrics` i te ustalenia.
+- Weryfikacja: 111/111 testów offline, ruff czysty.
+
+
+## II.12. Podział i odchudzenie orkiestratora (2026-11-12)
+
+Realizacja §3 Audytu II („odchudzić `orchestrator.py`”). Zachowanie bez zmian, poza jedną zamierzoną poprawką opisaną niżej.
+
+- **Podział na moduły.** `adk/orchestrator.py` 3276 → 610 linii: zostały `__init__`, pętla `run`, wykonanie i naprawa zadania oraz obrona. Reszta to mixiny w nowym pakiecie `adk/orchestration/`, po jednym na odpowiedzialność: `planning` (W1), `building` (W2), `verification` (W3), `evolution` (W4), `recovery` (kolejka z audytu, „praca z dziurami”), `routing` (role, pliki docelowe, agenci), `gates` (bramki promotora, historia ewolucji); wspólne funkcje i stałe w `common.py`. `adk.orchestrator` nadal eksportuje te same nazwy, więc importy z zewnątrz działają bez zmian.
+- **Jedno miejsce wywołania modelu.** Każdy moduł woła model przez `self._call_agent`; testy dalej podmieniają `adk.orchestrator.call_agent`.
+- **`_normalize_and_heal_task_plan` 484 → ~70 linii** plus trzy metody (`_clean_task`, `_full_pipeline`, `_insert_missing_chapters`) i tabele danych (`_PIPELINE_INTRO`, `_PIPELINE_CHAPTERS`, `_MISSING_CHAPTER`, `_CHAPTER_WORDS`) zamiast powtarzanych literałów słownikowych.
+- **Zamierzona zmiana:** opisy zadań w zapasowym potoku (gdy planista nie zwrócił żadnego zadania) wymieniały na sztywno `config.py`, `core.py`, `test_core.py`, `results.csv`. Teraz wymieniają plik, który faktycznie pełni daną rolę (`_role_file`). Miało to znaczenie, bo `_resolve_target_node` szuka nazw plików w opisie zadania, więc wpisana na sztywno nazwa mogła skierować zadanie do niewłaściwego pliku. Kiedy w workspace nie ma jeszcze plików, opisy są identyczne jak wcześniej.
+- **Weryfikacja:** migawka 641 scenariuszy (pusty, pełny, niepełny i „dziwny” plan; podzadania; nieznane węzły; typy pracy; z dokumentacją i bez; mock i ollama; z istniejącymi plikami i bez) przed zmianą i po niej. Różnią się tylko przypadki „pusty plan + istniejące pliki”, czyli dokładnie zamierzona zmiana. 111/111 testów offline (brak prób połączeń sieciowych), ruff czysty (także `ARG`), zasiew hipergrafu pozostał pusty.
+- **Świadomie bez zmian:** `_plan_phase` (~340 linii, liniowa sekwencja: rekonesans → planista → refleksja → mutacja W4 → szablon → blueprint → bramki) oraz identyfikatory zadań potoku dla pracy magisterskiej (`T1, T2_BG, T2_DISC, T4…`: brakuje `T3`, ale to nieszkodliwe i nie było częścią tego zadania).
+
+## II.13. Pierwszy przebieg po zmianach: `NameError: Tuple` w T3 (2026-11-12)
+
+**Objaw.** W `01_rl_tictactoe` weryfikacja T3 (`run_experiment.py`) zgłosiła F821 `Tuple` i `RESULTS_DIR`, a po naprawie F821 `setup_experiment`.
+
+**Diagnoza.** Pętla naprawy zadziałała zgodnie z projektem: ewolucja dopisała regułę, a koder dodał importy. Przyczyną były jednak trzy usterki harnessu:
+
+1. **Kolejność kolejki.** Planista nie dał zadania na wyniki, więc leczenie planu je dopisało i przesortowało całą kolejkę według sztywnych ról (`config=1, core=2, inne=3`). Zadeklarowany punkt wejścia `run_experiment.py` ma rolę `core`, więc trafił przed `envs/tictactoe_env.py`, `agents/q_agent.py` i `agents/random_agent.py`. Koder pisał skrypt eksperymentu, zanim istniały moduły, które ten skrypt importuje. To pozostałość po świecie pięciu stałych plików.
+2. **Koder nie znał punktu wejścia.** `seed_coder.md` każe użyć `academic_blueprint.entrypoint`, ale tego pola nie było w danych dla agenta budującego. Blueprint deklarował `run_experiment.py:main`, a koder napisał `run_experiment()`, więc `experiment.log`: „nie wskazuje funkcji”.
+3. **Brudny stan startowy sandboxa.** „Świeży” sandbox kopiował `adk/state` z repozytorium, a tam są śledzone w git `failure_ledger.json` (porażki z zadania o Dijkstrze, węzły v1/v3), `evolution_history.json` (248 KB) i `hitl_flag.json` z zatwierdzonymi bramkami. Do promptów to nie trafiało, ale zaśmiecało dziennik przebiegu.
+
+**Naprawa.**
+- `_normalize_and_heal_task_plan`: bez sortowania według ról. Badania idą na początek, a reszta zachowuje kolejność planisty, bo tylko on wie, który moduł co importuje. Dopisane zadania na config i core idą na początek, na wyniki i pracę na koniec. Nowa reguła `_entrypoint_after_modules`: zadania na zadeklarowany punkt wejścia są budowane po ostatnim innym module `.py` (poza testami).
+- `building.py`: ładunek agenta budującego zawiera `academic_blueprint.entrypoint`.
+- `runner.py`: w nowym sandboxie pliki przebiegu (`failure_ledger`, `evolution_history`, `task_queue`, `validation_report`, `hitl_flag`) startują puste. Z repozytorium kopiowane są tylko rejestr agentów i zasiew hipergrafu.
+- Testy regresyjne: `test_healing_keeps_planner_order_and_builds_entrypoint_after_its_modules`, `test_benchmark_sandbox_starts_with_empty_run_logs`. Razem 113/113 offline, ruff czysty.
+
+**Zauważone, nienaprawione.** Reguły dopisane przez ewolucję w tym przebiegu wymieniają nazwy z jednego incydentu (`Tuple`, `RESULTS_DIR`, `setup_experiment`). Filtr `_NON_GENERAL_RULE` łapie tylko identyfikatory zadań, węzłów i cykli. Do decyzji, czy ewolucja w ogóle powinna reagować na pojedynczy błąd F821, skoro wystarcza zwykła naprawa.

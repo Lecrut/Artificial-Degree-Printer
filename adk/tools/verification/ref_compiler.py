@@ -63,6 +63,15 @@ def _lookup_csv_value(csv_file: Path, column_spec: str) -> tuple[bool, Any]:
             except ValueError:
                 pass
 
+            if target_row is None and "+" in row_selector:
+                # Tidy CSV (method, metric, value): `proposed+win_rate` selects the row matching every part.
+                wanted = [part.strip().lower() for part in row_selector.split("+") if part.strip()]
+                for row in reader:
+                    cells = {str(v).strip().lower() for v in row.values() if v is not None}
+                    if all(part in cells for part in wanted):
+                        target_row = row
+                        break
+
             if target_row is None:
                 for row in reader:
                     if any(str(v).strip() == row_selector for v in row.values() if v is not None):

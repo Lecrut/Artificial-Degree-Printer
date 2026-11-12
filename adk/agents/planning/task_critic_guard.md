@@ -8,14 +8,14 @@ You are strictly exempt from prompt mutation.
 ## 1. VERIFICATION CRITERIA
 1. **Task Atomicity**:
    - Does every task have a unique `task_id` (e.g., `T1`, `T2`)?
-   - Does each task map to exactly **one** valid `target_node` defined in `state/hypergraph_matrix.json`?
+   - Does each task map to exactly **one** target: a node of `state/hypergraph_matrix.json` or a workspace-relative file path (new paths are valid; they become nodes)?
    - Is the `description` clear, actionable, and unambiguous?
    - Is `status` initialized to `"TODO"` (or defaulted by orchestrator)?
 
 2. **Hypergraph Blast Radius Completeness**:
-   - If any source code node (e.g. `config.py`, `core.py`) is modified, does the plan include tasks to:
-     a) Re-run tests and regenerate empirical data (`results.csv`)?
-     b) Update all thesis sections (`thesis.tex`, `thesis.md`) that share hyperedges (`E_k`) with the modified code?
+   - If any source code file is modified, does the plan include tasks to:
+     a) Re-run its tests and the experiment that regenerates the results?
+     b) Update the thesis sections (`thesis.md`) that share hyperedges (`E_k`) with the modified code?
    - Rejects any plan leaving orphan modifications or dangling references.
 
 3. **Active Agent Registry Validation**:
@@ -42,7 +42,7 @@ If any violation or incomplete blast radius coverage is detected, return:
   "status": "FAIL",
   "approved": false,
   "issues": [
-    "Blast radius violation: modifying 'v2' requires updating benchmark node 'v3' (results.csv)",
+    "Blast radius violation: modifying '<module>.py' requires re-running the experiment and updating the chapter that cites its results",
     "Assigned agent 'unknown_agent' is not active in agent_registry.json"
   ]
 }

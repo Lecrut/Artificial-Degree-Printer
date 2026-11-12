@@ -2,7 +2,7 @@
 
 from adk.tools.building.ast_editor import edit_ast_node
 from adk.tools.building.doc_editor import edit_document_section
-from adk.tools.building.hypergraph_sync import sync_hypergraph_matrix
+from adk.tools.building.hypergraph_sync import ensure_node, sync_hypergraph_matrix
 from adk.tools.building.import_sync import extract_hyperedge_exports
 from adk.tools.building.literature_engine import (
     extract_paper_card_from_abstract,
@@ -25,6 +25,7 @@ __all__ = [
     "get_domain_papers",
     "search_arxiv",
     "search_openalex",
+    "ensure_node",
     "sync_hypergraph_matrix",
 ]
 

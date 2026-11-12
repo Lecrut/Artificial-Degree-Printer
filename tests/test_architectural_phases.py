@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -19,6 +20,9 @@ def _setup_test_orchestrator(tmp_path: Path) -> NeuroSymbolicOrchestrator:
     orch.blueprint_path = orch.state_dir / "academic_blueprint.json"
     orch.failure_ledger_path = orch.state_dir / "failure_ledger.json"
     orch.hitl_flag_path = orch.state_dir / "hitl_flag.json"
+    # The hypergraph is state too: without this the tests rewrote the repository seed adk/state/hypergraph_matrix.json.
+    orch.matrix_path = orch.state_dir / "hypergraph_matrix.json"
+    shutil.copy2(Path("adk") / "state" / "hypergraph_matrix.json", orch.matrix_path)
     return orch
 
 
@@ -224,7 +228,6 @@ def test_reflexive_prompt_evolution_recovers_empty_tasks(tmp_path: Path) -> None
 def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_chapters(tmp_path: Path) -> None:
     """Verify that _normalize_and_heal_task_plan never forces a rigid 12-task count, preserving 9 or 16 tasks or injecting only missing chapters."""
     orch = _setup_test_orchestrator(tmp_path)
-    blast = {"source_node": "v1", "affected_nodes": ["v2", "v3", "v4"]}
 
     # 1. A 9-task plan that already covers all nodes and chapters 1..6 -> stays 9 tasks!
     nine_tasks = [
@@ -239,7 +242,7 @@ def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_cha
         {"task_id": "T9", "description": "Rozdział 6: Podsumowanie i wnioski", "target_node": "v4", "assigned_agent": "seed_writer"},
     ]
     healed_9 = orch._normalize_and_heal_task_plan(
-        nine_tasks, blast=blast, user_prompt="Test 9 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
+        nine_tasks, user_prompt="Test 9 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
     )
     assert len(healed_9) == 9
 
@@ -249,15 +252,39 @@ def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_cha
         for i in range(1, 8)
     ]
     healed_16 = orch._normalize_and_heal_task_plan(
-        sixteen_tasks, blast=blast, user_prompt="Test 16 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
+        sixteen_tasks, user_prompt="Test 16 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
     )
     assert len(healed_16) == 16
 
     # 3. A 7-task plan missing Chapters 5 and 6 -> only the 2 missing chapters are added (7 + 2 = 9 tasks, NOT 12)!
     seven_tasks_missing_5_6 = nine_tasks[:7]
     healed_7_to_9 = orch._normalize_and_heal_task_plan(
-        seven_tasks_missing_5_6, blast=blast, user_prompt="Test 7 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
+        seven_tasks_missing_5_6, user_prompt="Test 7 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
     )
     assert len(healed_7_to_9) == 9
 
 
+
+
+def test_healing_keeps_planner_order_and_builds_entrypoint_after_its_modules(tmp_path: Path) -> None:
+    """Regression (2026-11-12 run): a healed plan was sorted by role, which put the experiment script before the
+    environment and agent modules it imports, so the coder had nothing to import."""
+    orch = _setup_test_orchestrator(tmp_path)
+    orch.blueprint_path.write_text(json.dumps({"entrypoint": "run_experiment.py:main"}), encoding="utf-8")
+    planned = [
+        {"task_id": "T1", "description": "Literatura", "target_node": "thesis.md", "assigned_agent": "background_researcher"},
+        {"task_id": "T2", "description": "Konfiguracja", "target_node": "config.py", "assigned_agent": "seed_coder"},
+        {"task_id": "T3", "description": "Skrypt eksperymentu", "target_node": "run_experiment.py", "assigned_agent": "seed_coder"},
+        {"task_id": "T4", "description": "Środowisko gry", "target_node": "envs/tictactoe_env.py", "assigned_agent": "seed_coder"},
+        {"task_id": "T5", "description": "Testy środowiska", "target_node": "tests/test_env.py", "assigned_agent": "seed_tester"},
+        {"task_id": "T6", "description": "Agent Q-learning", "target_node": "agents/q_agent.py", "assigned_agent": "seed_coder"},
+        {"task_id": "T7", "description": "Rozdział 1-6 pracy", "target_node": "thesis.md", "assigned_agent": "seed_writer"},
+    ]
+    healed = orch._normalize_and_heal_task_plan(planned, user_prompt="RL", multi_cycle_waves=True)
+    order = [t["target_node"] for t in healed]
+
+    assert order.index("run_experiment.py") > order.index("agents/q_agent.py")
+    assert order.index("run_experiment.py") > order.index("envs/tictactoe_env.py")
+    # The planner's own order of the other tasks is kept; the healed results task comes after the code.
+    assert order.index("envs/tictactoe_env.py") < order.index("tests/test_env.py") < order.index("agents/q_agent.py")
+    assert order.index("results.csv") > order.index("run_experiment.py")

@@ -20,7 +20,6 @@ import matplotlib  # noqa: E402
 
 from adk.benchmarks.tasks import BenchmarkTaskSpec  # noqa: E402
 from adk.mocks.mock_pdf_template import (  # noqa: E402
-    _clean_latex_inline,
     _parse_compiled_sections,
 )
 from adk.mocks.thesis_mock_expander import expand_academic_chapters  # noqa: E402

@@ -31,8 +31,8 @@ If violations are detected, return:
 {
   "status": "FAIL",
   "issues": [
-    "pytest failed in test_core.py: assertion error on line 24",
-    "SyntaxError in config.py: invalid syntax"
+    "pytest failed in <test file>: assertion error on line <n>",
+    "SyntaxError in <file>: invalid syntax"
   ]
 }
 ```

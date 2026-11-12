@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import importlib
+import json
 import importlib.metadata
 import re
 import subprocess
@@ -191,13 +192,16 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
     res = run_benchmark_suite(task_keys=["2"], provider="mock", output_root=out_dir)
     assert res["status"] == "COMPLETED"
     assert len(res["tasks"]) == 1
+    # Each task runs in its own sandbox (decision H): nothing it learns or writes reaches another task.
+    assert (out_dir / "_evolved_adk_state" / "02_ml_anomaly_detection" / "state" / "evolution_history.json").exists()
 
     t_res = res["tasks"][0]
     assert t_res["orchestrator_status"] == "COMPLETED"
     # Verify multi-cycle architectural traversal (3 full W2->W3->W4->W1->W2->W3 loops across Code, Tests/CSV, and Thesis)
     assert t_res["replan_count"] == 3
     assert len(t_res["architecture_cycles"]) == 3
-    assert [c["node_id"] for c in t_res["architecture_cycles"]] == ["v1", "v3", "v4"]
+    # Node ids are opaque; the cycles are identified by the files they repaired.
+    assert [c["node_file"] for c in t_res["architecture_cycles"]] == ["config.py", "results.csv", "thesis.md"]
     assert all(c["w3_post_remediation_status"] == "PASS" for c in t_res["architecture_cycles"])
 
     # Verify Layer 4 self-evolution events (CREATE_AGENT + SPLIT_AGENT + MUTATE_AGENT + WEIGHT_ESCALATED)
@@ -233,3 +237,21 @@ def test_benchmark_task_4_federated_runs_10_tasks(tmp_path: Path):
     assert Path(res["master_summary_pdf"]).exists()
 
 
+
+
+def test_benchmark_sandbox_starts_with_empty_run_logs(tmp_path: Path):
+    """The repository state carries failures and evolution events of earlier runs; a task sandbox must not."""
+    from adk.benchmarks.runner import _prepare_evolved_adk_sandbox
+
+    base = tmp_path / "base"
+    for sub in ("state", "agents", "tools"):
+        (base / sub).mkdir(parents=True)
+    (base / "state" / "failure_ledger.json").write_text('{"failures": [{"agent": "old"}]}', encoding="utf-8")
+    (base / "state" / "evolution_history.json").write_text('{"events": [{"type": "old"}]}', encoding="utf-8")
+    (base / "state" / "agent_registry.json").write_text('{"agents": {"seed_coder": {}}}', encoding="utf-8")
+
+    sandbox = _prepare_evolved_adk_sandbox(base, tmp_path / "sandbox", reset=True)
+
+    assert json.loads((sandbox / "state" / "failure_ledger.json").read_text(encoding="utf-8")) == {"failures": []}
+    assert json.loads((sandbox / "state" / "evolution_history.json").read_text(encoding="utf-8")) == {"events": []}
+    assert "seed_coder" in json.loads((sandbox / "state" / "agent_registry.json").read_text(encoding="utf-8"))["agents"]

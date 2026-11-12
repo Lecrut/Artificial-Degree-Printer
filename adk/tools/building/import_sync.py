@@ -97,11 +97,15 @@ def extract_hyperedge_exports(
                     reader = list(csv.DictReader(f))
                     cols = list(reader[0].keys()) if reader else []
                     first_col = cols[0] if cols else None
-                    row_keys = (
-                        [str(r[first_col]) for r in reader if first_col and r.get(first_col)]
-                        if first_col
-                        else []
-                    )
+                    if {"method", "metric"} <= set(cols):
+                        # Tidy schema: a row is identified by the pair, cited as `file:method+metric:value`.
+                        row_keys = [f"{r['method']}+{r['metric']}" for r in reader if r.get("method") and r.get("metric")]
+                    else:
+                        row_keys = (
+                            [str(r[first_col]) for r in reader if first_col and r.get(first_col)]
+                            if first_col
+                            else []
+                        )
                     csv_schemas[rel_path] = {
                         "columns": cols,
                         "row_selectors": row_keys,

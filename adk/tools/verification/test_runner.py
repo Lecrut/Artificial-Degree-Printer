@@ -13,6 +13,12 @@ from adk.core.models import resolve_adk_path
 
 BUILTIN_VERIFICATION_MODULES = {"__init__.py", "test_runner.py", "ref_compiler.py", "contract_check.py"}
 
+# Lint findings that mean the code cannot run: syntax errors, invalid comparisons/control flow, undefined names.
+BLOCKING_LINT_RULES = "E9,F63,F7,F82"
+# Everything else in E/F is style or dead code: fixed by `ruff --fix`, reported as a warning if it survives.
+MECHANICAL_LINT_RULES = "E,F"
+IGNORED_LINT_RULES = "E501,F401,E402"
+
 
 def iter_workspace_python_files(w_dir: Path) -> list[Path]:
     """Python sources inside the workspace. A parent folder named benchmarks does not hide them."""
@@ -129,26 +135,35 @@ def run_isolated_tests(
         venv_candidate = Path(sys.executable).parent / ("ruff.exe" if sys.platform == "win32" else "ruff")
         if venv_candidate.exists():
             ruff_bin = str(venv_candidate)
+    lint_warnings: list[str] = []
     if ruff_bin:
-        # Deterministic pre-flight auto-fix for mechanical lint issues (unused variables, import sorting, etc.)
-        subprocess.run(
-            [ruff_bin, "check", "--fix", "--select", "E,F", "--ignore", "E501,F401,E402", str(w_dir)],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        ruff_proc = subprocess.run(
-            [ruff_bin, "check", "--select", "E,F", "--ignore", "E501,F401,E402", str(w_dir)],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=20,
-        )
-        ruff_passed = ruff_proc.returncode == 0
-        stdout_logs.append(ruff_proc.stdout + ruff_proc.stderr)
+
+        def _ruff(*args: str) -> subprocess.CompletedProcess[str]:
+            # --isolated: the repository's own ruff.toml must not change how generated code is judged.
+            return subprocess.run(
+                [ruff_bin, "check", "--isolated", *args, str(w_dir)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=20,
+            )
+
+        # Mechanical findings are repaired by the tool, never handed to an LLM. F841 (unused variable) only has
+        # an "unsafe" fix, so it gets its own pass; without it the model was asked to delete one assignment.
+        _ruff("--fix", "--select", MECHANICAL_LINT_RULES, "--ignore", IGNORED_LINT_RULES)
+        _ruff("--fix", "--unsafe-fixes", "--select", "F841")
+
+        # Only findings that mean the code cannot run block the task.
+        blocking = _ruff("--select", BLOCKING_LINT_RULES)
+        ruff_passed = blocking.returncode == 0
+        stdout_logs.append(blocking.stdout + blocking.stderr)
         if not ruff_passed:
-            errors.append(f"Ruff lint failure: {(ruff_proc.stdout + ruff_proc.stderr).strip()}")
+            errors.append(f"Ruff lint failure: {(blocking.stdout + blocking.stderr).strip()}")
+
+        # Whatever mechanical findings survive --fix are reported, not turned into repair tasks.
+        leftover = _ruff("--select", MECHANICAL_LINT_RULES, "--ignore", f"{IGNORED_LINT_RULES},{BLOCKING_LINT_RULES}")
+        if leftover.returncode != 0:
+            lint_warnings.append((leftover.stdout + leftover.stderr).strip())
 
     custom_validators_passed = True
     ver_dir = resolve_adk_path(verification_dir) if verification_dir else Path(__file__).resolve().parent
@@ -178,6 +193,7 @@ def run_isolated_tests(
         "ruff_passed": ruff_passed,
         "custom_validators_passed": custom_validators_passed,
         "errors": errors,
+        "lint_warnings": lint_warnings,
         "stdout": "\n".join(stdout_logs).strip(),
     }
 

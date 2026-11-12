@@ -155,7 +155,6 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                         "status": "TODO",
                     }
                 ],
-                "updated_pending_tasks": [],
             }
 
         # 4. Layer 4: Evolution Architect
@@ -189,7 +188,7 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                 "action": "MUTATE_AGENT",
                 "decision": "MUTATE_AGENT",
                 "agent_id": payload.get("failed_agent", "seed_coder"),
-                "rule": f"[{spec.task_id} cycle #{cycle_idx}] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
+                "rule": "Enforce exact AST exports, declared configuration symbols, and symbolic pointer parity in every chapter.",
             }
 
         # 5. Layer 4: Prompt Consolidator

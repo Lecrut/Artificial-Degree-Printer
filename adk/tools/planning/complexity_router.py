@@ -52,14 +52,12 @@ def escalate_node_weight(
                 node_id = n_key
                 break
 
-    if node_id not in nodes and node_id not in matrix:
-        nodes.setdefault(node_id, {"path": f"{node_id}.py", "degree": 0, "weight": 1.0})
-        matrix.setdefault(node_id, {})
-        data["nodes"] = nodes
-        data["matrix"] = matrix
+    if node_id not in nodes:
+        # Never invent a node: an unknown id used to create '<id>.py', a path pointing at no file.
+        return {"node_id": node_id, "status": "unknown_node", "tier": select_model_tier(node_id, matrix_path)}
 
     old_tier = select_model_tier(node_id, matrix_path)
-    node_meta = nodes.setdefault(node_id, {"path": f"{node_id}.py", "degree": 0, "weight": 1.0})
+    node_meta = nodes[node_id]
     row = matrix.get(node_id, {})
     degree = sum(int(v) for v in row.values()) if row else int(node_meta.get("degree", 0))
 

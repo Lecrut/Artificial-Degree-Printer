@@ -80,3 +80,35 @@ def test_contract_skips_dynamic_modules(tmp_path: Path):
     )
 
     assert check_test_contract(ws, matrix_file) == []
+
+
+def test_entrypoint_numeric_defaults_are_a_contract_violation(tmp_path: Path):
+    from adk.tools.verification import check_entrypoint_parameters
+
+    (tmp_path / "core.py").write_text(
+        "def train_and_evaluate(out='results.csv', n_runs: int = 50, seed: int = 42, verbose=False):\n    pass\n",
+        encoding="utf-8",
+    )
+    violations = check_entrypoint_parameters(tmp_path, "core.py:train_and_evaluate")
+    assert len(violations) == 1
+    assert "n_runs=50" in violations[0] and "seed=42" in violations[0]
+    assert "verbose" not in violations[0]
+
+
+def test_entrypoint_reading_config_symbols_passes(tmp_path: Path):
+    from adk.tools.verification import check_entrypoint_parameters
+
+    (tmp_path / "core.py").write_text(
+        "import config\n\ndef main(seed: int = config.SEED):\n    pass\n", encoding="utf-8"
+    )
+    assert check_entrypoint_parameters(tmp_path, "core.py:main") == []
+
+
+def test_closure_warns_about_declared_but_unused_parameters(tmp_path: Path):
+    from adk.tools.verification import check_parameter_closure
+
+    (tmp_path / "config.py").write_text("SEED = 1\nUNUSED_KNOB = 3\n", encoding="utf-8")
+    (tmp_path / "core.py").write_text("import config\nprint(config.SEED)\n", encoding="utf-8")
+    warnings = check_parameter_closure(tmp_path)
+    assert any("UNUSED_KNOB" in w for w in warnings)
+    assert not any(":SEED" in w for w in warnings)

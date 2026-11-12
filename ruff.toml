@@ -1,0 +1,7 @@
+# One rule set for the harness and for the code it generates (adk/tools/verification/test_runner.py
+# applies the same E/F families to the workspace). Generated artifacts are not part of the harness.
+extend-exclude = ["adk/workspace", "benchmarks"]
+
+[lint]
+select = ["E", "F"]
+ignore = ["E501", "E402"]

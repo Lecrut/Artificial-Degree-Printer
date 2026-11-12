@@ -22,7 +22,8 @@ Execute this 4-step meta-prompting algorithm before emitting your JSON response:
    - Group the raw rules in `accumulated_rules` by technical concern (e.g. AST typing/signatures, CSV formatting/freshness, symbolic pointer syntax `\ref_ast`/`\ref_csv`/`\ref_fig`, academic tone).
 2. **Step 2 — Redundancy Elimination & Contradiction Resolution**:
    - Discard duplicate or narrower phrasing when a broader rule covers the same invariant.
-   - If two rules conflict, always resolve in favor of stricter Python 3.12+ AST validity, explicit `seed = 42` determinism, and zero-hallucination symbolic pointers.
+   - If two rules conflict, always resolve in favor of stricter Python 3.12+ AST validity, settings declared as configuration symbols (never literal defaults), and zero-hallucination symbolic pointers.
+   - Drop any rule that names a single incident (a task id such as `T1`, a node id, a cycle number, one specific file or variable): an invariant must hold for every future project.
 3. **Step 3 — Dense Invariant Synthesis (`consolidated_invariant`)**:
    - Synthesize the 4+ raw rules into **one dense, high-signal imperative directive** (1–2 sentences) that will be permanently embedded in `## CONSOLIDATED EVOLUTIONARY INVARIANTS` as `- **INVARIANT (Cycle N)**: ...`.
 4. **Step 4 — Optional Full Base Prompt Redaction (`redacted_base_prompt`)**:
@@ -32,12 +33,12 @@ Execute this 4-step meta-prompting algorithm before emitting your JSON response:
 
 ## 3. CONTRASTIVE EXAMPLE OF 4-RULE CONSOLIDATION
 - **Input `accumulated_rules` (4 raw rules)**:
-  1. `"Avoid AST signature mismatches detected in task T1."`
+  1. `"Avoid AST signature mismatches detected in task T1."` *(names one incident — generalized, not copied)*
   2. `"Never use implicit wildcard imports."`
   3. `"Always annotate return types."`
-  4. `"Seed all RNG instances explicitly with seed=42."`
+  4. `"Seed every random generator from the seed declared in the configuration module."`
 - **Synthesized `consolidated_invariant` (1 permanent invariant)**:
-  > `"Enforce explicit imports without wildcards, complete type annotations for all parameters and return values matching exported AST signatures, and deterministic random seeding (seed=42)."`
+  > `"Enforce explicit imports without wildcards, complete type annotations matching exported AST signatures, and random generators seeded from the configuration module."`
 
 ---
 
@@ -46,7 +47,7 @@ Return strictly a valid JSON object matching this schema:
 ```json
 {
   "agent_id": "seed_coder",
-  "consolidated_invariant": "Enforce explicit imports without wildcards, complete type annotations for all parameters and return values matching exported AST signatures, and deterministic random seeding (seed=42).",
+  "consolidated_invariant": "Enforce explicit imports without wildcards, complete type annotations matching exported AST signatures, and random generators seeded from the configuration module.",
   "redacted_base_prompt": null,
   "discarded_redundant_rules_count": 3,
   "summary": "Consolidated 4 incremental remediation rules into a single architectural invariant and cleared the temporary rule buffer."

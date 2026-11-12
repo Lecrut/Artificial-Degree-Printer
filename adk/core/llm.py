@@ -4,7 +4,6 @@ import json
 import os
 import re
 import time
-import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -233,7 +232,6 @@ def _default_simulated_response(agent_name: str, system_prompt: str, payload: di
                     "status": "TODO",
                 }
             ],
-            "updated_pending_tasks": payload.get("updated_pending_tasks", []),
         }
 
 
@@ -337,7 +335,7 @@ def _default_simulated_response(agent_name: str, system_prompt: str, payload: di
             "action": "MUTATE_AGENT",
             "decision": "MUTATE_AGENT",
             "agent_id": payload.get("failed_agent", "seed_coder"),
-            "rule": payload.get("suggested_rule", "Always verify type consistency and exported AST symbol names."),
+            "rule": "Always verify type consistency and exported AST symbol names.",
         }
 
 

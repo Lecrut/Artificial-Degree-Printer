@@ -34,9 +34,9 @@ If errors or stale artifacts are detected:
 {
   "status": "FAIL",
   "issues": [
-    "Unresolved pointer: \\ref_ast{config.py:MISSING_VAR}",
-    "CSV benchmark file 'results.csv' is older than Python source code in workspace.",
-    "Referenced plot graphic 'plots/convergence.pdf' not found on disk."
+    "Unresolved pointer: \\ref_ast{<file>:<symbol>}",
+    "Results file '<file>.csv' is older than the Python source code in the workspace.",
+    "Referenced figure '<figure path>' not found on disk."
   ]
 }
 ```

@@ -67,6 +67,69 @@ def _parse(path: Path) -> ast.Module | None:
         return None
 
 
+def _numeric_defaults(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
+    """Parameters whose default is a literal int/float (bools are flags, not experiment knobs)."""
+    args = func.args
+    positional = args.posonlyargs + args.args
+    pairs = list(zip(positional[len(positional) - len(args.defaults):], args.defaults))
+    pairs += [(a, d) for a, d in zip(args.kwonlyargs, args.kw_defaults) if d is not None]
+    return [
+        f"{a.arg}={d.value!r}"
+        for a, d in pairs
+        if isinstance(d, ast.Constant) and isinstance(d.value, (int, float)) and not isinstance(d.value, bool)
+    ]
+
+
+def check_entrypoint_parameters(workspace_dir: str | Path, entrypoint: str | None) -> list[str]:
+    """The experiment entrypoint is called without arguments, so a literal numeric default IS the experiment
+    setting. It must be a configuration symbol instead, or the thesis cannot point at it."""
+    if not entrypoint:
+        return []
+    file_part, _, func_name = entrypoint.partition(":")
+    tree = _parse(resolve_adk_path(workspace_dir) / file_part)
+    if tree is None:
+        return []
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == (func_name or "main"):
+            hidden = _numeric_defaults(node)
+            if hidden:
+                return [
+                    f"Naruszenie kontraktu parametrów: punkt wejścia {entrypoint} ma liczbowe wartości domyślne "
+                    f"({', '.join(hidden)}). Przenieś je do pliku konfiguracyjnego jako symbole i czytaj je w funkcji."
+                ]
+    return []
+
+
+def check_parameter_closure(workspace_dir: str | Path) -> list[str]:
+    """Warnings for UPPER_CASE module constants that no workspace Python file reads (declared but unused)."""
+    w_dir = resolve_adk_path(workspace_dir)
+    trees: dict[str, ast.Module] = {}
+    for path in sorted(w_dir.rglob("*.py")) if w_dir.exists() else []:
+        rel = path.relative_to(w_dir)
+        if "__pycache__" in rel.parts or rel.parts[0] in ("benchmarks", "logs", ".venv", "venv"):
+            continue
+        tree = _parse(path)
+        if tree is not None:
+            trees[rel.as_posix()] = tree
+    read_names: set[str] = set()
+    for tree in trees.values():
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
+                read_names.add(node.attr)
+            elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+                read_names.add(node.id)
+            elif isinstance(node, ast.ImportFrom):
+                read_names.update(alias.name for alias in node.names)
+    warnings: list[str] = []
+    for rel, tree in trees.items():
+        for node in tree.body:
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, ast.AnnAssign) else []
+            for target in targets:
+                if isinstance(target, ast.Name) and target.id.isupper() and target.id not in read_names:
+                    warnings.append(f"Parametr {rel}:{target.id} jest zadeklarowany, ale żaden kod go nie używa.")
+    return warnings
+
+
 def check_test_contract(
     workspace_dir: str | Path = "workspace",
     matrix_path: str | Path = "state/hypergraph_matrix.json",

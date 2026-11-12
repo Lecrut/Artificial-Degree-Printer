@@ -172,3 +172,51 @@ def test_mock_queue_does_not_compile_pdf(tmp_path: Path):
     assert orch._pdf_failure_report() is None
 
 
+
+
+def test_declared_entrypoint_in_subpackage_runs_without_arguments(tmp_path: Path):
+    from adk.tools.building.experiment_runner import execute_workspace_experiment
+
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "settings.py").write_text('OUT = "metrics.csv"\n', encoding="utf-8")
+    (tmp_path / "src" / "train.py").write_text(
+        "from pathlib import Path\nimport settings\n\ndef main():\n"
+        "    Path(settings.OUT).write_text('method,metric,value\\nproposed,acc,0.9\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    result = execute_workspace_experiment(tmp_path, entrypoint="src/train.py:main")
+    assert result["ok"] is True, result["error"]
+    assert (tmp_path / "metrics.csv").exists()
+
+
+def test_entrypoint_with_required_arguments_is_reported_not_fed(tmp_path: Path):
+    from adk.tools.building.experiment_runner import execute_workspace_experiment
+
+    (tmp_path / "core.py").write_text("def train_and_evaluate(csv_out_path, seed):\n    return 1\n", encoding="utf-8")
+    result = execute_workspace_experiment(tmp_path)
+    assert result["ok"] is False
+    assert "csv_out_path" in result["error"]
+
+
+def test_missing_declared_entrypoint_is_an_error(tmp_path: Path):
+    from adk.tools.building.experiment_runner import execute_workspace_experiment
+
+    result = execute_workspace_experiment(tmp_path, entrypoint="src/nope.py:main")
+    assert result["ok"] is False
+
+
+def test_tidy_csv_pointer_selects_row_by_method_and_metric(tmp_path: Path):
+    from adk.tools.verification import compile_symbolic_references
+
+    (tmp_path / "results.csv").write_text(
+        "method,metric,value,std_dev\nproposed,win_rate,0.58,0.02\nbaseline,win_rate,0.33,0.01\nproposed,draw_rate,0.12,0.01\n",
+        encoding="utf-8",
+    )
+    doc = tmp_path / "thesis.md"
+    doc.write_text(
+        "Agent: \\ref_csv{results.csv:proposed+win_rate:value}, baseline: \\ref_csv{results.csv:baseline+win_rate:value}.\n",
+        encoding="utf-8",
+    )
+    res = compile_symbolic_references(doc, tmp_path, write_compiled=False)
+    assert res["status"] == "PASS", res["errors"]
+    assert "0.58" in res["compiled_text"] and "0.33" in res["compiled_text"]

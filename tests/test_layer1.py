@@ -33,8 +33,29 @@ def test_state_files_initialized():
         assert data is not None
 
 
-def test_blast_radius_and_complexity_router():
-    matrix_path = Path(__file__).resolve().parent.parent / "adk" / "state" / "hypergraph_matrix.json"
+def test_blast_radius_and_complexity_router(tmp_path: Path):
+    # The repository seed is empty (the graph is built from files), so this test brings its own graph.
+    matrix_path = tmp_path / "hypergraph_matrix.json"
+    matrix_path.write_text(
+        json.dumps(
+            {
+                "nodes": {
+                    "v1": {"path": "config.py", "degree": 2, "weight": 1.4},
+                    "v2": {"path": "core.py", "degree": 3, "weight": 1.2},
+                    "v3": {"path": "results.csv", "degree": 2, "weight": 1.4},
+                    "v4": {"path": "thesis.md", "degree": 1, "weight": 9.2},
+                },
+                "edges": {"E1": ["v1", "v2"], "E2": ["v2", "v3"], "E3": ["v1", "v3", "v4"]},
+                "matrix": {
+                    "v1": {"E1": 1, "E2": 0, "E3": 1},
+                    "v2": {"E1": 1, "E2": 1, "E3": 0},
+                    "v3": {"E1": 0, "E2": 1, "E3": 1},
+                    "v4": {"E1": 0, "E2": 0, "E3": 1},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
     res = calculate_blast_radius("v1", matrix_path)
     assert res["degree"] >= 2
     assert "E1" in res["active_edges"]
@@ -343,3 +364,87 @@ def test_vertical_feature_slices_in_single_task_planner():
     assert "thesis_title" in blueprint
     assert "thesis_statement" in blueprint
     assert len(blueprint["planned_chapters"]) >= 4
+
+
+def test_unknown_topic_gets_no_borrowed_methodology():
+    from adk.tools.planning.research_recon import scout_domain_conventions
+
+    recon = scout_domain_conventions("Kompresja modeli językowych metodą destylacji wiedzy", prescribe_methodology=True)
+    assert recon["task_key"] == ""
+    assert recon["standard_metrics"] == []
+    assert recon["available_citation_keys"] == []
+
+
+_ARXIV_ATOM = b"""<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <id>http://arxiv.org/abs/2301.01234v2</id>
+    <published>2023-01-03T00:00:00Z</published>
+    <title>Tabular Q-Learning Revisited</title>
+    <summary>We propose a method. However, it assumes small state spaces.</summary>
+    <author><name>Ada Lovelace</name></author>
+  </entry>
+</feed>"""
+
+
+class _FakeResponse:
+    def __init__(self, body: bytes):
+        self._body = body
+
+    def read(self) -> bytes:
+        return self._body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_exc):
+        return False
+
+
+def _fake_arxiv(monkeypatch, body: bytes | None):
+    import adk.tools.building.literature_engine as engine
+
+    engine._ARXIV_CACHE.clear()
+    calls: list[str] = []
+
+    def _urlopen(req, timeout=None):  # noqa: ARG001
+        calls.append(req.full_url)
+        if body is None:
+            raise OSError("arXiv unreachable")
+        return _FakeResponse(body)
+
+    monkeypatch.setattr(engine.urllib.request, "urlopen", _urlopen)
+    return calls
+
+
+def test_live_recon_leaves_metrics_and_structure_to_the_plan(monkeypatch):
+    from adk.tools.planning.research_recon import scout_domain_conventions
+
+    calls = _fake_arxiv(monkeypatch, _ARXIV_ATOM)
+    recon = scout_domain_conventions("tabular Q-Learning for Tic-Tac-Toe", prescribe_methodology=False)
+    assert recon["standard_metrics"] == []
+    assert recon["canonical_baselines"] == []
+    assert recon["common_structural_patterns"] == []
+    # Literature comes from arXiv only, with the arXiv identifier in every BibTeX entry.
+    assert calls and all("export.arxiv.org" in url for url in calls)
+    assert recon["citation_source"] == "arxiv"
+    assert recon["available_citation_keys"] == ["lovelace2023tabular"]
+    assert "eprint = {2301.01234}" in recon["verified_bibtex"]
+    assert "archivePrefix = {arXiv}" in recon["verified_bibtex"]
+
+
+def test_live_recon_without_arxiv_gets_no_substitute_literature(monkeypatch):
+    from adk.tools.planning.research_recon import scout_domain_conventions
+
+    _fake_arxiv(monkeypatch, None)
+    recon = scout_domain_conventions("tabular Q-Learning for Tic-Tac-Toe", prescribe_methodology=False)
+    assert recon["available_citation_keys"] == []
+    assert recon["verified_bibtex"] == ""
+
+
+def test_benchmark_prompts_dictate_no_files_values_or_metrics():
+    from adk.benchmarks.tasks import BENCHMARK_TASKS
+
+    dictated = ("config.py", "core.py", "results.csv", "train_and_evaluate", "ALPHA", "EPISODES", "win_rate", "\\ref_")
+    for key, spec in BENCHMARK_TASKS.items():
+        assert not [tok for tok in dictated if tok in spec.prompt], key

@@ -128,7 +128,10 @@ def test_bridges_import_and_hypergraph_sync(tmp_path: Path):
     assert sync_res["degrees"]["v1"] >= 2
 
 
-def test_doc_editor_drops_refs_missing_from_csv_and_ast(tmp_path: Path):
+def test_doc_editor_keeps_dangling_refs_for_the_symbolic_audit(tmp_path: Path):
+    """A pointer that does not resolve must stay visible and fail the audit, not vanish and leave a hole."""
+    from adk.tools.verification import compile_symbolic_references
+
     (tmp_path / "config.py").write_text("ALPHA = 0.2\n", encoding="utf-8")
     (tmp_path / "results.csv").write_text("method,win_rate\nbaseline_random,0.4\n", encoding="utf-8")
     doc = tmp_path / "thesis.md"
@@ -138,9 +141,13 @@ def test_doc_editor_drops_refs_missing_from_csv_and_ast(tmp_path: Path):
         "Stare \\ref_csv{results.csv:baseline:win_rate} i dobre \\ref_csv{results.csv:baseline_random:win_rate} oraz \\ref_ast{config.py:ALPHA}.",
     )
     text = doc.read_text(encoding="utf-8")
-    assert "baseline:win_rate" not in text
+    assert "baseline:win_rate" in text
     assert "baseline_random:win_rate" in text
     assert "config.py:ALPHA" in text
+
+    compiled = compile_symbolic_references(doc, tmp_path, write_compiled=False)
+    assert compiled["status"] == "FAIL"
+    assert any("baseline" in err for err in compiled["errors"])
 
 
 def test_sync_drops_single_member_edges_and_avoids_id_collisions(tmp_path: Path):
@@ -180,3 +187,91 @@ def test_sync_drops_single_member_edges_and_avoids_id_collisions(tmp_path: Path)
     assert {by_path["test_core.py"], "v3"} in edge_sets
     assert {by_path["plot.py"], "v3"} in edge_sets
     assert data["nodes"]["v3"]["degree"] == 3
+
+
+def test_sync_includes_files_when_workspace_lives_under_benchmarks_dir(tmp_path: Path):
+    """The benchmark sandbox path contains a 'benchmarks' segment; that must not exclude the whole workspace."""
+    ws = tmp_path / "benchmarks" / "_evolved_adk_state" / "workspace"
+    ws.mkdir(parents=True)
+    (ws / "config.py").write_text("ALPHA = 0.1\n", encoding="utf-8")
+    (ws / "core.py").write_text("import config\n", encoding="utf-8")
+    (ws / "plot_results.py").write_text("import core\n", encoding="utf-8")
+    (ws / "__pycache__").mkdir()
+    (ws / "__pycache__" / "core.cpython-313.pyc").write_text("x", encoding="utf-8")
+
+    matrix_file = tmp_path / "hypergraph_matrix.json"
+    matrix_file.write_text(json.dumps({"nodes": {}, "edges": {}, "matrix": {}}), encoding="utf-8")
+
+    sync_hypergraph_matrix(ws, matrix_file)
+    data = json.loads(matrix_file.read_text(encoding="utf-8"))
+    paths = {meta["path"] for meta in data["nodes"].values()}
+    assert {"config.py", "core.py", "plot_results.py"} <= paths
+    assert not any("__pycache__" in p for p in paths)
+
+
+def _sync_fresh(tmp_path: Path, files: dict[str, str]) -> dict:
+    ws = tmp_path / "workspace"
+    for rel, body in files.items():
+        (ws / rel).parent.mkdir(parents=True, exist_ok=True)
+        (ws / rel).write_text(body, encoding="utf-8")
+    matrix_file = tmp_path / "hypergraph_matrix.json"
+    matrix_file.write_text(json.dumps({"nodes": {}, "edges": {}, "matrix": {}}), encoding="utf-8")
+    res = sync_hypergraph_matrix(ws, matrix_file)
+    data = json.loads(matrix_file.read_text(encoding="utf-8"))
+    data["result"] = res
+    data["by_path"] = {m["path"]: (n, m) for n, m in data["nodes"].items()}
+    return data
+
+
+def test_sync_types_nodes_and_links_derived_artifacts_to_their_producer(tmp_path: Path):
+    data = _sync_fresh(
+        tmp_path,
+        {
+            "core.py": "def run():\n    import pandas as pd\n    pd.DataFrame().to_csv('results.csv')\n",
+            "plot_results.py": "import matplotlib.pyplot as plt\nplt.savefig('figures/comparison_chart.png')\n",
+            "results.csv": "method,metric,value\n",
+            "figures/comparison_chart.png": "PNG",
+            "thesis.md": "## Wyniki\n",
+            "thesis.compiled.md": "## Wyniki\n",
+        },
+    )
+    by_path = data["by_path"]
+    assert by_path["core.py"][1]["kind"] == "authored"
+    assert by_path["thesis.md"][1]["kind"] == "authored"
+    for derived in ("results.csv", "figures/comparison_chart.png", "thesis.compiled.md"):
+        assert by_path[derived][1]["kind"] == "derived", derived
+        assert by_path[derived][1]["degree"] >= 1, derived
+    assert by_path["results.csv"][1]["producer"] == by_path["core.py"][0]
+    assert by_path["figures/comparison_chart.png"][1]["producer"] == by_path["plot_results.py"][0]
+    assert by_path["thesis.compiled.md"][1]["producer"] == by_path["thesis.md"][0]
+
+
+def test_sync_keeps_logs_caches_and_vendored_classes_out_of_the_graph(tmp_path: Path):
+    data = _sync_fresh(
+        tmp_path,
+        {
+            "core.py": "X = 1\n",
+            "logs/experiment.log": "boom",
+            "IEEEtran.cls": "% vendored",
+            "venv/lib/site.py": "x = 1\n",
+        },
+    )
+    assert set(data["by_path"]) == {"core.py"}
+
+
+def test_sync_reports_orphans_as_warnings(tmp_path: Path):
+    data = _sync_fresh(tmp_path, {"core.py": "X = 1\n", "helper.py": "Y = 2\n"})
+    assert set(data["result"]["orphans"]) == {"core.py", "helper.py"}
+
+
+def test_declaring_an_output_path_is_not_producing_it(tmp_path: Path):
+    data = _sync_fresh(
+        tmp_path,
+        {
+            "config.py": 'RESULTS_PATH = "results.csv"\n',
+            "core.py": "import config\n\ndef run():\n    open(config.RESULTS_PATH, 'w').write('x')\n",
+            "results.csv": "method,metric,value\n",
+        },
+    )
+    by_path = data["by_path"]
+    assert by_path["results.csv"][1]["producer"] == by_path["core.py"][0]
