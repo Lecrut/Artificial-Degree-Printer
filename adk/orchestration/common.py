@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -71,6 +72,34 @@ def _issue_fingerprints(issue: str) -> list[str]:
     # No recognisable diagnostic: mask numbers and quoted/backticked names, keep the wording.
     masked = re.sub(r"`[^`]*`|'[^']*'|\"[^\"]*\"", "<id>", issue)
     return [re.sub(r"\d+", "#", masked).strip()[:200]]
+
+
+def _issue_category(issues: list[Any]) -> str:
+    """Kind of a failure, independent of the file: a ruff code (`F821`), `pytest:<Exception>`, `SyntaxError`,
+    `ImportError`, `contract` (import / hyperedge / interface contract), `harness` (a builder exception), or
+    `generic`. Evolution reacts to a category repeating across tasks, not to one incident."""
+    counts: Counter[str] = Counter()
+    for item in issues:
+        text = str(item)
+        counts.update(code for code, _ in _RUFF_FINDING.findall(text))
+        counts.update(f"pytest:{exc or 'fail'}" for _, _, exc in _PYTEST_FINDING.findall(text))
+        counts.update(f"{kind}Error" for kind, _ in _FILE_FINDING.findall(text))
+        lowered = text.lower()
+        if "naruszenie kontraktu" in lowered or "zapis odrzucony" in lowered and "sygnatur" in lowered:
+            counts["contract"] += 1
+        elif "wyjątek" in lowered and ("zadania" in lowered or "budowania" in lowered):
+            counts["harness"] += 1
+        elif "nie parsuje" in lowered or "syntaxerror" in lowered or "invalid-syntax" in lowered:
+            counts["SyntaxError"] += 1
+    return counts.most_common(1)[0][0] if counts else "generic"
+
+
+# Categories the harness itself enforces (syntax guard, import resolution, answer shape): a prompt rule cannot
+# add anything, so they never trigger evolution (Audit IV §IV.6.3 B2).
+HARNESS_ENFORCED_CATEGORIES = {"SyntaxError", "invalid-syntax", "E999", "ImportError", "harness"}
+# Repairs sent straight back to the failed file's author with the verification findings, before the one
+# planner-and-evolution cycle a task gets (Audit IV §IV.7 pkt 6).
+FAST_REPAIR_ATTEMPTS = 2
 
 
 def _issue_signature(report: dict[str, Any]) -> str:
@@ -249,6 +278,9 @@ class _RunState:
     seen_audit: list[str] = field(default_factory=list)
     seen_evo: set[tuple[str, str]] = field(default_factory=set)
     repeats_after_evolution: dict[tuple[str, str], int] = field(default_factory=dict)
+    # (agent, failure category) -> {task_id: one clipped example}; evolution waits for a category to repeat
+    # across tasks (a pattern), so the architect reasons about several incidents with different file names.
+    category_hits: dict[tuple[str, str], dict[str, str]] = field(default_factory=dict)
 
     def outcome(self, **extra: Any) -> dict[str, Any]:
         return {"tasks": self.tasks, "replan_count": self.replan_count, "architecture_cycles": self.architecture_cycles, **extra}
@@ -284,8 +316,15 @@ OUTPUT_SCHEMA = (
 # Keys that describe an answer rather than carry an artifact.
 _METADATA_KEYS = {
     "summary", "status", "notes", "rationale", "research_stage", "citation_keys", "test_file", "benchmark_file",
-    "plot_file", "bib_file", "section_title", "planned_visualizations",
+    "plot_file", "bib_file", "section_title", "planned_visualizations", "contract_change",
 }
+
+SKELETON_TASK_ID = "SKELETON"
+
+
+def is_skeleton_task(task: dict[str, Any] | None) -> bool:
+    """The task that lays out every planned module's public interface (and its repairs, `SKELETON_FIX…`)."""
+    return bool(task) and str(task.get("task_id", "")).upper().startswith(SKELETON_TASK_ID)
 
 
 def build_grounded_symbols(exports_info: dict[str, Any]) -> dict[str, list[str]]:

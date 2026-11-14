@@ -22,7 +22,12 @@ from adk.tools.planning import (
 from adk.orchestration.common import (
     _looks_like_workspace_path,
     ROLE_ALIASES,
+    is_skeleton_task,
+    SKELETON_TASK_ID,
 )
+from adk.tools.verification.contract_check import is_contract_module
+
+_SKELETON_WORDS = re.compile(r"\b(?:szkielet\w*|skeleton|stubs?)\b", re.IGNORECASE)
 
 
 _RESEARCH_AGENTS = {"background_researcher", "discoverer_researcher", "sota_researcher"}
@@ -575,6 +580,8 @@ class PlanningMixin:
                 task["task_id"] = f"T{idx}"
 
         cleaned = self._entrypoint_after_modules(cleaned)
+        if multi_cycle_waves:
+            cleaned = self._skeleton_first(cleaned, agents["coder"])
 
         # Topological sanity check: the module under test is implemented before its unit tests.
         roles = [self._role_of(t.get("target_node")) for t in cleaned]
@@ -605,6 +612,50 @@ class PlanningMixin:
         rest = [t for t in tasks if not any(t is e for e in early_entry)]
         at = next(i for i, t in enumerate(rest) if t is last_module) + 1
         return rest[:at] + early_entry + rest[at:]
+
+    def _skeleton_first(self, tasks: list[dict[str, Any]], coder: str) -> list[dict[str, Any]]:
+        """The interface of every planned code module is laid out once, before any module is implemented: one
+        task writes all modules as signatures with `raise NotImplementedError` bodies, later tasks fill them in.
+        Without it each builder guessed its neighbours' API (2026-11-12: eight versions of one agent class)."""
+        nodes = read_json_state(self.matrix_path).get("nodes", {}) if self.matrix_path.exists() else {}
+
+        def _path(task: dict[str, Any]) -> str:
+            target = str(task.get("target_node"))
+            if target in nodes:
+                return str(nodes[target].get("path", target))
+            return self._role_file(ROLE_ALIASES[target]) if target in ROLE_ALIASES else target
+
+        paths = [_path(t) for t in tasks]
+        modules = list(dict.fromkeys(p for p in paths if is_contract_module(p)))
+        if len(modules) < 2:
+            return tasks  # one module has no interface between tasks to agree on
+        blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+        entrypoint = str(blueprint.get("entrypoint") or "") if isinstance(blueprint, dict) else ""
+        entry_file = entrypoint.partition(":")[0]
+        module_list = ", ".join(modules)
+        planned = next((t for t in tasks if is_skeleton_task(t) or _SKELETON_WORDS.search(str(t.get("description", "")))), None)
+        if planned is not None:
+            tasks = [t for t in tasks if t is not planned]
+            planned["task_id"] = SKELETON_TASK_ID
+            if module_list not in str(planned.get("description", "")):
+                planned["description"] = f"{planned.get('description', '')} Moduły: {module_list}."
+            skeleton = planned
+        else:
+            skeleton = _task(
+                SKELETON_TASK_ID,
+                (
+                    f"[Przyrost 1: Szkielet] Szkielet wszystkich modułów planu: {module_list}. W każdym module publiczne "
+                    "klasy i funkcje z pełnymi sygnaturami (parametry, typy, wartość zwracana), jednozdaniowym "
+                    "docstringiem i ciałem `raise NotImplementedError`; stałe konfiguracyjne mogą mieć już wartości"
+                    + (f"; w {entry_file} funkcja punktu wejścia z `{entrypoint}`" if entrypoint else "")
+                    + ". Bez implementacji: kolejne zadania uzupełniają ciała, zachowując te sygnatury."
+                ),
+                entry_file if entry_file in modules else modules[0],
+                coder,
+            )
+        skeleton["assigned_agent"] = skeleton.get("assigned_agent") or coder
+        first_code = next((i for i, t in enumerate(tasks) if is_contract_module(_path(t))), len(tasks))
+        return tasks[:first_code] + [skeleton] + tasks[first_code:]
 
     def _clean_task(self, item: dict[str, Any], idx: int, agents: dict[str, str]) -> dict[str, Any]:
         """One planner task in canonical form: an existing node or workspace path, and an active agent."""

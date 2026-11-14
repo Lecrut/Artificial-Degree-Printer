@@ -1,105 +1,773 @@
 {
   "nodes": {
-    "v1": {
-      "path": "config.py",
-      "degree": 3,
-      "weight": 1.4
+    "n1": {
+      "path": "literature_review.md",
+      "degree": 1,
+      "weight": 1.0,
+      "last_writer": {
+        "agent": "background_researcher",
+        "task_id": "T1"
+      },
+      "kind": "authored"
     },
-    "v2": {
-      "path": "core.py",
-      "degree": 3,
-      "weight": 4.4
+    "n2": {
+      "path": "figures/comparison_chart.pdf",
+      "degree": 0,
+      "weight": 1.0,
+      "kind": "derived"
     },
-    "v3": {
-      "path": "results.csv",
-      "degree": 2,
-      "weight": 3.4
+    "n3": {
+      "path": "figures/comparison_chart.png",
+      "degree": 0,
+      "weight": 1.0,
+      "kind": "derived",
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T21"
+      }
     },
-    "v4": {
+    "n4": {
+      "path": "references.bib",
+      "degree": 0,
+      "weight": 1.0,
+      "kind": "authored"
+    },
+    "n5": {
       "path": "thesis.md",
       "degree": 1,
-      "weight": 12.0
+      "weight": 1.0,
+      "last_writer": {
+        "agent": "seed_writer",
+        "task_id": "T23"
+      },
+      "kind": "authored"
     },
-    "v5": {
-      "path": "test_core.py",
-      "degree": 2,
-      "weight": 4.6
+    "n6": {
+      "path": "literature_review.compiled.md",
+      "degree": 1,
+      "weight": 1.0,
+      "kind": "derived",
+      "producer": "n1"
     },
-    "v6": {
+    "n7": {
       "path": "thesis.compiled.md",
-      "degree": 0,
-      "weight": 1.0
+      "degree": 1,
+      "weight": 1.0,
+      "kind": "derived",
+      "producer": "n5"
+    },
+    "n8": {
+      "path": "tictactoe_env.py",
+      "degree": 5,
+      "weight": 5.8,
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "Q3_FIX_tictactoe_env_5"
+      },
+      "kind": "authored"
+    },
+    "n9": {
+      "path": "config.py",
+      "degree": 3,
+      "weight": 1.0,
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T24_FIX1"
+      },
+      "kind": "authored"
+    },
+    "n10": {
+      "path": "evaluate.py",
+      "degree": 5,
+      "weight": 2.2,
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T14_FIX"
+      },
+      "kind": "authored"
+    },
+    "n11": {
+      "path": "plot_results.py",
+      "degree": 2,
+      "weight": 2.2,
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T21_FIX"
+      },
+      "kind": "authored"
+    },
+    "n12": {
+      "path": "q_learning_agent.py",
+      "degree": 5,
+      "weight": 1.4,
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "Q1_FIX_tictactoe_env_5_FIX_2"
+      },
+      "kind": "authored"
+    },
+    "n13": {
+      "path": "random_agent.py",
+      "degree": 3,
+      "weight": 2.6,
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T12_FIX1"
+      },
+      "kind": "authored"
+    },
+    "n14": {
+      "path": "train.py",
+      "degree": 7,
+      "weight": 7.0,
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "SKELETON"
+      },
+      "kind": "authored"
+    },
+    "n15": {
+      "path": "test_env.py",
+      "degree": 1,
+      "weight": 7.0,
+      "kind": "authored",
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "Q2_FIX2_FIX2"
+      }
+    },
+    "n16": {
+      "path": "test_q_learning.py",
+      "degree": 1,
+      "weight": 3.4,
+      "kind": "authored",
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "Q1_FIX_tictactoe_env_5_FIX_3"
+      }
+    },
+    "n17": {
+      "path": "test_agents.py",
+      "degree": 3,
+      "weight": 7.0,
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "Q3_FIX1_FIX1"
+      },
+      "kind": "authored"
+    },
+    "n18": {
+      "path": "results.csv",
+      "degree": 2,
+      "weight": 2.2,
+      "kind": "derived"
+    },
+    "n19": {
+      "path": "test_core.py",
+      "degree": 1,
+      "weight": 3.4,
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "Q3_FIX2_FIX2"
+      },
+      "kind": "authored"
     }
   },
   "edges": {
     "E1": [
-      "v1",
-      "v2"
+      "n1",
+      "n6"
     ],
     "E2": [
-      "v2",
-      "v3"
+      "n5",
+      "n7"
     ],
     "E3": [
-      "v1",
-      "v3",
-      "v4"
+      "n14",
+      "n18"
     ],
     "E4": [
-      "v2",
-      "v5"
+      "n11",
+      "n18"
     ],
     "E5": [
-      "v1",
-      "v5"
+      "n10",
+      "n8"
+    ],
+    "E6": [
+      "n10",
+      "n12"
+    ],
+    "E7": [
+      "n10",
+      "n13"
+    ],
+    "E8": [
+      "n10",
+      "n9"
+    ],
+    "E9": [
+      "n12",
+      "n9"
+    ],
+    "E10": [
+      "n14",
+      "n8"
+    ],
+    "E11": [
+      "n12",
+      "n14"
+    ],
+    "E12": [
+      "n13",
+      "n14"
+    ],
+    "E13": [
+      "n10",
+      "n14"
+    ],
+    "E14": [
+      "n11",
+      "n14"
+    ],
+    "E15": [
+      "n14",
+      "n9"
+    ],
+    "E16": [
+      "n15",
+      "n8"
+    ],
+    "E17": [
+      "n12",
+      "n16"
+    ],
+    "E18": [
+      "n12",
+      "n17"
+    ],
+    "E19": [
+      "n13",
+      "n17"
+    ],
+    "E20": [
+      "n17",
+      "n8"
+    ],
+    "E21": [
+      "n19",
+      "n8"
     ]
   },
   "matrix": {
-    "v1": {
+    "n1": {
       "E1": 1,
       "E2": 0,
-      "E3": 1,
+      "E3": 0,
       "E4": 0,
-      "E5": 1
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
     },
-    "v2": {
+    "n2": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n3": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n4": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n5": {
+      "E1": 0,
+      "E2": 1,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n6": {
       "E1": 1,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n7": {
+      "E1": 0,
       "E2": 1,
       "E3": 0,
-      "E4": 1,
-      "E5": 0
-    },
-    "v3": {
-      "E1": 0,
-      "E2": 1,
-      "E3": 1,
       "E4": 0,
-      "E5": 0
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
     },
-    "v4": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 1,
-      "E4": 0,
-      "E5": 0
-    },
-    "v5": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 1,
-      "E5": 1
-    },
-    "v6": {
+    "n8": {
       "E1": 0,
       "E2": 0,
       "E3": 0,
       "E4": 0,
-      "E5": 0
+      "E5": 1,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 1,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 1,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 1,
+      "E21": 1
+    },
+    "n9": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 1,
+      "E9": 1,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 1,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n10": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 1,
+      "E6": 1,
+      "E7": 1,
+      "E8": 1,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 1,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n11": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 1,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 1,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n12": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 1,
+      "E7": 0,
+      "E8": 0,
+      "E9": 1,
+      "E10": 0,
+      "E11": 1,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 1,
+      "E18": 1,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n13": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 1,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 1,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 1,
+      "E20": 0,
+      "E21": 0
+    },
+    "n14": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 1,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 1,
+      "E11": 1,
+      "E12": 1,
+      "E13": 1,
+      "E14": 1,
+      "E15": 1,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n15": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 1,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n16": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 1,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n17": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 1,
+      "E19": 1,
+      "E20": 1,
+      "E21": 0
+    },
+    "n18": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 1,
+      "E4": 1,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 0
+    },
+    "n19": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 0,
+      "E20": 0,
+      "E21": 1
     }
   },
   "edge_meta": {
+    "E1": {
+      "dynamic": true,
+      "kind": "produces",
+      "producer": "n1"
+    },
+    "E2": {
+      "dynamic": true,
+      "kind": "produces",
+      "producer": "n5"
+    },
+    "E3": {
+      "dynamic": true,
+      "kind": "produces",
+      "producer": "n14"
+    },
+    "E4": {
+      "dynamic": true,
+      "kind": "produces",
+      "producer": "n11"
+    },
     "E5": {
+      "dynamic": true
+    },
+    "E6": {
+      "dynamic": true
+    },
+    "E7": {
+      "dynamic": true
+    },
+    "E8": {
+      "dynamic": true
+    },
+    "E9": {
+      "dynamic": true
+    },
+    "E10": {
+      "dynamic": true
+    },
+    "E11": {
+      "dynamic": true
+    },
+    "E12": {
+      "dynamic": true
+    },
+    "E13": {
+      "dynamic": true
+    },
+    "E14": {
+      "dynamic": true
+    },
+    "E15": {
+      "dynamic": true
+    },
+    "E16": {
+      "dynamic": true
+    },
+    "E17": {
+      "dynamic": true
+    },
+    "E18": {
+      "dynamic": true
+    },
+    "E19": {
+      "dynamic": true
+    },
+    "E20": {
+      "dynamic": true
+    },
+    "E21": {
       "dynamic": true
     }
   }

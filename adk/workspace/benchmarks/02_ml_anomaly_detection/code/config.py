@@ -1,18 +1,14 @@
-"""Configuration module for Bio-Signal & Telemetry Anomaly Detection.
-
-Defines hyperparameters for synthetic data generation and detector thresholds.
-
-Attributes:
-    N_SAMPLES (int): Number of samples in the synthetic bio-signal dataset.
-    ANOMALY_RATIO (float): Proportion of anomalous samples in the dataset.
-    Z_THRESHOLD (float): Standard deviation threshold for Z-score baseline.
-    ENSEMBLE_TREES (int): Number of trees in the Adaptive Robust Mahalanobis ensemble.
-"""
-
-# Synthetic dataset parameters
-N_SAMPLES: int = 600
-ANOMALY_RATIO: float = 0.08
-
-# Detector parameters
-Z_THRESHOLD: float = 2.4
-ENSEMBLE_TREES: int = 25
+class Hyperparameters:
+    """Experimental parameters for the bio-signal telemetry anomaly detection study."""
+    NUM_TRAIN_SAMPLES = 10000
+    NUM_VAL_SAMPLES = 2000
+    ANOMALY_PROBABILITY_TRAIN = 0.05
+    ANOMALY_PROBABILITY_VAL = 0.1
+    SEED = 42
+    FEATURE_COUNT = ['mean', 'variance', 'skewness', 'kurtosis', 'zero_crossings', 'histogram_entropy']
+    USE_RESAMPLING = True
+    N_EPOCHS_VAL_SEARCH = 100
+    PATIENCE = 20
+    BASELINE_METHOD = 'z_score'
+    REPORT_METRICS = ['mean_f1_score', 'std_f1_score', 'mean_roc_auc', 'detection_delay_mean']
+    SUCCESS_CRITERION = 'mean_f1_score > 0.85'

@@ -94,8 +94,11 @@ def test_agent_mutator_and_guard_protection(tmp_path: Path):
     assert mut_4th["compaction_details"]["rules_consolidated"] == 4
     redacted_text = coder_md.read_text(encoding="utf-8")
     assert "## CONSOLIDATED EVOLUTIONARY INVARIANTS" in redacted_text
-    assert "CONSOLIDATED_EPOCH" in redacted_text
+    # The learned section is rewritten, not appended to: no epoch notes, no raw rules left behind.
+    assert "CONSOLIDATED_EPOCH" not in redacted_text
+    assert "- **RULE**:" not in redacted_text
     assert "## LEARNED RULES AND CONSTRAINTS" in redacted_text
+    assert mut_4th["compaction_details"]["invariants"]
 
     guard_md = adk_dir / "agents" / "planning" / "task_critic_guard.md"
     guard_res = mutate_agent_prompt(
@@ -372,50 +375,60 @@ def test_real_pytest_errors_come_first_in_code_audit(tmp_path: Path, monkeypatch
     assert report["status"] == "FAIL"
     issues = report["supervisors"]["code_auditor"]["issues"]
     assert "is_terminal" in issues[0]
-    assert "LLM paraphrase of the failure" in issues
+    # An intermediate task is judged on the deterministic findings alone; the LLM auditor reads only at Gate 3.
+    assert "LLM paraphrase of the failure" not in issues
+    assert report["supervisors"]["code_auditor"]["skipped"] == "deterministic_only"
     # The hyperedge contract (E4: core.py <-> test_core.py) names the exact violation.
     assert any("core.is_terminal" in v for v in report["contract_violations"])
 
 
-def test_evolution_runs_once_per_distinct_failure(tmp_path: Path):
+def test_evolution_waits_for_a_pattern_across_tasks(tmp_path: Path):
+    """One task failing three times is an incident: two fast fixes by the file's author, one planner cycle, no
+    evolution. The same category of failure in a second task is a pattern: the architect runs once, with the
+    examples of both tasks, and the task gets no more than its one planner cycle (Audit IV §IV.7 pkt 6, §IV.6.3 A)."""
     adk_dir = _clone_adk_env(tmp_path)
     orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, enable_layer4=True, include_docs=False, provider="mock")
 
     real_verify = orch._run_verification_step
     real_evolve = orch._run_evolution_step
-    calls = {"verify": 0, "evolve": 0}
+    verifications: dict[str, int] = {}
+    evolutions: list[dict] = []
 
-    def same_failure_three_times(task, *args, **kwargs):
-        calls["verify"] += 1
-        if calls["verify"] <= 3:
+    def failing_three_times_per_task(task, *args, **kwargs):
+        t_id = str(task.get("task_id"))
+        verifications[t_id] = n = verifications.get(t_id, 0) + 1
+        if n <= 3:
             return {
                 "status": "FAIL",
-                "failed_task_id": task.get("task_id"),
-                "failed_node": "v1",
+                "failed_task_id": t_id,
+                "failed_node": task.get("target_node"),
                 "failed_file": "config.py",
                 "failed_agent": "seed_coder",
                 # Differing timings must not make it look like a new failure.
-                "supervisors": {"code_auditor": {"status": "FAIL", "issues": [f"Pytest failure: 1 failed in 0.{calls['verify']}s"]}},
+                "supervisors": {"code_auditor": {"status": "FAIL", "issues": [
+                    f"Pytest failure: FAILED test_core.py::test_value - AssertionError (0.{n}s)"
+                ]}},
                 "summary": "Layer 3 verification failed.",
             }
         return real_verify(task, *args, **kwargs)
 
-    def counting_evolve(*args, **kwargs):
-        calls["evolve"] += 1
-        return real_evolve(*args, **kwargs)
+    def recording_evolve(payload, *args, **kwargs):
+        evolutions.append(payload)
+        return real_evolve(payload, *args, **kwargs)
 
-    orch._run_verification_step = same_failure_three_times
-    orch._run_evolution_step = counting_evolve
+    orch._run_verification_step = failing_three_times_per_task
+    orch._run_evolution_step = recording_evolve
 
     res = orch.run("Zbuduj moduł walidacji parametrów")
 
-    assert calls["evolve"] == 1
     actions = [c["w4_action"] for c in res.get("architecture_cycles", [])]
-    # W4 on the first failure, skipped on the first identical repeat; the second repeat means the prompt change
-    # did not help, so the failure is reported as a suspected harness defect instead of burning more retries.
-    assert actions[:3] == ["MUTATE_AGENT", "SKIPPED_SAME_FAILURE", "REPORT_HARNESS_BUG"]
-    history = json.loads((adk_dir / "state" / "evolution_history.json").read_text(encoding="utf-8"))
-    assert any(e.get("type") == "HARNESS_BUG_REPORTED" for e in history["events"])
+    assert actions == ["FAST_FIX", "FAST_FIX", "SKIPPED_NO_PATTERN", "FAST_FIX", "FAST_FIX", "MUTATE_AGENT"]
+    assert len(evolutions) == 1
+    pattern = evolutions[0]["pattern"]
+    assert pattern["category"] == "pytest:AssertionError" and pattern["occurrences"] == 2
+    assert len(pattern["examples"]) == 2
+    # The architect reads the pattern, not the whole report.
+    assert len(evolutions[0]["validation_report"]["issues"]) <= 3
 
 
 def _grounding_fixture(tmp_path: Path) -> tuple[Path, Path]:

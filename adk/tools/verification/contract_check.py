@@ -130,12 +130,125 @@ def check_parameter_closure(workspace_dir: str | Path) -> list[str]:
     return warnings
 
 
+def _param_names(args: ast.arguments) -> list[str]:
+    """Parameter names in order; `*args`/`**kw` keep their stars. Annotations and defaults are not the interface."""
+    names = [a.arg for a in args.posonlyargs + args.args]
+    if args.vararg:
+        names.append(f"*{args.vararg.arg}")
+    names += [a.arg for a in args.kwonlyargs]
+    if args.kwarg:
+        names.append(f"**{args.kwarg.arg}")
+    return names
+
+
+def public_api(source: str) -> dict[str, list[str]] | None:
+    """Public interface of a module: `func` / `Class` / `Class.method` (public and `__init__`) -> parameter names.
+    None when the source does not parse (syntax errors are reported by the test runner)."""
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return None
+    api: dict[str, list[str]] = {}
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_"):
+            api[node.name] = _param_names(node.args)
+        elif isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
+            api[node.name] = []
+            for item in node.body:
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
+                    item.name == "__init__" or not item.name.startswith("_")
+                ):
+                    api[f"{node.name}.{item.name}"] = _param_names(item.args)
+    return api
+
+
+def is_contract_module(rel_path: str) -> bool:
+    """Modules whose public API is part of the interface contract: code, not tests."""
+    name = Path(rel_path).name
+    return rel_path.endswith(".py") and not name.startswith("test_") and not name.endswith("_test.py")
+
+
+def interface_contract_breaches(contract: dict[str, dict[str, list[str]]], rel_path: str, source: str) -> list[str]:
+    """Contracted symbols of `rel_path` that `source` removes or whose parameters it changes. Adding is free."""
+    expected = contract.get(rel_path)
+    actual = public_api(source)
+    if not expected or actual is None:
+        return []
+    breaches: list[str] = []
+    for symbol, params in expected.items():
+        if symbol not in actual:
+            breaches.append(f"{rel_path}: usunięto {symbol}({', '.join(params)})")
+        elif actual[symbol] != params:
+            breaches.append(f"{rel_path}: {symbol}({', '.join(params)}) -> {symbol}({', '.join(actual[symbol])})")
+    return breaches
+
+
+def _resolve_workspace_module(w_dir: Path, importer_rel: str, module: str | None, level: int) -> str | None:
+    """Workspace file an import statement refers to (`src.game` -> src/game.py, `.game` inside src/ -> src/game.py,
+    `game` -> the unique game.py); None for third-party modules."""
+    if level:
+        base = Path(importer_rel).parent
+        for _ in range(level - 1):
+            base = base.parent
+        parts = [*base.parts, *(module.split(".") if module else [])]
+    else:
+        parts = (module or "").split(".")
+    if not parts or not parts[0]:
+        return None
+    for candidate in (Path(*parts).with_suffix(".py"), Path(*parts) / "__init__.py"):
+        if (w_dir / candidate).is_file():
+            return candidate.as_posix()
+    if not level and len(parts) == 1:
+        same_stem = [p for p in w_dir.rglob(f"{parts[0]}.py") if "__pycache__" not in p.parts]
+        if len(same_stem) == 1:
+            return same_stem[0].relative_to(w_dir).as_posix()
+    return None
+
+
+def check_import_contract(workspace_dir: str | Path, rel_file: str) -> list[str]:
+    """Static L1 check of one file: every `from <workspace module> import name` names something that module
+    defines. Nothing is executed, so a broken neighbour cannot fail this file and a wrong name (`TicTacToe` for
+    `TicTacToeGame`) is caught before any test runs. Unparsable neighbours are the neighbour's problem."""
+    w_dir = resolve_adk_path(workspace_dir)
+    tree = _parse(w_dir / rel_file)
+    if tree is None:
+        return []
+    violations: list[str] = []
+    for node in tree.body:
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        target = _resolve_workspace_module(w_dir, rel_file, node.module, node.level)
+        if target is None or target == rel_file:
+            continue
+        target_tree = _parse(w_dir / target)
+        defined = _module_names(target_tree) if target_tree is not None else None
+        if defined is None:
+            continue
+        package_dir = Path(target).parent if Path(target).name == "__init__.py" else None
+        missing = [
+            alias.name
+            for alias in node.names
+            if alias.name != "*"
+            and alias.name not in defined
+            and not (package_dir is not None and (w_dir / package_dir / f"{alias.name}.py").is_file())
+        ]
+        if missing:
+            available = sorted(n for n in defined if not n.startswith("_"))
+            violations.append(
+                f"Naruszenie kontraktu importu: {rel_file} importuje {', '.join(missing)} z {target}, "
+                f"a ten moduł tego nie definiuje. Dostępne w {target}: {', '.join(available) or '(brak)'}."
+            )
+    return violations
+
+
 def check_test_contract(
     workspace_dir: str | Path = "workspace",
     matrix_path: str | Path = "state/hypergraph_matrix.json",
+    only_paths: set[str] | None = None,
 ) -> list[str]:
     """For every hyperedge coupling a `test_*.py` node with a `.py` module node, report module symbols the
-    test uses that the module does not define. Returns one message per (test, module) pair with violations."""
+    test uses that the module does not define. Returns one message per (test, module) pair with violations.
+    `only_paths` limits the pairs to those touching the given files (the scope of one task)."""
     w_dir = resolve_adk_path(workspace_dir)
     data: dict[str, Any] = read_json_state(matrix_path)
     nodes: dict[str, Any] = data.get("nodes", {})
@@ -148,6 +261,8 @@ def check_test_contract(
                 pairs.update(
                     (test_path, mod) for mod in py_paths if mod != test_path and not Path(mod).name.startswith("test_")
                 )
+    if only_paths is not None:
+        pairs = {(t, m) for t, m in pairs if t in only_paths or m in only_paths}
 
     violations: list[str] = []
     for test_path, module_path in sorted(pairs):

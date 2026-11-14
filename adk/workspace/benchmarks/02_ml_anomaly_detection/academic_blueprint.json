@@ -1,37 +1,44 @@
 {
-  "thesis_title": "Adaptive Robust Mahalanobis-Ensemble Detector for Bio-Signal Telemetry Anomaly Detection",
-  "thesis_statement": "Wdrożenie i ewaluacja wielowymiarowego, adaptacyjnego detektora anomalii opartego na ansamblu metod statystycznych (Mahalanobis/Isolation Forest) wykazuje wyższą odporność na szum i zmienną korelację sygnału biomedycznego w porównaniu do tradycyjnego jednowymiarowego detektora Z-score.",
-  "baseline_comparison": "Static Univariate Gaussian Z-Score",
+  "thesis_title": "Porównanie niezawodności detektora ensemblowego wielocechowego ze statycznym baselines Z-score w wykrywaniu anomalii w syntetycznych sygnałach bioelektrycznych",
+  "thesis_statement": "Wielocechowy, robusty detector ensemblowy osiąga wyższą niezawodność (zmierzoną jako wariancja F1 score i ROC-AUC przy różnych poziomach szumu) w detekcji anomalii w syntetycznych sygnałach wielokanałowych niż statyczny, jedno-wymiarowy baseline oparty na Z-score.",
+  "baseline_comparison": "Statyczny univariate Z-score baseline (window=50, threshold=3.0) vs. Propozycja: Ensemble oparty na korelacji między kanałami, rozkładzie i outlier detection statystycznym.",
+  "entrypoint": "src/experiment/experiment_runner.py:run_all",
+  "metrics": [
+    "mean_f1_score",
+    "std_f1_score",
+    "mean_roc_auc",
+    "detection_delay_mean"
+  ],
   "planned_chapters": [
     {
       "index": 1,
-      "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-      "focus": "Formalna definicja problemu detekcji anomalii w telemetryce medycznej, cel inżynierski budowy detektora oraz teza o wyższej skuteczności adaptacyjnych metod ensemblingowych"
+      "title": "Rozdział 1: Wstęp i Teza Pracy",
+      "focus": "Motywacja problemu detekcji anomalii w telemetrii medycznej, sformułowanie tezy o przewadze ensembli nad prostymi bazelines, zakres pracy."
     },
     {
       "index": 2,
-      "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-      "focus": "Systematyka metod wykrywania anomalii w sygnałach biomedycznych, analiza SOTA (2023-2026), specyfikacja metod referencyjnych (Z-score) i proponowanych (Mahalanobis-Ensemble)"
+      "title": "Rozdział 2: Przegląd Literatury",
+      "focus": "Podstawowe metody detekcji anomalii w sygnałach bioelektrycznych, ograniczenia statystyczne Z-score, koncepcja detectorów ensemblowych i robusty."
     },
     {
       "index": 3,
-      "title": "Rozdział 3: Architektura Systemu",
-      "focus": "Opis architektury modułowej (config, core, results), przepływ danych od syntezy do ewaluacji oraz interfejsy API między modułami"
+      "title": "Rozdział 3: Metodologia Syntezy Danych",
+      "focus": "Model syntetycznych sygnałów wielokanałowych (ECG/EEG analog), algorytm injektowania anomalii (szum, spike, drift) oraz specyfikacja środowiska testowego."
     },
     {
       "index": 4,
-      "title": "Rozdział 4: Formalizm Matematyczny i Implementacja",
-      "focus": "Wyprowadzenie wzorów na odległość Mahalanobisa, wagowanie drzew w ansamblu oraz szczegółowy opis algorytmu detekcji adaptacyjnej"
+      "title": "Rozdział 4: Projekt Detekcji i Oceny",
+      "focus": "Szczegółowy opis architektury detektora ensemblowego, implementacja baseline'u Z-score oraz zdefiniowanie miar niezawodności (F1, AUC, stabilność)."
     },
     {
       "index": 5,
-      "title": "Rozdział 5: Wyniki Eksperymentalne i Analiza",
-      "focus": "Prezentacja wyników porównawczych (precision, recall, f1_score), analiza wrażliwości na próg Z_THRESHOLD oraz wizualizacja wykrytych anomalii"
+      "title": "Rozdział 5: Wyniki Eksperymentu",
+      "focus": "Prezentacja wyników liczbowych z `results/final_results.json`, wizualizacja porównawcza (wykresy ROC, boxploty F1), analiza wrażliwości na szum."
     },
     {
       "index": 6,
       "title": "Rozdział 6: Wnioski",
-      "focus": "Weryfikacja postawionej tezy inżynierskiej, implikacje kliniczne metody oraz kierunki przyszłych badań"
+      "focus": "Weryfikacja tezy pracy, podsumowanie przewagi niezawodnościowej ensembli i sugestie dalszych badań."
     }
   ],
   "literature_recon": {
@@ -43,90 +50,24 @@
       "background_researcher",
       "discoverer_researcher"
     ],
-    "analyzed_papers_count": 36,
-    "canonical_baselines": [
-      "Univariate Gaussian Z-Score (3-sigma threshold)",
-      "Local Outlier Factor (LOF, Breunig 2000)",
-      "Isolation Forest (Liu 2008) & Deep Isolation Forest (Xu 2023)",
-      "Anomaly Transformer / PatchTST / TimesNet (2023-2025)"
-    ],
-    "standard_metrics": [
-      "precision",
-      "recall",
-      "f1_score",
-      "false_alarm_rate"
-    ],
-    "standard_datasets_or_environments": [
-      "Multi-channel physiological telemetry (HR, HRV-RMSSD, SpO2)",
-      "MIT-BIH Arrhythmia & PhysioNet ICU streams",
-      "TSB-AD / SMD multivariate time-series benchmarks"
-    ],
-    "common_structural_patterns": [
-      "Rozdział 1: Motywacja kliniczna, model zaburzeń wielokanałowych, formalna teza i 4 hipotezy",
-      "Rozdział 2: Dwuetapowy przegląd literatury — (2.1) lejek statystyki odpornej (Huber, Hampel, Rousseeuw) oraz (2.2) porównanie z modelami SOTA 2023-2026 i tabela syntetyczna",
-      "Rozdział 3: Wyprowadzenie punktu załamania (breakdown point 50%) estymatora MAD oraz redukcji wariancji komitetu podprzestrzeni",
-      "Rozdział 4: Specyfikacja AST generatora sygnałów biomedycznych i detektora w core.py",
-      "Rozdział 5: Ewaluacja precyzji, czułości, miary F1 i odsetka fałszywych alarmów wraz ze studium ablacyjnym",
-      "Rozdział 6: Wnioski kliniczno-inżynierskie, Threats to Validity i wdrożenie w systemach Edge-ICU"
-    ],
+    "analyzed_papers_count": 2,
+    "canonical_baselines": [],
+    "standard_metrics": [],
+    "standard_datasets_or_environments": [],
+    "common_structural_patterns": [],
     "sampled_methodologies": [
-      "Grubbs, Frank E. (1969) [grubbs1969procedures]: Parametric univariate extreme studentized deviate (Z-score) outlier test",
-      "Hampel, Frank R. (1974) [hampel1974influence]: Median Absolute Deviation (MAD) and bounded influence functions with 50% breakdown point",
-      "Tukey, John W. (1977) [tukey1977exploratory]: Order statistics, interquartile fences, and non-parametric resistant estimators",
-      "Huber, Peter J. (1981) [huber1981robust]: Minimax M-estimators and Huber loss transitions between quadratic and linear penalties",
-      "Rousseeuw, Peter J. (1984) [rousseeuw1984least]: Minimum Volume Ellipsoid (MVE) and Minimum Covariance Determinant (MCD) for robust Mahalanobis distance",
-      "Barnett, Vic and Lewis, Toby (1994) [barnett1994outliers]: Comprehensive taxonomy of discordancy tests, masking, and swamping phenomena",
-      "Malik, Marek and Bigger, J. Thomas and Camm, A. John and Kleiger, Robert E. (1996) [taskforce1996hrv]: Clinical standardization of time-domain (RMSSD, SDNN) and frequency-domain HRV biomarkers",
-      "Ho, Tin Kam (1998) [ho1998random]: Ensemble voting across random feature subspace projections to reduce estimator variance"
+      "Nastaran Mohammadian Rad and Seyed Mostafa Kia and Calogero Zarbo and Twan van Laarhoven and Giuseppe Jurman and Paola Venuti and Elena Marchiori and Cesare Furlanello (2017) [rad2017deep]: We propose a new application of the deep learning to facilitate automatic SMM detection using multi-axis IMUs.",
+      "Noor Islam S. Mohammad and Md. Basim Al Zabir Shammo and Hasan Siddiki and Mahmudul Hasan and Md. Faisal Sheikh and Jakaria Habib (2026) [mohammad2026sift]: We operationalize the principle in FaithShift, a stress-test protocol spanning ten shift axes, and propose SIFT, a hidden-state trajectory detector trained with cross-environment invariance objectives"
     ],
     "key_limitations_to_overcome": [
-      "Grubbs, Frank E. (1969) [grubbs1969procedures]: Severe masking effect when anomaly contamination exceeds 2-5% because outliers inflate sample mean and variance",
-      "Hampel, Frank R. (1974) [hampel1974influence]: Originally formulated for univariate location/scale; requires subspace projection for multivariate streams",
-      "Tukey, John W. (1977) [tukey1977exploratory]: Axis-aligned box fences miss correlated oblique anomalies across multiple channels",
-      "Huber, Peter J. (1981) [huber1981robust]: Iterative reweighting adds computational latency in multi-channel real-time telemetry",
-      "Rousseeuw, Peter J. (1984) [rousseeuw1984least]: Combinatorial subsampling complexity O(N^p) is expensive without random subspace ensembles",
-      "Barnett, Vic and Lewis, Toby (1994) [barnett1994outliers]: Parametric distributional assumptions fail on non-stationary physiological waveforms",
-      "Malik, Marek and Bigger, J. Thomas and Camm, A. John and Kleiger, Robert E. (1996) [taskforce1996hrv]: Single-channel HRV analysis suffers high false alarm rates from motion artifacts unless fused with HR and SpO2",
-      "Ho, Tin Kam (1998) [ho1998random]: Originally designed for supervised classification; required adaptation for unsupervised anomaly scoring"
+      "Nastaran Mohammadian Rad and Seyed Mostafa Kia and Calogero Zarbo and Twan van Laarhoven and Giuseppe Jurman and Paola Venuti and Elena Marchiori and Cesare Furlanello (2017) [rad2017deep]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Noor Islam S. Mohammad and Md. Basim Al Zabir Shammo and Hasan Siddiki and Mahmudul Hasan and Md. Faisal Sheikh and Jakaria Habib (2026) [mohammad2026sift]: Second, the dominant bottleneck is sampling stochasticity, not shift: over 80% of detector instability stems from random seed variation, falsifying our preregis"
     ],
     "available_citation_keys": [
-      "grubbs1969procedures",
-      "hampel1974influence",
-      "tukey1977exploratory",
-      "huber1981robust",
-      "rousseeuw1984least",
-      "barnett1994outliers",
-      "taskforce1996hrv",
-      "ho1998random",
-      "goldberger2000physionet",
-      "breunig2000lof",
-      "scholkopf2001estimating",
-      "lazarevic2005feature",
-      "clifford2006advanced",
-      "liu2008isolation",
-      "chandola2009anomaly",
-      "aggarwal2017outlier",
-      "hariri2019extended",
-      "ruff2021unifying",
-      "xu2023deep",
-      "audibert2023usad",
-      "tuli2023tranad",
-      "wu2023timesnet",
-      "zhou2023onefitsall",
-      "schmidl2023anomaly",
-      "paparrizos2023tsb",
-      "kim2023revin",
-      "yang2023dcdetector",
-      "zhang2024conformal",
-      "chen2024adaptive",
-      "liu2024itransformer",
-      "goswami2024moment",
-      "darban2024deep",
-      "wang2024drift",
-      "nam2024subspace",
-      "li2025streaming",
-      "kowalski2025edge"
-    ]
+      "rad2017deep",
+      "mohammad2026sift"
+    ],
+    "citation_source": "arxiv"
   },
   "thesis_type": "magisterska",
   "template_name": "thesis_plodz",
@@ -135,33 +76,33 @@
     "chapters": [
       {
         "index": 1,
-        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-        "focus": "Formalna definicja problemu detekcji anomalii w telemetryce medycznej, cel inżynierski budowy detektora oraz teza o wyższej skuteczności adaptacyjnych metod ensemblingowych"
+        "title": "Rozdział 1: Wstęp i Teza Pracy",
+        "focus": "Motywacja problemu detekcji anomalii w telemetrii medycznej, sformułowanie tezy o przewadze ensembli nad prostymi bazelines, zakres pracy."
       },
       {
         "index": 2,
-        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-        "focus": "Systematyka metod wykrywania anomalii w sygnałach biomedycznych, analiza SOTA (2023-2026), specyfikacja metod referencyjnych (Z-score) i proponowanych (Mahalanobis-Ensemble)"
+        "title": "Rozdział 2: Przegląd Literatury",
+        "focus": "Podstawowe metody detekcji anomalii w sygnałach bioelektrycznych, ograniczenia statystyczne Z-score, koncepcja detectorów ensemblowych i robusty."
       },
       {
         "index": 3,
-        "title": "Rozdział 3: Architektura Systemu",
-        "focus": "Opis architektury modułowej (config, core, results), przepływ danych od syntezy do ewaluacji oraz interfejsy API między modułami"
+        "title": "Rozdział 3: Metodologia Syntezy Danych",
+        "focus": "Model syntetycznych sygnałów wielokanałowych (ECG/EEG analog), algorytm injektowania anomalii (szum, spike, drift) oraz specyfikacja środowiska testowego."
       },
       {
         "index": 4,
-        "title": "Rozdział 4: Formalizm Matematyczny i Implementacja",
-        "focus": "Wyprowadzenie wzorów na odległość Mahalanobisa, wagowanie drzew w ansamblu oraz szczegółowy opis algorytmu detekcji adaptacyjnej"
+        "title": "Rozdział 4: Projekt Detekcji i Oceny",
+        "focus": "Szczegółowy opis architektury detektora ensemblowego, implementacja baseline'u Z-score oraz zdefiniowanie miar niezawodności (F1, AUC, stabilność)."
       },
       {
         "index": 5,
-        "title": "Rozdział 5: Wyniki Eksperymentalne i Analiza",
-        "focus": "Prezentacja wyników porównawczych (precision, recall, f1_score), analiza wrażliwości na próg Z_THRESHOLD oraz wizualizacja wykrytych anomalii"
+        "title": "Rozdział 5: Wyniki Eksperymentu",
+        "focus": "Prezentacja wyników liczbowych z `results/final_results.json`, wizualizacja porównawcza (wykresy ROC, boxploty F1), analiza wrażliwości na szum."
       },
       {
         "index": 6,
         "title": "Rozdział 6: Wnioski",
-        "focus": "Weryfikacja postawionej tezy inżynierskiej, implikacje kliniczne metody oraz kierunki przyszłych badań"
+        "focus": "Weryfikacja tezy pracy, podsumowanie przewagi niezawodnościowej ensembli i sugestie dalszych badań."
       }
     ]
   }

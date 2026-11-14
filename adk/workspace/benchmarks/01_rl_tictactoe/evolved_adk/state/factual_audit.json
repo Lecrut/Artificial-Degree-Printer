@@ -1,20 +1,27 @@
 {
   "files": [
     "config.py",
-    "core.py",
+    "evaluate.py",
     "figures/comparison_chart.pdf",
     "figures/comparison_chart.png",
+    "literature_review.md",
     "logs/experiment.log",
     "plot_results.py",
+    "q_learning_agent.py",
+    "random_agent.py",
     "references.bib",
-    "results.csv",
+    "test_agents.py",
     "test_core.py",
-    "test_results_tmp.csv",
-    "thesis.md"
+    "test_env.py",
+    "test_q_learning.py",
+    "thesis.md",
+    "tictactoe_env.py",
+    "train.py"
   ],
   "pytest_status": "FAIL",
   "pytest_errors": [
-    "Ruff lint failure: F841 Local variable `plot_df` is assigned to but never used\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\plot_results.py:17:9\n   |\n15 |         df = pd.read_csv(csv_path)\n16 |         # Pivot long format to wide format for plotting\n17 |         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n   |         ^^^^^^^\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n19 |         data = {row['metric']: row['mean'] for _, row in df.iterrows()}\n   |\nhelp: Remove assignment to unused variable `plot_df`\n   |\n16 |         # Pivot long format to wide format for plotting\n   -         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n17 +         df.set_index('metric')['mean'].unstack() if 'unstack' else None\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n   |\nnote: This is an unsafe fix and may change runtime behavior\n\nFound 1 error.\n1 unsafe fix available with `--fix --unsafe-fixes`."
+    "Pytest failure: FFFFFF...                                                                [100%]\n================================== FAILURES ===================================\n______________________ test_random_agent_initialization _______________________\ntest_agents.py:16: in test_random_agent_initialization\n    assert len(valid_moves) > 0, 'There should be valid moves in the initial state.'\nE   AssertionError: There should be valid moves in the initial state.\nE   assert 0 > 0\nE    +  where 0 = len([])\n____________________ test_q_learning_agent_initialization _____________________\ntest_agents.py:36: in test_q_learning_agent_initialization\n    assert len(valid_moves) > 0, f'There should be valid moves in the initial state, got {len(valid_moves)}.'\nE   AssertionError: There should be valid moves in the initial state, got 0.\nE   assert 0 > 0\nE    +  where 0 = len([])\n_________________________ test_initial_state_is_empty _________________________\ntest_core.py:9: in test_initial_state_is_empty\n    assert env.get_winner() is None, 'Expected winner to be None initially'\nE   AssertionError: Expected winner to be None initially\nE   assert <Player.AI: 0> is None\nE    +  where <Player.AI: 0> = get_winner()\nE    +    where get_winner = <tictactoe_env.TicTacToeEnv object at 0x000001748AAD65D0>.get_winner\n________________ test_terminal_states_correct_winner_detection ________________\ntest_core.py:29: in test_terminal_states_correct_winner_detection\n    assert env_x.get_winner() == player_one, f'Expected winner {player_one}, got {env_x.get_winner()}'\nE   AssertionError: Expected winner Player.PLAYER_ONE, got None\nE   assert None == <Player.PLAYER_ONE: 1>\nE    +  where None = get_winner()\nE    +    where get_winner = <tictactoe_env.TicTacToeEnv object at 0x000001748AA76D70>.get_winner\n_________________________ test_initial_state_is_empty _________________________\ntest_env.py:8: in test_initial_state_is_empty\n    assert env.get_winner() is None, 'Expected winner to be None initially'\nE   AssertionError: Expected winner to be None initially\nE   assert <Player.AI: 0> is None\nE    +  where <Player.AI: 0> = get_winner()\nE    +    where get_winner = <tictactoe_env.TicTacToeEnv object at 0x00000174B2EA1E00>.get_winner\n________________ test_terminal_states_correct_winner_detection ________________\ntest_env.py:44: in test_terminal_states_correct_winner_detection\n    assert winner_x == x_player or winner_x.value == x_player if hasattr(x_player, 'value') else winner_x == x_player\nE   assert False\n=========================== short test summary info ===========================\nFAILED test_agents.py::test_random_agent_initialization - AssertionError: The...\nFAILED test_agents.py::test_q_learning_agent_initialization - AssertionError:...\nFAILED test_core.py::test_initial_state_is_empty - AssertionError: Expected w...\nFAILED test_core.py::test_terminal_states_correct_winner_detection - Assertio...\nFAILED test_env.py::test_initial_state_is_empty - AssertionError: Expected wi...\nFAILED test_env.py::test_terminal_states_correct_winner_detection - assert False\n6 failed, 3 passed in 0.10s",
+    "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\evaluate.py:40:30: F821 Undefined name `random`\nFound 1 error."
   ],
   "chapters_present": [
     1,
@@ -26,18 +33,8 @@
   ],
   "chapters_missing": [],
   "symbolic_errors": [],
-  "csv_columns": [
-    "metric",
-    "mean",
-    "std_dev"
-  ],
+  "csv_columns": [],
   "trigger_issues": [
-    "Ruff lint failure: F841 Local variable `plot_df` is assigned to but never used\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\plot_results.py:17:9\n   |\n15 |         df = pd.read_csv(csv_path)\n16 |         # Pivot long format to wide format for plotting\n17 |         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n   |         ^^^^^^^\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n19 |         data = {row['metric']: row['mean'] for _, row in df.iterrows()}\n   |\nhelp: Remove assignment to unused variable `plot_df`\n   |\n16 |         # Pivot long format to wide format for plotting\n   -         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n17 +         df.set_index('metric')['mean'].unstack() if 'unstack' else None\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n   |\nnote: This is an unsafe fix and may change runtime behavior\n\nFound 1 error.\n1 unsafe fix available with `--fix --unsafe-fixes`.",
-    "Ruff lint failure: F841 Local variable `plot_df` is assigned to but never used\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\plot_results.py:17:9\n   |\n15 |         df = pd.read_csv(csv_path)\n16 |         # Pivot long format to wide format for plotting\n17 |         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n   |         ^^^^^^^\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n19 |         data = {row['metric']: row['mean'] for _, row in df.iterrows()}\n   |\nhelp: Remove assignment to unused variable `plot_df`\n   |\n16 |         # Pivot long format to wide format for plotting\n   -         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n17 +         df.set_index('metric')['mean'].unstack() if 'unstack' else None\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n   |\nnote: This is an unsafe fix and may change runtime behavior",
-    "Krytyczny błąd w kodzie (`plot_results.py`): Wykryto zmienną lokalną `plot_df`, która jest przypisana, lecz nigdy nie używana (Ruff F841). Jest to naruszenie standardów czystości kodu (PEP 8) i wymaga usunięcia lub wykorzystania zmiennej przed kompilacją.",
-    "Niespójność danych empirycznych vs teza badawcza: W Rozdziale 5 autor twierdzi, że agent osiąga 'znaczący próg skuteczności' i wysoki odsetek remisów. Jednak plik `results.csv` wskazuje średnią stopy remisów na poziomie 0.1264 (ok. 12.6%), co jest niską wartością w kontekście gry rozwiązanej w remisie, a nie 'wysokim' jak sugeruje tekst. Tekst nie odnosi się do tej niskiej wartości jako ograniczenia konwergencji przy tylko 500 epizodach.",
-    "Podwójna/lukowa prezentacja wyników: W sekcji analizy wyników występują luki w formatowaniu LaTeX (`wskaźnik zwycięstw na poziomie .` oraz `remisów na poziomie .`). Brak konkretnych liczb w kluczowych stwierdzeniach analitycznych jest niedopuszczalne w pracy dyplomowej.",
-    "Sugerowanie niestandardowego działania: W kodzie `plot_results.py` użyto warunku `if 'unstack'`, który zawsze zwraca True (bool), co powoduje wykonanie operacji `.unstack()` na Seriesie (co może rzucić błąm lub zwrócić nieprawidłowy format w zależności od wersji Pandas) zamiast logicznego sprawdzania kolumn. To sugeruje brak testów jednostkowych dla modułu raportowania.",
-    "Niedostateczna wiarygodność statystyczna: Choć kod (`core.py`) wykonuje 50 powtórzeń i oblicza odchylenie standardowe, tekst w Rozdziale 6 (Sekcja 'Ograniczenia Metodologiczne') błędnie twierdzi, że brak jest powtórzeń eksperymentu. Jest to sprzeczność między kodem a tekstem pracy."
+    "Pytest failure: FF                                                                       [100%]\n================================== FAILURES ===================================\n_________________________ test_initial_state_is_empty _________________________\ntest_env.py:8: in test_initial_state_is_empty\n    assert env.get_winner() is None, 'Expected winner to be None initially'\nE   AssertionError: Expected winner to be None initially\nE   assert <Player.AI: 0> is None\nE    +  where <Player.AI: 0> = get_winner()\nE    +    where get_winner = <tictactoe_env.TicTacToeEnv object at 0x000002285F3AB770>.get_winner\n________________ test_terminal_states_correct_winner_detection ________________\ntest_env.py:44: in test_terminal_states_correct_winner_detection\n    assert winner_x == x_player or winner_x.value == x_player if hasattr(x_player, 'value') else winner_x == x_player\nE   assert False\n=========================== short test summary info ===========================\nFAILED test_env.py::test_initial_state_is_empty - AssertionError: Expected wi...\nFAILED test_env.py::test_terminal_states_correct_winner_detection - assert False\n2 failed in 0.08s"
   ]
 }

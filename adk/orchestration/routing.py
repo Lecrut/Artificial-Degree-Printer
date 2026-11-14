@@ -20,6 +20,11 @@ from adk.orchestration.common import (
 )
 
 
+def _names_file(text: str, name: str) -> bool:
+    """`name` appears in `text` as a whole filename, not as the tail of a longer one."""
+    return bool(name) and re.search(rf"(?<![\w/.-]){re.escape(name)}(?![\w-])", text) is not None
+
+
 class RoutingMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
 
@@ -172,28 +177,32 @@ class RoutingMixin:
             role_path = self._role_file(ROLE_ALIASES[raw_id])
             return ensure_node(role_path, self.matrix_path), role_path
 
-        # 3. Check if raw_id is a file path matching any node's path or filename
-        for n_id, n_meta in nodes.items():
-            n_path = str(n_meta.get("path", ""))
-            if n_path == raw_id or Path(n_path).name == Path(raw_id).name:
-                return n_id, n_path
+        # 3. An explicit file path (the id itself or the task's target file): the node with that exact path, the
+        #    only node with that basename, or a new node. Never a node whose name merely contains it: the
+        #    substring match sent `tictoc_config.py` to `config.py` (2026-11-13) and test files to their modules.
+        target_f = str(task.get("target_file") or task.get("file") or "").strip() if task else ""
+        for candidate in (raw_id, target_f):
+            if not (candidate and _looks_like_workspace_path(candidate)):
+                continue
+            cand = candidate.replace("\\", "/")
+            exact = next((n_id for n_id, m in nodes.items() if str(m.get("path", "")) == cand), None)
+            if exact:
+                return exact, cand
+            same_name = [
+                (n_id, str(m.get("path", ""))) for n_id, m in nodes.items() if Path(str(m.get("path", ""))).name == Path(cand).name
+            ]
+            if len(same_name) == 1:
+                return same_name[0]
+            return ensure_node(cand, self.matrix_path), cand
 
-        # 3. Check task metadata (target_file, file, or description) for mention of known files
+        # 4. A known file the description names as a whole word (`config.py`, not the tail of `tictoc_config.py`);
+        #    longer paths first so `src/config.py` wins over `config.py`.
         if task:
-            target_f = str(task.get("target_file") or task.get("file") or "").strip()
             desc = str(task.get("description", "")).strip().lower()
-            for n_id, n_meta in nodes.items():
+            for n_id, n_meta in sorted(nodes.items(), key=lambda kv: -len(str(kv[1].get("path", "")))):
                 n_path = str(n_meta.get("path", ""))
-                fname = Path(n_path).name.lower()
-                if (target_f and (n_path == target_f or fname == Path(target_f).name.lower())) or (
-                    fname in desc or n_path.lower() in desc
-                ):
+                if n_path and (_names_file(desc, n_path.lower()) or _names_file(desc, Path(n_path).name.lower())):
                     return n_id, n_path
-
-        # 4. A file the graph does not know yet is a new node, never a reason to edit some other file.
-        for candidate in (raw_id, str((task or {}).get("target_file") or "").strip()):
-            if _looks_like_workspace_path(candidate):
-                return ensure_node(candidate, self.matrix_path), candidate
 
         # 5. Hallucinated non-path ids ('v7', 'node_core'): use the declared fallback (node, alias or path).
         if fallback in nodes:

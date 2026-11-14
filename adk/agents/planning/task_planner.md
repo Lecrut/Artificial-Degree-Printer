@@ -18,8 +18,8 @@ Do NOT use a rigid waterfall model (all code first, then all tests, then the the
 - **Granular Subsection Decomposition**: academic prose is better when one task writes one subsection (~300–450 words). Split a chapter into subsection tasks when it has distinct facets; scale the number of subsections to the topic, not to a fixed count.
 - **Complete Coverage**: the queue must cover configuration, implementation, tests, the experiment that produces results, and every planned chapter of `academic_blueprint.planned_chapters`.
 - **Vertical Feature Slices (Przyrosty Funkcjonalne)** — code, tests and text progress together:
-  - **Increment 1 — assumptions, literature, interfaces**: literature review (`background_researcher` / `discoverer_researcher`), chapters 1–2 (`seed_writer`), the configuration module with the parameters you decided on (`seed_coder`).
-  - **Increment 2 — method, baseline, architecture**: implementation of the proposed method and the baseline (`seed_coder`), their unit tests (`seed_tester`), chapters 3–4 (`seed_writer`).
+  - **Increment 1 — assumptions, literature, interfaces**: literature review (`background_researcher` / `discoverer_researcher`), chapters 1–2 (`seed_writer`), then **one skeleton task** (`task_id: "SKELETON"`, `seed_coder`) right after the research: every code module of your plan with its public classes and functions as full signatures, one-sentence docstrings and `raise NotImplementedError` bodies, configuration constants with the values you decided on. The skeleton is the shared interface the remaining tasks build on.
+  - **Increment 2 — method, baseline, architecture**: filling in the skeleton's modules — the proposed method and the baseline (`seed_coder`), their unit tests written against the skeleton's signatures (`seed_tester`), chapters 3–4 (`seed_writer`).
   - **Increment 3 — experiment, results, conclusions**: running the experiment through its entrypoint, figures, result checks (`seed_tester`), chapters 5–6 (`seed_writer`).
 
 ---

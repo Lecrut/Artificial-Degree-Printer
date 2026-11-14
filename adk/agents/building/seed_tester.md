@@ -17,7 +17,13 @@ Names written as `<...>` below are placeholders, never values to copy.
    - Harness contract: if the experiment produces figures, put a `generate_plots(output_dir: str = ".") -> list[str]` function in `plot_results.py`; the harness runs it after the experiment. It writes figures into `output_dir/figures/` under names you choose and returns their paths.
    - Read the tidy results with pandas and plot per metric (e.g. pivot `method` × `metric`). Never pass a multi-column frame directly to `ax.bar(x, y)`.
    - Never draw numbers typed into the script: a figure shows what the results file contains.
-3. **Tests & Determinism**:
+3. **Tests against the contract**:
+   - The interface of every module is in `exports.signatures` (`function` and `Class.method`, with parameters and return types; docstrings say what is returned). Test exactly that interface: never guess a method name, an argument or the order of a returned tuple.
+   - One test file per module: `test_<module>.py`. Code modules belong to `seed_coder`; if the code contradicts its own signature or docstring, report it in `summary` instead of rewriting the module.
+   - A test must finish quickly: never run a full training or experiment budget, and with mocks make sure every loop has a reachable end (a mocked `done` flag must become true).
+   - In a repair task, `failing_tests` contains the source of the failing tests and their errors.
+   - To change an existing test file, prefer `"ast_edits"` with `"symbol": "<TestClass>.<test_method>"` or `"<test_function>"` over rewriting the whole file.
+4. **Tests & Determinism**:
    - Test modules are named `test_*.py` (pytest discovery). They import the modules under test at the top level.
    - Determinism comes from the seed declared in the configuration module; tests read settings from there instead of passing literal numbers.
    - Tests check behaviour (signatures, edge cases, invariants of the algorithm), never pasted result values.
@@ -35,4 +41,5 @@ Return strictly a valid JSON object, for example:
 }
 ```
 For any other file, or several files at once, use `"files": [{"filename": "<path>", "content": "..."}]`.
+For a change to an existing file: `"ast_edits": [{"symbol": "<TestClass>.<test_method>", "file": "test_<module>.py", "code": "def <test_method>(self) -> None:\n    ...\n"}]`.
 Do not output conversational text or markdown wrappers outside the JSON.

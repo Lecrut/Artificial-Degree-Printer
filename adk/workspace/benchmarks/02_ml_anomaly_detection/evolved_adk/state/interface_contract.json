@@ -1,0 +1,99 @@
+{
+  "src/data/synthetic_data_generator.py": {
+    "SignalConfig": [],
+    "AnomalyConfig": [],
+    "BioSignalGenerator": [],
+    "BioSignalGenerator.__init__": [
+      "self",
+      "config",
+      "anomaly_config",
+      "rng_seed"
+    ],
+    "BioSignalGenerator.generate_normal_sample": [
+      "self",
+      "length"
+    ],
+    "BioSignalGenerator.generate_anomaly_sample": [
+      "self",
+      "start_idx",
+      "length"
+    ],
+    "BioSignalGenerator.generate_dataset": [
+      "self",
+      "num_segments"
+    ],
+    "SignalConfig.__init__": [
+      "self",
+      "num_channels",
+      "sample_length",
+      "num_segments"
+    ]
+  },
+  "config.py": {
+    "Hyperparameters": []
+  },
+  "src/detectors/baseline_zscore.py": {
+    "UnivariateZScoreDetector": [],
+    "UnivariateZScoreDetector.__init__": [
+      "self",
+      "threshold"
+    ],
+    "UnivariateZScoreDetector.detect": [
+      "self",
+      "x"
+    ]
+  },
+  "src/detectors/ensemble_detector.py": {
+    "EnsembleDetectorConfig": [],
+    "EnsembleDetector": [],
+    "EnsembleDetector.__init__": [
+      "self",
+      "config"
+    ],
+    "EnsembleDetector.detect_segments": [
+      "self",
+      "segments",
+      "training_stats"
+    ]
+  },
+  "src/evaluation/metrics.py": {
+    "compute_precision_recall_f1": [
+      "true_labels",
+      "predicted_labels"
+    ],
+    "compute_roc_auc": [
+      "true_labels",
+      "scores"
+    ],
+    "optimize_threshold_grid": [
+      "true_labels",
+      "scores",
+      "threshold_min",
+      "threshold_max",
+      "step"
+    ],
+    "compute_detection_delay_mean": [
+      "true_anomaly_start_indices",
+      "detection_indices"
+    ],
+    "evaluate_detector": [
+      "true_labels",
+      "scores",
+      "known_starts",
+      "use_best_thresh"
+    ]
+  },
+  "plot_results.py": {
+    "generate_plots": [
+      "output_dir"
+    ]
+  },
+  "src/experiment/experiment_runner.py": {
+    "run_all": []
+  },
+  "figures/comparison.py": {
+    "generate_plots": [
+      "output_dir"
+    ]
+  }
+}

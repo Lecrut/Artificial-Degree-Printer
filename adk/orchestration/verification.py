@@ -16,14 +16,21 @@ from adk.tools.verification import (
     check_parameter_closure,
     check_test_contract,
     compile_symbolic_references,
+    iter_workspace_python_files,
     run_isolated_tests,
 )
+from adk.tools.verification.contract_check import check_import_contract
 from adk.orchestration.common import (
     _collect_report_issues,
     _fit_items,
     _clip_log,
     _declared_vs_measured_metrics,
 )
+
+
+def _is_test(rel: str) -> bool:
+    name = Path(rel).name
+    return rel.endswith(".py") and (name.startswith("test_") or name.endswith("_test.py"))
 
 
 class VerificationMixin:
@@ -99,27 +106,70 @@ class VerificationMixin:
                 "inject_failure": inject_failure,
             },
         )
-        test_res = run_isolated_tests(
-            self.workspace_dir,
-            use_docker=False,
-            verification_dir=self.adk_root / "tools" / "verification",
-        )
-        # Hyperedge contract (test <-> module): deterministic, precise, and listed before pytest's tracebacks.
-        # The declared entrypoint must not hide experiment settings in literal defaults.
+        # Scope of an intermediate task (R4): its node, the files written since the last verification and the
+        # tests coupled to them by a hyperedge. The whole workspace is judged only at the milestones (factual
+        # audit, Gate 3); a writer's task is not judged on code at all.
+        written = set(self._written_since_verification)
+        self._written_since_verification = set()
+        scope: dict[str, list[str]] | None = None
+        code_checked = is_final_gate or not is_doc_scope
+        if not is_final_gate and code_checked:
+            candidates = {node_path, *written}
+            files = {p for p in candidates if p.endswith(".py") and not _is_test(p)}
+            tests = {p for p in candidates if _is_test(p)}
+            nodes_now = matrix_data.get("nodes", {})
+            by_path = {str(m.get("path", "")): n_id for n_id, m in nodes_now.items()}
+            scope_ids = {by_path[p] for p in files | tests if p in by_path}
+            for members in matrix_data.get("edges", {}).values():
+                if scope_ids & set(members):
+                    tests.update(p for p in (str(nodes_now.get(m, {}).get("path", "")) for m in members) if _is_test(p))
+            scope = {"files": sorted(files), "tests": sorted(tests)}
+        scope_paths = None if scope is None else set(scope["files"]) | set(scope["tests"])
+
+        if code_checked:
+            test_res = run_isolated_tests(
+                self.workspace_dir,
+                use_docker=False,
+                verification_dir=self.adk_root / "tools" / "verification",
+                scope=scope,
+            )
+        else:
+            test_res = {
+                "status": "PASS", "errors": [], "lint_warnings": [], "out_of_scope": [],
+                "stdout": "Zadanie dokumentacyjne: kod nie jest weryfikowany w tym kroku.",
+            }
+        # Hyperedge contract (test <-> module) and the static import contract (L1: names imported from a
+        # workspace module exist there, nothing executed): deterministic, precise, listed before pytest's
+        # tracebacks. The declared entrypoint must not hide experiment settings in literal defaults.
         blueprint_now = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
         declared_entry = str(blueprint_now.get("entrypoint") or "") if isinstance(blueprint_now, dict) else ""
-        contract_violations = check_test_contract(self.workspace_dir, self.matrix_path) + check_entrypoint_parameters(
-            self.workspace_dir, declared_entry or None
-        )
+        contract_violations: list[str] = []
+        if code_checked:
+            contract_violations += check_test_contract(self.workspace_dir, self.matrix_path, only_paths=scope_paths)
+            ws_root = self.workspace_dir.resolve()
+            import_checked = (
+                scope["files"]
+                if scope is not None
+                else [p.relative_to(ws_root).as_posix() for p in iter_workspace_python_files(self.workspace_dir) if not _is_test(p.name)]
+            )
+            for rel in import_checked:
+                contract_violations += check_import_contract(self.workspace_dir, rel)
+            if scope_paths is None or declared_entry.partition(":")[0] in scope_paths:
+                contract_violations += check_entrypoint_parameters(self.workspace_dir, declared_entry or None)
         declared_metrics = [str(m) for m in (blueprint_now.get("metrics") or [])] if isinstance(blueprint_now, dict) else []
         metric_findings = _declared_vs_measured_metrics(declared_metrics, self.workspace_dir)
         contract_warnings = (
-            check_parameter_closure(self.workspace_dir) + list(test_res.get("lint_warnings") or []) + metric_findings
+            check_parameter_closure(self.workspace_dir)
+            + list(test_res.get("lint_warnings") or [])
+            + metric_findings
+            + list(test_res.get("out_of_scope") or [])
         )
         if contract_violations:
             test_res["errors"] = contract_violations + list(test_res.get("errors") or [])
             test_res["status"] = "FAIL"
         snapshot = self._collect_workspace_snapshot()
+        if scope_paths is not None:
+            snapshot["code_files"] = {k: v for k, v in snapshot["code_files"].items() if k in scope_paths}
 
         # Only attach experiment errors to tasks that actually govern experiments/data (e.g. results.csv)
         if self._last_experiment_error and is_data_scope:
@@ -135,6 +185,11 @@ class VerificationMixin:
                 "status": "PASS",
                 "skipped": "is_doc_scope",
             }
+        elif not is_final_gate:
+            # The findings of py_compile, the import check, ruff, pytest and the contracts are deterministic and
+            # already worded for the repair; a model reading them added 41 calls and ~10 min to the 2026-11-13
+            # run and nothing to the diagnosis. The LLM auditor stays for the Gate 3 review.
+            code_audit = {"verdict": "PASS", "issues": [], "status": "PASS", "skipped": "deterministic_only"}
         else:
             code_audit = self._call_agent(
                 self.agents_dir / "verification" / "code_auditor.md",
@@ -284,7 +339,7 @@ class VerificationMixin:
         if deterministic_code_fail:
             code_audit["status"] = "FAIL"
             # Real pytest/ruff errors always come first; the LLM's issues only supplement them.
-            real_errors = [str(err) for err in (test_res.get("errors") or [])]
+            real_errors = list(dict.fromkeys(str(err) for err in (test_res.get("errors") or [])))
             llm_issues = [str(i) for i in (code_audit.get("issues") or []) if str(i) not in real_errors]
             code_audit["issues"] = real_errors + llm_issues or [
                 f"Wykryto niezgodność kontraktu w zadaniu {current_task.get('task_id')} na węźle {target_node} (wymagana pętla W3 -> W4 -> W1 -> W2)."
@@ -325,14 +380,26 @@ class VerificationMixin:
             and _is_supervisor_pass(redteam_audit)
         )
 
-        failed_file = node_path if not overall_pass else None
+        # The failed file is the one the findings name (R4 pt 3), and the blamed agent is its author (R5).
+        failed_file = None
+        failed_agent = None
+        if not overall_pass:
+            named = [
+                p
+                for issue in [*code_audit.get("issues", []), *ref_errors, *contract_violations]
+                for p in self._workspace_paths_in(str(issue))
+            ]
+            failed_file = next((p for p in named if scope_paths is None or p in scope_paths), None) or node_path
+            nodes_all = matrix_data.get("nodes", {})
+            author = next((m.get("last_writer") for m in nodes_all.values() if str(m.get("path", "")) == failed_file), None)
+            failed_agent = (author or {}).get("agent") or current_task.get("assigned_agent")
 
         report = ValidationReport(
             status="PASS" if overall_pass else "FAIL",
             failed_task_id=None if overall_pass else current_task.get("task_id"),
             failed_node=None if overall_pass else target_node,
             failed_file=failed_file,
-            failed_agent=None if overall_pass else current_task.get("assigned_agent"),
+            failed_agent=failed_agent,
             supervisors={
                 "code_auditor": code_audit,
                 "symbolic_auditor": symbolic_audit,
@@ -344,7 +411,7 @@ class VerificationMixin:
             report["contract_violations"] = contract_violations
         # Non-blocking findings (closure of declared parameters, lint left after `ruff --fix`): reported, not repaired.
         if contract_warnings:
-            report["warnings"] = contract_warnings
+            report["warnings"] = list(dict.fromkeys(contract_warnings))[:12]
 
         write_json_state(self.validation_report_path, report)
         return report

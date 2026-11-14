@@ -1,44 +1,51 @@
 [
   {
-    "task_id": "Q3_CODE",
-    "description": "Napraw kod tak, żeby pytest przeszedł. Stan faktyczny: Ruff lint failure: E402 Module level import not at top of file\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:8:1\n  |\n6 | current_dir = Path(__file__).parent\n7 | sys.path.insert(0, str(current_dir))\n8 | import config\n  | ^^^^^^^^^^^^^\n9 | import core\n  |\nhelp: Move module level imports to top of file\n\nE402 Module level import not at top of file\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:9:1\n   |\n 7 | sys.path.insert(0, str(current_dir))\n 8 | import config\n 9 | import core\n   | ^^^^^^^^^^^\n10 |\n11 | class TestConfigConstants:\n   |\nhelp: Move module level imports to top of file\n\nF811 Redefinition of unused `generate_comparison_plot` from line 86\n   --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:116:5\n    |\n114 |     plt.close()\n115 |\n116 | def generate_comparison_plot(csv_path: str='results.csv', out_path: str='figures/comparison_chart.png') -> None:\n    |     ^^^^^^^^^^^^^^^^^^^^^^^^ `generate_comparison_plot` redefined here\n117 |     \"\"\"Generate comparison chart from evaluation results.\n    |\n   ::: adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:86:5\n    |\n 84 |         assert proposed_f1 >= baseline_f1, f'Proposed F1 ({proposed_f1}) should be >= Baseline F1 ({baseline_f1})'\n 85 |\n 86 | def generate_comparison_plot(csv_path: str='results.csv', out_path: str='figures/comparison_chart.png') -> None:\n    |     ------------------------ previous definition of `generate_comparison_plot` here\n 87 |     \"\"\"Generate comparison chart from evaluation results.\n    |\nhelp: Remove definition: `generate_comparison_plot`\n\nFound 3 errors.",
-    "target_node": "v2",
-    "assigned_agent": "seed_coder",
-    "status": "FAILED"
-  },
-  {
-    "task_id": "Q3_TESTS",
-    "description": "Uruchom train_and_evaluate i zapisz results.csv zgodny z tym, co funkcja zwraca. Testy mają wołać kod, a nie sprawdzać wklejone liczby.",
-    "target_node": "v3",
+    "task_id": "Q4_FIX1",
+    "description": "Napraw plik tests/test_config.py. Błędy: Pytest failure: =================================== ERRORS ====================================\n_ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_config.py _\nimport file mismatch:\nimported module 'test_config' has this __file__ attribute:\n  D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\test_config.py\nwhich is not the same as the test file we want to collect:\n  D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_config.py\nHINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules\n=========================== short test summary info ===========================\nERROR tests\\test_config.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 1.01s",
+    "target_node": "n12",
     "assigned_agent": "seed_tester",
-    "status": "TODO"
+    "status": "FAILED",
+    "repair_attempts": 3
   },
   {
-    "task_id": "Q3_CH3",
-    "description": "Napisz Rozdział 3 w thesis.md. Zastąp sekcję, nie doklejaj drugiej kopii.",
-    "target_node": "v4",
-    "assigned_agent": "seed_writer",
-    "status": "TODO"
+    "task_id": "Q4_CODE",
+    "description": "Napraw kod tak, żeby testy przeszły. Błędy bez wskazanego pliku: Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_config.py:1:2: F821 Undefined name `pytest`\nFound 1 error.",
+    "target_node": "n20",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
   },
   {
-    "task_id": "Q3_CH4",
-    "description": "Napisz Rozdział 4 w thesis.md. Zastąp sekcję, nie doklejaj drugiej kopii.",
-    "target_node": "v4",
-    "assigned_agent": "seed_writer",
-    "status": "TODO"
-  },
-  {
-    "task_id": "Q3_CH5",
-    "description": "Napisz Rozdział 5 w thesis.md. Zastąp sekcję, nie doklejaj drugiej kopii.",
-    "target_node": "v4",
-    "assigned_agent": "seed_writer",
-    "status": "TODO"
-  },
-  {
-    "task_id": "Q3_CH6",
+    "task_id": "Q4_CH6",
     "description": "Napisz Rozdział 6 w thesis.md. Zastąp sekcję, nie doklejaj drugiej kopii.",
-    "target_node": "v4",
+    "target_node": "n8",
     "assigned_agent": "seed_writer",
-    "status": "TODO"
+    "status": "FAILED",
+    "repair_attempts": 3,
+    "harness_bug": {
+      "files_in_error": [
+        "Malformed symbolic tag missing <id> separator"
+      ],
+      "signature": "File <id> does not exist\nMalformed symbolic tag missing <id> separator: \\ref_csv{results/final_results.json}",
+      "task_id": "Q4_CH6",
+      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+      "source": "harness"
+    }
+  },
+  {
+    "task_id": "Q4_CRITIC",
+    "description": "Popraw thesis.md tak, by usunąć każde z ustaleń krytyka. Odnieś się do każdego identyfikatora; jeśli ustalenia nie da się usunąć, opisz je wprost jako ograniczenie pracy.\n[K1] Unresolved pointer: \\ref_csv{file:symbol}\n[K2] Unresolved pointer: \\ref_csv{results/final_results.json}",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "BLOCKED",
+    "blocked_by": "Q4_CH6"
+  },
+  {
+    "task_id": "Q4_REFS",
+    "description": "Popraw thesis.md tak, aby zostały tylko wskaźniki istniejące w plikach. Błędy: File 'file' does not exist; File 'file' does not exist; File 'file' does not exist; Malformed symbolic tag missing ':' separator: \\ref_csv{results/final_results.json}",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "BLOCKED",
+    "blocked_by": "Q4_CH6"
   }
 ]

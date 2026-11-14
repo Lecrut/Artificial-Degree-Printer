@@ -1,56 +1,24 @@
 {
-  "active": true,
-  "current_gate": "GATE_QUEUE_REBUILD_EXHAUSTED",
+  "active": false,
+  "current_gate": "GATE_2_METHODOLOGY_APPROVAL",
   "approved_gates": [
     "GATE_1_OUTLINE_APPROVAL",
-    "GATE_2_METHODOLOGY_APPROVAL",
-    "GATE_3_DEFENSE_APPROVAL"
+    "GATE_2_METHODOLOGY_APPROVAL"
   ],
-  "question": "Przebudowy kolejki nie zmieniły stanu plików albo limit przebudów został wyczerpany.",
+  "question": null,
   "context": {
-    "audit": {
-      "files": [
-        "config.py",
-        "core.py",
-        "figures/comparison_chart.pdf",
-        "figures/comparison_chart.png",
-        "logs/experiment.log",
-        "plot_results.py",
-        "references.bib",
-        "results.csv",
-        "test_core.py",
-        "test_results_tmp.csv",
-        "thesis.md"
+    "guard_approved": true,
+    "blast_radius": {
+      "modified_node_id": "v1",
+      "modified_file": "v1",
+      "degree": 0,
+      "active_edges": [],
+      "affected_nodes": [
+        "v1"
       ],
-      "pytest_status": "FAIL",
-      "pytest_errors": [
-        "Ruff lint failure: F841 Local variable `plot_df` is assigned to but never used\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\plot_results.py:17:9\n   |\n15 |         df = pd.read_csv(csv_path)\n16 |         # Pivot long format to wide format for plotting\n17 |         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n   |         ^^^^^^^\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n19 |         data = {row['metric']: row['mean'] for _, row in df.iterrows()}\n   |\nhelp: Remove assignment to unused variable `plot_df`\n   |\n16 |         # Pivot long format to wide format for plotting\n   -         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n17 +         df.set_index('metric')['mean'].unstack() if 'unstack' else None\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n   |\nnote: This is an unsafe fix and may change runtime behavior\n\nFound 1 error.\n1 unsafe fix available with `--fix --unsafe-fixes`."
-      ],
-      "chapters_present": [
-        1,
-        2,
-        3,
-        4,
-        5,
-        6
-      ],
-      "chapters_missing": [],
-      "symbolic_errors": [],
-      "csv_columns": [
-        "metric",
-        "mean",
-        "std_dev"
-      ],
-      "trigger_issues": [
-        "Ruff lint failure: F841 Local variable `plot_df` is assigned to but never used\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\plot_results.py:17:9\n   |\n15 |         df = pd.read_csv(csv_path)\n16 |         # Pivot long format to wide format for plotting\n17 |         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n   |         ^^^^^^^\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n19 |         data = {row['metric']: row['mean'] for _, row in df.iterrows()}\n   |\nhelp: Remove assignment to unused variable `plot_df`\n   |\n16 |         # Pivot long format to wide format for plotting\n   -         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n17 +         df.set_index('metric')['mean'].unstack() if 'unstack' else None\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n   |\nnote: This is an unsafe fix and may change runtime behavior\n\nFound 1 error.\n1 unsafe fix available with `--fix --unsafe-fixes`.",
-        "Ruff lint failure: F841 Local variable `plot_df` is assigned to but never used\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\plot_results.py:17:9\n   |\n15 |         df = pd.read_csv(csv_path)\n16 |         # Pivot long format to wide format for plotting\n17 |         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n   |         ^^^^^^^\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n19 |         data = {row['metric']: row['mean'] for _, row in df.iterrows()}\n   |\nhelp: Remove assignment to unused variable `plot_df`\n   |\n16 |         # Pivot long format to wide format for plotting\n   -         plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None\n17 +         df.set_index('metric')['mean'].unstack() if 'unstack' else None\n18 |         # Since standard output is long format [metric, mean, std_dev], we pivot manually\n   |\nnote: This is an unsafe fix and may change runtime behavior",
-        "Krytyczny błąd w kodzie (`plot_results.py`): Wykryto zmienną lokalną `plot_df`, która jest przypisana, lecz nigdy nie używana (Ruff F841). Jest to naruszenie standardów czystości kodu (PEP 8) i wymaga usunięcia lub wykorzystania zmiennej przed kompilacją.",
-        "Niespójność danych empirycznych vs teza badawcza: W Rozdziale 5 autor twierdzi, że agent osiąga 'znaczący próg skuteczności' i wysoki odsetek remisów. Jednak plik `results.csv` wskazuje średnią stopy remisów na poziomie 0.1264 (ok. 12.6%), co jest niską wartością w kontekście gry rozwiązanej w remisie, a nie 'wysokim' jak sugeruje tekst. Tekst nie odnosi się do tej niskiej wartości jako ograniczenia konwergencji przy tylko 500 epizodach.",
-        "Podwójna/lukowa prezentacja wyników: W sekcji analizy wyników występują luki w formatowaniu LaTeX (`wskaźnik zwycięstw na poziomie .` oraz `remisów na poziomie .`). Brak konkretnych liczb w kluczowych stwierdzeniach analitycznych jest niedopuszczalne w pracy dyplomowej.",
-        "Sugerowanie niestandardowego działania: W kodzie `plot_results.py` użyto warunku `if 'unstack'`, który zawsze zwraca True (bool), co powoduje wykonanie operacji `.unstack()` na Seriesie (co może rzucić błąm lub zwrócić nieprawidłowy format w zależności od wersji Pandas) zamiast logicznego sprawdzania kolumn. To sugeruje brak testów jednostkowych dla modułu raportowania.",
-        "Niedostateczna wiarygodność statystyczna: Choć kod (`core.py`) wykonuje 50 powtórzeń i oblicza odchylenie standardowe, tekst w Rozdziale 6 (Sekcja 'Ograniczenia Metodologiczne') błędnie twierdzi, że brak jest powtórzeń eksperymentu. Jest to sprzeczność między kodem a tekstem pracy."
+      "affected_files": [
+        "v1"
       ]
-    },
-    "generation": 4
+    }
   }
 }

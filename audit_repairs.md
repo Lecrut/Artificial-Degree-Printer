@@ -8,6 +8,90 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-11 | **Audyt II + plan napraw** | post-mortem 01 (3 h zegara, jeden błąd F841), dług techniczny `orchestrator.py`, błędy warstwy 4 (ewolucja) | w realizacji; pozycje `P1–P15`, `D1–D6`, `E1–E7`; wszystkie decyzje rozstrzygnięte, §II.10 |
 | 2026-11-11 | **Realizacja planu → §II.11** | wdrożenie fal 0–5 na `main`, bez commitów | zrobione z odstępstwami opisanymi w §II.11; 106/106 testów, ruff czysty |
 | 2026-11-11 | **Uwaga recenzenta → §II.2.3, P1, P8** | niezmiennik: każdy plik musi mieć węzeł i przyporządkowaną hiperkrawędź | przyjęta; ujawniła, że `hypergraph_sync` wyklucza 100% workspace'u sandboxa — P1 przepisane, dodane P8 i Q5 |
+| 2026-11-12 | **Audyt III** | post-mortem drugiego przebiegu 01 po §II.12–II.13: crash na `TimeoutExpired`, dryf API między modułami, weryfikacja całego workspace'u, błędne przypisanie winy w W4 | **otwarte**; pozycje `R1–R13`, pytania `Q12–Q14` |
+| 2026-11-12 | **Plan falami → §III.9, fala 1 → §III.10** | szkielet modułów jako kluczowe zadanie, kontrakt API między zadaniami, timeouty, edycje symboli, krótszy raport, testy w kontekście naprawy | fala 1 wdrożona (125/125 testów, ruff czysty), czeka na przebieg 01; fale 2–3 warunkowe |
+| 2026-11-13 | **Audyt IV** | trzeci przebieg 01 (po fali 1), w trakcie: harness generuje fałszywe porażki i odrzuca poprawne odpowiedzi, weryfikacja całego workspace'u, 52% czasu LLM na ścieżce porażki | **otwarte**; pozycje `S1–S8`; potwierdza warunki uruchomienia R4 i części fali 2 |
+| 2026-11-14 | **Audyt IV → §IV.5–IV.6** | stan końcowy przebiegu (1/20 DONE, 3 pliki trwale nieparsowalne), ranking napraw, dyskusja: ewolucja, drabinka weryfikacji L0–L2, budżet kontekstu z hipergrafu | ranking przyjęty do dyskusji; kierunek: hipergraf wyznacza kontekst, zakres weryfikacji i odpowiedzialność |
+| 2026-11-14 | **Korekta §IV.6.3 + ranking §IV.7** | ewolucja zostaje w trakcie przebiegu (wymóg); projekt A–E dla uniwersalnych reguł; ranking napraw z naciskiem na skrócenie przebiegu | obowiązujący ranking: §IV.7 |
+| 2026-11-14 | **§IV.8 dobór modelu i przeładowania, §IV.9 fale równoległe** | 83% czasu LLM na LRM; 102 przełączenia modelu = przeładowania (~16 min); projekt równoległych fal | `OLLAMA_NUM_PARALLEL=1` wdrożone; „jeden model dla obu tierów” **odrzucone** (sprzeczne z celem: mały model główny, duży pomocniczy) — cofnięte w `.env` przez użytkownika; router tieru, współrezydencja modeli i fale — otwarte |
+| 2026-11-14 | **Zbiorcza lista otwartych pozycji → §V** | wszystko, co z Audytów I–IV pozostaje do zrobienia, w etapach 0–4 według pilności i wpływu | w realizacji od 2026-11-14 (etap 0 →) |
+
+---
+
+# §V. Zbiorcza lista otwartych pozycji (2026-11-14)
+
+Stan: Audyt II (P1–P15, D1–D6, E1–E7) zrobiony w całości; z Audytu III zrobiona fala 1 (R1 bez pkt 3 dla przerwania, R2). Audyt I wchłonięty przez późniejsze pozycje. Poniżej wszystko, co otwarte. Wpływ to szacunek z przebiegu z 2026-11-13, nie pomiar.
+
+### Etap 0 — błędy harnessu (małe zmiany, największy wpływ na liczbę DONE)
+
+| # | co | wpływ | źródło |
+|---|---|---|---|
+| 1 | `ast.parse` przed zapisem `.py`, natychmiastowe ponowienie u tego samego agenta; zepsuty plik można nadpisać w całości | bardzo duży: jedyna szkoda nieodwracalna (3 pliki zablokowane na zawsze) | S3 + R7, I §5.4 |
+| 2 | `dedent` kodu w edycjach symboli | duży: 3 poprawne poprawki odrzucone, każda = cykl ~2 min | S2 |
+| 3 | test importu jako `src.x`, nie `x` | duży: ~20 min fałszywych porażek na starcie + przepisania, które wprowadziły prawdziwe błędy | S1 |
+| 4 | puste pliki i płaskie `{filename, content}` akceptowane | średni: 2–3 zbędne cykle | S4 |
+| 5 | status przy przerwaniu (`KeyboardInterrupt` to nie `Exception`) | diagnostyka: brak `benchmark_summary.json` z przebiegu | R1 pkt 3 |
+
+### Etap 1 — weryfikacja atomowa (największy wpływ na wynik przebiegu)
+
+| # | co | wpływ | źródło |
+|---|---|---|---|
+| 6 | routing bez dopasowania podciągów, jeden węzeł na plik | średni: `config.py`/`tictoc_config.py`, testy na modułach | R3 |
+| 7 | weryfikacja tylko węzła zadania (L0 parsowanie, L1 statyczny kontrakt, L2 testy na hiperkrawędziach); pełny zestaw na kamieniach milowych | największy pojedynczy: 1/20 DONE przy poprawnych T7–T9 | S5 = R4, §IV.6.2 |
+| 8 | wina przypisywana autorowi pliku z błędem (`last_writer`) | średni: ewolucja przestaje uczyć niewinnego agenta | R5 |
+| 9 | zakres zapisu: agent zapisuje tylko swój węzeł (koder ≠ testy, tester ≠ moduły) | średni; warunek dla fal | R6, Q12 |
+
+**Po etapie 1: przebieg 01 i pomiar**, bo etapy 0–1 zmieniają, które porażki w ogóle istnieją.
+
+### Etap 2 — czas przebiegu
+
+| # | co | wpływ | źródło |
+|---|---|---|---|
+| 10 | test jakości małego modelu na naprawach i modułach z przebiegu (`gemma4:e2b` vs najmocniejszy model mieszczący się w 8 GB) | warunek dla 11 | §IV.8 |
+| 11 | router tieru: domyślnie SML; LRM przy planowaniu, eskalacji po 2 porażkach, ewolucji; bez trwałego podbijania wagi; współrezydencja (SML na GPU, LRM na CPU) | bardzo duży czasowo: 83% czasu na LRM; SML 8–13 s vs LRM 27–40 s; −102 przeładowania (~16 min) | §IV.8 W1, W2 |
+| 12 | szybka ścieżka + limit na zadanie: porażka → ten sam agent z komunikatem narzędzia (maks. 2×) → raz planer → luka; `code_auditor` poza pętlą | duży: narzut na porażkę 1,5 → 0,5 min; koniec pętli typu T7/35 cykli; −10 min audytora | S6, R10 pkt 3 |
+| 13 | ewolucja w trakcie przebiegu według A–E | duży: −15 min architekta; prompt kodera nie rośnie; reguły uniwersalne | S7, §IV.6.3 |
+| 14 | budżet kontekstu z hipergrafu; ruff zwięzły; deduplikacja; kształty odpowiedzi per rola; kontrola `num_ctx` i `done_reason` | średni: krótszy prefill; więcej VRAM dla SML | S8, §IV.6.4, R10 pkt 1–2 |
+
+### Etap 3 — domknięcia i jakość treści
+
+| # | co | źródło |
+|---|---|---|
+| 15 | liczba rozdziałów z blueprintu, nie `range(1, 7)` | R8 |
+| 16 | koniec `results.csv` zaszytego w harnessie | R9 |
+| 17 | wskaźnik do testu w pracy rozwiązywalny tylko, gdy test przechodzi | R13 |
+| 18 | auto-bypass HITL: narzędzie deterministyczne albo luka | R11 |
+| 19 | drobne: `files_in_error`, odciski `invalid-syntax`, bez eksperymentu po zapisie testu | R12 |
+| 20 | `\ref_ast` z pojedynczym ukośnikiem w literale (`\r`) — sprawdzić, czy nadal jest | II.11 |
+| 21 | testy piszą do śledzonego `adk/state/evolution_history.json` | III.10 |
+| 22 | rotacja logów (1,9 GB), zapis UTF-8 | IV.2.7, I §6.4 |
+
+### Etap 4 — po pomiarach
+
+| # | co | źródło |
+|---|---|---|
+| 23 | fale równoległe (wymagają 7, 9, 11); zmierzyć zysk przed wdrożeniem | §IV.9 |
+| 24 | prompty od nowa (rola → wejście → przykład → format); właściciel pliku i zgłoszenia | III §III.9 fala 3 |
+
+**Dźwignie:** na liczbę DONE — 1–4 i 7; na czas — 11, potem 12 i 13; najbardziej ryzykowne założenie — czy mały model wystarczy do kodu (10 przed 11).
+
+### Realizacja etapów 0–1 (2026-11-14)
+
+Wdrożone na `main`, bez commitów. `pytest tests` **139/139** (było 125; +7 `tests/test_write_gate.py`, +7 `tests/test_node_scoped_verification.py`), `ruff check` czysty. Każdy nowy test odtwarza jedną porażkę z przebiegu z 2026-11-13.
+
+| # | stan | co dokładnie |
+|---|---|---|
+| 1 | zrobione | `building.py`: `ast.parse` każdego `.py` przed zapisem (także `source_code`, `test_code`, `plot_script`); błąd z `plik:linia` i 3 liniami kontekstu → `MaterializationError`, nic nie trafia na dysk. Odrzucona odpowiedź (składnia, kształt, kontrakt) → **natychmiastowe ponowienie u tego samego agenta** z polem `rejected_answer` (zdarzenie `BUILDER_ANSWER_REJECTED`, wpis `BUILDING_RETRY` w logu); druga odmowa idzie zwykłą ścieżką. Edycja symbolu w nieparsowalnym pliku zwraca instrukcję „zwróć cały plik w `files`” |
+| 2 | zrobione | `ast_editor.py`: `textwrap.dedent` snippetu |
+| 3 | zrobione | `test_runner.py`: import po ścieżce z kropkami (`src/a.py` → `src.a`, `src/__init__.py` → `src`), bez duplikatów |
+| 4 | zrobione | `building.py`: pusty plik zapisywalny; płaskie `{filename, content}` normalizowane do `files` |
+| 5 | zrobione | `runner.py`: `KeyboardInterrupt` → status `INTERRUPTED` zadania i pakietu, artefakty i podsumowanie zapisane, pętla pakietu przerwana |
+| 6 | zrobione | `routing.py`: jawna ścieżka → dokładny węzeł, jedyny węzeł o tej nazwie, albo nowy węzeł (przed heurystyką opisu); opis dopasowywany jako cała nazwa pliku z granicą tokenu, dłuższe ścieżki pierwsze |
+| 7 | zrobione | `verification.py` + `test_runner.py(scope=)` + `contract_check.check_import_contract`: zakres = węzeł zadania + pliki zapisane od ostatniej weryfikacji + testy sprzężone hiperkrawędzią. W zakresie: py_compile, import, pytest, ruff (blokujące), kontrakt test↔moduł, **L1 statyczny kontrakt importów** (nazwy importowane z modułu workspace'u muszą w nim istnieć; nic nie jest wykonywane). Import, który pada w cudzym pliku (`__init__.py` ciągnący zepsutego sąsiada), to ostrzeżenie, nie błąd. Pliki spoza zakresu: tylko `ast.parse` → `warnings` („Poza zakresem zadania: …”). **Zadanie pisarza nie jest oceniane po kodzie.** Pełny zestaw bez zmian w audycie stanu i przy Gate 3 (tam L1 dla wszystkich modułów). `code_auditor` dostaje tylko pliki z zakresu. Ruff w formacie `concise` |
+| 8 | zrobione | `building._record_written`: `last_writer` (`{agent, task_id}`) na każdym zapisanym węźle; `verification`: `failed_file` z diagnostyki (pierwszy plik z zakresu nazwany w ustaleniach), `failed_agent` = jego autor; `_repair_task` i ewolucja używają `report.failed_agent` |
+| 9 | **zrobione inaczej** | zapisy poza węzłem i sąsiadami → zdarzenie `OFF_TARGET_WRITE`; zapis pliku cudzej roli (`.py`) → zdarzenie `CROSS_ROLE_WRITE`. **Twardy zakaz (Q12) nie wdrożony:** fixtury mocków mają plan, w którym tester dostaje zadanie na `core.py`, a mock buildera zwraca `core.py` + `test_core.py` + CSV jednym blokiem; zakaz wywracał 4 testy i wymagałby przepisania fixtur z kaskadą asercji. Decyzja: najpierw zmierzyć liczbę `CROSS_ROLE_WRITE` w prawdziwym przebiegu, potem rozstrzygnąć Q12 i ewentualnie uporządkować fixtury (warunek dla fal, §IV.9) |
+
+Zmiana zachowania, którą zobaczysz w przebiegu: odpowiedź z błędem składni nie generuje cyklu W4→W1, tylko drugie wywołanie tego samego agenta; zadanie modułu nie oblewa przez cudzy plik, a w raporcie pojawia się sekcja `warnings` z plikami poza zakresem; `failed_agent` w raporcie może być inny niż agent zadania.
 
 ---
 
@@ -1518,3 +1602,868 @@ Realizacja §3 Audytu II („odchudzić `orchestrator.py`”). Zachowanie bez zm
 - Testy regresyjne: `test_healing_keeps_planner_order_and_builds_entrypoint_after_its_modules`, `test_benchmark_sandbox_starts_with_empty_run_logs`. Razem 113/113 offline, ruff czysty.
 
 **Zauważone, nienaprawione.** Reguły dopisane przez ewolucję w tym przebiegu wymieniają nazwy z jednego incydentu (`Tuple`, `RESULTS_DIR`, `setup_experiment`). Filtr `_NON_GENERAL_RULE` łapie tylko identyfikatory zadań, węzłów i cykli. Do decyzji, czy ewolucja w ogóle powinna reagować na pojedynczy błąd F821, skoro wystarcza zwykła naprawa.
+
+---
+
+# Audyt III — 2026-11-12: Drugi przebieg 01 po §II.12–II.13 — crash na `TimeoutExpired`, dryf API, weryfikacja całego workspace'u
+
+**Data audytu:** 2026-11-12
+**Środowisko:** ADK / Ollama `qwen3.6:35b` (LRM i SML), `num_ctx=32768`, `num_predict=8192`, tryb nieinteraktywny (`interactive_gates=False`)
+**Przebieg:** `01_rl_tictactoe`, start 15:54:48 UTC, ostatni wpis w logu 18:57:42 UTC, brak `ORCHESTRATOR_DONE`
+**Analizowane artefakty:**
+- `adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/state/` — `task_queue.json`, `validation_report.json`, `factual_audit.json`, `hitl_flag.json`, `evolution_history.json` (75 zdarzeń), `failure_ledger.json` (28 wpisów, 1 MB), `hypergraph_matrix.json`, `academic_blueprint.json`
+- `.../01_rl_tictactoe/workspace/` — kod, testy, `thesis.md`, `results/experiment_results.csv`, `logs/experiment.log`
+- `adk/logs/harness_process.log` — wycinek przebiegu od linii 15 757 366 (57 137 linii, 11,8 MB)
+- `adk/logs/agent_trace.jsonl` — 218 wywołań modelu z tego przebiegu (pełne prompty, surowe odpowiedzi, `elapsed_ms`)
+- kod: `adk/orchestrator.py`, `adk/orchestration/{verification,building,routing,common,evolution}.py`, `adk/tools/verification/test_runner.py`, `adk/tools/building/{import_sync,experiment_runner}.py`, `adk/core/connection.py`, `adk/benchmarks/runner.py`
+
+**Metoda:** oś czasu z nagłówków logu; statystyki wywołań, rozmiarów promptów i zapisów plików z `agent_trace.jsonl` (skrypty jednorazowe, poza repozytorium); `ast.parse` każdej wersji pliku `.py` zwróconej przez model (przed normalizacją materializera i po niej); odtworzenie awarii na kopii workspace'u.
+
+---
+
+## III.1. Podsumowanie
+
+Przebieg nie zakończył się żadnym artefaktem: `experiment_results.csv` ma tylko nagłówek, `thesis.md` ma rozdziały 1–3, PDF nie powstał. Przebieg nie skończył się żadnym statusem. Proces orkiestratora padł na nieprzechwyconym wyjątku `subprocess.TimeoutExpired` w weryfikacji (§III.2.1). Do tego momentu 2 h 45 min z 3 h 03 min poszło na pętle naprawcze zadań T8–T14, w których koder i tester na zmianę przepisywali sobie nawzajem API.
+
+| miara | wartość |
+|---|---|
+| czas zegara | 15:54:48 → ~18:58:12 UTC (crash ~30 s po ostatnim wpisie) = **3 h 03 min** |
+| wywołania modelu | **218**, łącznie **166 min** inferencji + 2 timeouty dostawcy po 5 min (17:16, 17:34; nie ma ich w trace) |
+| kolejka generacji 0 | 14 zadań (T1–T13 od planisty, T14 dopisane przez leczenie planu) |
+| wynik generacji 0 | **DONE:** T1–T7 · **FAILED:** T8, T9, T10, T11, T12, T14 · **nie wystartowało:** T13 (rozdział 4) |
+| generacja 1 (`Q1_*`) | crash przy pierwszej weryfikacji po naprawie `Q1_FIX1` |
+| cykle naprawcze | 34 wywołania `remediation_planner`, 31 wywołań `evolution_architect` |
+| decyzje W4 | 28× `MUTATE_AGENT`, 1× `HITL` (auto-bypass), 1× `update_file` (→ `UNKNOWN_ACTION`), 1× pusta; **0× `CREATE_TOOL`** |
+| wersje `.py` zwrócone przez model | **158**, z czego **27 (17%) nieparsowalnych już w surowej odpowiedzi** |
+| zapisy `environment.py` / `agent.py` / `trainer.py` | **18 / 18 / 11** zapisów → **5 / 8 / 5** różnych publicznych API |
+| wywołania buildera zapisujące pliki inne niż docelowy | **24 z 92** (koder 17, tester 7); koder przepisał pliki testów **15 razy** |
+| `code_auditor` (SML) | 43 wywołania, 12,9 min; werdykt i tak nadpisywany deterministycznie; 13 promptów szacunkowo > `num_ctx` |
+
+**Najważniejsze wnioski, w kolejności wagi:**
+
+1. **Brak artefaktu to skutek jednej usterki harnessu.** `run_isolated_tests` nie łapie `TimeoutExpired`, a nad orkiestratorem nie ma żadnej obsługi wyjątków. Wystarczy jeden zapętlony test wygenerowany przez model, żeby zabić cały benchmark bez statusu i bez `COMPLETED_WITH_GAPS` z P15 (§III.2.1). Odtworzone na kopii workspace'u.
+2. **Pętla trwała, bo nie ma jednego źródła prawdy o API modułów, a tester go nie widzi.** Eksport symboli pomija metody klas (`signatures: {}` dla klas). Routing kieruje zadania testera na moduł zamiast na plik testu. Obaj builderzy mogą przepisać dowolny plik. W efekcie `QLearningAgent` przeszedł 8 różnych interfejsów (§III.2.2).
+3. **Weryfikacja nie jest zawężona do hiperkrawędzi.** Każde zadanie, także zadanie pisarza, uruchamia cały pytest i importuje wszystkie moduły. Po pierwszym nieudanym zadaniu (T8) każde następne startowało już z porażką. Sygnatura błędu jest przez to niestabilna, więc bezpiecznik `seen_evo` z P3 prawie nie działa (§III.2.3).
+4. **Warstwa 4 karze złego agenta.** Winny jest agent przypisany do zadania, a nie autor pliku, w którym jest błąd. Stąd 5 mutacji `seed_coder` o wcięciach dekoratorów w `test_trainer.py`, który pisał `seed_tester`, i reguła o testach Pythona w prompcie `seed_writer`. To nowa postać „kozła ofiarnego" z Audytu I §4.4 (§III.2.4).
+5. **Nawroty z Audytu II:** harness nadal narzuca 6 rozdziałów przy planie na 4 (P10 pkt 4). Nadal istnieje węzeł-widmo `results.csv` i zadanie skierowane na węzeł `derived` (P1 pkt 3, P8 pkt 3, P14). Szybka pętla składniowa w agencie (Audyt I §5.4) nadal nie istnieje (§III.2.5–III.2.7).
+
+---
+
+## III.2. Diagnoza
+
+### III.2.1. Bezpośrednia przyczyna: nieprzechwycony `TimeoutExpired` w weryfikacji
+
+**Łańcuch zdarzeń (log + trace):**
+
+| UTC | zdarzenie |
+|---|---|
+| 18:38:16 | `seed_tester` (T14_FIX_3) zapisuje `test_trainer_validation.py` z testem `test_train_calls_agent_update` |
+| 18:39 – 18:54 | każda weryfikacja kończy się **błędem kolekcji** pytest: `test_run_experiment.py` ma niezamknięty f-string, więc pytest przerywa przed uruchomieniem jakiegokolwiek testu (`Interrupted: 1 error during collection`) |
+| 18:56:29 | `seed_tester` (Q1_FIX1) naprawia f-string |
+| 18:57:30 | `seed_coder` (Q1_FIX2) naprawia `plot_results.py` |
+| 18:57:42 | `[VERIFICATION] Weryfikacja zadania Q1_FIX1` — ostatnia linia logu |
+| ~18:58:12 | po 30 s `subprocess.run(..., timeout=30)` rzuca `TimeoutExpired`; proces kończy się bez wpisu |
+
+**Zapętlony test** (`workspace/test_trainer_validation.py:57-58`):
+
+```python
+env.reset.return_value = (0, False)       # state, done
+env.step.return_value = (0, True, 0.0)    # state, done, reward
+```
+
+`Trainer.train` rozpakowuje `next_state, reward, done = self.environment.step(action)` (`workspace/trainer.py:65`), więc `done = 0.0`, a `while not done:` (`trainer.py:58`) nie kończy się nigdy (`get_available_actions` z `MagicMock` jest zawsze prawdziwe). Test zakłada kolejność `(state, done, reward)`, a API ma `(state, reward, done)`. To jeden z objawów §III.2.2.
+
+**Dlaczego to zabija proces:**
+- `adk/tools/verification/test_runner.py:119-126`: `subprocess.run([... "pytest" ...], timeout=30)` bez `try/except subprocess.TimeoutExpired`. To samo dotyczy importu modułów (`:73-80`, `timeout=15`), walidatorów (`:176-181`) i gałęzi Dockera (`:100`). Jedyne miejsca w `adk/`, które łapią `TimeoutExpired`, to `experiment_runner.py:146` i `dependency_manager.py:58`.
+- Wołający też nie łapie: `verification.py:102` (weryfikacja zadania), `verification.py:354` (`_audit_factual_state`), `orchestrator.py:276` (`_execute_task`). W `run()` nie ma `try` (`orchestrator.py:152-220`). W `benchmarks/runner.py:316` `orch.run(...)` też nie jest owinięte.
+- Konsekwencja: P15 („przebieg zawsze kończy się artefaktem") nie obejmuje wyjątków. Mechanizm `COMPLETED_WITH_GAPS` jest nieosiągalny, gdy błąd przychodzi z narzędzia, a nie z agenta.
+
+**Odtworzenie:** kopia workspace'u w katalogu tymczasowym, `run_isolated_tests(kopia)` → `RAISED TimeoutExpired 32 s`. Ręcznie: `pytest test_trainer_validation.py` wisi na trzecim teście (`..` i brak dalszego wyniku).
+
+**Maskowanie:** od 18:39 do 18:56 zapętlony test istniał, ale nie wykonywał się, bo pytest padał wcześniej na błędzie kolekcji w innym pliku. Naprawienie jednego błędu odsłoniło drugi, groźniejszy. To bezpośredni skutek uruchamiania całego zestawu testów przy każdej weryfikacji (§III.2.3).
+
+**Wskazówka do naprawy:** pytest 9.1.1 w `.venv` ma wbudowane `faulthandler_timeout` i `faulthandler_exit_on_timeout` (bez wtyczki; `pytest-timeout` nie jest zainstalowany). `-o faulthandler_timeout=20 -o faulthandler_exit_on_timeout=true` kończy pytest ze zrzutem stosu wskazującym zawieszony test. Daje to agentowi konkretną informację zamiast samego „timeout".
+
+### III.2.2. Przyczyna pętli: API modułów nie ma jednego źródła prawdy, a tester go nie widzi
+
+**(a) Eksport symboli pomija metody klas.** `adk/tools/building/import_sync.py:61-77` iteruje tylko po `tree.body`. Funkcje modułu dostają sygnaturę, a klasa dostaje wyłącznie nazwę i docstring. Ładunek `seed_tester` przy T8 (16:14:49) miał w `exports` dla `agent.py` tylko `"classes": ["QLearningAgent"]` i `"signatures": {}`. Tester pisał `test_agent.py`, nie mając ani źródła, ani sygnatur metod `QLearningAgent`. Dodatkowo przy `SyntaxError` eksport pliku jest pusty (`:51-53`), więc po zepsuciu modułu nikt nie widzi już jego API.
+
+**(b) Routing kieruje zadanie testera na moduł.** `adk/orchestration/routing.py:185-191`: gdy `target_node` nie jest jeszcze węzłem, resolver szuka nazwy znanego pliku **jako podciągu opisu zadania**. `"environment.py"` jest podciągiem `"test_environment.py"`, więc zadanie trafia w istniejący węzeł modułu, zanim krok 4 (`:193-196`) zdąży utworzyć węzeł dla nowego pliku testu:
+
+| zadanie | `target_node` od planisty | rozwiązane na |
+|---|---|---|
+| T8 | `test_environment.py` | `n7` `environment.py` |
+| T9 | `test_trainer.py` | `n9` `trainer.py` |
+| T11 | `results/run_output.txt` | `n14` `run_experiment.py` (nazwa z opisu) |
+
+Skutek: tester dostaje w `existing_content` źródło modułu zamiast testu, weryfikacja liczy się dla węzła modułu, a porażka jest przypisywana do pliku modułu.
+
+**(c) Trzy różne API dla jednego agenta Q-learning.** Planista w opisie T5 podyktował `learn(state, action, reward, next_state)` i `select_action(state, is_training)`. Koder najpierw tak zrobił (T5_FIX_1, 16:10), a potem przy naprawie środowiska przepisał `agent.py` na `choose_action`/`update` (T8_FIX_1, 16:19). Tester, bez wglądu w żadną z tych wersji, wymyślił trzecią: `QLearningAgent(alpha=…)`, `get_action`, `learn(…, max_q_next)` (`hitl_flag.json`, raport T8).
+
+**(d) Każdy builder może przepisać każdy plik.** P2 zachęca do kształtu `files`, ale nie ogranicza zakresu. 24 z 92 wywołań buildera zapisały pliki inne niż docelowy. `seed_coder` zapisał pliki testów 15 razy (`test_environment.py` 5, `test_trainer.py` 4, `test_agent.py` 3, `test_trainer_validation.py`, `test_run_experiment.py`, `test_evaluator.py` po 1). Zadania T10 i T11 przepisały jednym wywołaniem po 7 modułów. Koder dopasowuje testy do kodu, a tester dopasowuje kod do testów.
+
+**Dryf API — wersje parsowalne, kolejne różne interfejsy publiczne:**
+
+```
+agent.py  (18 zapisów, 8 interfejsów)
+16:10 T5_FIX_1   __init__(state_size,action_size,learning_rate,discount_factor,epsilon,n_epochs) learn select_action
+16:19 T8_FIX_1   __init__(state_size,…,epsilon) get_q_value choose_action update(…,done) train(n_episodes,env)
+16:25 T8_FIX_2   __init__(alpha,gamma,epsilon) get_q_value get_action learn(…,done,max_q_next)
+17:21 T9_FIX_1   __init__(learning_rate,discount_factor,epsilon) choose_action get_action update
+17:26 T10        __init__(state_size,…) get_action(state) update(state,action,reward,next_state)
+17:46 T10_FIX_6  … get_q_values choose_action learn(…,is_terminal)
+17:52 T10_FIX_2  … get_action choose_action choose_action_impl get_q_values learn
+18:04 T11        … get_q_values choose_action update(…,next_available_actions)
+
+environment.py (18 zapisów, 5 interfejsów): step(action) ↔ step(action,player); get_valid_actions() ↔ get_available_actions(board|state);
+                is_terminal/check_winner/has_available_moves pojawiają się i znikają
+trainer.py (11 zapisów, 5 interfejsów): Trainer(env,…) ↔ Trainer(agent,environment,…) ↔ Trainer(agent,n_episodes,environment)
+```
+
+Stan końcowy pokazuje skutek: `evaluator.py:82` woła `environment._check_winner()`, którego nie ma w żadnej z ostatnich wersji `environment.py`. To jest błąd eksperymentu z `logs/experiment.log`.
+
+**To samo zauważył system i zapytał o to.** Pytanie HITL z 16:31 („…czy wolny przebieg `CREATE_TOOL` dla deterministycznej walidacji API agenta i środowiska przed kolejnym generowaniem kodu?") trafnie nazywa przyczynę. Auto-bypass (`orchestrator.py:435-450`) kontynuował jednak mutowanie promptów.
+
+### III.2.3. Weryfikacja obejmuje cały workspace, nie hiperkrawędź zadania
+
+Docstring `_run_verification_step` mówi o „Edge-Scoped Layer 3 verification", ale:
+- `run_isolated_tests` (`test_runner.py:61-83, 114-130`) importuje **każdy** moduł i uruchamia **każdy** `test_*.py` przy każdym zadaniu;
+- `verification.py:281-285`: dowolny błąd z tej puli ustawia `code_audit = FAIL`, także dla zadania dokumentacyjnego. Pominięcie audytu kodu dla `is_doc_scope` (`:131-137`) jest kilka linii dalej nadpisywane przez wynik deterministyczny;
+- `verification.py:328`: `failed_file = node_path`, czyli plik zadania, a nie plik, w którym jest błąd.
+
+**Skutki w przebiegu:**
+- Od T8 każde kolejne zadanie zaczynało od porażki odziedziczonej. Pierwsza weryfikacja T10 (`run_experiment.py`) miała 30 nieudanych testów i ~20 błędów kolekcji niezwiązanych z tym plikiem. Weryfikacja T8 (`environment.py`) o 16:40 oblała m.in. na błędzie składni w `plot_results.py`.
+- **T12 (pisarz, rozdział 3) oblał przez `IndentationError` w `test_trainer.py`.** Naprawy poszły do `test_trainer.py`, potem zadziałało `HARNESS_BUG_REPORTED` i T12 został `FAILED`. Reguła blokowania zadań na tym samym pliku (`orchestrator.py:296-304`) zablokowała wtedy **T13 (rozdział 4)**: w logu nie ma wpisu `[BUILDING] Zadanie T13`, a po T12 od razu startuje T14. Rozdział 4 nie powstał przez błąd wcięcia w pliku testu.
+- Sygnatura błędu (`common.py:58-86`) to zbiór odcisków `plik:reguła` **wszystkich** ustaleń w workspace. Każda zmiana gdziekolwiek, choćby inny zestaw nieudanych testów, bo odcisk pytest zawiera nazwę testu i słowo po ` - `, daje nową sygnaturę. `seen_evo` z P3 zablokował W4 tylko w 3 z 34 cykli, a eskalacja do `REPORT_HARNESS_BUG` zadziałała raz.
+
+### III.2.4. Warstwa 4 przypisuje winę agentowi zadania, nie autorowi błędu
+
+`orchestrator.py:336`: `failed_agent = task["assigned_agent"]`. Klucz ewolucji to `(failed_agent, sygnatura)`, a mutacja trafia do tego agenta.
+
+| zadanie (agent) | plik z błędem (autor) | mutacja |
+|---|---|---|
+| T10, T11 (`seed_coder`, `run_experiment.py`) | `test_trainer.py` (`seed_tester`) | 5× `seed_coder`: „decorators … @patch … indentation" |
+| T12 (`seed_writer`, `thesis.md`) | `test_trainer.py` (`seed_tester`) | `seed_writer`: „When generating Python test code, ensure strict indentation…" |
+| T8 (`seed_tester`, rozwiązane na `environment.py`) | `agent.py`, `environment.py` (`seed_coder`) | `seed_tester`: reguły o sygnaturach `__init__` |
+
+Pozostałe obserwacje W4:
+- **Reguły to banały składniowe albo opis API, który powinien być danymi.** Z 28 reguł 15 mówi „zamykaj stringi / pilnuj wcięć / nawiasów / dwukropków". 11 każe „trzymać się rzeczywistych sygnatur" (`__init__`, `step`, `reset`), których agent nie dostaje (§III.2.2 a). 2 dotyczą importów i formatu odpowiedzi. Błąd składni nadal pojawiał się w 17% odpowiedzi do końca przebiegu. Prompty urosły: `seed_coder` 3877 → 6335 B (+63%), `seed_tester` 2669 → 4358 B (+63%), `seed_writer` 7115 → 7598 B.
+- **Błędy składni pochodzą z modelu, nie z materializera.** Sprawdzone na wszystkich 158 wersjach: heurystyka `_normalize_raw_code` (`building.py:43-49`) nie uruchomiła się ani razu, a 27 plików było nieparsowalnych już w surowej odpowiedzi. Przykłady: `def reset(self) -> Tuple[…] |` zamiast `:` (`environment.py`, 15:57), plik zaczynający się od `"""import numpy as np` (`agent.py`, 16:04), `f\"Unexpected header: {header}\n` bez cudzysłowu zamykającego (surowy JSON, 18:52). Wyklucza to powtórkę błędu `\n` z Audytu I.
+- **Rola architekta myli się z rolą kodera.** Jedna odpowiedź `evolution_architect` to gotowy plik (`"action": "update_file"`, pełny `run_experiment.py`). E1 zadziałało poprawnie (`UNKNOWN_ACTION`, nic nie zapisano).
+- **Parser `files_in_error` w `_report_harness_bug`** (`evolution.py:299`) bierze tekst przed pierwszym `:` z odcisku zastępczego. Dla ruffowego `invalid-syntax` (bez kodu reguły `_RUFF_FINDING` go nie łapie) daje to „plik" `"Ruff lint failure"`.
+
+### III.2.5. Nawrót P10 pkt 4: harness narzuca 6 rozdziałów
+
+Planista zaplanował **4** rozdziały (`[PLANNING_RECON_TOC] … (4 rozdzialow, typ=inzynierska)`, `academic_blueprint.planned_chapters` ma 4 pozycje). Harness liczy jednak braki na sztywno względem 6:
+- `verification.py:198`: `missing_ch = [i for i in range(1, 7) …]` i komunikat „Wymagane jest pełne 6 rozdziałów";
+- `verification.py:372`: `chapters_missing = [n for n in range(1, 7) …]` w audycie faktów;
+- skutek: kolejka generacji 1 zawiera `Q1_CH5` i `Q1_CH6` dla rozdziałów, których nie ma w planie.
+
+Mapa słów kluczowych na numery rozdziałów (`verification.py:183-194`: „metodologia" → 5, „system" → 3 itd.) to ten sam katalog `if`-ów, który P10 miało usunąć z profilu domeny.
+
+### III.2.6. Nawrót P1 pkt 3 / P8 pkt 3 / P14: pozostałości `results.csv`
+
+Punkt wejścia zapisuje `results/experiment_results.csv` (węzeł `n15`). Harness wciąż zakłada `results.csv` w korzeniu:
+- `common.py:165`: rola `results` → `"results.csv"`; leczenie planu dopisało T14 na ten plik;
+- `hypergraph_matrix.json`: **węzeł-widmo `n22` `results.csv`** (`kind: derived`, `degree 4`, `weight 3.0`), a pliku nie ma na dysku. Łamie to P1 pkt 3, a zadanie T14 skierowane na węzeł `derived` łamie P8 pkt 3;
+- `verification.py:380`: audyt faktów czyta `workspace/results.csv`, więc `csv_columns` jest zawsze puste;
+- `experiment_runner.py:133-135` kasuje `results.csv` przed uruchomieniem; `building.py:82` ma domyślną nazwę `results.csv` dla `csv_content`.
+
+### III.2.7. Limity modelu bez kontroli
+
+- **Ucięta odpowiedź pisarza.** T12 (18:13:47): 24 360 znaków JSON urwane w środku bloku TikZ. Zadziałał limit `num_predict=8192` (`connection.py:263`), wynik się nie sparsował, a odpowiedź była pusta. Dyrektywa „dla rozdziału 3 użyj INLINE TikZ" w `grounded_hypergraph_state` zwiększa długość odpowiedzi właśnie w tym rozdziale. Harness nie sprawdza `done_reason == "length"`.
+- **Przepełnienie kontekstu.** Szacunek przy 3,5 znaku na token: 13 z 43 promptów `code_auditor` przekracza `num_ctx=32768` (maks. 290 tys. znaków), do tego 2 prompty `remediation_planner` (181 tys.) i 2 `evolution_architect` (180 tys.). Ollama ucina wtedy początek promptu bez błędu. `prompt_eval_count` nie jest zapisywany w trace, więc nie da się tego potwierdzić post factum.
+- **`code_auditor` (LLM) nie ma wpływu na wynik.** Werdykt jest nadpisywany wynikiem pytest/ruff (`verification.py:281-294`): FAIL przy błędach, PASS bez nich. Odpowiedzi: 26 FAIL, 4 PASS, 13 bez werdyktu. To 12,9 min inferencji bez wpływu na decyzję.
+- **Eksperyment po każdej zmianie kodu.** `_refresh_experiment_after_code` (`building.py:300-314`) uruchamia pełny eksperyment (tu: 100 000 epizodów × 3 ziarna, limit 180 s) po każdym zapisie `.py`, także po zapisie testu.
+
+### III.2.8. Jakość treści: twierdzenia bez pokrycia w pracy
+
+`thesis.md:125` twierdzi, że „przed uruchomieniem głównego eksperymentu przeprowadzono walidację jednostkową… zweryfikowany w testach `\ref_ast{test_environment.py:TestEnvironmentSetup}`". Te testy w chwili zapisu i na końcu przebiegu **nie przechodzą** (3 z 7 w `test_environment.py`). Wskaźnik `\ref_ast` sprawdza tylko istnienie symbolu, a nie to, że test przechodzi. To luka kontraktu formy z P9. Do tego zmienność plików testów unieważnia wskaźniki: `Q1_REFS` dotyczy `TestTrainerTrainOutput`, które zniknęło przy kolejnym przepisaniu `test_trainer_validation.py`.
+
+---
+
+## III.3. Co zadziałało — nie ruszać
+
+- **§II.13:** sandbox startuje z pustymi plikami stanu (historia ewolucji zawiera tylko 75 zdarzeń tego przebiegu); punkt wejścia jest budowany po modułach (T10 po T3–T9); `academic_blueprint.entrypoint` jest w ładunku buildera.
+- **P15 (częściowo):** nieudane zadanie blokuje tylko zadania na tym samym pliku, więc kolejka szła dalej (T9…T14). Generacja 1 została zbudowana z audytu faktów.
+- **P11:** zero zadań naprawczych z błędów mechanicznych lintera; blokowały tylko `invalid-syntax` i `F821`.
+- **P5:** odpowiedź w złym kształcie dała jawny `MaterializationError` (T10_FIX_1_ENV), a nie ciche porzucenie.
+- **E1, E2, E6:** `UNKNOWN_ACTION`, `MUTATION_SKIPPED_NO_RULE` i `HARNESS_BUG_REPORTED` wystąpiły i zostały zapisane.
+- **Planowanie:** prerejestracja metryk i punktu wejścia w blueprincie; `references.bib` z arXiv; rozdziały 1–3 z wskaźnikami `\ref_ast` do `config.py`.
+- **Część kodu jest poprawna:** `test_agent.py` 10/10, `test_run_experiment.py` 2/2, wszystkie pliki `.py` w stanie końcowym się kompilują.
+
+---
+
+## III.4. Mapa nawrotów
+
+| ustalenie wcześniejsze | stan w tym przebiegu |
+|---|---|
+| Audyt I §4.4 — kozioł ofiarny `core.py` | **nawrót w nowej postaci:** kozłem jest agent zadania (§III.2.4) i węzeł zadania (`failed_file = node_path`) |
+| Audyt I §5.4 — brak szybkiej pętli składniowej w agencie | **nie wdrożone;** 27/158 nieparsowalnych odpowiedzi idzie przez pełną pętlę W3 → W4 → W1 → W2 |
+| P3 / E4 — sygnatura + `seen` | wdrożone, ale **nieskuteczne** przy weryfikacji całego workspace'u (3/34 pominięć) |
+| P1 pkt 3 — węzeł bez pliku | **nawrót:** `n22 results.csv` |
+| P8 pkt 3 — zakaz zadań na węzłach `derived` | **nawrót:** T14 na `n22` (zadanie dopisane przez leczenie planu, nie z audytu) |
+| P10 pkt 4 — liczba rozdziałów z szablonu, nie z harnessu | **nie domknięte:** `range(1, 7)` w dwóch miejscach |
+| P14 — koniec wstrzykiwania `results.csv` | **pozostałości** w 4 miejscach (§III.2.6) |
+| P15 — przebieg zawsze kończy się artefaktem | **nie obejmuje wyjątków narzędzi** (§III.2.1) |
+| E6 — `REPORT_HARNESS_BUG` | działa, ale z błędem parsowania pliku i rzadko się uruchamia |
+
+---
+
+## III.5. Plan naprawy (R1–R13)
+
+### R1. Timeout narzędzia to wynik weryfikacji, nie wyjątek — **najpilniejsze**
+1. `test_runner.py`: każde `subprocess.run` (import, pytest, ruff, walidatory, Docker) w `try/except subprocess.TimeoutExpired` → błąd w `errors` z nazwą pliku/polecenia i statusem `FAIL`.
+2. Pytest z `-o faulthandler_timeout=<N> -o faulthandler_exit_on_timeout=true` (wbudowane w pytest 9.1.1), żeby błąd wskazywał zawieszony test i linię, a nie tylko „przekroczono 30 s".
+3. `benchmarks/runner.py:316`: `try/except Exception` wokół `orch.run` → status `CRASHED` z tracebackiem w `benchmark_summary.json` i w logu, zamiast cichego końca procesu.
+
+**Kryterium (test):** workspace z testem `while True: pass` → `run_isolated_tests` zwraca `FAIL` z nazwą testu i nie rzuca wyjątku; przebieg mock z takim testem kończy się `COMPLETED_WITH_GAPS`.
+**Rozmiar:** mały. **Ryzyko:** niskie.
+
+### R2. Eksport API klas
+`import_sync.extract_hyperedge_exports`: dla każdej klasy publicznej sygnatury jej metod publicznych i `__init__` (`ast.unparse(args)` + typ zwracany), np. `"QLearningAgent.choose_action": "def choose_action(self, state, available_actions) -> int"`. Przy `SyntaxError` zostawić ostatni znany eksport i oznaczyć go jako nieaktualny, zamiast zwracać pustą listę.
+**Kryterium:** ładunek testera dla modułu z klasą zawiera sygnatury wszystkich metod publicznych.
+**Rozmiar:** ~20 linii. **Ryzyko:** niskie; zwiększa ładunek o kilkaset znaków.
+
+### R3. Routing bez dopasowania podciągu
+`routing.py:181-191`: najpierw krok 4 (jawna ścieżka z `target_node`/`target_file`, która wygląda na plik workspace → nowy węzeł), dopiero potem heurystyka z opisu. W heurystyce nazwa pliku dopasowywana z granicą tokenu (`(?<![\w/.-])environment\.py\b`), żeby `test_environment.py` nie pasowało do `environment.py`. Zadanie bez pliku docelowego (`results/run_output.txt`, czyli „uruchom eksperyment") nie jest zadaniem buildera.
+**Kryterium (test):** zadanie z `target_node="test_environment.py"` i opisem wymieniającym oba pliki trafia na nowy węzeł `test_environment.py`.
+**Rozmiar:** mały. **Ryzyko:** niskie.
+
+### R4. Weryfikacja zawężona do hiperkrawędzi zadania
+1. Pytest tylko dla testów sprzężonych z węzłem docelowym (aktywne krawędzie) i dla plików zapisanych w tym kroku; import tylko tych modułów. Pełny zestaw zostaje w `_audit_factual_state`, w kontroli stanu po kolejce i przy Gate 3.
+2. Zadanie dokumentacyjne (`is_doc_scope`) nie oblewa na błędach kodu. Weryfikuje wskaźniki i strukturę, a stan kodu raportuje jako ostrzeżenie.
+3. `failed_file` i węzeł naprawy z diagnostyki (`_workspace_paths_in`), nie z `node_path`.
+
+**Kryterium (test):** zepsuty `test_b.py` niesprzężony z `a.py` nie oblewa zadania na `a.py`; zadanie pisarza przechodzi mimo zepsutego testu.
+**Rozmiar:** średni. **Ryzyko:** średnie. Błędy niesprzężone wyjdą dopiero w audycie stanu, więc to on musi tworzyć dla nich zadania (to już robi).
+**Zależność:** wymaga R3, bo bez poprawnych węzłów testów nie ma poprawnych krawędzi.
+
+### R5. Wina przypisywana autorowi pliku w błędzie
+Materializer zapisuje w węźle `last_writer` (agent i zadanie). W `_repair_task` agentem ewolucji jest `last_writer` pliku wskazanego przez diagnostykę, a nie `task.assigned_agent`. Gdy plików z błędem jest kilka, po jednym kluczu ewolucji na autora.
+**Kryterium (test):** błąd w `test_x.py` zapisanym przez `seed_tester`, wykryty w zadaniu `seed_coder`, nie mutuje `seed_coder`.
+**Rozmiar:** mały–średni. **Ryzyko:** niskie.
+
+### R6. Zakres zapisu buildera
+Uprawnienia zapisu według roli: `seed_coder` nie zapisuje `test_*.py`, `seed_tester` zapisuje tylko `test_*.py` (i ewentualnie fixtury testowe). Zapis spoza uprawnień to `MaterializationError` z wyjaśnieniem, kogo poprosić o zmianę. Plik spoza celu i jego bezpośrednich sąsiadów w grafie: zapis dozwolony, ale logowany jako `OFF_TARGET_WRITE`.
+**Kryterium:** w przebiegu nie ma zapisu testu przez kodera ani modułu przez testera.
+**Rozmiar:** mały. **Ryzyko:** średnie, bo zmienia charakter P2. Decyzja w **Q12**.
+
+### R7. Szybka pętla składniowa w agencie (Audyt I §5.4)
+W materializerze `ast.parse` każdego `.py` przed zapisem. Przy `SyntaxError` jedno natychmiastowe ponowienie tego samego agenta z komunikatem (`plik:linia: błąd` + 3 linie kontekstu), bez W4 i W1, i bez zapisu wersji nieparsowalnej. Błąd składni po ponowieniu idzie zwykłą ścieżką, ale nie generuje reguły W4, bo reguły „zamykaj stringi" nie zmieniły częstości błędu (§III.2.4).
+**Kryterium:** w `failure_ledger.json` nie ma reguł o składni Pythona; nieparsowalny plik nigdy nie trafia na dysk.
+**Rozmiar:** mały. **Ryzyko:** niskie; koszt to jedno dodatkowe wywołanie w ~17% kroków zamiast pełnego cyklu.
+
+### R8. Liczba i rola rozdziałów z blueprintu
+`verification.py:183-210` i `:372`: wymagane rozdziały = `academic_blueprint.planned_chapters` (numery i tytuły), a brak blueprintu oznacza brak wymogu liczby. Usunąć mapę słów kluczowych na numery i rozpoznawać rozdział po numerze z nagłówka.
+**Kryterium (test):** plan na 4 rozdziały z kompletnymi 4 rozdziałami przechodzi Gate 3; kolejka nie zawiera zadań na rozdziały 5–6.
+**Rozmiar:** mały. **Ryzyko:** niskie.
+
+### R9. Koniec `results.csv` w harnessie
+Rola `results` rozwiązywana z grafu (węzły `derived` z krawędzią `produces` od punktu wejścia), nie stałą z `common.py:165`. Audyt faktów czyta wszystkie CSV `derived`. `experiment_runner` nie kasuje plików po nazwie. Leczenie planu nie dopisuje zadań na węzły `derived`, bo wynik powstaje z uruchomienia, nie z edycji. `ensure_node` nie tworzy węzła `derived` dla pliku, którego nie ma.
+**Kryterium (test):** projekt zapisujący `out/metrics.csv` ma `csv_columns` w audycie, a w grafie nie ma węzła bez pliku.
+**Rozmiar:** średni. **Ryzyko:** niskie.
+
+### R10. Limity modelu jawnie
+1. Przed wywołaniem: szacowany rozmiar promptu względem `num_ctx` → przy przekroczeniu wybór ustaleń (`_fit_items`), a nie ciche ucięcie przez Ollamę. Zapisywać `prompt_eval_count`/`eval_count`/`done_reason` w `agent_trace.jsonl`.
+2. `done_reason == "length"` → jawny błąd „odpowiedź ucięta" i ponowienie z mniejszym zakresem (np. jedna sekcja rozdziału), a nie pusta odpowiedź.
+3. `code_auditor` wołany tylko wtedy, gdy pytest i ruff przechodzą (jedyny przypadek, w którym może wnieść coś ponad wynik deterministyczny), albo wcale.
+
+**Kryterium:** w trace żadne wywołanie nie przekracza `num_ctx`; brak pustych odpowiedzi bez przyczyny.
+**Rozmiar:** mały–średni. **Ryzyko:** niskie.
+
+### R11. Auto-bypass HITL nie może wybierać pętli, którą pytanie kwestionuje
+W trybie nieinteraktywnym propozycja HITL architekta jest zapisywana razem z wariantami. Jeśli jeden z wariantów to deterministyczne narzędzie, które harness ma (po R2 i R4: walidacja API przez kontrakt test↔moduł), zostaje wybrany ten wariant. W pozostałych przypadkach zadanie kończy się `HARNESS_BUG`/luką w pracy zamiast kolejnych mutacji. Decyzja w **Q14**.
+**Rozmiar:** mały. **Ryzyko:** niskie.
+
+### R12. Drobne
+- `evolution.py:299`: `files_in_error` z `_workspace_paths_in`, nie z tekstu przed `:`.
+- `_issue_fingerprints`: ruffowe `invalid-syntax` (bez kodu) jako `plik:invalid-syntax`; odcisk pytest bez słowa po ` - ` (to treść asercji, nie typ wyjątku).
+- `_refresh_experiment_after_code`: nie uruchamiać eksperymentu po zapisie pliku testu.
+
+### R13. Kontrakt formy: testy jako dowód
+Wskaźnik do symbolu w pliku `test_*.py` w pracy jest rozwiązywalny tylko wtedy, gdy ten test przechodzi w ostatnim audycie. W przeciwnym razie jest to błąd symboliczny „twierdzenie o weryfikacji bez pokrycia".
+**Rozmiar:** mały. **Ryzyko:** niskie; przebiegi z nieprzechodzącymi testami jawnie oblewają audyt pracy.
+
+---
+
+## III.6. Kolejność
+
+1. **R1**: bez tego żaden następny przebieg nie musi się zakończyć.
+2. **R3 → R2 → R4 → R5**: usuwają przyczynę pętli (brak źródła prawdy o API, weryfikacja globalna, zła wina). R3 przed R4, bo R4 opiera się na poprawnych węzłach testów.
+3. **R7, R6**: ograniczają koszt błędów modelu i ping-pong kodera z testerem.
+4. **R8, R9**: domknięcie P10 pkt 4 i P14.
+5. **R10–R13**.
+
+## III.7. Pytania do recenzenta
+
+| # | pytanie | domyślnie, jeśli bez decyzji |
+|---|---|---|
+| **Q12** | R6: twardy zakaz zapisu (koder ↛ testy, tester ↛ moduły) czy tylko logowanie `OFF_TARGET_WRITE`? | twardy zakaz według roli, logowanie dla pozostałych plików |
+| **Q13** | R4: pełny pytest tylko w audycie stanu i przy Gate 3 — akceptowalne, że błąd niesprzężony wyjdzie później? | tak |
+| **Q14** | R11: w trybie nieinteraktywnym propozycja HITL architekta ma wybierać wariant deterministyczny czy kończyć naprawy zadania? | wariant deterministyczny, jeśli istnieje; inaczej koniec napraw z wpisem do luk |
+
+## III.8. Linia bazowa do porównań (przebieg z 2026-11-12)
+
+Metryki procesowe do porównania w następnym przebiegu (diagnostyka naprawy, nie ocena benchmarku — Q6):
+
+| miara | 2026-11-12 |
+|---|---|
+| zakończenie przebiegu | crash, brak statusu |
+| zadania DONE w generacji 0 | 7 / 14 |
+| czas inferencji / zegara | 166 min / 183 min |
+| cykle naprawcze (`remediation_planner`) | 34 |
+| mutacje promptów | 28 |
+| odpowiedzi `.py` nieparsowalne | 27 / 158 (17%) |
+| różne API `agent.py` | 8 |
+| zapisy builderów poza plikiem docelowym | 24 / 92 |
+| prompty > `num_ctx` (szacunek) | 17 / 218 |
+
+---
+
+## III.9. Plan wdrożenia falami (2026-11-12)
+
+**Założenie przyjęte w dyskusji:** zmiany przyrostowe, na istniejących mechanizmach harnessu, każda z liczbą do porównania z linią bazową z §III.8. Następna fala rusza dopiero wtedy, gdy przebieg po poprzedniej potwierdzi albo obali obawę, którą ma usuwać.
+
+### Dodatkowe pomiary, na których opiera się plan
+
+| co | wartość w przebiegu z 2026-11-12 |
+|---|---|
+| jedyny kanał między zadaniami | opis zadania, średnio ~380 znaków prozy |
+| ładunek kodera: źródło edytowanego pliku / eksporty (same nazwy klas) / reszta | 31% / 11% / 25% (+33% prompt systemowy) |
+| naprawy kodera, w których ładunek zawierał źródło jakiegokolwiek testu | **6 z 48** |
+| wejście `remediation_planner` / `evolution_architect` | ~46 tys. znaków, z czego **87–90%** to `error_report` + ten sam tekst powtórzony w `remediation_directive` / `suggested_rule` |
+| kształt odpowiedzi builderów | `files` (całe pliki) 60/92, `test_code` 28/92, `ast_edits` **3/92** |
+| mediana wyjścia kodera | 6 tys. znaków, 56 s; ~9 s na 1 tys. znaków (~30 tokenów/s) |
+| udział docstringów i komentarzy w plikach | 30–50%; komentarze to myślenie na głos („Wait, …", „Let's assume …"), przy `think: False` |
+| prompt `seed_coder.md:18` | „docstrings: explain the algorithm, its complexity and the mathematical formulation" |
+
+### Decyzje z dyskusji
+
+- **Szkielet jest kluczowym zadaniem praktycznie każdej pracy.** Po researchu powstaje szkielet modułów, który kolejne zadania uzupełniają.
+- **`think` zostaje wyłączone.** Przy ~30 tokenach/s blok myślenia o długości 1–2 tys. tokenów to 35–70 s dodatkowo na każde wywołanie (2–4 h na przebieg o skali z 2026-11-12). Projektowanie odbywa się raz, w zadaniu szkieletu o krótkim wyjściu. Pole `plan` w odpowiedzi też odpada.
+- **Strażnik kontraktu odrzuca nieuzasadnioną zmianę sygnatury.** Agent zachowuje prawo zmiany API, ale musi ją nazwać (`contract_change` z uzasadnieniem).
+
+### Fala 1 — wdrażana teraz
+
+| # | zmiana | na czym się opiera | miara (linia bazowa) |
+|---|---|---|---|
+| 1.1 | **Timeout narzędzia = FAIL z nazwą zawieszonego testu**, nie wyjątek; `try` wokół `orch.run` w runnerze → status `CRASHED` z tracebackiem | R1; `faulthandler_timeout` z pytesta 9.1.1 | przebieg kończy się statusem (crash, brak statusu) |
+| 1.2 | **Zadanie `SKELETON` po researchu**: wszystkie moduły planu z publicznymi sygnaturami, jednozdaniowym docstringiem i ciałami `raise NotImplementedError`; zadania modułów uzupełniają ciała | prompt planera („Increment 1 — interfaces"), leczenie planu jak `_entrypoint_after_modules` | różne API `agent.py` (8), DONE w gen. 0 (7/14) |
+| 1.3 | **Eksport metod klas** do `exports.signatures` (`Klasa.metoda`) | R2; `import_sync.py` | j.w.; tester widzi sygnatury |
+| 1.4 | **Strażnik kontraktu**: po szkielecie publiczne sygnatury modułów to kontrakt; zapis, który je zmienia lub usuwa bez `contract_change: {reason}`, jest odrzucany `MaterializationError` z różnicą sygnatur; nowe symbole wolno dodawać | `MaterializationError` (P5) | wersje API; zdarzenia `CONTRACT_CHANGED` |
+| 1.5 | **Naprawy jako edycje symboli, krótkie docstringi**: istniejący plik zmieniany przez `ast_edits` (także metod: `Klasa.metoda`), `files` dla nowych plików; docstring = jedno zdanie + argumenty | `ast_edits` już w materializerze | mediana wyjścia kodera (6 tys. znaków / 56 s), udział `ast_edits` (3/92) |
+| 1.6 | **Krótszy raport błędu**: pytest `--tb=short`; dyrektywa naprawcza i `suggested_rule` bez powtórzenia listy błędów | flaga pytesta, jedno pole | wejście planera i architekta (~46 tys. znaków) |
+| 1.7 | **Źródło nieprzechodzących testów w ładunku naprawy** (funkcje testowe z ostatniego raportu) | regex `_PYTEST_FINDING` + `ast` | naprawy kodera z testem w kontekście (6/48) |
+
+### Fala 2 — warunkowa, po pomiarze fali 1
+
+| zmiana | uruchamiamy, jeśli w przebiegu po fali 1… |
+|---|---|
+| **R4** weryfikacja zawężona do sąsiadów pliku; zadanie pisarza nie oblewa na błędach kodu | zadania nadal oblewają na błędach w plikach, których nie dotyczą, albo rozdział jest blokowany przez test |
+| **R5** wina przypisywana autorowi pliku w błędzie (`last_writer` w węźle) | ewolucja nadal mutuje agenta, który nie pisał pliku z błędem |
+| **R3** routing bez dopasowania podciągu | zadanie na `test_X.py` nadal trafia na `X.py` (po 1.2 częściej będą to zadania uzupełniania, ryzyko maleje, ale nie znika) |
+| **R7** szybka pętla składniowa w agencie | udział nieparsowalnych odpowiedzi nadal > ~5% (po 1.5 odpowiedzi są krótsze, więc powinien spaść) |
+| **R8** liczba rozdziałów z blueprintu; **R9** koniec `results.csv` w harnessie | zawsze. To nawroty z Audytu II, ale nie blokują pomiaru fali 1, więc idą osobno |
+| `code_auditor` (LLM) tylko przy zielonym pytest / usunięty; eksperyment na kamieniach milowych zamiast po każdym zapisie `.py` | czas weryfikacji i eksperymentu > ~15% zegara |
+
+### Fala 3 — po fali 2
+
+- **Prompty od nowa** (planer naprawczy, architekt i pisarz częściowo poprawieni już w fali 1, §III.10 pkt 1.8; reszta: `task_planner`, badacze, audytorzy, ton wszystkich): rola i cel → co agent dostaje → krótki przykład dobrej odpowiedzi → format. Zakazy tylko tam, gdzie harness je egzekwuje, podane jako fakt. Prawo agenta do propozycji: nowy moduł, zmiana kontraktu, zgłoszenie do właściciela pliku.
+- **Polityka ewolucji:** reguła dopiero przy wzorcu (ten sam rodzaj błędu u tego samego agenta w ≥ 2 różnych zadaniach), z datą ważności. Usuwana, jeśli częstość błędu nie spadła.
+- **Właściciel pliku** (twardo albo miękko, Q12) i zgłoszenia `issue` zamiast przepisywania cudzych plików.
+- **R10, R11, R12, R13** z §III.5.
+
+### Kryterium sukcesu fali 1 (następny przebieg 01)
+
+Przebieg kończy się statusem. `agent.py` ma ≤ 2 publiczne API (szkielet + ewentualna jawna zmiana). DONE w generacji 0 > 7/14. Mediana wyjścia kodera przy naprawach < 3 tys. znaków. Wejście planera naprawczego < 20 tys. znaków. Naprawy z testem w kontekście ≥ 80%.
+
+---
+
+## III.10. Realizacja fali 1 (2026-11-12)
+
+Wdrożone na `main`, bez commitów. Weryfikacja: `pytest tests` **125/125** (było 113; +12 nowych w `tests/test_wave1_contract.py`, 2 istniejące testy dostosowane do nowego zadania), `ruff check adk tests main.py` czysty, w tym `ARG`. Benchmarku na modelu nie uruchamiałem. Kontrole na danych z przebiegu z 2026-11-12 opisane przy pozycjach.
+
+### Co zostało zmienione
+
+**1.1 Timeout jako ustalenie, nie wyjątek**
+- `adk/tools/verification/test_runner.py`: nowa funkcja `_run_tool`. Każde wywołanie podprocesu (import modułu, pytest, ruff, walidatory, Docker) zamienia `TimeoutExpired` na wpis w `errors` (ruff: w `lint_warnings`, nieblokujący), zamiast rzucać.
+- Pytest dostaje `-o faulthandler_timeout=20 -o faulthandler_exit_on_timeout=true`, a jego limit zewnętrzny wzrósł z 30 s do 120 s (ostatnia linia obrony, bo pojedynczy test i tak jest przerywany po 20 s). `_condense_hang` zostawia ze zrzutu stosu tylko ramki z plików workspace'u.
+- `adk/benchmarks/runner.py`: `orch.run` w `try/except`. Wyjątek → status `CRASHED`, wpis `ORCHESTRATOR_CRASHED` z tracebackiem w logu, pole `orchestrator_error` w podsumowaniu, a dalsza część runnera (kopia artefaktów, publikacja) wykonuje się normalnie.
+- **Kontrola na danych:** kopia workspace'u z 2026-11-12 → `run_isolated_tests` zwraca `FAIL` po 23 s z komunikatem „test zawiesił się… `test_trainer_validation.py`, line 64 in `test_train_calls_agent_update` → `trainer.py`, line 61 in `train`" (wcześniej: `TimeoutExpired` po 32 s i koniec procesu).
+
+**1.2 Zadanie `SKELETON`**
+- `adk/orchestration/planning.py`: `_skeleton_first` w leczeniu planu (tryb `multi_cycle_waves`). Gdy plan ma ≥ 2 moduły kodu (`.py`, nie `test_*`), przed pierwszym zadaniem kodu staje zadanie `SKELETON` (`seed_coder`) z listą wszystkich modułów planu i punktem wejścia w opisie. Szkielet zgłoszony przez planistę (id `SKELETON` albo słowa „szkielet/skeleton/stub" w opisie) jest zachowywany, przesuwany na to miejsce i uzupełniany o listę modułów. Aliasy ról (`v1`…`v5`) są rozwiązywane na pliki.
+- `adk/agents/planning/task_planner.md`: przyrost 1 kończy się jednym zadaniem szkieletu; przyrost 2 to uzupełnianie modułów szkieletu i testy pisane wobec jego sygnatur.
+- `adk/agents/building/seed_coder.md`: nowa sekcja „Skeleton first, then fill in". **Usunięta sprzeczność:** prompt zakazywał stubów (`No Placeholders`), a szkielet ich wymaga. Teraz zakaz obowiązuje poza szkieletem.
+
+**1.3 Eksport metod klas**
+- `adk/tools/building/import_sync.py`: `class_method_signatures`. `exports[plik].signatures` zawiera `Klasa.__init__` i każdą publiczną metodę z typami i typem zwracanym. Builder i tester widzą API klasy, a nie tylko jej nazwę.
+
+**1.4 Strażnik kontraktu**
+- `adk/tools/verification/contract_check.py`: `public_api` (funkcje, klasy, `Klasa.metoda` → nazwy parametrów; typy i wartości domyślne nie są częścią kontraktu), `is_contract_module` (kod, nie testy), `interface_contract_breaches`.
+- `adk/orchestration/building.py`:
+  - Odpowiedź buildera jest stosowana **atomowo**: `_materialize_workspace_artifact` zapamiętuje stan każdego pliku, którego dotyka, i przy `MaterializationError` przywraca wszystkie.
+  - Po zadaniu szkieletu (i jego naprawach, id `SKELETON…`) publiczne API modułów kodu trafia do `state/interface_contract.json` (zdarzenie `CONTRACT_ESTABLISHED`).
+  - Każdy późniejszy zapis, który usuwa lub zmienia zakontraktowaną sygnaturę bez `contract_change: {reason}`, jest odrzucany z listą różnic. Z uzasadnieniem zapis przechodzi, kontrakt się aktualizuje i powstaje zdarzenie `CONTRACT_CHANGED`. Nowe symbole dołączają do kontraktu bez formalności.
+- Bez pliku kontraktu (brak szkieletu) strażnik nie działa, więc zachowanie dla projektów jednomodułowych jest bez zmian.
+- `adk/orchestration/common.py`: `contract_change` w `_METADATA_KEYS`; `is_skeleton_task`, `SKELETON_TASK_ID`. `adk/orchestrator.py`: naprawy zadania szkieletu dostają prefiks `SKELETON_`, bo mogą jeszcze kształtować interfejs.
+
+**1.5 Edycje symboli i krótkie docstringi**
+- `adk/tools/building/ast_editor.py`: `edit_ast_node` obsługuje `Klasa.metoda`. Podmienia albo dopisuje metodę wewnątrz klasy; brak klasy lub brak `def metoda` w kodzie edycji daje błąd `TARGET_NOT_FOUND`. Wcześniej taka edycja zostałaby dopisana jako funkcja modułu.
+- `adk/orchestration/building.py`: odrzucona edycja (`SYNTAX_GUARD_REJECTED`, `TARGET_NOT_FOUND`) to `MaterializationError` dla agenta i cofnięcie całej odpowiedzi. **Wcześniej była cicho pomijana**, a odpowiedź liczyła się jako zapisana (luka P5).
+- Prompty: koder i tester zmieniają istniejący plik przez `ast_edits` (`files` dla nowych plików i szkieletu); docstring to jedno zdanie (+ argumenty i wartość zwracana), rozumowanie w `summary`, nie w komentarzach; tester pisze testy wyłącznie wobec `exports.signatures`, jeden plik testów na moduł, test musi się szybko kończyć (pętle z mockami mają osiągalny koniec). Każdy zgłasza w `summary` niezgodność z plikiem drugiej roli, zamiast go przepisywać.
+
+**1.6 Krótszy raport błędu**
+- Pytest z `--tb=short`.
+- `adk/orchestrator.py`, `_repair_task`: `remediation_directive` (trafia do planera jako dyrektywa i do architekta jako `suggested_rule`) nie powtarza już listy ustaleń, tylko wskazuje zadanie, węzeł i raport. Ustalenia płyną raz, w raporcie. Opis zadania zapasowego (gdy planista nie zwróci zadań) nadal zawiera ustalenia, bo to on trafia do buildera.
+
+**1.7 Źródło nieprzechodzących testów w naprawie**
+- `adk/orchestrator.py`: każde zadanie naprawcze (`_repair_cycle`, szybka naprawa kontraktu) dostaje `repair_of`.
+- `adk/orchestration/building.py`: `_failing_test_sources` czyta ostatni `validation_report.json`, wyciąga linie `FAILED/ERROR plik::Klasa::test - komunikat` i dodaje do ładunku buildera `failing_tests: {plik::Klasa::test: {error, source}}`: do 6 testów, do 6 tys. znaków, źródło funkcji testowej przez `ast.get_source_segment`. Nie dotyczy pisarza ani badaczy.
+
+**1.8 Prompty spójne z falą 1 (dopisane po dyskusji, 2026-11-12)**
+
+Pełna przebudowa promptów zostaje w fali 3, żeby nie zaciemnić pomiaru. Poprawione teraz zostały tylko trzy prompty, które były **sprzeczne z falą 1** albo niosły czysty szum:
+- `adk/agents/planning/remediation_planner.md`: kontrakt rozstrzyga spór test↔moduł (test odbiega od sygnatury → naprawia tester; kod nie robi tego, co obiecuje sygnatura → naprawia koder); zakaz wymyślania nowych nazw metod i sygnatur w opisie zadania (w przebiegu z 2026-11-12 planner dyktował API prozą, a ze strażnikiem takie zlecenia byłyby odrzucane); zmiana interfejsu tylko jawnie, z zadaniami dla użytkowników modułu; jeden właściciel pliku; obsługa zawieszonego testu. Kod: `_repair_cycle` przekazuje plannerowi `interface_contract` (wcześniej planner nie widział żadnych sygnatur).
+- `adk/agents/evolution/evolution_architect.md`: reguła ma sens tylko wtedy, gdy zmienia zachowanie, które agent kontroluje, a harness go nie egzekwuje. Nie są warte reguły: składnia Pythona (strażnik składni), „używaj prawdziwych sygnatur" (dane + kontrakt), nazwy z jednego incydentu; brak informacji po stronie agenta → `REPORT_HARNESS_BUG`, powtarzalna kontrola → `CREATE_TOOL`. W przebiegu z 2026-11-12 15 z 28 reguł dotyczyło składni, a 11 sygnatur.
+- `adk/agents/building/seed_writer.md` (7115 → 6189 B): usunięte 1,9 KB o klasach LaTeX (`ThesisPLodz`, `IEEEtran`, „ABSOLUTE BAN"). Pisarz zwraca sekcje Markdown, a szablon nakłada `thesis_publisher`, więc zostało jedno zdanie „nie pisz preambuły". „Kanon 6 rozdziałów" zastąpiony rozdziałami z `table_of_contents` planu. Dodane: limit długości odpowiedzi (~20 tys. znaków; dzisiejsza odpowiedź uciekła przy 24 tys.) i mały diagram; twierdzenie „zweryfikowano/przeszło" tylko wtedy, gdy ładunek to pokazuje (por. §III.2.8).
+- `adk/orchestration/building.py`: dyrektywa w ładunku każdego buildera „dla Rozdziału 3 użyj INLINE TikZ" (numer rozdziału na sztywno, trafiała też do kodera i testera) zastąpiona ogólną: diagram rysuj inline zamiast odwoływać się do nieistniejącego pliku.
+
+### Testy dodane (`tests/test_wave1_contract.py`)
+
+Zawieszony test → `FAIL` z nazwą testu i pliku, bez wyjątku · sygnatury metod w eksporcie · edycja `Klasa.metoda` i błąd przy braku klasy · szkielet ustanawia kontrakt tylko dla modułów kodu · nieuzasadniona zmiana sygnatury odrzucona i plik przywrócony · zmiana z uzasadnieniem przyjęta i zapisana jako `CONTRACT_CHANGED` · uzupełnianie ciał i dodawanie metod bez formalności · odrzucona edycja cofa całą odpowiedź (także nowy plik z `files`) · leczenie wstawia szkielet ze wszystkimi modułami przed pierwszym zadaniem kodu · szkielet planisty zachowany i przesunięty · ładunek naprawy zawiera źródło nieprzechodzącego testu · wyjątek orkiestratora daje status `CRASHED` z komunikatem.
+
+Dostosowane: `test_healing_keeps_planner_order_and_builds_entrypoint_after_its_modules` (kolejność liczona bez zadania szkieletu, które też celuje w punkt wejścia) i `test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_chapters` (liczba zadań planisty bez szkieletu + asercja, że szkielet jest dokładnie jeden).
+
+### Zmiany zachowania, które zobaczysz w przebiegu
+
+- W kolejce pojawi się zadanie `SKELETON` przed pierwszym modułem; w `state/` plik `interface_contract.json`; w historii `CONTRACT_ESTABLISHED`, ewentualnie `CONTRACT_CHANGED` z uzasadnieniem.
+- Odpowiedź, która cicho zmienia API, wraca do agenta jako błąd z różnicą sygnatur; w logu jako wyjątek budowania zadania.
+- Zawieszony test daje porażkę z nazwą testu, a nie koniec procesu.
+- Pliki zmieniane przez `ast_edits` są renderowane przez `ast.unparse`: **komentarze w takim pliku znikają**, formatowanie się normalizuje, docstringi zostają. Przy 30–50% komentarzy myślenia na głos to raczej zysk, ale to skutek uboczny, nie decyzja.
+
+### Znalezione przy okazji, nienaprawione
+
+- **Testy piszą do śledzonego `adk/state/evolution_history.json`**: 943 zdarzenia w HEAD, 1363 po dzisiejszych uruchomieniach testów (same `WEIGHT_ESCALATED`). Fixture `_setup_test_orchestrator` przekierowuje `matrix_path` i inne pliki stanu, ale nie `evolution_history_path`. Problem istniał przed falą 1 (plik był zmodyfikowany już na początku sesji).
+- W trybie mock wymuszona porażka (`simulate_first_attempt_fail`) trafia w pierwsze zadanie roli `config`, a tym jest teraz często szkielet. W przebiegu mock 01 kontrakt był przez to ustanawiany kilka razy (naprawy `SKELETON_…`). W przebiegu live wymuszonych porażek nie ma.
+- `_defend` (Gate 3) nadal powtarza ustalenia w dyrektywie. Poza zakresem 1.6, bo to inna pętla i występuje rzadziej.
+- Szkielet bez zadeklarowanego punktu wejścia celuje w pierwszy moduł listy (często `config.py`); weryfikacja i tak obejmuje cały workspace, więc to tylko etykieta węzła.
+
+### Co zmierzyć w następnym przebiegu 01 (porównanie z §III.8)
+
+| miara | skąd | cel fali 1 |
+|---|---|---|
+| status zakończenia | `benchmark_summary.json` → `orchestrator_status` | dowolny status (nie crash bez statusu) |
+| różne publiczne API `agent.py` (lub odpowiednika) | wersje z `agent_trace.jsonl`, `public_api` | ≤ 2 |
+| `CONTRACT_CHANGED` i odrzucenia strażnika | `evolution_history.json`, log (`Zapis odrzucony`) | jawne, z uzasadnieniem; liczba odrzuceń do oceny, czy strażnik nie dokłada cykli |
+| DONE w generacji 0 | `task_queue.json` / log | > 7/14 |
+| mediana wyjścia kodera przy naprawach; udział `ast_edits` | `agent_trace.jsonl` | < 3 tys. znaków; > 3/92 |
+| średnie wejście `remediation_planner` / `evolution_architect` | `agent_trace.jsonl` | < 20 tys. znaków |
+| naprawy z `failing_tests` w ładunku | `agent_trace.jsonl` | ≥ 80% napraw po porażce pytesta |
+
+Jeśli po przebiegu obawy z fali 2 się potwierdzą (porażki z cudzych plików, zła wina w W4, routing testów na moduły), uruchamiamy odpowiadające pozycje z tabeli fali 2.
+
+---
+
+# Audyt IV — 2026-11-13: Trzeci przebieg 01 po fali 1 — fałszywe porażki z harnessu, zakleszczenie edycji symboli, nieatomowa weryfikacja
+
+**Data audytu:** 2026-11-13
+**Przebieg:** `01_rl_tictactoe`, start 11:07:42 UTC (`ORCHESTRATOR_START`, `enable_layer4=True, include_docs=True, multi_cycle_waves=True`), modele (Ollama): LRM `qwen3.6:35b` (MoE, Q4_K_M, 22 GB), SML `gemma4:e2b` (7,2 GB); GPU RTX 5070 Laptop 8 GB VRAM, 64 GB RAM. *(Korekta 2026-11-14: pierwotnie błędnie podano `qwen3-coder:latest`.)* Audyt robiony **w trakcie przebiegu**; przebieg nie został przerwany.
+**Analizowane artefakty:**
+- `adk/logs/agent_trace.jsonl` (850 MB, 36 802 rekordy; analizowane rekordy od 11:07 UTC)
+- `adk/logs/harness_process.log` (1 GB; bieżący przebieg od linii 16 264 265)
+- kod: `adk/tools/verification/test_runner.py`, `adk/tools/building/ast_editor.py`, `adk/orchestration/building.py`
+
+---
+
+## IV.1. Podsumowanie
+
+Teza wyjściowa („ładujemy za dużo do modeli”) potwierdza się tylko częściowo. Kontekst rośnie i jest zaśmiecony powtórzeniami, ale **pojedyncze wywołania nie są duże** (2–45 tys. znaków, ≤ ~10 tys. tokenów). Czas zjada **liczba wywołań**: harness sam produkuje porażki, odrzuca poprawne odpowiedzi modelu, a każda porażka uruchamia szeregowo 3–4 kolejne wywołania LLM (audytor → architekt ewolucji → planer naprawczy → koder).
+
+- Po 1 h 40 min zegara (stan na 12:47 UTC): **203 wywołania LLM, 95 min czystej inferencji**. DONE: T1, SKELETON, T2, T3. T7 w 35. cyklu naprawczym. O 13:09 UTC przebieg doszedł do T9 i nadal krąży w naprawach.
+- **~50 min (52% czasu LLM) to ścieżka porażki**: `remediation_planner` 22,5 min, `evolution_architect` 17,4 min, `code_auditor` 9,8 min.
+- Co najmniej trzy z tych porażek wywołał harness, nie model (IV.2.1–IV.2.3). Czwarta przyczyna jest architektoniczna (IV.2.4): weryfikacja nie jest zawężona do węzła hipergrafu, więc wcześniejszy błąd w dowolnym pliku oblewa każde kolejne zadanie.
+
+### Statystyki per agent (11:07–12:47 UTC)
+
+| agent | wywołania | czas [min] | śr. czas [s] | prompt systemowy [tys. zn.] | śr. ładunek [tys. zn.] | max ładunek [tys. zn.] | śr. odpowiedź [tys. zn.] |
+|---|---|---|---|---|---|---|---|
+| seed_coder | 86 | 41,2 | 28,8 | 7,2 | 7,5 | 14,1 | 2,46 |
+| remediation_planner | 34 | 22,5 | 39,6 | 3,9 | 16,7 | 31,6 | 2,47 |
+| evolution_architect | 30 | 17,4 | 34,8 | 4,5 | 14,7 | 28,5 | 0,80 |
+| code_auditor | 41 | 9,8 | 14,4 | 1,5 | 24,7 | 45,6 | 2,35 |
+| task_planner | 1 | 2,0 | 119,3 | 8,5 | 2,4 | 2,4 | 7,34 |
+| prompt_consolidator | 7 | 1,5 | 12,7 | 4,2 | 8,6 | 10,5 | 0,63 |
+| background_researcher, task_critic_guard, seed_tester, symbolic_auditor | po 1 | 0,7 łącznie | — | — | — | — | — |
+
+Największe pola ładunku (średnio na wywołanie): `code_auditor.test_report` 11,2 tys., `code_auditor.code_files` 10,9 tys., `remediation_planner.error_report` 12,9 tys., `evolution_architect.validation_report` 13,5 tys., `seed_coder.existing_content` 3,2 tys.
+
+---
+
+## IV.2. Diagnoza
+
+### IV.2.1. Fałszywe błędy importu w `test_runner` (bug harnessu)
+
+`adk/tools/verification/test_runner.py:100-116` dla każdego pliku `.py` wykonuje `python -c "import {py_f.stem}"` z `PYTHONPATH=workspace`. Moduły w podkatalogach (`src/run_experiment.py`) są importowane jako `import run_experiment`, więc zawsze dają `ModuleNotFoundError: No module named 'run_experiment'`. `src/__init__.py` daje `import __init__`. **Poprawny kod zawsze oblewa.**
+
+Skutek w logu: SKELETON (11:10–11:20) i T2 (11:20–11:30) to ok. 20 minut, w których planer naprawczy diagnozuje „zepsutą strukturę pakietu”, a koder ją „naprawia”. Struktura była poprawna. Kolejne przepisania `run_experiment.py` wprowadziły realne błędy (F821 `seed`, a później niedomknięty string w linii 143).
+
+### IV.2.2. Zakleszczenie edycji symboli w `ast_editor` (bug harnessu)
+
+Dwa niezależne problemy, które razem dają pętlę bez wyjścia:
+
+1. `adk/tools/building/ast_editor.py:31-41`: snippet jest parsowany bez `textwrap.dedent`. Metoda zwrócona naturalnie, z wcięciem klasy (`"    def reset(self) -> None: ..."`), daje `SyntaxError in new_code: unexpected indent` i edycja jest odrzucana.
+2. `ast_editor.py:84-92`: jeśli istniejący plik ma `SyntaxError`, każda edycja AST jest odrzucana (`Existing file has SyntaxError`). Fala 1 (pkt 1.5) ustawiła `ast_edits` jako kanał napraw istniejących plików. **Plik z błędem składni nie może więc zostać naprawiony kanałem, którym naprawia się pliki.**
+
+Przebieg zdarzeń dla `src/tictoc_game.py`:
+- 12:28:41: koder (kanał `files`) zapisuje plik z uszkodzonym docstringiem `"""Resets the game board to initial state."""` + osobna linia `"""`. **Ten błąd pochodzi od modelu**: sprawdzono `parsed_output`, nie ma tam literalnych `\n` ani `\"`, więc `_normalize_raw_code` nie jest winny.
+- 12:31:56, 12:40:00, 12:42:53: koder zwraca **poprawne** `TicTacToeGame.reset` jako `ast_edits`. Wszystkie trzy odrzucone (`unexpected indent`), a w kolejnych cyklach dodatkowo `Existing file has SyntaxError`.
+- Analogicznie `src/run_experiment.py` (string w linii 143) i `src/tictoc_env.py` (niedomknięty nawias w linii 18).
+
+### IV.2.3. Za ostra walidacja kształtu odpowiedzi w `_apply_builder_output` (bug harnessu)
+
+`adk/orchestration/building.py:163-168` i `:255-262`:
+- **Pusty plik nie może zostać zapisany.** `_normalize_raw_code("")` zwraca `None`, więc `files: [{filename: "src/__init__.py", content: ""}]` daje `MaterializationError: pola ['files'] nie pasują…`. Pusty `__init__.py` jest poprawny i typowy (SKELETON_FIX_1, 11:19).
+- **Płaskie `{filename, content}` bez opakowania w `files` jest odrzucane** (SKELETON, 11:10 i 11:12). Normalizacja to jedna linia; zamiast niej mamy dwa pełne cykle naprawcze (koder + architekt + planer) tylko po to, żeby powiedzieć modelowi o opakowaniu.
+
+### IV.2.4. Weryfikacja nie jest atomowa (architektura) — nawrót R4 z Audytu III
+
+`run_isolated_tests` kompiluje, importuje i lintuje **cały workspace**, niezależnie od `target_node`. Inni audytorzy mają `SKIPPED_OUT_OF_EDGE_SCOPE`, test_runner hipergrafu nie używa.
+- T2 (`config.py`, n10) oblewa przez `src/run_experiment.py` i `src/__init__.py`.
+- T3 (`requirements.txt`, n11) oblewa przez składnię `config.py`.
+- T7 (`src/q_learner.py`, n15) oblewa przez `run_experiment.py`, `tictoc_env.py` i `tictoc_game.py`. Planer naprawczy sam to diagnozuje: „Although task T7 targeted q_learner.py, the verification failure was triggered by … upstream dependencies”.
+
+To unieważnia główną obietnicę harnessu (atomowe zadania, powiązania regulowane hipergrafem): każdy błąd w dowolnym węźle blokuje wszystkie kolejne zadania, a planer generuje rosnącą liczbę `_FIX_n` na cudzych węzłach. **Warunek uruchomienia R4 z §III.9 („zadania nadal oblewają na błędach w plikach, których nie dotyczą”) jest spełniony.**
+
+### IV.2.5. Kosztowna ścieżka porażki
+
+Każda porażka weryfikacji uruchamia szeregowo `code_auditor` (LLM czytający deterministyczne wyjście py_compile/ruff/pytest), `evolution_architect` (mutacja promptu) i `remediation_planner`, a dopiero potem kodera. Przy 15–55 s na wywołanie lokalnego modelu daje to ok. 1,5–2 min narzutu na porażkę, zanim koder w ogóle zobaczy błąd. Dla błędów deterministycznych (składnia, import, ruff) komunikat narzędzia jest już wystarczającą instrukcją naprawy.
+
+Ewolucja reaguje na fałszywe porażki: 35 decyzji `MUTATE_AGENT` (stan na ~13:10 UTC), a prompt systemowy `seed_coder` urósł z 5 296 do 8 479 znaków (+60%). Reguły dopisywane są m.in. w reakcji na błędy z IV.2.1–IV.2.3. To nawrót „Prompt Poisoning” z Audytu I §5.6 oraz problemu z polityki ewolucji (fala 3).
+
+### IV.2.6. Śmieci w kontekście
+
+- `validation_report` dla `evolution_architect` (12:44:11) zawiera ten sam `SyntaxError in tictoc_game.py` ok. 25 razy. Raporty kumulują się między cyklami bez deduplikacji.
+- Pełne wyjście ruff (z ramkami ASCII i kontekstem) trafia raz do `issues` i drugi raz do `warnings`. `code_auditor.test_report` ma stale ok. 17,8–19 tys. znaków, a `issues` 10–12 pozycji, z czego 9–11 unikalnych.
+- Fala 1 pkt 1.6 („krótszy raport”) skróciła pytesta (`--tb=short`), ale nie objęła ruff ani akumulacji między cyklami.
+
+### IV.2.7. Logi bez rotacji
+
+`harness_process.log` ma 1 GB, a `agent_trace.jsonl` 850 MB. Każde wywołanie jest zapisywane w całości w obu plikach. Nawrót Audytu I §6.4. Dodatkowo polskie znaki w `harness_process.log` są zapisywane w złym kodowaniu (np. `ZWRĂ“CONO`, czyli UTF-8 czytane jako cp1250).
+
+---
+
+## IV.3. Pomiar względem kryteriów fali 1 (§III.10)
+
+Stan na ~13:10 UTC, przebieg trwa.
+
+| miara | cel fali 1 | 2026-11-12 | 2026-11-13 |
+|---|---|---|---|
+| status zakończenia | dowolny status | crash | przebieg trwa, brak crashu do 13:10 |
+| DONE w generacji 0 | > 7/14 | 7/14 | 4 zadania (T1, SKELETON, T2, T3) po 1 h 40 min; nie do porównania przed końcem |
+| mediana wyjścia kodera | < 3 tys. znaków | ~6 tys. | **2,2 tys.** ✔ |
+| udział `ast_edits` w odpowiedziach kodera | > 3/92 | 3/92 | **84/115** ✔ (ale zob. IV.2.2: znaczna część odrzucona przez harness) |
+| śr. wejście `remediation_planner` | < 20 tys. znaków | ~46 tys. | 21,9 tys. (max 35,6 tys.) — blisko celu |
+| śr. wejście `evolution_architect` | < 20 tys. znaków | ~46 tys. | 20,1 tys. (max 33,1 tys.) — blisko celu |
+| cykle naprawcze | — | 34 | 34 do 12:47 UTC (przebieg trwa) |
+| mutacje promptów | — | 28 | 35 do ~13:10 UTC |
+
+Wniosek: fala 1 zrobiła to, co miała (krótsze odpowiedzi, edycje symboli, mniejszy raport), ale **przeniosła wąskie gardło**. Edycje symboli stały się głównym kanałem, a `ast_editor` nie jest na to gotowy (IV.2.2). Nieatomowa weryfikacja (IV.2.4) pozostała najważniejszym źródłem kaskadowych porażek.
+
+---
+
+## IV.4. Plan naprawy (S1–S8)
+
+| id | zmiana | miejsce | uzasadnienie | weryfikacja |
+|---|---|---|---|---|
+| **S1** | Import sprawdzany po ścieżce z kropkami względem workspace'u (`src/run_experiment.py` → `import src.run_experiment`); `__init__.py` jako import pakietu, nie `import __init__` | `test_runner.py:100-116` | IV.2.1, wszystkie porażki SKELETON/T2 | test: workspace z `src/__init__.py` + `src/a.py` przechodzi sanity check |
+| **S2** | `textwrap.dedent` snippetu przed `ast.parse`; wstawiana metoda dostaje wcięcie klasy | `ast_editor.py:31-41` | IV.2.2 pkt 1 | test: `Klasa.metoda` z wcięciem 4 spacji jest przyjmowane |
+| **S3** | Przy `Existing file has SyntaxError` fallback: przyjąć pełny plik (`files`) dla tego pliku albo podmienić symbol tekstowo po zakresie linii; komunikat dla agenta mówi wprost „plik jest nieparsowalny, zwróć cały plik w `files`” | `ast_editor.py:84-92`, `building.py` | IV.2.2 pkt 2, zakleszczenie | test: plik z SyntaxError da się naprawić jedną odpowiedzią |
+| **S4** | Akceptacja pustej treści w `files` (pusty `__init__.py`) i normalizacja płaskiego `{filename, content}` do `files: [...]` | `building.py:145-168` | IV.2.3 | testy materializera |
+| **S5** (= **R4**) | Weryfikacja zawężona do `target_node` i węzłów na jego hiperkrawędziach; błędy w pozostałych plikach idą do `warnings`, nie do FAIL | `test_runner.py`, `orchestration/` | IV.2.4 | test: zadanie na `config.py` przechodzi mimo SyntaxError w niezwiązanym `src/x.py` |
+| **S6** | Szybka ścieżka dla błędów deterministycznych (składnia, import, ruff): od razu z powrotem do tego samego kodera z komunikatem narzędzia, bez `code_auditor`, `evolution_architect` i `remediation_planner`; pełna ścieżka dopiero po N nieudanych próbach. Pokrywa się z R7 i z pozycją fali 2 o `code_auditor` | `orchestration/building.py`, `orchestrator.py` | IV.2.5 | udział czasu ścieżki porażki < 25% (teraz 52%) |
+| **S7** | Ewolucja promptów nie częściej niż raz na N porażek tego samego rodzaju u tego samego agenta i nigdy w reakcji na porażkę z S1–S4. Realizacja polityki z fali 3 | `evolution_architect`, `agent_mutator` | IV.2.5 | prompt `seed_coder` nie rośnie > 20% w przebiegu |
+| **S8** | Deduplikacja `issues` między cyklami; ruff w formacie zwięzłym (`--output-format concise`), bez powtórzenia w `warnings`; rotacja logów i zapis w UTF-8 | `test_runner.py`, raport walidacji, logger | IV.2.6, IV.2.7 | `validation_report` < 8 tys. znaków; brak powtórzeń |
+
+### Kolejność
+
+1. **S1–S4** razem: kilkanaście linii kodu, usuwają porażki wytwarzane przez harness. Bez nich pomiar kolejnych zmian jest zaszumiony.
+2. **S5** (R4): przywraca sens atomowych zadań i hipergrafu.
+3. **S6, S8**: tańsza ścieżka porażki i czystszy kontekst.
+4. **S7**: po S1–S5, żeby ewolucja uczyła się na prawdziwych błędach modelu.
+
+### Uwaga o oczekiwaniach
+
+Nawet po S1–S8 harness z lokalnym `qwen3.6:35b` (15–55 s na wywołanie) będzie wolniejszy niż jeden mocny model robiący całość w kilku wywołaniach. Architektura atomowych zadań ma przewagę dopiero wtedy, gdy typowe zadanie przechodzi w 1–2 wywołaniach. Teraz przechodzi w kilkunastu, głównie przez IV.2.1–IV.2.4.
+
+### Co zmierzyć w następnym przebiegu 01 (porównanie z IV.3)
+
+| miara | cel |
+|---|---|
+| porażki z `No module named` dla plików w `src/` | 0 |
+| odrzucenia `unexpected indent` / `Existing file has SyntaxError` | 0 / każde kończy się fallbackiem S3 |
+| zadania oblane wyłącznie przez błędy w plikach spoza hiperkrawędzi | 0 |
+| udział czasu LLM na ścieżce porażki | < 25% |
+| wywołania LLM na zadanie DONE | < 4 |
+| wzrost promptu `seed_coder` w przebiegu | < 20% |
+
+---
+
+## IV.5. Stan końcowy przebiegu i ranking napraw (2026-11-14)
+
+### Stan końcowy
+
+- Przebieg urwał się 2026-11-13 o 13:11 UTC (ok. 2 h zegara) **bez statusu**. Nie powstał nowy `benchmark_summary.json` (ostatni z 2026-11-08). Nie ustalono, czy przerwano go ręcznie, czy proces padł.
+- `task_queue.json`: **1/20 DONE** (T1, research). SKELETON i T2–T9: FAILED. T12: BLOCKED. Reszta: TODO.
+- Trwale nieparsowalne: `src/run_experiment.py`, `src/tictoc_env.py`, `src/tictoc_game.py`.
+- `src/q_learner.py`, `src/baseline_player.py`, `src/training_loop.py` **kompilują się poprawnie, a ich zadania (T7, T8, T9) są FAILED**. Oblały wyłącznie przez cudze pliki (IV.2.4).
+- Dwa moduły konfiguracji: T4 miało cel n10 (`config.py`), a powstał też `tictoc_config.py` (nawrót R3).
+- Dryf API: `tictoc_env.py` importuje `TicTacToe`, a w `tictoc_game.py` klasa nazywa się `TicTacToeGame`. Strażnik kontraktu tego nie wykrył, bo z nieparsowalnego pliku nie da się odczytać API.
+- `src/__init__.py` robi `from . import tictoc_game, tictoc_env`. Po naprawie S1 jeden zepsuty plik i tak położy import każdego modułu `src.*`, więc S5 musi to uwzględnić (L1 w §IV.6.2).
+
+### Ranking
+
+| # | naprawa | dlaczego tak wysoko | z czego wynika (logi) |
+|---|---|---|---|
+| 1 | **S3 + R7**: `ast.parse` przed każdym zapisem `.py` i natychmiastowe ponowienie u tego samego agenta; dla już zepsutego pliku przyjęcie całego pliku w `files` | jedyny błąd, który robi szkodę **nieodwracalną**: plik zostaje zamknięty na zawsze | 12:28 model zapisał uszkodzony docstring kanałem `files` (R7 niewdrożone); od tej chwili każde `ast_edits` daje `Existing file has SyntaxError`; 3 pliki zepsute do końca |
+| 2 | **S2**: `textwrap.dedent` snippetu | kilka linii; bez tego nr 1 nie działa dla metod klas | 12:31, 12:40, 12:42: poprawne `TicTacToeGame.reset` odrzucone z `unexpected indent` |
+| 3 | **S1**: import po ścieżce z kropkami | to on uruchomił kaskadę na starcie | SKELETON i T2 (ok. 20 min) to „naprawy” poprawnej struktury pakietu; przepisania `run_experiment.py` wprowadziły realne błędy, które dotrwały do końca |
+| 4 | **S5 (= R4)**: weryfikacja zawężona do węzła i hiperkrawędzi | główny powód wyniku 1/20; bez tego atomowe zadania nie mają sensu | T7–T9 z poprawnymi plikami FAILED; T2 oblane przez `src/`, T3 przez `config.py`. Warunek uruchomienia R4 z §III.9 spełniony. Średnia zmiana, dlatego po 1–3 |
+| 5 | **S4**: puste pliki i płaskie `{filename, content}` | mała zmiana, usuwa porażki wywołane wyłącznie przez harness | dwa pełne cykle naprawcze po to, żeby powiedzieć modelowi o opakowaniu; pusty `__init__.py` w ogóle niezapisywalny |
+| 6 | **S6**: szybka ścieżka dla błędów deterministycznych | największa dźwignia czasu dla porażek prawdziwych | 52% czasu LLM na ścieżce porażki; po 1–5 porażek będzie mniej, więc zysk spada |
+| 7 | **R3 + kontrakt** | dryf API i duplikaty modułów | `tictoc_config.py` obok `config.py`; `TicTacToe` vs `TicTacToeGame` |
+| 8 | **S7, S8** | koszt i szum, nie przyczyna porażek; stroić ewolucję dopiero, gdy uczy się na prawdziwych błędach | 35 mutacji, +60% promptu kodera, ten sam błąd ok. 25× w raporcie, 1,9 GB logów |
+| — | **R1 pkt 3**: status przy przerwaniu (`INTERRUPTED` na `KeyboardInterrupt`, `CRASHED` na wyjątek) | jeśli proces padł sam, pilne na równi z nr 1 | brak `benchmark_summary.json` z tego przebiegu |
+
+Punkty 1, 2, 3 i 5 to błędy harnessu, a nie modelu: kilkadziesiąt linii, większość porażek. Punkt 4 to brakująca część architektury, a 6–8 to koszt.
+
+---
+
+## IV.6. Dyskusja: co naprawdę jest problemem (2026-11-14)
+
+### IV.6.1. Główny problem: granica między odpowiedzią modelu a zaakceptowanym stanem
+
+Nie „walidacja kodu” w wąskim sensie, tylko trzy elementy tej granicy:
+1. **Bramka zapisu** (`_apply_builder_output`, `ast_editor`): przepuszcza nieparsowalny plik, a odrzuca poprawną metodę i pusty `__init__.py`.
+2. **Zakres weryfikacji** (`test_runner`): fałszywe importy, cały workspace zamiast węzła.
+3. **Reakcja na porażkę**: trzy kolejne LLM-y, mutacja promptu, `_FIX_n` na cudzych węzłach. Każda porażka, także fałszywa, kosztuje minuty i trwale zmienia prompty.
+
+Czego logi **nie** pokazują jako głównej przyczyny: rozmiaru kontekstu (skutek pętli, nie przyczyna), planowania (20 sensownych zadań w rozsądnej kolejności) ani koncepcji atomowych zadań (nieprzetestowana, bo weryfikacja globalna ją unieważnia). Model realnie produkuje błędy (docstring, zabłąkany cudzysłów, zła nazwa klasy), ale harness zamiast je lokalnie wyłapać, **wzmacnia** je w kaskadę.
+
+### IV.6.2. Logiczne kryterium „zadanie zrobione”: drabinka L0–L2
+
+Obecne kryterium („cały workspace zielony”) z definicji kłóci się z atomowością. Proponowane kryterium: każdy szczebel deterministyczny, każdy dotyczy **tylko węzła zadania**.
+
+| szczebel | co sprawdza | kiedy | przy porażce |
+|---|---|---|---|
+| **L0** | plik się parsuje (`ast.parse`) | przed zapisem | ten sam agent z linią błędu; nic nie trafia na dysk |
+| **L1** | publiczne API pliku zgodne z kontraktem; importy z sąsiadów **statycznie** zgodne z ich kontraktem (bez wykonywania kodu) | po zapisie | ten sam agent z różnicą sygnatur |
+| **L2** | testy sprzężone z węzłem na hiperkrawędziach | po zapisie | ten sam agent z wynikiem testu |
+| **DONE** | L0–L2 zielone | | |
+| **kamień milowy** | pełny pytest, uruchomienie eksperymentu | po fali zadań / przed pracą (audyt stanu, Gate 3) | błędy mapowane po tracebacku na węzły → zadania dla ich właścicieli |
+
+- **L1 zastępuje „zaimportuj wszystko”.** Import jest kruchy, bo jeden zepsuty sąsiad (albo `__init__.py` importujący rodzeństwo) kładzie wszystkich. Kontrola statyczna złapałaby `TicTacToe` vs `TicTacToeGame` bez uruchamiania czegokolwiek.
+- Porażka L0–L2: do tego samego agenta, z komunikatem narzędzia, maks. 2 razy; potem jeden raz planer naprawczy. Ewolucja nie reaguje na pojedynczą porażkę, tylko na wzorzec (IV.6.3 A).
+- `code_auditor` (LLM czytający wyniki narzędzi) przy tej drabince nie ma roli w pętli.
+
+**Czy pomysł jest spalony?** Nie, spalona jest implementacja bramki. Dla projektu na ~10 plików jeden mocny model w pętli „napisz → testy → popraw” wygra zawsze. Hipergraf i atomowe zadania mają przewagę przy słabym lokalnym modelu, który nie udźwignie całości, i przy projekcie, który nie mieści się w kontekście. To jest przypadek ADK, ale przewaga istnieje tylko przy rozliczaniu zadań atomowo, a przebieg z 2026-11-13 tego nie testował.
+
+### IV.6.3. Ewolucja promptów: stan faktyczny i docelowy
+
+**Stan faktyczny (kod i przebieg z 2026-11-13):**
+- Kod ma `CREATE_AGENT` i `SPLIT_AGENT` (`orchestration/evolution.py:129-187`), ale architekt praktycznie zawsze wybiera `MUTATE_AGENT` (dopisz regułę).
+- „Konsolidacja” (`agent_mutator.py:39-143`) nie przepisuje promptu. Zbija 4 reguły w jeden `INVARIANT` i **dokleja go na końcu**. Ewoluowany `seed_coder.md`: 9 inwariantów + 9 pustych linii `CONSOLIDATED_EPOCH`, 94 linie / 8,9 tys. znaków (bazowy: 73 / 5,3 tys.).
+- Inwarianty z cykli 4, 5, 7, 8 i 9 to w istocie to samo „pisz bezbłędną składnię” (reguła, która według §III.2.4 nie zmienia częstości błędów).
+- **Część reguł to wyuczone obejścia bugów harnessu**: cykl 1 (opakowanie w `files`, bug S4), cykl 6 („manipulacja `sys.path`”, bug S1). Ewolucja nie naprawi błędu harnessu promptem, więc uczy model złych nawyków.
+- Największą część promptu kodera stanowi lista **10 dozwolonych kształtów odpowiedzi**, wspólna dla wszystkich builderów. Koder potrzebuje dwóch (`files`, `ast_edits`). Zawężenie kształtów per rola to prostsza redukcja niż dzielenie agentów.
+- Każdy benchmark startuje od promptów z `adk/agents/` (`runner.py:255-259`, `reset=True`); ewoluowane prompty trafiają do archiwum `evolved_adk/` benchmarku. To zgodne z wymogiem: **ewolucja działa w trakcie przebiegu** i tam musi być skuteczna.
+- Prompty architekta i konsolidatora **już zakazują** reguł o składni i reguł nazywających pojedynczy plik lub symbol. Model złamał oba zakazy. Wniosek: **zakaz w prompcie to prośba**; uniwersalność trzeba zabezpieczyć wejściem architekta, bramką w kodzie i sposobem konsolidacji.
+
+> Korekta 2026-11-14: wcześniejsza wersja tej sekcji proponowała przeniesienie ewolucji do kroku między przebiegami. Odrzucone — ewolucja w trakcie przebiegu jest wymogiem projektu. Poniżej obowiązujący kierunek.
+
+**Wymóg treści:** reguła ewolucji ma opisywać **metodę pracy** agenta, uniwersalną dla dowolnego projektu, a nie objaw konkretnego błędu. Nie: „unikaj importu `re`”. Tak: „gdy [klasa sytuacji], [sposób działania], bo [zasada]”.
+
+**Docelowy projekt (A–E):**
+
+**A. Wejście architekta: wzorzec, nie incydent** (najważniejsze). Z jednego `validation_report` naturalnie wychodzi reguła pod ten incydent, niezależnie od promptu.
+- Ewolucja odpala się dopiero, gdy **ta sama kategoria błędu powtórzy się u tego samego agenta w ≥ 2 różnych zadaniach lub węzłach** w bieżącym przebiegu.
+- Architekt dostaje zestawienie: kategoria, liczba wystąpień, 2–3 skrócone przykłady z **różnych** plików. Wspólny mianownik przykładów z różnymi nazwami musi być ogólny, więc uniwersalność wynika ze struktury wejścia.
+
+**B. Bramka w kodzie przed zapisaniem reguły** (`agent_mutator`). Reguła odrzucana deterministycznie, jeśli:
+1. zawiera konkretne identyfikatory: nazwy plików i symboli z workspace'u lub kontraktu, nazwy modułów i bibliotek, kody błędów (`F821`, `SyntaxError`), numery linii, id zadań i węzłów (sprawdzenie względem tabeli symboli projektu i wzorców);
+2. dotyczy kategorii egzekwowanej przez harness (składnia, kształt odpowiedzi, rozwiązywanie importów) — dla nich ewolucja w ogóle się nie odpala, decyduje klasyfikacja raportu w kodzie, nie LLM;
+3. porażkę spowodował harness (ścieżka `REPORT_HARNESS_BUG`; harness musi oznaczać własne porażki — w przebiegu z 2026-11-13 wszystkie z S1–S4);
+4. jest semantycznym duplikatem istniejącej reguły (inwarianty 4, 5, 7, 8, 9 z przebiegu).
+
+**C. Konsolidacja jako przepisanie, nie doklejanie.** Konsolidator dostaje **całą sekcję wyuczoną** (inwarianty + nowe reguły) i zwraca **całą nową sekcję**, która zastępuje starą. Budżet sekcji w kodzie, np. ≤ 6 punktów i ≤ 1,2 tys. znaków. Linie `CONSOLIDATED_EPOCH` przenoszone do `evolution_history.json`.
+
+**D. Skuteczność w trakcie przebiegu.** Każda reguła ma kategorię błędu i cykl powstania. Jeśli po N kolejnych zadaniach agenta częstość tej kategorii nie spadła, konsolidacja ją usuwa. (Przebieg z 2026-11-13 miał 35 cykli — danych wystarczy.)
+
+**E. Forma reguły: metoda, nie objaw.** Pary zła/dobra w promptach architekta i konsolidatora:
+
+| zła (objaw, pod błąd) | dobra (metoda, uniwersalna) |
+|---|---|
+| „Nie używaj `import re` w config.py” | „Gdy moduł ma być konfiguracją, ograniczaj go do deklaracji wartości; logika należy do modułów, które z niej korzystają, bo konfiguracja jest importowana wszędzie i każda jej zależność się rozlewa.” |
+| „Klasa nazywa się TicTacToeGame, nie TicTacToe” | „Gdy używasz symbolu z innego modułu, bierz nazwę i sygnaturę z kontraktu w ładunku, a nie wnioskuj z nazwy pliku, bo kontrakt jest jedynym źródłem prawdy o API sąsiadów.” |
+| „Zamykaj potrójne cudzysłowy w docstringach” | brak reguły: składnię egzekwuje harness (B2) |
+| „Używaj prefiksu `src.` w importach” | brak reguły: porażka harnessu (B3) |
+
+B, C i D działają w kodzie, niezależnie od posłuszeństwa modelu. A i E kształtują treść. Skutek uboczny A: ewolucja odpala się rzadziej (na wzorzec), co jest zaletą — 35 mutacji z przebiegu dało 2–3 użyteczne myśli i ok. 17 min czasu architekta.
+
+### IV.6.4. Kontekst: budżet wyznaczany z hipergrafu
+
+Skala z przebiegu: największe wejście to ok. 45 tys. znaków (≈ 11 tys. tokenów) przy `num_ctx = 32768` (`core/connection.py:262`). Okno się nie przepełnia. Problemem jest **udział szumu**: ten sam błąd ok. 25×, ruff z ramkami ASCII dwa razy, kod wszystkich plików dla audytora, raport o cudzych plikach.
+
+Zasada: agent dostaje tylko to, co leży na jego hiperkrawędziach.
+- **zadanie** i **treść własnego węzła** (dla rozdziału: ten rozdział + spis treści — już częściowo działa),
+- **sygnatury sąsiadów z kontraktu, nie ich kod** (setki znaków zamiast tysięcy),
+- **błędy tylko jego węzła**: zdeduplikowane, format zwięzły, twardy limit (np. 20 linii),
+- **twardy budżet per rola** (np. koder ≤ 6 tys. tokenów); przy przekroczeniu harness obcina według priorytetu, zamiast pozwolić Ollamie po cichu uciąć początek.
+
+`code_auditor` wypada z pętli (zastępuje go L0–L2), a `evolution_architect` odpala się tylko na wzorzec (IV.6.3 A) i dostaje zestawienie zamiast pełnego raportu. To ok. 27 min z 95 min czasu LLM przebiegu i dwa największe wejścia.
+
+### IV.6.5. Wspólny wniosek
+
+Hipergraf powinien wyznaczać trzy rzeczy: **kontekst** agenta, **zakres weryfikacji** zadania i **odpowiedzialność** za błąd (właściciel węzła). Obecnie nie wyznacza żadnej z nich: weryfikacja patrzy na cały workspace, kontekst jest sklejany z raportów globalnych, a wina trafia do agenta bieżącego zadania. Następny krok: rozpisać to jako jeden spójny plan zamiast łatania S1–S8 osobno. S1–S4 zostają jako natychmiastowe poprawki błędów, niezależne od planu.
+
+---
+
+## IV.7. Ranking napraw z naciskiem na skrócenie przebiegu (2026-11-14)
+
+Zastępuje ranking z §IV.5 (ta sama treść napraw, dołożony wymiar czasu i projekt ewolucji z §IV.6.3).
+
+### Skąd bierze się czas (przebieg z 2026-11-13, 11:07–12:47 UTC)
+
+| składnik | czas LLM | uwaga |
+|---|---|---|
+| koder (seed_coder) | 41 min / 86 wywołań | ~7 nominalnych zadań; reszta to naprawy, w dużej części fałszywych porażek |
+| planer naprawczy | 22,5 min / 34 | ~40 s na porażkę |
+| architekt ewolucji | 17,4 min / 30 | ~35 s na porażkę |
+| code_auditor | 9,8 min / 41 | czyta deterministyczne wyniki narzędzi |
+| reszta | ~4 min | planowanie, research |
+
+Jedna porażka kosztuje ok. 1,5 min narzutu (audytor + architekt + planer), zanim koder zobaczy błąd. Run jest długi, bo porażek jest dużo (w dużej części wytwarza je harness), każda jest droga, a jedno zadanie może krążyć bez limitu (T7: 35. cykl).
+
+### Ranking
+
+| # | naprawa | jakość | czas | z czego wynika |
+|---|---|---|---|---|
+| 1 | **L0: `ast.parse` przed zapisem + ponowienie u tego samego agenta; zepsuty istniejący plik przyjmuje cały plik** (S3 + R7) | usuwa szkodę nieodwracalną | koniec pętli na zakleszczonych plikach (od 12:28 do końca) | IV.2.2 |
+| 2 | **`dedent` snippetu** (S2) | poprawne edycje metod przestają być odrzucane | każde odrzucenie = pełny cykl ~2 min | IV.2.2 |
+| 3 | **import po ścieżce z kropkami** (S1) | koniec fałszywych porażek | ~20 min na starcie przebiegu | IV.2.1 |
+| 4 | **puste pliki i płaskie `{filename, content}`** (S4) | j.w. | 2–3 cykle | IV.2.3 |
+| 5 | **Weryfikacja węzła: L1 (statyczny kontrakt) + L2 (testy na hiperkrawędziach); pełny zestaw tylko na kamieniach milowych** (S5 = R4, §IV.6.2) | atomowość; 1/20 DONE przy poprawnych T7–T9 | brak kaskady `_FIX_n` na cudzych węzłach | IV.2.4, IV.5 |
+| 6 | **Szybka ścieżka + limit na zadanie**: porażka L0–L2 → ten sam agent z komunikatem narzędzia (maks. 2×) → raz planer naprawczy → zadanie odkładane jako luka, kolejka idzie dalej. `code_auditor` poza pętlą. `ruff --fix` przed raportem (Audyt I §5.5) | brak nieskończonych pętli na jednym zadaniu | z ~1,5 min do ~0,5 min narzutu na porażkę; ~10 min audytora mniej | IV.2.5, T7 |
+| 7 | **Ewolucja w trakcie przebiegu według A–E** (§IV.6.3): wyzwalanie na wzorzec, bramka treści w kodzie, konsolidacja jako przepisanie w budżecie, usuwanie nieskutecznych reguł | reguły uniwersalne; prompt nie puchnie | z ~30 do kilku wywołań architekta (~15 min mniej); krótszy prompt kodera przy każdym wywołaniu | IV.2.5, IV.6.3 |
+| 8 | **Budżet kontekstu z hipergrafu** (§IV.6.4) + deduplikacja i zwięzły ruff (S8); kształty odpowiedzi zawężone per rola | mniej szumu | krótszy prefill lokalnego modelu przy każdym wywołaniu (wejścia planera i architekta do ~20 tys. znaków, audytora do 45 tys.) | IV.2.6 |
+| 9 | **Routing i kontrakt** (R3) | koniec duplikatów modułów i dryfu nazw | mniej napraw po fakcie | IV.5 |
+| 10 | **Status przy przerwaniu, rotacja logów, UTF-8** (R1 pkt 3, IV.2.7) | diagnozowalność | — | IV.5, IV.2.7 |
+| później | **Równoległe budowanie niezależnych węzłów** (hipergraf wskazuje niezależność; wymaga `OLLAMA_NUM_PARALLEL` i pamięci GPU) | — | potencjalnie największy zysk zegarowy, ale dopiero po 1–6 | pomysł do pomiaru |
+
+### Oczekiwany efekt (szacunek, do weryfikacji pomiarem)
+
+Po 1–4 znikają porażki wytwarzane przez harness. Po 5 porażka jednego pliku nie oblewa innych zadań. Po 6 każda prawdziwa porażka kosztuje ok. 1/3 obecnego narzutu i ma limit. W przebiegu z 2026-11-13 ok. 50 z 95 min LLM przypadało na ścieżkę porażki; cel to < 25% czasu i < 4 wywołania LLM na zadanie DONE (§IV.4, tabela pomiarów).
+
+---
+
+## IV.8. Dobór modelu i przeładowania modeli (2026-11-14)
+
+### Sprzęt i modele
+
+GPU RTX 5070 Laptop **8 GB VRAM**, 64 GB RAM. LRM `qwen3.6:35b` (MoE `qwen35moe`, 35,5B, Q4_K_M, 22 GB), SML `gemma4:e2b` (7,2 GB). qwen nie mieści się na GPU: 80–86% działa na CPU, ratuje go mała liczba aktywnych parametrów MoE.
+
+### Udział tierów (cały przebieg z 2026-11-13, 263 wywołania)
+
+| model | wywołania | czas LLM | role |
+|---|---|---|---|
+| `qwen3.6:35b` (LRM) | 188 | **103 min (83%)** | koder (97/117), planer naprawczy, architekt, konsolidator, planer |
+| `gemma4:e2b` (SML) | 75 | 20 min | audytorzy, 20 wywołań kodera |
+
+Dlaczego prawie zawsze LRM:
+1. `tools/planning/complexity_router.py:34`: LRM, gdy `degree >= 2` lub `weight > 1.5`. W projekcie z kodem, testami i pracą prawie każdy moduł ma ≥ 2 hiperkrawędzie. Każda porażka podbija wagę (`escalate_node_weight`), więc węzeł po porażce zostaje na LRM do końca przebiegu.
+2. Planer naprawczy i architekt mają LRM na sztywno (`orchestrator.py:516`, `orchestration/evolution.py:64`), także dla trywialnych napraw („usuń cudzysłów w linii 143”).
+
+### Przeładowania (zmierzone)
+
+- W przebiegu **102 przełączenia modelu** na 263 wywołania (cykl: koder LRM → audytor SML → architekt LRM).
+- Mediana po przełączeniu: koder LRM 47 s vs 27 s bez przełączenia; audytor SML 13 s vs 8 s.
+- Pomiar 2026-11-14 (naprzemienne wywołania z opcjami harnessu, `load_duration` z Ollamy): **każde przełączenie = pełne przeładowanie**: qwen 12–21 s, gemma ~6 s. Szacunek dla przebiegu: **~16 min samego ładowania**.
+- Przyczyna (log serwera Ollamy, `common_params_fit_impl`): qwen zajmuje całą wolną VRAM (~4,9 GB, 38 warstw ekspertów przelewa się do RAM). Gemma nie mieści się obok, więc scheduler wyrzuca qwen. `OLLAMA_MAX_LOADED_MODELS=2` tego nie zmienia: Ollama trzyma razem tylko modele, które się mieszczą.
+- `OLLAMA_NUM_PARALLEL=4` (zmienna użytkownika Windows) rezerwowało cache kontekstu na 4 sloty × 32k przy szeregowym harnessie. Po zmianie na 1: qwen 22 GB zamiast 24 GB, udział GPU 20% zamiast 14%.
+
+### Sprawdzone warianty
+
+| wariant | wynik |
+|---|---|
+| `MAX_LOADED_MODELS=2`, `NUM_PARALLEL=1` | przeładowania nadal (brak miejsca w VRAM) |
+| gemma tylko na CPU (`num_gpu: 0`) | oba modele zostają załadowane, ale gemma przetwarza prompt 9,6 tys. tokenów w **28 s** — wolniej niż obecna ścieżka |
+| **jeden model (qwen) dla obu tierów** | brak przełączeń; załadowany qwen przetwarza ten sam prompt 9 tys. tokenów w **11,8 s** (prefill ~850 tok/s, generowanie ~48 tok/s), czyli szybciej niż gemma + dwa przeładowania (~27 s) |
+
+### Zasada projektowa (korekta 2026-11-14)
+
+**Mały model wykonuje pracę, duży tylko czasem pomaga.** To cel harnessu. Dwa tiery zostają. Przebieg z 2026-11-13 robił odwrotnie (83% czasu na LRM), a problem przeładowań trzeba rozwiązać w ramach tej zasady, nie przez przejście na duży model.
+
+> Odrzucone 2026-11-14: wariant „jeden model (qwen) dla obu tierów” z tabeli wyżej. Był najszybszy w pomiarze, ale omija cel harnessu. Zmiana została wprowadzona w `.env` (`HARNESS_OLLAMA_SML_MODEL=qwen3.6:35b`, linia z `gemma4:e2b` zakomentowana) bez zgody użytkownika i **czeka na cofnięcie** przez użytkownika (przywrócenie `HARNESS_OLLAMA_SML_MODEL=gemma4:e2b`). Do czasu cofnięcia przebieg użyje qwen w obu tierach.
+
+### Wdrożone (2026-11-14)
+
+- Zmienne użytkownika Windows: `OLLAMA_NUM_PARALLEL=1` (było 4), `OLLAMA_MAX_LOADED_MODELS=2`; Ollama zrestartowana, log serwera potwierdza obie wartości. Ustawienie serwera, niezależne od wyboru modeli; zwalnia VRAM (qwen: udział GPU 20% zamiast 14%), który przyda się małemu modelowi.
+
+### Kierunek: dwa modele bez przeładowań
+
+**W1. Współrezydencja: mały na GPU, duży stale w RAM na CPU.** `gemma4:e2b` dostaje GPU, `qwen3.6:35b` ładowany z `num_gpu: 0` (opcja w zapytaniu dla tieru LRM). 64 GB RAM mieści oba modele, więc scheduler nie wyrzuca żadnego. Duży jest wolniejszy, ale wołany rzadko. Wariant odwrotny (gemma na CPU) potwierdził, że model z `num_gpu: 0` zostaje załadowany obok drugiego. **Do zmierzenia:** czas wywołania qwen w całości na CPU (prompt ~9 tys. tokenów) i czy gemma mieści się w całości w GPU przy `num_ctx` 32k / 16k.
+
+**W2. Rzadkie i grupowane wywołania dużego.** Przy kilku–kilkunastu wywołaniach LRM na przebieg przeładowania (~20 s każde) przestają mieć znaczenie. Problemem nie jest przełączanie, tylko 102 przełączenia. W2 wynika z routera (niżej) i z fal (§IV.9: wywołania LRM grupowane na granicy fali).
+
+W1 i W2 się uzupełniają: W2 jest potrzebne zawsze, W1 usuwa resztkowy koszt przełączeń.
+
+### Router tieru według rodzaju pracy (zastępuje kryterium stopnia węzła)
+
+| praca | tier |
+|---|---|
+| kodowanie, testy, pisanie, naprawy, audytorzy | **SML (domyślnie)** |
+| planowanie (raz na przebieg) | LRM |
+| zadanie, na którym SML oblał 2 razy z rzędu | LRM, **jednorazowa eskalacja** tej próby |
+| ewolucja (po §IV.6.3 A odpalana na wzorzec, rzadko) | LRM |
+
+- Porażka nie podbija tieru węzła na stałe (dziś `escalate_node_weight` + `weight > 1.5` trzyma węzeł na LRM do końca przebiegu).
+- Planer naprawczy i architekt przestają mieć LRM na sztywno (`orchestrator.py:516`, `orchestration/evolution.py:64`): planer naprawczy na SML, LRM tylko przy eskalacji.
+
+### Otwarte
+
+- **Jakość małego modelu staje się parametrem krytycznym systemu.** `gemma4:e2b` jest bardzo mały. Do przetestowania: najmocniejszy model mieszczący się w całości w 8 GB (wraz z cache kontekstu), porównany z gemmą na naprawach i zadaniach modułów z przebiegu z 2026-11-13 (odsetek przyjętych odpowiedzi, liczba prób do DONE).
+- `num_ctx` 32k → 16k po wdrożeniu budżetu kontekstu (§IV.6.4): mniejszy cache, więcej miejsca na GPU dla małego modelu.
+- Pomiar w następnym przebiegu: udział wywołań i czasu LRM (cel: mniejszość wywołań), liczba wywołań z `load_duration` > 1 s, mediana czasu wywołania per rola, liczba eskalacji SML → LRM.
+
+---
+
+## IV.9. Fale równoległe (2026-11-14, projekt)
+
+Obecnie wykonanie jest w pełni szeregowe (brak współbieżności w kodzie; `multi_cycle_waves` dotyczy przyrostów planu, nie równoległości).
+
+### Projekt: generowanie równolegle, zatwierdzanie szeregowo
+
+1. **Fala** = zadania z zależnościami DONE, których węzły docelowe nie są sprzężone w hipergrafie. Przykład z przebiegu z 2026-11-13: po SKELETON `tictoc_game`, `q_learner`, `baseline_player`, `training_loop` zależą tylko od kontraktu.
+2. **Generowanie równoległe**: 2 zapytania naraz do tego samego modelu, bez zapisów.
+3. **Zatwierdzanie szeregowe w głównym wątku**: materializacja + walidacja węzła (L0–L2) po kolei; stan JSON ma jednego pisarza, bez blokad.
+4. **Porażki** wracają w następnej fali jako naprawy, razem z nowymi zadaniami.
+5. **Ewolucja na granicy fal**: nadal w trakcie przebiegu, w punkcie bez zapytań w locie; naturalne miejsce na wykrycie wzorca w ≥ 2 zadaniach (§IV.6.3 A).
+
+Zmiana w kodzie: średnia. `_execute_builder_step` rozdzielone na „wygeneruj” (czyste wywołanie LLM) i „zatwierdź” (zapis + walidacja); pula wątków tylko na generowanie.
+
+### Warunki wstępne
+
+- **S5 (weryfikacja węzła)**: przy walidacji globalnej jedna porażka oblewa całą falę.
+- **Zakres zapisu ograniczony do węzła docelowego** (R6): zadanie nie zapisuje pliku innego zadania z fali.
+- **Zmiana kontraktu w fali** unieważnia zależne zadania z tej fali → następna fala.
+- **Jeden model na falę** (§IV.8).
+- `OLLAMA_NUM_PARALLEL=2` i `num_ctx` 16k, żeby cache dwóch slotów zmieścił się w pamięci.
+
+### Oczekiwany zysk (do zmierzenia przed wdrożeniem)
+
+Przy qwen w większości na CPU dwa zapytania mogą dzielić odczyt wag przy generowaniu, ale w MoE różne tokeny trafiają w różnych ekspertów, a prefill jest ograniczony obliczeniami. Szacunek **1,2–1,7× na zegarze** dla fali dwóch zadań. Pomiar: dwa równoczesne zapytania z promptami z przebiegu z 2026-11-13 vs sekwencyjnie.
+
+### Miejsce w kolejności
+
+Po §IV.7 pkt 1–6 i §IV.8. Równoległość mnoży to, co jest: przy 52% czasu na pętlach po fałszywych porażkach przyspieszyłaby pętle. Niezależnie od zysku czasowego granica fali porządkuje ewolucję i grupowanie napraw, więc warto ją zaplanować w projekcie wcześnie.

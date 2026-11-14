@@ -204,11 +204,13 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
     assert [c["node_file"] for c in t_res["architecture_cycles"]] == ["config.py", "results.csv", "thesis.md"]
     assert all(c["w3_post_remediation_status"] == "PASS" for c in t_res["architecture_cycles"])
 
-    # Verify Layer 4 self-evolution events (CREATE_AGENT + SPLIT_AGENT + MUTATE_AGENT + WEIGHT_ESCALATED)
+    # Layer 4 events: the missing specialization is created at planning time and every failure escalates the
+    # node weight. The architect itself is not called: each injected failure is one incident, repaired by the
+    # fast path (the split-agent path is covered by test_layer4_and_orchestrator at the tool level).
     evo_events = t_res["evolution"]["new_events_in_task"]
     assert "AGENT_CREATED" in evo_events
-    assert "AGENT_SPLIT" in evo_events
     assert "WEIGHT_ESCALATED" in evo_events
+    assert all(c["w4_action"] == "FAST_FIX" for c in t_res["architecture_cycles"])
 
     # Verify all 6 chapters exist in compiled thesis.compiled.md and thesis.compiled.tex
     compiled_md = Path(t_res["artifacts"]["compiled_md_path"]).read_text(encoding="utf-8")

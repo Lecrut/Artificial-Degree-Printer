@@ -1,37 +1,52 @@
 {
   "files": [
     "config.py",
-    "core.py",
+    "figures/anomaly_detection_comparison.png",
+    "figures/comparison.py",
     "figures/comparison_chart.pdf",
     "figures/comparison_chart.png",
     "logs/experiment.log",
     "plot_results.py",
     "references.bib",
-    "results.csv",
-    "test_core.py",
+    "research/foundations.md",
+    "research/sota.md",
+    "src/data/synthetic_data_generator.py",
+    "src/detectors/baseline_zscore.py",
+    "src/detectors/ensemble_detector.py",
+    "src/evaluation/metrics.py",
+    "src/experiment/experiment_runner.py",
+    "test_config.py",
+    "test_experiment_runner.py",
+    "tests/test_baseline_detector.py",
+    "tests/test_config.py",
+    "tests/test_data_generator.py",
+    "tests/test_ensemble_detector.py",
+    "tests/test_metrics.py",
+    "tests/test_plot_results.py",
     "thesis.md"
   ],
   "pytest_status": "FAIL",
   "pytest_errors": [
-    "Ruff lint failure: E402 Module level import not at top of file\n --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:8:1\n  |\n6 | current_dir = Path(__file__).parent\n7 | sys.path.insert(0, str(current_dir))\n8 | import config\n  | ^^^^^^^^^^^^^\n9 | import core\n  |\nhelp: Move module level imports to top of file\n\nE402 Module level import not at top of file\n  --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:9:1\n   |\n 7 | sys.path.insert(0, str(current_dir))\n 8 | import config\n 9 | import core\n   | ^^^^^^^^^^^\n10 |\n11 | class TestConfigConstants:\n   |\nhelp: Move module level imports to top of file\n\nF811 Redefinition of unused `generate_comparison_plot` from line 86\n   --> adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:116:5\n    |\n114 |     plt.close()\n115 |\n116 | def generate_comparison_plot(csv_path: str='results.csv', out_path: str='figures/comparison_chart.png') -> None:\n    |     ^^^^^^^^^^^^^^^^^^^^^^^^ `generate_comparison_plot` redefined here\n117 |     \"\"\"Generate comparison chart from evaluation results.\n    |\n   ::: adk\\workspace\\benchmarks\\_evolved_adk_state\\workspace\\test_core.py:86:5\n    |\n 84 |         assert proposed_f1 >= baseline_f1, f'Proposed F1 ({proposed_f1}) should be >= Baseline F1 ({baseline_f1})'\n 85 |\n 86 | def generate_comparison_plot(csv_path: str='results.csv', out_path: str='figures/comparison_chart.png') -> None:\n    |     ------------------------ previous definition of `generate_comparison_plot` here\n 87 |     \"\"\"Generate comparison chart from evaluation results.\n    |\nhelp: Remove definition: `generate_comparison_plot`\n\nFound 3 errors."
+    "Pytest failure: =================================== ERRORS ====================================\n_ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_config.py _\nimport file mismatch:\nimported module 'test_config' has this __file__ attribute:\n  D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\test_config.py\nwhich is not the same as the test file we want to collect:\n  D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_config.py\nHINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules\n=========================== short test summary info ===========================\nERROR tests\\test_config.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 1.28s"
   ],
   "chapters_present": [
     1,
-    2
-  ],
-  "chapters_missing": [
+    2,
     3,
     4,
     5,
     6
   ],
-  "symbolic_errors": [],
-  "csv_columns": [
-    "method",
-    "precision",
-    "recall",
-    "f1_score",
-    "false_alarm_rate"
+  "chapters_missing": [],
+  "symbolic_errors": [
+    "File 'file' does not exist",
+    "File 'file' does not exist",
+    "File 'file' does not exist",
+    "Malformed symbolic tag missing ':' separator: \\ref_csv{results/final_results.json}"
   ],
-  "trigger_issues": []
+  "csv_columns": [],
+  "trigger_issues": [
+    "Unresolved pointer: \\ref_csv{results/final_results.json}",
+    "Malformed symbolic tag missing ':' separator: \\ref_csv{results/final_results.json}"
+  ]
 }

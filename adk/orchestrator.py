@@ -21,6 +21,9 @@ from adk.orchestration.common import (
     _FILE_FINDING,
     _issue_fingerprints,
     _issue_signature,
+    _issue_category,
+    FAST_REPAIR_ATTEMPTS,
+    HARNESS_ENFORCED_CATEGORIES,
     _collect_report_issues,
     _looks_like_workspace_path,
     GAPS_SECTION_TITLE,
@@ -46,6 +49,8 @@ from adk.orchestration.common import (
     OUTPUT_SCHEMA,
     _METADATA_KEYS,
     build_grounded_symbols,
+    is_skeleton_task,
+    SKELETON_TASK_ID,
 )
 from adk.orchestration.gates import GatesMixin
 from adk.orchestration.routing import RoutingMixin
@@ -96,6 +101,8 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
         self.hitl_flag_path = self.state_dir / "hitl_flag.json"
         self.blueprint_path = self.state_dir / "academic_blueprint.json"
         self._last_experiment_error = ""
+        # Files written since the last verification: together with the task's node they are its verification scope.
+        self._written_since_verification: set[str] = set()
 
     def _call_agent(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """The single seam through which every part of the orchestrator calls a model (tests patch `call_agent`)."""
@@ -254,7 +261,7 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
 
         node_id, node_file = self._resolve_target_node(str(task.get("target_node", "v1")), task=task, fallback="v1")
         task["target_node"] = node_id
-        tier = select_model_tier(node_id, self.matrix_path)
+        tier = select_model_tier()
         t_id = str(task.get("task_id", f"T{idx + 1}"))
         t_agent = str(task.get("assigned_agent", "seed_coder"))
         print(
@@ -278,6 +285,7 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
         )
         if builder_error_msg:
             report["status"] = "FAIL"
+            report["failed_agent"] = report.get("failed_agent") or t_agent
             report.setdefault("issues", []).append(builder_error_msg)
             report.setdefault("errors", []).append(builder_error_msg)
 
@@ -318,22 +326,26 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
         node_id: str,
         node_file: str,
     ) -> tuple[dict[str, Any], dict[str, Any] | None]:
-        """W3(FAIL) -> [contract fast fix | W4 evolution] -> W1 remediation -> W2 -> W3, until PASS or budget."""
+        """W3(FAIL) -> fast fix by the file's author (twice, no W4/W1) -> one W4 (pattern-gated) -> W1 -> W2 -> W3.
+        A task that is still failing after that is left as a gap; the queue moves on (Audit IV §IV.7 pkt 6)."""
         t_id = str(task.get("task_id", "T1"))
         t_desc = str(task.get("description", "Brak opisu"))
         task["repair_attempts"] = 0
-        last_contract_fix: list[str] | None = None
         while report["status"] != "PASS" and task["repair_attempts"] < state.max_retries:
             task["status"] = "FAILED"
             write_json_state(self.task_queue_path, state.tasks)
             task["repair_attempts"] += 1
+            attempt = int(task["repair_attempts"])
             state.replan_count += 1
 
             # EvoRoute: dynamically escalate node difficulty weight w(v) on failure
             esc_res = escalate_node_weight(node_id, delta=0.4, matrix_path=self.matrix_path)
             self._record_evolution_event({"type": "WEIGHT_ESCALATED", "details": esc_res})
 
-            failed_agent = str(task.get("assigned_agent", "seed_coder"))
+            # The author of the file named in the findings (node `last_writer`), not the agent of this task:
+            # a coder's task failing on a wrong test must discipline the tester (R5).
+            failed_agent = str(report.get("failed_agent") or task.get("assigned_agent", "seed_coder"))
+            failed_file = str(report.get("failed_file") or node_file)
             state.agent_failures[failed_agent] = state.agent_failures.get(failed_agent, 0) + 1
             cycle_trace: dict[str, Any] = {
                 "cycle_number": state.replan_count,
@@ -354,69 +366,107 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
 
             issues_list = _collect_report_issues(report)
             issues_summary = "; ".join(_fit_items(issues_list)) if issues_list else "Usterka weryfikacji warstwy 3"
+            category = _issue_category(issues_list)
+            hits = state.category_hits.setdefault((failed_agent, category), {})
+            hits.setdefault(t_id, (issues_list[0] if issues_list else issues_summary)[:400])
+            self._log_failure_category(state.replan_count, failed_agent, category, t_id)
+            # The findings travel once, in the report. Repeating them here doubled the planner's and the
+            # architect's input (2026-11-12: ~46k characters per call, 87-90% of it two copies of pytest output).
             remediation_directive = (
-                f"Poprzednio nie zadziałało: {issues_summary}. "
-                f"Zrób to: w zadaniu {t_id} na węźle {node_id} ({node_file}) wyeliminuj ten błąd i wygeneruj w pełni poprawną zawartość."
+                f"Zadanie {t_id} na węźle {node_id} ({node_file}) nie przeszło weryfikacji; ustalenia są w raporcie "
+                "weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą."
             )
 
-            # Fast path: a hyperedge contract violation is deterministic and self-describing, so the same
-            # builder is re-run with the exact message, skipping W4 + W1 (two LRM calls). A repeated
-            # identical violation falls through to the full W4 -> W1 loop.
-            contract_violations = report.get("contract_violations") or []
-            if contract_violations and contract_violations != last_contract_fix:
-                last_contract_fix = contract_violations
-                contract_task = {
+            if attempt <= FAST_REPAIR_ATTEMPTS:
+                # Fast path: the findings are deterministic and self-describing (syntax, import, ruff, pytest,
+                # contracts), so the author of the failed file gets them verbatim, right away, with no planner
+                # and no evolution in between. 2026-11-13: that detour cost ~1.5 min per failure.
+                fast_task = {
                     **task,
-                    "task_id": f"{t_id}_CONTRACT_FIX",
-                    "description": f"{t_desc}\nNAPRAW KONTRAKT HIPERGRAFU: " + " ".join(contract_violations),
+                    "repair_of": t_id,
+                    "task_id": f"{t_id}_FIX{attempt}",
+                    "target_node": failed_file,
+                    "assigned_agent": failed_agent,
+                    "description": f"{t_desc}\nNAPRAW (ustalenia weryfikacji):\n- " + "\n- ".join(_fit_items(issues_list)),
                 }
+                fast_tier = select_model_tier(failures=attempt - 1)
                 print(
-                    f"  [KONTRAKT HIPERKRAWĘDZI] {' '.join(contract_violations)}\n"
-                    f"  [WARSTWA 2: SZYBKA NAPRAWA] Ponowne budowanie {node_file} bez W4/W1...",
+                    f"  [WARSTWA 2: SZYBKA NAPRAWA {attempt}/{FAST_REPAIR_ATTEMPTS}] {failed_file} przez '{failed_agent}' "
+                    f"(Tier: {fast_tier}), bez W4/W1...",
                     flush=True,
                 )
-                self._record_evolution_event({"type": "CONTRACT_FAST_FIX", "task_id": t_id, "violations": contract_violations})
+                builder_error: str | None = None
                 try:
-                    self._execute_builder_step(contract_task, model_tier=select_model_tier(node_id, self.matrix_path))
+                    self._execute_builder_step(fast_task, model_tier=fast_tier)
                     self._refresh_experiment_after_code(node_id)
                 except Exception as exc:
                     # A crashed repair must not look like a completed one: keep it on record.
-                    print(f"  [OSTRZEŻENIE: BŁĄD SZYBKIEJ NAPRAWY] {exc}", flush=True)
+                    builder_error = f"Wyjątek szybkiej naprawy {fast_task['task_id']} na pliku {failed_file}: {exc}"
+                    print(f"  [OSTRZEŻENIE: BŁĄD SZYBKIEJ NAPRAWY] {builder_error}", flush=True)
                     cycle_trace["builder_error"] = str(exc)
-                    self._record_evolution_event({"type": "CONTRACT_FAST_FIX_FAILED", "task_id": t_id, "error": str(exc)})
                 report = self._run_verification_step(task, include_docs=self.include_docs, is_final_gate=False, inject_failure=False)
-                cycle_trace["w4_action"] = "CONTRACT_FAST_FIX"
-                cycle_trace["w1_remediation_task_id"] = contract_task["task_id"]
+                if builder_error:
+                    report["status"] = "FAIL"
+                    report["failed_agent"] = report.get("failed_agent") or failed_agent
+                    report.setdefault("issues", []).append(builder_error)
+                    report.setdefault("errors", []).append(builder_error)
+                cycle_trace["w4_action"] = "FAST_FIX"
+                cycle_trace["w1_remediation_task_id"] = fast_task["task_id"]
                 cycle_trace["w3_post_remediation_status"] = report["status"]
                 state.architecture_cycles.append(cycle_trace)
                 continue
 
-            # W4 only for a failure this agent has not been disciplined for yet. The signature is the set
-            # of `file:rule` fingerprints and every one seen in the run is remembered, so neither a
-            # renamed identifier nor an A -> B -> A oscillation buys another near-identical MUTATE rule.
-            evo_key = (failed_agent, _issue_signature({"issues": issues_list}))
-            run_evolution = self.enable_layer4 and evo_key not in state.seen_evo
-            if self.enable_layer4 and not run_evolution:
+            # One full cycle. W4 only for a pattern: the same category of failure of the same agent in at least
+            # two different tasks, never for what the harness itself enforces, and once per (agent, category).
+            # A missing third-party package is the exception: that decision is deterministic and cheap.
+            evo_key = (failed_agent, category)
+            missing_pkgs = self._missing_third_party_modules(report)
+            pattern = len(hits) >= 2
+            run_evolution = False
+            if not self.enable_layer4:
+                pass
+            elif evo_key in state.seen_evo:
                 cycle_trace["w4_action"] = "SKIPPED_SAME_FAILURE"
-                print("  [WARSTWA 4: POMINIĘTA] Ten błąd był już w tym przebiegu; decyzja ewolucyjna już podjęta.", flush=True)
+                print("  [WARSTWA 4: POMINIĘTA] Ta kategoria błędu tego agenta ma już regułę w tym przebiegu.", flush=True)
                 state.repeats_after_evolution[evo_key] = state.repeats_after_evolution.get(evo_key, 0) + 1
                 if state.repeats_after_evolution[evo_key] >= 2:
-                    # The prompt was already changed for exactly this failure and it is still here: the defect
-                    # is not in the agent. Stop spending retries on it and say where to look instead.
-                    task["harness_bug"] = self._report_harness_bug(evo_key[1], t_id)
+                    # The prompt was already changed for exactly this kind of failure and it is still here: the
+                    # defect is not in the agent. Stop spending retries on it and say where to look instead.
+                    task["harness_bug"] = self._report_harness_bug(_issue_signature({"issues": issues_list}), t_id)
                     cycle_trace["w4_action"] = "REPORT_HARNESS_BUG"
                     state.architecture_cycles.append(cycle_trace)
                     break
-            state.seen_evo.add(evo_key)
+            elif category in HARNESS_ENFORCED_CATEGORIES and not missing_pkgs:
+                cycle_trace["w4_action"] = "SKIPPED_HARNESS_ENFORCED"
+                print(f"  [WARSTWA 4: POMINIĘTA] Kategorię '{category}' egzekwuje harness; reguła promptu nic tu nie da.", flush=True)
+            elif not pattern and not missing_pkgs:
+                cycle_trace["w4_action"] = "SKIPPED_NO_PATTERN"
+                print(f"  [WARSTWA 4: POMINIĘTA] Kategoria '{category}' wystąpiła dotąd w jednym zadaniu; ewolucja czeka na wzorzec.", flush=True)
+            else:
+                run_evolution = True
+                state.seen_evo.add(evo_key)
 
             if run_evolution:
                 print(
-                    f"  [WARSTWA 4: SAMOEWOLUCJA] Uruchomienie Architekta Ewolucji (cykl #{state.replan_count}, agent: {failed_agent})...",
+                    f"  [WARSTWA 4: SAMOEWOLUCJA] Uruchomienie Architekta Ewolucji (cykl #{state.replan_count}, agent: {failed_agent}, "
+                    f"kategoria: {category} w {len(hits)} zadaniach)...",
                     flush=True,
                 )
                 evo_res = self._run_evolution_step(
                     {
-                        "validation_report": report,
+                        # The architect sees the pattern (several incidents, different files), not one report.
+                        "pattern": {
+                            "category": category,
+                            "occurrences": len(hits),
+                            "tasks": sorted(hits),
+                            "examples": list(hits.values())[:3],
+                        },
+                        "validation_report": {
+                            "status": "FAIL",
+                            "failed_file": failed_file,
+                            "failed_agent": failed_agent,
+                            "issues": _fit_items(issues_list)[:3],
+                        },
                         "failed_agent": failed_agent,
                         "agent_failure_count": state.agent_failures[failed_agent],
                         "cycle_index": state.replan_count,
@@ -474,7 +524,19 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
                 f"W1({cycle_trace['w1_remediation_task_id']}) -> W2 -> W3({report['status']})",
                 flush=True,
             )
+            # One planner cycle per task. A task that still fails is a gap in the delivery, listed in the thesis;
+            # 2026-11-13 spent 35 cycles on one task and never got past it.
+            break
         return report, None
+
+    def _log_failure_category(self, cycle: int, agent: str, category: str, task_id: str) -> None:
+        """Append one failure to `failure_ledger.json[category_log]`: the data the prompt consolidation uses to
+        tell whether a learned rule lowered the frequency of the failures it was written for (§IV.6.3 D)."""
+        ledger = read_json_state(self.failure_ledger_path) if self.failure_ledger_path.exists() else {"failures": []}
+        ledger.setdefault("category_log", []).append(
+            {"cycle": cycle, "agent": agent, "category": category, "task_id": task_id}
+        )
+        write_json_state(self.failure_ledger_path, ledger)
 
     def _repair_cycle(
         self,
@@ -502,8 +564,14 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
                 "blast_radius": blast,
                 "hypergraph_matrix": get_scoped_hypergraph_context(self.matrix_path, blast_radius=blast),
                 "include_docs": self.include_docs,
+                # Without the signatures the planner dictated new APIs in prose (2026-11-12); now it can tell
+                # which side of a test/module mismatch departs from the agreed interface.
+                "interface_contract": (
+                    read_json_state(self.interface_contract_path) if self.interface_contract_path.exists() else {}
+                ),
             },
-            model_tier="LRM",
+            # The planner runs after the fast fixes failed, i.e. at the escalation point: the large model.
+            model_tier=select_model_tier(failures=int(failed_task.get("repair_attempts", 0))),
             provider=self.provider,
         )["output"]
         proposed = planner_out.get("surgical_tasks") or planner_out.get("tasks") or []
@@ -536,11 +604,15 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
                 requested = default_agent
             stask["assigned_agent"] = self._resolve_active_agent(requested, fallback=default_agent)
             stask.setdefault("task_id", f"{failed_id}_FIX")
+            stask["repair_of"] = failed_id
+            # A repair of the skeleton may still shape the interface; it re-establishes the contract.
+            if is_skeleton_task(failed_task) and not is_skeleton_task(stask):
+                stask["task_id"] = f"{SKELETON_TASK_ID}_{stask['task_id']}"
             if _is_document(st_file) and context and context[:30].lower() not in str(stask.get("description", "")).lower():
                 stask["description"] = f"[Kontekst sekcji: {context}] {stask.get('description', '')}"
             if cycle_trace is not None:
                 cycle_trace["w1_remediation_task_id"] = str(stask["task_id"])
-            st_tier = select_model_tier(st_node, self.matrix_path)
+            st_tier = select_model_tier(failures=int(failed_task.get("repair_attempts", 0)))
             print(
                 f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE] Zadanie chirurgiczne {stask['task_id']} "
                 f"[{st_file}] przez agenta '{stask['assigned_agent']}' (Tier: {st_tier})...",

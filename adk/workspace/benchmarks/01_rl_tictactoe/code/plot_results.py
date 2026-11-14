@@ -1,45 +1,54 @@
+"""
+Plotting utilities for generating figures.
+Generates architecture diagrams inline (Mermaid) instead of referencing non-existent files.
+"""
 import matplotlib.pyplot as plt
+import os
 from pathlib import Path
+from typing import List, Dict, Optional
 import pandas as pd
+ARCH_DIAGRAM = '\ngraph TD;\n    subgraph Agent { \n        direction TB\n        QLearner[Q-Learning Agent];\n        RandomAgent[Random Agent Baseline]; \n    }\n    subgraph Env { \n        TicTacToeEnv[Tic-Tac-Toe Environment];\n    }\n    QLearner --> TicTacToeEnv; \n    RandomAgent --> TicTacToeEnv;\n'
 
-def generate_plots(output_dir='.'):
-    fig_dir = Path(output_dir) / 'figures'
-    fig_dir.mkdir(parents=True, exist_ok=True)
-    
-    pdf_p = fig_dir / 'comparison_chart.pdf'
-    png_p = fig_dir / 'comparison_chart.png'
-    
-    # Load existing results.csv from root or use hardcoded values for consistency if file is missing
-    csv_path = Path(output_dir) / 'results.csv'
-    if csv_path.exists():
-        df = pd.read_csv(csv_path)
-        # Pivot long format to wide format for plotting
-        plot_df = df.set_index('metric')['mean'].unstack() if 'unstack' else None
-        # Since standard output is long format [metric, mean, std_dev], we pivot manually
-        data = {row['metric']: row['mean'] for _, row in df.iterrows()}
+def generate_diagram_text() -> str:
+    """
+    Generate the Mermaid diagram string for the architecture.
+    Returns: A Mermaid sequence defining the environment, agent, and baseline interaction.
+    """
+    return ARCH_DIAGRAM
+
+def plot_learning_curve(results: List[Dict], output_path: str, columns_to_plot: Optional[List[str]]=None) -> None:
+    """
+    Plot the learning curve of Q-Learning against a random baseline.
+
+    Args:
+        results (List[Dict]): List of episodes with 'epoch', 'reward', and 'agent' keys.
+        output_path (str): Path to save the plot as an image file.
+        columns_to_plot (Optional[List[str]]): Specific column names to aggregate (defaults to ['reward'] for both agents).
+    """
+    out_dir = Path(output_path).parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+    if columns_to_plot is None:
+        cols_to_aggregate = ['reward']
     else:
-        # Fallback if results.csv not present yet (should not happen per task flow)
-        data = {'win_rate': 0.58, 'draw_rate': 0.13, 'loss_rate': 0.29}
-
-    labels = list(data.keys())
-    values = [data[k] for k in labels]
-    colors = ['#0284c7', '#facc15', '#ef4444'] # Blue for win, yellow for draw, red for loss
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    bars = ax.bar(labels, values, color=colors, width=0.6)
-    
-    ax.set_ylabel('Rate')
-    ax.set_title('Q-Learning Agent Performance (50 Runs)')
-    ax.set_ylim(0, max(values) * 1.2)
-    
-    # Add value labels on top of bars
-    for bar in bars:
-        yval = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, yval + 0.01, f'{yval:.2f}', ha='center', va='bottom')
-
-    fig.tight_layout()
-    fig.savefig(pdf_p, bbox_inches='tight')
-    fig.savefig(png_p, dpi=150, bbox_inches='tight')
+        cols_to_aggregate = columns_to_plot
+    df_results = pd.DataFrame(results)
+    if 'epoch' not in df_results.columns or 'agent' not in df_results.columns:
+        raise ValueError("Results must contain 'epoch' and 'agent' columns.")
+    summary_stats = df_results.groupby(['epoch', 'agent'])[cols_to_aggregate].mean()
+    plot_data = summary_stats.unpivot('long')
+    color_map = {'Q-Learning': '#1f77b4', 'Random Agent': '#ff7f0e'}
+    legend_labels = {'Q-Learning': 'Q-Learning Agent (Learning)', 'Random Agent': 'Random Baseline'}
+    fig, ax = plt.subplots(figsize=(10, 6))
+    lines = []
+    for agent_name in ['Q-Learning', 'Random Agent']:
+        subset = plot_data[plot_data['agent'] == agent_name]
+        ax.plot(subset['epoch'], subset['value'], marker='o', color=color_map[agent_name], label=legend_labels[agent_name])
+        lines.append(ax.lines[-1])
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Average Reward per Episode')
+    ax.set_title('Learning Curve: Q-Learning vs Random Baseline')
+    ax.legend(lines, legend_labels)
+    ax.grid(True, alpha=0.3)
+    output_file = str(output_path)
+    fig.savefig(output_file, bbox_inches='tight', dpi=300)
     plt.close(fig)
-    
-    return [str(pdf_p), str(png_p)]

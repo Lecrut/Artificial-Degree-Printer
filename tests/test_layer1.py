@@ -61,12 +61,10 @@ def test_blast_radius_and_complexity_router(tmp_path: Path):
     assert "E1" in res["active_edges"]
     assert "v2" in res["affected_nodes"]
 
-    assert select_model_tier("v1", matrix_path) == "LRM"
-    assert select_model_tier("v4", matrix_path) == "LRM"
-
-    # Unknown node robustness: select_model_tier returns LRM fallback and does not raise KeyError
-    assert select_model_tier("v7", matrix_path) == "LRM"
-    assert select_model_tier("core.py", matrix_path) in ("LRM", "SML")
+    # The tier follows the attempt, not the node: the small model works, the large one steps in after two failures.
+    assert select_model_tier() == "SML"
+    assert select_model_tier(failures=1) == "SML"
+    assert select_model_tier(failures=2) == "LRM"
 
     # Unknown node in calculate_blast_radius returns safe fallback dict
     blast_unknown = calculate_blast_radius("v7", matrix_path)
@@ -133,18 +131,16 @@ def test_evoroute_escalate_node_weight_switches_sml_to_lrm(tmp_path: Path):
         encoding="utf-8",
     )
 
-    assert select_model_tier("v5", matrix_file) == "SML"
-
     esc1 = escalate_node_weight("v5", delta=0.4, matrix_path=matrix_file)
     assert esc1["old_weight"] == 1.0
     assert esc1["new_weight"] == 1.4
-    assert esc1["new_tier"] == "SML"
 
     esc2 = escalate_node_weight("v5", delta=0.4, matrix_path=matrix_file)
     assert esc2["old_weight"] == 1.4
     assert esc2["new_weight"] == 1.8
-    assert esc2["new_tier"] == "LRM"
-    assert select_model_tier("v5", matrix_file) == "LRM"
+    # The weight records how much trouble a node gave; it no longer promotes the node to the large model.
+    assert "new_tier" not in esc2
+    assert select_model_tier(failures=0) == "SML"
 
 
 def test_get_scoped_hypergraph_context_omits_matrix_and_scopes_edges(tmp_path: Path):

@@ -249,19 +249,28 @@ class LLMConnectionManager:
         timeout: int = 300,
         system_prompt: str | None = None,
         user_prompt: str | None = None,
+        model_tier: str | None = None,
     ) -> dict[str, Any]:
-        """Call local Ollama /api/generate endpoint with failover on HTTP 500 context errors."""
+        """Call local Ollama /api/generate endpoint with failover on HTTP 500 context errors.
+
+        `HARNESS_OLLAMA_<SML|LRM>_NUM_GPU` (optional) pins a tier's layers on GPU (`0` = CPU only). With 8 GB of
+        VRAM the two models cannot share the GPU, so every switch reloaded one of them (12-21 s, 102 times in the
+        2026-11-13 run); the large, rarely used model living in RAM keeps both resident (Audit IV §IV.8 W1)."""
         ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
+        options: dict[str, Any] = {
+            "num_ctx": int(os.environ.get("OLLAMA_NUM_CTX", "32768")),
+            "num_predict": int(os.environ.get("OLLAMA_NUM_PREDICT", "8192")),
+        }
+        num_gpu = os.environ.get(f"HARNESS_OLLAMA_{(model_tier or '').upper()}_NUM_GPU") if model_tier else None
+        if num_gpu not in (None, ""):
+            options["num_gpu"] = int(num_gpu)
         body_dict: dict[str, Any] = {
             "model": model_name,
             "prompt": user_prompt if user_prompt is not None else combined_prompt,
             "stream": False,
             "format": "json",
             "think": False,
-            "options": {
-                "num_ctx": int(os.environ.get("OLLAMA_NUM_CTX", "32768")),
-                "num_predict": int(os.environ.get("OLLAMA_NUM_PREDICT", "8192")),
-            },
+            "options": options,
         }
         if system_prompt:
             body_dict["system"] = system_prompt
@@ -278,6 +287,13 @@ class LLMConnectionManager:
                 p_tok = int(raw_resp.get("prompt_eval_count") or 0)
                 c_tok = int(raw_resp.get("eval_count") or 0)
                 t_tok = p_tok + c_tok
+                done_reason = str(raw_resp.get("done_reason") or "")
+                if done_reason == "length":
+                    print(
+                        f"  [OLLAMA] Odpowiedź modelu {model_name} ucięta po {c_tok} tokenach (num_predict); "
+                        "JSON będzie niekompletny.",
+                        flush=True,
+                    )
                 return {
                     "status": "ok",
                     "raw_text": raw_resp.get("response", "{}"),
@@ -285,6 +301,7 @@ class LLMConnectionManager:
                     "prompt_tokens": p_tok,
                     "completion_tokens": c_tok,
                     "total_tokens": t_tok,
+                    "done_reason": done_reason,
                 }
         except urllib.error.HTTPError as err:
             err_body = ""

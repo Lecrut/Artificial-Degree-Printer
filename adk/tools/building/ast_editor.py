@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,8 @@ def edit_ast_node(
 ) -> dict[str, Any]:
     """Replace or append a function/class/assignment AST node in a .py file with built-in syntax GUARD."""
     path = Path(file_path)
+    # A method is naturally returned with its class indentation; indented code is not a syntax error.
+    new_code = textwrap.dedent(new_code)
 
     # 1. Syntax GUARD on incoming snippet
     import warnings
@@ -50,15 +53,30 @@ def edit_ast_node(
             "error": "Provided new_code contains no AST statements.",
         }
 
+    # `Class.method` edits one method inside a class instead of a top-level symbol.
+    class_name, _, method_name = target_name.rpartition(".")
+    lookup_name = method_name if class_name else target_name
+
     # Find the primary statement matching target_name if multiple statements (e.g. imports + def) were provided
     matching_stmt = None
     extra_imports: list[ast.stmt] = []
     for stmt in snippet_tree.body:
-        if _extract_stmt_name(stmt) == target_name and matching_stmt is None:
+        if _extract_stmt_name(stmt) == lookup_name and matching_stmt is None:
             matching_stmt = stmt
+        elif class_name and isinstance(stmt, ast.ClassDef) and stmt.name == class_name and matching_stmt is None:
+            # the snippet repeats the class around the method: take the method out of it
+            matching_stmt = next((s for s in stmt.body if _extract_stmt_name(s) == lookup_name), None)
         elif isinstance(stmt, (ast.Import, ast.ImportFrom)):
             extra_imports.append(stmt)
 
+    if class_name and matching_stmt is None:
+        return {
+            "status": "error",
+            "guard": "TARGET_NOT_FOUND",
+            "file": str(path),
+            "target_name": target_name,
+            "error": f"Kod edycji {target_name} nie zawiera definicji `def {method_name}`.",
+        }
     new_node = matching_stmt if matching_stmt is not None else snippet_tree.body[-1]
 
     if path.exists():
@@ -106,16 +124,35 @@ def edit_ast_node(
 
     replaced = False
     new_body: list[ast.stmt] = list(prefix_nodes) + list(deduped_imports)
-    for node in rest_nodes:
-        node_name = _extract_stmt_name(node)
-        if node_name == target_name and not replaced:
-            new_body.append(new_node)
-            replaced = True
-        else:
-            new_body.append(node)
+    if class_name:
+        owner = next((n for n in rest_nodes if isinstance(n, ast.ClassDef) and n.name == class_name), None)
+        if owner is None:
+            return {
+                "status": "error",
+                "guard": "TARGET_NOT_FOUND",
+                "file": str(path),
+                "target_name": target_name,
+                "error": f"Klasa {class_name} nie istnieje w {path.name}; edycja {target_name} nie ma gdzie trafić.",
+            }
+        for i, member in enumerate(owner.body):
+            if _extract_stmt_name(member) == method_name:
+                owner.body[i] = new_node
+                replaced = True
+                break
+        if not replaced:
+            owner.body.append(new_node)
+        new_body.extend(rest_nodes)
+    else:
+        for node in rest_nodes:
+            node_name = _extract_stmt_name(node)
+            if node_name == target_name and not replaced:
+                new_body.append(new_node)
+                replaced = True
+            else:
+                new_body.append(node)
 
-    if not replaced:
-        new_body.append(new_node)
+        if not replaced:
+            new_body.append(new_node)
 
     tree.body = new_body
     ast.fix_missing_locations(tree)

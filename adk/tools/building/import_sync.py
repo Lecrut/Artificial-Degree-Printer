@@ -8,6 +8,18 @@ from typing import Any
 from adk.core.models import read_json_state, resolve_adk_path
 
 
+def class_method_signatures(cls: ast.ClassDef) -> dict[str, str]:
+    """`Class.method` -> `def method(args) -> ret` for `__init__` and every public method of the class."""
+    out: dict[str, str] = {}
+    for item in cls.body:
+        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
+            item.name == "__init__" or not item.name.startswith("_")
+        ):
+            ret = f" -> {ast.unparse(item.returns)}" if item.returns is not None else ""
+            out[f"{cls.name}.{item.name}"] = f"def {item.name}({ast.unparse(item.args)}){ret}"
+    return out
+
+
 def extract_hyperedge_exports(
     edge_id: str = "E1",
     matrix_path: str | Path = "state/hypergraph_matrix.json",
@@ -75,6 +87,8 @@ def extract_hyperedge_exports(
                     doc = ast.get_docstring(node)
                     if doc:
                         docstrings[node.name] = doc[:300]
+                    # The class API: without method signatures a tester could only guess them (2026-11-12 run).
+                    signatures.update(class_method_signatures(node))
                 elif isinstance(node, ast.Assign):
                     for target in node.targets:
                         if isinstance(target, ast.Name) and not target.id.startswith("_"):

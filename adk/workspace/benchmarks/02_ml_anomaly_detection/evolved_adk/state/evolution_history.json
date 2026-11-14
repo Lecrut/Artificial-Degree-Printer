@@ -1,796 +1,6 @@
 {
   "events": [
     {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
-        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
-        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
-        "injected_rule": "Unikaj niezgodności sygnatur wykrytych w zadaniu T1"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v1",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 16,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
-        "injected_rule": "Preserve strict AST, CSV and symbolic reference parity in task T1 (v1).",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v3",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 18,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_coder.md",
-        "injected_rule": "Preserve strict AST, CSV and symbolic reference parity in task T3 (v3).",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 1.6,
-        "new_weight": 2.0,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_writer",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\agents\\building\\seed_writer.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 2.0,
-        "new_weight": 2.4,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 2.4,
-        "new_weight": 2.8,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 2.8,
-        "new_weight": 3.2,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "HITL_TRIGGERED",
-      "gate": "GATE_REMEDIATION_EXHAUSTED",
-      "question": "Wyczerpano 3 prób naprawy zadania T1."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 3.2,
-        "new_weight": 3.6,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 3.6,
-        "new_weight": 4.0,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 4.0,
-        "new_weight": 4.4,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "HITL_TRIGGERED",
-      "gate": "GATE_REMEDIATION_EXHAUSTED",
-      "question": "Wyczerpano 3 prób naprawy zadania T1."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 4.4,
-        "new_weight": 4.8,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 4.8,
-        "new_weight": 5.2,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 5.2,
-        "new_weight": 5.6,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "HITL_TRIGGERED",
-      "gate": "GATE_REMEDIATION_EXHAUSTED",
-      "question": "Wyczerpano 3 prób naprawy zadania T4."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 5.6,
-        "new_weight": 6.0,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 6.0,
-        "new_weight": 6.4,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 6.4,
-        "new_weight": 6.8,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "HITL_TRIGGERED",
-      "gate": "GATE_REMEDIATION_EXHAUSTED",
-      "question": "Wyczerpano 3 prób naprawy zadania T1."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 6.8,
-        "new_weight": 7.2,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 7.2,
-        "new_weight": 7.6,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 7.6,
-        "new_weight": 8.0,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "HITL_TRIGGERED",
-      "gate": "GATE_REMEDIATION_EXHAUSTED",
-      "question": "Wyczerpano 3 prób naprawy zadania T1."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 8.0,
-        "new_weight": 8.4,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 8.4,
-        "new_weight": 8.8,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 8.8,
-        "new_weight": 9.2,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "HITL_TRIGGERED",
-      "gate": "GATE_REMEDIATION_EXHAUSTED",
-      "question": "Wyczerpano 3 prób naprawy zadania T4."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v1",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 16,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "[01_rl_tictactoe cycle #1] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v3",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 18,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
-        "injected_rule": "[01_rl_tictactoe cycle #2] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 9.2,
-        "new_weight": 9.6,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_writer",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
-        "injected_rule": "[01_rl_tictactoe cycle #3] Enforce exact AST exports, seed=42 reproducibility, and 6-chapter symbolic pointer parity.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 9.6,
-        "new_weight": 10.0,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "background_researcher",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\background_researcher.md",
-        "injected_rule": "Ensure all symbolic references (\\ref_*) in thesis.md strictly match symbols and files defined in config.py and results.csv before generation.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 10.0,
-        "new_weight": 10.4,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "background_researcher",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\background_researcher.md",
-        "injected_rule": "Strictly validate that all \\\\ref_ast, \\\\ref_csv, and citation keys exist in their target files (config.py, results.csv, .bib) before outputting any thesis content to prevent 'Malformed symbolic tag' and 'File not found' errors.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 10.4,
-        "new_weight": 10.8,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "background_researcher",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\background_researcher.md",
-        "injected_rule": "Mandatory Pre-flight: Before generating any thesis content, execute a script to verify that all target symbols (config.py keys, results.csv columns) and files exist. If validation fails or tags are malformed, abort generation. Do not output hypothetical citations.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "QUEUE_REBUILT",
-      "generation": 1,
-      "task_ids": [
-        "Q1_CH5"
-      ]
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 10.8,
-        "new_weight": 11.2,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 11.2,
-        "new_weight": 11.6,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_writer",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
-        "injected_rule": "Enforce strict AST, CSV and symbolic reference parity: resolve all \\ref_ast, \\ref_csv pointers to existing symbols in config.py/results.csv; abort generation if any file or symbol is missing.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v4",
-        "old_weight": 11.6,
-        "new_weight": 12.0,
-        "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_writer",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
-        "injected_rule": "Before generating thesis content, strictly verify existence of all symbols in config.py and columns/files in results.csv; abort if unresolved pointers or missing references are detected.",
-        "active_rules_count": 0,
-        "compacted": true,
-        "compaction_details": {
-          "status": "consolidated",
-          "agent": "seed_writer",
-          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
-          "cycle": 1,
-          "rules_consolidated": 4,
-          "consolidated_invariant": "Enforce strict zero-hallucination grounding for all \\ref_ast and \\ref_csv symbolic pointers by verifying existence in grounded_hypergraph_state (available_ast_symbols, available_csv_columns) prior to generation; abort immediately if any reference targets missing files or symbols."
-        }
-      }
-    },
-    {
-      "type": "PROMPT_CONSOLIDATED",
-      "details": {
-        "status": "consolidated",
-        "agent": "seed_writer",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
-        "cycle": 1,
-        "rules_consolidated": 4,
-        "consolidated_invariant": "Enforce strict zero-hallucination grounding for all \\ref_ast and \\ref_csv symbolic pointers by verifying existence in grounded_hypergraph_state (available_ast_symbols, available_csv_columns) prior to generation; abort immediately if any reference targets missing files or symbols."
-      }
-    },
-    {
-      "type": "QUEUE_REBUILT",
-      "generation": 2,
-      "task_ids": [
-        "Q2_CODE",
-        "Q2_TESTS",
-        "Q2_REFS"
-      ]
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v2",
-        "old_weight": 1.2,
-        "new_weight": 1.6,
-        "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Never output raw docstrings containing escaped newlines (\\n) on a single line; ensure all Python syntax is strictly valid, newline-separated, and free of literal backslash-n sequences within source code blocks.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v2",
-        "old_weight": 1.6,
-        "new_weight": 2.0,
-        "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Never output raw docstrings containing escaped newlines (\\n) on a single line; ensure all Python syntax is strictly valid, newline-separated, and free of literal backslash-n sequences within source code blocks. Always implement exactly the functions tested in test_core.py (e.g., check_winner, train_and_evaluate).",
-        "active_rules_count": 0,
-        "compacted": true,
-        "compaction_details": {
-          "status": "consolidated",
-          "agent": "seed_coder",
-          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-          "cycle": 1,
-          "rules_consolidated": 4,
-          "consolidated_invariant": "Maintain strict type signature parity for all exported symbols and ensure deterministic execution via seed=42; strictly format source code and docstrings to avoid literal \\n escape sequences, ensuring syntactically valid Python 3.12+ with complete, operational implementations matching test requirements."
-        }
-      }
-    },
-    {
-      "type": "PROMPT_CONSOLIDATED",
-      "details": {
-        "status": "consolidated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "cycle": 1,
-        "rules_consolidated": 4,
-        "consolidated_invariant": "Maintain strict type signature parity for all exported symbols and ensure deterministic execution via seed=42; strictly format source code and docstrings to avoid literal \\n escape sequences, ensuring syntactically valid Python 3.12+ with complete, operational implementations matching test requirements."
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v2",
-        "old_weight": 2.0,
-        "new_weight": 2.4,
-        "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Strictly implement check_winner(board) to handle variable-length inputs without IndexError (validate len==9 or slice safely) and ensure train_and_evaluate accepts 'seed' parameter for deterministic Q-learning reproducibility.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "QUEUE_REBUILT",
-      "generation": 3,
-      "task_ids": [
-        "Q3_CODE",
-        "Q3_TESTS",
-        "Q3_REFS"
-      ]
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v2",
-        "old_weight": 2.4,
-        "new_weight": 2.8,
-        "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "CRITICAL: Ensure valid Python syntax by never merging multi-line docstrings or code into a single line; always separate statements with newlines and avoid literal backslash-n sequences in source code output.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v2",
-        "old_weight": 2.8,
-        "new_weight": 3.2,
-        "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Strictly align implementation logic with test assertions: `check_winner` must return 'D' for a draw (full board, no winner) and `None` only if the game is ongoing; remove any unused variables in helper scripts like `plot_results.py` to satisfy Ruff linting.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v2",
-        "old_weight": 3.2,
-        "new_weight": 3.6,
-        "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Strictly align implementation logic with test assertions: `check_winner` must return 'D' for a draw (full board, no winner) and `None` only if the game is ongoing; remove any unused variables in helper scripts like `plot_results.py` to satisfy Ruff linting.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
       "type": "AGENT_CREATED",
       "details": {
         "status": "created",
@@ -801,16 +11,928 @@
       }
     },
     {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "SKELETON",
+      "agent": "seed_coder",
+      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- src/data/synthetic_data_generator.py:109: invalid syntax\n   108: \n   109:     def generate_anomaly_sample(\n   110:         self,"
+    },
+    {
+      "type": "CONTRACT_ESTABLISHED",
+      "files": [
+        "src/data/synthetic_data_generator.py"
+      ]
+    },
+    {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "v4",
-        "old_weight": 12.0,
-        "new_weight": 12.4,
+        "node_id": "n6",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
         "delta": 0.4,
-        "degree": 1,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
+        "degree": 0
+      }
+    },
+    {
+      "type": "CONTRACT_ESTABLISHED",
+      "files": [
+        "src/data/synthetic_data_generator.py"
+      ]
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "config.py",
+      "files": [
+        "thesis.md"
+      ],
+      "agent": "dyn_anomaly_ml_specialist",
+      "task_id": "T3"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T7",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- config.py:config.Hyperparameters: Klasa config nie istnieje w config.py; edycja config.Hyperparameters nie ma gdzie trafić."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n7",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T7_FIX1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- config.py:config.py:Hyperparameters: Kod edycji config.py:Hyperparameters nie zawiera definicji `def py:Hyperparameters`."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n7",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T7_FIX2",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- config.py:config.Hyperparameters: Klasa config nie istnieje w config.py; edycja config.Hyperparameters nie ma gdzie trafić."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n7",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "file": "config.py",
+        "line": null,
+        "reason": "The repair was sent to a file (config.py) but attempted to edit a symbol (config.Hyperparameters) that implies a class name different from the module name. The harness failed to resolve or reject this structural contradiction, resulting in 'Symbol edits rejected'. This is a routing/semantic resolution failure of the harness, not an agent reasoning error.",
+        "source": "evolution_architect"
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_config.py",
+      "files": [
+        "plot_results.py",
+        "test_config.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T11"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T12",
+      "agent": "seed_tester",
+      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- test_data_generator.py:88: invalid syntax\n    87:     # Generate dataset\n    88:     datasets: List[np.ndarray], labels: List[str] = generator.generate_dataset(num_segments=NUM_SEGMENTS)\n    89:     "
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_data_generator.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T12"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n15",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T12_FIX1",
+      "agent": "seed_tester",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_data_generator.py:tests.test_data_generator.TestSignalDimensions.test_normal_sample_shape: Klasa tests.test_data_generator.TestSignalDimensions nie istnieje w test_data_generator.py; edycja tests.test_data_generator.TestSignalDimensions.test_normal_sample_shape nie ma gdzie trafić.\n- test_data_generator.py:tests.test_data_generator.TestSignalDimensions.test_anomaly_sample_shape: Klasa tests.test_data_generator.TestSignalDimensions nie istnieje w test_data_generator.py; edycja tests.test_data_generator.TestSignalDimensions.test_anomaly_sample_shape nie ma gdzie trafić.\n- test_data_generator.py:tests.test_data_generator.TestDatasetGeneration.test_dataset_structure: Klasa tests.test_data_generator.TestDatasetGeneration nie istnieje w test_data_generator.py; edycja tests.test_data_generator.TestDatasetGeneration.test_dataset_structure nie ma gdzie trafić."
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_data_generator.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T12_FIX1"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n15",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "CROSS_ROLE_WRITE",
+      "node": "tests/test_data_generator.py",
+      "files": [
+        "src/data/synthetic_data_generator.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T12_FIX2"
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_data_generator.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T12_FIX2"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n15",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_tester",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_tester.md",
+        "injected_rule": "When writing tests for a module that is imported by other files in the package, place the test file outside the directory containing the source code or use a unique module name to prevent Python's import cache from conflating the test script with the production module, because pytest collection will fail on import file mismatches.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n16",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_baseline_detector.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T13_FIX1"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n16",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n16",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_ensemble_detector.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T14"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n17",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_ensemble_detector.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T14_FIX1"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n17",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_ensemble_detector.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T14_FIX2"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n17",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "test_ensemble_detector.py"
+        ],
+        "signature": "test_ensemble_detector.py::TestEnsembleDetector::test_ensemble_detector_init:fail\ntest_ensemble_detector.py::TestEnsembleDetector::test_feature_aggregation_logic:fail\ntest_ensemble_detector.py::TestEnsembleDetector::test_output_shape_independence_from_channel_count:fail",
+        "task_id": "T14",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T15",
+      "agent": "seed_tester",
+      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- tests/test_metrics.py:48: invalid syntax\n    47:         yield_labels=TrueYield(true_positives),\n    48:         probs=yield_probs=False,\n    49:         true_detection_delay=TrueDetectionDelay(np.array([])),"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n18",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_metrics.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T15_FIX1"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n18",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n18",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "test_metrics.py"
+        ],
+        "signature": "test_metrics.py::TestMetricCalculations::test_compute_roc_auc:fail\ntest_metrics.py::TestMetricCalculations::test_evaluate_detector_integration:fail",
+        "task_id": "T15",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T17",
+      "agent": "seed_coder",
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- config.py: usunięto Hyperparameters()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n19",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T17_FIX1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment_runner.py:src/experiment/experiment_runner.py: Kod edycji src/experiment/experiment_runner.py nie zawiera definicji `def py`."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n19",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T17_FIX2",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment_runner.py:experiment_runner.run_all: Klasa experiment_runner nie istnieje w experiment_runner.py; edycja experiment_runner.run_all nie ma gdzie trafić."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n19",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T17_FIX3",
+      "agent": "seed_coder",
+      "error": "Odpowiedź agenta dla 'src/experiment/experiment_runner.py' nie została zapisana: pola ['error', 'issues', 'raw_response'] nie pasują do żadnego dozwolonego kształtu. Dozwolone: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section_content}]'). Pliki zwracaj w polu 'files' jako listę {'filename', 'content'}."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T18",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- plot_results.py:plot_results.py:generate_plots: Kod edycji plot_results.py:generate_plots nie zawiera definicji `def py:generate_plots`."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n13",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T18_FIX1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- plot_results.py:plot_results.py.generate_plots: Klasa plot_results.py nie istnieje w plot_results.py; edycja plot_results.py.generate_plots nie ma gdzie trafić."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n13",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T18_FIX2",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- plot_results.py:plot_results.generate_plots: SyntaxError in new_code: unterminated f-string literal (detected at line 25) (plot_results.py, line 25)"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n13",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "- plot_results.py",
+          "Wyjątek szybkiej naprawy T#_FIX# na pliku plot_results.py"
+        ],
+        "signature": "Wyjątek szybkiej naprawy T#_FIX# na pliku plot_results.py: Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- plot_results.py:plot_results.generate_plots: Klasa plot_results nie istnieje ",
+        "task_id": "T18",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T16",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment_runner.py:src/experiment/experiment_runner.py.run_all: SyntaxError in new_code: invalid syntax (experiment_runner.py, line 68)"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n20",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 5
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T16_FIX1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment_runner.py:src/experiment/experiment_runner.py.run_all: Klasa src/experiment/experiment_runner.py nie istnieje w experiment_runner.py; edycja src/experiment/experiment_runner.py.run_all nie ma gdzie trafić."
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "figures/comparison.pdf",
+      "files": [
+        "figures/comparison.py"
+      ],
+      "agent": "seed_coder",
+      "task_id": "T19"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n21",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 3
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T19_FIX1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment_runner.py:src/experiment/experiment_runner.py.run_all: Klasa src/experiment/experiment_runner.py nie istnieje w experiment_runner.py; edycja src/experiment/experiment_runner.py.run_all nie ma gdzie trafić."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n21",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 3
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T19_FIX2",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment_runner.py:src/experiment/experiment_runner.py: Kod edycji src/experiment/experiment_runner.py nie zawiera definicji `def py`."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n21",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 3
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "    n_runs",
+          "- experiment_runner.py",
+          "Traceback (most recent call last)",
+          "Wyjątek szybkiej naprawy T#_FIX# na pliku figures/comparison.pdf"
+        ],
+        "signature": "Traceback (most recent call last):\n  File <id>, line #, in <module>\n    fn()\n    ~~^^\n  File <id>, line #, in run_all\n    n_runs: int = params.n_repetitions\n                  ^^^^^^^^^^^^^^^^^^^^\nAttr\nWyjątek szybkiej naprawy T#_FIX# na pliku figures/comparison.pdf: Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment_runner.py:src/experiment/experiment_runner.py.run_all: Klas",
+        "task_id": "T19",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "results.csv",
+      "files": [
+        "plot_results.py",
+        "test_experiment_runner.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T23"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n23",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 4
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T23_FIX1",
+      "agent": "seed_tester",
+      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- plot_results.py:70: unterminated string literal (detected at line 70)\n    69:     plt.tight_layout()\n    70:     fig.savefig(f\"{Path(output_dir) / 'figures' / 'comparison_by_method.pdf}\"),\n    71:     plt.close()"
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "test_experiment_runner.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T23_FIX1"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n23",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 4
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T23_FIX2",
+      "agent": "seed_tester",
+      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- tests/test_experiment_runner.py:47: invalid syntax\n    46:         assert list(result_df_1.keys()) or list(result_df_1.columns) == ['method', 'metric', 'value'], \\\n    47:             f\"Expected columns ['method', 'metric', 'value'], got {list(result_df_1.keys()) if hasattr(result_df_1, 'keys') else result_df_1}\".\n    48: "
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "test_experiment_runner.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T23_FIX2"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n23",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 4
+      }
+    },
+    {
+      "type": "DEPENDENCY_INSTALLED",
+      "details": {
+        "status": "skipped",
+        "package": "numpy",
+        "message": "Module 'numpy' is already importable."
+      }
+    },
+    {
+      "type": "QUEUE_REBUILT",
+      "generation": 1,
+      "task_ids": [
+        "Q1_FIX1",
+        "Q1_FIX2",
+        "Q1_FIX3",
+        "Q1_FIX4",
+        "Q1_CODE",
+        "Q1_CH2",
+        "Q1_CH3",
+        "Q1_CH4",
+        "Q1_CH5",
+        "Q1_CH6",
+        "Q1_FIX_plot_results_11",
+        "Q1_REFS"
+      ]
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment_runner.py:src/experiment/experiment_runner.run_all: Klasa src/experiment/experiment_runner nie istnieje w experiment_runner.py; edycja src/experiment/experiment_runner.run_all nie ma gdzie trafić."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n20",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 8
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX1_FIX1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment_runner.py:src.experiment.experiment_runner.run_all: Klasa src.experiment.experiment_runner nie istnieje w experiment_runner.py; edycja src.experiment.experiment_runner.run_all nie ma gdzie trafić."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n20",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 8
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX1_FIX2",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment_runner.py:src/experiment/experiment_runner.run_all: Klasa src/experiment/experiment_runner nie istnieje w experiment_runner.py; edycja src/experiment/experiment_runner.run_all nie ma gdzie trafić."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n20",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
+        "delta": 0.4,
+        "degree": 8
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "test_experiment_runner.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q1_FIX2"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_config.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q1_FIX3_FIX1"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 2.6,
+        "new_weight": 3.0,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX3_FIX2",
+      "agent": "seed_tester",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_config.py:None: SyntaxError in new_code: unmatched '}' (test_config.py, line 76)"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 3.0,
+        "new_weight": 3.4,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "test_config.py"
+        ],
+        "signature": "test_config.py::*:fail",
+        "task_id": "Q1_FIX3",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_data_generator.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q1_FIX4"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n15",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "plot_results.py",
+      "files": [
+        "tests/test_data_generator.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q1_FIX4_FIX1"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n15",
+        "old_weight": 2.6,
+        "new_weight": 3.0,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX4_FIX2",
+      "agent": "seed_tester",
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_plots(output_dir)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n15",
+        "old_weight": 3.0,
+        "new_weight": 3.4,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_config.py",
+      "files": [
+        "test_config.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q1_FIX4_FIX3"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 2.6,
+        "new_weight": 3.0,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 3.0,
+        "new_weight": 3.4,
+        "delta": 0.4,
+        "degree": 3
       }
     },
     {
@@ -818,330 +940,374 @@
       "details": {
         "status": "mutated",
         "agent": "seed_writer",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_writer.md",
-        "injected_rule": "Perform strict pre-flight verification of all \\\\ref_ast and \\\\ref_csv pointers against available AST symbols (config.py) and CSV columns/files (results.csv). If any pointer is unresolved or target file missing, abort generation immediately to prevent hallucinated references.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v5",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 3,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
-        "injected_rule": "Ensure all test imports are located at the top of the file before any executable code or class definitions to satisfy E402 PEP8 rules; use underscore prefix (e.g., _false_alarms) for intentionally unused variables to suppress Ruff F841 linting errors.",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_writer.md",
+        "injected_rule": "When generating academic text that requires citations or cross-references, strictly verify the existence of the target file in the workspace filesystem and the presence of the citation key in available .bib files before writing, because unresolved pointers and missing references break document compilation.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
       }
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v5",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 3,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_plot_results_11",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- plot_results.py:plot_results.generate_plots: Klasa plot_results nie istnieje w plot_results.py; edycja plot_results.generate_plots nie ma gdzie trafić."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "v5",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
+        "node_id": "n13",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
         "delta": 0.4,
-        "degree": 3,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
-        "injected_rule": "Always place `import core` and `import config` at the absolute top of test_core.py; remove all unused variables (prefixed with `_`) to pass Ruff F841/E402 checks.",
-        "active_rules_count": 0,
-        "compacted": true,
-        "compaction_details": {
-          "status": "consolidated",
-          "agent": "seed_tester",
-          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
-          "cycle": 1,
-          "rules_consolidated": 4,
-          "consolidated_invariant": "Enforce strict E402 module import ordering (imports at file top), suppress Ruff F841 linting for unused variables via underscore prefix, and guarantee deterministic reproducibility (seed=42) alongside 100% AST signature compatibility for all exported symbols."
-        }
-      }
-    },
-    {
-      "type": "PROMPT_CONSOLIDATED",
-      "details": {
-        "status": "consolidated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_tester.md",
-        "cycle": 1,
-        "rules_consolidated": 4,
-        "consolidated_invariant": "Enforce strict E402 module import ordering (imports at file top), suppress Ruff F841 linting for unused variables via underscore prefix, and guarantee deterministic reproducibility (seed=42) alongside 100% AST signature compatibility for all exported symbols."
-      }
-    },
-    {
-      "type": "QUEUE_REBUILT",
-      "generation": 1,
-      "task_ids": [
-        "Q1_CODE",
-        "Q1_TESTS",
-        "Q1_CH3",
-        "Q1_CH4",
-        "Q1_CH5",
-        "Q1_CH6"
-      ]
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v2",
-        "old_weight": 3.6,
-        "new_weight": 4.0,
-        "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Strictly implement all functions referenced in test_core.py (specifically generate_biosignal_dataset and train_and_evaluate) to prevent AttributeError; ensure core.py exports match test expectations exactly.",
-        "active_rules_count": 0,
-        "compacted": true,
-        "compaction_details": {
-          "status": "consolidated",
-          "agent": "seed_coder",
-          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-          "cycle": 2,
-          "rules_consolidated": 4,
-          "consolidated_invariant": "Enforce strict type signature parity and deterministic seeding (seed=42) for all exported symbols; ensure operational logic strictly matches test assertions (e.g., draw detection, attribute existence); guarantee valid Python 3.12+ syntax with proper docstring formatting, explicit imports, and zero literal escape sequences in source code."
-        }
-      }
-    },
-    {
-      "type": "PROMPT_CONSOLIDATED",
-      "details": {
-        "status": "consolidated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "cycle": 2,
-        "rules_consolidated": 4,
-        "consolidated_invariant": "Enforce strict type signature parity and deterministic seeding (seed=42) for all exported symbols; ensure operational logic strictly matches test assertions (e.g., draw detection, attribute existence); guarantee valid Python 3.12+ syntax with proper docstring formatting, explicit imports, and zero literal escape sequences in source code."
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v2",
-        "old_weight": 4.0,
-        "new_weight": 4.4,
-        "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v2",
-        "old_weight": 4.4,
-        "new_weight": 4.8,
-        "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
+        "degree": 2
       }
     },
     {
       "type": "QUEUE_REBUILT",
       "generation": 2,
       "task_ids": [
-        "Q2_CODE",
-        "Q2_TESTS",
-        "Q2_CH3",
+        "Q2_FIX1",
+        "Q2_FIX2",
         "Q2_CH4",
         "Q2_CH5",
-        "Q2_CH6"
+        "Q2_CH6",
+        "Q2_CRITIC",
+        "Q2_REFS"
       ]
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "v2",
-        "old_weight": 4.8,
-        "new_weight": 5.2,
-        "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_config.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q2_FIX1"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "v2",
-        "old_weight": 5.2,
-        "new_weight": 5.6,
+        "node_id": "n12",
+        "old_weight": 3.4,
+        "new_weight": 3.8,
         "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
+        "degree": 1
       }
     },
     {
-      "type": "AGENT_MUTATED",
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q2_FIX1_FIX1",
+      "agent": "seed_tester",
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_plots(output_dir)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
       "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
+        "node_id": "n12",
+        "old_weight": 3.8,
+        "new_weight": 4.2,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q2_FIX1_FIX2",
+      "agent": "seed_tester",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_config.py:tests.test_config.TEST_MODULE_NAME: Klasa tests.test_config nie istnieje w test_config.py; edycja tests.test_config.TEST_MODULE_NAME nie ma gdzie trafić."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 4.2,
+        "new_weight": 4.6,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "test_config.py"
+        ],
+        "signature": "test_config.py::*:fail",
+        "task_id": "Q2_FIX1",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "v2",
-        "old_weight": 5.6,
-        "new_weight": 6.0,
+        "node_id": "n15",
+        "old_weight": 3.4,
+        "new_weight": 3.8,
         "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
+        "degree": 1
       }
     },
     {
-      "type": "AGENT_MUTATED",
+      "type": "WEIGHT_ESCALATED",
       "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
+        "node_id": "n15",
+        "old_weight": 3.8,
+        "new_weight": 4.2,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_data_generator.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q2_FIX2_FIX2"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n15",
+        "old_weight": 4.2,
+        "new_weight": 4.6,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "test_data_generator.py"
+        ],
+        "signature": "test_data_generator.py::test_mock_generator_init:fail",
+        "task_id": "Q2_FIX2",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 3.4,
+        "new_weight": 3.8,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 3.8,
+        "new_weight": 4.2,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 4.2,
+        "new_weight": 4.6,
+        "delta": 0.4,
+        "degree": 2
       }
     },
     {
       "type": "QUEUE_REBUILT",
       "generation": 3,
       "task_ids": [
-        "Q3_CODE",
-        "Q3_TESTS",
-        "Q3_CH3",
-        "Q3_CH4",
+        "Q3_FIX1",
         "Q3_CH5",
-        "Q3_CH6"
+        "Q3_CH6",
+        "Q3_CRITIC",
+        "Q3_REFS"
       ]
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "v2",
-        "old_weight": 6.0,
-        "new_weight": 6.4,
+        "node_id": "n12",
+        "old_weight": 4.6,
+        "new_weight": 5.0,
         "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
+        "degree": 1
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_config.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q3_FIX1_FIX1"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 5.0,
+        "new_weight": 5.4,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q3_FIX1_FIX2",
+      "agent": "seed_tester",
+      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- plot_results.py:52: unterminated string literal (detected at line 52)\n    51:         \n    52:         axes[1].set_title('Detection Delay (ms)\")\n    53:         axes[1].set_ylabel('Delay')"
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_config.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q3_FIX1_FIX2"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 5.4,
+        "new_weight": 5.8,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q3_FIX1_FIX_1",
+      "agent": "seed_tester",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_config.py:test_config.py: Kod edycji test_config.py nie zawiera definicji `def py`."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 4.6,
+        "new_weight": 5.0,
+        "delta": 0.4,
+        "degree": 11
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 5.0,
+        "new_weight": 5.4,
+        "delta": 0.4,
+        "degree": 10
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 5.4,
+        "new_weight": 5.8,
+        "delta": 0.4,
+        "degree": 9
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "Malformed symbolic tag missing <id> separator"
+        ],
+        "signature": "File <id> does not exist\nMalformed symbolic tag missing <id> separator: \\ref_csv{results/final_results.json}",
+        "task_id": "Q3_CH5",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "QUEUE_REBUILT",
+      "generation": 4,
+      "task_ids": [
+        "Q4_FIX1",
+        "Q4_CODE",
+        "Q4_CH6",
+        "Q4_CRITIC",
+        "Q4_REFS"
+      ]
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_config.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q4_FIX1"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 5.8,
+        "new_weight": 6.2,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "plot_results.py",
+      "files": [
+        "tests/test_plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q4_FIX1_FIX1"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 6.2,
+        "new_weight": 6.6,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_config.py",
+      "files": [
+        "plot_results.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q4_FIX1_FIX2"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 6.6,
+        "new_weight": 7.0,
+        "delta": 0.4,
+        "degree": 0
       }
     },
     {
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Fix E402 by moving imports to the top; fix F841 by removing unused `bars` variable in core.py; remove duplicate `generate_comparison_plot` definition in test_core.py.",
+        "agent": "seed_tester",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_tester.md",
+        "injected_rule": "When generating tests for code that uses data processing libraries, construct the test fixtures to strictly guarantee the existence of all required columns and keys within the input data structures, because runtime KeyErrors indicate a mismatch between test data schema and implementation dependencies.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
@@ -1150,51 +1316,43 @@
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "v2",
-        "old_weight": 6.4,
-        "new_weight": 6.8,
+        "node_id": "n8",
+        "old_weight": 5.8,
+        "new_weight": 6.2,
         "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
+        "degree": 10
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "v2",
-        "old_weight": 6.8,
-        "new_weight": 7.2,
+        "node_id": "n8",
+        "old_weight": 6.2,
+        "new_weight": 6.6,
         "delta": 0.4,
-        "degree": 4,
-        "old_tier": "LRM",
-        "new_tier": "LRM",
-        "tier": "LRM"
+        "degree": 11
       }
     },
     {
-      "type": "AGENT_MUTATED",
+      "type": "WEIGHT_ESCALATED",
       "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\agents\\building\\seed_coder.md",
-        "injected_rule": "Always preserve AST signature compatibility and symbolic pointer validity.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
+        "node_id": "n8",
+        "old_weight": 6.6,
+        "new_weight": 7.0,
+        "delta": 0.4,
+        "degree": 11
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "Malformed symbolic tag missing <id> separator"
+        ],
+        "signature": "File <id> does not exist\nMalformed symbolic tag missing <id> separator: \\ref_csv{results/final_results.json}",
+        "task_id": "Q4_CH6",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
       }
     }
   ]

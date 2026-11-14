@@ -241,9 +241,15 @@ def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_cha
         {"task_id": "T8", "description": "Rozdział 5: Badania eksperymentalne i wyniki", "target_node": "v4", "assigned_agent": "seed_writer"},
         {"task_id": "T9", "description": "Rozdział 6: Podsumowanie i wnioski", "target_node": "v4", "assigned_agent": "seed_writer"},
     ]
-    healed_9 = orch._normalize_and_heal_task_plan(
+    # Plans with two or more code modules get exactly one SKELETON task (wave 1, §III.9); the counts below are
+    # of the planner's tasks.
+    def _without_skeleton(healed: list[dict]) -> list[dict]:
+        assert sum(1 for t in healed if t["task_id"] == "SKELETON") == 1
+        return [t for t in healed if t["task_id"] != "SKELETON"]
+
+    healed_9 = _without_skeleton(orch._normalize_and_heal_task_plan(
         nine_tasks, user_prompt="Test 9 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
-    )
+    ))
     assert len(healed_9) == 9
 
     # 2. A 16-task granular plan -> stays 16 tasks!
@@ -251,16 +257,16 @@ def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_cha
         {"task_id": f"T_EXTRA_{i}", "description": f"Dodatkowy podmoduł algorytmu #{i} w core.py", "target_node": "v2", "assigned_agent": "seed_coder"}
         for i in range(1, 8)
     ]
-    healed_16 = orch._normalize_and_heal_task_plan(
+    healed_16 = _without_skeleton(orch._normalize_and_heal_task_plan(
         sixteen_tasks, user_prompt="Test 16 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
-    )
+    ))
     assert len(healed_16) == 16
 
     # 3. A 7-task plan missing Chapters 5 and 6 -> only the 2 missing chapters are added (7 + 2 = 9 tasks, NOT 12)!
     seven_tasks_missing_5_6 = nine_tasks[:7]
-    healed_7_to_9 = orch._normalize_and_heal_task_plan(
+    healed_7_to_9 = _without_skeleton(orch._normalize_and_heal_task_plan(
         seven_tasks_missing_5_6, user_prompt="Test 7 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
-    )
+    ))
     assert len(healed_7_to_9) == 9
 
 
@@ -281,7 +287,8 @@ def test_healing_keeps_planner_order_and_builds_entrypoint_after_its_modules(tmp
         {"task_id": "T7", "description": "Rozdział 1-6 pracy", "target_node": "thesis.md", "assigned_agent": "seed_writer"},
     ]
     healed = orch._normalize_and_heal_task_plan(planned, user_prompt="RL", multi_cycle_waves=True)
-    order = [t["target_node"] for t in healed]
+    # The skeleton task (wave 1, §III.9) also targets the entrypoint; the order below is of the implementing tasks.
+    order = [t["target_node"] for t in healed if t["task_id"] != "SKELETON"]
 
     assert order.index("run_experiment.py") > order.index("agents/q_agent.py")
     assert order.index("run_experiment.py") > order.index("envs/tictactoe_env.py")

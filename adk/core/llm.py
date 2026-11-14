@@ -548,6 +548,7 @@ def call_agent(
                     combined_prompt,
                     system_prompt=system_prompt.strip(),
                     user_prompt=user_only_prompt,
+                    model_tier=model_tier,
                 )
 
             raw_response_str = api_res.get("raw_text", "{}")
@@ -648,6 +649,7 @@ def call_agent(
         "prompt_tokens": p_tok,
         "completion_tokens": c_tok,
         "total_tokens": t_tok,
+        "done_reason": str(api_res.get("done_reason") or "") if is_network_call else "",
         "decision_summary": decision_summary,
         "system_prompt": system_prompt,
         "user_payload": user_payload,

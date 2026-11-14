@@ -1,37 +1,44 @@
 {
-  "thesis_title": "Implementacja i Ocena Wydajności Tablicowego Agentu Q-Learning w Grze Kółko i Krzyżyk",
-  "thesis_statement": "Tablicowy agent Q-Learning potrafi skutecznie nauczyć się optymalnej strategii w grze Tic-Tac-Toe na małym przestrzenią stanów (9 pól), osiągając stabilny wzrost win_rate przy odpowiednio dobranych hiperparametrach ALPHA i EPSILON, co potwierdza słuszność zastosowania metod uczenia przez wzmacnianie dla problemów o dyskretnych, skończonych stanach.",
-  "baseline_comparison": "Uniformly Random Legal Move Policy (Baseline Monte Carlo)",
+  "thesis_title": "Uczenie się przez wzmocnienie w grze Kółko i krzyżyk: Analiza porównawcza Q-Learning i strategii losowej",
+  "thesis_statement": "Celem pracy jest zaimplementowanie agenta uczącego się metodą Q-Learning grającego w Kółko i Krzyżyk przeciwko losowemu przeciwnikowi. Teza głosi, że agent ten osiąga poziom gry stabilny i dominujący nad losowym (zwycięża >90% gier po odpowiedniej liczbie epok), a analiza błędów pozwala zidentyfikować krytyczne stany dla konwergencji.",
+  "baseline_comparison": "Metodą odniesienia jest agent wybierający ruchy losowo z dopuszczalnych. Porównanie polega na analizie procentowej zwycięstw, remisów i porażek w 1000 rundach ewaluacyjnych oraz analizie krzywej uczenia (średnia nagroda/gra w epokach).",
+  "entrypoint": "train.py:main",
+  "metrics": [
+    "win_rate_vs_random",
+    "draw_rate_vs_random",
+    "avg_reward_per_episode",
+    "convergence_epoch"
+  ],
   "planned_chapters": [
     {
       "index": 1,
-      "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-      "focus": "Formalna definicja problemu Tic-Tac-Toe jako MDP, cel inżynierski implementacji agenta RL oraz teza badawcza."
+      "title": "Wstęp",
+      "focus": "Motywacja, definicja problemu uczenia się w grach zero-sum, cel i teza pracy."
     },
     {
       "index": 2,
-      "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-      "focus": "Analiza podstaw Q-Learningu ( Watkins & Dayan ), pracy Rummery & Niranjan oraz porównanie z baseline'em losowym."
+      "title": "Stan badań i literatura",
+      "focus": "Podstawy Reinforcement Learning, algorytm Q-Learning, prace związane z Tic-Tac-Toe jako MDP."
     },
     {
       "index": 3,
-      "title": "Rozdział 3: Architektura Systemu i Model MDP",
-      "focus": "Opis przestrzeni stanów (board representation), akcji i nagród; implementacja tablicy Q."
+      "title": "Metodologia rozwiązania",
+      "focus": "Modelowanie Tic-Tac-Toe jako MDP (stan, akcja, nagroda), architektura agenta Q-Learning i agenta losowego."
     },
     {
       "index": 4,
-      "title": "Rozdział 4: Implementacja Algorytmu",
-      "focus": "Szczegółowy opis kodu w core.py: funkcja e-greedy, update rule oraz pętla treningowa."
+      "title": "Implementacja systemu",
+      "focus": "Szczegóły kodu: moduł środowiska, moduł uczenia, konfiguracja hiperparametrów."
     },
     {
       "index": 5,
-      "title": "Rozdział 5: Analiza Wyników Eksperymentów",
-      "focus": "Prezentacja results.csv (win_rate, draw_rate), analiza wpływu ALPHA/GAMMA/EPSILON na zbieżność."
+      "title": "Eksperymenty i wyniki",
+      "focus": "Ustawienia eksperymentu, wykresy konwergencji, tabele wyników porównawczych z bazą (Random)."
     },
     {
       "index": 6,
-      "title": "Rozdział 6: Wnioski i Dalsze Kierunki",
-      "focus": "Weryfikacja tezy, ocena skuteczności metody oraz propozycje rozszerzeń (np. Deep Q-Networks)."
+      "title": "Wnioski",
+      "focus": "Podsumowanie osiągnięcia celu, analiza błędów, możliwości rozszerzenia (np. self-play, AlphaZero lite)."
     }
   ],
   "literature_recon": {
@@ -42,76 +49,54 @@
     "research_routing": [
       "background_researcher"
     ],
-    "analyzed_papers_count": 25,
-    "canonical_baselines": [
-      "Uniformly Random Legal Move Policy (Baseline Monte Carlo)",
-      "Exhaustive Minimax / Alpha-Beta Pruning (Von Neumann 1944, Knuth 1975)",
-      "On-Policy SARSA (Rummery & Niranjan 1994) & MENACE Matchbox RL (Michie 1968)"
-    ],
-    "standard_metrics": [
-      "win_rate",
-      "draw_rate",
-      "loss_rate"
-    ],
-    "standard_datasets_or_environments": [
-      "Finite-state 3x3 Tic-Tac-Toe zero-sum Markov Decision Process",
-      "Repeated multi-episode self-play and evaluation rollouts (seed=42)"
-    ],
-    "common_structural_patterns": [
-      "Rozdział 1: Geneza problemu decyzyjnego, równanie optymalizacyjne MDP, teza pracy i 4 hipotezy",
-      "Rozdział 2: Lejek teoretyczny (od klasycznych monografii von Neumanna, Bellmana i Howarda do Q-Learningu Watkinsa i Suttona) wraz z tabelą porównawczą",
-      "Rozdział 3: Operator kontrakcji Bellmana w normie supremum, Twierdzenie o zbieżności z prawdopodobieństwem 1 wraz z dowodem",
-      "Rozdział 4: Specyfikacja struktur tablicy Q-table i funkcji AST w module core.py",
-      "Rozdział 5: Badania eksperymentalne współczynnika wygranych, remisów i porażek oraz studium ablacyjne parametrów ALPHA, GAMMA, EPSILON, EPISODES",
-      "Rozdział 6: Podsumowanie, weryfikacja hipotez, Threats to Validity i kierunki dalszych prac"
-    ],
+    "analyzed_papers_count": 20,
+    "canonical_baselines": [],
+    "standard_metrics": [],
+    "standard_datasets_or_environments": [],
+    "common_structural_patterns": [],
     "sampled_methodologies": [
-      "von Neumann, John and Morgenstern, Oskar (1944) [vonneumann1944theory]: Axiomatic utility theory and minimax theorem for two-person zero-sum finite games",
-      "Nash, John F. (1950) [nash1950equilibrium]: Kakutani fixed-point existence proof for mixed-strategy equilibria in finite games",
-      "Shannon, Claude E. (1950) [shannon1950programming]: Type-A and Type-B lookahead tree search with static board evaluation functions",
-      "Bellman, Richard (1957) [bellman1957dynamic]: Principle of Optimality and recursive backward induction over state spaces",
-      "Bellman, Richard (1957) [bellman1957markovian]: Formalization of discrete-time Markov Decision Processes (MDP) with discounted rewards",
-      "Samuel, Arthur L. (1959) [samuel1959some]: Rote learning and generalized polynomial scoring updated via backed-up minimax values",
-      "Howard, Ronald A. (1960) [howard1960dynamic]: Policy Iteration alternating policy evaluation and greedy policy improvement",
-      "Michie, Donald (1968) [michie1968boxes]: MENACE matchbox reinforcement mechanism for Tic-Tac-Toe state-action weighting"
+      "Muhammad Ahmed Atif and Nehal Naeem Haji and Muhammad Ebad Atif and Mohammad Shahid Shaikh (2026) [atif2026does]: Earlier work tests this only in parts: it measures coordination for one learning method, compares methods with the agents' bodies fixed, or varies speed but reports only how well the team did.",
+      "Gabriel Kalweit and Maria Huegle and Moritz Werling and Joschka Boedecker (2020) [kalweit2020deep]: Classical methods based on reward shaping, i.e.",
+      "Yunhao Tang and Rémi Munos and Mark Rowland and Michal Valko (2023) [tang2023valearning]: In this work, we introduce VA-learning, which directly learns advantage function and value function using bootstrapping, without explicit reference to Q-functions.",
+      "Jiin Woo and Gauri Joshi and Yuejie Chi (2023) [woo2023blessing]: When the data used for reinforcement learning (RL) are collected by multiple agents in a distributed manner, federated versions of RL algorithms allow collaborative learning without the need for agent",
+      "Pedro Cisneros-Velarde and Sanmi Koyejo (2023) [cisnerosvelarde2023finitesample]: Nash Q-learning may be considered one of the first and most known algorithms in multi-agent reinforcement learning (MARL) for learning policies that constitute a Nash equilibrium of an underlying gene",
+      "Andrea Cini and Carlo D'Eramo and Jan Peters and Cesare Alippi (2020) [cini2020deep]: Reinforcement learning algorithms based on Q-learning are driving Deep Reinforcement Learning (DRL) research towards solving complex problems and achieving super-human performance on many of them.",
+      "E. Hurwitz and N. Peace and G. Cevora (2023) [hurwitz2023achieving]: Bimodal, stochastic environments present a challenge to typical Reinforcement Learning problems.",
+      "Zuguang Gao and Qianqian Ma and Tamer Başar and John R. Birge (2021) [gao2021finitesample]: In particular, we establish the finite-sample complexity of fully decentralized Q-learning algorithms in a significant class of general-sum stochastic games (SGs) - weakly acyclic SGs, which includes "
     ],
     "key_limitations_to_overcome": [
-      "von Neumann, John and Morgenstern, Oskar (1944) [vonneumann1944theory]: Requires full game tree enumeration; intractable without value approximation or sampling",
-      "Nash, John F. (1950) [nash1950equilibrium]: Non-constructive fixed-point proof; does not provide an iterative online learning rule",
-      "Shannon, Claude E. (1950) [shannon1950programming]: Relies on handcrafted static evaluation weights rather than autonomous reinforcement signals",
-      "Bellman, Richard (1957) [bellman1957dynamic]: Requires explicit transition probability matrix P(s'|s,a) and suffers from curse of dimensionality",
-      "Bellman, Richard (1957) [bellman1957markovian]: Model-based formulation requiring complete knowledge of transition dynamics",
-      "Samuel, Arthur L. (1959) [samuel1959some]: Linear feature instability when bootstrapping without formal TD convergence guarantees",
-      "Howard, Ronald A. (1960) [howard1960dynamic]: Requires solving linear systems of size |S|x|S| at every policy evaluation phase",
-      "Michie, Donald (1968) [michie1968boxes]: Ad-hoc bead count reinforcement lacking discounted Bellman optimality equations"
+      "Muhammad Ahmed Atif and Nehal Naeem Haji and Muhammad Ebad Atif and Mohammad Shahid Shaikh (2026) [atif2026does]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Gabriel Kalweit and Maria Huegle and Moritz Werling and Joschka Boedecker (2020) [kalweit2020deep]: When a discrete policy is extracted from an action-value function, safe actions can be ensured by restricting the action space at maximization, but can lead to ",
+      "Yunhao Tang and Rémi Munos and Mark Rowland and Michal Valko (2023) [tang2023valearning]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Jiin Woo and Gauri Joshi and Yuejie Chi (2023) [woo2023blessing]: However, its sample complexity still suffers when the local trajectories are highly heterogeneous.",
+      "Pedro Cisneros-Velarde and Sanmi Koyejo (2023) [cisnerosvelarde2023finitesample]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Andrea Cini and Carlo D'Eramo and Jan Peters and Cesare Alippi (2020) [cini2020deep]: WQL uses a weighted sum of the estimated action values, where the weights correspond to the probability of each action value being the maximum; however, the com",
+      "E. Hurwitz and N. Peace and G. Cevora (2023) [hurwitz2023achieving]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Zuguang Gao and Qianqian Ma and Tamer Başar and John R. Birge (2021) [gao2021finitesample]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees"
     ],
     "available_citation_keys": [
-      "vonneumann1944theory",
-      "nash1950equilibrium",
-      "shannon1950programming",
-      "bellman1957dynamic",
-      "bellman1957markovian",
-      "samuel1959some",
-      "howard1960dynamic",
-      "michie1968boxes",
-      "knuth1975analysis",
-      "barto1983neuronlike",
-      "sutton1988learning",
-      "watkins1989learning",
-      "watkins1992qlearning",
-      "rummery1994online",
-      "jaakkola1994convergence",
-      "tsitsiklis1994asynchronous",
-      "tesauro1995temporal",
-      "bertsekas1996neuro",
-      "kearns2002near",
-      "auer2002finite",
-      "evendar2003learning",
-      "szepesvari2010algorithms",
-      "puterman2014markov",
-      "sutton2018reinforcement",
-      "russell2020artificial"
-    ]
+      "atif2026does",
+      "kalweit2020deep",
+      "tang2023valearning",
+      "woo2023blessing",
+      "cisnerosvelarde2023finitesample",
+      "cini2020deep",
+      "hurwitz2023achieving",
+      "gao2021finitesample",
+      "lim2024finite",
+      "larchenko2021study",
+      "moraes2026algorithmic",
+      "hwang2023practical",
+      "zheng2024federated",
+      "hau2024qlearning",
+      "sowerby2022designing",
+      "cassano2020logical",
+      "seyedsalehi2023approximate",
+      "pardo2018scaling",
+      "zheng2023federated",
+      "sharma2019deep"
+    ],
+    "citation_source": "arxiv"
   },
   "thesis_type": "inzynierska",
   "template_name": "thesis_plodz",
@@ -120,33 +105,33 @@
     "chapters": [
       {
         "index": 1,
-        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-        "focus": "Formalna definicja problemu Tic-Tac-Toe jako MDP, cel inżynierski implementacji agenta RL oraz teza badawcza."
+        "title": "Wstęp",
+        "focus": "Motywacja, definicja problemu uczenia się w grach zero-sum, cel i teza pracy."
       },
       {
         "index": 2,
-        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-        "focus": "Analiza podstaw Q-Learningu ( Watkins & Dayan ), pracy Rummery & Niranjan oraz porównanie z baseline'em losowym."
+        "title": "Stan badań i literatura",
+        "focus": "Podstawy Reinforcement Learning, algorytm Q-Learning, prace związane z Tic-Tac-Toe jako MDP."
       },
       {
         "index": 3,
-        "title": "Rozdział 3: Architektura Systemu i Model MDP",
-        "focus": "Opis przestrzeni stanów (board representation), akcji i nagród; implementacja tablicy Q."
+        "title": "Metodologia rozwiązania",
+        "focus": "Modelowanie Tic-Tac-Toe jako MDP (stan, akcja, nagroda), architektura agenta Q-Learning i agenta losowego."
       },
       {
         "index": 4,
-        "title": "Rozdział 4: Implementacja Algorytmu",
-        "focus": "Szczegółowy opis kodu w core.py: funkcja e-greedy, update rule oraz pętla treningowa."
+        "title": "Implementacja systemu",
+        "focus": "Szczegóły kodu: moduł środowiska, moduł uczenia, konfiguracja hiperparametrów."
       },
       {
         "index": 5,
-        "title": "Rozdział 5: Analiza Wyników Eksperymentów",
-        "focus": "Prezentacja results.csv (win_rate, draw_rate), analiza wpływu ALPHA/GAMMA/EPSILON na zbieżność."
+        "title": "Eksperymenty i wyniki",
+        "focus": "Ustawienia eksperymentu, wykresy konwergencji, tabele wyników porównawczych z bazą (Random)."
       },
       {
         "index": 6,
-        "title": "Rozdział 6: Wnioski i Dalsze Kierunki",
-        "focus": "Weryfikacja tezy, ocena skuteczności metody oraz propozycje rozszerzeń (np. Deep Q-Networks)."
+        "title": "Wnioski",
+        "focus": "Podsumowanie osiągnięcia celu, analiza błędów, możliwości rozszerzenia (np. self-play, AlphaZero lite)."
       }
     ]
   }

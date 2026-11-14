@@ -8,17 +8,23 @@ import re
 from typing import Any
 
 from adk.core.models import read_json_state, write_json_state
+from pathlib import Path
+
 from adk.tools.evolution import (
     create_specialized_agent,
     evaluate_and_promote_validator,
     mutate_agent_prompt,
     split_agent,
 )
+from adk.tools.evolution.agent_mutator import learned_rules_of, rule_rejection_reason
 from adk.orchestration.common import (
     _collect_report_issues,
     _KNOWN_EVOLUTION_ACTIONS,
     _NON_GENERAL_RULE,
 )
+
+# Role words every prompt may use; naming them is not naming a file of this project.
+_GENERIC_NAMES = {"__init__", "main", "test", "tests", "config", "core", "utils", "init", "setup"}
 
 
 class EvolutionMixin:
@@ -26,6 +32,21 @@ class EvolutionMixin:
 
     def _workspace_module_stems(self) -> set[str]:
         return {p.stem for p in self.workspace_dir.rglob("*.py")} if self.workspace_dir.exists() else set()
+
+    def _forbidden_rule_names(self) -> set[str]:
+        """Identifiers of this project (module names, contracted symbols): a learned rule that names one
+        describes an incident, not a way of working, and is rejected (§IV.6.3 B1)."""
+        names: set[str] = set()
+        if self.workspace_dir.exists():
+            for p in self.workspace_dir.rglob("*.py"):
+                if "__pycache__" not in p.parts:
+                    names.update({p.name, p.stem})
+        if self.interface_contract_path.exists():
+            for rel, api in read_json_state(self.interface_contract_path).items():
+                names.add(Path(rel).name)
+                for symbol in api or {}:
+                    names.update(symbol.split("."))
+        return {n for n in names if len(n) >= 4 and n.lower() not in _GENERIC_NAMES}
 
     def _missing_third_party_modules(self, report: dict[str, Any]) -> list[str]:
         """`No module named X` names from a report, excluding the workspace's own modules: a missing `core`
@@ -281,13 +302,27 @@ class EvolutionMixin:
                 {"type": "MUTATION_REJECTED_NOT_GENERAL", "agent": target_mut_agent, "rule": rule_text}
             )
             return {"action": "MUTATION_SKIPPED", "decision": "MUTATION_SKIPPED", "reason": "rule_names_an_incident"}
+        # The gate the prompt alone could not hold (2026-11-13: rules about closing quotes, `src.` prefixes and
+        # `sys.path`, five near-copies of "write perfect syntax"): project identifiers, symptoms, harness-enforced
+        # topics and near-duplicates are refused deterministically.
+        rejection = rule_rejection_reason(
+            rule_text, self._forbidden_rule_names(), learned_rules_of(Path(target_md_path))
+        )
+        if rejection:
+            self._record_evolution_event(
+                {"type": "MUTATION_REJECTED", "agent": target_mut_agent, "rule": rule_text, "reason": rejection}
+            )
+            return {"action": "MUTATION_SKIPPED", "decision": "MUTATION_SKIPPED", "reason": rejection}
 
+        pattern = payload.get("pattern") if isinstance(payload.get("pattern"), dict) else {}
         mut_res = mutate_agent_prompt(
             agent_md_path=target_md_path,
             new_rule=rule_text,
             failure_context=json.dumps(payload, ensure_ascii=False),
             failure_ledger_path=self.failure_ledger_path,
             provider=self.provider,
+            category=str(pattern.get("category") or ""),
+            cycle=int(payload.get("cycle_index") or 0),
         )
         self._record_evolution_event({"type": "AGENT_MUTATED", "details": mut_res})
         if mut_res.get("compacted"):

@@ -223,6 +223,7 @@ def run_benchmark_suite(
     total_llm_calls = 0
     total_live_network_calls = 0
     override_tpl, override_type = parse_template_flag(template_override)
+    interrupted = False
 
     try:
         for spec in selected_specs:
@@ -313,15 +314,29 @@ def run_benchmark_suite(
             )
 
             adk_t0 = time.perf_counter()
-            orch_res = orch.run(
-                user_prompt=spec.prompt,
-                target_node="v1",
-                simulate_first_attempt_fail=(spec.simulate_first_fail if resolved_provider == "mock" else False),
-                missing_agent_specialization=spec.missing_specialization,
-                multi_cycle_waves=True,
-                template_name=effective_template,
-                thesis_type=effective_thesis_type,
-            )
+            try:
+                orch_res = orch.run(
+                    user_prompt=spec.prompt,
+                    target_node="v1",
+                    simulate_first_attempt_fail=(spec.simulate_first_fail if resolved_provider == "mock" else False),
+                    missing_agent_specialization=spec.missing_specialization,
+                    multi_cycle_waves=True,
+                    template_name=effective_template,
+                    thesis_type=effective_thesis_type,
+                )
+            except Exception as exc:  # noqa: BLE001 - a crashed run must still leave a status and its artifacts
+                import traceback
+
+                crash = traceback.format_exc()
+                orch.logger.log_step("ORCHESTRATOR_CRASHED", f"Przebieg przerwany wyjątkiem: {exc}", {"traceback": crash})
+                print(f"  [PRZEBIEG PRZERWANY] {type(exc).__name__}: {exc}", flush=True)
+                orch_res = {"status": "CRASHED", "error": f"{type(exc).__name__}: {exc}", "traceback": crash}
+            except KeyboardInterrupt:
+                # Ctrl+C is not an Exception: the 2026-11-13 run ended this way with no status and no summary.
+                orch.logger.log_step("ORCHESTRATOR_INTERRUPTED", "Przebieg przerwany przez użytkownika (Ctrl+C)", {})
+                print("  [PRZEBIEG PRZERWANY PRZEZ UŻYTKOWNIKA] Zapisuję status i artefakty tego zadania...", flush=True)
+                orch_res = {"status": "INTERRUPTED", "error": "KeyboardInterrupt"}
+                interrupted = True
 
             # Ensure all required benchmark files/sections exist so run_experiment.py & 6-chapter PDF compilation succeed
             mock_fallback = _make_task_mock_llm_handler(spec)
@@ -437,6 +452,7 @@ def run_benchmark_suite(
                     "title_en": spec.title_en,
                     "domain": spec.domain,
                     "orchestrator_status": orch_res["status"],
+                    "orchestrator_error": orch_res.get("error"),
                     "replan_count": orch_res.get("replan_count", 0),
                     "architecture_cycles": arch_cycles,
                     "llm_telemetry": llm_stats,
@@ -471,12 +487,14 @@ def run_benchmark_suite(
                     },
                 }
             )
+            if interrupted:
+                break
     finally:
         set_llm_handler(None)
 
     suite_elapsed_ms = (time.perf_counter() - suite_start) * 1000.0
     all_completed = all(t.get("orchestrator_status") == "COMPLETED" for t in results_per_task)
-    suite_status = "COMPLETED" if all_completed else "COMPLETED_WITH_FAILURES"
+    suite_status = "INTERRUPTED" if interrupted else ("COMPLETED" if all_completed else "COMPLETED_WITH_FAILURES")
     summary_payload = {
         "status": suite_status,
         "provider": resolved_provider,
