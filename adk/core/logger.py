@@ -102,3 +102,12 @@ def get_process_logger() -> HarnessProcessLogger:
         _DEFAULT_LOGGER = HarnessProcessLogger()
     return _DEFAULT_LOGGER
 
+
+def set_process_log_dir(log_dir: str | Path | None) -> HarnessProcessLogger:
+    """Point the process logger at `log_dir` (None: back to HARNESS_LOG_DIR / adk/logs). A benchmark task logs
+    live into its own folder, so a run that dies mid-task still leaves its full trace, and every run starts
+    with fresh files instead of appending to a shared log that had grown to ~2 GB (Audit V §VI.9a P6)."""
+    global _DEFAULT_LOGGER
+    _DEFAULT_LOGGER = HarnessProcessLogger(log_dir=log_dir) if log_dir is not None else HarnessProcessLogger()
+    return _DEFAULT_LOGGER
+

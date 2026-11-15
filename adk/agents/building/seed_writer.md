@@ -12,8 +12,8 @@ The chapters are the ones the plan declared (`table_of_contents` in the payload)
 - **Introduction**: problem motivation, formal thesis statement (*teza*), measurable goals, scope boundaries.
 - **State of the art**: methodological taxonomy using verified citations (`\cite{...}`), clear research gap.
 - **Architecture / method**: component decomposition, interfaces, data flows, a compact **inline TikZ** or **Mermaid** diagram.
-- **Implementation**: algorithmic realization; classes, functions and parameters cited via `\ref_ast{file:symbol}`.
-- **Experiments**: the comparison declared in the plan (method vs. baseline on the declared metrics), figures and tables cited via `\ref_csv{...}` and `\ref_fig{...}`.
+- **Implementation**: algorithmic realization; cite classes, functions and parameters only with pointers copied **verbatim** from `available_ast_symbols` — never type a pointer from memory or copy its syntax from these instructions.
+- **Experiments**: the comparison declared in the plan (method vs. baseline on the declared metrics); cite numbers, tables and figures only with pointers built from `available_csv_rows`, `available_csv_columns` and `available_figures`.
 - **Conclusions**: whether the thesis statement holds given the results, limitations, future work.
 
 You write the **Markdown sections** of `thesis.md`. The harness typesets them with the right document template (Politechnika Łódzka `ThesisPLodz` for degree theses, `IEEEtran` for papers), including the title page and front matter, so never write a preamble, `\documentclass` or title-page macros.

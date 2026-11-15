@@ -17,6 +17,7 @@ from adk.benchmarks.llm_logging import export_task_llm_interactions  # noqa: E40
 from adk.benchmarks.tasks import BENCHMARK_TASKS, BenchmarkTaskSpec, get_benchmark_task  # noqa: E402
 from adk.core.connection import LLMConnectionManager  # noqa: E402
 from adk.core.llm import get_llm_telemetry, reset_llm_telemetry, set_llm_handler  # noqa: E402
+from adk.core.logger import set_process_log_dir  # noqa: E402
 from adk.core.models import read_json_state, write_json_state  # noqa: E402
 from adk.mocks.benchmark_mock_handlers import (  # noqa: E402
     VALIDATOR_SYNTHESIS_CODE,
@@ -111,7 +112,11 @@ def _render_master_benchmark_summary_pdf(summary_data: dict[str, Any], output_pd
                         f"{r['timings_ms']['total_task_ms']:.0f} ms",
                         ", ".join(r["evolution"]["new_events_in_task"]),
                         str(r["evolution"]["total_registered_agents"]),
-                        f"{r['artifacts']['resolved_references_count']} refs / PASS",
+                        (
+                            "publikacja nieudana"
+                            if r["artifacts"].get("publish_error")
+                            else f"{r['artifacts'].get('resolved_references_count', 0)} refs / PASS"
+                        ),
                     ]
                 )
             tbl = tbl_ax.table(
@@ -177,8 +182,8 @@ def _render_master_benchmark_summary_pdf(summary_data: dict[str, Any], output_pd
         )
         cmd_lines = [
             f"• [{r['task_id']}]:\n"
-            f"    Kod + testy:  python {r['artifacts']['runner_script']}\n"
-            f"    Plik PDF:     {r['artifacts']['pdf_path']}"
+            f"    Kod + testy:  python {r['artifacts'].get('runner_script', '(brak — publikacja nieudana)')}\n"
+            f"    Plik PDF:     {r['artifacts'].get('pdf_path', '(brak — publikacja nieudana)')}"
             for r in tasks_res
         ]
         ax.text(0.08, 0.235, "\n".join(cmd_lines), fontsize=7.0, family="monospace", color="#1e293b", ha="left", va="top")
@@ -259,6 +264,10 @@ def run_benchmark_suite(
                 reset=True,
             )
             sandbox_ws = evolved_adk_dir / "workspace"
+            # Live per-task logs (harness_process.log, agent_trace.jsonl) in the task's own logs/ folder; it is
+            # copied to benchmarks/<slug>/logs/ with the workspace and survives a run that dies mid-task.
+            task_logger = set_process_log_dir(sandbox_ws / "logs")
+            print(f"    Logi zadania (na żywo): {task_logger.text_log_path}", flush=True)
 
             # Seed brownfield initial workspace files if task_type == "evolution"
             for rel_f, init_content in (spec.initial_workspace_files or {}).items():
@@ -426,19 +435,29 @@ def run_benchmark_suite(
             arch_cycles = orch_res.get("architecture_cycles", [])
 
             pub_t0 = time.perf_counter()
-            pub_res = publish_workspace_thesis_bundle(
-                spec=spec,
-                workspace_dir=task_dest_dir,
-                evolution_summary={
-                    "events_triggered": new_events,
-                    "active_agents_count": len(active_agents),
-                    "elapsed_seconds": (time.perf_counter() - t_start),
-                    "architecture_cycles": arch_cycles,
-                },
-                template_name=effective_template,
-                thesis_type=effective_thesis_type,
-                provider=resolved_provider,
-            )
+            try:
+                pub_res = publish_workspace_thesis_bundle(
+                    spec=spec,
+                    workspace_dir=task_dest_dir,
+                    evolution_summary={
+                        "events_triggered": new_events,
+                        "active_agents_count": len(active_agents),
+                        "elapsed_seconds": (time.perf_counter() - t_start),
+                        "architecture_cycles": arch_cycles,
+                    },
+                    template_name=effective_template,
+                    thesis_type=effective_thesis_type,
+                    provider=resolved_provider,
+                )
+            except Exception as exc:  # noqa: BLE001 - one task's publishing must not end the whole suite
+                # 2026-11-15: a malformed thesis pointer crashed publishing and took the whole suite with it,
+                # without a summary. The task gets the error in its result; the next task still runs.
+                import traceback
+
+                pub_res = {"publish_error": f"{type(exc).__name__}: {exc}", "publish_traceback": traceback.format_exc()}
+                print(f"  [PUBLIKACJA NIEUDANA] {type(exc).__name__}: {exc}", flush=True)
+                if orch_res.get("status") == "COMPLETED":
+                    orch_res["status"] = "COMPLETED_WITH_GAPS"
             pub_res.setdefault("llm_interactions_md", str(task_dest_dir / "logs" / "llm_interactions.md"))
             pub_res.setdefault("llm_interactions_jsonl", str(task_dest_dir / "logs" / "llm_interactions.jsonl"))
             pub_res["evolved_adk_dir"] = str(task_adk_dest)
@@ -487,10 +506,18 @@ def run_benchmark_suite(
                     },
                 }
             )
+            # A partial summary after every task: on 2026-11-14 the third task hung, the process was ended and the
+            # finished results of the first two were lost because the summary was written only at the very end.
+            write_json_state(
+                bench_out_root / "benchmark_summary.json",
+                {"status": "IN_PROGRESS", "provider": resolved_provider, "sml_model": sml_model,
+                 "lrm_model": lrm_model, "tasks": results_per_task},
+            )
             if interrupted:
                 break
     finally:
         set_llm_handler(None)
+        set_process_log_dir(None)
 
     suite_elapsed_ms = (time.perf_counter() - suite_start) * 1000.0
     all_completed = all(t.get("orchestrator_status") == "COMPLETED" for t in results_per_task)

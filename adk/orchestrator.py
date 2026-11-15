@@ -381,17 +381,26 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
                 # Fast path: the findings are deterministic and self-describing (syntax, import, ruff, pytest,
                 # contracts), so the author of the failed file gets them verbatim, right away, with no planner
                 # and no evolution in between. 2026-11-13: that detour cost ~1.5 min per failure.
+                # A derived artifact (CSV, figure) is repaired through its producer: on 2026-11-14 agents were
+                # sent to "fix" figures/comparison.pdf and results.csv, files no one can edit.
+                fast_target = self._repair_target(failed_file)
+                if fast_target != failed_file:
+                    nodes_now = read_json_state(self.matrix_path).get("nodes", {})
+                    author = next(
+                        (m.get("last_writer") for m in nodes_now.values() if str(m.get("path", "")) == fast_target), None
+                    )
+                    failed_agent = str((author or {}).get("agent") or _default_agent(fast_target))
                 fast_task = {
                     **task,
                     "repair_of": t_id,
                     "task_id": f"{t_id}_FIX{attempt}",
-                    "target_node": failed_file,
+                    "target_node": fast_target,
                     "assigned_agent": failed_agent,
                     "description": f"{t_desc}\nNAPRAW (ustalenia weryfikacji):\n- " + "\n- ".join(_fit_items(issues_list)),
                 }
                 fast_tier = select_model_tier(failures=attempt - 1)
                 print(
-                    f"  [WARSTWA 2: SZYBKA NAPRAWA {attempt}/{FAST_REPAIR_ATTEMPTS}] {failed_file} przez '{failed_agent}' "
+                    f"  [WARSTWA 2: SZYBKA NAPRAWA {attempt}/{FAST_REPAIR_ATTEMPTS}] {fast_target} przez '{failed_agent}' "
                     f"(Tier: {fast_tier}), bez W4/W1...",
                     flush=True,
                 )
@@ -401,7 +410,7 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
                     self._refresh_experiment_after_code(node_id)
                 except Exception as exc:
                     # A crashed repair must not look like a completed one: keep it on record.
-                    builder_error = f"Wyjątek szybkiej naprawy {fast_task['task_id']} na pliku {failed_file}: {exc}"
+                    builder_error = f"Wyjątek szybkiej naprawy {fast_task['task_id']} na pliku {fast_target}: {exc}"
                     print(f"  [OSTRZEŻENIE: BŁĄD SZYBKIEJ NAPRAWY] {builder_error}", flush=True)
                     cycle_trace["builder_error"] = str(exc)
                 report = self._run_verification_step(task, include_docs=self.include_docs, is_final_gate=False, inject_failure=False)
@@ -418,9 +427,8 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
 
             # One full cycle. W4 only for a pattern: the same category of failure of the same agent in at least
             # two different tasks, never for what the harness itself enforces, and once per (agent, category).
-            # A missing third-party package is the exception: that decision is deterministic and cheap.
+            # (The environment is fixed, D1: a missing package is an L1 finding, never an evolution matter.)
             evo_key = (failed_agent, category)
-            missing_pkgs = self._missing_third_party_modules(report)
             pattern = len(hits) >= 2
             run_evolution = False
             if not self.enable_layer4:
@@ -436,10 +444,10 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
                     cycle_trace["w4_action"] = "REPORT_HARNESS_BUG"
                     state.architecture_cycles.append(cycle_trace)
                     break
-            elif category in HARNESS_ENFORCED_CATEGORIES and not missing_pkgs:
+            elif category in HARNESS_ENFORCED_CATEGORIES:
                 cycle_trace["w4_action"] = "SKIPPED_HARNESS_ENFORCED"
                 print(f"  [WARSTWA 4: POMINIĘTA] Kategorię '{category}' egzekwuje harness; reguła promptu nic tu nie da.", flush=True)
-            elif not pattern and not missing_pkgs:
+            elif not pattern:
                 cycle_trace["w4_action"] = "SKIPPED_NO_PATTERN"
                 print(f"  [WARSTWA 4: POMINIĘTA] Kategoria '{category}' wystąpiła dotąd w jednym zadaniu; ewolucja czeka na wzorzec.", flush=True)
             else:
@@ -557,7 +565,18 @@ class NeuroSymbolicOrchestrator(PlanningMixin, BuildingMixin, VerificationMixin,
             self.agents_dir / "planning" / "remediation_planner.md",
             {
                 "user_prompt": state.user_prompt,
-                "error_report": report,
+                # The fields the planner acts on; the full report (supervisor dumps, every warning) averaged
+                # ~13k characters per call on 2026-11-13 and repeated the same findings several times.
+                "error_report": {
+                    "status": report.get("status"),
+                    "failed_task_id": report.get("failed_task_id"),
+                    "failed_node": report.get("failed_node"),
+                    "failed_file": report.get("failed_file"),
+                    "failed_agent": report.get("failed_agent"),
+                    "issues": _fit_items(list(dict.fromkeys(_collect_report_issues(report)))),
+                    "contract_violations": report.get("contract_violations") or [],
+                    "warnings": list(report.get("warnings") or [])[:5],
+                },
                 "failed_task": failed_task,
                 "remediation_directive": directive,
                 "agent_registry": read_json_state(self.registry_path),

@@ -109,6 +109,52 @@ def test_modules_inside_a_package_are_imported_by_their_dotted_path(tmp_path: Pa
     assert not [e for e in res["errors"] if e.startswith("Import error")]
 
 
+def test_symbols_qualified_with_module_or_path_land_in_the_file(tmp_path: Path) -> None:
+    """2026-11-14: `random_agent.RandomAgent.__init__`, `train.py:main`, `src/exp/runner.run_all` were rejected."""
+    orch = _orch(tmp_path)
+    (orch.workspace_dir / "src").mkdir()
+    (orch.workspace_dir / "game.py").write_text(GAME, encoding="utf-8")
+    (orch.workspace_dir / "src" / "runner.py").write_text("def run_all() -> None:\n    pass\n", encoding="utf-8")
+
+    orch._materialize_workspace_artifact("game.py", {"ast_edits": [
+        {"symbol": "game.Game.reset", "file": "game.py", "code": "def reset(self) -> None:\n    self.board = []\n"},
+        {"symbol": "src/runner.py:run_all", "code": "def run_all() -> int:\n    return 1\n"},
+    ]})
+
+    assert "self.board = []" in (orch.workspace_dir / "game.py").read_text(encoding="utf-8")
+    assert "return 1" in (orch.workspace_dir / "src" / "runner.py").read_text(encoding="utf-8")
+
+
+def test_two_test_files_with_one_basename_are_both_collected(tmp_path: Path) -> None:
+    """2026-11-14 (task 02): `test_config.py` and `tests/test_config.py` broke collection in every verification."""
+    ws = tmp_path / "ws"
+    (ws / "tests").mkdir(parents=True)
+    (ws / "config.py").write_text("SEED = 1\n", encoding="utf-8")
+    for rel in ("test_config.py", "tests/test_config.py"):
+        (ws / rel).write_text("from config import SEED\n\n\ndef test_seed() -> None:\n    assert SEED == 1\n", encoding="utf-8")
+
+    res = test_runner.run_isolated_tests(ws, verification_dir=tmp_path / "none")
+
+    assert res["status"] == "PASS", res["errors"]
+
+
+def test_benchmark_task_logs_live_into_its_own_folder(tmp_path: Path) -> None:
+    """§VI.9a P6: per-task harness log and trace, written live, copied to benchmarks/<slug>/logs/; afterwards the
+    logger is back on the default directory."""
+    import os
+
+    from adk.benchmarks import run_benchmark_suite
+    from adk.core.logger import get_process_logger
+
+    res = run_benchmark_suite(task_keys=["2"], provider="mock", output_root=tmp_path / "out")
+
+    task_logs = tmp_path / "out" / "02_ml_anomaly_detection" / "logs"
+    assert "[ORCHESTRATOR_START]" in (task_logs / "harness_process.log").read_text(encoding="utf-8")
+    assert (task_logs / "agent_trace.jsonl").stat().st_size > 0
+    assert res["tasks"][0]["orchestrator_status"]
+    assert get_process_logger().log_dir == Path(os.environ["HARNESS_LOG_DIR"])
+
+
 def test_interrupted_run_leaves_a_status(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from unittest.mock import MagicMock
 

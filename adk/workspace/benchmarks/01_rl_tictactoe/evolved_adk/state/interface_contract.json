@@ -1,55 +1,21 @@
 {
-  "evaluate.py": {
-    "run_evaluation_episode": [
-      "q_learner",
-      "env"
-    ]
-  },
-  "plot_results.py": {
-    "generate_diagram_text": [],
-    "plot_learning_curve": [
-      "results",
-      "output_path",
-      "columns_to_plot"
-    ]
-  },
-  "q_learning_agent.py": {
-    "QLearner": [],
-    "QLearner.__init__": [
+  "src/config.py": {
+    "Config": [],
+    "Config.__init__": [
       "self"
     ],
-    "QLearner.choose_action": [
-      "self",
-      "state_key"
-    ],
-    "QLearner.update": [
-      "self",
-      "state_key",
-      "action",
-      "reward",
-      "next_state_key"
-    ],
-    "QLearner.get_all_actions": [
-      "self",
-      "state_key"
-    ]
-  },
-  "random_agent.py": {
-    "RandomAgent": [],
-    "RandomAgent.__init__": [
+    "Config.to_dict": [
       "self"
-    ],
-    "RandomAgent.choose_action": [
-      "self",
-      "available_actions"
     ]
   },
-  "tictactoe_env.py": {
-    "Player": [],
+  "src/tictactoe_env.py": {
     "TicTacToeEnv": [],
+    "TicTacToeEnv.get_symbol": [],
+    "TicTacToeEnv.get_empty": [],
     "TicTacToeEnv.__init__": [
       "self",
-      "max_steps"
+      "max_turns",
+      "use_terminal_value"
     ],
     "TicTacToeEnv.reset": [
       "self"
@@ -59,33 +25,144 @@
       "action"
     ],
     "TicTacToeEnv.get_state_key": [
-      "self",
-      "state"
-    ],
-    "TicTacToeEnv.get_terminal_states": [
-      "self"
-    ],
-    "TicTacToeEnv.get_winner": [
       "self"
     ],
     "TicTacToeEnv.is_game_over": [
       "self"
     ],
-    "TicTacToeEnv.is_valid_move": [
+    "reset": [
+      "self"
+    ],
+    "step": [
       "self",
       "action"
     ],
-    "TicTacToeEnv.get_current_player": [
+    "get_state_key": [
       "self"
     ],
-    "TicTacToeEnv.get_step_count": [
+    "is_game_over": [
       "self"
     ]
   },
-  "train.py": {
-    "main": [
-      "seed"
+  "src/qlearning_agent.py": {
+    "State": [],
+    "QEntry": [],
+    "QLearningAgent": [],
+    "QLearningAgent.__init__": [
+      "self",
+      "config"
+    ],
+    "QLearningAgent.choose_action": [
+      "self",
+      "state",
+      "available_actions"
+    ],
+    "QLearningAgent.learn": [
+      "self",
+      "state",
+      "action",
+      "reward",
+      "next_state",
+      "done"
+    ],
+    "QLearningAgent.save_q_table": [
+      "self",
+      "path"
+    ],
+    "QLearningAgent.load_q_table": [
+      "self",
+      "path"
+    ],
+    "QLearningAgent.get_statistics": [
+      "self"
+    ],
+    "fix_duplicate_imports": [
+      "self"
     ]
   },
-  "config.py": {}
+  "src/random_baseline.py": {
+    "RandomBaseline": [],
+    "RandomBaseline.play_episode": [
+      "self",
+      "env",
+      "agent_state"
+    ],
+    "RandomBaseline.get_action": [
+      "self",
+      "state"
+    ],
+    "RandomBaseline.__init__": [
+      "self",
+      "rng"
+    ],
+    "play_episode": [
+      "self",
+      "env",
+      "agent_state"
+    ],
+    "get_action": [
+      "self",
+      "env",
+      "state"
+    ]
+  },
+  "src/training_loop.py": {
+    "Config": [],
+    "Config.__init__": [
+      "self",
+      "env_seed",
+      "agent_seed",
+      "random_baseline_seed",
+      "num_episodes",
+      "eval_every_n_episodes",
+      "max_steps",
+      "gamma"
+    ],
+    "TrainingResults": [],
+    "TrainingResults.__init__": [
+      "self"
+    ],
+    "train": [
+      "qlearning_agent",
+      "random_baseline_env",
+      "config",
+      "env"
+    ]
+  },
+  "src/evaluation.py": {
+    "get_seed": [],
+    "EvaluationError": [],
+    "EvalResults": [],
+    "evaluate_agent": [
+      "env",
+      "agent",
+      "n_episodes",
+      "seed"
+    ],
+    "evaluate_episode": [
+      "agent1",
+      "agent2",
+      "baseline",
+      "state",
+      "n_episodes"
+    ],
+    "RandomBaseline": [],
+    "RandomBaseline.__init__": [
+      "self",
+      "seed"
+    ],
+    "RandomBaseline.get_action": [
+      "self",
+      "state"
+    ]
+  },
+  "src/experiment.py": {
+    "RunResult": [],
+    "AggregateResult": [],
+    "TrainingProgress": [],
+    "run_experiment": [],
+    "get_state_string": [
+      "state"
+    ]
+  }
 }

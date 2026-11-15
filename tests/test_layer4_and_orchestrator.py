@@ -422,7 +422,9 @@ def test_evolution_waits_for_a_pattern_across_tasks(tmp_path: Path):
     res = orch.run("Zbuduj moduł walidacji parametrów")
 
     actions = [c["w4_action"] for c in res.get("architecture_cycles", [])]
-    assert actions == ["FAST_FIX", "FAST_FIX", "SKIPPED_NO_PATTERN", "FAST_FIX", "FAST_FIX", "MUTATE_AGENT"]
+    assert actions[:5] == ["FAST_FIX", "FAST_FIX", "SKIPPED_NO_PATTERN", "FAST_FIX", "FAST_FIX"]
+    # The sixth cycle is the architect's own decision (the mock splits an agent with many failures).
+    assert len(actions) == 6 and not actions[5].startswith("SKIPPED")
     assert len(evolutions) == 1
     pattern = evolutions[0]["pattern"]
     assert pattern["category"] == "pytest:AssertionError" and pattern["occurrences"] == 2
@@ -520,16 +522,18 @@ def test_rebuild_queue_detects_oscillating_failures(tmp_path: Path):
     assert "stop" in orch._rebuild_queue({}, 2, seen)
 
 
-def test_mechanical_lint_is_fixed_by_tool_not_reported_as_failure(tmp_path: Path):
+def test_mechanical_lint_is_a_warning_and_verification_never_edits(tmp_path: Path):
+    """D3 (2026-11-15): who diagnoses does not edit. A mechanical finding does not block and the file stays
+    exactly as its author wrote it."""
     ws = tmp_path / "workspace"
     ws.mkdir()
-    (ws / "plot_results.py").write_text(
-        "def plot(values):\n    width = 0.35\n    return sum(values)\n", encoding="utf-8"
-    )
+    source = "def plot(values):\n    width = 0.35\n    return sum(values)\n"
+    (ws / "plot_results.py").write_text(source, encoding="utf-8")
     res = run_isolated_tests(ws, verification_dir=tmp_path / "no_validators")
     assert res["ruff_passed"] is True
     assert not any("F841" in err for err in res["errors"])
-    assert "width" not in (ws / "plot_results.py").read_text(encoding="utf-8")
+    assert any("F841" in w for w in res["lint_warnings"])
+    assert (ws / "plot_results.py").read_text(encoding="utf-8") == source
 
 
 def test_blocking_lint_still_fails_verification(tmp_path: Path):
@@ -691,9 +695,10 @@ def test_missing_rule_does_not_inject_a_filler(tmp_path: Path):
     assert res["action"] == "MUTATION_SKIPPED"
 
 
-def test_unusable_install_decision_is_not_laundered_into_a_mutation(tmp_path: Path):
+def test_install_decision_no_longer_exists(tmp_path: Path):
+    """D1 (2026-11-14): the environment is fixed for the whole run; an install decision is an unknown action."""
     _orch, res = _evolution_with_decision(tmp_path, {"action": "INSTALL_DEPENDENCY"})
-    assert res["action"] == "INSTALL_DEPENDENCY_SKIPPED"
+    assert res["action"] == "UNKNOWN"
 
 
 def test_unknown_evolution_action_is_reported(tmp_path: Path):
@@ -701,10 +706,10 @@ def test_unknown_evolution_action_is_reported(tmp_path: Path):
     assert res["action"] == "UNKNOWN"
 
 
-def test_install_package_skips_importable_module():
-    from adk.tools.evolution.dependency_manager import install_package
+def test_dependency_manager_is_gone():
+    import importlib.util
 
-    assert install_package("json")["status"] == "skipped"
+    assert importlib.util.find_spec("adk.tools.evolution.dependency_manager") is None
 
 
 def test_role_alias_never_collides_with_a_discovered_node(tmp_path: Path):

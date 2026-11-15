@@ -7,6 +7,7 @@ import csv
 import re
 from collections import Counter
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -74,23 +75,41 @@ def _issue_fingerprints(issue: str) -> list[str]:
     return [re.sub(r"\d+", "#", masked).strip()[:200]]
 
 
+# A builder answer the write gate refused (or a builder exception). The gate already returned the exact reason
+# to the agent and retried it; a prompt rule cannot add to that, so such failures never feed evolution.
+# All three wrappers count: "Wyjątek wykonania zadania", "Wyjątek szybkiej naprawy", "Wyjątek zadania naprawczego"
+# (the last two used to fall into `generic`: 15/26 failures of the 2026-11-14 run).
+_GATE_REJECTION = re.compile(
+    r"wyjątek (?:wykonania zadania|szybkiej naprawy|zadania naprawczego)|zapis odrzucony|edycje symboli odrzucone"
+    r"|nic z tej odpowiedzi nie zapisano|nie została zapisana|kod nie parsuje się",
+    re.IGNORECASE,
+)
+
+
 def _issue_category(issues: list[Any]) -> str:
     """Kind of a failure, independent of the file: a ruff code (`F821`), `pytest:<Exception>`, `SyntaxError`,
-    `ImportError`, `contract` (import / hyperedge / interface contract), `harness` (a builder exception), or
-    `generic`. Evolution reacts to a category repeating across tasks, not to one incident."""
+    `ImportError`, `contract` (a verified finding: a test or module uses a name its neighbour does not define),
+    `harness` (an answer refused by the write gate / a builder exception), `document` (unresolved thesis
+    pointers), or `generic`. Evolution reacts to a category repeating across tasks, not to one incident.
+
+    A gate rejection outweighs whatever it quotes: its text carries the inner error ("SyntaxError", pytest lines)
+    of an answer that never reached the disk, so that error is not what the workspace failed on."""
     counts: Counter[str] = Counter()
     for item in issues:
         text = str(item)
+        if _GATE_REJECTION.search(text):
+            counts["harness"] += 1
+            continue
         counts.update(code for code, _ in _RUFF_FINDING.findall(text))
         counts.update(f"pytest:{exc or 'fail'}" for _, _, exc in _PYTEST_FINDING.findall(text))
         counts.update(f"{kind}Error" for kind, _ in _FILE_FINDING.findall(text))
         lowered = text.lower()
-        if "naruszenie kontraktu" in lowered or "zapis odrzucony" in lowered and "sygnatur" in lowered:
+        if "naruszenie kontraktu" in lowered:
             counts["contract"] += 1
-        elif "wyjątek" in lowered and ("zadania" in lowered or "budowania" in lowered):
-            counts["harness"] += 1
         elif "nie parsuje" in lowered or "syntaxerror" in lowered or "invalid-syntax" in lowered:
             counts["SyntaxError"] += 1
+        elif "pointer" in lowered or "symbolic tag" in lowered or "does not exist" in lowered:
+            counts["document"] += 1
     return counts.most_common(1)[0][0] if counts else "generic"
 
 
@@ -134,10 +153,39 @@ def _looks_like_workspace_path(value: str) -> bool:
 
 GAPS_SECTION_TITLE = "Braki i ograniczenia realizacji"
 
+# INSTALL_DEPENDENCY / INSTALL_PACKAGE removed 2026-11-14 (D1): the environment is fixed for the whole run.
 _KNOWN_EVOLUTION_ACTIONS = {
-    "INSTALL_DEPENDENCY", "INSTALL_PACKAGE", "HITL", "CREATE_AGENT", "SPLIT_AGENT", "CREATE_TOOL", "MUTATE_AGENT",
+    "HITL", "CREATE_AGENT", "SPLIT_AGENT", "CREATE_TOOL", "MUTATE_AGENT",
     "REPORT_HARNESS_BUG",
 }
+
+# The canonical import of every package generated code may use (alias, module probed, the one true import line).
+# One source of truth for external imports (D2): the model never guesses, the harness never sprays imports.
+_CANONICAL_PACKAGES: tuple[tuple[str, str, str], ...] = (
+    ("np", "numpy", "import numpy as np"),
+    ("pd", "pandas", "import pandas as pd"),
+    ("plt", "matplotlib", "import matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt"),
+    ("pytest", "pytest", "import pytest"),
+    ("scipy", "scipy", "import scipy"),
+    ("sklearn", "sklearn", "import sklearn"),
+    ("sns", "seaborn", "import seaborn as sns"),
+    ("nx", "networkx", "import networkx as nx"),
+)
+
+
+@lru_cache(maxsize=1)
+def available_package_imports() -> dict[str, str]:
+    """`alias -> canonical import line` for the canonical packages actually installed in this environment."""
+    import importlib.util
+
+    out: dict[str, str] = {}
+    for alias, module, line in _CANONICAL_PACKAGES:
+        try:
+            if importlib.util.find_spec(module) is not None:
+                out[alias] = line
+        except (ImportError, ValueError):
+            continue
+    return out
 # A learned rule is permanent; one naming a task, node, queue generation or cycle describes a single incident.
 _NON_GENERAL_RULE = re.compile(
     r"\b(?:T\d+(?:\.\d+)?|v\d+|Q\d+|E\d+)\b|\bzadani\w*\s+\S*\d|\btask\s+\S*\d|\bcycle\s*#?\s*\d|\bcykl\w*\s*#?\s*\d",

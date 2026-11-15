@@ -333,6 +333,9 @@ def main() -> None:
                     print(f"      {d_idx}. {d_text}")
                 if len(decisions) > 4:
                     print(f"      ... [oraz {len(decisions) - 4} kolejnych decyzji w llm_interactions.md]")
+            if art.get("publish_error"):
+                print(f"  * PUBLIKACJA NIEUDANA: {art['publish_error']}")
+                continue
             print(f"  * Uruchom kod  : .\\.venv\\Scripts\\python.exe {art['runner_script']} --open-pdf")
             print(f"  * Podgląd PDF  : {art['pdf_path']}")
             print(f"  * LaTeX / HTML : {art['tex_path']}  |  {art['html_path']}")

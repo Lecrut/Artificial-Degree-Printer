@@ -18,7 +18,6 @@ from adk.tools.evolution import (
 )
 from adk.tools.evolution.agent_mutator import learned_rules_of, rule_rejection_reason
 from adk.orchestration.common import (
-    _collect_report_issues,
     _KNOWN_EVOLUTION_ACTIONS,
     _NON_GENERAL_RULE,
 )
@@ -27,11 +26,18 @@ from adk.orchestration.common import (
 _GENERIC_NAMES = {"__init__", "main", "test", "tests", "config", "core", "utils", "init", "setup"}
 
 
+def _looks_like_identifier(name: str) -> bool:
+    """`q_learner`, `TicTacToeGame`, `game.py`, `UPPER_CONST`, `env2` — not a plain word like `model` or `Agent`."""
+    return (
+        "_" in name
+        or name.endswith(".py")
+        or any(ch.isdigit() for ch in name)
+        or any(ch.isupper() for ch in name[1:])
+    )
+
+
 class EvolutionMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
-
-    def _workspace_module_stems(self) -> set[str]:
-        return {p.stem for p in self.workspace_dir.rglob("*.py")} if self.workspace_dir.exists() else set()
 
     def _forbidden_rule_names(self) -> set[str]:
         """Identifiers of this project (module names, contracted symbols): a learned rule that names one
@@ -46,18 +52,10 @@ class EvolutionMixin:
                 names.add(Path(rel).name)
                 for symbol in api or {}:
                     names.update(symbol.split("."))
-        return {n for n in names if len(n) >= 4 and n.lower() not in _GENERIC_NAMES}
-
-    def _missing_third_party_modules(self, report: dict[str, Any]) -> list[str]:
-        """`No module named X` names from a report, excluding the workspace's own modules: a missing `core`
-        or `config` is a path/contract problem, and pip-installing that name from PyPI would be wrong."""
-        local = self._workspace_module_stems()
-        found: list[str] = []
-        for issue in _collect_report_issues(report):
-            for name in re.findall(r"No module named ['\"]([^'\"]+)['\"]", issue):
-                if name.split(".")[0] not in local and name not in found:
-                    found.append(name)
-        return found
+        # Only names that look like identifiers. A module called `model.py`, `agent.py` or `game.py` must not
+        # ban the ordinary words "model", "agent", "game" from every rule (§VI.9 P3); `q_learner`, `TicTacToeGame`,
+        # `tictoc_game.py` stay forbidden.
+        return {n for n in names if n.lower() not in _GENERIC_NAMES and _looks_like_identifier(n)}
 
     def _run_evolution_step(
         self,
@@ -104,23 +102,6 @@ class EvolutionMixin:
                 decision_out["rule"] = decision_out["injected_rule"]
 
         action = str(decision_out.get("action") or decision_out.get("decision") or "MUTATE_AGENT")
-
-        if action in ("INSTALL_DEPENDENCY", "INSTALL_PACKAGE"):
-            from adk.tools.evolution.dependency_manager import install_package
-
-            pkg_name = str(decision_out.get("package_name") or decision_out.get("package") or "").strip()
-            if not pkg_name:
-                missing = self._missing_third_party_modules(payload.get("validation_report") or {})
-                pkg_name = missing[0] if missing else ""
-            if pkg_name and pkg_name.split(".")[0] not in self._workspace_module_stems():
-                pkg_map = {"sklearn": "scikit-learn", "cv2": "opencv-python", "PIL": "pillow"}
-                pkg_to_install = pkg_map.get(pkg_name, pkg_name)
-                inst_res = install_package(pkg_to_install, import_name=pkg_name)
-                self._record_evolution_event({"type": "DEPENDENCY_INSTALLED", "details": inst_res})
-                return {"action": "INSTALL_DEPENDENCY", "decision": "INSTALL_DEPENDENCY", "details": inst_res}
-            skipped = {"package": pkg_name, "reason": "brak nazwy paczki albo moduł należy do workspace"}
-            self._record_evolution_event({"type": "DEPENDENCY_SKIPPED", "details": skipped})
-            return {"action": "INSTALL_DEPENDENCY_SKIPPED", "decision": "INSTALL_DEPENDENCY_SKIPPED", "details": skipped}
 
         if action == "REPORT_HARNESS_BUG":
             details = {

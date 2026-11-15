@@ -33,6 +33,36 @@ def _is_test(rel: str) -> bool:
     return rel.endswith(".py") and (name.startswith("test_") or name.endswith("_test.py"))
 
 
+_TB_FRAME = re.compile(r"^(\S+?\.py):\d+: in ", re.MULTILINE)
+_TB_EXC = re.compile(r"^E\s+([A-Za-z_][\w.]*)", re.MULTILINE)
+# Errors raised at the test's own call site: the test uses the API wrongly (wrong arguments, a name the module
+# does not have). Anything else that surfaces only in the test frame (a failed assertion) is a wrong result
+# of the code under test.
+_TEST_MISUSE = {"TypeError", "AttributeError", "NameError", "ImportError", "ModuleNotFoundError", "SyntaxError"}
+
+
+def _pytest_culprits(issue: str) -> list[tuple[str, bool]]:
+    """Per failed test in a `--tb=short` pytest report: (deepest workspace frame, whether that is the code under
+    test). A frame below the test means the code raised; only the test frame means either the test misuses the
+    API (`_TEST_MISUSE`, culprit = test) or the code returned a wrong value (assertion, culprit = code; the
+    caller resolves which module from the hypergraph).
+
+    2026-11-14: the first file named in the findings was taken as the culprit, pytest always names the test file
+    first, and 77 repairs of failed assertions went to the tester while the bug sat in the module."""
+    found: list[tuple[str, bool]] = []
+    for section in re.split(r"\n_{3,} .+? _{3,}\n", issue)[1:]:
+        frames = [f.replace("\\", "/") for f in _TB_FRAME.findall(section)]
+        if not frames:
+            continue
+        code_frames = [f for f in frames if not _is_test(f)]
+        if code_frames:
+            found.append((code_frames[-1], True))
+            continue
+        exc = (_TB_EXC.findall(section) or [""])[-1].split(".")[-1].rstrip(":")
+        found.append((frames[0], exc not in _TEST_MISUSE))
+    return found
+
+
 class VerificationMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
 
@@ -384,13 +414,34 @@ class VerificationMixin:
         failed_file = None
         failed_agent = None
         if not overall_pass:
-            named = [
-                p
-                for issue in [*code_audit.get("issues", []), *ref_errors, *contract_violations]
-                for p in self._workspace_paths_in(str(issue))
-            ]
-            failed_file = next((p for p in named if scope_paths is None or p in scope_paths), None) or node_path
             nodes_all = matrix_data.get("nodes", {})
+            for issue in code_audit.get("issues", []):
+                for culprit, is_code in _pytest_culprits(str(issue)):
+                    if is_code and _is_test(culprit):
+                        # Wrong result seen only in the test frame: the module under test, i.e. a code module
+                        # coupled to the test by a hyperedge (in scope first).
+                        by_path = {str(m.get("path", "")): n for n, m in nodes_all.items()}
+                        test_id = by_path.get(culprit)
+                        coupled = [
+                            str(nodes_all.get(m, {}).get("path", ""))
+                            for members in matrix_data.get("edges", {}).values()
+                            if test_id in members
+                            for m in members
+                        ]
+                        modules = [p for p in coupled if p.endswith(".py") and not _is_test(p)]
+                        modules.sort(key=lambda p: scope_paths is not None and p not in scope_paths)
+                        culprit = modules[0] if modules else (node_path if not _is_test(node_path) else culprit)
+                    failed_file = culprit
+                    break
+                if failed_file:
+                    break
+            if failed_file is None:
+                named = [
+                    p
+                    for issue in [*code_audit.get("issues", []), *ref_errors, *contract_violations]
+                    for p in self._workspace_paths_in(str(issue))
+                ]
+                failed_file = next((p for p in named if scope_paths is None or p in scope_paths), None) or node_path
             author = next((m.get("last_writer") for m in nodes_all.values() if str(m.get("path", "")) == failed_file), None)
             failed_agent = (author or {}).get("agent") or current_task.get("assigned_agent")
 

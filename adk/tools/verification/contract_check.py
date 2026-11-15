@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import ast
+import importlib.util
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -205,17 +207,59 @@ def _resolve_workspace_module(w_dir: Path, importer_rel: str, module: str | None
     return None
 
 
+def _workspace_top_names(w_dir: Path) -> set[str]:
+    """Top-level names the workspace itself provides: root module stems and first-level package directories."""
+    tops: set[str] = set()
+    for p in w_dir.rglob("*.py"):
+        if "__pycache__" in p.parts:
+            continue
+        rel = p.relative_to(w_dir)
+        tops.add(rel.parts[0] if len(rel.parts) > 1 else rel.stem)
+    return tops
+
+
+def _package_unavailable(top: str, tops: set[str]) -> bool:
+    """True when `top` is neither a workspace name, nor stdlib, nor an installed package. The environment is
+    fixed for the whole run (decision D1, 2026-11-14): a missing package is a finding for the builder, never
+    a reason to install anything."""
+    if not top or top in tops or top in sys.stdlib_module_names:
+        return False
+    try:
+        return importlib.util.find_spec(top) is None
+    except (ImportError, ValueError):
+        return True
+
+
 def check_import_contract(workspace_dir: str | Path, rel_file: str) -> list[str]:
     """Static L1 check of one file: every `from <workspace module> import name` names something that module
-    defines. Nothing is executed, so a broken neighbour cannot fail this file and a wrong name (`TicTacToe` for
-    `TicTacToeGame`) is caught before any test runs. Unparsable neighbours are the neighbour's problem."""
+    defines, and every absolute import resolves to the workspace, the stdlib or an installed package. Nothing
+    is executed, so a broken neighbour cannot fail this file and a wrong name (`TicTacToe` for `TicTacToeGame`)
+    is caught before any test runs. Unparsable neighbours are the neighbour's problem."""
     w_dir = resolve_adk_path(workspace_dir)
     tree = _parse(w_dir / rel_file)
     if tree is None:
         return []
+    tops = _workspace_top_names(w_dir)
     violations: list[str] = []
     for node in tree.body:
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                top = alias.name.split(".")[0]
+                if _package_unavailable(top, tops):
+                    violations.append(
+                        f"Naruszenie kontraktu środowiska: {rel_file} importuje pakiet '{top}', którego nie ma "
+                        "w środowisku. Środowisko jest stałe na cały przebieg: użyj pakietów z 'available_packages' "
+                        "albo modułów projektu (ich ścieżki importu są w 'exports')."
+                    )
+            continue
         if not isinstance(node, ast.ImportFrom):
+            continue
+        if not node.level and _package_unavailable((node.module or "").split(".")[0], tops):
+            violations.append(
+                f"Naruszenie kontraktu środowiska: {rel_file} importuje pakiet '{(node.module or '').split('.')[0]}', "
+                "którego nie ma w środowisku. Środowisko jest stałe na cały przebieg: użyj pakietów z "
+                "'available_packages' albo modułów projektu (ich ścieżki importu są w 'exports')."
+            )
             continue
         target = _resolve_workspace_module(w_dir, rel_file, node.module, node.level)
         if target is None or target == rel_file:

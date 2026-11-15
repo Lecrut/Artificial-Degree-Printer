@@ -20,6 +20,8 @@ def _setup_test_orchestrator(tmp_path: Path) -> NeuroSymbolicOrchestrator:
     orch.blueprint_path = orch.state_dir / "academic_blueprint.json"
     orch.failure_ledger_path = orch.state_dir / "failure_ledger.json"
     orch.hitl_flag_path = orch.state_dir / "hitl_flag.json"
+    # Without this every test run appended events to the tracked adk/state/evolution_history.json (§V pkt 21).
+    orch.evolution_history_path = orch.state_dir / "evolution_history.json"
     # The hypergraph is state too: without this the tests rewrote the repository seed adk/state/hypergraph_matrix.json.
     orch.matrix_path = orch.state_dir / "hypergraph_matrix.json"
     shutil.copy2(Path("adk") / "state" / "hypergraph_matrix.json", orch.matrix_path)

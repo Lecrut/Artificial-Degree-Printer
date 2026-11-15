@@ -272,6 +272,14 @@ class LLMConnectionManager:
             "think": False,
             "options": options,
         }
+        # ~3.5 characters per token: a prompt over the window is cut silently from the start by Ollama.
+        est_tokens = int((len(body_dict["prompt"]) + len(system_prompt or "")) / 3.5)
+        if est_tokens + int(options["num_predict"]) > int(options["num_ctx"]):
+            print(
+                f"  [OLLAMA] Szacowany prompt ~{est_tokens} tokenów + {options['num_predict']} na odpowiedź przekracza "
+                f"num_ctx={options['num_ctx']}; początek promptu zostanie ucięty.",
+                flush=True,
+            )
         if system_prompt:
             body_dict["system"] = system_prompt
         req_body = json.dumps(body_dict).encode("utf-8")

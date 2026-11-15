@@ -9,7 +9,8 @@ from adk.core.models import read_json_state, resolve_adk_path
 
 
 def class_method_signatures(cls: ast.ClassDef) -> dict[str, str]:
-    """`Class.method` -> `def method(args) -> ret` for `__init__` and every public method of the class."""
+    """`Class.member` -> its signature: `__init__` and public methods, plus public class attributes (among them
+    Enum members — without these a tester guessed names like `Player.PLAYER_ONE`, 2026-11-14 run)."""
     out: dict[str, str] = {}
     for item in cls.body:
         if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and (
@@ -17,7 +18,20 @@ def class_method_signatures(cls: ast.ClassDef) -> dict[str, str]:
         ):
             ret = f" -> {ast.unparse(item.returns)}" if item.returns is not None else ""
             out[f"{cls.name}.{item.name}"] = f"def {item.name}({ast.unparse(item.args)}){ret}"
+        elif isinstance(item, ast.Assign):
+            for target in item.targets:
+                if isinstance(target, ast.Name) and not target.id.startswith("_"):
+                    out[f"{cls.name}.{target.id}"] = f"{target.id} = {ast.unparse(item.value)}"[:120]
+        elif isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name) and not item.target.id.startswith("_"):
+            value = f" = {ast.unparse(item.value)}" if item.value is not None else ""
+            out[f"{cls.name}.{item.target.id}"] = f"{item.target.id}: {ast.unparse(item.annotation)}{value}"[:120]
     return out
+
+
+def module_import_path(rel_path: str) -> str:
+    """Dotted import path of a workspace module (`src/data/gen.py` -> `src.data.gen`, `src/__init__.py` -> `src`)."""
+    parts = Path(rel_path).with_suffix("").parts
+    return ".".join(p for p in parts if p != "__init__")
 
 
 def extract_hyperedge_exports(
@@ -55,13 +69,13 @@ def extract_hyperedge_exports(
         if rel_path.endswith(".py"):
             py_file = w_dir / rel_path
             if not py_file.exists():
-                exports_by_file[rel_path] = {"functions": [], "classes": [], "variables": []}
+                exports_by_file[rel_path] = {"functions": [], "classes": [], "variables": [], "import": module_import_path(rel_path)}
                 continue
 
             try:
                 tree = ast.parse(py_file.read_text(encoding="utf-8"))
             except SyntaxError:
-                exports_by_file[rel_path] = {"functions": [], "classes": [], "variables": []}
+                exports_by_file[rel_path] = {"functions": [], "classes": [], "variables": [], "import": module_import_path(rel_path)}
                 continue
 
             functions: list[str] = []
@@ -103,6 +117,9 @@ def extract_hyperedge_exports(
                 "docstrings": docstrings,
                 "classes": classes,
                 "variables": variables,
+                # The one true way to import this module (`from src.data.gen import X`); without it a tester
+                # guessed `import synthetic_data_generator` for a module living in a package (2026-11-14, D2).
+                "import": module_import_path(rel_path),
             }
         elif rel_path.endswith(".csv"):
             csv_file = w_dir / rel_path

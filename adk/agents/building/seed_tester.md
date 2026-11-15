@@ -36,10 +36,10 @@ Return strictly a valid JSON object, for example:
 {
   "test_file": "test_<module>.py",
   "test_code": "import <module>\n\n\ndef test_<behaviour>():\n    ...\n",
-  "plot_script": "from pathlib import Path\n\nimport matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt\nimport pandas as pd\n\n\ndef generate_plots(output_dir: str = '.') -> list[str]:\n    ...\n",
-  "summary": "<what is tested and what the figures show>"
+  "summary": "<what is tested>"
 }
 ```
+Return `plot_script` + `plot_file` only when the task itself targets the plotting script; attached to any other task it is skipped.
 For any other file, or several files at once, use `"files": [{"filename": "<path>", "content": "..."}]`.
 For a change to an existing file: `"ast_edits": [{"symbol": "<TestClass>.<test_method>", "file": "test_<module>.py", "code": "def <test_method>(self) -> None:\n    ...\n"}]`.
 Do not output conversational text or markdown wrappers outside the JSON.

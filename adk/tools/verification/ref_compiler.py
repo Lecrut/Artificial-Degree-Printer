@@ -12,8 +12,11 @@ from adk.tools.verification.test_runner import iter_workspace_python_files
 
 def _lookup_ast_value(py_file: Path, symbol_name: str) -> tuple[bool, Any]:
     """Extract constant value or function/class signature from a Python file's AST."""
-    if not py_file.exists():
-        return False, f"File '{py_file.name}' does not exist"
+    # `is_file`, not `exists`: a pointer like `ref_ast{src:evaluation.py:f}` names the DIRECTORY `src`, and reading
+    # a directory raised PermissionError on Windows, which crashed the 2026-11-15 run (pointers come from the model:
+    # a wrong one is a finding, never an exception).
+    if not py_file.is_file():
+        return False, f"File '{py_file.name}' does not exist" + (" (to katalog, nie plik)" if py_file.is_dir() else "")
     try:
         import warnings
         with warnings.catch_warnings():
@@ -45,8 +48,8 @@ def _lookup_ast_value(py_file: Path, symbol_name: str) -> tuple[bool, Any]:
 
 def _lookup_csv_value(csv_file: Path, column_spec: str) -> tuple[bool, Any]:
     """Extract a CSV value by 'column' (latest row) or 'row_selector:column' (specific method/metric row or index)."""
-    if not csv_file.exists():
-        return False, f"CSV file '{csv_file.name}' does not exist"
+    if not csv_file.is_file():
+        return False, f"CSV file '{csv_file.name}' does not exist" + (" (to katalog, nie plik)" if csv_file.is_dir() else "")
 
     with csv_file.open("r", encoding="utf-8", newline="") as f:
         reader = list(csv.DictReader(f))
@@ -105,18 +108,18 @@ def _lookup_csv_value(csv_file: Path, column_spec: str) -> tuple[bool, Any]:
 
 def _csv_path(workspace: Path, rel_file: str) -> Path:
     direct = workspace / rel_file
-    if direct.exists():
+    if direct.is_file():
         return direct
     nested = workspace / "results" / Path(rel_file).name
-    return nested if nested.exists() else direct
+    return nested if nested.is_file() else direct
 
 
 def _py_path(workspace: Path, rel_file: str) -> Path:
     direct = workspace / rel_file
-    if direct.exists():
+    if direct.is_file():
         return direct
     nested = workspace / "code" / Path(rel_file).name
-    return nested if nested.exists() else direct
+    return nested if nested.is_file() else direct
 
 
 def strip_dangling_symbolic_tags(doc_path: str | Path, workspace_dir: str | Path) -> int:
@@ -229,17 +232,56 @@ def compile_symbolic_references(
 
     py_files = iter_workspace_python_files(w_dir)
     latest_py_mtime = max((p.stat().st_mtime for p in py_files), default=0.0)
+    known_targets: list[str] = []
+
+    def _known_ast_targets() -> list[str]:
+        """`file:symbol` for every public top-level name in the workspace (computed once, on first failure)."""
+        if not known_targets:
+            for p in py_files:
+                rel = p.relative_to(w_dir).as_posix()
+                try:
+                    tree = ast.parse(p.read_text(encoding="utf-8"))
+                except (SyntaxError, UnicodeDecodeError):
+                    continue
+                for node in tree.body:
+                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and not node.name.startswith("_"):
+                        known_targets.append(f"{rel}:{node.name}")
+                    elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+                        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                        for t in targets:
+                            if isinstance(t, ast.Name) and not t.id.startswith("_"):
+                                known_targets.append(f"{rel}:{t.id}")
+        return known_targets
+
+    def _pointer_hint(rel_file: str, sym: str) -> str:
+        """What the writer should have cited: placeholders copied from instructions get named as such, and a
+        wrong path/name gets the closest real `file:symbol` targets (2026-11-14: 12+ pointers to existing
+        symbols under a wrong path, plus literal `\\ref_ast{file:symbol}` from the prompt)."""
+        if rel_file.strip("<>").lower() in ("file", "plik") or sym.strip("<>").lower() in ("symbol",):
+            return " To placeholder skopiowany z instrukcji, nie wskaźnik: wybierz prawdziwy cel z 'available_ast_symbols'."
+        if ":" in sym and sym.split(":", 1)[0].endswith(".py"):
+            # `ref_ast{src:evaluation.py:f}` -> the path separator inside a pointer is `/`, not `:`.
+            return " Ścieżkę we wskaźniku oddziela się ukośnikiem: \\ref_ast{" + f"{rel_file}/{sym}" + "}."
+        import difflib
+
+        known = _known_ast_targets()
+        by_symbol = [k for k in known if k.endswith(f":{sym}")]
+        close = by_symbol[:2] or difflib.get_close_matches(f"{rel_file}:{sym}", known, n=2, cutoff=0.5)
+        return f" Najbliższe istniejące cele: {', '.join(close)}." if close else ""
 
     def _replace_ast(match: re.Match[str]) -> str:
         rel_file = match.group(1).strip()
         sym = match.group(2).strip()
         key = f"\\ref_ast{{{rel_file}:{sym}}}"
         target_py = w_dir / rel_file
-        if not target_py.exists() and (w_dir / "code" / rel_file).exists():
+        if not target_py.is_file() and (w_dir / "code" / rel_file).is_file():
             target_py = w_dir / "code" / rel_file
-        ok, val = _lookup_ast_value(target_py, sym)
+        try:
+            ok, val = _lookup_ast_value(target_py, sym)
+        except (OSError, UnicodeDecodeError, ValueError) as exc:
+            ok, val = False, f"Nie da się odczytać '{rel_file}': {exc}"
         if not ok:
-            errors.append(str(val))
+            errors.append(str(val) + _pointer_hint(rel_file, sym))
             return key
         resolved[key] = val
         if d_path.suffix == ".tex":
@@ -251,13 +293,16 @@ def compile_symbolic_references(
         col = match.group(2).strip()
         key = f"\\ref_csv{{{rel_file}:{col}}}"
         csv_path = w_dir / rel_file
-        if not csv_path.exists() and (w_dir / "results" / rel_file).exists():
+        if not csv_path.is_file() and (w_dir / "results" / rel_file).is_file():
             csv_path = w_dir / "results" / rel_file
-        ok, val = _lookup_csv_value(csv_path, col)
+        try:
+            ok, val = _lookup_csv_value(csv_path, col)
+        except (OSError, UnicodeDecodeError, ValueError, csv.Error) as exc:
+            ok, val = False, f"Nie da się odczytać '{rel_file}': {exc}"
         if not ok:
             errors.append(str(val))
             return key
-        if csv_path.exists() and latest_py_mtime > 0 and csv_path.stat().st_mtime + 1e-6 < latest_py_mtime:
+        if csv_path.is_file() and latest_py_mtime > 0 and csv_path.stat().st_mtime + 1e-6 < latest_py_mtime:
             stale_msg = f"CSV file '{rel_file}' is older than Python source code in workspace."
             if rel_file not in stale_csv_files:
                 stale_csv_files.append(rel_file)
@@ -289,7 +334,11 @@ def compile_symbolic_references(
 
     # Check for malformed \ref_ast{...} or \ref_csv{...} missing a ':' separator
     for bad_tag in re.findall(r"\\ref_(?:ast|csv)\{[^:}]+\}", text):
-        errors.append(f"Malformed symbolic tag missing ':' separator: {bad_tag}")
+        errors.append(
+            f"Malformed symbolic tag missing ':' separator: {bad_tag}. Wskaźnik bez celu (sam plik) jest "
+            "nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik "
+            "wymieniany w prozie zapisz jako \\texttt{...}."
+        )
 
     # Check balanced TikZ environments if present
     tikz_begins = len(re.findall(r"\\begin\{tikzpicture\}", compiled_text))

@@ -36,14 +36,13 @@ Return strictly a valid JSON object, for example:
 {
   "test_file": "test_<module>.py",
   "test_code": "import <module>\n\n\ndef test_<behaviour>():\n    ...\n",
-  "plot_script": "from pathlib import Path\n\nimport matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt\nimport pandas as pd\n\n\ndef generate_plots(output_dir: str = '.') -> list[str]:\n    ...\n",
-  "summary": "<what is tested and what the figures show>"
+  "summary": "<what is tested>"
 }
 ```
+Return `plot_script` + `plot_file` only when the task itself targets the plotting script; attached to any other task it is skipped.
 For any other file, or several files at once, use `"files": [{"filename": "<path>", "content": "..."}]`.
 For a change to an existing file: `"ast_edits": [{"symbol": "<TestClass>.<test_method>", "file": "test_<module>.py", "code": "def <test_method>(self) -> None:\n    ...\n"}]`.
 Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When modifying a file that is imported by other modules or referenced in contracts, preserve existing public signatures and symbols unless explicitly instructed otherwise, because breaking external contracts requires coordinated changes across dependent files.
-- **RULE**: When defining a test case that instantiates a class using an enum value as an argument, verify first that the enum is correctly imported and that the specific attribute being accessed actually exists on the enum class, because relying on incomplete memory of the contract leads to AttributeErrors when symbols are renamed or never defined.
+- **RULE**: When writing tests that use mocking, always import the specific decorator (e.g., `patch`) directly from `unittest.mock` rather than relying on the patch target to be available via module attributes or global scope, because test isolation requires explicit imports for all external dependencies and mock components.

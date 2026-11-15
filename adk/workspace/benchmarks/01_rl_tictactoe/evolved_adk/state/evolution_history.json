@@ -1,74 +1,27 @@
 {
   "events": [
     {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "SKELETON",
+      "agent": "seed_coder",
+      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- src/tictactoe_env.py:15: invalid syntax\n    14:         np.random.seed(self.seed)\n    15:         self.reset()n\n    16: \n- src/qlearning_agent.py:41: closing parenthesis ')' does not match opening parenthesis '['\n    40: \n    41:     def update(self, state: List[int], action: int, reward: float, next_state: List[int) -> None:\n    42:         \"\"\"Update Q-table value.\"\"\""
+    },
+    {
       "type": "CONTRACT_ESTABLISHED",
       "files": [
-        "evaluate.py",
-        "plot_results.py",
-        "q_learning_agent.py",
-        "random_agent.py",
-        "tictactoe_env.py",
-        "train.py"
+        "src/config.py"
       ]
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T7",
+      "task_id": "T2",
       "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- random_agent.py:random_agent.RandomAgent.__init__: Klasa random_agent.RandomAgent nie istnieje w random_agent.py; edycja random_agent.RandomAgent.__init__ nie ma gdzie trafić.\n- random_agent.py:random_agent.RandomAgent.choose_action: Klasa random_agent.RandomAgent nie istnieje w random_agent.py; edycja random_agent.RandomAgent.choose_action nie ma gdzie trafić."
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/config.py: Config.__init__(self) -> Config.__init__(self, seed)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach.\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n# src/config.py: Config.__init__\ndef __init__(self) -> None:\n        self.LEARNING_RATE: float = 0.1\n        self.DISCOUNT_FACTOR: float = 0.95\n        self.EPSILON_START: float = 1.0\n        self.EPSILON_END: float = 0.01\n        self.EPSILON_DECAY: float = 0.995\n        self.TOTAL_EPISODES: int = 50000\n        self.SEED: int = 42"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n13",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T7_FIX1",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- random_agent.py:random_agent.RandomAgent.__init__: Klasa random_agent.RandomAgent nie istnieje w random_agent.py; edycja random_agent.RandomAgent.__init__ nie ma gdzie trafić.\n- random_agent.py:random_agent.RandomAgent.choose_action: Klasa random_agent.RandomAgent nie istnieje w random_agent.py; edycja random_agent.RandomAgent.choose_action nie ma gdzie trafić."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n13",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T7_FIX2",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- random_agent.py:random_agent.RandomAgent.__init__: Klasa random_agent.RandomAgent nie istnieje w random_agent.py; edycja random_agent.RandomAgent.__init__ nie ma gdzie trafić.\n- random_agent.py:random_agent.RandomAgent.choose_action: Klasa random_agent.RandomAgent nie istnieje w random_agent.py; edycja random_agent.RandomAgent.choose_action nie ma gdzie trafić."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n13",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
+        "node_id": "n5",
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
@@ -76,9 +29,51 @@
       }
     },
     {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T2_FIX1",
+      "agent": "seed_coder",
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/config.py: Config.__init__(self) -> Config.__init__(self, learning_rate, discount_factor, epsilon_start, epsilon_end, epsilon_decay, total_episodes, seed)\n- src/config.py: Config.to_dict(self) -> Config.to_dict(self, learning_rate, discount_factor, epsilon_start, epsilon_end, epsilon_decay, total_episodes, seed)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach.\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n# src/config.py: Config.__init__\ndef __init__(self) -> None:\n        self.LEARNING_RATE: float = 0.1\n        self.DISCOUNT_FACTOR: float = 0.95\n        self.EPSILON_START: float = 1.0\n        self.EPSILON_END: float = 0.01\n        self.EPSILON_DECAY: float = 0.995\n        self.TOTAL_EPISODES: int = 50000\n        self.SEED: int = 42\n\n# src/config.py: Config.to_dict\ndef to_dict(self) -> dict:\n        \"\"\"Return configuration as a dictionary for CSV compatibility.\"\"\"\n        return {\n            'learning_rate': self.LEARNING_RATE,\n            'discount_factor': self.DISCOUNT_FACTOR,\n            'epsilon_start': self.EPSILON_START,\n            'epsilon_end': self.EPSILON_END,\n            'epsilon_decay': self.EPSILON_DECAY,\n            'total_episodes': self.TOTAL_EPISODES,\n            'seed': self.SEED\n        }"
+    },
+    {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n15",
+        "node_id": "n5",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T2_FIX2",
+      "agent": "seed_coder",
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/config.py: Config.__init__(self) -> Config.__init__(self, learning_rate, discount_factor, epsilon_start, epsilon_end, epsilon_decay, total_episodes, seed)\n- src/config.py: Config.to_dict(self) -> Config.to_dict(self, learning_rate, discount_factor, epsilon_start, epsilon_end, epsilon_decay, total_episodes, seed)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach.\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n# src/config.py: Config.__init__\ndef __init__(self) -> None:\n        self.LEARNING_RATE: float = 0.1\n        self.DISCOUNT_FACTOR: float = 0.95\n        self.EPSILON_START: float = 1.0\n        self.EPSILON_END: float = 0.01\n        self.EPSILON_DECAY: float = 0.995\n        self.TOTAL_EPISODES: int = 50000\n        self.SEED: int = 42\n\n# src/config.py: Config.to_dict\ndef to_dict(self) -> dict:\n        \"\"\"Return configuration as a dictionary for CSV compatibility.\"\"\"\n        return {\n            'learning_rate': self.LEARNING_RATE,\n            'discount_factor': self.DISCOUNT_FACTOR,\n            'epsilon_start': self.EPSILON_START,\n            'epsilon_end': self.EPSILON_END,\n            'epsilon_decay': self.EPSILON_DECAY,\n            'total_episodes': self.TOTAL_EPISODES,\n            'seed': self.SEED\n        }"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n5",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n8",
         "old_weight": 1.4,
         "new_weight": 1.8,
         "delta": 0.4,
@@ -87,152 +82,50 @@
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T9",
+      "task_id": "T10",
       "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- tictactoe_env.py:tictactoe_env.py.TicTacToeEnv.step: Klasa tictactoe_env.py.TicTacToeEnv nie istnieje w tictactoe_env.py; edycja tictactoe_env.py.TicTacToeEnv.step nie ma gdzie trafić.\n- tictactoe_env.py:tictactoe_env.py.TicTacToeEnv.get_winner: Klasa tictactoe_env.py.TicTacToeEnv nie istnieje w tictactoe_env.py; edycja tictactoe_env.py.TicTacToeEnv.get_winner nie ma gdzie trafić."
+      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- src/evaluation.py:208: unterminated triple-quoted string literal (detected at line 215)\n   207:         None. Results are printed to console and logged locally.\n   208:     \"\"\"\n   209:     if __name__ == \"__main__\":"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n8",
+        "node_id": "n11",
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
-        "degree": 3
+        "degree": 0
       }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T9_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+      "task_id": "T10_FIX1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- evaluation.py:evaluation.py:evaluate_episode: SyntaxError in new_code: parameter without a default follows parameter with a default (evaluation.py, line 5)"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n8",
+        "node_id": "n11",
         "old_weight": 1.4,
         "new_weight": 1.8,
         "delta": 0.4,
-        "degree": 3
+        "degree": 0
       }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T9_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+      "task_id": "T10_FIX2",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- evaluation.py:evaluation.py: SyntaxError in new_code: unterminated string literal (detected at line 139) (evaluation.py, line 139)"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n8",
+        "node_id": "n11",
         "old_weight": 1.8,
         "new_weight": 2.2,
         "delta": 0.4,
-        "degree": 3
-      }
-    },
-    {
-      "type": "MUTATION_REJECTED",
-      "agent": "seed_tester",
-      "rule": "When modifying code that implements a public interface, preserve the existing method signatures and attributes to maintain cross-module compatibility, only altering internal implementation details unless a formal contract update is explicitly provided, because external modules depend on these stable contracts for correct interaction.",
-      "reason": "nazywa konkretne pliki/symbole projektu: update"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T11",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- q_learning_agent.py:q_learning_agent.QLearner.update: Klasa q_learning_agent.QLearner nie istnieje w q_learning_agent.py; edycja q_learning_agent.QLearner.update nie ma gdzie trafić."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 3
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T12",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- random_agent.py:random_agent.py:RandomAgent.__init__: Klasa random_agent.py:RandomAgent nie istnieje w random_agent.py; edycja random_agent.py:RandomAgent.__init__ nie ma gdzie trafić.\n- random_agent.py:random_agent.py:RandomAgent.choose_action: Klasa random_agent.py:RandomAgent nie istnieje w random_agent.py; edycja random_agent.py:RandomAgent.choose_action nie ma gdzie trafić."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n13",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T14",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- evaluate.py:evaluate.py:run_evaluation_episode: Kod edycji evaluate.py:run_evaluation_episode nie zawiera definicji `def py:run_evaluation_episode`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n10",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 5
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T14_FIX1",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- evaluate.py:evaluate.py:run_evaluation_episode: Kod edycji evaluate.py:run_evaluation_episode nie zawiera definicji `def py:run_evaluation_episode`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n10",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 5
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T14_FIX2",
-      "agent": "seed_coder",
-      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- evaluate.py:99: unterminated triple-quoted string literal (detected at line 99)\n    98: PLAYER_Y_VALUE = -1\n    99: \"\"\""
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n10",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 5
+        "degree": 0
       }
     },
     {
@@ -241,7 +134,7 @@
         "status": "mutated",
         "agent": "seed_coder",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
-        "injected_rule": "When modifying a symbol in a file, verify the symbol's current definition exists within that file before generating edits, because editing a non-existent or incorrectly defined symbol results in rejected patches.",
+        "injected_rule": "When writing code that relies on parameters passed to a function or class, you must explicitly accept them as arguments (e.g., `def func(param):`) or define them as class attributes, because using a name without prior declaration results in an undefined variable error.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
@@ -249,129 +142,162 @@
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T10_FIX_1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- evaluation.py:SrcEvaluationFixer.repair_module: Klasa SrcEvaluationFixer nie istnieje w evaluation.py; edycja SrcEvaluationFixer.repair_module nie ma gdzie trafić."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n9",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T14_FIX1",
+      "agent": "seed_coder",
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/random_baseline.py: RandomBaseline.get_action(self, state) -> RandomBaseline.get_action(self, state, env)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach.\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n# src/random_baseline.py: RandomBaseline.get_action\ndef get_action(self, state: State) -> int:\n        \"\"\"Returns a random valid move index.\n\n        Args:\n            state: The current game state.\n\n        Returns:\n            A randomly selected action from the available options at `state`.\n        \"\"\"\n        available_moves = env.get_available_moves(state)\n        if len(available_moves) == 0:\n            return -1\n        return self._rng.choice(len(available_moves))"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n9",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n9",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
       "task_id": "T15",
+      "agent": "seed_coder",
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/training_loop.py: usunięto TrainingResults()\n- src/training_loop.py: usunięto TrainingResults.__init__(self)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach.\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n# src/training_loop.py: TrainingResults\nclass TrainingResults:\n    \"\"\"Container for metrics collected during training.\"\"\"\n    \n    def __init__(self) -> None:\n        self.episode_rewards: list[float] = []\n        self.episode_win_rates: list[float] = []\n        self.episode_draw_rates: list[float] = []\n        self.convergence_epoch: int | None = None\n\n# src/training_loop.py: TrainingResults.__init__\ndef __init__(self) -> None:\n        self.episode_rewards: list[float] = []\n        self.episode_win_rates: list[float] = []\n        self.episode_draw_rates: list[float] = []\n        self.convergence_epoch: int | None = None"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T18",
       "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- tests/test_tictactoe_env.py:99: unmatched '}'\n    98:         assert is_win == False\n    99: }"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n16",
+        "node_id": "n12",
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
-        "degree": 0
+        "degree": 1
       }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T15_FIX1",
-      "agent": "seed_tester",
-      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- test_q_learning.py:14: unterminated triple-quoted string literal (detected at line 18)\n    13: def test_q_learning_update_rule(clean_q_table):\n    14:     \"\"\"Validates that the QLearner correctly applies Bellman update with epsilon-greedy selection.\n    15: "
+      "task_id": "T18_FIX1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- tictactoe_env.py:TicTacToeEnv.__init__: SyntaxError in new_code: invalid syntax (tictactoe_env.py, line 1)"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n16",
+        "node_id": "n12",
         "old_weight": 1.4,
         "new_weight": 1.8,
         "delta": 0.4,
-        "degree": 0
+        "degree": 1
       }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T15_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n16",
+        "node_id": "n12",
         "old_weight": 1.8,
         "new_weight": 2.2,
         "delta": 0.4,
-        "degree": 0
+        "degree": 1
       }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T16",
-      "agent": "seed_tester",
-      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- test_agents.py:21: invalid syntax\n    20:     \n    21:     assert valid_moves_generated == 100, f\"Expected all 100 actions to be valid, got {valid_moves_generated}\".\n    22: "
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n17",
+        "node_id": "n13",
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
-        "degree": 4
+        "degree": 1
       }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T16_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n17",
+        "node_id": "n13",
         "old_weight": 1.4,
         "new_weight": 1.8,
         "delta": 0.4,
-        "degree": 4
+        "degree": 1
       }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T16_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n17",
+        "node_id": "n13",
         "old_weight": 1.8,
         "new_weight": 2.2,
         "delta": 0.4,
-        "degree": 4
+        "degree": 1
       }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T11",
+      "agent": "seed_coder",
+      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- src/experiment.py:94: expression cannot contain assignment, perhaps you meant \"==\"?\n    93:         writer = pd.DataFrame(final_results[\"results\"]) if isinstance(final_results[\"results\"], list) else pd.DataFrame([final_results[\"results\"]])\n    94:         writer.to_csv(f.index_col=False)\n    95:     "
     },
     {
       "type": "OFF_TARGET_WRITE",
-      "node": "plot_results.py",
+      "node": "src/experiment.py",
       "files": [
-        "figures/comparison_chart.png"
+        "test_experiment.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "T20"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n15",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "CROSS_ROLE_WRITE",
+      "node": "src/experiment.py",
+      "files": [
+        "test_experiment.py"
       ],
       "agent": "seed_coder",
-      "task_id": "T21"
+      "task_id": "T20_FIX1"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n11",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T21_FIX1",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- plot_results.py:plot_results.py:plot_learning_curve: Kod edycji plot_results.py:plot_learning_curve nie zawiera definicji `def py:plot_learning_curve`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
+        "node_id": "n15",
         "old_weight": 1.4,
         "new_weight": 1.8,
         "delta": 0.4,
@@ -379,15 +305,18 @@
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T21_FIX2",
+      "type": "CROSS_ROLE_WRITE",
+      "node": "test_experiment.py",
+      "files": [
+        "test_experiment.py"
+      ],
       "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- plot_results.py:plot_results.py:plot_learning_curve: Kod edycji plot_results.py:plot_learning_curve nie zawiera definicji `def py:plot_learning_curve`."
+      "task_id": "T20_FIX2"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n11",
+        "node_id": "n15",
         "old_weight": 1.8,
         "new_weight": 2.2,
         "delta": 0.4,
@@ -395,76 +324,34 @@
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T13",
-      "agent": "seed_coder",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- train.py: main(seed) -> main()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
+      "type": "AGENT_MUTATED",
       "details": {
-        "node_id": "n14",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 6
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T13_FIX1",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji `def py:main`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 6
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T13_FIX2",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji `def py:main`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 6
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "- train.py",
-          "Wyjątek szybkiej naprawy T#_FIX# na pliku train.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy T#_FIX# na pliku train.py: Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji <id>.",
-        "task_id": "T13",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When an implementation changes state or produces side effects (such as writing a file), you must verify that these changes persist before returning success, because tests often run in isolated environments where side effects are not guaranteed unless explicitly checked for return values.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
       }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
       "task_id": "T24",
       "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_experiment.py:test_run_experiment_produces_results: SyntaxError in new_code: unmatched '}' (test_experiment.py, line 59)"
+    },
+    {
+      "type": "SIDE_ARTIFACT_SKIPPED",
+      "node": "results.csv",
+      "skipped": [
+        "test_code -> test_experiment.py"
+      ]
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n18",
+        "node_id": "n17",
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
@@ -472,42 +359,115 @@
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T24_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+      "type": "SIDE_ARTIFACT_SKIPPED",
+      "node": "results.csv",
+      "skipped": [
+        "test_code -> test_experiment.py"
+      ]
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n18",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T24_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n18",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 2
-      }
+      "type": "CONTRACT_FILE_RESTORED",
+      "node": "results.csv",
+      "files": [
+        "src/config.py"
+      ]
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T24_FIX1",
+      "task_id": "T24_FIX_1",
       "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- config.py:config.py: Kod edycji config.py nie zawiera definicji `def py`."
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/random_baseline.py: RandomBaseline.play_episode(self, env, agent_state) -> RandomBaseline.play_episode(self, env, initial_state)\n- src/random_baseline.py: RandomBaseline.get_action(self, state) -> RandomBaseline.get_action(self, env, state)\n- src/random_baseline.py: usunięto play_episode(self, env, agent_state)\n- src/random_baseline.py: usunięto get_action(self, env, state)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach.\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n# src/random_baseline.py: RandomBaseline.play_episode\ndef play_episode(self, env, agent_state: State) -> int:\n        \"\"\"Simulate one episode against the environment.\n\n        Args:\n            env: The TicTacToe environment instance.\n            agent_state: The initial state of the game for the agent.\n\n        Returns:\n            1 if the agent wins, 0 if it loses or draws.\n        \"\"\"\n        current_state = copy.deepcopy(agent_state)\n        winner = None\n        is_agent_turn = True\n        while winner is None and len(env.get_available_moves(current_state)) > 0:\n            if not is_agent_turn:\n                pass\n            else:\n                available_moves = env.get_available_moves(current_state)\n                if len(available_moves) == 0:\n                    break\n                move_idx = self._rng.choice(len(available_moves))\n                next_state = env.apply_move(current_state, available_moves[move_idx])\n                current_state = next_state\n            winner = env.get_winner(current_state)\n            if winner is not None:\n                break\n            is_agent_turn = not is_agent_turn\n        if winner == 'A':\n            return 1\n        elif winner == 'B' or (len(env.get_ava"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T24_FIX_4",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- qlearning_agent.py:__init__: SyntaxError in new_code: unexpected character after line continuation character (qlearning_agent.py, line 2)\n- qlearning_agent.py:save_q_table: SyntaxError in new_code: unexpected character after line continuation character (qlearning_agent.py, line 2)\n- qlearning_agent.py:load_q_table: SyntaxError in new_code: unexpected character after line continuation character (qlearning_agent.py, line 2)"
+    },
+    {
+      "type": "CROSS_ROLE_WRITE",
+      "node": "test_experiment.py",
+      "files": [
+        "test_experiment.py"
+      ],
+      "agent": "seed_coder",
+      "task_id": "T24_FIX_6"
+    },
+    {
+      "type": "CROSS_ROLE_WRITE",
+      "node": "tests/test_qlearning_agent.py",
+      "files": [
+        "tests/test_qlearning_agent.py"
+      ],
+      "agent": "seed_coder",
+      "task_id": "T24_FIX_7"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T24_FIX_2",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- random_baseline.py:src.random_baseline.py:play_episode: Provided new_code contains no AST statements.\n- random_baseline.py:src.random_baseline.py:get_action: Provided new_code contains no AST statements."
+    },
+    {
+      "type": "CONTRACT_FILE_RESTORED",
+      "node": "src/random_baseline.py",
+      "files": [
+        "src/evaluation.py"
+      ]
+    },
+    {
+      "type": "CROSS_ROLE_WRITE",
+      "node": "src/random_baseline.py",
+      "files": [
+        "tests/test_qlearning_agent.py"
+      ],
+      "agent": "seed_coder",
+      "task_id": "T24_FIX_2"
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "src/random_baseline.py",
+      "files": [
+        "tests/test_qlearning_agent.py"
+      ],
+      "agent": "seed_coder",
+      "task_id": "T24_FIX_2"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T24_FIX_3",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- random_baseline.py:src/random_baseline.py: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 107) (random_baseline.py, line 107)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T24_FIX_4",
+      "agent": "seed_tester",
+      "error": "Odpowiedź agenta dla 'tests/test_tictactoe_env.py' nie została zapisana: pola ['ast_edits'] nie pasują do żadnego dozwolonego kształtu. Dozwolone: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section_content}]'). Pliki zwracaj w polu 'files' jako listę {'filename', 'content'}."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T24_FIX_5",
+      "agent": "seed_coder",
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/experiment.py: usunięto run_experiment()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "GATE_3_FIX_6",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment.py:src.experiment.run_experiment: SyntaxError in new_code: invalid syntax (experiment.py, line 18)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "GATE_3_FIX_7",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- thesis.md:thesis.md:LastSection: SyntaxError in new_code: invalid syntax (thesis.md, line 1)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "GATE_3_FIX_8",
+      "agent": "seed_coder",
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/qlearning_agent.py: usunięto QLearningAgent.save_q_table(self, path)\n- src/qlearning_agent.py: usunięto QLearningAgent.load_q_table(self, path)\n- src/qlearning_agent.py: usunięto QLearningAgent.get_statistics(self)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach.\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n# src/qlearning_agent.py: QLearningAgent.save_q_table\ndef save_q_table(self, path: str) -> None:\n        \"\"\"Persist the Q-table to a JSON file.\n\n        Args:\n            path: File path to save the Q-table.\n        \"\"\"\n        import json\n        data = {'agent_version': '1.0', 'epsilon': self.epsilon, 'alpha': self.alpha, 'total_episodes': self.episode_count, 'q_table': {key: entry.q_value for key, entry in self.q_table.items()}}\n        with open(path, 'w') as f:\n            json.dump(data, f)\n\n# src/qlearning_agent.py: QLearningAgent.load_q_table\ndef load_q_table(self, path: str) -> None:\n        \"\"\"Load Q-values from a JSON file.\n\n        Args:\n            path: File path to read the Q-table from.\n        \"\"\"\n        import json\n        with open(path, 'r') as f:\n            data = json.load(f)\n        self.epsilon = data.get('epsilon', 0.1)\n        self.alpha = data.get('alpha', 0.1)\n        self.q_table = {key: QEntry(q_value=value) for key, value in data.get('q_table', {}).items()}\n\n# src/qlearning_agent.py: QLearningAgent.get_statistics\ndef get_statistics(self) -> Dict[str, float]:\n        \"\"\"Return statistics about training so far.\"\"\"\n        return {'episodes': self.episode_count, 'average_reward_per_episode': self.total_reward / max(1, self.episode_count)}"
     },
     {
       "type": "QUEUE_REBUILT",
@@ -516,61 +476,130 @@
         "Q1_FIX1",
         "Q1_FIX2",
         "Q1_FIX3",
-        "Q1_CODE",
-        "Q1_FIX_tictactoe_env_5"
+        "Q1_FIX_tictactoe_env_4",
+        "Q1_FIX_test_qlearning_agent_5",
+        "Q1_FIX_experiment_6",
+        "Q1_FIX_experiment_7",
+        "Q1_CRITIC"
       ]
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n16",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "CONTRACT_FILE_RESTORED",
+      "node": "src/experiment.py",
+      "files": [
+        "src/config.py"
+      ]
+    },
+    {
+      "type": "CROSS_ROLE_WRITE",
+      "node": "src/experiment.py",
+      "files": [
+        "tests/test_experiment.py"
+      ],
+      "agent": "seed_coder",
+      "task_id": "Q1_FIX1_FIX1"
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "src/experiment.py",
+      "files": [
+        "tests/test_experiment.py"
+      ],
+      "agent": "seed_coder",
+      "task_id": "Q1_FIX1_FIX1"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n17",
+        "node_id": "n16",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "CROSS_ROLE_WRITE",
+      "node": "src/experiment.py",
+      "files": [
+        "workspace/tests/test_experiment.py"
+      ],
+      "agent": "seed_coder",
+      "task_id": "Q1_FIX1_FIX2"
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "src/experiment.py",
+      "files": [
+        "workspace/tests/test_experiment.py"
+      ],
+      "agent": "seed_coder",
+      "task_id": "Q1_FIX1_FIX2"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n16",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX1_TEST_TTENV",
+      "agent": "seed_tester",
+      "error": "Odpowiedź agenta dla 'tests/test_tictactoe_env.py' nie została zapisana: pola ['task'] nie pasują do żadnego dozwolonego kształtu. Dozwolone: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section_content}]'). Pliki zwracaj w polu 'files' jako listę {'filename', 'content'}."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
         "old_weight": 2.2,
         "new_weight": 2.6,
         "delta": 0.4,
-        "degree": 4
+        "degree": 1
       }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX1_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n17",
+        "node_id": "n12",
         "old_weight": 2.6,
         "new_weight": 3.0,
         "delta": 0.4,
-        "degree": 4
+        "degree": 1
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n17",
+        "node_id": "n12",
         "old_weight": 3.0,
         "new_weight": 3.4,
         "delta": 0.4,
-        "degree": 4
+        "degree": 1
       }
     },
     {
       "type": "HARNESS_BUG_REPORTED",
       "details": {
         "files_in_error": [
-          "Naruszenie kontraktu hiperkrawędzi",
-          "test_agents.py"
+          "test_tictactoe_env.py"
         ],
-        "signature": "Naruszenie kontraktu hiperkrawędzi: test_agents.py używa config.RANDOM_SEAD, których nie ma w config.py. Dostępne w config.py: ALPHA, EPSILON, EPSILON_DECAY_RATE, EPSILON_MIN, GAMMA, MAX_STEPS_PER_EPI\ntest_agents.py::test_env_player_consistency:AssertionError\ntest_agents.py::test_q_learning_agent_initialization:ImportError",
-        "task_id": "Q1_FIX1",
+        "signature": "test_tictactoe_env.py::test_initial_state_is_valid:AssertionEr\ntest_tictactoe_env.py::test_win_detection_horizontal:ValueErro\ntest_tictactoe_env.py::test_win_detection_vertical:ValueError",
+        "task_id": "Q1_FIX2",
         "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
         "source": "harness"
       }
@@ -578,61 +607,7 @@
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n15",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX2_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX2_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
-        "old_weight": 3.0,
-        "new_weight": 3.4,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX2_FIX_2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX3",
-      "agent": "seed_tester",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_q_learning.py:MockPlayer: Provided new_code contains no AST statements."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n16",
+        "node_id": "n13",
         "old_weight": 2.2,
         "new_weight": 2.6,
         "delta": 0.4,
@@ -640,15 +615,9 @@
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX3_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n16",
+        "node_id": "n13",
         "old_weight": 2.6,
         "new_weight": 3.0,
         "delta": 0.4,
@@ -656,15 +625,9 @@
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX3_FIX2",
-      "agent": "seed_tester",
-      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- test_q_learning.py:27: invalid syntax\n    26:     \"\"\"Verify that MockPlayer has a Player class and is usable.\"\"\"\n    27:     assert hasattr(MockPlayer, 'Player'), \"MockPlayer must define its own Player enum.\", f\"{dir(MockPlayer)}\"\n    28:     instance = MockPlayer()"
-    },
-    {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n16",
+        "node_id": "n13",
         "old_weight": 3.0,
         "new_weight": 3.4,
         "delta": 0.4,
@@ -672,130 +635,112 @@
       }
     },
     {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_tester.md",
-        "injected_rule": "When modifying a file that is imported by other modules or referenced in contracts, preserve existing public signatures and symbols unless explicitly instructed otherwise, because breaking external contracts requires coordinated changes across dependent files.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX3_FIX",
+      "type": "OFF_TARGET_WRITE",
+      "node": "test_experiment.py",
+      "files": [
+        "tests/test_experiment.py"
+      ],
       "agent": "seed_tester",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_q_learning.py:test_q_learning.py.test_mock_player_inheritance: Klasa test_q_learning.py nie istnieje w test_q_learning.py; edycja test_q_learning.py.test_mock_player_inheritance nie ma gdzie trafić.\n- test_q_learning.py:test_q_learning.py.test_q_learner_initialization: Klasa test_q_learning.py nie istnieje w test_q_learning.py; edycja test_q_learning.py.test_q_learner_initialization nie ma gdzie trafić."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_CODE",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji `def py:main`."
+      "task_id": "Q1_FIX3_FIX_4"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n14",
+        "node_id": "n7",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_tictactoe_env_4_FIX1",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- tictactoe_env.py:TicTacToeEnv.step: Kod edycji TicTacToeEnv.step nie zawiera definicji `def step`."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n7",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_tictactoe_env_4_FIX2",
+      "agent": "seed_tester",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- tictactoe_env.py:TicTacToeEnv.__init__: Kod edycji TicTacToeEnv.__init__ nie zawiera definicji `def __init__`."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n7",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "MUTATION_REJECTED",
+      "agent": "seed_tester",
+      "rule": "When instantiating classes during test setup, ensure no positional arguments are passed to `__init__` unless they are explicitly documented as required for initialization without a default, because passing `self` or other implicit context is handled by the interpreter and causes TypeError when manually called in tests.",
+      "reason": "koduje objaw (kod błędu, typ wyjątku, numer linii) zamiast metody pracy"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_experiment_6",
+      "agent": "seed_coder",
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/experiment.py: usunięto TrainingProgress()\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach.\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n# src/experiment.py: TrainingProgress\nclass TrainingProgress:\n    \"\"\"Intermediate state during training evaluation.\"\"\"\n    episode: int\n    win_rate: float\n    loss: float"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n15",
         "old_weight": 2.2,
         "new_weight": 2.6,
         "delta": 0.4,
-        "degree": 7
+        "degree": 4
       }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_CODE_FIX1",
+      "task_id": "Q1_FIX_experiment_6_FIX1",
       "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji `def py:main`."
+      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/experiment.py: run_experiment() -> run_experiment(config)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n14",
+        "node_id": "n15",
         "old_weight": 2.6,
         "new_weight": 3.0,
         "delta": 0.4,
-        "degree": 7
+        "degree": 4
       }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_CODE_FIX2",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji `def py:main`."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n14",
+        "node_id": "n15",
         "old_weight": 3.0,
         "new_weight": 3.4,
         "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "- train.py",
-          "Wyjątek szybkiej naprawy Q#_CODE_FIX# na pliku train.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_CODE_FIX# na pliku train.py: Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji <id>.",
-        "task_id": "Q1_CODE",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX_tictactoe_env_5",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- tictactoe_env.py:tictactoe_env.TicTacToeEnv.step: SyntaxError in new_code: unexpected indent (tictactoe_env.py, line 12)"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n8",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 5
+        "degree": 3
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n8",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
+        "node_id": "n1",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
         "delta": 0.4,
-        "degree": 5
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n8",
-        "old_weight": 3.0,
-        "new_weight": 3.4,
-        "delta": 0.4,
-        "degree": 5
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_tester.md",
-        "injected_rule": "When defining a test case that instantiates a class using an enum value as an argument, verify first that the enum is correctly imported and that the specific attribute being accessed actually exists on the enum class, because relying on incomplete memory of the contract leads to AttributeErrors when symbols are renamed or never defined.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
+        "degree": 2
       }
     },
     {
@@ -804,56 +749,56 @@
       "task_ids": [
         "Q2_FIX1",
         "Q2_FIX2",
-        "Q2_CODE",
-        "Q2_FIX_tictactoe_env_4"
+        "Q2_FIX3",
+        "Q2_CRITIC"
       ]
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n17",
-        "old_weight": 3.4,
-        "new_weight": 3.8,
+        "node_id": "n18",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
         "delta": 0.4,
-        "degree": 3
+        "degree": 2
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n17",
-        "old_weight": 3.8,
-        "new_weight": 4.2,
+        "node_id": "n18",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
         "delta": 0.4,
-        "degree": 3
+        "degree": 1
       }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_FIX1_FIX2",
-      "agent": "seed_tester",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_agents.py:test_agents.py::test_random_agent_initialization: Kod edycji test_agents.py::test_random_agent_initialization nie zawiera definicji `def py::test_random_agent_initialization`.\n- test_agents.py:test_agents.py::test_q_learning_agent_initialization: Kod edycji test_agents.py::test_q_learning_agent_initialization nie zawiera definicji `def py::test_q_learning_agent_initialization`."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n17",
-        "old_weight": 4.2,
-        "new_weight": 4.6,
+        "node_id": "n18",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
         "delta": 0.4,
-        "degree": 3
+        "degree": 1
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_tester",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_tester.md",
+        "injected_rule": "When writing tests that use mocking, always import the specific decorator (e.g., `patch`) directly from `unittest.mock` rather than relying on the patch target to be available via module attributes or global scope, because test isolation requires explicit imports for all external dependencies and mock components.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n15",
+        "node_id": "n12",
         "old_weight": 3.4,
         "new_weight": 3.8,
         "delta": 0.4,
@@ -864,12 +809,12 @@
       "type": "BUILDER_ANSWER_REJECTED",
       "task_id": "Q2_FIX2_FIX1",
       "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_tictactoe_env.py:tests.test_tictactoe_env.TestCaseBase.test_win_detection_horizontal: Klasa TestCaseBase nie istnieje w test_tictactoe_env.py; edycja TestCaseBase.test_win_detection_horizontal nie ma gdzie trafić."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n15",
+        "node_id": "n12",
         "old_weight": 3.8,
         "new_weight": 4.2,
         "delta": 0.4,
@@ -877,15 +822,9 @@
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_FIX2_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n15",
+        "node_id": "n12",
         "old_weight": 4.2,
         "new_weight": 4.6,
         "delta": 0.4,
@@ -893,204 +832,44 @@
       }
     },
     {
-      "type": "OFF_TARGET_WRITE",
-      "node": "test_env.py",
-      "files": [
-        "test_core.py"
-      ],
-      "agent": "seed_tester",
-      "task_id": "Q2_FIX2_FIX2"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_CODE",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji `def py:main`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
+      "type": "AGENT_MUTATED",
       "details": {
-        "node_id": "n14",
-        "old_weight": 3.4,
-        "new_weight": 3.8,
-        "delta": 0.4,
-        "degree": 7
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When modifying a stateful function that manages resource or occupancy logic, verify that all call sites in the same file do not violate preconditions (e.g., double-occupancy) after the change, because static analysis of the full test suite is required to detect cascading state conflicts introduced by code edits.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "seed_coder",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+          "cycle": 1,
+          "rules_consolidated": 4,
+          "dropped_ineffective": [],
+          "invariants": [
+            "When defining public interfaces, strictly preserve parameter names, types, and return annotations to ensure cross-module compatibility, because the skeleton contract is immutable without explicit approval.",
+            "When implementing logic that depends on inputs, always accept them as explicit function arguments or class attributes rather than relying on global scope, because undefined variables cause runtime failures.",
+            "When a function modifies state or produces side effects such as writing files, verify persistence before returning success because test isolation does not guarantee external state consistency."
+          ]
+        }
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_CODE_FIX1",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji `def py:main`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
+      "type": "PROMPT_CONSOLIDATED",
       "details": {
-        "node_id": "n14",
-        "old_weight": 3.8,
-        "new_weight": 4.2,
-        "delta": 0.4,
-        "degree": 7
+        "status": "consolidated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "cycle": 1,
+        "rules_consolidated": 4,
+        "dropped_ineffective": [],
+        "invariants": [
+          "When defining public interfaces, strictly preserve parameter names, types, and return annotations to ensure cross-module compatibility, because the skeleton contract is immutable without explicit approval.",
+          "When implementing logic that depends on inputs, always accept them as explicit function arguments or class attributes rather than relying on global scope, because undefined variables cause runtime failures.",
+          "When a function modifies state or produces side effects such as writing files, verify persistence before returning success because test isolation does not guarantee external state consistency."
+        ]
       }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_CODE_FIX2",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: SyntaxError in new_code: unexpected character after line continuation character (train.py, line 2)"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 4.2,
-        "new_weight": 4.6,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "- train.py",
-          "Wyjątek szybkiej naprawy Q#_CODE_FIX# na pliku train.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_CODE_FIX# na pliku train.py: Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji <id>.",
-        "task_id": "Q2_CODE",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_FIX_tictactoe_env_4",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- tictactoe_env.py:tictactoe_env.py:class TicTacToeEnv: Kod edycji tictactoe_env.py:class TicTacToeEnv nie zawiera definicji `def py:class TicTacToeEnv`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n8",
-        "old_weight": 3.4,
-        "new_weight": 3.8,
-        "delta": 0.4,
-        "degree": 5
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n8",
-        "old_weight": 3.8,
-        "new_weight": 4.2,
-        "delta": 0.4,
-        "degree": 5
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_FIX_tictactoe_env_4_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- tictactoe_env.py: usunięto TicTacToeEnv()\n- tictactoe_env.py: usunięto TicTacToeEnv.__init__(self, max_steps)\n- tictactoe_env.py: usunięto TicTacToeEnv.reset(self)\n- tictactoe_env.py: usunięto TicTacToeEnv.step(self, action)\n- tictactoe_env.py: usunięto TicTacToeEnv.get_state_key(self, state)\n- tictactoe_env.py: usunięto TicTacToeEnv.get_terminal_states(self)\n- tictactoe_env.py: usunięto TicTacToeEnv.get_winner(self)\n- tictactoe_env.py: usunięto TicTacToeEnv.is_game_over(self)\n- tictactoe_env.py: usunięto TicTacToeEnv.is_valid_move(self, action)\n- tictactoe_env.py: usunięto TicTacToeEnv.get_current_player(self)\n- tictactoe_env.py: usunięto TicTacToeEnv.get_step_count(self)\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n8",
-        "old_weight": 4.2,
-        "new_weight": 4.6,
-        "delta": 0.4,
-        "degree": 5
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "Wyjątek szybkiej naprawy Q#_FIX_tictactoe_env_#_FIX# na pliku test_agents.py",
-          "test_agents.py",
-          "test_core.py",
-          "test_env.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_FIX_tictactoe_env_#_FIX# na pliku test_agents.py: Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym for\ntest_agents.py::test_q_learning_agent_initialization:AssertionError\ntest_agents.py::test_random_agent_initialization:AssertionError\ntest_core.py::test_initial_state_is_empty:AttributeError\ntest_core.py::test_terminal_states_correct_winner_detection:Assertio\ntest_env.py::test_initial_state_is_empty:AttributeError\ntest_env.py::test_terminal_states_correct_winner_detection:assert",
-        "task_id": "Q2_FIX_tictactoe_env_4",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "QUEUE_REBUILT",
-      "generation": 3,
-      "task_ids": [
-        "Q3_FIX1",
-        "Q3_FIX2",
-        "Q3_FIX3",
-        "Q3_CODE",
-        "Q3_FIX_tictactoe_env_5"
-      ]
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n17",
-        "old_weight": 4.6,
-        "new_weight": 5.0,
-        "delta": 0.4,
-        "degree": 3
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n17",
-        "old_weight": 5.0,
-        "new_weight": 5.4,
-        "delta": 0.4,
-        "degree": 3
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_FIX1_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n17",
-        "old_weight": 5.4,
-        "new_weight": 5.8,
-        "delta": 0.4,
-        "degree": 3
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "- plot_results.py",
-          "Wyjątek szybkiej naprawy Q#_FIX#_FIX# na pliku test_agents.py",
-          "test_agents.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_FIX#_FIX# na pliku test_agents.py: Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diag\ntest_agents.py::test_q_learning_agent_initialization:AssertionError\ntest_agents.py::test_random_agent_initialization:AssertionError",
-        "task_id": "Q3_FIX1",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
     },
     {
       "type": "WEIGHT_ESCALATED",
@@ -1099,14 +878,8 @@
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
-        "degree": 1
+        "degree": 2
       }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_FIX2_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
     },
     {
       "type": "WEIGHT_ESCALATED",
@@ -1115,14 +888,14 @@
         "old_weight": 1.4,
         "new_weight": 1.8,
         "delta": 0.4,
-        "degree": 1
+        "degree": 2
       }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_FIX2_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
+      "task_id": "Q2_FIX3_FIX2",
+      "agent": "seed_coder",
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- experiment.py:src.experiment.run_experiment: SyntaxError in new_code: invalid syntax (experiment.py, line 42)"
     },
     {
       "type": "WEIGHT_ESCALATED",
@@ -1131,458 +904,14 @@
         "old_weight": 1.8,
         "new_weight": 2.2,
         "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "test_core.py"
-        ],
-        "signature": "test_core.py::test_initial_state_is_empty:AttributeError\ntest_core.py::test_terminal_states_correct_winner_detection:Assertio",
-        "task_id": "Q3_FIX2",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
+        "degree": 2
       }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_FIX3",
+      "task_id": "Q2_FIX3_FIX_3",
       "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
-        "old_weight": 4.6,
-        "new_weight": 5.0,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_FIX3_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
-        "old_weight": 5.0,
-        "new_weight": 5.4,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_FIX3_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
-        "old_weight": 5.4,
-        "new_weight": 5.8,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "- plot_results.py",
-          "Wyjątek szybkiej naprawy Q#_FIX#_FIX# na pliku test_env.py",
-          "test_env.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_FIX#_FIX# na pliku test_env.py: Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram\ntest_env.py::test_initial_state_is_empty:AttributeError\ntest_env.py::test_terminal_states_correct_winner_detection:assert",
-        "task_id": "Q3_FIX3",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_CODE",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py: Kod edycji train.py nie zawiera definicji `def py`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 4.6,
-        "new_weight": 5.0,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_CODE_FIX1",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py.main: Klasa train.py nie istnieje w train.py; edycja train.py.main nie ma gdzie trafić."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 5.0,
-        "new_weight": 5.4,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_CODE_FIX2",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji `def py:main`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 5.4,
-        "new_weight": 5.8,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "- train.py",
-          "Wyjątek szybkiej naprawy Q#_CODE_FIX# na pliku train.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_CODE_FIX# na pliku train.py: Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py.main: Klasa train.py nie istnieje w train.py; edycja train.py",
-        "task_id": "Q3_CODE",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n8",
-        "old_weight": 4.6,
-        "new_weight": 5.0,
-        "delta": 0.4,
-        "degree": 5
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_FIX_tictactoe_env_5_FIX1",
-      "agent": "seed_tester",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- tictactoe_env.py:tictactoe_env.Player: Klasa tictactoe_env nie istnieje w tictactoe_env.py; edycja tictactoe_env.Player nie ma gdzie trafić."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n8",
-        "old_weight": 5.0,
-        "new_weight": 5.4,
-        "delta": 0.4,
-        "degree": 5
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q3_FIX_tictactoe_env_5_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n8",
-        "old_weight": 5.4,
-        "new_weight": 5.8,
-        "delta": 0.4,
-        "degree": 5
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "- plot_results.py",
-          "Wyjątek szybkiej naprawy Q#_FIX_tictactoe_env_#_FIX# na pliku test_agents.py",
-          "test_agents.py",
-          "test_core.py",
-          "test_env.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_FIX_tictactoe_env_#_FIX# na pliku test_agents.py: Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięt\ntest_agents.py::test_q_learning_agent_initialization:AssertionError\ntest_agents.py::test_random_agent_initialization:AssertionError\ntest_core.py::test_initial_state_is_empty:AssertionError\ntest_core.py::test_terminal_states_correct_winner_detection:Assertio\ntest_env.py::test_initial_state_is_empty:AssertionError\ntest_env.py::test_terminal_states_correct_winner_detection:assert",
-        "task_id": "Q3_FIX_tictactoe_env_5",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "QUEUE_REBUILT",
-      "generation": 4,
-      "task_ids": [
-        "Q4_FIX1",
-        "Q4_FIX2",
-        "Q4_FIX3",
-        "Q4_CODE",
-        "Q4_FIX_test_env_5"
-      ]
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX1",
-      "agent": "seed_tester",
-      "error": "Odpowiedź agenta dla 'test_agents.py' nie została zapisana: pola ['entrypoint_function', 'rationale_summary', 'recommended_changes'] nie pasują do żadnego dozwolonego kształtu. Dozwolone: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section_content}]'). Pliki zwracaj w polu 'files' jako listę {'filename', 'content'}."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n17",
-        "old_weight": 5.8,
-        "new_weight": 6.2,
-        "delta": 0.4,
-        "degree": 3
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX1_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n17",
-        "old_weight": 6.2,
-        "new_weight": 6.6,
-        "delta": 0.4,
-        "degree": 3
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX1_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n17",
-        "old_weight": 6.6,
-        "new_weight": 7.0,
-        "delta": 0.4,
-        "degree": 3
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "Wyjątek szybkiej naprawy Q#_FIX#_FIX# na pliku test_agents.py",
-          "test_agents.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_FIX#_FIX# na pliku test_agents.py: Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- test_a\ntest_agents.py::test_q_learning_agent_initialization:AssertionError\ntest_agents.py::test_random_agent_initialization:AssertionError",
-        "task_id": "Q4_FIX1",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n19",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX2_FIX1",
-      "agent": "seed_tester",
-      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- plot_results.py:9: unterminated string literal (detected at line 9)\n     8: results_path = 'results.csv'\n     9: output_dir = '.\"\n    10: Path(output_dir).mkdir(parents=True, exist_ok=True)"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n19",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX2_FIX2",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n19",
-        "old_weight": 3.0,
-        "new_weight": 3.4,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "- plot_results.py",
-          "Wyjątek szybkiej naprawy Q#_FIX#_FIX# na pliku test_core.py",
-          "test_core.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_FIX#_FIX# na pliku test_core.py: Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagra\ntest_core.py::test_initial_state_is_empty:AssertionError\ntest_core.py::test_terminal_states_correct_winner_detection:Assertio",
-        "task_id": "Q4_FIX2",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX3",
-      "agent": "seed_tester",
-      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- test_env.py:11: invalid syntax\n    10:     assert len(state) == 0 or all(cell == 0 for cell in state), 'Initial board should be empty (zeros)' or \\\n    11:                     'Initial board should contain only Player.AI placeholder', 'Initial board must be valid'\n    12: "
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
-        "old_weight": 5.8,
-        "new_weight": 6.2,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX3_FIX1",
-      "agent": "seed_tester",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram_text()\n- plot_results.py: usunięto plot_learning_curve(results, output_path, columns_to_plot)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
-        "old_weight": 6.2,
-        "new_weight": 6.6,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX3_FIX2",
-      "agent": "seed_tester",
-      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- plot_results.py:47: unmatched '}'\n    46:         return []\n    47: }"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
-        "old_weight": 6.6,
-        "new_weight": 7.0,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "- plot_results.py",
-          "Wyjątek szybkiej naprawy Q#_FIX#_FIX# na pliku test_env.py",
-          "test_env.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_FIX#_FIX# na pliku test_env.py: Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- plot_results.py: usunięto generate_diagram\ntest_env.py::test_initial_state_is_empty:AssertionError\ntest_env.py::test_terminal_states_correct_winner_detection:assert",
-        "task_id": "Q4_FIX3",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_CODE",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: SyntaxError in new_code: invalid syntax (train.py, line 44)"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 5.8,
-        "new_weight": 6.2,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_CODE_FIX1",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji `def py:main`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 6.2,
-        "new_weight": 6.6,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_CODE_FIX2",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji `def py:main`."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 6.6,
-        "new_weight": 7.0,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "- train.py",
-          "Wyjątek szybkiej naprawy Q#_CODE_FIX# na pliku train.py"
-        ],
-        "signature": "Wyjątek szybkiej naprawy Q#_CODE_FIX# na pliku train.py: Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- train.py:train.py:main: Kod edycji train.py:main nie zawiera definicji <id>.",
-        "task_id": "Q4_CODE",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
+      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_experiment.py:TestCaseBase: Provided new_code contains no AST statements."
     }
   ]
 }

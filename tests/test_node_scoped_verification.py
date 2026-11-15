@@ -90,20 +90,38 @@ def test_writer_task_is_not_judged_on_code(tmp_path: Path) -> None:
     assert report["status"] == "PASS", report
 
 
-def test_blame_goes_to_the_author_of_the_failing_file(tmp_path: Path) -> None:
-    """A coder's task fails on a test the tester wrote: the tester is the failed agent (R5)."""
+def _game_with_test(tmp_path: Path, test_body: str) -> NeuroSymbolicOrchestrator:
     orch = _orch(tmp_path)
-    ws = orch.workspace_dir
     orch._materialize_workspace_artifact(
         "game.py", {"files": [{"filename": "game.py", "content": "def size() -> int:\n    return 9\n"}]},
         writer={"agent": "seed_coder", "task_id": "T5"},
     )
     orch._materialize_workspace_artifact(
         "test_game.py",
-        {"files": [{"filename": "test_game.py", "content": "from game import size\n\n\ndef test_size() -> None:\n    assert size() == 10\n"}]},
+        {"files": [{"filename": "test_game.py", "content": "from game import size\n\n\ndef test_size() -> None:\n" + test_body}]},
         writer={"agent": "seed_tester", "task_id": "T10"},
     )
-    sync_hypergraph_matrix(ws, orch.matrix_path)
+    sync_hypergraph_matrix(orch.workspace_dir, orch.matrix_path)
+    return orch
+
+
+def test_a_wrong_result_goes_to_the_author_of_the_code_under_test(tmp_path: Path) -> None:
+    """2026-11-14: a failed assertion was charged to the test file (named first by pytest); 77 repairs went to
+    the tester while the bug was in the module."""
+    orch = _game_with_test(tmp_path, "    assert size() == 10\n")
+
+    report = orch._run_verification_step(
+        {"task_id": "T10", "target_node": "test_game.py", "assigned_agent": "seed_tester"}, include_docs=False
+    )
+
+    assert report["status"] == "FAIL"
+    assert report["failed_file"] == "game.py"
+    assert report["failed_agent"] == "seed_coder"
+
+
+def test_a_test_misusing_the_api_goes_to_the_author_of_the_test(tmp_path: Path) -> None:
+    """A coder's task fails on a test that calls the API wrongly: the tester is the failed agent (R5)."""
+    orch = _game_with_test(tmp_path, "    assert size(3) == 9\n")
 
     report = orch._run_verification_step(
         {"task_id": "T5", "target_node": "game.py", "assigned_agent": "seed_coder"}, include_docs=False

@@ -13,6 +13,34 @@ from adk.core.logger import get_process_logger
 from adk.core.models import resolve_adk_path
 
 _CUSTOM_LLM_HANDLER: Callable[[str, dict[str, Any], str], dict[str, Any]] | None = None
+
+# Wall-clock budget for one whole model call. The per-request socket timeout does not bound a stalled stream.
+LLM_WALL_CLOCK_LIMIT_S = int(os.environ.get("HARNESS_LLM_WALL_CLOCK_LIMIT_S", "600"))
+
+
+def _call_with_wall_clock_limit(dispatch: Callable[[], dict[str, Any]], model_name: str) -> dict[str, Any]:
+    """Run `dispatch` in a daemon thread and give up after LLM_WALL_CLOCK_LIMIT_S with a TimeoutError, so a
+    hung provider ends as a logged failure of one call instead of silently freezing the whole run."""
+    import threading
+
+    box: dict[str, Any] = {}
+
+    def _run() -> None:
+        try:
+            box["result"] = dispatch()
+        except BaseException as exc:  # noqa: BLE001 - re-raised in the caller thread
+            box["error"] = exc
+
+    worker = threading.Thread(target=_run, daemon=True)
+    worker.start()
+    worker.join(LLM_WALL_CLOCK_LIMIT_S)
+    if worker.is_alive():
+        raise TimeoutError(
+            f"Wywołanie modelu {model_name} nie zakończyło się w {LLM_WALL_CLOCK_LIMIT_S}s (limit zegarowy całego wywołania)."
+        )
+    if "error" in box:
+        raise box["error"]
+    return box["result"]
 _LLM_TELEMETRY: dict[str, Any] = {
     "calls_count": 0,
     "live_network_calls": 0,
@@ -531,25 +559,35 @@ def call_agent(
 
     elif active_provider in ("google", "ollama"):
         user_only_prompt = f"=== INPUT JSON PAYLOAD ===\n{serialized_payload}{action_directive}\n"
+        # Logged BEFORE the call: when a run dies inside a model call, the log must show which one (the
+        # 2026-11-14 run ended with no trace of what it was waiting for). The wall-clock limit covers the whole
+        # call; urlopen's own timeout only bounds a single socket operation, so a stalled stream never returns.
+        logger.log_step(
+            "LLM_CALL_START",
+            f"{path.stem} -> {model_name} ({model_tier}, {active_provider})",
+            {"prompt_chars": len(combined_prompt)},
+        )
         try:
-            if active_provider == "google":
-                api_res = conn.call_google_gemini(
+            def _dispatch() -> dict[str, Any]:
+                if active_provider == "google":
+                    return conn.call_google_gemini(
+                        model_name,
+                        combined_prompt,
+                        system_prompt=system_prompt.strip(),
+                        user_prompt=user_only_prompt,
+                        model_tier=model_tier,
+                    )
+                return conn.call_ollama(
                     model_name,
                     combined_prompt,
                     system_prompt=system_prompt.strip(),
                     user_prompt=user_only_prompt,
                     model_tier=model_tier,
                 )
-                if api_res.get("model_used"):
-                    model_name = api_res["model_used"]
-            else:
-                api_res = conn.call_ollama(
-                    model_name,
-                    combined_prompt,
-                    system_prompt=system_prompt.strip(),
-                    user_prompt=user_only_prompt,
-                    model_tier=model_tier,
-                )
+
+            api_res = _call_with_wall_clock_limit(_dispatch, model_name)
+            if active_provider == "google" and api_res.get("model_used"):
+                model_name = api_res["model_used"]
 
             raw_response_str = api_res.get("raw_text", "{}")
             extracted = _extract_json_from_text(raw_response_str)

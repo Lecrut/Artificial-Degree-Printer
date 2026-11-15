@@ -69,6 +69,11 @@ Paths are relative to the workspace; subdirectories are created automatically.
 Optional in any form: `"contract_change": {"reason": "<why a contracted signature changes>"}`.
 Do not include conversational filler or explanatory prose outside the JSON object.
 
+---
+
+## CONSOLIDATED EVOLUTIONARY INVARIANTS
+- **INVARIANT**: When defining public interfaces, strictly preserve parameter names, types, and return annotations to ensure cross-module compatibility, because the skeleton contract is immutable without explicit approval.
+- **INVARIANT**: When implementing logic that depends on inputs, always accept them as explicit function arguments or class attributes rather than relying on global scope, because undefined variables cause runtime failures.
+- **INVARIANT**: When a function modifies state or produces side effects such as writing files, verify persistence before returning success because test isolation does not guarantee external state consistency.
+
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.
-- **RULE**: When modifying a symbol in a file, verify the symbol's current definition exists within that file before generating edits, because editing a non-existent or incorrectly defined symbol results in rejected patches.

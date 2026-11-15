@@ -1,44 +1,33 @@
 {
-  "thesis_title": "Uczenie się przez wzmocnienie w grze Kółko i krzyżyk: Analiza porównawcza Q-Learning i strategii losowej",
-  "thesis_statement": "Celem pracy jest zaimplementowanie agenta uczącego się metodą Q-Learning grającego w Kółko i Krzyżyk przeciwko losowemu przeciwnikowi. Teza głosi, że agent ten osiąga poziom gry stabilny i dominujący nad losowym (zwycięża >90% gier po odpowiedniej liczbie epok), a analiza błędów pozwala zidentyfikować krytyczne stany dla konwergencji.",
-  "baseline_comparison": "Metodą odniesienia jest agent wybierający ruchy losowo z dopuszczalnych. Porównanie polega na analizie procentowej zwycięstw, remisów i porażek w 1000 rundach ewaluacyjnych oraz analizie krzywej uczenia (średnia nagroda/gra w epokach).",
-  "entrypoint": "train.py:main",
+  "thesis_title": "Nauka gry w Tic-Tac-Toe za pomocą algorytmu Q-Learning: Analiza konwergencji i porównanie z strategią losową",
+  "thesis_statement": "Teza: Agent oparty na Q-Learning potrafi wyuczyć się strategii bliskiej optimum Nasha (zysk=0, remis) w grze przeciwko losowemu opponentowi po około 30-40 tysiącach epok. Kryterium sukcesu: osiągnięcie średniego współczynnika remisów > 0.95 i współczynnika wygranych agenta > 0.4 w ostatnim dziesięciotysięcznym fragmencie treningu, przy jednoczesnym potwierdzeniu, że baseline losowy wygrywa tylko ~2% gier (gdyby nie robił błędów) lub remisuje ~60% (w zależności od first-mover advantage), demonstrując silny postęp Q-Learninga.",
+  "baseline_comparison": "Baseline stanowi gra losowa (uniform random selection z legal actions). Porównanie odbywa się poprzez symulację 1000 gier post-treningowych. Mierzony jest procent remisów i zwycięstw agenta względem baseline oraz self-play.",
+  "entrypoint": "src/experiment.py:run_experiment",
   "metrics": [
-    "win_rate_vs_random",
-    "draw_rate_vs_random",
-    "avg_reward_per_episode",
-    "convergence_epoch"
+    "win_rate_vs_baseline",
+    "draw_rate_vs_baseline",
+    "convergence_episodes"
   ],
   "planned_chapters": [
     {
       "index": 1,
-      "title": "Wstęp",
-      "focus": "Motywacja, definicja problemu uczenia się w grach zero-sum, cel i teza pracy."
+      "title": "Wstęp i Cele Pracy",
+      "focus": "Motywacja, sformułowanie problemu Markov Decision Process dla Tic-Tac-Toe, teza pracy i cele eksperymentu."
     },
     {
       "index": 2,
-      "title": "Stan badań i literatura",
-      "focus": "Podstawy Reinforcement Learning, algorytm Q-Learning, prace związane z Tic-Tac-Toe jako MDP."
+      "title": "Przegląd Literatury",
+      "focus": "Podstawy uczenia przez wzmacnianie (RL), algorytm Q-Learning (Watkins & Dayan), historia gry w Tic-Tac-Toe (AI solving history) oraz konwergencja Q-Learning w stochastycznych środowiskach."
     },
     {
       "index": 3,
-      "title": "Metodologia rozwiązania",
-      "focus": "Modelowanie Tic-Tac-Toe jako MDP (stan, akcja, nagroda), architektura agenta Q-Learning i agenta losowego."
+      "title": "Metodyka Eksperymentu",
+      "focus": "Modelowanie gry jako MDP (stan, akcja, nagroda), architektura agenta Q-Learning, konfiguracja hiperparametrów, definicja baseline losowego oraz protokół ewaluacji."
     },
     {
       "index": 4,
-      "title": "Implementacja systemu",
-      "focus": "Szczegóły kodu: moduł środowiska, moduł uczenia, konfiguracja hiperparametrów."
-    },
-    {
-      "index": 5,
-      "title": "Eksperymenty i wyniki",
-      "focus": "Ustawienia eksperymentu, wykresy konwergencji, tabele wyników porównawczych z bazą (Random)."
-    },
-    {
-      "index": 6,
-      "title": "Wnioski",
-      "focus": "Podsumowanie osiągnięcia celu, analiza błędów, możliwości rozszerzenia (np. self-play, AlphaZero lite)."
+      "title": "Wyniki i Dyskusja",
+      "focus": "Prezentacja wykresów konwergencji, liczbowe porównanie z baseline, analiza wpływu parametru epsilon oraz wnioski końcowe dotyczące skuteczności RL w prostych grach o pełnej informacji."
     }
   ],
   "literature_recon": {
@@ -105,33 +94,23 @@
     "chapters": [
       {
         "index": 1,
-        "title": "Wstęp",
-        "focus": "Motywacja, definicja problemu uczenia się w grach zero-sum, cel i teza pracy."
+        "title": "Wstęp i Cele Pracy",
+        "focus": "Motywacja, sformułowanie problemu Markov Decision Process dla Tic-Tac-Toe, teza pracy i cele eksperymentu."
       },
       {
         "index": 2,
-        "title": "Stan badań i literatura",
-        "focus": "Podstawy Reinforcement Learning, algorytm Q-Learning, prace związane z Tic-Tac-Toe jako MDP."
+        "title": "Przegląd Literatury",
+        "focus": "Podstawy uczenia przez wzmacnianie (RL), algorytm Q-Learning (Watkins & Dayan), historia gry w Tic-Tac-Toe (AI solving history) oraz konwergencja Q-Learning w stochastycznych środowiskach."
       },
       {
         "index": 3,
-        "title": "Metodologia rozwiązania",
-        "focus": "Modelowanie Tic-Tac-Toe jako MDP (stan, akcja, nagroda), architektura agenta Q-Learning i agenta losowego."
+        "title": "Metodyka Eksperymentu",
+        "focus": "Modelowanie gry jako MDP (stan, akcja, nagroda), architektura agenta Q-Learning, konfiguracja hiperparametrów, definicja baseline losowego oraz protokół ewaluacji."
       },
       {
         "index": 4,
-        "title": "Implementacja systemu",
-        "focus": "Szczegóły kodu: moduł środowiska, moduł uczenia, konfiguracja hiperparametrów."
-      },
-      {
-        "index": 5,
-        "title": "Eksperymenty i wyniki",
-        "focus": "Ustawienia eksperymentu, wykresy konwergencji, tabele wyników porównawczych z bazą (Random)."
-      },
-      {
-        "index": 6,
-        "title": "Wnioski",
-        "focus": "Podsumowanie osiągnięcia celu, analiza błędów, możliwości rozszerzenia (np. self-play, AlphaZero lite)."
+        "title": "Wyniki i Dyskusja",
+        "focus": "Prezentacja wykresów konwergencji, liczbowe porównanie z baseline, analiza wpływu parametru epsilon oraz wnioski końcowe dotyczące skuteczności RL w prostych grach o pełnej informacji."
       }
     ]
   }

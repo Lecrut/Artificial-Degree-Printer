@@ -17,7 +17,7 @@ BUILTIN_VERIFICATION_MODULES = {"__init__.py", "test_runner.py", "ref_compiler.p
 
 # Lint findings that mean the code cannot run: syntax errors, invalid comparisons/control flow, undefined names.
 BLOCKING_LINT_RULES = "E9,F63,F7,F82"
-# Everything else in E/F is style or dead code: fixed by `ruff --fix`, reported as a warning if it survives.
+# Everything else in E/F is style or dead code: reported as a non-blocking warning, never auto-fixed (D3).
 MECHANICAL_LINT_RULES = "E,F"
 IGNORED_LINT_RULES = "E501,F401,E402"
 
@@ -201,6 +201,9 @@ def run_isolated_tests(
         proc = _run_tool(
             [
                 sys.executable, "-m", "pytest", *[str(p) for p in test_files], "-q", "-p", "no:cacheprovider",
+                # Two test files with one basename (`test_config.py` and `tests/test_config.py`) made the default
+                # import mode fail at collection, before any test ran, in every verification (2026-11-14, task 02).
+                "--import-mode=importlib",
                 # short tracebacks: the repair prompt needs the failing assertion, not pages of frames
                 "--tb=short",
                 "-o", f"faulthandler_timeout={PER_TEST_TIMEOUT_S}",
@@ -239,10 +242,10 @@ def run_isolated_tests(
                 lint_warnings,
             )
 
-        # Mechanical findings are repaired by the tool, never handed to an LLM. F841 (unused variable) only has
-        # an "unsafe" fix, so it gets its own pass; without it the model was asked to delete one assignment.
-        _ruff("--fix", "--select", MECHANICAL_LINT_RULES, "--ignore", IGNORED_LINT_RULES)
-        _ruff("--fix", "--unsafe-fixes", "--select", "F841")
+        # Verification only reports; it never edits (decision D3, 2026-11-15). `ruff --fix` used to rewrite
+        # generated files here, outside the write gate, the interface contract and `last_writer`, and
+        # `--unsafe-fixes` could drop an assignment with a side effect. Mechanical findings stay non-blocking
+        # warnings; the author fixes them in its own change if it wants to.
 
         # Only findings that mean the code cannot run block the task.
         blocking = _ruff("--select", BLOCKING_LINT_RULES, targets=judged)
@@ -252,7 +255,7 @@ def run_isolated_tests(
             if not ruff_passed:
                 errors.append(f"Ruff lint failure: {(blocking.stdout + blocking.stderr).strip()}")
 
-        # Whatever mechanical findings survive --fix are reported, not turned into repair tasks.
+        # Mechanical findings are reported, not turned into repair tasks.
         leftover = _ruff(
             "--select", MECHANICAL_LINT_RULES, "--ignore", f"{IGNORED_LINT_RULES},{BLOCKING_LINT_RULES}", targets=judged
         )

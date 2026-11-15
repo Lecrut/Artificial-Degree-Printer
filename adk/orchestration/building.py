@@ -26,6 +26,7 @@ from adk.tools.verification.contract_check import interface_contract_breaches, i
 from adk.tools.verification.test_runner import iter_workspace_python_files
 from adk.orchestration.common import (
     _agent_for_path,
+    available_package_imports,
     _collect_report_issues,
     _filter_bibtex,
     _merge_bibtex_entries,
@@ -39,6 +40,48 @@ from adk.orchestration.common import (
 
 # pytest summary line: `FAILED path.py::Class::test_name - message` (or ERROR)
 _FAILED_TEST_LINE = re.compile(r"^(?:FAILED|ERROR)\s+(\S+?\.py)::(\S+?)(?:\s+-\s+(.*))?$", re.MULTILINE)
+
+
+def _plain_symbol(raw: str) -> tuple[str, str | None]:
+    """`path/to/file.py:Class.method` -> (`Class.method`, `path/to/file.py`); `pkg/mod.func` -> (`mod.func`, None);
+    `src/exp/runner.py.run_all` -> (`run_all`, `src/exp/runner.py`); a leading `class ` / `def ` is dropped."""
+    raw = raw.strip().replace("\\", "/")
+    named_file = None
+    if ":" in raw:
+        head, _, raw = raw.rpartition(":")
+        named_file = head if head.endswith(".py") else None
+    if ".py." in raw:
+        head, raw = raw.split(".py.", 1)
+        named_file = named_file or f"{head}.py"
+    if "/" in raw:
+        raw = raw.rsplit("/", 1)[1]
+    raw = re.sub(r"^(?:class|def)\s+", "", raw)
+    if raw.endswith(".py") and raw.count(".") == 1:
+        return raw, named_file
+    return raw.removesuffix(".py"), named_file
+
+
+def _symbol_source(source: str | None, symbol: str) -> str | None:
+    """Source text of a top-level function/class or `Class.method` in `source`; None when absent or unparsable."""
+    if not source:
+        return None
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return None
+    cls_name, _, member = symbol.rpartition(".")
+    body: list[ast.stmt] = tree.body
+    if cls_name:
+        owner = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == cls_name), None)
+        if owner is None:
+            return None
+        body = owner.body
+    name = member if cls_name else symbol
+    node = next(
+        (n for n in body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and n.name == name),
+        None,
+    )
+    return ast.get_source_segment(source, node) if node is not None else None
 
 
 def _test_function_source(path: Path, qualname: str) -> str | None:
@@ -82,7 +125,7 @@ class BuildingMixin:
         originals: dict[Path, str | None] = {}
         try:
             self._apply_builder_output(node_path, llm_output, originals)
-            self._enforce_interface_contract(originals, llm_output, establishes_contract)
+            self._enforce_interface_contract(originals, llm_output, establishes_contract, node_path)
         except MaterializationError:
             for dest, before in originals.items():
                 if before is None:
@@ -152,10 +195,14 @@ class BuildingMixin:
             )
 
     def _enforce_interface_contract(
-        self, originals: dict[Path, str | None], llm_output: dict[str, Any], establishes_contract: bool
+        self, originals: dict[Path, str | None], llm_output: dict[str, Any], establishes_contract: bool, node_path: str = ""
     ) -> None:
         """After the skeleton task the public signatures of code modules are the contract between tasks.
-        Changing or removing one needs `contract_change: {reason}`; new public symbols join the contract freely."""
+        Changing or removing one needs `contract_change: {reason}`; new public symbols join the contract freely.
+
+        A breach in a file that is NOT the task's target restores that one file and keeps the rest of the
+        answer: on 2026-11-14 the tester attached `plot_script` to every test repair, broke `plot_results.py`'s
+        contract, and ~95 whole answers — including the corrected tests — were thrown away for it."""
         ws_root = self.workspace_dir.resolve()
         if establishes_contract:
             contract: dict[str, dict[str, list[str]]] = {}
@@ -175,28 +222,68 @@ class BuildingMixin:
             for dest in originals
             if dest.exists() and is_contract_module(dest.relative_to(ws_root).as_posix())
         }
-        breaches = [
-            breach
-            for rel, dest in touched.items()
-            for breach in interface_contract_breaches(contract, rel, dest.read_text(encoding="utf-8", errors="replace"))
-        ]
         change = llm_output.get("contract_change")
         reason = str(change.get("reason") if isinstance(change, dict) else change or "").strip()
+        breaches_by_rel = {
+            rel: interface_contract_breaches(contract, rel, dest.read_text(encoding="utf-8", errors="replace"))
+            for rel, dest in touched.items()
+        }
+        if not reason:
+            protected = [rel for rel, found in breaches_by_rel.items() if found and rel != node_path]
+            for rel in protected:
+                dest = touched.pop(rel)
+                before = originals.pop(dest, None)
+                if before is None:
+                    dest.unlink(missing_ok=True)
+                else:
+                    dest.write_text(before, encoding="utf-8")
+                breaches_by_rel.pop(rel)
+            if protected:
+                self._record_evolution_event(
+                    {"type": "CONTRACT_FILE_RESTORED", "node": node_path, "files": sorted(protected)}
+                )
+        breaches = [breach for found in breaches_by_rel.values() for breach in found]
         if breaches and not reason:
+            # The small model rewriting a whole file loses skeleton symbols; without their source the retry
+            # could only guess them back (2026-11-14: 38+ such rejections).
+            help_sources = self._removed_symbol_sources(originals, breaches)
             raise MaterializationError(
                 "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- "
                 + "\n- ".join(breaches)
                 + "\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi "
                 "'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, "
                 "dostosuje się w kolejnych zadaniach."
+                + help_sources
             )
         for rel, dest in touched.items():
+            if breaches_by_rel.get(rel) and not reason:
+                continue
             api = public_api(dest.read_text(encoding="utf-8", errors="replace"))
             if api is not None:
                 contract[rel] = {**contract.get(rel, {}), **api} if not breaches else api
         write_json_state(self.interface_contract_path, contract)
         if breaches:
             self._record_evolution_event({"type": "CONTRACT_CHANGED", "changes": breaches, "reason": reason})
+
+    @staticmethod
+    def _removed_symbol_sources(originals: dict[Path, str | None], breaches: list[str], budget: int = 2000) -> str:
+        """Source of the symbols a breach says were removed, taken from the file's previous version, so the
+        retry can paste them back instead of guessing."""
+        found: list[str] = []
+        used = 0
+        for breach in breaches:
+            m = re.match(r"^(.+?): (?:usunięto )?([\w.]+)\(", breach)
+            if not m:
+                continue
+            rel, symbol = m.group(1), m.group(2)
+            before = next((txt for dest, txt in originals.items() if txt and dest.name == Path(rel).name), None)
+            source = _symbol_source(before, symbol)
+            if source and used + len(source) <= budget:
+                found.append(f"# {rel}: {symbol}\n{source}")
+                used += len(source)
+        if not found:
+            return ""
+        return "\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n" + "\n\n".join(found)
 
     def _apply_builder_output(
         self, node_path: str, llm_output: dict[str, Any], originals: dict[Path, str | None]
@@ -275,11 +362,25 @@ class BuildingMixin:
         for item in llm_output.get("ast_edits") or []:
             if isinstance(item, dict) and item.get("symbol") and item.get("code") is not None:
                 code_str = _normalize_raw_code(str(item["code"])) or str(item["code"])
-                edit_path = (self.workspace_dir / str(item.get("file") or node_path).replace("\\", "/")).resolve()
+                symbol, named_file = _plain_symbol(str(item["symbol"]))
+                file_rel = str(item.get("file") or named_file or node_path).replace("\\", "/")
+                edit_path = (self.workspace_dir / file_rel).resolve()
                 if ws_root != edit_path and ws_root not in edit_path.parents:
                     continue
+                # The model qualifies symbols the way it reads them: `random_agent.RandomAgent.__init__`,
+                # `src/experiment/runner.run_all`, `tests.test_config.X`. Module/path parts of the target file are
+                # not part of the symbol (2026-11-14: ~30 rejected edits). A bare file name means the whole file.
+                parts = symbol.split(".")
+                rel_parts = set(edit_path.relative_to(ws_root).with_suffix("").parts)
+                while len(parts) > 1 and parts[0] in rel_parts:
+                    parts.pop(0)
+                symbol = ".".join(parts)
+                if not symbol or symbol in (edit_path.name, edit_path.stem):
+                    if _write(edit_path.relative_to(ws_root).as_posix(), code_str):
+                        materialized_any = True
+                    continue
                 _remember(edit_path)
-                result = edit_ast_node(edit_path, str(item["symbol"]), code_str)
+                result = edit_ast_node(edit_path, symbol, code_str)
                 if result.get("status") == "ok":
                     materialized_any = True
                 elif str(result.get("error", "")).startswith("Existing file has SyntaxError"):
@@ -292,6 +393,7 @@ class BuildingMixin:
                     )
                 else:
                     edit_errors.append(f"{edit_path.name}:{item['symbol']}: {result.get('error')}")
+        _raise_if_unparsable()
         if edit_errors:
             raise MaterializationError("Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- " + "\n- ".join(edit_errors))
 
@@ -300,19 +402,32 @@ class BuildingMixin:
         if source_code and node_path.endswith(".py") and not materialized_any:
             materialized_any = _write(node_path, source_code)
 
-        # test suite, results and plotting script (seed_tester)
+        # test suite, results and plotting script (seed_tester). A side artifact lands only when it IS the
+        # task's target (same path or name) or does not exist yet: on 2026-11-14 the tester attached
+        # `plot_script` to every test repair and the stale script overwrote `plot_results.py` each time.
+        skipped_side: list[str] = []
         for body_key, file_key, default_rel in (
             ("test_code", "test_file", "test_core.py"),
             ("csv_content", "benchmark_file", "results.csv"),
             ("plot_script", "plot_file", "plot_results.py"),
         ):
             body = _normalize_raw_code(llm_output.get(body_key))
-            if body and _write(str(llm_output.get(file_key) or default_rel), body):
+            side_rel = str(llm_output.get(file_key) or default_rel).replace("\\", "/")
+            if body and (
+                side_rel != node_path
+                and Path(side_rel).name != Path(node_path).name
+                and (self.workspace_dir / side_rel).exists()
+            ):
+                skipped_side.append(f"{body_key} -> {side_rel}")
+                continue
+            if body and _write(side_rel, body):
                 materialized_any = True
                 if body_key == "csv_content":
-                    csv_path = self.workspace_dir / str(llm_output.get(file_key) or default_rel)
+                    csv_path = self.workspace_dir / side_rel
                     now = time.time() + 1.0
                     os.utime(csv_path, (now, now))
+        if skipped_side:
+            self._record_evolution_event({"type": "SIDE_ARTIFACT_SKIPPED", "node": node_path, "skipped": skipped_side})
         _raise_if_unparsable()
 
         # bibliography (researchers): merged by citation key; with an arXiv-verified bibliography only its keys stay
@@ -475,6 +590,9 @@ class BuildingMixin:
             "hypergraph_nodes": scoped_graph.get("nodes", {}),
             "active_edges": scoped_graph.get("active_edges", {}),
             "grounded_hypergraph_state": grounded_state,
+            # One source of truth for external imports (D2): the canonical import line of every package this
+            # fixed environment provides. Anything else is unavailable for the whole run (D1).
+            "available_packages": available_package_imports(),
             # The metrics the plan declared (P9 pre-registration) take the place of a prescribed list.
             "standard_metrics": blueprint_data.get("metrics") or recon_data.get("standard_metrics", []),
             "canonical_baselines": recon_data.get("canonical_baselines", []),
