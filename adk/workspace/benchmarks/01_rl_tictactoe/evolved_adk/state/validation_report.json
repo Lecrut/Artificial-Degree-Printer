@@ -1,40 +1,101 @@
 {
   "status": "FAIL",
-  "failed_task_id": "Q2_FIX3",
-  "failed_node": "n19",
-  "failed_file": "tests/test_tictactoe_env.py",
-  "failed_agent": "seed_tester",
+  "failed_task_id": "Q4_REFS",
+  "failed_node": "n5",
+  "failed_file": "thesis.md",
+  "failed_agent": "seed_writer",
   "supervisors": {
     "code_auditor": {
       "verdict": "PASS",
-      "issues": [
-        "Pytest failure: =================================== ERRORS ====================================\n_ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/tests/test_tictactoe_env.py _\ntests\\test_tictactoe_env.py:5: in <module>\n    @pytest.fixture(autouse=True)\n     ^^^^^^\nE   NameError: name 'pytest' is not defined\n============================== warnings summary ===============================\ntest_experiment.py:85\n  D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\test_experiment.py:85: PytestCollectionWarning: cannot collect test class 'TestCaseBase' because it has a __init__ constructor (from: adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/test_experiment.py)\n    class TestCaseBase:\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ===========================\nERROR tests\\test_tictactoe_env.py - NameError: name 'pytest' is not defined\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 warning, 1 error in 0.39s",
-        "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_tictactoe_env.py:5:2: F821 Undefined name `pytest`\nFound 1 error."
-      ],
-      "status": "FAIL",
-      "skipped": "deterministic_only"
+      "issues": [],
+      "status": "PASS",
+      "skipped": "is_doc_scope"
     },
     "symbolic_auditor": {
-      "status": "SKIPPED_OUT_OF_EDGE_SCOPE",
-      "verdict": "PASS",
-      "skipped": "SKIPPED_OUT_OF_EDGE_SCOPE",
-      "issues": []
+      "status": "FAIL",
+      "issues": [
+        "Unresolved pointer: \\ref_csv{<file>}",
+        "Unresolved pointer: \\ref_csv{file}",
+        "Unresolved pointer: \\ref_ast{RandomOpponentAgent.get_move}",
+        "Unresolved pointer: \\ref_csv{results.csv}"
+      ]
     },
     "redteam_critic_guard": {
-      "status": "SKIPPED_OUT_OF_EDGE_SCOPE",
+      "status": "SKIPPED_INTERMEDIATE_TASK",
       "verdict": "PASS",
-      "skipped": "SKIPPED_OUT_OF_EDGE_SCOPE",
+      "gate_3_approved": false,
       "issues": []
     }
   },
-  "summary": "Layer 3 verification failed.",
-  "warnings": [
-    "Parametr src/config.py:EPOCHES_PER_EVALUATION jest zadeklarowany, ale żaden kod go nie używa.",
-    "Parametr src/config.py:BASELINE_WIN_RATE_TARGET jest zadeklarowany, ale żaden kod go nie używa.",
-    "Parametr src/evaluation.py:EPOCHES_PER_EVALUATION jest zadeklarowany, ale żaden kod go nie używa.",
-    "Parametr src/experiment.py:NUM_EPOCHES_PER_EVALUATION jest zadeklarowany, ale żaden kod go nie używa.",
-    "Parametr src/experiment.py:EPOCHES_PER_TRAINING jest zadeklarowany, ale żaden kod go nie używa.",
-    "Parametr src/experiment.py:BASELINE_WIN_RATE_TARGET jest zadeklarowany, ale żaden kod go nie używa.",
-    "adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\experiment.py:56:25: F811 [*] Redefinition of unused `Path` from line 8: `Path` redefined here\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\experiment.py:57:26: F811 [*] Redefinition of unused `datetime` from line 10: `datetime` redefined here\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\experiment.py:62:5: F841 Local variable `agent_win_rate_threshold` is assigned to but never used\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\experiment.py:63:5: F841 Local variable `baseline_win_rate_target` is assigned to but never used\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\test_experiment.py:45:21: F841 Local variable `original_runs` is assigned to but never used\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\test_experiment.py:46:21: F841 Local variable `original_seed` is assigned to but never used\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\test_experiment.py:83:8: F811 [*] Redefinition of unused `os` from line 1: `os` redefined here\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_experiment.py:14:17: F841 Local variable `result` is assigned to but never used\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_experiment.py:23:17: F841 Local variable `result` is assigned to but never used\nFound 9 errors.\n[*] 3 fixable with `--fix` (6 unsafe fixes available with `--fix --unsafe-fixes`)."
+  "summary": "Zakończono z brakami: 17 nierozwiązanych ustaleń.",
+  "gaps": [
+    {
+      "kind": "kod",
+      "detail": "Pytest failure: FF......                                                                                                                                                                                                                                                                                             [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n____________________________________________________________________________________________________________________________________ test_run_experiment_produces_csv _____________________________________________________________________________________________________________________________________\ntest_experiment.py:17: in test_run_experiment_produces_csv\n    with patch('src.experiment.write_csv'):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1497: in __enter__\n    original, local = self.get_original()\n                      ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1467: in get_original\n    raise AttributeError(\nE   AttributeError: <module 'src.experiment' from 'D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\experiment.py'> does not have the attribute 'write_csv'\n_______________________________________________________________________________________________________________________________________ test_agent_loop_completion ________________________________________________________________________________________________________________________________________\ntests\\test_agents.py:127: in test_agent_loop_completion\n    current_state = test_env.state\n                    ^^^^^^^^^^^^^^\nE   AttributeError: 'GameEnvironment' object has no attribute 'state'\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED test_experiment.py::test_run_experiment_produces_csv - AttributeError: <module 'src.experiment' from 'D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\experiment.py'> does not have the attribute 'write_csv'\nFAILED tests\\test_agents.py::test_agent_loop_completion - AttributeError: 'GameEnvironment' object has no attribute 'state'\n2 failed, 6 passed in 0.57s"
+    },
+    {
+      "kind": "kod",
+      "detail": "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\game_environment.py:172:33: F821 Undefined name `idx`\nFound 1 error."
+    },
+    {
+      "kind": "wskaźnik",
+      "detail": "File '<file>' does not exist To placeholder skopiowany z instrukcji, nie wskaźnik: wybierz prawdziwy cel z 'available_ast_symbols'."
+    },
+    {
+      "kind": "wskaźnik",
+      "detail": "CSV file '<file>' does not exist"
+    },
+    {
+      "kind": "wskaźnik",
+      "detail": "CSV file 'file' does not exist"
+    },
+    {
+      "kind": "wskaźnik",
+      "detail": "Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}."
+    },
+    {
+      "kind": "wskaźnik",
+      "detail": "Malformed symbolic tag missing ':' separator: \\ref_ast{RandomOpponentAgent.get_move}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}."
+    },
+    {
+      "kind": "ustalenie weryfikacji",
+      "detail": "Unresolved pointer: \\ref_csv{<file>}"
+    },
+    {
+      "kind": "ustalenie weryfikacji",
+      "detail": "Unresolved pointer: \\ref_csv{file}"
+    },
+    {
+      "kind": "ustalenie weryfikacji",
+      "detail": "Unresolved pointer: \\ref_ast{RandomOpponentAgent.get_move}"
+    },
+    {
+      "kind": "ustalenie weryfikacji",
+      "detail": "Unresolved pointer: \\ref_csv{results.csv}"
+    },
+    {
+      "kind": "zadanie",
+      "detail": "Q4_FIX1 (FAILED): Napraw plik test_experiment.py. Błędy: Pytest failure: FF......                                                                                                                                                                                                                                                                                             [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n____________________________________________________________________________________________________________________________________ test_run_experiment_produces_csv _____________________________________________________________________________________________________________________________________\ntest_experiment.py:46: in test_run_experiment_produces_csv\n    run_experiment()\nsrc\\experiment.py:17: in run_experiment\n    rng = np.random.default_rng(seed=config.seed)\n                                     ^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:690: in __getattr__\n    raise AttributeError(\"Mock object has no attribute %r\" % name)\nE   AttributeError: Mock object has no attribute 'seed'\n_______________________________________________________________________________________________________________________________________ test_agent_loop_completion ________________________________________________________________________________________________________________________________________\ntests\\test_agents.py:117: in test_agent_loop_completion\n    assert result is True\nE   assert False is True\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED test_experiment.py::test_run_experiment_produces_csv - AttributeError: Mock object has no attribute 'seed'\nFAILED tests\\test_agents.py::test_agent_loop_completion - assert False is True\n2 failed, 6 passed in 0.58s"
+    },
+    {
+      "kind": "zadanie",
+      "detail": "Q4_FIX2 (FAILED): Napraw plik tests/test_agents.py. Błędy: Pytest failure: FF......                                                                                                                                                                                                                                                                                             [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n____________________________________________________________________________________________________________________________________ test_run_experiment_produces_csv _____________________________________________________________________________________________________________________________________\ntest_experiment.py:46: in test_run_experiment_produces_csv\n    run_experiment()\nsrc\\experiment.py:17: in run_experiment\n    rng = np.random.default_rng(seed=config.seed)\n                                     ^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:690: in __getattr__\n    raise AttributeError(\"Mock object has no attribute %r\" % name)\nE   AttributeError: Mock object has no attribute 'seed'\n_______________________________________________________________________________________________________________________________________ test_agent_loop_completion ________________________________________________________________________________________________________________________________________\ntests\\test_agents.py:117: in test_agent_loop_completion\n    assert result is True\nE   assert False is True\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED test_experiment.py::test_run_experiment_produces_csv - AttributeError: Mock object has no attribute 'seed'\nFAILED tests\\test_agents.py::test_agent_loop_completion - assert False is True\n2 failed, 6 passed in 0.58s"
+    },
+    {
+      "kind": "zadanie",
+      "detail": "Q4_CODE (FAILED): Napraw kod tak, żeby testy przeszły. Błędy bez wskazanego pliku: Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\game_environment.py:172:33: F821 Undefined name `idx`\nFound 1 error."
+    },
+    {
+      "kind": "zadanie",
+      "detail": "Q4_CRITIC (FAILED): Popraw thesis.md tak, by usunąć każde z ustaleń krytyka. Odnieś się do każdego identyfikatora; jeśli ustalenia nie da się usunąć, opisz je wprost jako ograniczenie pracy.\n[K1] Unresolved pointer: \\ref_csv{results.csv}\n[K2] Unresolved pointer: \\ref_ast{test_random_agent_move}\n[K3] Unresolved pointer: \\ref_ast{test_q_learning_update}\n[K4] Unresolved pointer: \\ref_ast{RandomOpponentAgent.get_move}"
+    },
+    {
+      "kind": "błąd harnessu",
+      "detail": "Q4_CRITIC: Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie). Pliki: ['File <id> does not exist', 'Malformed symbolic tag missing <id> separator']"
+    },
+    {
+      "kind": "zadanie",
+      "detail": "Q4_REFS (BLOCKED): Popraw thesis.md tak, aby zostały tylko wskaźniki istniejące w plikach. Błędy: Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.; Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.; Malformed symbolic tag missing ':' separator: \\ref_ast{test_random_agent_move}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.; Malformed symbolic tag missing ':' separator: \\ref_ast{test_q_learning_update}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.; Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.; Malformed symbolic tag missing ':' separator: \\ref_ast{RandomOpponentAgent.get_move}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}."
+    }
   ]
 }

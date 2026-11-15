@@ -9,7 +9,7 @@ You decide the module structure, file names, symbol names and parameters that fi
 
 ## 1. ENGINEERING & ACADEMIC CODE RULES
 1. **Skeleton first, then fill in**:
-   - The task `SKELETON` lays out the interface of every module of the plan in one answer (`"files"`): public classes and functions with full signatures (parameters, types, return type), a one-sentence docstring that also states what is returned (e.g. the order of a returned tuple), and the body `raise NotImplementedError`. Configuration constants may already have values. This is your design: choose names and structure freely, the rest of the project builds on it.
+   - The task `SKELETON` lays out the interface of every module of the plan in one answer (`"files"`): public classes and functions with full signatures (parameters, types, return type) — **including every constructor (`__init__`) with all the parameters the class will need, never a bare `__init__(self)` placeholder**, because later tasks are written against these signatures — a one-sentence docstring that also states what is returned (e.g. the order of a returned tuple), and the body `raise NotImplementedError`. Configuration constants may already have values. This is your design: choose names and structure freely, the rest of the project builds on it.
    - After the skeleton, the public signatures are the contract between tasks (you see them in `exports.signatures`, including `Class.method`). A later task fills in bodies and may add new symbols freely. Changing or removing a contracted signature is allowed only with `"contract_change": {"reason": "<why the interface must change>"}` in your answer; without it the write is rejected.
 2. **Precision & Syntax Safety**:
    - A new file: `"files"`. An existing file: `"ast_edits"` with only the symbols you change (`"symbol": "<function>"` or `"<Class>.<method>"`) — a small edit is faster and cannot break the rest of the file.
@@ -69,11 +69,6 @@ Paths are relative to the workspace; subdirectories are created automatically.
 Optional in any form: `"contract_change": {"reason": "<why a contracted signature changes>"}`.
 Do not include conversational filler or explanatory prose outside the JSON object.
 
----
-
-## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT**: When defining public interfaces, strictly preserve parameter names, types, and return annotations to ensure cross-module compatibility, because the skeleton contract is immutable without explicit approval.
-- **INVARIANT**: When implementing logic that depends on inputs, always accept them as explicit function arguments or class attributes rather than relying on global scope, because undefined variables cause runtime failures.
-- **INVARIANT**: When a function modifies state or produces side effects such as writing files, verify persistence before returning success because test isolation does not guarantee external state consistency.
-
 ## LEARNED RULES AND CONSTRAINTS
+- **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.
+- **RULE**: When modifying a file based on error reports, verify that all symbols referenced in the code are defined within that module or imported from explicitly declared dependencies, because undefined names cause both linting failures and runtime import errors which prevent validation.

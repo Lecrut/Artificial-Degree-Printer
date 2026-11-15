@@ -1,168 +1,124 @@
 {
-  "src/config.py": {
-    "Config": [],
-    "Config.__init__": [
-      "self"
-    ],
-    "Config.to_dict": [
-      "self"
-    ]
+  "src/experiment.py": {
+    "run_experiment": []
   },
-  "src/tictactoe_env.py": {
-    "TicTacToeEnv": [],
-    "TicTacToeEnv.get_symbol": [],
-    "TicTacToeEnv.get_empty": [],
-    "TicTacToeEnv.__init__": [
+  "src/game_environment.py": {
+    "GameState": [],
+    "GameState.__init__": [
       "self",
-      "max_turns",
-      "use_terminal_value"
+      "board",
+      "winner",
+      "is_over"
     ],
-    "TicTacToeEnv.reset": [
+    "GameState.copy": [
       "self"
     ],
-    "TicTacToeEnv.step": [
+    "GameState.apply_action": [
       "self",
+      "player",
       "action"
     ],
-    "TicTacToeEnv.get_state_key": [
+    "check_winner": [
+      "board"
+    ],
+    "GameEnvironment": [],
+    "GameEnvironment.__init__": [
       "self"
     ],
-    "TicTacToeEnv.is_game_over": [
-      "self"
-    ],
-    "reset": [
-      "self"
-    ],
-    "step": [
+    "GameEnvironment.reset": [
       "self",
+      "board"
+    ],
+    "GameEnvironment.get_available_moves": [
+      "self",
+      "state"
+    ],
+    "GameEnvironment.simulate_episode": [
+      "self",
+      "opponent_func"
+    ],
+    "RandomOpponentAgent": [],
+    "RandomOpponentAgent.__init__": [
+      "self",
+      "board",
+      "opponent_func"
+    ],
+    "RandomOpponentAgent.reset": [
+      "self"
+    ],
+    "RandomOpponentAgent.get_move": [
+      "self",
+      "board"
+    ],
+    "GameEnvironment.apply_action": [
+      "self",
+      "player",
       "action"
-    ],
-    "get_state_key": [
-      "self"
-    ],
-    "is_game_over": [
-      "self"
     ]
   },
-  "src/qlearning_agent.py": {
-    "State": [],
-    "QEntry": [],
-    "QLearningAgent": [],
-    "QLearningAgent.__init__": [
+  "src/plot_results.py": {
+    "plot_comparison_results": [
+      "results_data",
+      "output_path",
+      "figure_name"
+    ]
+  },
+  "src/q_learner.py": {
+    "Q_Learning_Agent": [],
+    "Q_Learning_Agent.__init__": [
       "self",
-      "config"
+      "state_encoder",
+      "discount_factor",
+      "learning_rate",
+      "epsilon_start",
+      "epsilon_end",
+      "epsilon_decay",
+      "epsilon_min_steps_to_end"
     ],
-    "QLearningAgent.choose_action": [
-      "self",
-      "state",
-      "available_actions"
+    "Q_Learning_Agent.reset": [
+      "self"
     ],
-    "QLearningAgent.learn": [
+    "Q_Learning_Agent.select_action": [
       "self",
-      "state",
+      "state_index"
+    ],
+    "Q_Learning_Agent.update": [
+      "self",
+      "state_index",
       "action",
       "reward",
-      "next_state",
-      "done"
+      "next_state_index"
     ],
-    "QLearningAgent.save_q_table": [
+    "Q_Learning_Agent.train_episode": [
       "self",
-      "path"
+      "opponent_func"
     ],
-    "QLearningAgent.load_q_table": [
-      "self",
-      "path"
-    ],
-    "QLearningAgent.get_statistics": [
-      "self"
-    ],
-    "fix_duplicate_imports": [
-      "self"
-    ]
-  },
-  "src/random_baseline.py": {
-    "RandomBaseline": [],
-    "RandomBaseline.play_episode": [
-      "self",
-      "env",
-      "agent_state"
-    ],
-    "RandomBaseline.get_action": [
+    "Q_Learning_Agent.state_encoder": [
       "self",
       "state"
-    ],
-    "RandomBaseline.__init__": [
-      "self",
-      "rng"
-    ],
-    "play_episode": [
-      "self",
-      "env",
-      "agent_state"
-    ],
-    "get_action": [
-      "self",
-      "env",
-      "state"
     ]
   },
-  "src/training_loop.py": {
-    "Config": [],
-    "Config.__init__": [
-      "self",
-      "env_seed",
-      "agent_seed",
-      "random_baseline_seed",
-      "num_episodes",
-      "eval_every_n_episodes",
-      "max_steps",
-      "gamma"
-    ],
-    "TrainingResults": [],
-    "TrainingResults.__init__": [
-      "self"
-    ],
-    "train": [
-      "qlearning_agent",
-      "random_baseline_env",
-      "config",
-      "env"
-    ]
-  },
-  "src/evaluation.py": {
-    "get_seed": [],
-    "EvaluationError": [],
-    "EvalResults": [],
-    "evaluate_agent": [
-      "env",
-      "agent",
-      "n_episodes",
-      "seed"
-    ],
-    "evaluate_episode": [
-      "agent1",
-      "agent2",
-      "baseline",
-      "state",
-      "n_episodes"
-    ],
-    "RandomBaseline": [],
-    "RandomBaseline.__init__": [
+  "src/random_agent.py": {
+    "RandomPlayerAgent": [],
+    "RandomPlayerAgent.__init__": [
       "self",
       "seed"
     ],
-    "RandomBaseline.get_action": [
+    "RandomPlayerAgent.reset": [
+      "self",
+      "state"
+    ],
+    "RandomPlayerAgent.get_move": [
       "self",
       "state"
     ]
   },
-  "src/experiment.py": {
-    "RunResult": [],
-    "AggregateResult": [],
-    "TrainingProgress": [],
-    "run_experiment": [],
-    "get_state_string": [
-      "state"
-    ]
+  "src/config.py": {
+    "GameAgentType": [],
+    "ExperimentConfig": [],
+    "ExperimentConfig.__init__": [
+      "self"
+    ],
+    "get_default_config": []
   }
 }

@@ -170,8 +170,29 @@ def is_contract_module(rel_path: str) -> bool:
     return rel_path.endswith(".py") and not name.startswith("test_") and not name.endswith("_test.py")
 
 
+def _is_placeholder_extension(expected: list[str], actual: list[str]) -> bool:
+    """The skeleton declared no real parameters (`()` or `(self)`) and the implementation adds some after them:
+    the skeleton was a placeholder, not an interface anyone relies on (N6, 2026-11-15: `Config.__init__(self)` ->
+    `Config.__init__(self, learning_rate, ...)` was rejected 9 times)."""
+    return expected in ([], ["self"]) and len(actual) > len(expected) and actual[: len(expected)] == expected
+
+
+def interface_contract_extensions(contract: dict[str, dict[str, list[str]]], rel_path: str, source: str) -> list[str]:
+    """Placeholder signatures of `rel_path` that `source` fills in with parameters (allowed, recorded)."""
+    expected = contract.get(rel_path)
+    actual = public_api(source)
+    if not expected or actual is None:
+        return []
+    return [
+        f"{rel_path}: {symbol}({', '.join(params)}) -> {symbol}({', '.join(actual[symbol])})"
+        for symbol, params in expected.items()
+        if symbol in actual and actual[symbol] != params and _is_placeholder_extension(params, actual[symbol])
+    ]
+
+
 def interface_contract_breaches(contract: dict[str, dict[str, list[str]]], rel_path: str, source: str) -> list[str]:
-    """Contracted symbols of `rel_path` that `source` removes or whose parameters it changes. Adding is free."""
+    """Contracted symbols of `rel_path` that `source` removes or whose parameters it changes. Adding is free, and
+    so is the first set of parameters for a placeholder signature (`()` / `(self)`)."""
     expected = contract.get(rel_path)
     actual = public_api(source)
     if not expected or actual is None:
@@ -180,7 +201,7 @@ def interface_contract_breaches(contract: dict[str, dict[str, list[str]]], rel_p
     for symbol, params in expected.items():
         if symbol not in actual:
             breaches.append(f"{rel_path}: usunięto {symbol}({', '.join(params)})")
-        elif actual[symbol] != params:
+        elif actual[symbol] != params and not _is_placeholder_extension(params, actual[symbol]):
             breaches.append(f"{rel_path}: {symbol}({', '.join(params)}) -> {symbol}({', '.join(actual[symbol])})")
     return breaches
 

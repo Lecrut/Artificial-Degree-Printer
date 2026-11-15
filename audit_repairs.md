@@ -2676,3 +2676,35 @@ Propozycja: na czas zadania benchmarku logger pisze **na żywo** do `<piaskownic
 - Testy: `test_pointer_naming_a_directory_is_a_finding_not_a_crash`, `test_failed_publishing_of_one_task_does_not_end_the_suite`.
 
 **Przy okazji:** dwukrotnie przy dopisywaniu kodu przez powłokę `\ref_ast` zamieniło się w `\r` + `ef_ast` (powrót karetki) — ten sam typ błędu, który Audyt II §II.11 opisał w `orchestrator.py`/`thesis_publisher.py`. Wykryte przez testy, poprawione; w kodzie z `\ref_*` używać surowych stringów lub `\`.
+
+## §VI.11. Analiza przebiegu 01 z 2026-11-15 (pierwszy po §VI.8, P2/P3, P6)
+
+Przebieg 09:55–11:04 UTC, 201 wywołań LLM, 67,5 min, udział LRM 48% (wzrost z 29%). Zakończony awarią z §VI.10. Logi na żywo w piaskownicy zadziałały (P6) — cała analiza z `scripts/analyze_run.py --logs <piaskownica>/workspace/logs`.
+
+**Co zadziałało (potwierdzone danymi):** wina za porażki idzie do autora kodu (porażki: koder 30, tester 15; w przebiegu z 2026-11-14 tester 57, koder 26); `CONTRACT_FILE_RESTORED` ×3 i `SIDE_ARTIFACT_SKIPPED` ×2 — odpowiedzi testera nie są już tracone przez `plot_results.py`; żaden nieparsowalny plik nie trafił na dysk; reguły ewolucji mają formę „When…, because…” bez nazw plików.
+
+| # | problem | dowód | propozycja |
+|---|---|---|---|
+| N1 | awaria na wskaźniku do katalogu | §VI.10 | **naprawione** (§VI.10) |
+| N2 | **koder przepisuje testy.** Odkąd asercja jest winą kodu, koder w szybkiej naprawie poprawia test zamiast modułu — ryzyko „naprawy” przez osłabienie testu | `CROSS_ROLE_WRITE` ×7 (było 0–1): `test_experiment.py`, `tests/test_qlearning_agent.py` przez `seed_coder` w T20_FIX1/2, T24_FIX_2/6/7, Q1_FIX1_FIX1/2 | zapis pliku testu przez kodera pomijany (jak artefakt poboczny), reszta odpowiedzi zostaje; zdarzenie zostaje w logu; jeśli koder uważa test za błędny, pisze to w `summary` → przy następnej porażce naprawa idzie do testera. Rozstrzyga Q12 danymi |
+| N3 | **zagnieżdżony `workspace/workspace/` i zdublowane testy.** Ścieżka `workspace/tests/test_experiment.py` z odpowiedzi jest przyjmowana dosłownie; ten sam test powstaje jako `test_experiment.py` i `tests/test_experiment.py` | Q1_FIX1_FIX2; `OFF_TARGET_WRITE` tester → `tests/test_experiment.py` przy węźle `test_experiment.py`; w workspace 01 z 2026-11-14 też był katalog `workspace/` | bramka zapisu zdejmuje prefiks `workspace/`; plik testu o nazwie, która już istnieje gdzie indziej w workspace, trafia do istniejącego pliku |
+| N4 | **ucięte nazwy wyjątków w podsumowaniu pytesta** dzielą jedną porażkę na kilka kategorii i odcisków | `- AssertionEr...`, `- Asser...`, `- NameE...` (szerokość terminala w podprocesie); kategorie `pytest:AssertionEr`, `pytest:ValueErro` | `COLUMNS=300` w środowisku podprocesu pytesta; kategoria z linii `E   XError`, gdy jest |
+| N5 | **brakujące importy kosztują pełny cykl** (weryfikacja + szybka naprawa) | ~14 × ruff F821: `np`, `pytest`, `tempfile`, `os`, `patch`, `Config` | sprawdzenie nieznanych nazw (ruff F821) w bramce zapisu, przed zapisem: odrzucenie z komunikatem → natychmiastowe ponowienie u autora (D2/D3: harness niczego nie dopisuje, autor poprawia sam) |
+| N6 | **za cienki szkielet konstruktora.** `Config.__init__(self)` w szkielecie; implementacja potrzebuje parametrów; model nie używa `contract_change` | 9 odrzuceń „Config.__init__(self) -> Config.__init__(self, learning_rate, …)”, „usunięto run_experiment()” | (a) prompt szkieletu: konstruktory i funkcje z pełnymi parametrami (nie samo `self`); (b) do decyzji: pierwsze rozszerzenie sygnatury, która w szkielecie nie miała parametrów, dozwolone bez `contract_change` (zdarzenie `CONTRACT_CHANGED`) |
+| N7 | **niejasne odmowy** | `ast_edits` na `thesis.md` („SyntaxError in new_code”); „pola ['ast_edits'] nie pasują” przy elementach bez `symbol`/`code`; „pola ['task']” | komunikaty: „`ast_edits` tylko dla `.py` — pracę zmieniaj przez `sections`”; wskazać brakujące klucze elementu `ast_edits`; pole `task` w odpowiedzi = echo ładunku, ignorować |
+| N8 | **koszt Gate 3** | `redteam_critic_guard` LRM ×6, mediana 59 s, wejście ~69 tys. znaków; `code_auditor` (Gate 3) ~66 tys. znaków | ładunek Gate 3: sygnatury modułów + nieprzechodzące testy + skompilowana praca zamiast pełnego kodu wszystkich plików; budżet znaków jak w §IV.6.4 |
+| N9 | eskalacje testera na LRM | tester: 20 × LRM, 31 × SML | skutek N2/N4/N5 (powtarzające się porażki); ocenić po ich naprawie |
+
+Kolejność proponowana: N2 i N3 (integralność testów i workspace'u) → N4 (wiarygodność kategorii, od której zależy ewolucja) → N5 (najtańszy zysk czasu) → N7 → N6 (wymaga decyzji co do b) → N8.
+
+### §VI.11a. Realizacja N2, N3, N4, N6, N7 (2026-11-15)
+
+Decyzja użytkownika: wdrożyć N2, N3, N4, N6, N7; **N5, N8, N9 — nie ruszać**. `pytest` **169/169** (+8 `tests/test_run_1115_fixes.py`; `test_cross_role_and_off_target_writes_are_logged` przepisany na zapis testera do modułu, bo zapis kodera do testu jest teraz pomijany), `ruff` czysty.
+
+| # | co dokładnie |
+|---|---|
+| N2 | `building._apply_builder_output(agent=)`: zapis pliku testu przez `seed_coder*` (w `files`, `ast_edits`, `test_code`, edycji całego pliku) jest pomijany, reszta odpowiedzi zostaje; zdarzenie `CODER_TEST_WRITE_SKIPPED`. Gdy odpowiedź kodera to wyłącznie test → `MaterializationError` „pliki testów należą do testera … jeśli test jest błędny, napisz to w 'summary'”. Tester nadal może zapisać moduł (logowane jako `CROSS_ROLE_WRITE`) |
+| N3 | `_canonical(rel)` w bramce zapisu (pliki, `ast_edits.file`, artefakty poboczne): zdejmuje prefiksy `workspace/` i `./`; plik testu, którego ścieżki nie ma, a jego nazwa istnieje w dokładnie jednym miejscu workspace'u (poza `logs/`), trafia do istniejącego pliku |
+| N4 | `test_runner`: `COLUMNS=300` dla podprocesu pytesta; `common._issue_category` bierze nazwę wyjątku z linii `E   XError` (`_PYTEST_E_LINE`), podsumowanie pytesta tylko jako zapas |
+| N6 | (a) `seed_coder.md` i opis zadania SKELETON (`planning._skeleton_first`): konstruktory z pełną listą parametrów, nigdy samo `__init__(self)`; (b) `contract_check._is_placeholder_extension`: pierwsze parametry dla sygnatury zastępczej `()` / `(self)` nie są naruszeniem kontraktu, kontrakt się aktualizuje, zdarzenie `CONTRACT_CHANGED` z powodem „uzupełnienie sygnatury zastępczej ze szkieletu” (`interface_contract_extensions`); zmiana prawdziwej sygnatury nadal chroniona |
+| N7 | `ast_edits` na pliku innym niż `.py` → „działa tylko dla plików .py; pracę zmieniaj przez 'sections', inne pliki przez 'files'”; element `ast_edits` bez `symbol`/`code` → błąd z listą kluczy, jakie miał (wcześniej znikał i wychodził jako „pola ['ast_edits'] nie pasują”); `task`, `target_file`, `task_id` w `_METADATA_KEYS` (echo ładunku ignorowane) |

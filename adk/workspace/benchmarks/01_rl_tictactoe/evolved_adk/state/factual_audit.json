@@ -1,5 +1,6 @@
 {
   "files": [
+    "docs/background_research.md",
     "figures/comparison_chart.pdf",
     "figures/comparison_chart.png",
     "logs/agent_trace.jsonl",
@@ -7,22 +8,20 @@
     "logs/harness_process.log",
     "references.bib",
     "src/config.py",
-    "src/evaluation.py",
     "src/experiment.py",
-    "src/qlearning_agent.py",
-    "src/random_baseline.py",
-    "src/tictactoe_env.py",
-    "src/training_loop.py",
+    "src/game_environment.py",
+    "src/plot_results.py",
+    "src/q_learner.py",
+    "src/random_agent.py",
     "test_experiment.py",
-    "tests/test_experiment.py",
-    "tests/test_qlearning_agent.py",
-    "tests/test_tictactoe_env.py",
-    "thesis.md",
-    "workspace/tests/test_experiment.py"
+    "tests/test_agents.py",
+    "tests/test_game_environment.py",
+    "thesis.md"
   ],
   "pytest_status": "FAIL",
   "pytest_errors": [
-    "Pytest failure: ....F...FFF                                                              [100%]\n================================== FAILURES ===================================\n____________________ test_run_experiment_produces_results _____________________\ntests\\test_experiment.py:36: in test_run_experiment_produces_results\n    assert os.path.exists(csv_path), f'CSV file not created at {csv_path}'\nE   AssertionError: CSV file not created at C:\\Users\\Filip\\AppData\\Local\\Temp\\tmp39staow4\\results\\results.csv\nE   assert False\nE    +  where False = <built-in function _path_exists>('C:\\\\Users\\\\Filip\\\\AppData\\\\Local\\\\Temp\\\\tmp39staow4\\\\results\\\\results.csv')\nE    +    where <built-in function _path_exists> = <module 'ntpath' (frozen)>.exists\nE    +      where <module 'ntpath' (frozen)> = <module 'os' (frozen)>.path\n---------------------------- Captured stdout call -----------------------------\nStarting experiment. Results will be saved to D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\results\\20261115_115416\\experiment_results.csv\nConfig: N_RUNS=1, RANDOM_SEED=42, EPOCHES_PER_EVALUATION=50\n________________________ test_win_detection_horizontal ________________________\ntests\\test_tictactoe_env.py:25: in test_win_detection_horizontal\n    s1, r1, d1, info1 = env.step(0)\n                        ^^^^^^^^^^^\nsrc\\tictactoe_env.py:64: in step\n    raise ValueError(f'Cell {cell_idx} is already occupied.')\nE   ValueError: Cell 0 is already occupied.\n_________________________ test_win_detection_vertical _________________________\ntests\\test_tictactoe_env.py:41: in test_win_detection_vertical\n    s1, r1, d1, info1 = env.step(0)\n                        ^^^^^^^^^^^\nsrc\\tictactoe_env.py:64: in step\n    raise ValueError(f'Cell {cell_idx} is already occupied.')\nE   ValueError: Cell 0 is already occupied.\n____________________ test_run_experiment_produces_results _____________________\nworkspace\\tests\\test_experiment.py:32: in test_run_experiment_produces_results\n    assert os.path.exists(csv_path), f'CSV file not created at {csv_path}'\nE   AssertionError: CSV file not created at C:\\Users\\Filip\\AppData\\Local\\Temp\\tmp8h8d14eg\\results\\results.csv\nE   assert False\nE    +  where False = <built-in function _path_exists>('C:\\\\Users\\\\Filip\\\\AppData\\\\Local\\\\Temp\\\\tmp8h8d14eg\\\\results\\\\results.csv')\nE    +    where <built-in function _path_exists> = <module 'ntpath' (frozen)>.exists\nE    +      where <module 'ntpath' (frozen)> = <module 'os' (frozen)>.path\n\nDuring handling of the above exception, another exception occurred:\nworkspace\\tests\\test_experiment.py:36: in test_run_experiment_produces_results\n    raise AssertionError(f'run_experiment failed unexpectedly: {e}')\nE   AssertionError: run_experiment failed unexpectedly: CSV file not created at C:\\Users\\Filip\\AppData\\Local\\Temp\\tmp8h8d14eg\\results\\results.csv\nE   assert False\nE    +  where False = <built-in function _path_exists>('C:\\\\Users\\\\Filip\\\\AppData\\\\Local\\\\Temp\\\\tmp8h8d14eg\\\\results\\\\results.csv')\nE    +    where <built-in function _path_exists> = <module 'ntpath' (frozen)>.exists\nE    +      where <module 'ntpath' (frozen)> = <module 'os' (frozen)>.path\n---------------------------- Captured stdout call -----------------------------\nStarting experiment. Results will be saved to D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\results\\20261115_115417\\experiment_results.csv\nConfig: N_RUNS=1, RANDOM_SEED=42, EPOCHES_PER_EVALUATION=50\n============================== warnings summary ===============================\ntest_experiment.py:85\n  D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\test_experiment.py:85: PytestCollectionWarning: cannot collect test class 'TestCaseBase' because it has a __init__ constructor (from: adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/test_experiment.py)\n    class TestCaseBase:\n\nadk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/test_experiment.py::test_run_experiment_produces_results\n  D:\\studia-local\\Artificial-Degree-Printer\\.venv\\Lib\\site-packages\\_pytest\\python.py:171: PytestReturnNotNoneWarning: Test functions should return None, but adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/test_experiment.py::test_run_experiment_produces_results returned <class 'bool'>.\n  Did you mean to use `assert` instead of `return`?\n  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ===========================\nFAILED tests\\test_experiment.py::test_run_experiment_produces_results - Asser...\nFAILED tests\\test_tictactoe_env.py::test_win_detection_horizontal - ValueErro...\nFAILED tests\\test_tictactoe_env.py::test_win_detection_vertical - ValueError:...\nFAILED workspace\\tests\\test_experiment.py::test_run_experiment_produces_results\n4 failed, 7 passed, 2 warnings in 0.34s"
+    "Pytest failure: FF......                                                                                                                                                                                                                                                                                             [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n____________________________________________________________________________________________________________________________________ test_run_experiment_produces_csv _____________________________________________________________________________________________________________________________________\ntest_experiment.py:17: in test_run_experiment_produces_csv\n    with patch('src.experiment.write_csv'):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1497: in __enter__\n    original, local = self.get_original()\n                      ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1467: in get_original\n    raise AttributeError(\nE   AttributeError: <module 'src.experiment' from 'D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\experiment.py'> does not have the attribute 'write_csv'\n_______________________________________________________________________________________________________________________________________ test_agent_loop_completion ________________________________________________________________________________________________________________________________________\ntests\\test_agents.py:127: in test_agent_loop_completion\n    current_state = test_env.state\n                    ^^^^^^^^^^^^^^\nE   AttributeError: 'GameEnvironment' object has no attribute 'state'\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED test_experiment.py::test_run_experiment_produces_csv - AttributeError: <module 'src.experiment' from 'D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\experiment.py'> does not have the attribute 'write_csv'\nFAILED tests\\test_agents.py::test_agent_loop_completion - AttributeError: 'GameEnvironment' object has no attribute 'state'\n2 failed, 6 passed in 0.57s",
+    "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\game_environment.py:172:33: F821 Undefined name `idx`\nFound 1 error."
   ],
   "chapters_present": [
     1,
@@ -33,11 +32,22 @@
     6
   ],
   "chapters_missing": [],
-  "symbolic_errors": [],
+  "symbolic_errors": [
+    "File '<file>' does not exist To placeholder skopiowany z instrukcji, nie wskaźnik: wybierz prawdziwy cel z 'available_ast_symbols'.",
+    "CSV file '<file>' does not exist",
+    "CSV file 'file' does not exist",
+    "CSV file 'file' does not exist",
+    "CSV file 'file' does not exist",
+    "Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.",
+    "Malformed symbolic tag missing ':' separator: \\ref_ast{RandomOpponentAgent.get_move}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.",
+    "Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.",
+    "Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}."
+  ],
   "csv_columns": [],
   "trigger_issues": [
-    "Unresolved pointer: \\ref_ast{file:symbol} - Symbolic references require resolution to existing Python AST constants or classes.",
-    "Unresolved pointer: \\ref_csv{file:column} - CSV column references require validation against actual benchmark table columns.",
-    "Stale artifact detection required but no physical file system access available in this context to verify modification timestamps against Python source."
+    "Unresolved pointer: \\ref_csv{<file>}",
+    "Unresolved pointer: \\ref_csv{file}",
+    "Unresolved pointer: \\ref_ast{RandomOpponentAgent.get_move}",
+    "Unresolved pointer: \\ref_csv{results.csv}"
   ]
 }

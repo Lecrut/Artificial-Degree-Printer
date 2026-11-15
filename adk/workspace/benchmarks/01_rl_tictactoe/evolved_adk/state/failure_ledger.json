@@ -1,24 +1,19 @@
 {
   "failures": [
     {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"generic\", \"occurrences\": 2, \"tasks\": [\"T10\", \"T7\"], \"examples\": [\"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\qlearning_agent.py:50:39: F821 Undefined name `np`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\qlearning_agent.py:51:22: F821 Undefined name `np`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\qlearning_agent.py:68:18: F821 Undefined name `np`\\nFound \", \"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:72:20: F821 Undefined name `n_episodes_SELFPLAY`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:91:20: F821 Undefined name `n_episodes_VSB`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:109:22: F821 Undefined n\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/evaluation.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:94:20: F821 Undefined name `n_episodes_SELFPLAY`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:110:20: F821 Undefined name `n_episodes_VSB`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:125:22: F821 Undefined name `n_episodes_SELFPLAY`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:126:43: F821 Undefined name `n_episodes_SELFPLAY`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:126:74: F821 Undefined name `n_episodes_SELFPLAY`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:127:44: F821 Undefined name `n_episodes_SELFPLAY`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:127:75: F821 Undefined name `n_episodes_SELFPLAY`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:128:37: F821 Undefined name `n_episodes_VSB`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:128:63: F821 Undefined name `n_episodes_VSB`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:129:38: F821 Undefined name `n_episodes_VSB`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:129:64: F821 Undefined name `n_episodes_VSB`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:150:17: F821 Undefined name `env`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\evaluation.py:153:37: F821 Undefined name `env`\\nFound 13 errors.\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 8, \"cycle_index\": 8, \"task_id\": \"T10\", \"target_node\": \"n11\", \"suggested_rule\": \"Zadanie T10 na węźle n11 (src/evaluation.py) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
-      "injected_rule": "When writing code that relies on parameters passed to a function or class, you must explicitly accept them as arguments (e.g., `def func(param):`) or define them as class attributes, because using a name without prior declaration results in an undefined variable error."
-    },
-    {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"pytest:AssertionEr\", \"occurrences\": 2, \"tasks\": [\"T18\", \"T20\"], \"examples\": [\"Pytest failure: FFFF                                                                     [100%]\\n================================== FAILURES ===================================\\n_________________________ test_initial_state_is_valid _________________________\\ntests\\\\test_tictactoe_env.py:6: in test_initial_state_is_valid\\n    assert len(env.state) == 9, 'Initial state must be a list of length 9'\\nE   Ass\", \"Pytest failure: F...                                                                     [100%]\\n================================== FAILURES ===================================\\n____________________ test_run_experiment_produces_results _____________________\\ntest_experiment.py:27: in test_run_experiment_produces_results\\n    assert found, 'CSV file must be generated after run_experiment().'\\nE   Assert\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/experiment.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: F...                                                                     [100%]\\n================================== FAILURES ===================================\\n____________________ test_run_experiment_produces_results _____________________\\ntest_experiment.py:27: in test_run_experiment_produces_results\\n    assert found, 'CSV file must be generated after run_experiment().'\\nE   AssertionError: CSV file must be generated after run_experiment().\\nE   assert False\\n---------------------------- Captured stdout call -----------------------------\\nRun 1/30 (Seed: 42)\\nRun 2/30 (Seed: 43)\\nRun 3/30 (Seed: 44)\\nRun 4/30 (Seed: 45)\\nRun 5/30 (Seed: 46)\\nRun 6/30 (Seed: 47)\\nRun 7/30 (Seed: 48)\\nRun 8/30 (Seed: 49)\\nRun 9/30 (Seed: 50)\\nRun 10/30 (Seed: 51)\\nRun 11/30 (Seed: 52)\\nRun 12/30 (Seed: 53)\\nRun 13/30 (Seed: 54)\\nRun 14/30 (Seed: 55)\\nRun 15/30 (Seed: 56)\\nRun 16/30 (Seed: 57)\\nRun 17/30 (Seed: 58)\\nRun 18/30 (Seed: 59)\\nRun 19/30 (Seed: 60)\\nRun 20/30 (Seed: 61)\\nRun 21/30 (Seed: 62)\\nRun 22/30 (Seed: 63)\\nRun 23/30 (Seed: 64)\\nRun 24/30 (Seed: 65)\\nRun 25/30 (Seed: 66)\\nRun 26/30 (Seed: 67)\\nRun 27/30 (Seed: 68)\\nRun 28/30 (Seed: 69)\\nRun 29/30 (Seed: 70)\\nRun 30/30 (Seed: 71)\\nResults saved to D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\results\\\\20261115_111717\\\\experiment_results.csv\\nExperiment completed successfully.\\n=========================== short test summary info ===========================\\nFAILED test_experiment.py::test_run_experiment_produces_results - AssertionEr...\\n1 failed, 3 passed in 0.31s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 17, \"cycle_index\": 20, \"task_id\": \"T20\", \"target_node\": \"n15\", \"suggested_rule\": \"Zadanie T20 na węźle n15 (src/experiment.py) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
-      "injected_rule": "When an implementation changes state or produces side effects (such as writing a file), you must verify that these changes persist before returning success, because tests often run in isolated environments where side effects are not guaranteed unless explicitly checked for return values."
+      "agent": "seed_writer",
+      "context": "{\"pattern\": {\"category\": \"document\", \"occurrences\": 2, \"tasks\": [\"Q1_CH6\", \"Q2_CRITIC\"], \"examples\": [\"Unresolved pointer: \\\\ref_ast{test_random_agent_move}\", \"Unresolved pointer: \\\\ref_ast{test_random_agent_move}\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"thesis.md\", \"failed_agent\": \"seed_writer\", \"issues\": [\"Symbol 'RandomPlayerAgent.get_move' not found in 'random_agent.py'\", \"CSV file 'results.csv' does not exist\", \"Malformed symbolic tag missing ':' separator: \\\\ref_csv{results.csv}\"]}, \"failed_agent\": \"seed_writer\", \"agent_failure_count\": 6, \"cycle_index\": 27, \"task_id\": \"Q2_CRITIC\", \"target_node\": \"n5\", \"suggested_rule\": \"Zadanie Q2_CRITIC na węźle n5 (thesis.md) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
+      "injected_rule": "When referencing external symbols or files in the output, use their canonical names exactly as defined in the import contract or available packages list, because symbolic tags must resolve to existing entities without ambiguity."
     },
     {
       "agent": "seed_tester",
-      "context": "{\"pattern\": {\"category\": \"pytest:fail\", \"occurrences\": 2, \"tasks\": [\"Q1_FIX3\", \"Q2_FIX1\"], \"examples\": [\"Pytest failure: E                                                                        [100%]\\n=================================== ERRORS ====================================\\n_________________ ERROR at setup of test_qupdate_table_update _________________\\nfile D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_qlearning_agent.\", \"Pytest failure: FF                                                                       [100%]\\n================================== FAILURES ===================================\\n________________ TestExperiment.test_tempfile_import_and_usage ________________\\ntests\\\\test_experiment.py:17: in test_tempfile_import_and_usage\\n    with patch.object('src.config', 'N_RUNS', 1), \\\\\\n         ^^^^^^^^^^^^^^^^^^^^\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"C:/Users/Filip/AppData/Local/Programs/Python/Python313/Lib/unittest/mock.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: FF.                                                                      [100%]\\n================================== FAILURES ===================================\\n________________ TestExperiment.test_tempfile_import_and_usage ________________\\ntests\\\\test_experiment.py:17: in test_tempfile_import_and_usage\\n    with patch.object('src.config', 'N_RUNS', 1), \\\\\\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nC:\\\\Users\\\\Filip\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\Lib\\\\unittest\\\\mock.py:1699: in _patch_object\\n    raise TypeError(\\nE   TypeError: 'src.config' must be the actual object to be patched, not a str\\n_______________ TestExperiment.test_csv_file_created_after_run ________________\\ntests\\\\test_experiment.py:26: in test_csv_file_created_after_run\\n    with patch('src.tictactoe_env.TicTacToeEnv.reset', return_value=('empty_board', None, None, True)):\\n         ^^^^^\\nE   NameError: name 'patch' is not defined\\n=========================== short test summary info ===========================\\nFAILED tests\\\\test_experiment.py::TestExperiment::test_tempfile_import_and_usage\\nFAILED tests\\\\test_experiment.py::TestExperiment::test_csv_file_created_after_run\\n2 failed, 1 passed in 0.33s\", \"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_experiment.py:26:14: F821 Undefined name `patch`\\nFound 1 error.\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 13, \"cycle_index\": 45, \"task_id\": \"Q2_FIX1\", \"target_node\": \"n18\", \"suggested_rule\": \"Zadanie Q2_FIX1 na węźle n18 (tests/test_experiment.py) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
-      "injected_rule": "When writing tests that use mocking, always import the specific decorator (e.g., `patch`) directly from `unittest.mock` rather than relying on the patch target to be available via module attributes or global scope, because test isolation requires explicit imports for all external dependencies and mock components."
+      "context": "{\"pattern\": {\"category\": \"pytest:fail\", \"occurrences\": 2, \"tasks\": [\"Q3_FIX2\", \"T16\"], \"examples\": [\"Pytest failure: E.                                                                                                                                                                                                                                                                                                   [100%]\\n====================================================================================\", \"Pytest failure: E.                                                                                                                                                                                                                                                                                                   [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_agents.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: E.                                                                                                                                                                                                                                                                                                   [100%]\\n================================================================================================================================================= ERRORS ==================================================================================================================================================\\n______________________________________________________________________________________________________________________________ ERROR at setup of test_agent_loop_completion _______________________________________________________________________________________________________________________________\\nfile D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_agents.py, line 99\\n  def test_agent_loop_completion(self, seed):\\nE       fixture 'self' not found\\n>       available fixtures: capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, mock_env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory\\n>       use 'pytest --fixtures [testpath]' for help on them.\\n\\nD:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_agents.py:99\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nERROR tests\\\\test_agents.py::test_agent_loop_completion\\n1 passed, 1 error in 0.06s\", \"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_agents.py:62:22: F821 Undefined name `RandomPlayerAgent`\\nFound 1 error.\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 12, \"cycle_index\": 33, \"task_id\": \"Q3_FIX2\", \"target_node\": \"n14\", \"suggested_rule\": \"Zadanie Q3_FIX2 na węźle n14 (tests/test_agents.py) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
+      "injected_rule": "When writing a unit test case, verify that the class under test is actually imported and available in the module's namespace before referencing it in assertions or setup, because missing imports cause undefined name errors during execution."
     },
     {
       "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"pytest:ValueErro\", \"occurrences\": 3, \"tasks\": [\"Q1_FIX2\", \"Q1_FIX_tictactoe_env_4\", \"Q2_FIX2\"], \"examples\": [\"Pytest failure: ..FF                                                                     [100%]\\n================================== FAILURES ===================================\\n________________________ test_win_detection_horizontal ________________________\\ntests\\\\test_tictactoe_env.py:25: in test_win_detection_horizontal\\n    s1, r1, d1, info1 = env.step(0)\\n                        ^^^^^^^^^^^\\nsrc\\\\tic\", \"Pytest failure: ..FF                                                                     [100%]\\n================================== FAILURES ===================================\\n________________________ test_win_detection_horizontal ________________________\\ntests\\\\test_tictactoe_env.py:25: in test_win_detection_horizontal\\n    s1, r1, d1, info1 = env.step(0)\\n                        ^^^^^^^^^^^\\nsrc\\\\tic\", \"Pytest failure: ..FF                                                                     [100%]\\n================================== FAILURES ===================================\\n________________________ test_win_detection_horizontal ________________________\\ntests\\\\test_tictactoe_env.py:28: in test_win_detection_horizontal\\n    s1, r1, d1, info1 = env.step(o_move)\\n                        ^^^^^^^^^^^^^^\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/tictactoe_env.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: ..FF                                                                     [100%]\\n================================== FAILURES ===================================\\n________________________ test_win_detection_horizontal ________________________\\ntests\\\\test_tictactoe_env.py:28: in test_win_detection_horizontal\\n    s1, r1, d1, info1 = env.step(o_move)\\n                        ^^^^^^^^^^^^^^^^\\nsrc\\\\tictactoe_env.py:64: in step\\n    raise ValueError(f'Cell {cell_idx} is already occupied.')\\nE   ValueError: Cell 0 is already occupied.\\n_________________________ test_win_detection_vertical _________________________\\ntests\\\\test_tictactoe_env.py:66: in test_win_detection_vertical\\n    s_start, _ = env.step(0)\\n                 ^^^^^^^^^^^\\nsrc\\\\tictactoe_env.py:64: in step\\n    raise ValueError(f'Cell {cell_idx} is already occupied.')\\nE   ValueError: Cell 0 is already occupied.\\n=========================== short test summary info ===========================\\nFAILED tests\\\\test_tictactoe_env.py::test_win_detection_horizontal - ValueErro...\\nFAILED tests\\\\test_tictactoe_env.py::test_win_detection_vertical - ValueError:...\\n2 failed, 2 passed in 0.09s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 28, \"cycle_index\": 48, \"task_id\": \"Q2_FIX2\", \"target_node\": \"n12\", \"suggested_rule\": \"Zadanie Q2_FIX2 na węźle n12 (tests/test_tictactoe_env.py) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
-      "injected_rule": "When modifying a stateful function that manages resource or occupancy logic, verify that all call sites in the same file do not violate preconditions (e.g., double-occupancy) after the change, because static analysis of the full test suite is required to detect cascading state conflicts introduced by code edits."
+      "context": "{\"pattern\": {\"category\": \"pytest:assert\", \"occurrences\": 2, \"tasks\": [\"Q1_FIX2\", \"Q3_FIX_random_agent_3\"], \"examples\": [\"Wyjątek wykonania zadania Q1_FIX2 na węźle n13 (tests/test_game_environment.py): Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\\n- test_game_environment.py:tests.test_game_environment.py:test_check_winner_complete_draw: SyntaxError in new_code: unexpected character after line continuation character (test_game_environment.py, line 2)\\n- test_game_environment.py:tests.test_game_environm\", \"Pytest failure: F.                                                                                                                                                                                                                                                                                                   [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/random_agent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: F.                                                                                                                                                                                                                                                                                                   [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_______________________________________________________________________________________________________________________________________ test_agent_loop_completion ________________________________________________________________________________________________________________________________________\\ntests\\\\test_agents.py:116: in test_agent_loop_completion\\n    assert result is True\\nE   assert False is True\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_agents.py::test_agent_loop_completion - assert False is True\\n1 failed, 1 passed in 0.12s\", \"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_agents.py:62:22: F821 Undefined name `RandomPlayerAgent`\\nFound 1 error.\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 18, \"cycle_index\": 36, \"task_id\": \"Q3_FIX_random_agent_3\", \"target_node\": \"n11\", \"suggested_rule\": \"Zadanie Q3_FIX_random_agent_3 na węźle n11 (src/random_agent.py) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
+      "injected_rule": "When modifying a file based on error reports, verify that all symbols referenced in the code are defined within that module or imported from explicitly declared dependencies, because undefined names cause both linting failures and runtime import errors which prevent validation."
     }
   ],
   "category_log": [
@@ -26,322 +21,327 @@
       "cycle": 1,
       "agent": "seed_coder",
       "category": "harness",
-      "task_id": "T2"
+      "task_id": "T4"
     },
     {
       "cycle": 2,
       "agent": "seed_coder",
       "category": "harness",
-      "task_id": "T2"
+      "task_id": "T6"
     },
     {
       "cycle": 3,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T2"
+      "category": "pytest:TypeError",
+      "task_id": "T7"
     },
     {
       "cycle": 4,
       "agent": "seed_coder",
-      "category": "generic",
+      "category": "ImportError",
       "task_id": "T7"
     },
     {
       "cycle": 5,
       "agent": "seed_coder",
-      "category": "generic",
+      "category": "pytest:TypeError",
       "task_id": "T7"
     },
     {
       "cycle": 6,
-      "agent": "seed_coder",
-      "category": "generic",
+      "agent": "seed_tester",
+      "category": "pytest:TypeError",
       "task_id": "T10"
     },
     {
       "cycle": 7,
-      "agent": "seed_coder",
-      "category": "generic",
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
       "task_id": "T10"
     },
     {
       "cycle": 8,
-      "agent": "seed_coder",
-      "category": "generic",
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
       "task_id": "T10"
     },
     {
       "cycle": 9,
       "agent": "seed_coder",
-      "category": "ImportError",
-      "task_id": "T14"
+      "category": "generic",
+      "task_id": "T13"
     },
     {
       "cycle": 10,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T14"
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "T16"
     },
     {
       "cycle": 11,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T14"
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "T16"
     },
     {
       "cycle": 12,
-      "agent": "seed_coder",
-      "category": "pytest:AssertionEr",
-      "task_id": "T18"
+      "agent": "seed_tester",
+      "category": "pytest:fail",
+      "task_id": "T16"
     },
     {
       "cycle": 13,
       "agent": "seed_coder",
-      "category": "pytest:AssertionEr",
-      "task_id": "T18"
+      "category": "pytest:TypeError",
+      "task_id": "Q1_FIX1"
     },
     {
       "cycle": 14,
-      "agent": "seed_coder",
-      "category": "pytest:AssertionEr",
-      "task_id": "T18"
+      "agent": "seed_tester",
+      "category": "pytest:AttributeError",
+      "task_id": "Q1_FIX1"
     },
     {
       "cycle": 15,
       "agent": "seed_tester",
-      "category": "pytest:TypeError",
-      "task_id": "T19"
+      "category": "pytest:NameError",
+      "task_id": "Q1_FIX1"
     },
     {
       "cycle": 16,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "T19"
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "Q1_FIX2"
     },
     {
       "cycle": 17,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "T19"
+      "agent": "seed_coder",
+      "category": "pytest:AttributeError",
+      "task_id": "Q1_FIX2"
     },
     {
       "cycle": 18,
       "agent": "seed_coder",
-      "category": "pytest:Failed",
-      "task_id": "T20"
+      "category": "pytest:NameError",
+      "task_id": "Q1_FIX2"
     },
     {
       "cycle": 19,
-      "agent": "seed_coder",
-      "category": "pytest:NameError",
-      "task_id": "T20"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q1_CH6"
     },
     {
       "cycle": 20,
-      "agent": "seed_coder",
-      "category": "pytest:AssertionEr",
-      "task_id": "T20"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q1_CH6"
     },
     {
       "cycle": 21,
-      "agent": "seed_tester",
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q1_CH6"
+    },
+    {
+      "cycle": 22,
+      "agent": "seed_coder",
+      "category": "pytest:TypeError",
+      "task_id": "Q2_FIX1"
+    },
+    {
+      "cycle": 23,
+      "agent": "seed_coder",
       "category": "harness",
-      "task_id": "T24"
+      "task_id": "Q2_FIX1"
+    },
+    {
+      "cycle": 24,
+      "agent": "seed_coder",
+      "category": "harness",
+      "task_id": "Q2_FIX1"
+    },
+    {
+      "cycle": 25,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q2_CRITIC"
+    },
+    {
+      "cycle": 26,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q2_CRITIC"
     },
     {
       "cycle": 27,
-      "agent": "seed_coder",
-      "category": "pytest:AssertionEr",
-      "task_id": "Q1_FIX1"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q2_CRITIC"
     },
     {
       "cycle": 28,
-      "agent": "seed_coder",
-      "category": "pytest:AssertionEr",
-      "task_id": "Q1_FIX1"
+      "agent": "seed_tester",
+      "category": "pytest:AttributeError",
+      "task_id": "Q3_FIX1"
     },
     {
       "cycle": 29,
       "agent": "seed_coder",
-      "category": "pytest:AssertionEr",
-      "task_id": "Q1_FIX1"
+      "category": "pytest:AttributeError",
+      "task_id": "Q3_FIX1"
     },
     {
       "cycle": 30,
-      "agent": "seed_tester",
-      "category": "pytest:NameErro",
-      "task_id": "Q1_FIX2"
+      "agent": "seed_coder",
+      "category": "pytest:AttributeError",
+      "task_id": "Q3_FIX1"
     },
     {
       "cycle": 31,
-      "agent": "seed_coder",
-      "category": "pytest:ValueErro",
-      "task_id": "Q1_FIX2"
+      "agent": "seed_tester",
+      "category": "pytest:fail",
+      "task_id": "Q3_FIX2"
     },
     {
       "cycle": 32,
-      "agent": "seed_coder",
-      "category": "pytest:AssertionEr",
-      "task_id": "Q1_FIX2"
+      "agent": "seed_tester",
+      "category": "pytest:fail",
+      "task_id": "Q3_FIX2"
     },
     {
       "cycle": 33,
       "agent": "seed_tester",
       "category": "pytest:fail",
-      "task_id": "Q1_FIX3"
+      "task_id": "Q3_FIX2"
     },
     {
       "cycle": 34,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q1_FIX3"
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "Q3_FIX_random_agent_3"
     },
     {
       "cycle": 35,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q1_FIX3"
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "Q3_FIX_random_agent_3"
     },
     {
       "cycle": 36,
       "agent": "seed_coder",
-      "category": "pytest:ValueErro",
-      "task_id": "Q1_FIX_tictactoe_env_4"
+      "category": "pytest:assert",
+      "task_id": "Q3_FIX_random_agent_3"
     },
     {
       "cycle": 37,
-      "agent": "seed_tester",
-      "category": "pytest:TypeError",
-      "task_id": "Q1_FIX_tictactoe_env_4"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q3_CRITIC"
     },
     {
       "cycle": 38,
-      "agent": "seed_tester",
-      "category": "pytest:TypeError",
-      "task_id": "Q1_FIX_tictactoe_env_4"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q3_CRITIC"
     },
     {
       "cycle": 39,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q1_FIX_experiment_6"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q3_CRITIC"
     },
     {
       "cycle": 40,
-      "agent": "seed_coder",
-      "category": "pytest:fail",
-      "task_id": "Q1_FIX_experiment_6"
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q4_FIX1"
     },
     {
       "cycle": 41,
-      "agent": "seed_coder",
-      "category": "pytest:fail",
-      "task_id": "Q1_FIX_experiment_6"
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q4_FIX1"
     },
     {
       "cycle": 42,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q1_CRITIC"
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q4_FIX1"
     },
     {
       "cycle": 43,
       "agent": "seed_tester",
-      "category": "pytest:NameE",
-      "task_id": "Q2_FIX1"
+      "category": "pytest:fail",
+      "task_id": "Q4_FIX2"
     },
     {
       "cycle": 44,
       "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q2_FIX1"
+      "category": "contract",
+      "task_id": "Q4_FIX2"
     },
     {
       "cycle": 45,
       "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q2_FIX1"
+      "category": "contract",
+      "task_id": "Q4_FIX2"
     },
     {
       "cycle": 46,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q2_FIX2"
+      "agent": "seed_coder",
+      "category": "pytest:AttributeError",
+      "task_id": "Q4_CODE"
     },
     {
       "cycle": 47,
       "agent": "seed_coder",
-      "category": "pytest:ValueErro",
-      "task_id": "Q2_FIX2"
+      "category": "harness",
+      "task_id": "Q4_CODE"
     },
     {
       "cycle": 48,
       "agent": "seed_coder",
-      "category": "pytest:ValueErro",
-      "task_id": "Q2_FIX2"
+      "category": "harness",
+      "task_id": "Q4_CODE"
     },
     {
       "cycle": 49,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q2_FIX3"
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "Q4_CRITIC"
     },
     {
       "cycle": 50,
-      "agent": "seed_coder",
-      "category": "pytest:fail",
-      "task_id": "Q2_FIX3"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q4_CRITIC"
     },
     {
       "cycle": 51,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q2_FIX3"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q4_CRITIC"
     }
   ],
   "rules": [
     {
-      "agent": "seed_coder",
-      "rule": "When writing code that relies on parameters passed to a function or class, you must explicitly accept them as arguments (e.g., `def func(param):`) or define them as class attributes, because using a name without prior declaration results in an undefined variable error.",
-      "category": "generic",
-      "cycle": 8
-    },
-    {
-      "agent": "seed_coder",
-      "rule": "When an implementation changes state or produces side effects (such as writing a file), you must verify that these changes persist before returning success, because tests often run in isolated environments where side effects are not guaranteed unless explicitly checked for return values.",
-      "category": "pytest:AssertionEr",
-      "cycle": 20
+      "agent": "seed_writer",
+      "rule": "When referencing external symbols or files in the output, use their canonical names exactly as defined in the import contract or available packages list, because symbolic tags must resolve to existing entities without ambiguity.",
+      "category": "document",
+      "cycle": 27
     },
     {
       "agent": "seed_tester",
-      "rule": "When writing tests that use mocking, always import the specific decorator (e.g., `patch`) directly from `unittest.mock` rather than relying on the patch target to be available via module attributes or global scope, because test isolation requires explicit imports for all external dependencies and mock components.",
+      "rule": "When writing a unit test case, verify that the class under test is actually imported and available in the module's namespace before referencing it in assertions or setup, because missing imports cause undefined name errors during execution.",
       "category": "pytest:fail",
-      "cycle": 45
+      "cycle": 33
     },
     {
       "agent": "seed_coder",
-      "rule": "When modifying a stateful function that manages resource or occupancy logic, verify that all call sites in the same file do not violate preconditions (e.g., double-occupancy) after the change, because static analysis of the full test suite is required to detect cascading state conflicts introduced by code edits.",
-      "category": "pytest:ValueErro",
-      "cycle": 48
-    }
-  ],
-  "compactions": [
-    {
-      "agent": "seed_coder",
-      "cycle": 1,
-      "rules_consolidated_count": 4,
-      "consolidated_rules": [
-        "Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.",
-        "When writing code that relies on parameters passed to a function or class, you must explicitly accept them as arguments (e.g., `def func(param):`) or define them as class attributes, because using a name without prior declaration results in an undefined variable error.",
-        "When an implementation changes state or produces side effects (such as writing a file), you must verify that these changes persist before returning success, because tests often run in isolated environments where side effects are not guaranteed unless explicitly checked for return values.",
-        "When modifying a stateful function that manages resource or occupancy logic, verify that all call sites in the same file do not violate preconditions (e.g., double-occupancy) after the change, because static analysis of the full test suite is required to detect cascading state conflicts introduced by code edits."
-      ],
-      "dropped_ineffective": [],
-      "invariants": [
-        "When defining public interfaces, strictly preserve parameter names, types, and return annotations to ensure cross-module compatibility, because the skeleton contract is immutable without explicit approval.",
-        "When implementing logic that depends on inputs, always accept them as explicit function arguments or class attributes rather than relying on global scope, because undefined variables cause runtime failures.",
-        "When a function modifies state or produces side effects such as writing files, verify persistence before returning success because test isolation does not guarantee external state consistency."
-      ]
+      "rule": "When modifying a file based on error reports, verify that all symbols referenced in the code are defined within that module or imported from explicitly declared dependencies, because undefined names cause both linting failures and runtime import errors which prevent validation.",
+      "category": "pytest:assert",
+      "cycle": 36
     }
   ]
 }

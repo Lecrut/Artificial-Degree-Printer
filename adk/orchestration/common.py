@@ -55,6 +55,8 @@ def _merge_bibtex_entries(existing_bib: str, new_bib: str) -> str:
 _RUFF_FINDING = re.compile(r"\b([A-Z]{1,4}\d{3,4})\b[^\n]*\n\s*-->\s*(.+?):\d+:\d+")
 _PYTEST_FINDING = re.compile(r"(?:FAILED|ERROR)\s+(\S+?\.py)(?:::(\S+))?(?:\s+-\s+(\w+))?")
 _FILE_FINDING = re.compile(r"\b(Syntax|Import) error in (\S+?\.py)")
+# pytest `E   ValueError: ...` / `E   Failed: DID NOT RAISE` — the full exception name of a failed test
+_PYTEST_E_LINE = re.compile(r"^E\s+([A-Za-z_]\w*(?:Error|Exception|Exit|Failed|Interrupt))\b", re.MULTILINE)
 
 
 def _issue_fingerprints(issue: str) -> list[str]:
@@ -101,7 +103,13 @@ def _issue_category(issues: list[Any]) -> str:
             counts["harness"] += 1
             continue
         counts.update(code for code, _ in _RUFF_FINDING.findall(text))
-        counts.update(f"pytest:{exc or 'fail'}" for _, _, exc in _PYTEST_FINDING.findall(text))
+        # The exception name from pytest's `E   XError: ...` lines is never truncated; the short-summary name is a
+        # fallback only (it was cut to "AssertionEr..." in a narrow terminal, N4).
+        e_names = set(_PYTEST_E_LINE.findall(text))
+        if e_names:
+            counts.update(f"pytest:{name}" for name in e_names)
+        else:
+            counts.update(f"pytest:{exc or 'fail'}" for _, _, exc in _PYTEST_FINDING.findall(text))
         counts.update(f"{kind}Error" for kind, _ in _FILE_FINDING.findall(text))
         lowered = text.lower()
         if "naruszenie kontraktu" in lowered:
@@ -365,6 +373,8 @@ OUTPUT_SCHEMA = (
 _METADATA_KEYS = {
     "summary", "status", "notes", "rationale", "research_stage", "citation_keys", "test_file", "benchmark_file",
     "plot_file", "bib_file", "section_title", "planned_visualizations", "contract_change",
+    # Echo of the payload: a small model sometimes copies the task back (N7, 2026-11-15: "fields ['task']").
+    "task", "target_file", "task_id",
 }
 
 SKELETON_TASK_ID = "SKELETON"

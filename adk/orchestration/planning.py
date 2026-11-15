@@ -645,7 +645,8 @@ class PlanningMixin:
                 SKELETON_TASK_ID,
                 (
                     f"[Przyrost 1: Szkielet] Szkielet wszystkich modułów planu: {module_list}. W każdym module publiczne "
-                    "klasy i funkcje z pełnymi sygnaturami (parametry, typy, wartość zwracana), jednozdaniowym "
+                    "klasy i funkcje z pełnymi sygnaturami (parametry, typy, wartość zwracana; konstruktory `__init__` "
+                    "z wszystkimi parametrami, nigdy samo `__init__(self)`), jednozdaniowym "
                     "docstringiem i ciałem `raise NotImplementedError`; stałe konfiguracyjne mogą mieć już wartości"
                     + (f"; w {entry_file} funkcja punktu wejścia z `{entrypoint}`" if entrypoint else "")
                     + ". Bez implementacji: kolejne zadania uzupełniają ciała, zachowując te sygnatury."

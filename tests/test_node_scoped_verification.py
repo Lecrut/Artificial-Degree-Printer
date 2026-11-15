@@ -150,17 +150,19 @@ def test_explicit_path_never_routes_to_a_file_whose_name_merely_contains_it(tmp_
 
 
 def test_cross_role_and_off_target_writes_are_logged(tmp_path: Path) -> None:
+    """A tester writing a module is logged (R6). A coder writing a test is skipped outright (N2, 2026-11-15;
+    see tests/test_run_1115_fixes.py)."""
     orch = _orch(tmp_path)
     orch._materialize_workspace_artifact(
-        "game.py",
+        "test_game.py",
         {"files": [
-            {"filename": "game.py", "content": "X = 1\n"},
             {"filename": "test_game.py", "content": "def test_x() -> None:\n    pass\n"},
+            {"filename": "game.py", "content": "X = 1\n"},
         ]},
-        writer={"agent": "seed_coder", "task_id": "T5"},
+        writer={"agent": "seed_tester", "task_id": "T10"},
     )
 
     events = json.loads(orch.evolution_history_path.read_text(encoding="utf-8"))["events"]
     kinds = {e["type"]: e for e in events}
-    assert kinds["CROSS_ROLE_WRITE"]["files"] == ["test_game.py"]
-    assert kinds["OFF_TARGET_WRITE"]["files"] == ["test_game.py"]
+    assert kinds["CROSS_ROLE_WRITE"]["files"] == ["game.py"]
+    assert kinds["OFF_TARGET_WRITE"]["files"] == ["game.py"]

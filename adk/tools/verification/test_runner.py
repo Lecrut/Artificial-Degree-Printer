@@ -198,6 +198,9 @@ def run_isolated_tests(
     if test_files:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(w_dir.resolve()) + os.pathsep + env.get("PYTHONPATH", "")
+        # A wide terminal: the short summary cut exception names to "AssertionEr..." / "Asser..." and one failure
+        # became several categories and fingerprints (N4, 2026-11-15).
+        env["COLUMNS"] = "300"
         proc = _run_tool(
             [
                 sys.executable, "-m", "pytest", *[str(p) for p in test_files], "-q", "-p", "no:cacheprovider",

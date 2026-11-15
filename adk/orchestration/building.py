@@ -22,7 +22,12 @@ from adk.tools.planning import (
     get_scoped_hypergraph_context,
 )
 from adk.tools.building.hypergraph_sync import ensure_node
-from adk.tools.verification.contract_check import interface_contract_breaches, is_contract_module, public_api
+from adk.tools.verification.contract_check import (
+    interface_contract_breaches,
+    interface_contract_extensions,
+    is_contract_module,
+    public_api,
+)
 from adk.tools.verification.test_runner import iter_workspace_python_files
 from adk.orchestration.common import (
     _agent_for_path,
@@ -124,7 +129,7 @@ class BuildingMixin:
         charged to its author, not to whichever task happened to run the verification (R5)."""
         originals: dict[Path, str | None] = {}
         try:
-            self._apply_builder_output(node_path, llm_output, originals)
+            self._apply_builder_output(node_path, llm_output, originals, str((writer or {}).get("agent") or ""))
             self._enforce_interface_contract(originals, llm_output, establishes_contract, node_path)
         except MaterializationError:
             for dest, before in originals.items():
@@ -255,6 +260,12 @@ class BuildingMixin:
                 "dostosuje się w kolejnych zadaniach."
                 + help_sources
             )
+        # Placeholder signatures filled in with their first parameters: allowed, but on record (N6).
+        extensions = [
+            ext
+            for rel, dest in touched.items()
+            for ext in interface_contract_extensions(contract, rel, dest.read_text(encoding="utf-8", errors="replace"))
+        ]
         for rel, dest in touched.items():
             if breaches_by_rel.get(rel) and not reason:
                 continue
@@ -264,6 +275,10 @@ class BuildingMixin:
         write_json_state(self.interface_contract_path, contract)
         if breaches:
             self._record_evolution_event({"type": "CONTRACT_CHANGED", "changes": breaches, "reason": reason})
+        if extensions:
+            self._record_evolution_event(
+                {"type": "CONTRACT_CHANGED", "changes": extensions, "reason": "uzupełnienie sygnatury zastępczej ze szkieletu"}
+            )
 
     @staticmethod
     def _removed_symbol_sources(originals: dict[Path, str | None], breaches: list[str], budget: int = 2000) -> str:
@@ -286,12 +301,38 @@ class BuildingMixin:
         return "\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n" + "\n\n".join(found)
 
     def _apply_builder_output(
-        self, node_path: str, llm_output: dict[str, Any], originals: dict[Path, str | None]
+        self, node_path: str, llm_output: dict[str, Any], originals: dict[Path, str | None], agent: str = ""
     ) -> None:
         full_file_path = self.workspace_dir / node_path
         materialized_any = False
         ws_root = self.workspace_dir.resolve()
         syntax_errors: list[str] = []
+        # Test files a coder tried to write: skipped, the rest of the answer kept (N2, 2026-11-15: once a failed
+        # assertion became the code's fault, the coder "fixed" it 7 times by rewriting the test instead).
+        role_skipped: list[str] = []
+        coder = agent.startswith("seed_coder")
+
+        def _canonical(rel: str) -> str:
+            """Workspace-relative path as the agent meant it (N3, 2026-11-15): a leading `workspace/` or `./` is the
+            agent naming the workspace itself (it created `workspace/workspace/tests/...`), and a test file whose
+            basename already exists in exactly one place goes there instead of becoming a duplicate
+            (`test_experiment.py` next to `tests/test_experiment.py`)."""
+            rel = rel.replace("\\", "/").strip()
+            while rel.startswith(("./", "workspace/")):
+                rel = rel.removeprefix("./").removeprefix("workspace/")
+            name = Path(rel).name
+            if (name.startswith("test_") or name.endswith("_test.py")) and not (self.workspace_dir / rel).exists():
+                same = [
+                    p for p in self.workspace_dir.rglob(name)
+                    if p.is_file() and "__pycache__" not in p.parts and "logs" not in p.relative_to(self.workspace_dir).parts
+                ]
+                if len(same) == 1:
+                    return same[0].relative_to(self.workspace_dir).as_posix()
+            return rel
+
+        def _is_test_rel(rel: str) -> bool:
+            name = Path(rel).name
+            return rel.endswith(".py") and (name.startswith("test_") or name.endswith("_test.py"))
 
         # One file answered flat (`{filename, content}`) is the `files` shape with one element.
         flat_name = llm_output.get("filename") or llm_output.get("path")
@@ -325,7 +366,11 @@ class BuildingMixin:
             return None
 
         def _write(rel: str, body: str) -> bool:
-            dest = (self.workspace_dir / rel.replace("\\", "/")).resolve()
+            rel = _canonical(rel)
+            if coder and _is_test_rel(rel):
+                role_skipped.append(rel)
+                return False
+            dest = (self.workspace_dir / rel).resolve()
             if ws_root != dest and ws_root not in dest.parents:
                 return False  # never write outside the workspace
             # Unparsable Python never reaches the disk: a file written broken could not be repaired by symbol
@@ -360,10 +405,27 @@ class BuildingMixin:
         # agent, not a silently skipped change.
         edit_errors: list[str] = []
         for item in llm_output.get("ast_edits") or []:
+            if isinstance(item, dict) and not (item.get("symbol") and item.get("code") is not None):
+                # N7: a malformed element used to vanish and surface as "fields ['ast_edits'] match no shape".
+                edit_errors.append(
+                    f"element ast_edits bez wymaganego 'symbol' albo 'code' (ma klucze: {sorted(item)}); "
+                    "każdy element to {'symbol': '<nazwa lub Klasa.metoda>', 'code': '<kod>', 'file': '<ścieżka.py>'}"
+                )
+                continue
             if isinstance(item, dict) and item.get("symbol") and item.get("code") is not None:
                 code_str = _normalize_raw_code(str(item["code"])) or str(item["code"])
                 symbol, named_file = _plain_symbol(str(item["symbol"]))
-                file_rel = str(item.get("file") or named_file or node_path).replace("\\", "/")
+                file_rel = _canonical(str(item.get("file") or named_file or node_path))
+                if not file_rel.endswith(".py"):
+                    # N7: `ast_edits` on thesis.md answered "SyntaxError in new_code", which told the writer nothing.
+                    edit_errors.append(
+                        f"{file_rel}: 'ast_edits' działa tylko dla plików .py. Pracę zmieniaj przez 'sections' "
+                        "([{section_title, section_content}]), inne pliki przez 'files'."
+                    )
+                    continue
+                if coder and _is_test_rel(file_rel):
+                    role_skipped.append(file_rel)
+                    continue
                 edit_path = (self.workspace_dir / file_rel).resolve()
                 if ws_root != edit_path and ws_root not in edit_path.parents:
                     continue
@@ -412,7 +474,7 @@ class BuildingMixin:
             ("plot_script", "plot_file", "plot_results.py"),
         ):
             body = _normalize_raw_code(llm_output.get(body_key))
-            side_rel = str(llm_output.get(file_key) or default_rel).replace("\\", "/")
+            side_rel = _canonical(str(llm_output.get(file_key) or default_rel))
             if body and (
                 side_rel != node_path
                 and Path(side_rel).name != Path(node_path).name
@@ -429,6 +491,10 @@ class BuildingMixin:
         if skipped_side:
             self._record_evolution_event({"type": "SIDE_ARTIFACT_SKIPPED", "node": node_path, "skipped": skipped_side})
         _raise_if_unparsable()
+        if role_skipped:
+            self._record_evolution_event(
+                {"type": "CODER_TEST_WRITE_SKIPPED", "node": node_path, "agent": agent, "files": sorted(set(role_skipped))}
+            )
 
         # bibliography (researchers): merged by citation key; with an arXiv-verified bibliography only its keys stay
         bibtex_entries = llm_output.get("bibtex_entries")
@@ -480,6 +546,12 @@ class BuildingMixin:
         # An agent that returned content which landed nowhere has not done its task. Saying nothing here made a
         # discarded fix indistinguishable from an applied one.
         if not materialized_any:
+            if role_skipped:
+                raise MaterializationError(
+                    f"Zapis odrzucony: pliki testów ({', '.join(sorted(set(role_skipped)))}) należą do testera i koder "
+                    "ich nie zmienia. Popraw kod modułu tak, żeby test przechodził. Jeśli uważasz, że to test jest "
+                    "błędny, napisz to w 'summary' (co i dlaczego) — następna naprawa trafi do testera."
+                )
             carried = sorted(k for k, v in llm_output.items() if k not in _METADATA_KEYS and v)
             if carried:
                 raise MaterializationError(

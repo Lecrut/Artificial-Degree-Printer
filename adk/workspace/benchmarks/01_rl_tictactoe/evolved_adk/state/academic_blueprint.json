@@ -1,33 +1,39 @@
 {
-  "thesis_title": "Nauka gry w Tic-Tac-Toe za pomocą algorytmu Q-Learning: Analiza konwergencji i porównanie z strategią losową",
-  "thesis_statement": "Teza: Agent oparty na Q-Learning potrafi wyuczyć się strategii bliskiej optimum Nasha (zysk=0, remis) w grze przeciwko losowemu opponentowi po około 30-40 tysiącach epok. Kryterium sukcesu: osiągnięcie średniego współczynnika remisów > 0.95 i współczynnika wygranych agenta > 0.4 w ostatnim dziesięciotysięcznym fragmencie treningu, przy jednoczesnym potwierdzeniu, że baseline losowy wygrywa tylko ~2% gier (gdyby nie robił błędów) lub remisuje ~60% (w zależności od first-mover advantage), demonstrując silny postęp Q-Learninga.",
-  "baseline_comparison": "Baseline stanowi gra losowa (uniform random selection z legal actions). Porównanie odbywa się poprzez symulację 1000 gier post-treningowych. Mierzony jest procent remisów i zwycięstw agenta względem baseline oraz self-play.",
+  "thesis_title": "Ewolucja Strategii Gry w Tic-Tac-Toe z Użyciem Q-Learning: Analiza Porównawcza z Losowym Przeciwnikiem",
+  "thesis_statement": "Teza: Agent wykorzystujący algorytm Q-Learning potrafi nauczyć się optymalnej strategii gry w Tic-Tac-Toe, eliminując straty w partiach przeciwko losowemu przeciwnikowi po określonym budżecie szkoleniowym (np. 10,000 epok), co dowodzi skuteczności metody temporal difference w dyskretnych środowiskach MDP.",
+  "baseline_comparison": "Metoda odniesienia: Agent wybierający ruchy całkowicie losowo z dostępnych opcji (Uniform Random). Porównanie odbywa się poprzez pomiar procentowej liczby wygranych, remisów i strat w serii testowych gier po zakończeniu fazy treningu Q-Learnera.",
   "entrypoint": "src/experiment.py:run_experiment",
   "metrics": [
-    "win_rate_vs_baseline",
-    "draw_rate_vs_baseline",
-    "convergence_episodes"
+    "win_rate_vs_random",
+    "draw_rate_vs_random",
+    "loss_rate_vs_random",
+    "training_convergence_step"
   ],
   "planned_chapters": [
     {
       "index": 1,
-      "title": "Wstęp i Cele Pracy",
-      "focus": "Motywacja, sformułowanie problemu Markov Decision Process dla Tic-Tac-Toe, teza pracy i cele eksperymentu."
+      "title": "Rozdział 1: Wstęp i Cel Pracy",
+      "focus": "Sformułowanie problemu uczenia maszynowego w grach deterministycznych, cele pracy oraz teza badawcza."
     },
     {
       "index": 2,
-      "title": "Przegląd Literatury",
-      "focus": "Podstawy uczenia przez wzmacnianie (RL), algorytm Q-Learning (Watkins & Dayan), historia gry w Tic-Tac-Toe (AI solving history) oraz konwergencja Q-Learning w stochastycznych środowiskach."
+      "title": "Rozdział 2: Przegląd Literatury",
+      "focus": "Podstawy Reinforcement Learning, Markov Decision Processes, algorytm Q-Learning oraz specyfikacja środowiska Tic-Tac-Toe."
     },
     {
       "index": 3,
-      "title": "Metodyka Eksperymentu",
-      "focus": "Modelowanie gry jako MDP (stan, akcja, nagroda), architektura agenta Q-Learning, konfiguracja hiperparametrów, definicja baseline losowego oraz protokół ewaluacji."
+      "title": "Rozdział 3: Metodyka Badania",
+      "focus": "Detale implementacyjne Q-Learnera (funkcja wartości, aktualizacja wag), definicja środowiska oraz opis agenta odniesienia."
     },
     {
       "index": 4,
-      "title": "Wyniki i Dyskusja",
-      "focus": "Prezentacja wykresów konwergencji, liczbowe porównanie z baseline, analiza wpływu parametru epsilon oraz wnioski końcowe dotyczące skuteczności RL w prostych grach o pełnej informacji."
+      "title": "Rozdział 4: Wyniki Eksperymentu",
+      "focus": "Prezentacja wykresów nauki, statystyki porównawcze z Baseline oraz analiza stabilności algorytmu."
+    },
+    {
+      "index": 5,
+      "title": "Rozdział 5: Wnioski",
+      "focus": "Podsumowanie badań, potwierdzenie lub obalenie tezy, wnioski praktyczne i kierunki przyszłych prac."
     }
   ],
   "literature_recon": {
@@ -94,23 +100,28 @@
     "chapters": [
       {
         "index": 1,
-        "title": "Wstęp i Cele Pracy",
-        "focus": "Motywacja, sformułowanie problemu Markov Decision Process dla Tic-Tac-Toe, teza pracy i cele eksperymentu."
+        "title": "Rozdział 1: Wstęp i Cel Pracy",
+        "focus": "Sformułowanie problemu uczenia maszynowego w grach deterministycznych, cele pracy oraz teza badawcza."
       },
       {
         "index": 2,
-        "title": "Przegląd Literatury",
-        "focus": "Podstawy uczenia przez wzmacnianie (RL), algorytm Q-Learning (Watkins & Dayan), historia gry w Tic-Tac-Toe (AI solving history) oraz konwergencja Q-Learning w stochastycznych środowiskach."
+        "title": "Rozdział 2: Przegląd Literatury",
+        "focus": "Podstawy Reinforcement Learning, Markov Decision Processes, algorytm Q-Learning oraz specyfikacja środowiska Tic-Tac-Toe."
       },
       {
         "index": 3,
-        "title": "Metodyka Eksperymentu",
-        "focus": "Modelowanie gry jako MDP (stan, akcja, nagroda), architektura agenta Q-Learning, konfiguracja hiperparametrów, definicja baseline losowego oraz protokół ewaluacji."
+        "title": "Rozdział 3: Metodyka Badania",
+        "focus": "Detale implementacyjne Q-Learnera (funkcja wartości, aktualizacja wag), definicja środowiska oraz opis agenta odniesienia."
       },
       {
         "index": 4,
-        "title": "Wyniki i Dyskusja",
-        "focus": "Prezentacja wykresów konwergencji, liczbowe porównanie z baseline, analiza wpływu parametru epsilon oraz wnioski końcowe dotyczące skuteczności RL w prostych grach o pełnej informacji."
+        "title": "Rozdział 4: Wyniki Eksperymentu",
+        "focus": "Prezentacja wykresów nauki, statystyki porównawcze z Baseline oraz analiza stabilności algorytmu."
+      },
+      {
+        "index": 5,
+        "title": "Rozdział 5: Wnioski",
+        "focus": "Podsumowanie badań, potwierdzenie lub obalenie tezy, wnioski praktyczne i kierunki przyszłych prac."
       }
     ]
   }

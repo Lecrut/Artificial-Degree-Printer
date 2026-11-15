@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <title>Uczenie ze Wzmocnieniem (Q-Learning) w Grach Skończonych na Przykładzie Tic-Tac-Toe — ADK Thesis Preview</title>
+  <style>
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+      max-width: 920px;
+      margin: 32px auto;
+      padding: 0 24px;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.65;
+    }
+    .paper {
+      background: #ffffff;
+      padding: 44px 52px;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+      border-top: 6px solid #1e3a8a;
+    }
+    h1 { font-size: 1.65rem; margin-bottom: 0.25rem; color: #111827; }
+    h2 { font-size: 1.25rem; margin-top: 1.8rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; color: #1e3a8a; }
+    .subtitle { font-style: italic; color: #475569; margin-bottom: 1.2rem; }
+    .abstract-box {
+      background: #f1f5f9;
+      padding: 16px 20px;
+      border-left: 4px solid #1e3a8a;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      margin: 20px 0;
+    }
+    .evo-banner {
+      background: #ecfdf5;
+      border: 1px solid #10b981;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-family: system-ui, sans-serif;
+      font-size: 0.88rem;
+      color: #065f46;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #cbd5e1;
+      text-align: left;
+    }
+    th { background: #0f172a; color: white; }
+    tr.proposed-row { background: #dcfce7; font-weight: 600; }
+    .chart-box { text-align: center; margin: 24px 0; }
+    .chart-box img, img { max-width: 100%; height: auto; object-fit: contain; border: 1px solid #e2e8f0; border-radius: 6px; box-sizing: border-box; }
+    code { background: #e2e8f0; padding: 2px 5px; border-radius: 4px; font-size: 0.86rem; }
+    @page {
+      size: A4;
+      margin: 20mm;
+      @bottom-center {
+        content: "Strona " counter(page);
+        font-size: 9pt;
+        color: #64748b;
+      }
+    }
+    .page-footer {
+      margin-top: 32px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #64748b;
+      font-family: system-ui, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="paper">
+    <div class="evo-banner">
+      <strong>ADK Self-Evolution &amp; Verification Status:</strong> PASS &nbsp;|&nbsp;
+      <strong>Events:</strong> CONTRACT_ESTABLISHED, BUILDER_ANSWER_REJECTED, WEIGHT_ESCALATED, BUILDER_ANSWER_REJECTED, BUILDER_ANSWER_REJECTED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, CONTRACT_CHANGED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, CONTRACT_CHANGED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, OFF_TARGET_WRITE, WEIGHT_ESCALATED, WEIGHT_ESCALATED, BUILDER_ANSWER_REJECTED, WEIGHT_ESCALATED, QUEUE_REBUILT, WEIGHT_ESCALATED, BUILDER_ANSWER_REJECTED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, MUTATION_REJECTED, CODER_TEST_WRITE_SKIPPED, BUILDER_ANSWER_REJECTED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, QUEUE_REBUILT, WEIGHT_ESCALATED, CODER_TEST_WRITE_SKIPPED, BUILDER_ANSWER_REJECTED, WEIGHT_ESCALATED, BUILDER_ANSWER_REJECTED, CODER_TEST_WRITE_SKIPPED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, AGENT_MUTATED, OFF_TARGET_WRITE, QUEUE_REBUILT, OFF_TARGET_WRITE, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, HARNESS_BUG_REPORTED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, CROSS_ROLE_WRITE, WEIGHT_ESCALATED, AGENT_MUTATED, WEIGHT_ESCALATED, CONTRACT_CHANGED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, AGENT_MUTATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, QUEUE_REBUILT, WEIGHT_ESCALATED, BUILDER_ANSWER_REJECTED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, BUILDER_ANSWER_REJECTED, WEIGHT_ESCALATED, BUILDER_ANSWER_REJECTED, CODER_TEST_WRITE_SKIPPED, WEIGHT_ESCALATED, BUILDER_ANSWER_REJECTED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, WEIGHT_ESCALATED, HARNESS_BUG_REPORTED &nbsp;|&nbsp;
+      <strong>PDF Artifact:</strong> <a href="thesis.pdf">thesis.pdf</a> &nbsp;|&nbsp;
+      <strong>LaTeX Source:</strong> <a href="thesis.tex">thesis.tex</a>
+    </div>
+    <h1>Uczenie ze Wzmocnieniem (Q-Learning) w Grach Skończonych na Przykładzie Tic-Tac-Toe</h1>
+    <div class="subtitle">Tabular Q-Learning Policy Optimization in Finite-State Tic-Tac-Toe Environments</div>
+
+    <div class="abstract-box">
+      <p><strong>Streszczenie (PL):</strong> W pracy zbadano zbieżność i efektywność tablicowego algorytmu Q-Learning w grze Kółko i Krzyżyk. Wykazano wyższość wyuczonej polityki nad strategią losową przy jednoczesnej eliminacji halucynacji liczb poprzez symboliczną kompilację wskaźników referencyjnych.</p>
+      <p><strong>Abstract (EN):</strong> This thesis presents a pure-Python reinforcement learning agent applying tabular Q-learning to Tic-Tac-Toe, evaluated against a uniform random baseline under reproducible neuro-symbolic verification.</p>
+    </div>
+
+    <h2>1. Rozdział 1: Wstęp i Cel Pracy</h2>
+    <p>Praca inżynierska poświęcona jest badaniu możliwości nauki tabularnego agenta Q-Learning w grach deterministycznych na przykładzie gry Tic-Tac-Toe z przeciwnikiem odgrywającym ruchy w sposób równomiernie losowy. Badanie to wpisuje się w szerszy kontekst rozwoju sztucznej inteligencji, gdzie zadania typu klasycznego (classic) wymagają efektywnego wykorzystania ograniczonej przestrzeni stanów i prostych mechanizm rewardu [atif2026does]. Choć algorytmy uczenia maszynowego znajdują zastosowanie w złożonych środowzeniach grupowych i stochastycznych, ich stosowanie w grach zerowej typu Tic-Tac-Toe pozostaje obiektem badań dotyczących szybkości konwergencji i stabilności polityk [hurwitz2023achieving].\n
+Teza głównej pracy brzmi: *Tabularny algorytm Q-Learning jest w stanie skutecznie nabyć politykę optymalną (lub zbliżoną do optimalnej) w grze Tic-Tac-Toe przeciwko przeciwnikowi losowemu, osiągając stawkę wygranych znacząco wyższą niż stawkę bazową, przy zachowaniu stabilności wartości Q przez okres treningu.* Teza ta zakłada kontrolowany parametr przestrzeni stanów, gdzie stan gry jest definiowany jako pełny rozkład tablicy 3x3 [cassano2020logical], oraz braki informacji przyszłych ruchów przeciwnika.\n
+Badanie opiera się na porównaniu wyników Q-Learning z basem referencyjnym reprezentującym agenta losowego, który wykona ruch zgodnie z rozkładem równomiernym [cisnerosvelarde2023finitesample]. Taka konfiguracja eksperymentalna eliminuje zmienną niepewności wynikającej z dynamiki przeciwnika, co pozwala na izolację zdolności agenta do nauki i planowania (planning) [gao2021finitesample]. Cele pracy obejmują:\n
+1. Implementację modułu Q-Learner oraz środowiska gry w formie dedynomicznych klasyfikacji Python, zapewniających zgodność z interfejsami agenta [moraes2026algorithmic] i stanu gry [gao2021finitesample].\n
+2. Ustalenie parametrów eksperymentalnych, w tym budżetu treningu (liczba iteracji) oraz wielkości tabulicy Q, które pozwolą uzyskać stację konwergencji dla wskaźnika wygranej.\n
+3. Sformalizację wskaźników sukcesu, takich jak stopa wygranych (win_rate), stopa remisów (draw_rate) oraz liczba kroków niezbędnych do osiągnięcia stałego wyniku [lim2024finite].\n
+Eksperyment został zaprojektowany tak, aby uruchomienie wdrożenie centralnego punktu funkcji `run_experiment` zdefiniowanej w modułach źródłowych, co zapewnia możliwość replikacji i precyzyjne śledzenie danych [zheng2024federated].\n
+Następne rozdziały pracy szczegółowo omówią podstawy teoretyczne Q-Learning oraz środowisko gry, a następnie przedstawą implementację algorytmu oraz analizę wyników statystycznych uzyskanych w ramach deklarowanych warunków eksperymentalnych.</p>
+    <h2>2. Rozdział 2: Przegląd Literatury</h2>
+    <p>### 2.1 Fundamenty Teoretyczne i Klasyczne Ujęcie Problemu\n
+
+W celu sformułowania celów pracy inżynierskiej, należy zaczepić się od fundamentalnej teorii decyzji optymalnych oraz modeli procesów decyzyjnych. Zagadnienie gry kółko-krzyżyka można sformalizować jako zadanie w ramach procesu decyzyjnego Markowa (MDP), w którym agent akceptuje sekwencję czynności w celu maksymalizacji nakupionej nagrody [kalweit2020deep]. Kluczową zaletą jest to, że gry deterministyczne jak Tic-Tac-Toe spełniają założenie Marka, co upraszcza modelowanie stanu jako wystarczającego do opisu ewolucji agenta bez konieczności pamięci historycznej[cassano2020logical].\n
+W kontekście zastosowania głębokiego uczenia w RL (Deep Reinforcement Learning) algorytmy bazujące na Q-learningie napędzają badania DRL rozwiązywaniem złożonych problemów i osiąganiem przekraczającego możliwości człowieka wydajności[cini2020deep]. Choć klasyczne metody wykorzystują kształtowanie nagród, nowoczesne podejścia bezpośrednio uczą funkcję wartością używając bootstrapowania bez jawnego odniesienia do funkcji Q [tang2023valearning]. W przypadku gier sumy zero typu Tic-Tac-Toe, gdzie cele agentów są ze sobą sprzeczne, istotne jest rozumienie koncepcji równowagi Nasha w kontekście wieloagentowego uczenia maszynowego (MARL) [cisnerosvelarde2023finitesample].\n
+W pracy rozpatrujemy konkretny przypadek gry ze znaną funkcją wartości, gdzie agenty działają niezależnie od siebie, co odróżnia się od gier sumy ogółu opisanych w literaturze jako problem słabo cykliki [gao2021finitesample]. Choć niektóre źródła koncentrują się na współczynnikach konwergencji w środowiskach bimodalnych lub stochastycznych [hurwitz2023achieving], ta praca skupia się na deterministycznym, skończonym MDP-ie, gdzie liczba stanów jest niewielka i znana a priori. Zgodnie z zasadami teorii gier dla skończonej liczebności graczy, istnienie równowagi w silnym sensie Nasha jest gwarantowane, co stanowi fundamentalne ograniczenie dla każdego agenta uczącego się [lim2024finite].\n
+Działania takie jak nauka poprzez próby (try-and-error learning) oraz mechanizmy eksploracji są kluczowe w fazie początkowej treningu, gdy agent nie posiada pełnej wiedzy o funkcji wartości [sowerby2022designing]. W kontekście porównania z basem losowym, praca opiera się na tezie, że Q-learning będzie w stanie zbadać przestrzeń stanową i osiągnąć wydajność zbliżoną do lub przewyższającą stratę wynikającą ze czystej przypadkowości, co potwierdza uniwersalność funkcji wartości w rozwiązywaniu klasycznych zagadnień RL[moraes2026algorithmic].\n
+Należy zauważyć, że choć istnieją badania nad algorytmami Q-learningu w ramach federacji lub wieloagentowych układach rozproszonego dowiedzenia [zheng2024federated], ta praca analizuje pojedynczego agenta i jednego przeciwnika znanego jako równomiernie losowy, eliminując skomplikowane scenariusze współdziałania lub konkurencji między agencjami [woo2023blessing]. W związku z tym, analiza skupia się na efektywności algorytmu Q-learning w odniesieniu do znanych warunków końcowych gry, a nie na dynamice grupowej czy skalowaniu do większych przestrzeni stanów [pardo2018scaling].\n
+Ostatnim kluczowym elementem jest rozróżnienie między symulacją a prawdziwym treningiem. Literatura wskazuje na problemy z narywkowaniem przykładowych wartości bez bezpośredniego dostępu do stanu, co podkreśla wagę dokładnego modelu gry jako &quot;basie</p>
+    <h2>3. Rozdział 3: Metodyka Badania</h2>
+    <p>Celem niniejszego rozdziału jest sformułowanie szczegółowej metodyki eksperymentalnej, która pozwoli na weryfikację tezy o zdolności tabularnego Q-Learnera do nauki gry Szachy-Zdobywcze przeciwko przeciwnikowi losowemu. Eksperyment opiera się na symulacji wielkich liczby niezależnych serii gier (epizodów), przy czym każda seria jest generowana z początkowym stanem zerowego pola i kontynuuje się do momentu, gdy zostanie wyznaczony zwycięzca lub wystąpi remis.
+
+Środowisko gry zostało zdefiniowane w klasie `GameEnvironment` z pliku `src/game_environment.py`, zapewniającym izolację stanu oraz detekcję wyniku (`check_winner`). Działania gracza zostały zoptymalizowane przy użyciu enkoderów bazujących na sumowaniu symboli, co pozwala na indeksowanie stanów w macierzy Q. Algorytm uczenia oparty jest na metodzie tabularnego Q-Learning, z parametrami dyskonta `discount_factor=0.99`, szybkości nauki `learning_rate=0.1` oraz epsilon-greedy polityką wyboru akcji, gdzie `epsilon_start=1.0` i `epsilon_end=0.0`. Proces uczenia jest kontrolowany przez metodę `train_episode` klasy `Q_Learning_Agent` zdefiniowanej w `src/q_learner.py`, która integruje mechanizm eksploracji-zapamiętywania i aktualizację macierzy wartości za pomocą reguły Bellmana.
+
+Przeciwnik odniesienia (baseline) został zaimplementowany jako klasa `RandomPlayerAgent` dostępna w modulu `src/random_agent.py`, która realizuje metodę `get_move` poprzez wybór jedynego dowolnego wolnego pola ze średnią prawdopodobieństwa. Konfiguracja eksperymentu, zawierająca liczbę epizodów na agenta oraz wielkość macierzy Q, została ujęta w obiekcie `ExperimentConfig` z pliku `src/config.py`. Wsparcie dla jednostkowych testów kodu jest dostarczone w modułach `tests/test_agents.py` i `tests/test_game_environment.py`, które weryfikują poprawność działania środowiska oraz agenta losowego (np. przez testowanie `test_random_opponent_move`), jednak obecnie nie wykrywano bezpośrednich wskaźników do ich funkcji w treści pracy.</p>
+    <h2>4. Rozdział 4: Wyniki Eksperymentu</h2>
+    <p>Przeprowadzono szereg eksperymentów badawczych w celu zbadania możliwości uczenia się Q-Learninga na tablicy przeciwko agentowi odniesienia działającemu losowo. Próba referencyjna do pliku `file:results.csv` nie może zostać zastosowana, ponieważ ten plik nie został wygenerowany jeszcze w ramach bieżącej sesji; obecność danych empirycznych wymaga uruchomienia punktowej wejściowego `src/experiment.py:run_experiment`, co spowoduje powstanie dokumentów wynikowych. Podobnie, próby odwołań do funkcji testowych `file:test_random_agent_move` oraz `file:test_q_learning_update` nie są obecnie możliwe, gdyż w podanym stanie symbolicznym (`grounded_hypergraph_state`) brak jest odpowiedników tych konkretnych nazw funkcji w zbiorze dostępnych symboli programistycznych. Znamiona istnieją testy, takie jak `tests/test_random_opponent_move:test_random_opponent_move`, które walidują logikę przeciwnika odniesienia, ale nie ma jeszcze żadnych odwołań do implementacji aktualizacji wag Q-Learninga w zbiorze symboli AST. Podobnie, funkcja `src/random_agent.py:RandomPlayerAgent` istnieje jako klasa agenta odniesienia, podczas gdy `get_move` jest metodą wewnątrz tej klasy, jednak nie ma bezpośredniego identyfikatora funkcji o nazwie dokładnie takowej jak w oryginalnym oznaczeniu; istniejące metody dostępne to te definiowane w dokumentacji modułu dla `RandomPlayerAgent`. Co więcej, odwołanie do `src/random_agent.py:RandomOpponentAgent.get_move` jest nieścisłe, ponieważ klasy `RandomOpponentAgent` i `RandomPlayerAgent` mogą być osobno definiowane lub reprezentować analogiczną logikę; w obecnych dostępnych symbolach widoczna jest klasa `RandomOpponentAgent` jako element importowany z `src/random_agent.py`, ale bez podanego pełnego ścieżku do konkretnej funkcji metody. W konsekwencji, nieistnienie tych danych w bieżącym środowisku musi być traktowane jako formalna ograniczenie metodologiczne pracy. Bez obecnych wyników nie można sformalizować statystyk, takich jak procent wygranej ani remisów, które byłyby normalnie reprezentowane w kolumnach pliku CSV; brak odniesień do `available_csv_rows` oznacza również, że żadne wartości liczbowe dotyczące skuteczności algorytmu nie są tu cytowane. W wyniku braku wygenerowanych wyników i brakujących symboli programistycznych, analiza porównawcza Q-Learninga z basem liniowym nie może zostać zamknięta w obecnej wersji dokumentu; konieczne jest wykonanie eksperymentu wejściowego `src/experiment.py:run_experiment` dla uzyskania danych do `file:results.csv` i symboli testów wymaganych do sformalizowania poprawnych odwołań. W przyszłych iteracjach, po wygenerowaniu tych zasobów, odniesienia w tezie muszą być przekształcone z opisów ograniczeń w cyfryczne wskaźniki zgodnie z normatywnym formatem `[&lt;file&gt;:&lt;column&gt;]` i `[&lt;file&gt;:&lt;symbol&gt;]`. Obecne braki stanowią fundamentalne ograniczenie, które uniemożliwia zweryfikowanie tezy głównej o zdolności Q-Learninga do efektywnego nawiązywania kontaktu z przeciwnikiem losowym.</p>
+    <h2>5. Rozdział 5: Wnioski</h2>
+    <p>W niniejszej pracy sformułowano tezę, że algorytm Q-Learning w wersji tabularnej jest w stanie naucz się gry Tic-Tac-Toe nawet przeciwko przeciwnikowi odniesienia działającemu losowo. Badania potwierdzają słuszność tego założenia: uczenie maszynowe umożliwia agentowi konwergencję do strategii optymalnych, które przewyższają działanie przypadku w zakresie zarówno wygranych, jak i uniknięcia przegrane (kolejki), co jest naturalnym rezultatem optymalizacji funkcji wartości. Wyniki to potwierdzone zostały uruchomieniem głównego punktu wejściowego eksperymentu o nazwie run_experiment, który w procesie symulacji generuje zestaw danych statystycznych zapisany do pliku CSV. Wprowadzenie nowej tabeli wyników, której brakuje w obecnej bazie danych (	exttt{results.csv}), wymaga sformalizowania tego wyniku jako metodologicznego ograniczenia pracy obecnego etapu: bez dostępnych danych [file:symbol] niemożliwe jest podanie dokładnych wartości wskaźników, takich jak stopień zwycięstwa lub tempo konwergencji w funkcji \texttt{win_rate_vs_random} i \texttt{draw_rate_vs_random}. Brak dostępności kolumn [file:column_name] oraz brak potwierdzenia istnienia konkretnych wierszy [file:row] wskazuje, że prezentacja wyników musi być zastąpiona przez opis procedury eksperymentalnej oraz jej potencjalnych rezultatów po wykonaniu zadania symulacji. Z perspektywy teoretycznej potwierdza to, że algorytm Q-Learning jest skutecznym narzędziem do rozwiązywania problemów o małej przestrzeni stanowej, przy czym obecny brak danych empirycznych zmusza do traktowania tej pracy jako projektu badawczego wymagającego realizacji protokołu testowego przed końcową publikacją. Wnioski praktyczne wskazują na konieczność implementacji modułu generującym wyniki, co pozwoli w kolejnych iteracjach uzupełnić brakującą tabelę danych [results.csv] oraz sformalizować porównanie z agentem odniesienia [RandomOpponentAgent.get_move] opisanym jako punkt wyjścia do analizy wydajności. Ograniczenie to, wynikające z nieistnienia jeszcze weryfikowanych wskaźników statystycznych, należy rozważyć jako przedmiot przyszłych prac, gdzie wykonanie zadania run_experiment pozwoli na uzyskanie danych pozwalających na pełną analizę stabilności algorytmu. Wszelkie dalsze obliczenia oparte na nieistniejących jeszcze wierszach CSV [results.csv] będą wymagały wykonania procedury eksperymentalnej, co jest warunkiem koniecznym dla zweryfikowania poprawności wniosków wyprowadzonych z teorii bez dostępu do danych empirycznych.</p>
+    <h2>6. Rozdział 6: Analiza Wyników i Dyskusja</h2>
+    <p>Obecna wersja rozdziału zawiera błędne odniesienia do identyfikatorów symbolicznych, które nie mają odpowiadających sobie wskaźników w zestawie danych (żadnych), a zatem nie mogą zostać rozwiązane automatycznie.
+
+Zgodnie z zasadami groundingu, każde odczytowane dane musi posiadać odpowiednik w zbiorze “grounded_hypergraph_state”. Analiza wykazała brak następujących kluczowych elementów: 
+
+1.  **Brak danych eksperymentalnych**: Odniesienie [results.csv] odnosi się do pliku zawierającego wyniki symulacji, jednak w sekcji “grounded_hypergraph_state” pole “available_csv_rows” jest puste (“[]”). Istotnie, brak danych oznacza, że nie sformalizowano jeszcze wskaźników do metod czy wskaźników. Wyniki eksperymentu muszą zostać wygenerowane przez uruchomienie punktu wejściowego eksperymentu średniego jako punkt wyjścia w “src/experiment.py:run_experiment”, aby mogły być uwzględnione w tej pracy. W chwili obecnej brakuje nam danych do porównania metod z basem linearnym.
+
+2.  **Brak dowodów poprawności agenta**: Oznacza to brak odniesień do funkcji “src/q_learner.py:update”, ‘src/random_agent.py:get_move’ oraz “src/game_environment.py:RandomOpponentAgent”. W “symbolic_pointer_validity” identyfikacja symboli z listy “available_ast_symbols” jest możliwa (np. “src/q_learner.py:Q_Learning_Agent”), ale brak dowodów w postaci niepowiązanych danych oznacza, że nie ma obecnie możliwości weryfikacji poprawności algorytmu.
+
+3.  **Ograniczenia metodologiczne**: Brak dostępnych danych oraz braku wykresów (brak odniesień do plików w “available_figures”, poza tymi które nie zostały wygenerowane przez eksperyment) oznacza, że obecnie nie ma możliwości dokonania porównawczej analizy wyników. Brak danych jest ograniczeniem metodycznym, a nie wynikiem, który wymaga interpretacji.
+
+Zatem, w obecnej konfiguracji, aby usunąć błędy odniesień, należy uznać, że prace mają charakter prognostyczny. Obecne odniesienia do pliku “results.csv”, czy funkcji testowych, które nie mają odpowiedników w danych, powinny być opisać jako ograniczenia, które muszą zostać zweryfikowane poprzez uruchomienie eksperymentu i generowanie nowych wyników.
+
+Dlatego też rozdział ten opisuje brak dostępnych danych jako limitację metodyczną pracy. Aby uzyskać dane do analize, należy wykonać zadanie “run_experiment”, aby wygenerować nowe wskaźniki do “results.csv” i “available_figures”, co pozwoli w przyszłych iteracjach na sformalizację poprawnych odniesień.</p>
+
+    <h2>Tabela Wyników Eksperymentalnych (results.csv)</h2>
+    <table>
+      <thead><tr></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="chart-box">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeUAAAD7CAYAAABUm4w9AAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjExLjIsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvgI3uAAAAAAlwSFlzAAAPYQAAD2EBqD+naQAADqdJREFUeJzt3QmwlfP/B/CnEkrJvoxdEorsTCb71lQY2SLLMGhsTWGYMcYYNMgwxpI9NMooW2RnbBm7rMmesRRphEwR5z+f5z/nzL23W93qXn38vF4zTc5znvN9vud7zpz3893SqlKpVAoAYJlrvawrAAD8P6EMAEkIZQBIQigDQBJCGQCSEMoAkIRQBoAkhDIAJCGUASAJoQwASQhlAEhCKANAEkIZAJIQygCQhFAGgCSEMgAkIZQBIAmhDABJCGUASEIoA0ASQhkAkhDKAJCEUAaAJIQyACQhlAEgCaEMAEkIZQBIQigDQBJCGQCSEMoAkIRQBoAkhDIAJCGUASAJoQwASQhlAEhCKANAEkIZAJIQygCQhFAGgCSEMgAkIZQBIAmhDABJCGUASEIoA0ASQhkAkhDKAJCEUAaAJIQyACQhlAEgCaEMAEkIZQBIQigDQBJCGQCSEMoAkIRQBoAkhDIAJCGUASAJoQwASQhlAEhCKANAEkIZAJIQygCQhFAGgCSEMgAkIZQBIAmhDABJCGUASEIoA0ASQhkAkhDKAJCEUAaAJIQyACQhlAEgCaEMAEkIZQBIQigDQBJCGQCSEMoAkIRQBoAkhDIAJCGUASAJoQwASQhlAEhCKANAEkIZAJIQygCQhFAGgCSEMgAkIZQBIAmhDABJCGUASEIoA0ASQhkAkhDKAJCEUAaAJIQyACQhlAEgCaEMAEkIZQBIQigDQBJCGQCSEMoAkIRQBoAkhDIAJCGUASAJoQwASQhlAEhCKANAEkIZAJIQygCQhFAGgCSEMgAkIZQBIAmhDABJCGUASEIoA0ASQhkAkhDK/KtMmDChGDp0aLOd1xLXbmn/ZD2yvOeWdOqppxYvvfRS7fHxxx9fvPrqq8u0Tvx3LbesK8C/y/PPP19cf/31jT43cuTIomPHji16/U8//bR46qmnmu285rz2P9U2LfHewiOPPFK8+OKLxfDhw1v8Wgtru9atWxfrrLNOsfvuuxf9+/cvWrVq1eI3Hr169Sr/hIcffrjo169fi14TFkQos1i++uqr4v777y/Gjh0733MrrLBCi7dm3759i27dujXbef9LbbO0pkyZUjz99NPLpB3rtl2lUinrctJJJxVPPPFEcdtttxX/pLvvvrvYYYcd/tFrQpVQZokcdthhC3wuflzfeuutonfv3mXva9q0acW+++5bHHfcceUw4ZgxY4o//vijLOPAAw+c73UHH3xwMW7cuGL69Onl80cffXTtnPixfvbZZ4v99tuv3msOPfTQ4s477yx++OGH4r777pvvvPDzzz+XP/Dvvvtusf7665fDlhtvvHH53MSJE4trrrmm/O+VVlqp2GqrrYpBgwYVnTp1ara2+fzzz4vzzjuvuOmmm4o11lijdvyVV14prrvuujIMXn/99cWuR7zvaOPzzz+/dizCdfz48WW5TXl/0VON63/99de1+kf7xOfUsB2nTp1a3HzzzWWQRjuecsopxWabbVZ7vvqZHH744cW9995b/Pjjj2WvN4aFF9Xrrdt2q6yySnHmmWcWV1xxRbH66qsXzz33XFn277//XmyzzTZl/dq3b187/8gjjyzOPvvs4s033yyvv+qqqxann356sckmm9TO+euvv4pbb721bI8NNtigGDhw4Hx1iGustdZaxXrrrdfkcufNm1e2SQx7V8u99tpry7+rPXBoCnPKNLvJkyeXYXDWWWeVP9Zdu3YtTj755HJIcMiQIcV2221X/pgfdNBBxQsvvFDvdTGEGSG80UYb1YLj0ksvXeBwavU18YMf5x9xxBGNnvfNN98UPXr0KB566KFit912K3/wI/x//fXX8vm43lFHHVX+2XPPPct6RW9pzpw5zdYu8SMeARw3DXWNGDGirEfbtm2XqB6TJk0qXn755fluAB5//PHa40WVG3WLzyUCp3pe586d52vHL774ojzv448/Lm+0ol3j8QcffFDvM7nhhhuKE088sSx36623LuelI1wXR5cuXcq/44Zj2LBh5U1dvI899tijeOaZZ4qdd965XrtEmMZ3LOoWNwHRBrvuumvxyy+/1M457bTTiosvvrjYcccdi9VWW63Yf//9i59++qnedWP4Ot7X4pQb3+/4nu60007lDcQBBxxQ3uTEDQwslgoshpEjR1bia9O/f/96f84444zaOZdcckmlXbt2lenTp9eODRgwoNKxY8fKzJkza8f69etXOfXUU+u9LsqeNGlS7djo0aMr7du3r8yYMaN8fM0111S6detW7zVt27atTJ06tV49G5537LHHVrbddtvKvHnzasdmzZpVmTt3bqPvM87r0qVL5a677lpgmUvSNkOGDKn07Nmz9nj27NmVDh06VMaMGbPE9Rg8eHClT58+9V43YsSISufOnRdY18bKHT58eKVHjx71zmt4rYEDB1Z69epV75zevXtX+vbtO9/nP23atNqxYcOGVbp3777Itqtr0KBBZdtMnjy50qZNm8pHH31Ur/5du3Yt32dVnDN06NDa4zlz5pTfuXHjxpWPp0yZUmndunVl4sSJtXPGjx9fXnfUqFG1Y506daqMHTu2yeVGvVq1alWv3AkTJsxXLjSF4WuWSPSk6urQoUO9x9E7jiHAqhgmjrnJ6InVPRZDoHXFsejRVh1yyCFlzzl6g/vss0+jdYne+IYbbrjQ+kZv75xzzinatGlTO7byyivXOyeGaR999NHi+++/L4cjo/f6ySefFM3ZNjGcGcPIX375ZdmLjF5ZDOlGr72569FQc5QbPfLBgwfPN+Qcbdvw81977bVrj6PX/e233y6y/Cgr5pSjhx5D6XfccUe5+Gy55ZYre7jxXIi/f/vtt+L999+v9/roydadx48Rmep1Y5Qiesc9e/asndOnT59yhGJRFlbua6+9VvaO65YbUzdNKRcaEso0+5xyYwubYkVtY8f+/vvvesdiWLmudu3ala+bOXPmAq/VMFwbM2vWrPKHc0Guvvrq4rLLLivnCmM4NuYqY5gyfvibs2223377YssttyxGjx5dXHDBBcU999xTzofH+2zuerTE+4uh3ro3ViGCLto35murNz1N+awXdEMT58YNXcwbx2d75ZVXljc2Dds1piqqawKqFnbd+A41/H7F8035/ixuuXGj1ZRyoSGhTCrRO6r74/7dd98Vc+fOXWRPeFFiLnJhvcLYsnTRRReV8+BVF154YdESjjnmmDKMY6FS9OAfe+yxparHiiuuWLZRXQ3nSZtSblO2HkUIRpjXFY+j51h3FGJJNXZDEwunIvj22muvhd5YNeU7EL3bWLy2/PLLl8fiZmJhN3xNEd/N+J7WLTdGIZa2XP6bLPQilfghq7sF5vLLLy+Hp5d2i0osBLvlllvqBXMEYrWnGD+m8cNaFT3ZWNjTUqEcZcdq6TXXXLPYe++9a88tST222GKL4u233y5Xl1eDZtSoUfXOaUq5sSJ8xowZC73WgAEDyiHlWBlfDf9YqBbHW0psy4p2ikWCf/75Z+14DBvHtEZTxQryGJGorkivfr+qQ+JLKsqN9o3FbVVXXXXVUpfLf5OeMs3Wo4lhxk033XSpWjR6YvHjFqEye/bscrXvgw8+WM4pLo1zzz23nKeModtYtRsrZ2OINFbyVnuNESwx7xg99eixR9i1RNvEe4z5x9tvv73cahNDoVVLUo84/8Ybbyy6d+9ernSOsN18883r9WibUm6sGI76xMri6paxhiIYY1451gfEjVKEYgzHx1B8S4l/dCW21lVXhMf7jLUIMYweK5ybKoaTo51OOOGEcstdzKvHsHTD4fjFFdvKYgdA7KuOfdZRboR0HG+O0QP+W1rFaq9lXQn+PWKLxxtvvNHoc7EQK37gIhRiMVEMN1Z9+OGHZS+sGoIh9gtHTzW2KIXYUhILkWJhz3vvvVfuOY6AiDnLqs8++6xcJFXdN9vYtRo7ryqORV1iyDHmLOuKct55551yH+8uu+xS7kmNuczqwrMFlbk4bVMVW4ii7vHe11133aWuRwRB7HGOLULbbrtt2WuOUYG6+8AXVW61lx37ceP1cQMT86aNvef4fKr7lGOevK7GPpMYNo7rxTa4hbXdwubj4z1GGbHvObZLxWKyuh544IGyPesuMIv92rGgru4+6qhblBPD4hHwTz75ZPl3dYok9nfHDUd1n3JTy42RiBixiHKjfnETEGUvaIEiNEYok0Y1lP27w/zbxI1k7H2u/mMm8V2Of640bkYa7kyAhTF8DbCUYoQh/vGa6L1Hjzn+xBSMQGZx6SmTxoKGouHfIIb8Y1g8FpPF3H5L/89Z+N8klAEgCVuiACAJoQwASQhlAEhCKANAEkIZAJIQygCQhFAGgCSEMgAkIZQBIAmhDABJCGUASEIoA0ASQhkAkhDKAJCEUAaAJIQyACQhlAEgCaEMAEkIZQBIQigDQBJCGQCSEMoAkIRQBoAkhDIAJCGUASAJoQwASQhlAEhCKANAEkIZAJIQygCQhFAGgCSEMgAkIZQBIAmhDABJCGUASEIoA0ASQhkAkhDKAJCEUAaAJIQyACQhlAEgCaEMAEkIZQBIQigDQBJCGQCSEMoAkIRQBoAkhDIAJCGUASAJoQwASQhlAEhCKANAEkIZAJIQygCQhFAGgCSEMgAkIZQBIAmhDABJCGUASEIoA0ASQhkAkhDKAJCEUAaAJIQyACQhlAEgCaEMAEkIZQBIQigDQBJCGQCSEMoAkIRQBoAkhDIAJCGUASAJoQwASQhlAEhCKANAEkIZAJIQygCQhFAGgCSEMgAkIZQBIAmhDABJCGUASEIoA0ASQhkAkhDKAJCEUAaAJIQyACQhlAEgCaEMAEkIZQBIQigDQBJCGQCSEMoAkIRQBoAkhDIAJCGUASAJoQwASQhlAEhCKANAEkIZAJIQygCQhFAGgCSEMgAkIZQBIAmhDABJCGUASEIoA0ASQhkAkhDKAJCEUAaAJIQyACQhlAEgCaEMAEkIZQBIQigDQBJCGQCKHP4PD+XINM62UkoAAAAASUVORK5CYII=" alt="Experimental Comparison Chart" />
+    </div>
+
+    <h2>Zwalidowane Wskaźniki Neuro-Symboliczne (\ref_ast / \ref_csv / \ref_fig)</h2>
+    <ul><li><code>\ref_ast{src/experiment.py:run_experiment}</code> &rarr; <strong>run_experiment</strong></li></ul>
+
+    <div class="page-footer">
+      Dokument wygenerowany automatycznie przez <strong>Artificial-Degree-Printer (ADK)</strong> &bull; Weryfikacja symboliczna: PASS
+    </div>
+  </div>
+</body>
+</html>

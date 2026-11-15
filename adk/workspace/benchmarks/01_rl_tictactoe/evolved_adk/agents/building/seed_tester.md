@@ -45,4 +45,4 @@ For a change to an existing file: `"ast_edits": [{"symbol": "<TestClass>.<test_m
 Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When writing tests that use mocking, always import the specific decorator (e.g., `patch`) directly from `unittest.mock` rather than relying on the patch target to be available via module attributes or global scope, because test isolation requires explicit imports for all external dependencies and mock components.
+- **RULE**: When writing a unit test case, verify that the class under test is actually imported and available in the module's namespace before referencing it in assertions or setup, because missing imports cause undefined name errors during execution.

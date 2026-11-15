@@ -74,3 +74,4 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
+- **RULE**: When referencing external symbols or files in the output, use their canonical names exactly as defined in the import contract or available packages list, because symbolic tags must resolve to existing entities without ambiguity.
