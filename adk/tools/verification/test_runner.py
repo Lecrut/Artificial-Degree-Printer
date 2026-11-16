@@ -36,7 +36,7 @@ def _run_tool(cmd: list[str], timeout: int, label: str, errors: list[str], **kwa
         out = exc.stdout or b""
         out = out.decode("utf-8", errors="replace") if isinstance(out, bytes) else str(out)
         tail = "\n".join(out.strip().splitlines()[-15:])
-        errors.append(f"{label}: przekroczono limit {timeout}s (prawdopodobnie pętla nieskończona).\n{tail}".strip())
+        errors.append(f"{label}: exceeded the {timeout}s limit (probably an infinite loop).\n{tail}".strip())
         return None
 
 
@@ -49,8 +49,8 @@ def _condense_hang(output: str, w_dir: Path) -> str:
     prefix = re.compile(re.escape(str(w_dir.resolve())) + r"[\\/]", re.IGNORECASE)
     frames = [prefix.sub("", line.strip()) for line in kept]
     return (
-        "Pytest: test zawiesił się i został przerwany po "
-        f"{PER_TEST_TIMEOUT_S}s (prawdopodobnie pętla nieskończona). Stos (najnowsza ramka pierwsza):\n" + "\n".join(frames)
+        "Pytest: a test hung and was stopped after "
+        f"{PER_TEST_TIMEOUT_S}s (probably an infinite loop). Stack (newest frame first):\n" + "\n".join(frames)
     )
 
 
@@ -114,7 +114,7 @@ def run_isolated_tests(
             "errors": [],
             "lint_warnings": [],
             "out_of_scope": _out_of_scope_syntax(all_py, py_files, w_dir) if scope is not None else [],
-            "stdout": "No Python files found in workspace to test." if not all_py else "Zadanie nie dotyczy kodu Pythona.",
+            "stdout": "No Python files found in workspace to test." if not all_py else "The task does not concern Python code.",
         }
 
     errors: list[str] = []
@@ -158,7 +158,7 @@ def run_isolated_tests(
                     # The import died inside another file (a broken sibling pulled in by `__init__.py`): that
                     # file's task owns the error, this one is only told about it.
                     out_of_scope.append(
-                        f"Import {mod_name} nie powiódł się z powodu innego pliku ({culprit}): {imp_err.splitlines()[-1]}"
+                        f"Import {mod_name} failed because of another file ({culprit}): {imp_err.splitlines()[-1]}"
                     )
                 else:
                     errors.append(f"Import error in {py_f.name}: {imp_err}")
@@ -311,7 +311,7 @@ def _out_of_scope_syntax(all_py: list[Path], scoped: list[Path], w_dir: Path, li
         try:
             ast.parse(py_f.read_text(encoding="utf-8", errors="replace"))
         except SyntaxError as exc:
-            notes.append(f"Poza zakresem zadania: {py_f.relative_to(w_dir).as_posix()}:{exc.lineno} nie parsuje się ({exc.msg}).")
+            notes.append(f"Outside the task's scope: {py_f.relative_to(w_dir).as_posix()}:{exc.lineno} does not parse ({exc.msg}).")
             if len(notes) >= limit:
                 break
     return notes

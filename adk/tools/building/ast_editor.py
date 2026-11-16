@@ -75,7 +75,7 @@ def edit_ast_node(
             "guard": "TARGET_NOT_FOUND",
             "file": str(path),
             "target_name": target_name,
-            "error": f"Kod edycji {target_name} nie zawiera definicji `def {method_name}`.",
+            "error": f"The edit code of {target_name} has no `def {method_name}` definition.",
         }
     new_node = matching_stmt if matching_stmt is not None else snippet_tree.body[-1]
 
@@ -132,7 +132,7 @@ def edit_ast_node(
                 "guard": "TARGET_NOT_FOUND",
                 "file": str(path),
                 "target_name": target_name,
-                "error": f"Klasa {class_name} nie istnieje w {path.name}; edycja {target_name} nie ma gdzie trafić.",
+                "error": f"Class {class_name} does not exist in {path.name}; the edit of {target_name} has nowhere to land.",
             }
         for i, member in enumerate(owner.body):
             if _extract_stmt_name(member) == method_name:

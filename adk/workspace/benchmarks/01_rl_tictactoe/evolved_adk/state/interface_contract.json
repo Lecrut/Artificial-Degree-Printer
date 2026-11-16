@@ -1,124 +1,72 @@
 {
-  "src/experiment.py": {
-    "run_experiment": []
-  },
-  "src/game_environment.py": {
-    "GameState": [],
-    "GameState.__init__": [
-      "self",
-      "board",
-      "winner",
-      "is_over"
-    ],
-    "GameState.copy": [
-      "self"
-    ],
-    "GameState.apply_action": [
-      "self",
-      "player",
-      "action"
-    ],
-    "check_winner": [
-      "board"
-    ],
-    "GameEnvironment": [],
-    "GameEnvironment.__init__": [
-      "self"
-    ],
-    "GameEnvironment.reset": [
-      "self",
-      "board"
-    ],
-    "GameEnvironment.get_available_moves": [
-      "self",
-      "state"
-    ],
-    "GameEnvironment.simulate_episode": [
-      "self",
-      "opponent_func"
-    ],
-    "RandomOpponentAgent": [],
-    "RandomOpponentAgent.__init__": [
-      "self",
-      "board",
-      "opponent_func"
-    ],
-    "RandomOpponentAgent.reset": [
-      "self"
-    ],
-    "RandomOpponentAgent.get_move": [
-      "self",
-      "board"
-    ],
-    "GameEnvironment.apply_action": [
-      "self",
-      "player",
-      "action"
-    ]
-  },
   "src/plot_results.py": {
-    "plot_comparison_results": [
-      "results_data",
-      "output_path",
-      "figure_name"
+    "generate_plots": [
+      "output_dir"
     ]
   },
-  "src/q_learner.py": {
-    "Q_Learning_Agent": [],
-    "Q_Learning_Agent.__init__": [
+  "src/ql_agent.py": {
+    "QAgent": [],
+    "QAgent.__init__": [
       "self",
-      "state_encoder",
-      "discount_factor",
-      "learning_rate",
+      "alpha",
+      "gamma",
       "epsilon_start",
       "epsilon_end",
-      "epsilon_decay",
-      "epsilon_min_steps_to_end"
+      "decay_rate"
     ],
-    "Q_Learning_Agent.reset": [
-      "self"
-    ],
-    "Q_Learning_Agent.select_action": [
+    "QAgent.get_action": [
       "self",
-      "state_index"
+      "state_key"
     ],
-    "Q_Learning_Agent.update": [
+    "QAgent.update": [
       "self",
-      "state_index",
+      "state_key",
       "action",
       "reward",
-      "next_state_index"
+      "next_state_key"
     ],
-    "Q_Learning_Agent.train_episode": [
-      "self",
-      "opponent_func"
-    ],
-    "Q_Learning_Agent.state_encoder": [
-      "self",
-      "state"
+    "QAgent.decay_epsilon": [
+      "self"
     ]
   },
-  "src/random_agent.py": {
-    "RandomPlayerAgent": [],
-    "RandomPlayerAgent.__init__": [
-      "self",
-      "seed"
-    ],
-    "RandomPlayerAgent.reset": [
-      "self",
-      "state"
-    ],
-    "RandomPlayerAgent.get_move": [
-      "self",
-      "state"
+  "src/run_experiment.py": {
+    "run_experiments": [
+      "config"
     ]
   },
-  "src/config.py": {
-    "GameAgentType": [],
-    "ExperimentConfig": [],
-    "ExperimentConfig.__init__": [
+  "src/tictactoe.py": {
+    "Board": [],
+    "Board.__init__": [
       "self"
     ],
-    "get_default_config": []
-  }
+    "Board.reset": [
+      "self"
+    ],
+    "Board.make_move": [
+      "self",
+      "position",
+      "player"
+    ],
+    "Board.get_legal_moves": [
+      "self"
+    ],
+    "Board.check_win": [
+      "self",
+      "player"
+    ],
+    "Board.is_draw": [
+      "self"
+    ],
+    "Board.get_state_key": [
+      "self"
+    ],
+    "simulate_game": [
+      "config"
+    ],
+    "check_win": [
+      "self",
+      "player"
+    ]
+  },
+  "config.py": {}
 }

@@ -46,14 +46,14 @@ def rule_rejection_reason(rule: str, forbidden_names: set[str], existing_rules: 
     words = set(re.findall(r"[A-Za-z_][A-Za-z0-9_.]*", rule))
     named = sorted(w for w in words if w in forbidden_names or w.split(".")[0] in forbidden_names)
     if named:
-        return f"nazywa konkretne pliki/symbole projektu: {', '.join(named[:5])}"
+        return f"names specific project files/symbols: {', '.join(named[:5])}"
     if _SYMPTOM.search(rule):
-        return "koduje objaw (kod błędu, typ wyjątku, numer linii) zamiast metody pracy"
+        return "encodes a symptom (error code, exception type, line number) instead of a working method"
     if _HARNESS_TOPICS.search(rule):
-        return "dotyczy tego, co egzekwuje harness (składnia, kształt odpowiedzi, importy)"
+        return "concerns what the harness enforces (syntax, answer shape, imports)"
     for old in existing_rules:
         if _similarity(rule, old) >= 0.6:
-            return f"powtarza istniejącą regułę: {old[:80]}"
+            return f"repeats an existing rule: {old[:80]}"
     return None
 
 

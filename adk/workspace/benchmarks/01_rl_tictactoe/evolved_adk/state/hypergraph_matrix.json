@@ -1,143 +1,109 @@
 {
   "nodes": {
     "n1": {
-      "path": "docs/background_research.md",
-      "degree": 1,
-      "weight": 1.0,
+      "path": "thesis.md",
+      "degree": 2,
+      "weight": 3.8,
       "last_writer": {
-        "agent": "background_researcher",
-        "task_id": "T2"
+        "agent": "seed_writer",
+        "task_id": "Q2_CRITIC_FIX_1"
       },
       "kind": "authored"
     },
     "n2": {
       "path": "figures/comparison_chart.pdf",
-      "degree": 2,
+      "degree": 1,
       "weight": 1.0,
-      "kind": "derived"
+      "kind": "derived",
+      "producer": "n6"
     },
     "n3": {
       "path": "figures/comparison_chart.png",
-      "degree": 2,
+      "degree": 1,
       "weight": 1.0,
-      "kind": "derived"
+      "kind": "derived",
+      "producer": "n6"
     },
     "n4": {
       "path": "references.bib",
-      "degree": 3,
+      "degree": 1,
       "weight": 1.0,
       "kind": "authored"
     },
     "n5": {
-      "path": "thesis.md",
-      "degree": 3,
-      "weight": 5.8,
+      "path": "src/run_experiment.py",
+      "degree": 1,
+      "weight": 2.2,
       "last_writer": {
-        "agent": "seed_writer",
-        "task_id": "Q4_CRITIC_FIX2"
+        "agent": "seed_coder",
+        "task_id": "SKELETON_FIX_2"
       },
       "kind": "authored"
     },
     "n6": {
-      "path": "src/experiment.py",
-      "degree": 7,
-      "weight": 2.2,
+      "path": "src/plot_results.py",
+      "degree": 3,
+      "weight": 3.0,
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "Q4_CODE_FIX2"
+        "task_id": "Q1_CRITIC_FIX_1"
       },
       "kind": "authored"
     },
     "n7": {
-      "path": "src/config.py",
-      "degree": 5,
-      "weight": 1.4,
+      "path": "src/ql_agent.py",
+      "degree": 1,
+      "weight": 1.0,
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "Q1_FIX_experiment_4"
+        "task_id": "Q2_FIX_test_ql_agent_3_FIX2"
       },
       "kind": "authored"
     },
     "n8": {
-      "path": "src/game_environment.py",
-      "degree": 3,
-      "weight": 1.4,
+      "path": "src/tictactoe.py",
+      "degree": 1,
+      "weight": 1.8,
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "Q4_CODE_FIX1"
+        "task_id": "Q2_FIX_test_tictactoe_4_FIX_2"
       },
       "kind": "authored"
     },
     "n9": {
-      "path": "src/plot_results.py",
-      "degree": 4,
-      "weight": 1.4,
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T13_FIX1"
-      },
-      "kind": "authored"
-    },
-    "n10": {
-      "path": "src/q_learner.py",
-      "degree": 2,
-      "weight": 1.0,
-      "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "Q3_FIX2_FIX2"
-      },
-      "kind": "authored"
-    },
-    "n11": {
-      "path": "src/random_agent.py",
-      "degree": 1,
-      "weight": 2.2,
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "Q3_FIX_random_agent_3_FIX_1"
-      },
-      "kind": "authored"
-    },
-    "n12": {
       "path": "thesis.compiled.md",
       "degree": 2,
       "weight": 1.0,
       "kind": "derived",
-      "producer": "n5"
+      "producer": "n1"
     },
-    "n13": {
-      "path": "tests/test_game_environment.py",
+    "n10": {
+      "path": "config.py",
       "degree": 1,
-      "weight": 3.4,
+      "weight": 1.4,
+      "kind": "authored",
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "Q2_CRITIC_FIX_2"
+      }
+    },
+    "n11": {
+      "path": "tests/test_tictactoe.py",
+      "degree": 1,
+      "weight": 5.4,
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "Q1_FIX2_FIX_TEST_GAME_ENV"
+        "task_id": "Q2_FIX_test_tictactoe_4_FIX_1"
       },
       "kind": "authored"
     },
-    "n14": {
-      "path": "tests/test_agents.py",
-      "degree": 3,
-      "weight": 7.0,
+    "n12": {
+      "path": "tests/test_ql_agent.py",
+      "degree": 1,
+      "weight": 8.2,
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "Q4_FIX2_FIX_2"
-      },
-      "kind": "authored"
-    },
-    "n15": {
-      "path": "results.csv",
-      "degree": 3,
-      "weight": 2.2,
-      "kind": "derived"
-    },
-    "n16": {
-      "path": "test_experiment.py",
-      "degree": 2,
-      "weight": 3.4,
-      "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "Q4_CODE_FIX3"
+        "task_id": "Q4_FIX1_FIX_1"
       },
       "kind": "authored"
     }
@@ -145,143 +111,39 @@
   "edges": {
     "E1": [
       "n2",
-      "n9"
+      "n6"
     ],
     "E2": [
-      "n2",
-      "n7"
+      "n3",
+      "n6"
     ],
     "E3": [
-      "n3",
+      "n1",
       "n9"
     ],
     "E4": [
-      "n3",
-      "n7"
-    ],
-    "E5": [
-      "n12",
+      "n1",
       "n5"
     ],
+    "E5": [
+      "n10",
+      "n6"
+    ],
     "E6": [
-      "n15",
+      "n4",
       "n9"
     ],
     "E7": [
-      "n15",
-      "n7"
+      "n11",
+      "n8"
     ],
     "E8": [
-      "n15",
-      "n6"
-    ],
-    "E9": [
-      "n1",
-      "n4"
-    ],
-    "E10": [
-      "n5",
-      "n6"
-    ],
-    "E11": [
-      "n4",
-      "n5"
-    ],
-    "E12": [
-      "n6",
-      "n7"
-    ],
-    "E13": [
-      "n6",
-      "n8"
-    ],
-    "E14": [
-      "n10",
-      "n6"
-    ],
-    "E15": [
-      "n6",
-      "n9"
-    ],
-    "E16": [
       "n12",
-      "n4"
-    ],
-    "E17": [
-      "n13",
-      "n8"
-    ],
-    "E18": [
-      "n14",
-      "n8"
-    ],
-    "E19": [
-      "n10",
-      "n14"
-    ],
-    "E20": [
-      "n11",
-      "n14"
-    ],
-    "E21": [
-      "n16",
       "n7"
-    ],
-    "E22": [
-      "n16",
-      "n6"
     ]
   },
   "matrix": {
     "n1": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 0,
-      "E5": 0,
-      "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 1,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
-    },
-    "n2": {
-      "E1": 1,
-      "E2": 1,
-      "E3": 0,
-      "E4": 0,
-      "E5": 0,
-      "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
-    },
-    "n3": {
       "E1": 0,
       "E2": 0,
       "E3": 1,
@@ -289,21 +151,27 @@
       "E5": 0,
       "E6": 0,
       "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
+      "E8": 0
+    },
+    "n2": {
+      "E1": 1,
+      "E2": 0,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0
+    },
+    "n3": {
+      "E1": 0,
+      "E2": 1,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0
     },
     "n4": {
       "E1": 0,
@@ -311,49 +179,31 @@
       "E3": 0,
       "E4": 0,
       "E5": 0,
-      "E6": 0,
+      "E6": 1,
       "E7": 0,
-      "E8": 0,
-      "E9": 1,
-      "E10": 0,
-      "E11": 1,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 1,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
+      "E8": 0
     },
     "n5": {
       "E1": 0,
       "E2": 0,
       "E3": 0,
+      "E4": 1,
+      "E5": 0,
+      "E6": 0,
+      "E7": 0,
+      "E8": 0
+    },
+    "n6": {
+      "E1": 1,
+      "E2": 1,
+      "E3": 0,
       "E4": 0,
       "E5": 1,
       "E6": 0,
       "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 1,
-      "E11": 1,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
+      "E8": 0
     },
-    "n6": {
+    "n7": {
       "E1": 0,
       "E2": 0,
       "E3": 0,
@@ -361,45 +211,7 @@
       "E5": 0,
       "E6": 0,
       "E7": 0,
-      "E8": 1,
-      "E9": 0,
-      "E10": 1,
-      "E11": 0,
-      "E12": 1,
-      "E13": 1,
-      "E14": 1,
-      "E15": 1,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 1
-    },
-    "n7": {
-      "E1": 0,
-      "E2": 1,
-      "E3": 0,
-      "E4": 1,
-      "E5": 0,
-      "E6": 0,
-      "E7": 1,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 1,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 1,
-      "E22": 0
+      "E8": 1
     },
     "n8": {
       "E1": 0,
@@ -408,70 +220,28 @@
       "E4": 0,
       "E5": 0,
       "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 1,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 1,
-      "E18": 1,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
+      "E7": 1,
+      "E8": 0
     },
     "n9": {
-      "E1": 1,
+      "E1": 0,
       "E2": 0,
       "E3": 1,
       "E4": 0,
       "E5": 0,
       "E6": 1,
       "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 1,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
+      "E8": 0
     },
     "n10": {
       "E1": 0,
       "E2": 0,
       "E3": 0,
       "E4": 0,
-      "E5": 0,
+      "E5": 1,
       "E6": 0,
       "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 1,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 1,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
+      "E8": 0
     },
     "n11": {
       "E1": 0,
@@ -480,225 +250,49 @@
       "E4": 0,
       "E5": 0,
       "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 1,
-      "E21": 0,
-      "E22": 0
+      "E7": 1,
+      "E8": 0
     },
     "n12": {
       "E1": 0,
       "E2": 0,
       "E3": 0,
       "E4": 0,
-      "E5": 1,
-      "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 1,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
-    },
-    "n13": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 0,
       "E5": 0,
       "E6": 0,
       "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 1,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
-    },
-    "n14": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 0,
-      "E5": 0,
-      "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 1,
-      "E19": 1,
-      "E20": 1,
-      "E21": 0,
-      "E22": 0
-    },
-    "n15": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 0,
-      "E5": 0,
-      "E6": 1,
-      "E7": 1,
-      "E8": 1,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0
-    },
-    "n16": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 0,
-      "E5": 0,
-      "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 1,
-      "E22": 1
+      "E8": 1
     }
   },
   "edge_meta": {
     "E1": {
       "dynamic": true,
       "kind": "produces",
-      "producer": "n9"
+      "producer": "n6"
     },
     "E2": {
       "dynamic": true,
       "kind": "produces",
-      "producer": "n7"
+      "producer": "n6"
     },
     "E3": {
       "dynamic": true,
       "kind": "produces",
-      "producer": "n9"
+      "producer": "n1"
     },
     "E4": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n7"
+      "dynamic": true
     },
     "E5": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n5"
+      "dynamic": true
     },
     "E6": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n9"
+      "dynamic": true
     },
     "E7": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n7"
+      "dynamic": true
     },
     "E8": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n6"
-    },
-    "E9": {
-      "dynamic": true
-    },
-    "E10": {
-      "dynamic": true
-    },
-    "E11": {
-      "dynamic": true
-    },
-    "E12": {
-      "dynamic": true
-    },
-    "E13": {
-      "dynamic": true
-    },
-    "E14": {
-      "dynamic": true
-    },
-    "E15": {
-      "dynamic": true
-    },
-    "E16": {
-      "dynamic": true
-    },
-    "E17": {
-      "dynamic": true
-    },
-    "E18": {
-      "dynamic": true
-    },
-    "E19": {
-      "dynamic": true
-    },
-    "E20": {
-      "dynamic": true
-    },
-    "E21": {
-      "dynamic": true
-    },
-    "E22": {
       "dynamic": true
     }
   }

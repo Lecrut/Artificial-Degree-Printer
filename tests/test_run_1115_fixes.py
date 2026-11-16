@@ -61,7 +61,7 @@ def test_coder_answer_that_only_touches_a_test_is_refused_with_the_reason(tmp_pa
     orch = _orch(tmp_path)
     (orch.workspace_dir / "test_experiment.py").write_text(TEST, encoding="utf-8")
 
-    with pytest.raises(MaterializationError, match="należą do testera"):
+    with pytest.raises(MaterializationError, match="belong to the tester"):
         orch._materialize_workspace_artifact(
             "experiment.py",
             {"ast_edits": [{"symbol": "test_x", "file": "test_experiment.py", "code": "def test_x() -> None:\n    pass\n"}]},
@@ -132,11 +132,11 @@ def test_ast_edits_on_a_document_and_malformed_elements_get_a_clear_reason(tmp_p
     orch = _orch(tmp_path)
     (orch.workspace_dir / "thesis.md").write_text("# Praca\n", encoding="utf-8")
 
-    with pytest.raises(MaterializationError, match=r"tylko dla plików \.py.*'sections'"):
+    with pytest.raises(MaterializationError, match=r"only for \.py files.*'sections'"):
         orch._materialize_workspace_artifact(
             "thesis.md", {"ast_edits": [{"symbol": "LastSection", "file": "thesis.md", "code": "## X\ntekst\n"}]}
         )
-    with pytest.raises(MaterializationError, match=r"bez wymaganego 'symbol' albo 'code'.*\['content', 'name'\]"):
+    with pytest.raises(MaterializationError, match=r"without the required 'symbol' or 'code'.*\['content', 'name'\]"):
         orch._materialize_workspace_artifact("a.py", {"ast_edits": [{"name": "f", "content": "def f(): pass"}]})
 
 

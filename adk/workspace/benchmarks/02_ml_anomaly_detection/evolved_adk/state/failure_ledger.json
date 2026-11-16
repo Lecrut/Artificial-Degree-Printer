@@ -1,455 +1,712 @@
 {
   "failures": [
     {
-      "agent": "seed_tester",
-      "context": "{\"pattern\": {\"category\": \"pytest:fail\", \"occurrences\": 2, \"tasks\": [\"T11\", \"T12\"], \"examples\": [\"Pytest failure: =================================== ERRORS ====================================\\n_ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/test_config.py _\\nImportError while importing test module 'D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\test_config.py'.\\nHint: make s\", \"Pytest failure: =================================== ERRORS ====================================\\n_ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_config.py _\\nimport file mismatch:\\nimported module 'test_config' has this __file__ attribute:\\n  D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_d\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_config.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: =================================== ERRORS ====================================\\n_ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_config.py _\\nimport file mismatch:\\nimported module 'test_config' has this __file__ attribute:\\n  D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\test_config.py\\nwhich is not the same as the test file we want to collect:\\n  D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\tests\\\\test_config.py\\nHINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules\\n_ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_data_generator.py _\\nIn adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_data_generator.py::test_signal_config_dimensions: function uses no argument 'sample_length'\\n=========================== short test summary info ===========================\\nERROR tests\\\\test_config.py\\nERROR tests\\\\test_data_generator.py - Failed: In adk/workspace/benchmarks/_evo...\\n!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!\\n2 errors in 0.15s\", \"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\tests\\\\test_config.py:14:24: F821 Undefined name `Hyperparameters`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\tests\\\\test_config.py:15:23: F821 Undefined name `Hyperparameters`\\nFound 2 errors.\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 6, \"cycle_index\": 13, \"task_id\": \"T12\", \"target_node\": \"n15\", \"suggested_rule\": \"Zadanie T12 na węźle n15 (tests/test_data_generator.py) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
-      "injected_rule": "When writing tests for a module that is imported by other files in the package, place the test file outside the directory containing the source code or use a unique module name to prevent Python's import cache from conflating the test script with the production module, because pytest collection will fail on import file mismatches."
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"contract\", \"occurrences\": 2, \"tasks\": [\"T6\", \"T9\"], \"examples\": [\"Import contract violation: src/data_generator.py imports CHANNELS, NOISE_LEVELS, ANOMALY_RATE, DATA_DIR from src/config.py, which that module does not define. Available in src/config.py: List, get_anomaly_rate, get_channels, get_data_dir, get_ensemble_size, get_n_repetitions, get_noise_levels, get_results_dir, get_seeds, get_test_split, os.\", \"Import contract violation: src/data_generator.py imports CHANNELS, NOISE_LEVELS, ANOMALY_RATE, DATA_DIR from src/config.py, which that module does not define. Available in src/config.py: List, get_anomaly_rate, get_channels, get_data_dir, get_ensemble_size, get_n_repetitions, get_noise_levels, get_results_dir, get_seeds, get_test_split, os.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/data_generator.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Import contract violation: src/data_generator.py imports CHANNELS, NOISE_LEVELS, ANOMALY_RATE, DATA_DIR from src/config.py, which that module does not define. Available in src/config.py: List, get_anomaly_rate, get_channels, get_data_dir, get_ensemble_size, get_n_repetitions, get_noise_levels, get_results_dir, get_seeds, get_test_split, os.\", \"Import error in data_generator.py: Traceback (most recent call last):\\n  File \\\"<string>\\\", line 1, in <module>\\n    import src.data_generator\\n  File \\\"D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\src\\\\data_generator.py\\\", line 6, in <module>\\n    from src.config import CHANNELS, NOISE_LEVELS, ANOMALY_RATE, DATA_DIR\\nImportError: cannot import name 'CHANNELS' from 'src.config' (D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\src\\\\config.py)\", \"Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\\n_______________________________________________________________________________________ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_data_generator.py _______________________________________________________________________________________\\nImportError while importing test module 'D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\tests\\\\test_data_generator.py'.\\nHint: make sure your test modules/packages have valid Python names.\\nTraceback:\\ntests\\\\test_data_generator.py:3: in <module>\\n    from src.data_generator import generate_sample, generate_dataset\\nsrc\\\\data_generator.py:6: in <module>\\n    from src.config import CHANNELS, NOISE_LEVELS, ANOMALY_RATE, DATA_DIR\\nE   ImportError: cannot import name 'CHANNELS' from 'src.config' (D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\src\\\\config.py)\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nERROR tests\\\\test_data_generator.py\\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\\n1 error in 0.13s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 6, \"cycle_index\": 12, \"task_id\": \"T9\", \"target_node\": \"n14\", \"suggested_rule\": \"Task T9 on node n14 (tests/test_data_generator.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When importing symbols from a target module, verify their existence in the module's actual interface (contract) before writing the import statement, because assuming symbol names based on naming conventions or logical expectations leads to runtime errors when the target module uses different exports."
     },
     {
       "agent": "seed_writer",
-      "context": "{\"pattern\": {\"category\": \"generic\", \"occurrences\": 2, \"tasks\": [\"Q1_CH2\", \"T4\"], \"examples\": [\"Unresolved pointer: ref_ast{file:symbol} (Source file 'file' does not exist)\", \"Unresolved pointer: \\\\ref_ast{<file>:<symbol>}\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"thesis.md\", \"failed_agent\": \"seed_writer\", \"issues\": [\"File referenced but not found on disk:\", \"Citation key 'carter2014' not found in workspace .bib files.\", \"Citation key 'chen2021' not found in workspace .bib files.\"]}, \"failed_agent\": \"seed_writer\", \"agent_failure_count\": 6, \"cycle_index\": 47, \"task_id\": \"Q1_CH2\", \"target_node\": \"n8\", \"suggested_rule\": \"Zadanie Q1_CH2 na węźle n8 (thesis.md) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
-      "injected_rule": "When generating academic text that requires citations or cross-references, strictly verify the existence of the target file in the workspace filesystem and the presence of the citation key in available .bib files before writing, because unresolved pointers and missing references break document compilation."
+      "context": "{\"pattern\": {\"category\": \"document\", \"occurrences\": 2, \"tasks\": [\"Q1_CH2\", \"T4\"], \"examples\": [\"File 'src' does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\\\ref_ast{src/data_generator.py:generate_dataset}.\", \"File 'src' does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\\\ref_ast{src/data_generator.py:generate_dataset}.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"thesis.md\", \"failed_agent\": \"seed_writer\", \"issues\": [\"File 'src' does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\\\ref_ast{src/data_generator.py:generate_dataset}.\", \"File 'src' does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\\\ref_ast{src/methods\\\\baselinescore.py:ZScoreBaseline}.\", \"File 'src' does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\\\ref_ast{src/methods\\\\robust_ensemble.py:RobustEnsemble}.\"]}, \"failed_agent\": \"seed_writer\", \"agent_failure_count\": 6, \"cycle_index\": 33, \"task_id\": \"Q1_CH2\", \"target_node\": \"n13\", \"suggested_rule\": \"Task Q1_CH2 on node n13 (thesis.md) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When constructing cross-references to code files, ensure the path strictly points to a file (ending in an extension) rather than a directory or containing backslashes, because LaTeX resolution fails if the pointer targets a non-existent file."
     },
     {
       "agent": "seed_tester",
-      "context": "{\"pattern\": {\"category\": \"pytest:Failed\", \"occurrences\": 3, \"tasks\": [\"Q1_FIX4\", \"Q2_FIX2\", \"Q4_FIX1\"], \"examples\": [\"Pytest failure: =================================== ERRORS ====================================\\n_ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_data_generator.py _\\nIn adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_data_generator.py::test_anomaly_config_defaults: function uses no argument 'types'\\n=\", \"Pytest failure: =================================== ERRORS ====================================\\n_ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_data_generator.py _\\nIn adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_data_generator.py::test_anomaly_config_defaults: function uses no argument 'types'\\n=\", \"Pytest failure: .FF                                                                      [100%]\\n================================== FAILURES ===================================\\n_______________________ test_generate_plots_saves_file ________________________\\ntests\\\\test_plot_results.py:35: in test_generate_plots_saves_file\\n    paths = generate_plots(output_dir=output_dir)\\n            ^^^^^^^^^^^^^^^^^\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_plot_results.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: .FF                                                                      [100%]\\n================================== FAILURES ===================================\\n_______________________ test_generate_plots_saves_file ________________________\\ntests\\\\test_plot_results.py:35: in test_generate_plots_saves_file\\n    paths = generate_plots(output_dir=output_dir)\\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nplot_results.py:27: in generate_plots\\n    methods = df.groupby('method')['mean_f1_score'].mean().sort_values(ascending=True).index\\n              ^^^^^^^^^^^^^^^^^^^^\\n..\\\\..\\\\..\\\\..\\\\..\\\\..\\\\.venv\\\\Lib\\\\site-packages\\\\pandas\\\\util\\\\_decorators.py:335: in wrapper\\n    return func(*args, **kwargs)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n..\\\\..\\\\..\\\\..\\\\..\\\\..\\\\.venv\\\\Lib\\\\site-packages\\\\pandas\\\\core\\\\frame.py:13788: in groupby\\n    return DataFrameGroupBy(\\n..\\\\..\\\\..\\\\..\\\\..\\\\..\\\\.venv\\\\Lib\\\\site-packages\\\\pandas\\\\core\\\\groupby\\\\groupby.py:849: in __init__\\n    grouper, exclusions, obj = get_grouper(\\n..\\\\..\\\\..\\\\..\\\\..\\\\..\\\\.venv\\\\Lib\\\\site-packages\\\\pandas\\\\core\\\\groupby\\\\grouper.py:925: in get_grouper\\n    raise KeyError(gpr)\\nE   KeyError: 'method'\\n\\nDuring handling of the above exception, another exception occurred:\\ntests\\\\test_plot_results.py:42: in test_generate_plots_saves_file\\n    pytest.fail(f\\\"generate_plots raised an exception: {e}\\\")\\nE   Failed: generate_plots raised an exception: 'method'\\n__________________ test_generate_plots_handles_missing_cols ___________________\\ntests\\\\test_plot_results.py:52: in test_generate_plots_handles_missing_cols\\n    generate_plots(output_dir=str(tmp_path))\\nplot_results.py:27: in generate_plots\\n    methods = df.groupby('method')['mean_f1_score'].mean().sort_values(ascending=True).index\\n              ^^^^^^^^^^^^^^^^^^^^\\n..\\\\..\\\\..\\\\..\\\\..\\\\..\\\\.venv\\\\Lib\\\\site-packages\\\\pandas\\\\util\\\\_decorators.py:335: in wrapper\\n    return func(*args, **kwargs)\\n           ^^^^^^^^^^^^^^^^^^^^^\\n..\\\\..\\\\..\\\\..\\\\..\\\\..\\\\.venv\\\\Lib\\\\site-packages\\\\pandas\\\\core\\\\frame.py:13788: in groupby\\n    return DataFrameGroupBy(\\n..\\\\..\\\\..\\\\..\\\\..\\\\..\\\\.venv\\\\Lib\\\\site-packages\\\\pandas\\\\core\\\\groupby\\\\groupby.py:849: in __init__\\n    grouper, exclusions, obj = get_grouper(\\n..\\\\..\\\\..\\\\..\\\\..\\\\..\\\\.venv\\\\Lib\\\\site-packages\\\\pandas\\\\core\\\\groupby\\\\grouper.py:925: in get_grouper\\n    raise KeyError(gpr)\\nE   KeyError: 'method'\\n=========================== short test summary info ===========================\\nFAILED tests\\\\test_plot_results.py::test_generate_plots_saves_file - Failed: g...\\nFAILED tests\\\\test_plot_results.py::test_generate_plots_handles_missing_cols\\n2 failed, 1 passed in 0.81s\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 36, \"cycle_index\": 66, \"task_id\": \"Q4_FIX1\", \"target_node\": \"n12\", \"suggested_rule\": \"Zadanie Q4_FIX1 na węźle n12 (tests/test_config.py) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
-      "injected_rule": "When generating tests for code that uses data processing libraries, construct the test fixtures to strictly guarantee the existence of all required columns and keys within the input data structures, because runtime KeyErrors indicate a mismatch between test data schema and implementation dependencies."
+      "context": "{\"pattern\": {\"category\": \"pytest:NameError\", \"occurrences\": 2, \"tasks\": [\"Q2_FIX2\", \"T11\"], \"examples\": [\"Pytest failure: .FF                                                                                                                                                                                                                                                                                                  [100%]\\n====================================================================================\", \"Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\\n____________________________________________________________________________________\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_baseline_zscore.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\\n______________________________________________________________________________________ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_baseline_zscore.py _______________________________________________________________________________________\\ntests\\\\test_baseline_zscore.py:21: in <module>\\n    assert isinstance(result, DetectionResult)\\n                      ^^^^^^\\nE   NameError: name 'result' is not defined\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nERROR tests\\\\test_baseline_zscore.py - NameError: name 'result' is not defined\\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\\n1 error in 0.13s\", \"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\tests\\\\test_baseline_zscore.py:21:19: F821 Undefined name `result`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\tests\\\\test_baseline_zscore.py:22:19: F821 Undefined name `result`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\tests\\\\test_baseline_zscore.py:23:19: F821 Undefined name `result`\\nFound 3 errors.\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 5, \"cycle_index\": 39, \"task_id\": \"Q2_FIX2\", \"target_node\": \"n15\", \"suggested_rule\": \"Task Q2_FIX2 on node n15 (tests/test_baseline_zscore.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When defining test cases, ensure all variables used in assertions or expressions are explicitly assigned within the test scope before they are referenced, because undefined names cause collection errors that prevent the test from running."
+    },
+    {
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"pytest:NameError\", \"occurrences\": 2, \"tasks\": [\"Q1_FIX4\", \"Q2_FIX3\"], \"examples\": [\"Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\\n____________________________________________________________________________________\", \"Pytest failure: FFFF                                                                                                                                                                                                                                                                                                 [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/data_generator.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: FFFF                                                                                                                                                                                                                                                                                                 [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_______________________________________________________________________________________________________________________________________ test_generate_sample_shape ________________________________________________________________________________________________________________________________________\\ntests\\\\test_data_generator.py:16: in test_generate_sample_shape\\n    sample = generate_sample(channel, noise_level, anomaly_rate, seed)\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nsrc\\\\data_generator.py:20: in generate_sample\\n    n_channels = len(get_channels())\\n                     ^^^^^^^^^^^^\\nE   NameError: name 'get_channels' is not defined\\n_______________________________________________________________________________________________________________________________________ test_generate_sample_labels _______________________________________________________________________________________________________________________________________\\ntests\\\\test_data_generator.py:31: in test_generate_sample_labels\\n    sample = generate_sample(channel, noise_level, anomaly_rate, seed)\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nsrc\\\\data_generator.py:20: in generate_sample\\n    n_channels = len(get_channels())\\n                     ^^^^^^^^^^^^\\nE   NameError: name 'get_channels' is not defined\\n__________________________________________________________________________________________________________________________________ test_generate_sample_anomaly_indices ___________________________________________________________________________________________________________________________________\\ntests\\\\test_data_generator.py:44: in test_generate_sample_anomaly_indices\\n    sample = generate_sample(channel, noise_level, anomaly_rate, seed)\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nsrc\\\\data_generator.py:20: in generate_sample\\n    n_channels = len(get_channels())\\n                     ^^^^^^^^^^^^\\nE   NameError: name 'get_channels' is not defined\\n_____________________________________________________________________________________________________________________________________ test_generate_dataset_structure _____________________________________________________________________________________________________________________________________\\ntests\\\\test_data_generator.py:56: in test_generate_dataset_structure\\n    dataset = generate_dataset(channels, noise_levels, n_samples, seeds)\\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nsrc\\\\data_generator.py:60: in generate_dataset\\n    sample = generate_sample(channel=channel_id, noise_level=noise_factor, anomaly_rate=anomaly_rate, seed=int(sample_rng.integers(0, 2 ** 31)))\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nsrc\\\\data_generator.py:20: in generate_sample\\n    n_channels = len(get_channels())\\n                     ^^^^^^^^^^^^\\nE   NameError: name 'get_channels' is not defined\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_data_generator.py::test_generate_sample_shape - NameError: name 'get_channels' is not defined\\nFAILED tests\\\\test_data_generator.py::test_generate_sample_labels - NameError: name 'get_channels' is not defined\\nFAILED tests\\\\test_data_generator.py::test_generate_sample_anomaly_indices - NameError: name 'get_channels' is not defined\\nFAILED tests\\\\test_data_generator.py::test_generate_dataset_structure - NameError: name 'get_channels' is not defined\\n4 failed in 0.10s\", \"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\src\\\\data_generator.py:20:22: F821 Undefined name `get_channels`\\nFound 1 error.\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 28, \"cycle_index\": 42, \"task_id\": \"Q2_FIX3\", \"target_node\": \"n14\", \"suggested_rule\": \"Task Q2_FIX3 on node n14 (tests/test_data_generator.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When a name error occurs for a function or variable, verify whether the symbol is defined locally, imported from another module, or part of a class interface, and explicitly add the required import statement or assignment because undefined symbols must be resolved before execution."
     }
   ],
   "category_log": [
     {
       "cycle": 1,
-      "agent": "seed_coder",
-      "category": "generic",
+      "agent": "dyn_anomaly_ml_specialist",
+      "category": "ImportError",
       "task_id": "SKELETON"
     },
     {
       "cycle": 2,
-      "agent": "seed_writer",
+      "agent": "dyn_anomaly_ml_specialist",
       "category": "generic",
-      "task_id": "T4"
+      "task_id": "SKELETON"
     },
     {
       "cycle": 3,
-      "agent": "seed_writer",
+      "agent": "dyn_anomaly_ml_specialist",
       "category": "generic",
-      "task_id": "T4"
+      "task_id": "SKELETON"
     },
     {
       "cycle": 4,
       "agent": "seed_writer",
-      "category": "generic",
+      "category": "document",
       "task_id": "T4"
     },
     {
       "cycle": 5,
-      "agent": "seed_coder",
-      "category": "contract",
-      "task_id": "T7"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T4"
     },
     {
       "cycle": 6,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T7"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T4"
     },
     {
       "cycle": 7,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T7"
+      "category": "contract",
+      "task_id": "T6"
     },
     {
       "cycle": 8,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T11"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "T6"
     },
     {
       "cycle": 9,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T11"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "T6"
     },
     {
       "cycle": 10,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "T11"
+      "agent": "seed_coder",
+      "category": "pytest:ImportError",
+      "task_id": "T9"
     },
     {
       "cycle": 11,
-      "agent": "seed_tester",
-      "category": "generic",
-      "task_id": "T12"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "T9"
     },
     {
       "cycle": 12,
-      "agent": "seed_tester",
-      "category": "pytest:TypeError",
-      "task_id": "T12"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "T9"
     },
     {
       "cycle": 13,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T12"
+      "agent": "seed_coder",
+      "category": "pytest:AssertionError",
+      "task_id": "T10"
     },
     {
       "cycle": 14,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T13"
+      "agent": "seed_coder",
+      "category": "pytest:ValueError",
+      "task_id": "T10"
     },
     {
       "cycle": 15,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T13"
+      "agent": "seed_coder",
+      "category": "harness",
+      "task_id": "T10"
     },
     {
       "cycle": 16,
       "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T13"
+      "category": "pytest:NameError",
+      "task_id": "T11"
     },
     {
       "cycle": 17,
       "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T14"
+      "category": "harness",
+      "task_id": "T11"
     },
     {
       "cycle": 18,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T14"
+      "agent": "seed_coder",
+      "category": "pytest:NotImplementedError",
+      "task_id": "T11"
     },
     {
       "cycle": 19,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T14"
+      "agent": "seed_coder",
+      "category": "harness",
+      "task_id": "Q1_FIX1"
     },
     {
       "cycle": 20,
-      "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "T15"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q1_FIX1"
     },
     {
       "cycle": 21,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T15"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q1_FIX1"
     },
     {
       "cycle": 22,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T15"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q1_FIX2"
     },
     {
       "cycle": 23,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T17"
+      "category": "contract",
+      "task_id": "Q1_FIX2"
     },
     {
       "cycle": 24,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T17"
+      "category": "harness",
+      "task_id": "Q1_FIX2"
     },
     {
       "cycle": 25,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T17"
+      "category": "pytest:ImportError",
+      "task_id": "Q1_FIX3"
     },
     {
       "cycle": 26,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T18"
+      "category": "contract",
+      "task_id": "Q1_FIX3"
     },
     {
       "cycle": 27,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T18"
+      "category": "pytest:TypeError",
+      "task_id": "Q1_FIX3"
     },
     {
       "cycle": 28,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T18"
+      "category": "harness",
+      "task_id": "Q1_FIX4"
     },
     {
       "cycle": 29,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T16"
+      "category": "pytest:NameError",
+      "task_id": "Q1_FIX4"
     },
     {
       "cycle": 30,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T19"
+      "category": "pytest:NameError",
+      "task_id": "Q1_FIX4"
     },
     {
       "cycle": 31,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T19"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q1_CH2"
     },
     {
       "cycle": 32,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T19"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q1_CH2"
     },
     {
       "cycle": 33,
-      "agent": "seed_tester",
-      "category": "pytest:Na",
-      "task_id": "T23"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q1_CH2"
     },
     {
       "cycle": 34,
-      "agent": "seed_tester",
-      "category": "pytest:Un",
-      "task_id": "T23"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX1"
     },
     {
       "cycle": 35,
-      "agent": "seed_tester",
-      "category": "pytest:Un",
-      "task_id": "T23"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX1"
     },
     {
       "cycle": 36,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q1_FIX1"
+      "category": "contract",
+      "task_id": "Q2_FIX1"
     },
     {
       "cycle": 37,
-      "agent": "seed_coder",
-      "category": "ImportError",
-      "task_id": "Q1_FIX1"
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q2_FIX2"
     },
     {
       "cycle": 38,
-      "agent": "seed_coder",
-      "category": "ImportError",
-      "task_id": "Q1_FIX1"
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q2_FIX2"
     },
     {
       "cycle": 39,
       "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q1_FIX3"
+      "category": "pytest:NameError",
+      "task_id": "Q2_FIX2"
     },
     {
       "cycle": 40,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q1_FIX3"
+      "agent": "seed_coder",
+      "category": "pytest:AssertionError",
+      "task_id": "Q2_FIX3"
     },
     {
       "cycle": 41,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q1_FIX3"
+      "agent": "seed_coder",
+      "category": "pytest:AssertionError",
+      "task_id": "Q2_FIX3"
     },
     {
       "cycle": 42,
-      "agent": "seed_tester",
-      "category": "SyntaxError",
-      "task_id": "Q1_FIX4"
+      "agent": "seed_coder",
+      "category": "pytest:NameError",
+      "task_id": "Q2_FIX3"
     },
     {
       "cycle": 43,
       "agent": "seed_tester",
-      "category": "pytest:Failed",
-      "task_id": "Q1_FIX4"
+      "category": "pytest:NameError",
+      "task_id": "Q2_FIX4"
     },
     {
       "cycle": 44,
       "agent": "seed_tester",
-      "category": "SyntaxError",
-      "task_id": "Q1_FIX4"
+      "category": "pytest:NameError",
+      "task_id": "Q2_FIX4"
     },
     {
       "cycle": 45,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q1_CH2"
+      "agent": "seed_tester",
+      "category": "pytest:ModuleNotFoundError",
+      "task_id": "Q2_FIX4"
     },
     {
       "cycle": 46,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q1_CH2"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX5"
     },
     {
       "cycle": 47,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q1_CH2"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX5"
     },
     {
       "cycle": 48,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q1_FIX_plot_results_11"
+      "category": "contract",
+      "task_id": "Q2_FIX5"
     },
     {
       "cycle": 49,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q2_FIX1"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX6"
     },
     {
       "cycle": 50,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q2_FIX1"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX6"
     },
     {
       "cycle": 51,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q2_FIX1"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX6"
     },
     {
       "cycle": 52,
-      "agent": "seed_tester",
-      "category": "pytest:Failed",
-      "task_id": "Q2_FIX2"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX7"
     },
     {
       "cycle": 53,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q2_FIX2"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX7"
     },
     {
       "cycle": 54,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q2_FIX2"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX7"
     },
     {
       "cycle": 55,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q2_CH4"
+      "agent": "seed_coder",
+      "category": "ImportError",
+      "task_id": "Q2_FIX8"
     },
     {
       "cycle": 56,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q2_CH4"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX9"
     },
     {
       "cycle": 57,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q2_CH4"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX9"
     },
     {
       "cycle": 58,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q3_FIX1"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q2_FIX9"
     },
     {
       "cycle": 59,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "Q3_FIX1"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q2_CH3"
     },
     {
       "cycle": 60,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "Q3_FIX1"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q2_CH3"
     },
     {
       "cycle": 61,
       "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q3_CH5"
+      "category": "document",
+      "task_id": "Q2_CH3"
     },
     {
       "cycle": 62,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q3_CH5"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX1"
     },
     {
       "cycle": 63,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q3_CH5"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX1"
     },
     {
       "cycle": 64,
-      "agent": "seed_tester",
-      "category": "SyntaxError",
-      "task_id": "Q4_FIX1"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX1"
     },
     {
       "cycle": 65,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "Q4_FIX1"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX2"
     },
     {
       "cycle": 66,
-      "agent": "seed_tester",
-      "category": "pytest:Failed",
-      "task_id": "Q4_FIX1"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX2"
     },
     {
       "cycle": 67,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q4_CH6"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX2"
     },
     {
       "cycle": 68,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q4_CH6"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX3"
     },
     {
       "cycle": 69,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX3"
+    },
+    {
+      "cycle": 70,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX3"
+    },
+    {
+      "cycle": 71,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX4"
+    },
+    {
+      "cycle": 72,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX4"
+    },
+    {
+      "cycle": 73,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX4"
+    },
+    {
+      "cycle": 74,
+      "agent": "seed_coder",
+      "category": "pytest:ImportError",
+      "task_id": "Q3_FIX5"
+    },
+    {
+      "cycle": 75,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX5"
+    },
+    {
+      "cycle": 76,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX5"
+    },
+    {
+      "cycle": 77,
+      "agent": "seed_tester",
+      "category": "pytest:ModuleNotFoundError",
+      "task_id": "Q3_FIX6"
+    },
+    {
+      "cycle": 78,
+      "agent": "seed_tester",
+      "category": "pytest:ModuleNotFoundError",
+      "task_id": "Q3_FIX6"
+    },
+    {
+      "cycle": 79,
+      "agent": "seed_tester",
+      "category": "pytest:ModuleNotFoundError",
+      "task_id": "Q3_FIX6"
+    },
+    {
+      "cycle": 80,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX7"
+    },
+    {
+      "cycle": 81,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX7"
+    },
+    {
+      "cycle": 82,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q3_FIX7"
+    },
+    {
+      "cycle": 83,
       "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q4_CH6"
+      "category": "document",
+      "task_id": "Q3_CH4"
+    },
+    {
+      "cycle": 84,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q3_CH4"
+    },
+    {
+      "cycle": 85,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q3_CH4"
+    },
+    {
+      "cycle": 86,
+      "agent": "seed_tester",
+      "category": "harness",
+      "task_id": "Q3_FIX_robust_ensemble_12"
+    },
+    {
+      "cycle": 87,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX1"
+    },
+    {
+      "cycle": 88,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX1"
+    },
+    {
+      "cycle": 89,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX1"
+    },
+    {
+      "cycle": 90,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX2"
+    },
+    {
+      "cycle": 91,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX2"
+    },
+    {
+      "cycle": 92,
+      "agent": "seed_coder",
+      "category": "harness",
+      "task_id": "Q4_FIX2"
+    },
+    {
+      "cycle": 93,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX3"
+    },
+    {
+      "cycle": 94,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX3"
+    },
+    {
+      "cycle": 95,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX3"
+    },
+    {
+      "cycle": 96,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX4"
+    },
+    {
+      "cycle": 97,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX4"
+    },
+    {
+      "cycle": 98,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX4"
+    },
+    {
+      "cycle": 99,
+      "agent": "seed_coder",
+      "category": "pytest:ModuleNotFoundError",
+      "task_id": "Q4_FIX5"
+    },
+    {
+      "cycle": 100,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX5"
+    },
+    {
+      "cycle": 101,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX5"
+    },
+    {
+      "cycle": 102,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q4_CH5"
+    },
+    {
+      "cycle": 103,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q4_CH5"
+    },
+    {
+      "cycle": 104,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q4_CH5"
+    },
+    {
+      "cycle": 105,
+      "agent": "seed_coder",
+      "category": "pytest:ModuleNotFoundError",
+      "task_id": "Q4_FIX_config_8"
+    },
+    {
+      "cycle": 106,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX_config_8"
+    },
+    {
+      "cycle": 107,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX_config_8"
+    },
+    {
+      "cycle": 108,
+      "agent": "seed_coder",
+      "category": "pytest:ModuleNotFoundError",
+      "task_id": "Q4_FIX_robust_ensemble_9"
+    },
+    {
+      "cycle": 109,
+      "agent": "seed_coder",
+      "category": "harness",
+      "task_id": "Q4_FIX_robust_ensemble_9"
+    },
+    {
+      "cycle": 110,
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "Q4_FIX_robust_ensemble_9"
     }
   ],
   "rules": [
     {
-      "agent": "seed_tester",
-      "rule": "When writing tests for a module that is imported by other files in the package, place the test file outside the directory containing the source code or use a unique module name to prevent Python's import cache from conflating the test script with the production module, because pytest collection will fail on import file mismatches.",
-      "category": "pytest:fail",
-      "cycle": 13
+      "agent": "seed_coder",
+      "rule": "When importing symbols from a target module, verify their existence in the module's actual interface (contract) before writing the import statement, because assuming symbol names based on naming conventions or logical expectations leads to runtime errors when the target module uses different exports.",
+      "category": "contract",
+      "cycle": 12
     },
     {
       "agent": "seed_writer",
-      "rule": "When generating academic text that requires citations or cross-references, strictly verify the existence of the target file in the workspace filesystem and the presence of the citation key in available .bib files before writing, because unresolved pointers and missing references break document compilation.",
-      "category": "generic",
-      "cycle": 47
+      "rule": "When constructing cross-references to code files, ensure the path strictly points to a file (ending in an extension) rather than a directory or containing backslashes, because LaTeX resolution fails if the pointer targets a non-existent file.",
+      "category": "document",
+      "cycle": 33
     },
     {
       "agent": "seed_tester",
-      "rule": "When generating tests for code that uses data processing libraries, construct the test fixtures to strictly guarantee the existence of all required columns and keys within the input data structures, because runtime KeyErrors indicate a mismatch between test data schema and implementation dependencies.",
-      "category": "pytest:Failed",
-      "cycle": 66
+      "rule": "When defining test cases, ensure all variables used in assertions or expressions are explicitly assigned within the test scope before they are referenced, because undefined names cause collection errors that prevent the test from running.",
+      "category": "pytest:NameError",
+      "cycle": 39
+    },
+    {
+      "agent": "seed_coder",
+      "rule": "When a name error occurs for a function or variable, verify whether the symbol is defined locally, imported from another module, or part of a class interface, and explicitly add the required import statement or assignment because undefined symbols must be resolved before execution.",
+      "category": "pytest:NameError",
+      "cycle": 42
     }
   ]
 }

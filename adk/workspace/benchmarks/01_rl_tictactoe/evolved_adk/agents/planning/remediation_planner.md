@@ -23,7 +23,7 @@ Names written as `<...>` below are placeholders, never values to copy.
    - describe the behaviour to fix and name the existing symbol. Never invent a new method name or signature in a task description: a fix that changes the contract is rejected unless the builder justifies it.
    - Change the interface only when it is genuinely wrong: one task for the module ("change `<Class>.<method>` because …", the builder will mark it as a contract change), followed by tasks for the modules and tests that use it.
 4. **One owner per file**: code modules belong to `seed_coder`, `test_*.py` files to `seed_tester`, `thesis.md` to `seed_writer`. One task per file; never ask one role to rewrite another role's file.
-5. **A hung test** ("test zawiesił się"): the stack shows where it loops. Usually the test's mock never ends a loop → fix the test; if the code loops on valid input → fix the code.
+5. **A hung test** ("a test hung"): the stack shows where it loops. Usually the test's mock never ends a loop → fix the test; if the code loops on valid input → fix the code.
 6. **Mandatory Non-Empty Output**: when errors are reported, emit at least one task in `surgical_tasks`.
 7. **Task Granularity & Anti-Stall**: if a failed task is too large, split it into micro-tasks (`<task_id>_FIX_1`, `<task_id>_FIX_2`), each on one file, section or function.
 

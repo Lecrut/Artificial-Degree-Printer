@@ -3,6 +3,7 @@ budget, and a rule that did not lower its failure category is dropped (§IV.6.3 
 
 from __future__ import annotations
 
+from adk.orchestration import agent_texts as texts
 from adk.orchestration.common import _issue_category
 from adk.tools.evolution.agent_mutator import _effective_rules, _fit_invariants, rule_rejection_reason
 
@@ -23,7 +24,7 @@ def test_rules_from_the_2026_11_13_run_are_rejected() -> None:
 def test_a_way_of_working_passes_but_its_near_copy_does_not() -> None:
     assert rule_rejection_reason(GOOD, {"tictoc_game"}, []) is None
     near_copy = GOOD.replace("take its name", "always take the name")
-    assert "powtarza" in str(rule_rejection_reason(near_copy, set(), [GOOD]))
+    assert "repeats" in str(rule_rejection_reason(near_copy, set(), [GOOD]))
 
 
 def test_failure_category_ignores_the_file() -> None:
@@ -36,12 +37,12 @@ def test_failure_category_ignores_the_file() -> None:
 def test_every_gate_rejection_wrapper_is_harness_not_generic_and_outweighs_quoted_errors() -> None:
     """§VI.9 P2: two of the three builder-exception wrappers fell into `generic` (2026-11-14)."""
     for wrapper in (
-        "Wyjątek wykonania zadania T3 na węźle n2 (a.py): Zapis odrzucony: zmienia publiczne sygnatury",
-        "Wyjątek szybkiej naprawy T3_FIX1 na pliku a.py: Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano)",
-        "Wyjątek zadania naprawczego T3_FIX na węźle n2 (a.py): Kod nie parsuje się; a.py:3: invalid syntax",
+        texts.task_exception("T3", "n2", "a.py", texts.contract_breach(["a.py: f(x) -> f(y)"], "")),
+        texts.fast_repair_exception("T3_FIX1", "a.py", texts.symbol_edits_rejected(["a.py:f: SyntaxError"])),
+        texts.repair_task_exception("T3_FIX", "n2", "a.py", texts.unparsable_code(["a.py:3: invalid syntax"])),
     ):
         assert _issue_category([wrapper]) == "harness", wrapper
-    assert _issue_category(["Naruszenie kontraktu importu: env.py importuje TicTacToe z game.py"]) == "contract"
+    assert _issue_category(["Import contract violation: env.py imports TicTacToe from game.py"]) == "contract"
     assert _issue_category(["Unresolved pointer: \\ref_ast{x.py:Y} (Source file 'x.py' does not exist)"]) == "document"
 
 

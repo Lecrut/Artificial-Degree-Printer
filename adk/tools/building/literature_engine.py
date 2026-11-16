@@ -22,9 +22,6 @@ from adk.mocks.paper_catalogs import (
 )
 
 
-
-
-
 def extract_paper_card_from_abstract(
     title: str,
     abstract: str,
@@ -343,24 +340,6 @@ def search_arxiv(
         _add_card(item)
 
     return results[:max_results]
-
-
-def fetch_live_or_curated_papers(
-    query_or_task_id: str,
-    stage: str | None = None,
-    max_results: int = 36,
-    attempt_live_network: bool = False,
-) -> list[dict[str, Any]]:
-    """Unified literature fetcher: returns curated domain cards for known benchmarks, or queries live arXiv+OpenAlex + fallback."""
-    if query_or_task_id in DOMAIN_CATALOG_MAP and not attempt_live_network:
-        return get_domain_papers(query_or_task_id, stage=stage)[:max_results]
-    return search_arxiv(
-        query=query_or_task_id,
-        max_results=max_results,
-        task_id=query_or_task_id if query_or_task_id in DOMAIN_CATALOG_MAP else None,
-        stage=stage,
-        attempt_live_network=attempt_live_network,
-    )
 
 
 def _resolve_catalog(task_id: str | None = None, query: str = "") -> list[dict[str, Any]]:

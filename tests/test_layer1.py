@@ -241,7 +241,6 @@ def test_paper_card_extraction_and_arxiv_openalex_parsers():
         _parse_openalex_json,
         _reconstruct_openalex_abstract,
         extract_paper_card_from_abstract,
-        fetch_live_or_curated_papers,
         format_bibtex,
     )
 
@@ -300,9 +299,6 @@ def test_paper_card_extraction_and_arxiv_openalex_parsers():
     assert len(oa_cards) == 1
     assert oa_cards[0]["venue"] == "IEEE JBHI"
     assert "96.5%" in oa_cards[0]["reported_metrics"]
-
-    curated = fetch_live_or_curated_papers("01_rl_tictactoe", stage="background", attempt_live_network=False)
-    assert len(curated) >= 20
 
 
 def test_dynamic_toc_subsection_injection_into_thesis_mock_expander(tmp_path: Path):

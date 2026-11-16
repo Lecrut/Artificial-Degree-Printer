@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
 from adk.tools.building import (
     edit_document_section,
@@ -45,18 +46,18 @@ class RecoveryMixin:
                 tasks.append(
                     {
                         "task_id": f"{prefix}_FIX{idx}",
-                        "description": f"Napraw plik {rel}. Błędy: {'; '.join(errs)}",
+                        "description": texts.fix_file_task(rel, errs),
                         "target_node": rel,
                         "assigned_agent": _agent_for_path(rel),
                         "status": "TODO",
                     }
                 )
             if unlocated or not by_file:
-                detail = "; ".join(unlocated) or "pytest nie przechodzi"
+                detail = "; ".join(unlocated) or texts.PYTEST_FAILS
                 tasks.append(
                     {
                         "task_id": f"{prefix}_CODE",
-                        "description": f"Napraw kod tak, żeby testy przeszły. Błędy bez wskazanego pliku: {detail}",
+                        "description": texts.fix_code_task(detail),
                         "target_node": self._role_file("core"),
                         "assigned_agent": "seed_coder",
                         "status": "TODO",
@@ -67,7 +68,7 @@ class RecoveryMixin:
             tasks.append(
                 {
                     "task_id": f"{prefix}_RESULTS",
-                    "description": "Eksperyment nie wyprodukował pliku wyników. Popraw kod tak, żeby punkt wejścia eksperymentu zapisywał wyniki.",
+                    "description": texts.RESULTS_TASK,
                     "target_node": self._role_file("core"),
                     "assigned_agent": "seed_coder",
                     "status": "TODO",
@@ -77,7 +78,7 @@ class RecoveryMixin:
             tasks.append(
                 {
                     "task_id": f"{prefix}_CH{number}",
-                    "description": f"Napisz Rozdział {number} w thesis.md. Zastąp sekcję, nie doklejaj drugiej kopii.",
+                    "description": texts.write_chapter_task(number),
                     "target_node": THESIS_FILE,
                     "assigned_agent": "seed_writer",
                     "status": "TODO",
@@ -87,6 +88,14 @@ class RecoveryMixin:
         # (claims, numbers, contradictions in the text) go to the writer, each with its own id. Findings that
         # still stand when the budget runs out are listed as gaps (see _finalize_with_gaps), never dropped.
         handled = {err for errs in by_file.values() for err in errs}
+        # While the code fails or has written no results, a pointer to results cannot resolve whatever the writer
+        # does: such findings wait for green code and stay listed as gaps meanwhile (U9, 2026-11-15: every
+        # generation Q1-Q4 gave the writer CRITIC + REFS on \ref_csv while results.csv did not exist).
+        code_red = audit.get("pytest_status") != "PASS" or bool(audit.get("pytest_errors")) or not audit.get("csv_columns")
+
+        def _waits_for_results(text: str) -> bool:
+            return code_red and ("ref_csv" in text or "csv" in text.lower())
+
         known_files = [
             str(m.get("path", ""))
             for m in read_json_state(self.matrix_path).get("nodes", {}).values()
@@ -95,7 +104,7 @@ class RecoveryMixin:
         content_findings: list[str] = []
         for issue in audit.get("trigger_issues") or []:
             text = str(issue)
-            if text in handled or any(tok in text.lower() for tok in ("tectonic", "latex", "kompilacja pdf")):
+            if text in handled or _waits_for_results(text) or any(tok in text.lower() for tok in ("tectonic", "latex", "kompilacja pdf", texts.PDF_FAILED.lower())):
                 continue
             named = [p for p in known_files if re.search(rf"(?<![\w/]){re.escape(Path(p).name)}\b", text)]
             if named:
@@ -103,7 +112,7 @@ class RecoveryMixin:
                 tasks.append(
                     {
                         "task_id": f"{prefix}_FIX_{Path(target).stem}_{len(tasks) + 1}",
-                        "description": f"Napraw plik {target} zgodnie z ustaleniem weryfikacji: {text}",
+                        "description": texts.fix_finding_task(target, text),
                         "target_node": target,
                         "assigned_agent": _agent_for_path(target),
                         "status": "TODO",
@@ -111,15 +120,17 @@ class RecoveryMixin:
                 )
             else:
                 content_findings.append(text)
+        # Broken pointers and critic findings on the same thesis are one task, not two (REFS was always BLOCKED
+        # behind a failed CRITIC on the same file).
+        content_findings += [
+            str(err) for err in audit.get("symbolic_errors") or [] if not _waits_for_results(str(err)) and str(err) not in content_findings
+        ]
         if content_findings:
             numbered = "\n".join(f"[K{i}] {finding}" for i, finding in enumerate(content_findings, 1))
             tasks.append(
                 {
                     "task_id": f"{prefix}_CRITIC",
-                    "description": (
-                        "Popraw thesis.md tak, by usunąć każde z ustaleń krytyka. Odnieś się do każdego identyfikatora; "
-                        f"jeśli ustalenia nie da się usunąć, opisz je wprost jako ograniczenie pracy.\n{numbered}"
-                    ),
+                    "description": texts.critic_task(numbered),
                     "target_node": THESIS_FILE,
                     "assigned_agent": "seed_writer",
                     "status": "TODO",
@@ -131,32 +142,18 @@ class RecoveryMixin:
             tasks.append(
                 {
                     "task_id": f"{prefix}_PDF",
-                    "description": (
-                        "Kompilacja thesis.pdf nie przeszła. Popraw thesis.md i kod tak, "
-                        f"żeby LaTeX się zbudował. Log: {_clip_log(trigger_text)}"
-                    ),
-                    "target_node": THESIS_FILE,
-                    "assigned_agent": "seed_writer",
-                    "status": "TODO",
-                }
-            )
-        if audit.get("symbolic_errors"):
-            detail = "; ".join(audit["symbolic_errors"])
-            tasks.append(
-                {
-                    "task_id": f"{prefix}_REFS",
-                    "description": f"Popraw thesis.md tak, aby zostały tylko wskaźniki istniejące w plikach. Błędy: {detail}",
+                    "description": texts.pdf_task(_clip_log(trigger_text)),
                     "target_node": THESIS_FILE,
                     "assigned_agent": "seed_writer",
                     "status": "TODO",
                 }
             )
         if not tasks:
-            detail = "; ".join(audit.get("trigger_issues") or []) or "bramka końcowa nie przeszła"
+            detail = "; ".join(audit.get("trigger_issues") or []) or texts.FINAL_GATE_FAILED
             tasks.append(
                 {
                     "task_id": f"{prefix}_CLOSE",
-                    "description": f"Domykanie pracy na podstawie audytu. Do usunięcia: {detail}",
+                    "description": texts.close_task(detail),
                     "target_node": THESIS_FILE,
                     "assigned_agent": "seed_writer",
                     "status": "TODO",
@@ -258,7 +255,7 @@ class RecoveryMixin:
         tasks = self._tasks_from_audit(audit, generation + 1)
         write_json_state(self.task_queue_path, tasks)
         print(
-            f"  [NOWA KOLEJKA {generation + 1}/3] {len(tasks)} zadań z audytu, stara kolejka przerwana.",
+            f"  [NOWA KOLEJKA {generation + 1}/4] {len(tasks)} zadań z audytu, stara kolejka przerwana.",
             flush=True,
         )
         self._record_evolution_event(

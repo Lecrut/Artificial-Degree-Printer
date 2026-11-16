@@ -3,40 +3,109 @@
     {
       "type": "CONTRACT_ESTABLISHED",
       "files": [
-        "src/experiment.py",
-        "src/game_environment.py",
         "src/plot_results.py",
-        "src/q_learner.py",
-        "src/random_agent.py"
+        "src/ql_agent.py",
+        "src/run_experiment.py",
+        "src/tictactoe.py"
       ]
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T4",
-      "agent": "seed_coder",
-      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- src/config.py:40: unterminated triple-quoted string literal (detected at line 40)\n    39: ]\n    40: \"\"\""
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n7",
+        "node_id": "n5",
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
-        "degree": 3
+        "degree": 0
       }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T4_FIX1",
+      "task_id": "SKELETON_FIX1",
       "agent": "seed_coder",
-      "error": "Kod nie parsuje się; nic z tej odpowiedzi nie zapisano. Popraw wskazane miejsca i zwróć odpowiedź ponownie w tym samym formacie:\n- src/config.py:40: unterminated string literal (detected at line 40)\n    39: ]\n    40: \""
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- plot_results.py:src.plot_results.py:generate_plots: SyntaxError in new_code: unexpected character after line continuation character (plot_results.py, line 2)"
+    },
+    {
+      "type": "CONTRACT_ESTABLISHED",
+      "files": [
+        "src/plot_results.py",
+        "src/ql_agent.py",
+        "src/run_experiment.py",
+        "src/tictactoe.py"
+      ]
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n5",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "CONTRACT_ESTABLISHED",
+      "files": [
+        "src/plot_results.py",
+        "src/ql_agent.py",
+        "src/run_experiment.py",
+        "src/tictactoe.py"
+      ]
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n5",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "CONTRACT_ESTABLISHED",
+      "files": [
+        "src/plot_results.py",
+        "src/ql_agent.py",
+        "src/run_experiment.py",
+        "src/tictactoe.py"
+      ]
+    },
+    {
+      "type": "CONTRACT_ESTABLISHED",
+      "files": [
+        "src/plot_results.py",
+        "src/ql_agent.py",
+        "src/run_experiment.py",
+        "src/tictactoe.py"
+      ]
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T6",
+      "task_id": "T2",
       "agent": "seed_coder",
-      "error": "Zapis odrzucony: zmienia publiczne sygnatury ustalone w szkielecie (kontrakt między zadaniami):\n- src/game_environment.py: usunięto GameState.copy(self)\n- src/game_environment.py: usunięto GameState.apply_action(self, player, action)\nAlbo zachowaj te sygnatury i zmień tylko implementację, albo dodaj do odpowiedzi 'contract_change': {'reason': '<dlaczego API musi się zmienić>'}. Moduły, które z niego korzystają, dostosuje się w kolejnych zadaniach.\nKod tych symboli z poprzedniej wersji pliku (wklej je z powrotem):\n# src/game_environment.py: GameState.copy\ndef copy(self) -> \"GameState\":\n        \"\"\"Return a deep copy of the state.\"\"\"\n        new_state = GameState()\n        new_state.board = self.board.copy()\n        new_state.winner = self.winner\n        new_state.is_over = self.is_over\n        return new_state\n\n# src/game_environment.py: GameState.apply_action\ndef apply_action(self, player: Literal[1, 2], action: int) -> \"GameState\":\n        \"\"\"Apply a move by the given player and return the new state.\"\"\"\n        if not (0 <= action < 9):\n            raise ValueError(\"Action must be an integer between 0 and 8.\")\n        if self.board[action] != 0:\n            raise ValueError(\"Cell is not empty.\")\n\n        new_board = self.board.copy()\n        new_board[action] = player\n\n        # Check for win or draw immediately after move\n        winner = check_winner(new_board)\n        new_state = GameState(board=new_board, winner=winner)\n        new_state.is_over = new_state.winner is not None\n        return new_state"
+      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- config.py:31: unterminated triple-quoted string literal (detected at line 33)\n    30: \n    31: \"\"\"\n    32: The module defines all fixed hyperparameters, experimental budgets, and metadata required to run the experiment reproducibly."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n10",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n1",
+        "old_weight": 1.0,
+        "new_weight": 1.4,
+        "delta": 0.4,
+        "degree": 4
+      }
     },
     {
       "type": "WEIGHT_ESCALATED",
@@ -45,13 +114,23 @@
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
-        "degree": 1
+        "degree": 0
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n13",
+        "node_id": "n8",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
+        "delta": 0.4,
+        "degree": 0
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n11",
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
@@ -59,16 +138,9 @@
       }
     },
     {
-      "type": "CONTRACT_CHANGED",
-      "changes": [
-        "src/game_environment.py: RandomOpponentAgent.__init__(self) -> RandomOpponentAgent.__init__(self, board, opponent_func)"
-      ],
-      "reason": "uzupełnienie sygnatury zastępczej ze szkieletu"
-    },
-    {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n13",
+        "node_id": "n11",
         "old_weight": 1.4,
         "new_weight": 1.8,
         "delta": 0.4,
@@ -78,7 +150,7 @@
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n13",
+        "node_id": "n11",
         "old_weight": 1.8,
         "new_weight": 2.2,
         "delta": 0.4,
@@ -86,46 +158,45 @@
       }
     },
     {
-      "type": "CONTRACT_CHANGED",
-      "changes": [
-        "src/random_agent.py: RandomPlayerAgent.reset(self) -> RandomPlayerAgent.reset(self, state)"
-      ],
-      "reason": "uzupełnienie sygnatury zastępczej ze szkieletu"
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T7_FIX_1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- tictactoe.py:check_win: Provided new_code contains no AST statements."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n14",
+        "node_id": "n12",
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
-        "degree": 3
+        "degree": 1
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n14",
+        "node_id": "n12",
         "old_weight": 1.4,
         "new_weight": 1.8,
         "delta": 0.4,
-        "degree": 3
+        "degree": 1
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n14",
+        "node_id": "n12",
         "old_weight": 1.8,
         "new_weight": 2.2,
         "delta": 0.4,
-        "degree": 3
+        "degree": 1
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n9",
+        "node_id": "n6",
         "old_weight": 1.0,
         "new_weight": 1.4,
         "delta": 0.4,
@@ -133,49 +204,42 @@
       }
     },
     {
-      "type": "OFF_TARGET_WRITE",
-      "node": "results.csv",
-      "files": [
-        "tests/test_agents.py"
-      ],
-      "agent": "seed_tester",
-      "task_id": "T16"
-    },
-    {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n15",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
+        "node_id": "n6",
+        "old_weight": 1.4,
+        "new_weight": 1.8,
         "delta": 0.4,
-        "degree": 3
+        "degree": 4
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n15",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
+        "node_id": "n6",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
         "delta": 0.4,
-        "degree": 3
+        "degree": 4
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When implementing functionality that requires external libraries, verify their presence in the provided environment contract before writing imports or code, because using non-existent dependencies causes immediate runtime failure and wastes execution cycles.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
       }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T16_FIX2",
-      "agent": "seed_tester",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_agents.py:<TestClass>.<test_method>: Provided new_code contains no AST statements."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n15",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 3
-      }
+      "task_id": "GATE_3_FIX_2_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- tictactoe.py:src/tictactoe.py:Board.make_move: SyntaxError in new_code: unexpected indent (tictactoe.py, line 3)"
     },
     {
       "type": "QUEUE_REBUILT",
@@ -183,15 +247,20 @@
       "task_ids": [
         "Q1_FIX1",
         "Q1_FIX2",
-        "Q1_CH6",
-        "Q1_FIX_experiment_4",
-        "Q1_REFS"
+        "Q1_FIX3",
+        "Q1_FIX_test_tictactoe_4",
+        "Q1_FIX_plot_results_5",
+        "Q1_FIX_test_tictactoe_6",
+        "Q1_FIX_test_ql_agent_7",
+        "Q1_FIX_config_8",
+        "Q1_CRITIC",
+        "Q1_PDF"
       ]
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n14",
+        "node_id": "n6",
         "old_weight": 2.2,
         "new_weight": 2.6,
         "delta": 0.4,
@@ -202,12 +271,12 @@
       "type": "BUILDER_ANSWER_REJECTED",
       "task_id": "Q1_FIX1_FIX1",
       "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- q_learner.py:Q_Learning_Agent.__init__: SyntaxError in new_code: unexpected indent (q_learner.py, line 16)\n- q_learner.py:Q_Learning_Agent.update: SyntaxError in new_code: unexpected indent (q_learner.py, line 13)"
+      "error": "Write rejected: it changes public signatures fixed by the skeleton (the contract between tasks):\n- src/plot_results.py: removed generate_plots(output_dir)\nEither keep these signatures and change only the implementation, or add 'contract_change': {'reason': '<why the API must change>'} to the answer. The modules that use it are adapted in later tasks."
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n14",
+        "node_id": "n6",
         "old_weight": 2.6,
         "new_weight": 3.0,
         "delta": 0.4,
@@ -215,39 +284,34 @@
       }
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 3.0,
-        "new_weight": 3.4,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "MUTATION_REJECTED",
-      "agent": "seed_tester",
-      "rule": "When writing a test that instantiates classes or imports from other modules, verify that every external name is explicitly imported or accessible via the correct namespace, because NameError indicates a missing import or incorrect reference.",
-      "reason": "koduje objaw (kod błędu, typ wyjątku, numer linii) zamiast metody pracy"
-    },
-    {
-      "type": "CODER_TEST_WRITE_SKIPPED",
-      "node": "src/game_environment.py",
-      "agent": "seed_coder",
-      "files": [
-        "tests/test_game_environment.py"
-      ]
-    },
-    {
       "type": "BUILDER_ANSWER_REJECTED",
       "task_id": "Q1_FIX2",
       "agent": "seed_tester",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_game_environment.py:test_check_winner_complete_draw: SyntaxError in new_code: expected an indented block after function definition on line 9 (test_game_environment.py, line 10)"
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_tictactoe.py:test_make_move_validity: SyntaxError in new_code: unexpected indent (test_tictactoe.py, line 2)"
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n13",
+        "node_id": "n11",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "OFF_TARGET_WRITE",
+      "node": "tests/test_ql_agent.py",
+      "files": [
+        "tests/test_tictactoe.py"
+      ],
+      "agent": "seed_tester",
+      "task_id": "Q1_FIX3"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
         "old_weight": 2.2,
         "new_weight": 2.6,
         "delta": 0.4,
@@ -257,7 +321,7 @@
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n13",
+        "node_id": "n12",
         "old_weight": 2.6,
         "new_weight": 3.0,
         "delta": 0.4,
@@ -267,7 +331,33 @@
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n13",
+        "node_id": "n12",
+        "old_weight": 3.0,
+        "new_weight": 3.4,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_test_tictactoe_4",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_tictactoe.py:test_make_move_validity: SyntaxError in new_code: unmatched '}' (test_tictactoe.py, line 16)"
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n11",
+        "old_weight": 2.6,
+        "new_weight": 3.0,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n11",
         "old_weight": 3.0,
         "new_weight": 3.4,
         "delta": 0.4,
@@ -277,247 +367,11 @@
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n5",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 8
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 8
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 8
-      }
-    },
-    {
-      "type": "QUEUE_REBUILT",
-      "generation": 2,
-      "task_ids": [
-        "Q2_FIX1",
-        "Q2_CRITIC",
-        "Q2_REFS"
-      ]
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
+        "node_id": "n11",
         "old_weight": 3.4,
         "new_weight": 3.8,
         "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "CODER_TEST_WRITE_SKIPPED",
-      "node": "src/q_learner.py",
-      "agent": "seed_coder",
-      "files": [
-        "tests/test_agents.py"
-      ]
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_FIX1_FIX1",
-      "agent": "seed_coder",
-      "error": "Zapis odrzucony: pliki testów (tests/test_agents.py) należą do testera i koder ich nie zmienia. Popraw kod modułu tak, żeby test przechodził. Jeśli uważasz, że to test jest błędny, napisz to w 'summary' (co i dlaczego) — następna naprawa trafi do testera."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 3.8,
-        "new_weight": 4.2,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_FIX1_FIX2",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- q_learner.py:src.q_learner.py:Q_Learning_Agent.update: SyntaxError in new_code: unexpected indent (q_learner.py, line 13)"
-    },
-    {
-      "type": "CODER_TEST_WRITE_SKIPPED",
-      "node": "src/q_learner.py",
-      "agent": "seed_coder",
-      "files": [
-        "tests/test_agents.py"
-      ]
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 4.2,
-        "new_weight": 4.6,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 12
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
-        "delta": 0.4,
-        "degree": 12
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 3.0,
-        "new_weight": 3.4,
-        "delta": 0.4,
-        "degree": 10
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_writer",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_writer.md",
-        "injected_rule": "When referencing external symbols or files in the output, use their canonical names exactly as defined in the import contract or available packages list, because symbolic tags must resolve to existing entities without ambiguity.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "OFF_TARGET_WRITE",
-      "node": "src/experiment.py",
-      "files": [
-        "test_experiment.py"
-      ],
-      "agent": "seed_tester",
-      "task_id": "Q2_CRITIC_FIX_1"
-    },
-    {
-      "type": "QUEUE_REBUILT",
-      "generation": 3,
-      "task_ids": [
-        "Q3_FIX1",
-        "Q3_FIX2",
-        "Q3_FIX_random_agent_3",
-        "Q3_CRITIC",
-        "Q3_REFS"
-      ]
-    },
-    {
-      "type": "OFF_TARGET_WRITE",
-      "node": "test_experiment.py",
-      "files": [
-        "tests/test_agents.py"
-      ],
-      "agent": "seed_tester",
-      "task_id": "Q3_FIX1"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n16",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
         "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n16",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n16",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "file": "src/experiment.py",
-        "line": 23,
-        "reason": "The validation report explicitly identifies an AttributeError ('GameEnvironment' object has no attribute 'get_state_hash') in src/experiment.py at line 23. The suggested rule instructs the agent to fix the cause in 'the file that it concerns'. If the repair is applied to tests/test_agents.py or another file instead of src/experiment.py, it constitutes a routing error by the harness or misinterpretation of the error context.",
-        "source": "evolution_architect"
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 4.6,
-        "new_weight": 5.0,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 5.0,
-        "new_weight": 5.4,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "CROSS_ROLE_WRITE",
-      "node": "tests/test_agents.py",
-      "files": [
-        "src/q_learner.py"
-      ],
-      "agent": "seed_tester",
-      "task_id": "Q3_FIX2_FIX2"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 5.4,
-        "new_weight": 5.8,
-        "delta": 0.4,
-        "degree": 4
       }
     },
     {
@@ -526,7 +380,7 @@
         "status": "mutated",
         "agent": "seed_tester",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_tester.md",
-        "injected_rule": "When writing a unit test case, verify that the class under test is actually imported and available in the module's namespace before referencing it in assertions or setup, because missing imports cause undefined name errors during execution.",
+        "injected_rule": "When defining a test case without an accompanying class-based fixture setup, avoid using 'self' as a parameter name because pytest interprets it as a request for a fixture rather than a method instance reference; instead use 'case' or 'test_case', because the test is a standalone function.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
@@ -535,27 +389,117 @@
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n11",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "CONTRACT_CHANGED",
-      "changes": [
-        "src/random_agent.py: RandomPlayerAgent.__init__(self) -> RandomPlayerAgent.__init__(self, seed)"
-      ],
-      "reason": "uzupełnienie sygnatury zastępczej ze szkieletu"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
+        "node_id": "n1",
         "old_weight": 1.4,
         "new_weight": 1.8,
         "delta": 0.4,
+        "degree": 9
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n1",
+        "old_weight": 1.8,
+        "new_weight": 2.2,
+        "delta": 0.4,
+        "degree": 9
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n1",
+        "old_weight": 2.2,
+        "new_weight": 2.6,
+        "delta": 0.4,
+        "degree": 9
+      }
+    },
+    {
+      "type": "QUEUE_REBUILT",
+      "generation": 2,
+      "task_ids": [
+        "Q2_FIX1",
+        "Q2_FIX2",
+        "Q2_FIX_test_ql_agent_3",
+        "Q2_FIX_test_tictactoe_4",
+        "Q2_CRITIC"
+      ]
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n11",
+        "old_weight": 3.8,
+        "new_weight": 4.2,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 3.4,
+        "new_weight": 3.8,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 3.8,
+        "new_weight": 4.2,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 4.2,
+        "new_weight": 4.6,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q2_FIX_test_ql_agent_3",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_ql_agent.py:tests.test_ql_agent:QAgent.update_convergence_check: The edit code of QAgent.update_convergence_check has no `def update_convergence_check` definition."
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 4.6,
+        "new_weight": 5.0,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 5.0,
+        "new_weight": 5.4,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 5.4,
+        "new_weight": 5.8,
+        "delta": 0.4,
         "degree": 2
       }
     },
@@ -563,28 +507,56 @@
       "type": "WEIGHT_ESCALATED",
       "details": {
         "node_id": "n11",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
+        "old_weight": 4.2,
+        "new_weight": 4.6,
         "delta": 0.4,
         "degree": 2
       }
     },
     {
-      "type": "AGENT_MUTATED",
+      "type": "WEIGHT_ESCALATED",
       "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
-        "injected_rule": "When modifying a file based on error reports, verify that all symbols referenced in the code are defined within that module or imported from explicitly declared dependencies, because undefined names cause both linting failures and runtime import errors which prevent validation.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
+        "node_id": "n11",
+        "old_weight": 4.6,
+        "new_weight": 5.0,
+        "delta": 0.4,
+        "degree": 2
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n5",
+        "node_id": "n11",
+        "old_weight": 5.0,
+        "new_weight": 5.4,
+        "delta": 0.4,
+        "degree": 2
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n1",
+        "old_weight": 2.6,
+        "new_weight": 3.0,
+        "delta": 0.4,
+        "degree": 3
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n1",
+        "old_weight": 3.0,
+        "new_weight": 3.4,
+        "delta": 0.4,
+        "degree": 4
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n1",
         "old_weight": 3.4,
         "new_weight": 3.8,
         "delta": 0.4,
@@ -592,23 +564,76 @@
       }
     },
     {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_writer",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_writer.md",
+        "injected_rule": "When referencing code symbols or file paths from another module, always resolve them against the explicit contract definitions provided in the input payload rather than inferring names or locations from the current file's context, because the payload contains the ground truth for existing artifacts.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q2_CRITIC_FIX_3",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- ast_edits element without the required 'symbol' or 'code' (it has keys: ['simulate_game', \"} \\n            # We should probably use simulate_game if available with agent support.\\n            # But QAgent is not integrated into Board yet. \\n            # Let's assume the loop implements one run.\\n            \\n            total_steps += step\\n        \\n        # Calculate aggregates for this run\\n        avg_reward = sum(run_rewards) / len(run_rewards) if run_rewards else 0.0\\n        # Win/Loss logic needs to be stored in Board or returned by simulate_game equivalent\\n        # Since I am implementing the body, I will assume Board tracks winner or we get it from reward\\n        # Reward usually: +1 for win, -1 for loss, 0 for draw for agent.\\n        \\n        if avg_reward > 0:\\n            wins += 1\\n        elif avg_reward < 0:\\n            losses += 1\\n        else:\\n            draws += 1\\n            \\n    n_runs = config.get('N_REPETITIONS', 10)\\n    win_rate = wins / n_runs if n_runs else 0\\n    draw_rate = draws / n_runs if n_runs else 0\\n    loss_rate = losses / n_runs if n_runs else 0\\n    \\n    row = {\\n        'method': 'Q-Learning',\\n        'N_EPISODES': config.get('N_EPISODES_PER_RUN', 1000),\\n        'N_REPETITIONS': n_runs,\\n        'win_rate_agent': win_rate,\\n        'draw_rate': draw_rate,\\n        'loss_rate_agent': loss_rate\\n    }\\n    results.append(row)\\n    \\n    return results\"]); every element is {'symbol': '<name or Class.method>', 'code': '<code>', 'file': '<path.py>'}"
+    },
+    {
+      "type": "QUEUE_REBUILT",
+      "generation": 3,
+      "task_ids": [
+        "Q3_FIX1"
+      ]
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q3_FIX1",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_ql_agent.py:test_q_value_update_convergence: SyntaxError in new_code: expected an indented block after 'with' statement on line 2 (test_ql_agent.py, line 2)"
+    },
+    {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n5",
-        "old_weight": 3.8,
-        "new_weight": 4.2,
+        "node_id": "n12",
+        "old_weight": 5.8,
+        "new_weight": 6.2,
         "delta": 0.4,
-        "degree": 8
+        "degree": 1
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n5",
-        "old_weight": 4.2,
-        "new_weight": 4.6,
+        "node_id": "n12",
+        "old_weight": 6.2,
+        "new_weight": 6.6,
         "delta": 0.4,
-        "degree": 6
+        "degree": 1
+      }
+    },
+    {
+      "type": "WEIGHT_ESCALATED",
+      "details": {
+        "node_id": "n12",
+        "old_weight": 6.6,
+        "new_weight": 7.0,
+        "delta": 0.4,
+        "degree": 1
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_tester",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_tester.md",
+        "injected_rule": "When defining a test case that interacts with a specific class instance, instantiate that instance in the local scope (e.g., via `fixture` or function body) before attempting to mock its methods, because mocked objects require an active instance of the target class to bind attributes to.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
       }
     },
     {
@@ -616,175 +641,37 @@
       "generation": 4,
       "task_ids": [
         "Q4_FIX1",
-        "Q4_FIX2",
-        "Q4_CODE",
-        "Q4_CRITIC",
-        "Q4_REFS"
+        "Q4_FIX_test_ql_agent_2"
       ]
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n16",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
+        "node_id": "n12",
+        "old_weight": 7.0,
+        "new_weight": 7.4,
         "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX1_FIX1",
-      "agent": "seed_tester",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_experiment.py:test_run_experiment_produces_csv: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 30) (test_experiment.py, line 2)"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n16",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
-        "delta": 0.4,
-        "degree": 2
+        "degree": 1
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n16",
-        "old_weight": 3.0,
-        "new_weight": 3.4,
+        "node_id": "n12",
+        "old_weight": 7.4,
+        "new_weight": 7.8,
         "delta": 0.4,
-        "degree": 2
+        "degree": 1
       }
     },
     {
       "type": "WEIGHT_ESCALATED",
       "details": {
-        "node_id": "n14",
-        "old_weight": 5.8,
-        "new_weight": 6.2,
+        "node_id": "n12",
+        "old_weight": 7.8,
+        "new_weight": 8.2,
         "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 6.2,
-        "new_weight": 6.6,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n14",
-        "old_weight": 6.6,
-        "new_weight": 7.0,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_FIX2_FIX_2",
-      "agent": "seed_tester",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- test_agents.py:TestAgentLoop.test_agent_loop_completion: Klasa TestAgentLoop nie istnieje w test_agents.py; edycja TestAgentLoop.test_agent_loop_completion nie ma gdzie trafić.\n- test_agents.py:test_agent_loop_completion: Provided new_code contains no AST statements."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n6",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_CODE_FIX1",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- game_environment.py:RandomOpponentAgent.__init__: SyntaxError in new_code: unexpected indent (game_environment.py, line 11)"
-    },
-    {
-      "type": "CODER_TEST_WRITE_SKIPPED",
-      "node": "src/game_environment.py",
-      "agent": "seed_coder",
-      "files": [
-        "test_experiment.py"
-      ]
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n6",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q4_CODE_FIX2",
-      "agent": "seed_coder",
-      "error": "Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\n- game_environment.py:GameEnvironment.apply_action: SyntaxError in new_code: unexpected character after line continuation character (game_environment.py, line 2)"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n6",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 4.6,
-        "new_weight": 5.0,
-        "delta": 0.4,
-        "degree": 8
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 5.0,
-        "new_weight": 5.4,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 5.4,
-        "new_weight": 5.8,
-        "delta": 0.4,
-        "degree": 3
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "File <id> does not exist",
-          "Malformed symbolic tag missing <id> separator"
-        ],
-        "signature": "CSV file <id> does not exist\nFile <id> does not exist: placeholder copied from instruction, not a reference; select valid target from <id>.\nMalformed symbolic tag missing <id> separator: \\ref_ast{RandomOpponentAgent.get_move}. Reference without target (only filename) is invalid: select full target from <id> / <id>; write referenced files \nMalformed symbolic tag missing <id> separator: \\ref_csv{results.csv}. Reference without target (only filename) is invalid: select full target from <id> / <id>; write referenced files in prose as \\text",
-        "task_id": "Q4_CRITIC",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
+        "degree": 1
       }
     }
   ]

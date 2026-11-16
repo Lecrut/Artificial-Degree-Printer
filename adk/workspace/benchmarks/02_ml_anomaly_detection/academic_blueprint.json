@@ -1,46 +1,50 @@
 {
-  "thesis_title": "Porównanie niezawodności detektora ensemblowego wielocechowego ze statycznym baselines Z-score w wykrywaniu anomalii w syntetycznych sygnałach bioelektrycznych",
-  "thesis_statement": "Wielocechowy, robusty detector ensemblowy osiąga wyższą niezawodność (zmierzoną jako wariancja F1 score i ROC-AUC przy różnych poziomach szumu) w detekcji anomalii w syntetycznych sygnałach wielokanałowych niż statyczny, jedno-wymiarowy baseline oparty na Z-score.",
-  "baseline_comparison": "Statyczny univariate Z-score baseline (window=50, threshold=3.0) vs. Propozycja: Ensemble oparty na korelacji między kanałami, rozkładzie i outlier detection statystycznym.",
-  "entrypoint": "src/experiment/experiment_runner.py:run_all",
+  "thesis_title": "Ocena niezawodności detekcji anomalii w syntetycznej telemetrii sygnałów biomedycznych przy użyciu odpornego zespołu detektorów",
+  "thesis_statement": "Teza: Odporny zespół wielofunkcyjnych detektorów (Robust Ensemble) wykrywa anomalie w syntetycznych wielokanałowych danych telemetrycznych z istotnie wyższą niezawodnością (mierzona F1-score i AUC-ROC przy różnych poziomach szumu) niż statyczny uniewariantny baseline oparty na Z-score.",
+  "baseline_comparison": "Porównanie metody Robust Ensemble z bazową metodą Z-score. Porównanie odbywa się poprzez generowanie syntetycznych danych z kontrolowanym szumem i wstrzykniętymi anomaliemi, a następnie ocenę obu metod na niezależnym zbiorze testowym dla każdej kombinacji parametrów.",
+  "entrypoint": "src/experiment.py:run_experiment",
   "metrics": [
-    "mean_f1_score",
-    "std_f1_score",
-    "mean_roc_auc",
-    "detection_delay_mean"
+    "precision",
+    "recall",
+    "f1_score",
+    "auc_roc"
   ],
   "planned_chapters": [
     {
       "index": 1,
-      "title": "Rozdział 1: Wstęp i Teza Pracy",
-      "focus": "Motywacja problemu detekcji anomalii w telemetrii medycznej, sformułowanie tezy o przewadze ensembli nad prostymi bazelines, zakres pracy."
+      "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+      "focus": "Definicja problemu detekcji anomalii w sygnałach biomedycznych, sformułowanie tezy, cel pracy oraz zakres badania."
     },
     {
       "index": 2,
-      "title": "Rozdział 2: Przegląd Literatury",
-      "focus": "Podstawowe metody detekcji anomalii w sygnałach bioelektrycznych, ograniczenia statystyczne Z-score, koncepcja detectorów ensemblowych i robusty."
+      "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+      "focus": "Analiza metod statystycznych (Z-score) oraz maszynowych (Isolation Forest, LOF) w kontekście przetwarzania sygnałów biomedycznych. Omówienie syntetycznej generacji danych."
     },
     {
       "index": 3,
-      "title": "Rozdział 3: Metodologia Syntezy Danych",
-      "focus": "Model syntetycznych sygnałów wielokanałowych (ECG/EEG analog), algorytm injektowania anomalii (szum, spike, drift) oraz specyfikacja środowiska testowego."
+      "title": "Rozdział 3: Metodologia Rozwiązania",
+      "focus": "Szczegółowy opis architektury proponowanego zespołu detektorów (Robust Ensemble), definicja generatora danych oraz metryk oceny."
     },
     {
       "index": 4,
-      "title": "Rozdział 4: Projekt Detekcji i Oceny",
-      "focus": "Szczegółowy opis architektury detektora ensemblowego, implementacja baseline'u Z-score oraz zdefiniowanie miar niezawodności (F1, AUC, stabilność)."
+      "title": "Rozdział 4: Eksperyment i Wyniki",
+      "focus": "Prezentacja wyników porównania na syntetycznych danych. Analiza wrażliwości obu metod na różne poziomy szumu oraz proporcji anomalii."
     },
     {
       "index": 5,
-      "title": "Rozdział 5: Wyniki Eksperymentu",
-      "focus": "Prezentacja wyników liczbowych z `results/final_results.json`, wizualizacja porównawcza (wykresy ROC, boxploty F1), analiza wrażliwości na szum."
-    },
-    {
-      "index": 6,
-      "title": "Rozdział 6: Wnioski",
-      "focus": "Weryfikacja tezy pracy, podsumowanie przewagi niezawodnościowej ensembli i sugestie dalszych badań."
+      "title": "Rozdział 5: Wnioski",
+      "focus": "Podsumowanie badań, potwierdzenie lub obalenie tezy, wskazanie ograniczeń i kierunków przyszłych prac."
     }
   ],
+  "interfaces": {
+    "src/config.py": "\"\"\"Configuration module for the anomaly detection experiment.\"\"\"\n\nimport os\nfrom dataclasses import dataclass, field\n\nCHANNELS: list[str] = [\"EEG\", \"ECG\", \"EMG\"]\nNOISE_LEVELS: list[float] = [0.1, 0.5, 1.0]\nANOMALY_RATE: float = 0.05\nENSEMBLE_SIZE: int = 10\nN_REPETITIONS: int = 5\nSEEDS: list[int] = field(default_factory=lambda: list(range(N_REPETITIONS)))\nTEST_SPLIT: float = 0.2\nDATA_DIR: str = \"data\"\nRESULTS_DIR: str = \"results\"\n",
+    "src/data_types.py": "\"\"\"Core data types for signal processing.\"\"\"\n\nfrom typing import NamedTuple, List\nimport numpy as np\n\nclass SignalSample(NamedTuple):\n    \"\"\"Represents a multi-channel time-series sample.\"\"\"\n    timestamps: np.ndarray\n    channels: np.ndarray  # Shape: (len(CHANNELS), seq_len)\n    labels: np.ndarray   # Binary mask of anomalies, shape: (seq_len,)\n\nclass DetectionResult(NamedTuple):\n    \"\"\"Result of detection for a single sample.\"\"\"\n    score: float\n    is_anomaly: bool\n",
+    "src/data_generator.py": "\"\"\"Synthetic multi-channel bio-signal telemetry generator.\"\"\"\n\nimport numpy as np\nfrom src.config import CHANNELS, NOISE_LEVELS, ANOMALY_RATE, DATA_DIR\nfrom src.data_types import SignalSample\n\ndef generate_sample(\n    channel: str,\n    noise_level: float,\n    anomaly_rate: float,\n    seed: int\n) -> SignalSample:\n    \"\"\"Generate a single synthetic bio-signal sample with specified noise and anomaly rate.\"\"\"\n    pass\n\ndef generate_dataset(\n    channels: list[str],\n    noise_levels: list[float],\n    n_samples: int,\n    seeds: list[int]\n) -> List[SignalSample]:\n    \"\"\"Generate a full dataset combining multiple channels and noise levels.\"\"\"\n    pass\n",
+    "src/methods/baseline_zscore.py": "\"\"\"Static univariate Z-score baseline detector.\"\"\"\n\nimport numpy as np\nfrom src.data_types import SignalSample, DetectionResult\n\nclass ZScoreBaseline:\n    \"\"\"A simple baseline using global Z-scores per channel.\"\"\"\n    \n    def __init__(self, threshold: float = 3.0) -> None:\n        \"\"\"Initialize with detection threshold.\"\"\"\n        pass\n\n    def fit(self, samples: List[SignalSample]) -> None:\n        \"\"\"Calculate mean and std for each channel from training data.\"\"\"\n        pass\n\n    def predict(self, sample: SignalSample) -> DetectionResult:\n        \"\"\"Predict anomaly score and binary label for a single sample.\"\"\"\n        pass\n",
+    "src/methods/robust_ensemble.py": "\"\"\"Multi-feature robust ensemble detector.\"\"\"\n\nimport numpy as np\nfrom src.data_types import SignalSample, DetectionResult\n\nclass RobustEnsemble:\n    \"\"\"Ensemble of diverse anomaly detectors (IForest, LOF, Stats).\"\"\"\n    \n    def __init__(self, ensemble_size: int, threshold: float = 0.5) -> None:\n        \"\"\"Initialize ensemble with specified size and voting threshold.\"\"\"\n        pass\n\n    def fit(self, samples: List[SignalSample]) -> None:\n        \"\"\"Fit individual base estimators on the training data.\"\"\"\n        pass\n\n    def predict(self, sample: SignalSample) -> DetectionResult:\n        \"\"\"Aggregate votes from all estimators to produce final score and label.\"\"\"\n        pass\n",
+    "src/experiment.py": "\"\"\"Experiment entrypoint for comparing baseline vs ensemble.\"\"\"\n\nimport numpy as np\nimport pandas as pd\nfrom src.config import CHANNELS, NOISE_LEVELS, ANOMALY_RATE, N_REPETITIONS, SEEDS, RESULTS_DIR\nfrom src.data_generator import generate_dataset\nfrom src.methods.baseline_zscore import ZScoreBaseline\nfrom src.methods.robust_ensemble import RobustEnsemble\n\ndef run_experiment() -> pd.DataFrame:\n    \"\"\"Run the full comparison experiment across seeds and noise levels.\n    Returns a DataFrame with metrics for each method.\"\"\"\n    pass",
+    "scripts/plot_results.py": "\"\"\"Visualization script for experiment results.\"\"\"\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\ndef generate_plots(results_df: pd.DataFrame, output_dir: str) -> None:\n    \"\"\"Generate comparison plots and save to output_dir.\"\"\"\n    pass"
+  },
   "literature_recon": {
     "task_key": "02_ml_anomaly_detection",
     "domain": "Biomedical Signal Processing & Unsupervised Anomaly Detection",
@@ -76,33 +80,28 @@
     "chapters": [
       {
         "index": 1,
-        "title": "Rozdział 1: Wstęp i Teza Pracy",
-        "focus": "Motywacja problemu detekcji anomalii w telemetrii medycznej, sformułowanie tezy o przewadze ensembli nad prostymi bazelines, zakres pracy."
+        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "focus": "Definicja problemu detekcji anomalii w sygnałach biomedycznych, sformułowanie tezy, cel pracy oraz zakres badania."
       },
       {
         "index": 2,
-        "title": "Rozdział 2: Przegląd Literatury",
-        "focus": "Podstawowe metody detekcji anomalii w sygnałach bioelektrycznych, ograniczenia statystyczne Z-score, koncepcja detectorów ensemblowych i robusty."
+        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+        "focus": "Analiza metod statystycznych (Z-score) oraz maszynowych (Isolation Forest, LOF) w kontekście przetwarzania sygnałów biomedycznych. Omówienie syntetycznej generacji danych."
       },
       {
         "index": 3,
-        "title": "Rozdział 3: Metodologia Syntezy Danych",
-        "focus": "Model syntetycznych sygnałów wielokanałowych (ECG/EEG analog), algorytm injektowania anomalii (szum, spike, drift) oraz specyfikacja środowiska testowego."
+        "title": "Rozdział 3: Metodologia Rozwiązania",
+        "focus": "Szczegółowy opis architektury proponowanego zespołu detektorów (Robust Ensemble), definicja generatora danych oraz metryk oceny."
       },
       {
         "index": 4,
-        "title": "Rozdział 4: Projekt Detekcji i Oceny",
-        "focus": "Szczegółowy opis architektury detektora ensemblowego, implementacja baseline'u Z-score oraz zdefiniowanie miar niezawodności (F1, AUC, stabilność)."
+        "title": "Rozdział 4: Eksperyment i Wyniki",
+        "focus": "Prezentacja wyników porównania na syntetycznych danych. Analiza wrażliwości obu metod na różne poziomy szumu oraz proporcji anomalii."
       },
       {
         "index": 5,
-        "title": "Rozdział 5: Wyniki Eksperymentu",
-        "focus": "Prezentacja wyników liczbowych z `results/final_results.json`, wizualizacja porównawcza (wykresy ROC, boxploty F1), analiza wrażliwości na szum."
-      },
-      {
-        "index": 6,
-        "title": "Rozdział 6: Wnioski",
-        "focus": "Weryfikacja tezy pracy, podsumowanie przewagi niezawodnościowej ensembli i sugestie dalszych badań."
+        "title": "Rozdział 5: Wnioski",
+        "focus": "Podsumowanie badań, potwierdzenie lub obalenie tezy, wskazanie ograniczeń i kierunków przyszłych prac."
       }
     ]
   }

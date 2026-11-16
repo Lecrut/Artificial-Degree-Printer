@@ -79,7 +79,7 @@ def test_unparsable_file_tells_the_agent_to_return_the_whole_file_and_accepts_it
     (orch.workspace_dir / "game.py").write_text(BROKEN_GAME, encoding="utf-8")
     edit = {"ast_edits": [{"symbol": "Game.reset", "file": "game.py", "code": "def reset(self) -> None:\n    self.board = []\n"}]}
 
-    with pytest.raises(MaterializationError, match=r"nieparsowalny.*cały poprawiony plik.*'files'"):
+    with pytest.raises(MaterializationError, match=r"does not parse now.*whole corrected file.*'files'"):
         orch._materialize_workspace_artifact("game.py", edit)
 
     orch._materialize_workspace_artifact("game.py", {"files": [{"filename": "game.py", "content": GAME}]})

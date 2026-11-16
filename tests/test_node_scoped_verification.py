@@ -49,7 +49,7 @@ def test_a_task_passes_despite_a_broken_file_it_does_not_own(tmp_path: Path) -> 
     )
 
     assert report["status"] == "PASS", report
-    assert any("tictoc_env.py" in w and "Poza zakresem" in w for w in report.get("warnings", []))
+    assert any("tictoc_env.py" in w and "Outside the task's scope" in w for w in report.get("warnings", []))
 
 
 def test_import_failure_caused_by_a_sibling_is_not_this_files_error(tmp_path: Path) -> None:

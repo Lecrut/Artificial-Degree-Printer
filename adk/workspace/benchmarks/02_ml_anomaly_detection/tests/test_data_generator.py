@@ -1,106 +1,75 @@
-import pytest
-from pathlib import Path
 import numpy as np
-from typing import Tuple, List
-from dataclasses import dataclass
+from src.data_generator import generate_sample, generate_dataset
+from src.config import get_channels, get_noise_levels, get_anomaly_rate, get_seeds, get_ensemble_size
+from src.data_types import SignalSample
 
-class SignalConfig:
-    num_channels: int = 3
-    sample_length: int = 100
-    num_segments: int = 5
+def test_generate_sample_shape():
+    """Test that generate_sample returns the correct shape for timestamps and channels."""
+    from src.data_generator import generate_sample
+    from src.config import get_channels, get_noise_levels, get_anomaly_rate, get_seeds
+    from src.data_types import SignalSample
+    channel = get_channels()[0]
+    noise_level = get_noise_levels()[0]
+    anomaly_rate = get_anomaly_rate()
+    seed = 42
+    sample = generate_sample(channel, noise_level, anomaly_rate, seed)
+    assert isinstance(sample, SignalSample)
+    expected_ts_len = 100
+    actual_ts_len = len(sample.timestamps)
+    assert actual_ts_len == expected_ts_len, f'Expected {expected_ts_len} timestamps, got {actual_ts_len}'
+    expected_ch_len = 1
+    actual_ch_len = len(sample.channels)
+    assert actual_ch_len == expected_ch_len, f'Expected {expected_ch_len} channel for single-sample gen, got {actual_ch_len}'
 
-@dataclass
-class AnomalyConfig:
-    anomaly_rate_ratio: float = 0.1
-    injected_anomaly_types: List[str] = None
+def test_generate_sample_labels():
+    """Test that labels are generated with the specified anomaly rate."""
+    from src.data_generator import generate_sample
+    from src.config import get_channels, get_noise_levels, get_anomaly_rate
+    import numpy as np
+    channel = get_channels()[0]
+    noise_level = get_noise_levels()[0]
+    anomaly_rate = get_anomaly_rate()
+    seed = 42
+    sample = generate_sample(channel, noise_level, anomaly_rate, seed)
+    expected_len = 100
+    assert len(sample.labels) == expected_len
+    n_true_positive = np.sum(sample.labels)
+    expected_tp_count = int(expected_len * anomaly_rate)
+    assert abs(n_true_positive - expected_tp_count) <= 1, f'Expected ~{expected_tp_count} anomalies, got {n_true_positive}'
 
-    def __post_init__(self):
-        if self.injected_anomaly_types is None:
-            self.injected_anomaly_types = ['spike', 'flatline']
-from src.data.synthetic_data_generator import BioSignalGenerator, SignalConfig as Config_cls
+def test_generate_sample_anomaly_indices():
+    """Test that generate_sample returns anomaly indices if available."""
+    from src.data_generator import generate_sample
+    from src.config import get_channels, get_noise_levels, get_anomaly_rate
+    channel = get_channels()[0]
+    noise_level = get_noise_levels()[0]
+    anomaly_rate = get_anomaly_rate()
+    seed = 42
+    sample = generate_sample(channel, noise_level, anomaly_rate, seed)
+    if hasattr(sample, 'anomaly_indices'):
+        assert sample.anomaly_indices is not None or isinstance(sample.anomaly_indices, list)
+        if sample.anomaly_indices is not None:
+            for idx in sample.anomaly_indices:
+                assert idx < len(sample.labels), f'Index {idx} out of bounds'
+                assert sample.labels[idx] == 1, f'Label at index {idx} should be 1 (anomaly) but was {sample.labels[idx]}'
 
-class MockGenerator(BioSignalGenerator):
-
-    def __init__(self, config: SignalConfig, anomaly_config: AnomalyConfig, rng_seed: int=42):
-        self.config = config
-        self.anomaly_config = anomaly_config
-        self.rng_seed = rng_seed
-        self._normal_samples = []
-
-    def generate_normal_sample(self, length: int) -> np.ndarray:
-        return np.zeros(length)
-
-    def generate_anomaly_sample(self, start_idx: int, length: int) -> Tuple[np.ndarray, str]:
-        return (np.ones(length), 'anomaly')
-
-    def generate_dataset(self, num_segments: int) -> Tuple[List[np.ndarray], List[str]]:
-        datasets = []
-        labels = []
-        for i in range(num_segments):
-            datasets.append(np.zeros(self.config.sample_length))
-            labels.append(f'segment_{i}')
-        return (datasets, labels)
-
-@pytest.mark.parametrize('sample_length', [128, 512])
-def test_signal_config_dimensions(sample_length: int) -> None:
-    """
-    Test that SignalConfig accepts valid sample lengths.
-
-    Args:
-        sample_length (int): The length to test.
-    """
-    from src.data.synthetic_data_generator import SignalConfig, AnomalyConfig
-    config = SignalConfig(sample_length=sample_length)
-    assert config.sample_length == sample_length
-
-def test_anomaly_config_defaults() -> None:
-    """Verify injected anomaly types are set by default."""
-    config = AnomalyConfig()
-    expected_types = ['spike', 'flatline']
-    assert config.injected_anomaly_types == expected_types
-
-def test_mock_generator_init(config: SignalConfig) -> None:
-    """
-    Verify MockGenerator.__init__ parameters and return attributes.
-
-    Args:
-        config (SignalConfig): Configuration for the generator.
-    """
-    anomaly_config = AnomalyConfig()
-    gen = MockGenerator(config, anomaly_config)
-    assert hasattr(gen, 'config')
-    assert hasattr(gen, 'anomaly_config')
-    assert hasattr(gen, '_normal_samples')
-
-@pytest.mark.parametrize('length', [10])
-def test_mock_generate_normal_sample(length: int) -> None:
-    """Verify generate_normal_sample returns zero array of correct shape."""
-    gen = MockGenerator(SignalConfig(), AnomalyConfig())
-    sample = gen.generate_normal_sample(length)
-    assert isinstance(sample, np.ndarray)
-    assert len(sample) == length
-    assert np.allclose(sample, 0.0)
-
-@pytest.mark.parametrize('length', [5])
-def test_mock_generate_anomaly_sample(length: int) -> None:
-    """Verify generate_anomaly_sample returns one array and string label."""
-    gen = MockGenerator(SignalConfig(), AnomalyConfig())
-    sample, label = gen.generate_anomaly_sample(0, length)
-    assert isinstance(sample, np.ndarray)
-    assert len(sample) == length
-    assert np.allclose(sample, 1.0)
-    assert isinstance(label, str)
-    assert label == 'anomaly'
-
-@pytest.mark.parametrize('num_segments', [5])
-def test_mock_generate_dataset_structure(num_segments: int) -> None:
-    """Verify generate_dataset returns list of arrays and labels."""
-    gen = MockGenerator(SignalConfig(), AnomalyConfig())
-    datasets, labels = gen.generate_dataset(num_segments)
-    assert isinstance(datasets, List)
-    assert isinstance(labels, List)
-    assert len(datasets) == num_segments
-    assert len(labels) == num_segments
-    for i, d in enumerate(datasets):
-        assert isinstance(d, np.ndarray)
-        assert d.shape[0] == SignalConfig().sample_length
+def test_generate_dataset_structure():
+    """Test that generate_dataset returns a list of samples with consistent structure."""
+    from src.data_generator import generate_dataset
+    from src.config import get_channels, get_noise_levels, get_seeds
+    from src.data_types import SignalSample
+    channels = get_channels()
+    noise_levels = get_noise_levels()
+    n_samples = 10
+    seeds = get_seeds()
+    dataset = generate_dataset(channels, noise_levels, n_samples, seeds)
+    assert isinstance(dataset, list)
+    assert len(dataset) == n_samples
+    first_sample = dataset[0]
+    expected_ts_len = len(first_sample.timestamps)
+    for i, sample in enumerate(dataset):
+        assert isinstance(sample, SignalSample)
+        assert len(sample.timestamps) == expected_ts_len
+        expected_n_channels = 1
+        actual_ch_len = len(sample.channels)
+        assert actual_ch_len == expected_n_channels, f'Sample {i}: Expected {expected_n_channels} channel per sample, got {actual_ch_len}'

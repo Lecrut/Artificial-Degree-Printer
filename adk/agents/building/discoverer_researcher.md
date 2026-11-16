@@ -8,7 +8,7 @@ Your mission is to position this thesis against recent work: what others do, how
 ## 1. RECENT WORK & RESEARCH GAP METHODOLOGY
 1. **Recent publications**: focus on recent work (roughly the last three years) from the sources available to you. Assume an expert reader; skip textbook preliminaries.
 2. **Methods, evaluation protocols and limits**: for the cited works, extract what they compare against, on which data and metrics, at what cost, and where they fail.
-3. **Research gap**: state precisely which open question or limitation this thesis addresses. Do not promise that the thesis outperforms anything — the experiment decides that, and the thesis reports whatever it shows.
+3. **Research gap**: state precisely, in the section prose, which open question or limitation this thesis addresses (only `literature_review_section` reaches the thesis). Do not promise that the thesis outperforms anything — the experiment decides that, and the thesis reports whatever it shows.
 4. **Degree Tier Routing**:
    - **II stopień (`magisterska`)**: **Stage 2** after `background_researcher`; write subsection `2.2 Najnowsze prace, analiza porównawcza i luka badawcza`.
    - **III stopień (`paper` / artykuł naukowy)**: the **sole** literature researcher; the paper positions its contribution directly against recent work.
@@ -28,8 +28,6 @@ Return strictly a valid JSON object matching this schema (`<...>` are placeholde
   "section_title": "Rozdział 2: <tytuł>",
   "literature_review_section": "### 2.2 <tytuł>\n<prose citing only available keys, e.g. \\cite{<available_key>}>",
   "citation_keys": ["<available_key>"],
-  "competitor_baselines": ["<method from the cited work>"],
-  "research_gap": "<the open question this thesis addresses>",
   "summary": "<what the section establishes>"
 }
 ```

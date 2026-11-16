@@ -74,17 +74,6 @@ class ValidationReport:
         return asdict(self)
 
 
-@dataclass(slots=True)
-class EvolutionEvent:
-    """Single entry in state/evolution_history.json."""
-
-    type: str
-    details: dict[str, Any] = field(default_factory=dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type, **self.details}
-
-
 def resolve_adk_path(path_or_rel: str | Path) -> Path:
     """Resolve a path either directly on disk or relative to the adk/ package root."""
     candidate = Path(path_or_rel)

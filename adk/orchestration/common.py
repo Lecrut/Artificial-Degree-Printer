@@ -10,7 +10,8 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
-
+from adk.orchestration import agent_texts as texts
+from adk.orchestration import agent_task_templates as templates
 
 
 def _filter_bibtex(bib_text: str, allowed_keys: set[str]) -> tuple[str, list[str]]:
@@ -79,13 +80,9 @@ def _issue_fingerprints(issue: str) -> list[str]:
 
 # A builder answer the write gate refused (or a builder exception). The gate already returned the exact reason
 # to the agent and retried it; a prompt rule cannot add to that, so such failures never feed evolution.
-# All three wrappers count: "Wyjątek wykonania zadania", "Wyjątek szybkiej naprawy", "Wyjątek zadania naprawczego"
+# All three exception wrappers count: task, fast repair and repair task (agent_texts.*_exception)
 # (the last two used to fall into `generic`: 15/26 failures of the 2026-11-14 run).
-_GATE_REJECTION = re.compile(
-    r"wyjątek (?:wykonania zadania|szybkiej naprawy|zadania naprawczego)|zapis odrzucony|edycje symboli odrzucone"
-    r"|nic z tej odpowiedzi nie zapisano|nie została zapisana|kod nie parsuje się",
-    re.IGNORECASE,
-)
+_GATE_REJECTION = texts.GATE_REJECTION
 
 
 def _issue_category(issues: list[Any]) -> str:
@@ -112,9 +109,9 @@ def _issue_category(issues: list[Any]) -> str:
             counts.update(f"pytest:{exc or 'fail'}" for _, _, exc in _PYTEST_FINDING.findall(text))
         counts.update(f"{kind}Error" for kind, _ in _FILE_FINDING.findall(text))
         lowered = text.lower()
-        if "naruszenie kontraktu" in lowered:
+        if "contract violation" in lowered:
             counts["contract"] += 1
-        elif "nie parsuje" in lowered or "syntaxerror" in lowered or "invalid-syntax" in lowered:
+        elif "does not parse" in lowered or "syntaxerror" in lowered or "invalid-syntax" in lowered:
             counts["SyntaxError"] += 1
         elif "pointer" in lowered or "symbolic tag" in lowered or "does not exist" in lowered:
             counts["document"] += 1
@@ -216,7 +213,7 @@ def _fit_items(items: list[str], max_chars: int = FINDINGS_BUDGET_CHARS) -> list
         shown.append(item)
         used += len(item)
     if len(shown) < len(items):
-        shown.append(f"[pokazano {len(shown)} z {len(items)} ustaleń; pełna lista w validation_report.json]")
+        shown.append(texts.shown_of(len(shown), len(items)))
     return shown
 
 
@@ -224,7 +221,7 @@ def _clip_log(text: str, max_chars: int = LOG_BUDGET_CHARS) -> str:
     """A log excerpt that says how much was left out instead of ending mid-line silently."""
     if len(text) <= max_chars:
         return text
-    return text[:max_chars] + f"\n[skrócono {len(text) - max_chars} znaków; pełny tekst w logs/]"
+    return text[:max_chars] + texts.clipped(len(text) - max_chars)
 
 
 def _plain_text(text: str, limit: int = 240) -> str:
@@ -275,33 +272,14 @@ def _declared_vs_measured_metrics(declared: list[str], workspace_dir: Path) -> l
             continue
     if not measured:
         return []  # nothing measured yet: the experiment has not run
-    findings = [f"Metryka '{m}' zadeklarowana w planie nie została zmierzona." for m in declared if m not in measured]
-    findings += [f"Metryka '{m}' została zmierzona, ale nie była zadeklarowana w planie." for m in sorted(measured - set(declared))]
+    findings = [texts.metric_not_measured(m) for m in declared if m not in measured]
+    findings += [texts.metric_not_declared(m) for m in sorted(measured - set(declared))]
     return findings
-
-
-def _default_agent(rel_path: str) -> str:
-    """Default builder for a file: documents to the writer, tests and results to the tester, other code to the coder."""
-    if _is_document(rel_path):
-        return "seed_writer"
-    if Path(str(rel_path)).suffix.lower() == ".csv":
-        return "seed_tester"
-    return _agent_for_path(rel_path)
-
-
-_CHAPTER_REPAIR = {
-    1: "Zredaguj Rozdział 1: Wstęp, cel pracy i sformalizowaną tezę inżynierską w thesis.md",
-    2: "Zredaguj Rozdział 2: Stan wiedzy, lejek literatury teoretycznej i analizę SOTA w references.bib i thesis.md",
-    3: "Zredaguj Rozdział 3: Architektura systemu, schemat TikZ i formalizm matematyczny w thesis.md",
-    4: "Zredaguj Rozdział 4: Implementacja algorytmiczna i struktury AST w thesis.md",
-    5: "Zredaguj Rozdział 5: Badania eksperymentalne, protokół pomiarowy i dyskusja wyników w thesis.md",
-    6: "Zredaguj Rozdział 6: Podsumowanie, formalna weryfikacja tezy i wnioski końcowe w thesis.md",
-}
 
 
 def _missing_chapter_tasks(issues_text: str) -> list[dict[str, Any]]:
     """Writer tasks for chapters the defense audit reported as missing."""
-    match = re.search(r"brakujące rozdziały.*?\[(.*?)\]", issues_text)
+    match = texts.MISSING_CHAPTERS_PATTERN.search(issues_text)
     if not match:
         return []
     listed = match.group(1).lower()
@@ -312,10 +290,10 @@ def _missing_chapter_tasks(issues_text: str) -> list[dict[str, Any]]:
             "assigned_agent": "seed_writer",
             "description": description,
             "status": "TODO",
-            "covers": f"rozdział {number}",
+            "covers": texts.chapter_covers(number),
         }
-        for number, description in _CHAPTER_REPAIR.items()
-        if f"rozdział {number}" in listed
+        for number, description in templates.CHAPTER_REPAIR.items()
+        if texts.chapter_covers(number) in listed
     ]
 
 

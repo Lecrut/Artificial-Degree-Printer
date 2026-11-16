@@ -42,6 +42,12 @@ _RUNTIME_STATE = {
 }
 
 
+def _declared_entrypoint(blueprint_path: Path) -> str | None:
+    """The plan's `path.py:function`, or None when the run stopped before a plan was written."""
+    blueprint = read_json_state(blueprint_path) if blueprint_path.exists() else {}
+    return str(blueprint.get("entrypoint") or "") or None if isinstance(blueprint, dict) else None
+
+
 def _prepare_evolved_adk_sandbox(base_adk_root: Path, sandbox_root: Path, reset: bool = False) -> Path:
     """Create an isolated ADK root (state, agents, tools, workspace) for one benchmark task."""
     if reset and sandbox_root.exists():
@@ -448,6 +454,7 @@ def run_benchmark_suite(
                     template_name=effective_template,
                     thesis_type=effective_thesis_type,
                     provider=resolved_provider,
+                    entrypoint=_declared_entrypoint(evolved_adk_dir / "state" / "academic_blueprint.json"),
                 )
             except Exception as exc:  # noqa: BLE001 - one task's publishing must not end the whole suite
                 # 2026-11-15: a malformed thesis pointer crashed publishing and took the whole suite with it,

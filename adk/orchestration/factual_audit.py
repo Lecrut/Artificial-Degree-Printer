@@ -1,0 +1,174 @@
+"""Milestone checks of the whole workspace: the factual audit behind queue rebuilds, the PDF build, files still to come."""
+
+from __future__ import annotations
+
+
+import re
+from pathlib import Path
+from typing import Any
+
+from adk.orchestration import agent_texts as texts
+from adk.core.models import read_json_state, write_json_state
+from adk.tools.verification import (
+    compile_symbolic_references,
+    run_isolated_tests,
+)
+from adk.orchestration.common import (
+    _collect_report_issues,
+    _fit_items,
+)
+
+
+_CHAPTER_HEADING_WORDS = {
+    1: ("wstęp", "wstep", "cel", "teza", "intro", "problem"),
+    2: ("sota", "stan wiedzy", "literatur", "przegląd", "przeglad", "related", "background"),
+    3: ("architektur", "formalizm", "matematyczn", "system", "design", "model"),
+    4: ("implementacj", "algorytm", "struktury", "implementation"),
+    5: ("wyniki", "ewaluacj", "eksperyment", "badani", "evaluation", "metodologia", "empirical", "results"),
+    6: ("podsumowan", "wnioski", "conclusi", "kierunki", "summary"),
+}
+
+
+def thesis_missing_chapters(thesis_text: str) -> list[int]:
+    """Canonical chapters (1-6) with no `## ` heading in the thesis: a heading counts by its number
+    (`Rozdział 3`, `Chapter 3`) or, without one, by the first chapter whose words it contains."""
+    found: set[int] = set()
+    for match in re.finditer(r"^##\s+([^\n]+)", thesis_text, flags=re.MULTILINE):
+        heading = match.group(1).lower()
+        number = re.search(r"(?:rozdzia[łl]|chapter)\s+(\d+)", heading)
+        if number:
+            found.add(int(number.group(1)))
+            continue
+        hit = next((n for n, words in _CHAPTER_HEADING_WORDS.items() if any(w in heading for w in words)), None)
+        if hit is not None:
+            found.add(hit)
+    return [n for n in range(1, 7) if n not in found]
+
+
+class FactualAuditMixin:
+    """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
+
+    def _get_pending_future_files(self, current_task: dict[str, Any]) -> set[str]:
+        """Return filenames scheduled to be created by subsequent TODO tasks in the queue."""
+        pending: set[str] = set()
+        if not self.task_queue_path.exists():
+            return pending
+        tasks = read_json_state(self.task_queue_path)
+        if not isinstance(tasks, list):
+            return pending
+
+        current_id = str(current_task.get("task_id", ""))
+        found_current = False
+        matrix_data = read_json_state(self.matrix_path)
+        matrix_nodes = matrix_data.get("nodes", {})
+
+        for t in tasks:
+            if not isinstance(t, dict):
+                continue
+            t_id = str(t.get("task_id", ""))
+            if t_id == current_id:
+                found_current = True
+                continue
+            if found_current and t.get("status") == "TODO":
+                t_node = str(t.get("target_node", ""))
+                node_meta = matrix_nodes.get(t_node, {})
+                path_str = str(node_meta.get("path", ""))
+                if path_str:
+                    pending.add(Path(path_str).name)
+                    pending.add(path_str)
+                role = self._role_of(t_node)
+                if role in ("config", "core"):
+                    pending.update({self._role_file("config"), self._role_file("core")})
+                elif role in ("results", "tests"):
+                    pending.update({self._role_file("results"), "figures", "plot_results.py", self._role_file("tests")})
+        return pending
+
+    def _audit_factual_state(self, report: dict[str, Any]) -> dict[str, Any]:
+        """Read the workspace as it is. The next queue is built from this, not from the abandoned plan."""
+        test_res = run_isolated_tests(
+            self.workspace_dir,
+            use_docker=False,
+            verification_dir=self.adk_root / "tools" / "verification",
+        )
+        files: list[str] = []
+        if self.workspace_dir.exists():
+            for path in sorted(self.workspace_dir.rglob("*")):
+                if path.is_file() and "__pycache__" not in path.parts and ".compiled." not in path.name:
+                    files.append(path.relative_to(self.workspace_dir).as_posix())
+
+        chapters_present: list[int] = []
+        thesis = self.workspace_dir / "thesis.md"
+        if thesis.exists():
+            for match in re.finditer(r"^##\s+.*?(\d+)", thesis.read_text(encoding="utf-8"), flags=re.MULTILINE):
+                number = int(match.group(1))
+                if 1 <= number <= 6 and number not in chapters_present:
+                    chapters_present.append(number)
+        chapters_missing = [n for n in range(1, 7) if n not in chapters_present] if self.include_docs else []
+
+        symbolic_errors: list[str] = []
+        if thesis.exists() and self.include_docs:
+            compiled = compile_symbolic_references(thesis, self.workspace_dir)
+            symbolic_errors = _fit_items([str(err) for err in compiled.get("errors", [])])
+
+        csv_columns: list[str] = []
+        csv_path = self.workspace_dir / "results.csv"
+        if csv_path.exists():
+            header = csv_path.read_text(encoding="utf-8", errors="replace").splitlines()
+            csv_columns = [part.strip() for part in header[0].split(",")] if header else []
+
+        trigger_issues = _collect_report_issues(report)
+        audit = {
+            "files": files,
+            "pytest_status": test_res.get("status"),
+            "pytest_errors": [str(err) for err in test_res.get("errors", [])][:8],
+            "chapters_present": chapters_present,
+            "chapters_missing": chapters_missing,
+            "symbolic_errors": symbolic_errors,
+            "csv_columns": csv_columns,
+            "trigger_issues": [str(item) for item in trigger_issues],
+        }
+        write_json_state(self.state_dir / "factual_audit.json", audit)
+        return audit
+
+    def _pdf_failure_report(self) -> dict[str, Any] | None:
+        """Compile the thesis. A live failure comes back as a queue-rebuild reason. Mock stays out of this path."""
+        if str(self.provider).strip().lower() == "mock":
+            return None
+        thesis_md = self.workspace_dir / "thesis.md"
+        if not thesis_md.exists():
+            return {"status": "FAIL", "issues": [texts.NO_THESIS_FOR_PDF]}
+        try:
+            from adk.benchmarks.tasks import BenchmarkTaskSpec
+            from adk.tools.building.thesis_publisher import build_latex_source, compile_latex_to_pdf
+
+            blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+            spec = BenchmarkTaskSpec(
+                task_id=str(blueprint.get("task_id") or "live"),
+                slug=str(blueprint.get("slug") or "live"),
+                title_pl=str(blueprint.get("title_pl") or blueprint.get("title") or "Praca dyplomowa"),
+                title_en=str(blueprint.get("title_en") or blueprint.get("title_pl") or "Thesis"),
+                domain=str(blueprint.get("domain") or "general"),
+                prompt=self.current_user_prompt,
+                thesis_type=str(getattr(self, "planned_thesis_type", None) or blueprint.get("thesis_type") or "inzynierska"),
+                template_name=blueprint.get("template_name"),
+            )
+            tex_path = build_latex_source(
+                spec,
+                self.workspace_dir,
+                template_name=spec.template_name,
+                thesis_type=spec.thesis_type,
+                provider=self.provider,
+            )
+            pdf_path = self.workspace_dir / "thesis.pdf"
+            compiled = compile_latex_to_pdf(tex_path, pdf_path)
+        except Exception as exc:
+            return {"status": "FAIL", "issues": [f"{texts.PDF_FAILED}: {exc}"]}
+        if compiled and pdf_path.exists() and pdf_path.read_bytes()[:5] == b"%PDF-":
+            return None
+        log_path = self.workspace_dir / "logs" / "tectonic.log"
+        log_text = (
+            log_path.read_text(encoding="utf-8", errors="replace")[-4000:]
+            if log_path.exists()
+            else texts.NO_TECTONIC_LOG
+        )
+        return {"status": "FAIL", "issues": [f"{texts.PDF_FAILED}.\n{log_text}"]}

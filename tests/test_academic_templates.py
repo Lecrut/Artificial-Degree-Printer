@@ -5,7 +5,6 @@ from pathlib import Path
 from adk.benchmarks import get_benchmark_task
 from adk.tools.building.template_manager import (
     copy_template_assets,
-    list_available_templates,
     render_template_latex,
     resolve_template_name,
 )
@@ -14,10 +13,6 @@ from adk.tools.verification.ref_compiler import compile_symbolic_references
 
 
 def test_list_and_resolve_templates(tmp_path: Path):
-    templates = list_available_templates()
-    assert "thesis_plodz" in templates
-    assert "paper_ieee" in templates
-
     assert resolve_template_name(thesis_type="inzynierska") == "thesis_plodz"
     assert resolve_template_name(thesis_type="magisterska") == "thesis_plodz"
     assert resolve_template_name(thesis_type="engineering") == "thesis_plodz"

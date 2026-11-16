@@ -201,7 +201,8 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
     assert t_res["replan_count"] == 3
     assert len(t_res["architecture_cycles"]) == 3
     # Node ids are opaque; the cycles are identified by the files they repaired.
-    assert [c["node_file"] for c in t_res["architecture_cycles"]] == ["config.py", "results.csv", "thesis.md"]
+    # The results wave is the module that writes the results (U5): no task targets results.csv itself.
+    assert [c["node_file"] for c in t_res["architecture_cycles"]] == ["config.py", "core.py", "thesis.md"]
     assert all(c["w3_post_remediation_status"] == "PASS" for c in t_res["architecture_cycles"])
 
     # Layer 4 events: the missing specialization is created at planning time and every failure escalates the

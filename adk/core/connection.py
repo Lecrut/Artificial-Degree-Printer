@@ -83,8 +83,6 @@ class LLMConnectionManager:
 
         return "mock"
 
-    def resolve_active_provider(self) -> str:
-        return self.resolve_provider()
 
     def resolve_model_name(self, provider: str, model_tier: str) -> str:
         """Return model identifier for the given provider and tier ('SML' or 'LRM')."""
@@ -106,8 +104,6 @@ class LLMConnectionManager:
         else:
             return f"mock-{model_tier.lower()}"
 
-    def select_model_for_tier(self, tier: str, active_provider: str) -> str:
-        return self.resolve_model_name(active_provider, tier)
 
     def get_google_model_pool(self, model_tier: str | None = None, primary_model: str | None = None) -> list[str]:
         """Return an ordered failover pool of Google models for the given tier (Series 3 for LRM, Series 2 for SML)."""
@@ -376,5 +372,3 @@ class LLMConnectionManager:
             },
         }
 
-    def test_connection_endpoints(self) -> dict[str, Any]:
-        return self.check_llm_access()

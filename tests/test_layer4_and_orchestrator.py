@@ -665,7 +665,7 @@ def test_findings_are_fitted_whole_with_a_count_note():
     items = ["a" * 50, "b" * 50, "c" * 50]
     shown = _fit_items(items, max_chars=110)
     assert shown[:2] == items[:2]
-    assert shown[-1].startswith("[pokazano 2 z 3")
+    assert shown[-1].startswith("[showing 2 of 3")
 
 
 def _evolution_with_decision(tmp_path: Path, decision: dict) -> tuple[NeuroSymbolicOrchestrator, dict]:
@@ -764,8 +764,8 @@ def test_declared_metrics_are_compared_with_what_was_measured(tmp_path: Path):
         "method,metric,value\nproposed,win_rate,0.6\nproposed,episode_length,7\n", encoding="utf-8"
     )
     findings = _declared_vs_measured_metrics(["win_rate", "draw_rate"], tmp_path)
-    assert any("'draw_rate'" in f and "nie została zmierzona" in f for f in findings)
-    assert any("'episode_length'" in f and "nie była zadeklarowana" in f for f in findings)
+    assert any("'draw_rate'" in f and "was not measured" in f for f in findings)
+    assert any("'episode_length'" in f and "not declared" in f for f in findings)
     assert not any("'win_rate'" in f for f in findings)
     # Before the experiment has run there is nothing to compare yet.
     assert _declared_vs_measured_metrics(["win_rate"], tmp_path / "empty") == []

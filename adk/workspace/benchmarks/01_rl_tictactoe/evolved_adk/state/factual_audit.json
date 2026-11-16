@@ -1,27 +1,24 @@
 {
   "files": [
-    "docs/background_research.md",
+    "config.py",
     "figures/comparison_chart.pdf",
     "figures/comparison_chart.png",
     "logs/agent_trace.jsonl",
     "logs/experiment.log",
     "logs/harness_process.log",
     "references.bib",
-    "src/config.py",
-    "src/experiment.py",
-    "src/game_environment.py",
     "src/plot_results.py",
-    "src/q_learner.py",
-    "src/random_agent.py",
-    "test_experiment.py",
-    "tests/test_agents.py",
-    "tests/test_game_environment.py",
+    "src/ql_agent.py",
+    "src/run_experiment.py",
+    "src/tictactoe.py",
+    "tests/test_ql_agent.py",
+    "tests/test_tictactoe.py",
     "thesis.md"
   ],
   "pytest_status": "FAIL",
   "pytest_errors": [
-    "Pytest failure: FF......                                                                                                                                                                                                                                                                                             [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n____________________________________________________________________________________________________________________________________ test_run_experiment_produces_csv _____________________________________________________________________________________________________________________________________\ntest_experiment.py:17: in test_run_experiment_produces_csv\n    with patch('src.experiment.write_csv'):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1497: in __enter__\n    original, local = self.get_original()\n                      ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1467: in get_original\n    raise AttributeError(\nE   AttributeError: <module 'src.experiment' from 'D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\experiment.py'> does not have the attribute 'write_csv'\n_______________________________________________________________________________________________________________________________________ test_agent_loop_completion ________________________________________________________________________________________________________________________________________\ntests\\test_agents.py:127: in test_agent_loop_completion\n    current_state = test_env.state\n                    ^^^^^^^^^^^^^^\nE   AttributeError: 'GameEnvironment' object has no attribute 'state'\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED test_experiment.py::test_run_experiment_produces_csv - AttributeError: <module 'src.experiment' from 'D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\experiment.py'> does not have the attribute 'write_csv'\nFAILED tests\\test_agents.py::test_agent_loop_completion - AttributeError: 'GameEnvironment' object has no attribute 'state'\n2 failed, 6 passed in 0.57s",
-    "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\game_environment.py:172:33: F821 Undefined name `idx`\nFound 1 error."
+    "Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\n______________________________________________________________________________________________ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/tests/test_ql_agent.py ______________________________________________________________________________________________\ntests\\test_ql_agent.py:16: in <module>\n    with patch.object(agent, 'get_random_choice', return_value=0) as mock_choice:\n                      ^^^^^\nE   NameError: name 'agent' is not defined\n========================================================================================================================================= short test summary info =========================================================================================================================================\nERROR tests\\test_ql_agent.py - NameError: name 'agent' is not defined\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 error in 0.16s",
+    "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:16:19: F821 Undefined name `agent`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:17:14: F821 Undefined name `agent`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:17:31: F821 Undefined name `state_key`\nFound 3 errors."
   ],
   "chapters_present": [
     1,
@@ -33,21 +30,12 @@
   ],
   "chapters_missing": [],
   "symbolic_errors": [
-    "File '<file>' does not exist To placeholder skopiowany z instrukcji, nie wskaźnik: wybierz prawdziwy cel z 'available_ast_symbols'.",
     "CSV file '<file>' does not exist",
-    "CSV file 'file' does not exist",
-    "CSV file 'file' does not exist",
-    "CSV file 'file' does not exist",
-    "Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.",
-    "Malformed symbolic tag missing ':' separator: \\ref_ast{RandomOpponentAgent.get_move}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.",
-    "Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.",
-    "Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}."
+    "CSV file '<file>' does not exist"
   ],
   "csv_columns": [],
   "trigger_issues": [
-    "Unresolved pointer: \\ref_csv{<file>}",
-    "Unresolved pointer: \\ref_csv{file}",
-    "Unresolved pointer: \\ref_ast{RandomOpponentAgent.get_move}",
-    "Unresolved pointer: \\ref_csv{results.csv}"
+    "Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\n______________________________________________________________________________________________ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/tests/test_ql_agent.py ______________________________________________________________________________________________\ntests\\test_ql_agent.py:16: in <module>\n    with patch.object(agent, 'get_random_choice', return_value=0) as mock_choice:\n                      ^^^^^\nE   NameError: name 'agent' is not defined\n========================================================================================================================================= short test summary info =========================================================================================================================================\nERROR tests\\test_ql_agent.py - NameError: name 'agent' is not defined\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 error in 0.16s",
+    "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:16:19: F821 Undefined name `agent`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:17:14: F821 Undefined name `agent`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:17:31: F821 Undefined name `state_key`\nFound 3 errors."
   ]
 }

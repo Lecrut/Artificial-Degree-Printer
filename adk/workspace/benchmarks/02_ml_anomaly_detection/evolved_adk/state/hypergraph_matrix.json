@@ -1,7 +1,7 @@
 {
   "nodes": {
     "n1": {
-      "path": "research/foundations.md",
+      "path": "docs/literature_review.md",
       "degree": 0,
       "weight": 1.0,
       "last_writer": {
@@ -18,18 +18,18 @@
     },
     "n3": {
       "path": "figures/comparison_chart.png",
-      "degree": 1,
+      "degree": 0,
       "weight": 1.0,
       "kind": "derived"
     },
     "n4": {
       "path": "references.bib",
-      "degree": 1,
+      "degree": 0,
       "weight": 1.0,
       "kind": "authored"
     },
     "n5": {
-      "path": "research/sota.md",
+      "path": "docs/sota_review.md",
       "degree": 0,
       "weight": 1.0,
       "last_writer": {
@@ -39,317 +39,276 @@
       "kind": "authored"
     },
     "n6": {
-      "path": "src/data/synthetic_data_generator.py",
-      "degree": 3,
-      "weight": 1.4,
+      "path": "src/experiment.py",
+      "degree": 6,
+      "weight": 7.0,
       "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "T12_FIX2"
+        "agent": "seed_coder",
+        "task_id": "Q4_FIX2_FIX"
       },
       "kind": "authored"
     },
     "n7": {
-      "path": "config.py",
-      "degree": 2,
-      "weight": 2.2,
+      "path": "scripts/plot_results.py",
+      "degree": 1,
+      "weight": 1.0,
       "last_writer": {
-        "agent": "dyn_anomaly_ml_specialist",
-        "task_id": "T3"
+        "agent": "seed_coder",
+        "task_id": "T14"
       },
       "kind": "authored"
     },
     "n8": {
-      "path": "thesis.md",
-      "degree": 11,
-      "weight": 7.0,
+      "path": "src/config.py",
+      "degree": 6,
+      "weight": 4.6,
       "last_writer": {
-        "agent": "seed_writer",
-        "task_id": "Q4_CH6_FIX2"
+        "agent": "seed_coder",
+        "task_id": "Q4_FIX_config_8"
       },
       "kind": "authored"
     },
     "n9": {
-      "path": "src/detectors/baseline_zscore.py",
-      "degree": 3,
-      "weight": 1.0,
+      "path": "src/data_generator.py",
+      "degree": 5,
+      "weight": 3.4,
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "T13_FIX_1"
+        "task_id": "Q2_FIX3_FIX_3"
       },
       "kind": "authored"
     },
     "n10": {
-      "path": "src/detectors/ensemble_detector.py",
-      "degree": 4,
+      "path": "src/data_types.py",
+      "degree": 11,
       "weight": 1.0,
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "T9"
+        "task_id": "Q4_FIX4_FIX2"
       },
       "kind": "authored"
     },
     "n11": {
-      "path": "src/evaluation/metrics.py",
-      "degree": 3,
-      "weight": 1.0,
+      "path": "src/methods/baseline_zscore.py",
+      "degree": 4,
+      "weight": 4.6,
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "T12_FIX_METRICS_UNUSED"
+        "task_id": "Q4_FIX3_FIX2"
       },
       "kind": "authored"
     },
     "n12": {
-      "path": "tests/test_config.py",
-      "degree": 0,
-      "weight": 7.0,
-      "kind": "authored",
-      "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "Q4_FIX1_FIX2"
-      }
-    },
-    "n13": {
-      "path": "plot_results.py",
+      "path": "src/methods/robust_ensemble.py",
       "degree": 4,
-      "weight": 2.6,
+      "weight": 5.0,
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "Q4_FIX1_FIX_2"
+        "task_id": "Q4_FIX_robust_ensemble_9"
+      },
+      "kind": "authored"
+    },
+    "n13": {
+      "path": "thesis.md",
+      "degree": 8,
+      "weight": 7.0,
+      "last_writer": {
+        "agent": "seed_writer",
+        "task_id": "Q4_CH5_FIX2"
       },
       "kind": "authored"
     },
     "n14": {
-      "path": "test_config.py",
-      "degree": 0,
-      "weight": 1.0,
+      "path": "tests/test_data_generator.py",
+      "degree": 4,
+      "weight": 4.6,
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "Q4_FIX1_FIX_1"
+        "task_id": "Q2_FIX4_FIX_4"
       },
       "kind": "authored"
     },
     "n15": {
-      "path": "tests/test_data_generator.py",
-      "degree": 1,
-      "weight": 4.6,
+      "path": "tests/test_baseline_zscore.py",
+      "degree": 3,
+      "weight": 5.8,
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "Q2_FIX2_FIX2"
+        "task_id": "Q4_FIX5"
       },
       "kind": "authored"
     },
     "n16": {
-      "path": "tests/test_baseline_detector.py",
+      "path": "tests/test_robust_ensemble.py",
       "degree": 2,
-      "weight": 2.2,
+      "weight": 4.6,
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "T13_FIX2"
+        "task_id": "Q3_FIX_robust_ensemble_12_FIX1"
       },
       "kind": "authored"
     },
     "n17": {
-      "path": "tests/test_ensemble_detector.py",
+      "path": "_iforest.py",
       "degree": 2,
-      "weight": 2.2,
+      "weight": 4.6,
       "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "T14_FIX2"
+        "agent": "seed_coder",
+        "task_id": "Q4_FIX1_FIX2"
       },
       "kind": "authored"
     },
     "n18": {
-      "path": "tests/test_metrics.py",
-      "degree": 1,
-      "weight": 2.2,
-      "kind": "authored",
+      "path": "src/methods/_iforest.py",
+      "degree": 2,
+      "weight": 3.4,
       "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "T15_FIX2"
-      }
+        "agent": "seed_coder",
+        "task_id": "Q4_FIX_robust_ensemble_9_FIX2"
+      },
+      "kind": "authored"
     },
     "n19": {
-      "path": "results/final_results.json",
-      "degree": 0,
-      "weight": 2.2,
+      "path": "validation.py",
+      "degree": 1,
+      "weight": 1.4,
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "Q2_FIX8_FIX1"
+      },
       "kind": "authored"
     },
     "n20": {
-      "path": "src/experiment/experiment_runner.py",
-      "degree": 9,
-      "weight": 2.6,
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "Q4_CODE"
-      },
-      "kind": "authored"
-    },
-    "n21": {
-      "path": "figures/comparison.pdf",
-      "degree": 3,
-      "weight": 2.2,
-      "kind": "derived",
-      "producer": "n22"
-    },
-    "n22": {
-      "path": "figures/comparison.py",
-      "degree": 2,
-      "weight": 1.0,
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T19"
-      },
-      "kind": "authored"
-    },
-    "n23": {
-      "path": "results.csv",
-      "degree": 4,
-      "weight": 2.2,
-      "kind": "derived"
-    },
-    "n24": {
-      "path": "test_experiment_runner.py",
+      "path": "src/methods/__init__.py",
       "degree": 1,
       "weight": 1.0,
       "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "Q1_FIX2"
-      },
-      "kind": "authored"
-    },
-    "n25": {
-      "path": "figures/anomaly_detection_comparison.png",
-      "degree": 0,
-      "weight": 1.0,
-      "kind": "derived"
-    },
-    "n26": {
-      "path": "tests/test_plot_results.py",
-      "degree": 1,
-      "weight": 1.0,
-      "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "Q4_FIX1_FIX_3"
+        "agent": "seed_coder",
+        "task_id": "Q4_FIX4_FIX2"
       },
       "kind": "authored"
     }
   },
   "edges": {
     "E1": [
-      "n13",
-      "n21"
+      "n10",
+      "n6"
     ],
     "E2": [
-      "n21",
-      "n22"
-    ],
-    "E3": [
-      "n20",
-      "n21"
-    ],
-    "E4": [
-      "n13",
-      "n23"
-    ],
-    "E5": [
-      "n10",
-      "n23"
-    ],
-    "E6": [
-      "n22",
-      "n23"
-    ],
-    "E7": [
-      "n20",
-      "n23"
-    ],
-    "E8": [
       "n6",
       "n8"
     ],
-    "E9": [
-      "n7",
-      "n8"
+    "E3": [
+      "n6",
+      "n9"
     ],
-    "E10": [
+    "E4": [
+      "n11",
+      "n6"
+    ],
+    "E5": [
+      "n12",
+      "n6"
+    ],
+    "E6": [
       "n8",
       "n9"
     ],
+    "E7": [
+      "n10",
+      "n9"
+    ],
+    "E8": [
+      "n10",
+      "n11"
+    ],
+    "E9": [
+      "n10",
+      "n12"
+    ],
+    "E10": [
+      "n12",
+      "n13"
+    ],
     "E11": [
-      "n16",
-      "n8"
+      "n11",
+      "n13"
     ],
     "E12": [
-      "n10",
-      "n8"
+      "n13",
+      "n9"
     ],
     "E13": [
-      "n11",
+      "n13",
       "n8"
     ],
     "E14": [
-      "n20",
-      "n8"
+      "n13",
+      "n6"
     ],
     "E15": [
       "n13",
-      "n8"
+      "n14"
     ],
     "E16": [
-      "n17",
-      "n8"
+      "n10",
+      "n13"
     ],
     "E17": [
-      "n3",
-      "n8"
+      "n13",
+      "n7"
     ],
     "E18": [
-      "n4",
-      "n8"
+      "n14",
+      "n9"
     ],
     "E19": [
-      "n15",
-      "n6"
+      "n14",
+      "n8"
     ],
     "E20": [
-      "n16",
-      "n9"
+      "n10",
+      "n14"
     ],
     "E21": [
       "n10",
-      "n17"
+      "n15"
     ],
     "E22": [
       "n11",
-      "n18"
+      "n15"
     ],
     "E23": [
-      "n20",
-      "n7"
+      "n15",
+      "n8"
     ],
     "E24": [
-      "n20",
-      "n6"
+      "n10",
+      "n16"
     ],
     "E25": [
-      "n20",
-      "n9"
+      "n12",
+      "n16"
     ],
     "E26": [
       "n10",
-      "n20"
+      "n17"
     ],
     "E27": [
-      "n11",
-      "n20"
+      "n17",
+      "n8"
     ],
     "E28": [
-      "n20",
-      "n24"
+      "n10",
+      "n18"
     ],
     "E29": [
-      "n13",
-      "n26"
+      "n10",
+      "n19"
+    ],
+    "E30": [
+      "n18",
+      "n20"
     ]
   },
   "matrix": {
@@ -382,7 +341,8 @@
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n2": {
       "E1": 0,
@@ -413,7 +373,8 @@
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n3": {
       "E1": 0,
@@ -432,7 +393,7 @@
       "E14": 0,
       "E15": 0,
       "E16": 0,
-      "E17": 1,
+      "E17": 0,
       "E18": 0,
       "E19": 0,
       "E20": 0,
@@ -444,7 +405,8 @@
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n4": {
       "E1": 0,
@@ -464,7 +426,7 @@
       "E15": 0,
       "E16": 0,
       "E17": 0,
-      "E18": 1,
+      "E18": 0,
       "E19": 0,
       "E20": 0,
       "E21": 0,
@@ -475,7 +437,8 @@
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n5": {
       "E1": 0,
@@ -506,38 +469,40 @@
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n6": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 0,
-      "E5": 0,
+      "E1": 1,
+      "E2": 1,
+      "E3": 1,
+      "E4": 1,
+      "E5": 1,
       "E6": 0,
       "E7": 0,
-      "E8": 1,
+      "E8": 0,
       "E9": 0,
       "E10": 0,
       "E11": 0,
       "E12": 0,
       "E13": 0,
-      "E14": 0,
+      "E14": 1,
       "E15": 0,
       "E16": 0,
       "E17": 0,
       "E18": 0,
-      "E19": 1,
+      "E19": 0,
       "E20": 0,
       "E21": 0,
       "E22": 0,
       "E23": 0,
-      "E24": 1,
+      "E24": 0,
       "E25": 0,
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n7": {
       "E1": 0,
@@ -548,7 +513,7 @@
       "E6": 0,
       "E7": 0,
       "E8": 0,
-      "E9": 1,
+      "E9": 0,
       "E10": 0,
       "E11": 0,
       "E12": 0,
@@ -556,9 +521,41 @@
       "E14": 0,
       "E15": 0,
       "E16": 0,
-      "E17": 0,
+      "E17": 1,
       "E18": 0,
       "E19": 0,
+      "E20": 0,
+      "E21": 0,
+      "E22": 0,
+      "E23": 0,
+      "E24": 0,
+      "E25": 0,
+      "E26": 0,
+      "E27": 0,
+      "E28": 0,
+      "E29": 0,
+      "E30": 0
+    },
+    "n8": {
+      "E1": 0,
+      "E2": 1,
+      "E3": 0,
+      "E4": 0,
+      "E5": 0,
+      "E6": 1,
+      "E7": 0,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
+      "E12": 0,
+      "E13": 1,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
+      "E18": 0,
+      "E19": 1,
       "E20": 0,
       "E21": 0,
       "E22": 0,
@@ -566,28 +563,29 @@
       "E24": 0,
       "E25": 0,
       "E26": 0,
-      "E27": 0,
+      "E27": 1,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
-    "n8": {
+    "n9": {
       "E1": 0,
       "E2": 0,
-      "E3": 0,
+      "E3": 1,
       "E4": 0,
       "E5": 0,
-      "E6": 0,
-      "E7": 0,
-      "E8": 1,
-      "E9": 1,
-      "E10": 1,
-      "E11": 1,
+      "E6": 1,
+      "E7": 1,
+      "E8": 0,
+      "E9": 0,
+      "E10": 0,
+      "E11": 0,
       "E12": 1,
-      "E13": 1,
-      "E14": 1,
-      "E15": 1,
-      "E16": 1,
-      "E17": 1,
+      "E13": 0,
+      "E14": 0,
+      "E15": 0,
+      "E16": 0,
+      "E17": 0,
       "E18": 1,
       "E19": 0,
       "E20": 0,
@@ -599,84 +597,55 @@
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
-    "n9": {
-      "E1": 0,
+    "n10": {
+      "E1": 1,
       "E2": 0,
       "E3": 0,
       "E4": 0,
       "E5": 0,
       "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 1,
+      "E7": 1,
+      "E8": 1,
+      "E9": 1,
+      "E10": 0,
       "E11": 0,
       "E12": 0,
       "E13": 0,
       "E14": 0,
       "E15": 0,
-      "E16": 0,
+      "E16": 1,
       "E17": 0,
       "E18": 0,
       "E19": 0,
       "E20": 1,
-      "E21": 0,
-      "E22": 0,
-      "E23": 0,
-      "E24": 0,
-      "E25": 1,
-      "E26": 0,
-      "E27": 0,
-      "E28": 0,
-      "E29": 0
-    },
-    "n10": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 0,
-      "E5": 1,
-      "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 1,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
       "E21": 1,
       "E22": 0,
       "E23": 0,
-      "E24": 0,
+      "E24": 1,
       "E25": 0,
       "E26": 1,
       "E27": 0,
-      "E28": 0,
-      "E29": 0
+      "E28": 1,
+      "E29": 1,
+      "E30": 0
     },
     "n11": {
       "E1": 0,
       "E2": 0,
       "E3": 0,
-      "E4": 0,
+      "E4": 1,
       "E5": 0,
       "E6": 0,
       "E7": 0,
-      "E8": 0,
+      "E8": 1,
       "E9": 0,
       "E10": 0,
-      "E11": 0,
+      "E11": 1,
       "E12": 0,
-      "E13": 1,
+      "E13": 0,
       "E14": 0,
       "E15": 0,
       "E16": 0,
@@ -690,21 +659,22 @@
       "E24": 0,
       "E25": 0,
       "E26": 0,
-      "E27": 1,
+      "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n12": {
       "E1": 0,
       "E2": 0,
       "E3": 0,
       "E4": 0,
-      "E5": 0,
+      "E5": 1,
       "E6": 0,
       "E7": 0,
       "E8": 0,
-      "E9": 0,
-      "E10": 0,
+      "E9": 1,
+      "E10": 1,
       "E11": 0,
       "E12": 0,
       "E13": 0,
@@ -719,30 +689,31 @@
       "E22": 0,
       "E23": 0,
       "E24": 0,
-      "E25": 0,
+      "E25": 1,
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n13": {
-      "E1": 1,
+      "E1": 0,
       "E2": 0,
       "E3": 0,
-      "E4": 1,
+      "E4": 0,
       "E5": 0,
       "E6": 0,
       "E7": 0,
       "E8": 0,
       "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
+      "E10": 1,
+      "E11": 1,
+      "E12": 1,
+      "E13": 1,
+      "E14": 1,
       "E15": 1,
-      "E16": 0,
-      "E17": 0,
+      "E16": 1,
+      "E17": 1,
       "E18": 0,
       "E19": 0,
       "E20": 0,
@@ -754,7 +725,8 @@
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 1
+      "E29": 0,
+      "E30": 0
     },
     "n14": {
       "E1": 0,
@@ -771,12 +743,12 @@
       "E12": 0,
       "E13": 0,
       "E14": 0,
-      "E15": 0,
+      "E15": 1,
       "E16": 0,
       "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
+      "E18": 1,
+      "E19": 1,
+      "E20": 1,
       "E21": 0,
       "E22": 0,
       "E23": 0,
@@ -785,7 +757,8 @@
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n15": {
       "E1": 0,
@@ -806,17 +779,18 @@
       "E16": 0,
       "E17": 0,
       "E18": 0,
-      "E19": 1,
+      "E19": 0,
       "E20": 0,
-      "E21": 0,
-      "E22": 0,
-      "E23": 0,
+      "E21": 1,
+      "E22": 1,
+      "E23": 1,
       "E24": 0,
       "E25": 0,
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n16": {
       "E1": 0,
@@ -829,7 +803,7 @@
       "E8": 0,
       "E9": 0,
       "E10": 0,
-      "E11": 1,
+      "E11": 0,
       "E12": 0,
       "E13": 0,
       "E14": 0,
@@ -838,16 +812,17 @@
       "E17": 0,
       "E18": 0,
       "E19": 0,
-      "E20": 1,
+      "E20": 0,
       "E21": 0,
       "E22": 0,
       "E23": 0,
-      "E24": 0,
-      "E25": 0,
+      "E24": 1,
+      "E25": 1,
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n17": {
       "E1": 0,
@@ -865,20 +840,21 @@
       "E13": 0,
       "E14": 0,
       "E15": 0,
-      "E16": 1,
+      "E16": 0,
       "E17": 0,
       "E18": 0,
       "E19": 0,
       "E20": 0,
-      "E21": 1,
+      "E21": 0,
       "E22": 0,
       "E23": 0,
       "E24": 0,
       "E25": 0,
-      "E26": 0,
-      "E27": 0,
+      "E26": 1,
+      "E27": 1,
       "E28": 0,
-      "E29": 0
+      "E29": 0,
+      "E30": 0
     },
     "n18": {
       "E1": 0,
@@ -902,14 +878,15 @@
       "E19": 0,
       "E20": 0,
       "E21": 0,
-      "E22": 1,
+      "E22": 0,
       "E23": 0,
       "E24": 0,
       "E25": 0,
       "E26": 0,
       "E27": 0,
-      "E28": 0,
-      "E29": 0
+      "E28": 1,
+      "E29": 0,
+      "E30": 1
     },
     "n19": {
       "E1": 0,
@@ -940,166 +917,12 @@
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
+      "E29": 1,
+      "E30": 0
     },
     "n20": {
       "E1": 0,
       "E2": 0,
-      "E3": 1,
-      "E4": 0,
-      "E5": 0,
-      "E6": 0,
-      "E7": 1,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 1,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0,
-      "E23": 1,
-      "E24": 1,
-      "E25": 1,
-      "E26": 1,
-      "E27": 1,
-      "E28": 1,
-      "E29": 0
-    },
-    "n21": {
-      "E1": 1,
-      "E2": 1,
-      "E3": 1,
-      "E4": 0,
-      "E5": 0,
-      "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0,
-      "E23": 0,
-      "E24": 0,
-      "E25": 0,
-      "E26": 0,
-      "E27": 0,
-      "E28": 0,
-      "E29": 0
-    },
-    "n22": {
-      "E1": 0,
-      "E2": 1,
-      "E3": 0,
-      "E4": 0,
-      "E5": 0,
-      "E6": 1,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0,
-      "E23": 0,
-      "E24": 0,
-      "E25": 0,
-      "E26": 0,
-      "E27": 0,
-      "E28": 0,
-      "E29": 0
-    },
-    "n23": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 1,
-      "E5": 1,
-      "E6": 1,
-      "E7": 1,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0,
-      "E23": 0,
-      "E24": 0,
-      "E25": 0,
-      "E26": 0,
-      "E27": 0,
-      "E28": 0,
-      "E29": 0
-    },
-    "n24": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 0,
-      "E5": 0,
-      "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0,
-      "E23": 0,
-      "E24": 0,
-      "E25": 0,
-      "E26": 0,
-      "E27": 0,
-      "E28": 1,
-      "E29": 0
-    },
-    "n25": {
-      "E1": 0,
-      "E2": 0,
       "E3": 0,
       "E4": 0,
       "E5": 0,
@@ -1126,75 +949,31 @@
       "E26": 0,
       "E27": 0,
       "E28": 0,
-      "E29": 0
-    },
-    "n26": {
-      "E1": 0,
-      "E2": 0,
-      "E3": 0,
-      "E4": 0,
-      "E5": 0,
-      "E6": 0,
-      "E7": 0,
-      "E8": 0,
-      "E9": 0,
-      "E10": 0,
-      "E11": 0,
-      "E12": 0,
-      "E13": 0,
-      "E14": 0,
-      "E15": 0,
-      "E16": 0,
-      "E17": 0,
-      "E18": 0,
-      "E19": 0,
-      "E20": 0,
-      "E21": 0,
-      "E22": 0,
-      "E23": 0,
-      "E24": 0,
-      "E25": 0,
-      "E26": 0,
-      "E27": 0,
-      "E28": 0,
-      "E29": 1
+      "E29": 0,
+      "E30": 1
     }
   },
   "edge_meta": {
     "E1": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n13"
+      "dynamic": true
     },
     "E2": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n22"
+      "dynamic": true
     },
     "E3": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n20"
+      "dynamic": true
     },
     "E4": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n13"
+      "dynamic": true
     },
     "E5": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n10"
+      "dynamic": true
     },
     "E6": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n22"
+      "dynamic": true
     },
     "E7": {
-      "dynamic": true,
-      "kind": "produces",
-      "producer": "n20"
+      "dynamic": true
     },
     "E8": {
       "dynamic": true
@@ -1260,6 +1039,9 @@
       "dynamic": true
     },
     "E29": {
+      "dynamic": true
+    },
+    "E30": {
       "dynamic": true
     }
   }

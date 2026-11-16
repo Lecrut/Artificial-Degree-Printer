@@ -44,8 +44,8 @@ If violations are detected, return:
   "status": "FAIL",
   "gate_3_approved": false,
   "issues": [
-    "Recenzja negatywna (Gate 3): Rozdział 5 twierdzi o 'znaczącej przewadze', lecz w pliku wyników różnica względem baseline na deklarowanej metryce jest mniejsza niż odchylenie standardowe.",
-    "Wykryto AI fluff: nieuzasadnione sformułowanie 'rewolucyjne podejście' w Rozdziale 1 bez dowodu analitycznego."
+    "Negative review (Gate 3): Chapter 5 claims 'znacząca przewaga', but in the results file the difference from the baseline on the declared metric is smaller than the standard deviation.",
+    "AI fluff: the unsupported phrase 'rewolucyjne podejście' in Chapter 1 has no analytical evidence."
   ]
 }
 ```

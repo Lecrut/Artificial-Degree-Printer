@@ -1,101 +1,62 @@
 {
   "status": "FAIL",
-  "failed_task_id": "Q4_REFS",
-  "failed_node": "n5",
-  "failed_file": "thesis.md",
-  "failed_agent": "seed_writer",
+  "failed_task_id": "Q4_FIX_test_ql_agent_2",
+  "failed_node": "n12",
+  "failed_file": "tests/test_ql_agent.py",
+  "failed_agent": "seed_tester",
   "supervisors": {
     "code_auditor": {
       "verdict": "PASS",
-      "issues": [],
-      "status": "PASS",
-      "skipped": "is_doc_scope"
+      "issues": [
+        "Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\n______________________________________________________________________________________________ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/tests/test_ql_agent.py ______________________________________________________________________________________________\ntests\\test_ql_agent.py:16: in <module>\n    with patch.object(agent, 'get_random_choice', return_value=0) as mock_choice:\n                      ^^^^^\nE   NameError: name 'agent' is not defined\n========================================================================================================================================= short test summary info =========================================================================================================================================\nERROR tests\\test_ql_agent.py - NameError: name 'agent' is not defined\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 error in 0.16s",
+        "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:16:19: F821 Undefined name `agent`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:17:14: F821 Undefined name `agent`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:17:31: F821 Undefined name `state_key`\nFound 3 errors."
+      ],
+      "status": "FAIL",
+      "skipped": "deterministic_only"
     },
     "symbolic_auditor": {
-      "status": "FAIL",
-      "issues": [
-        "Unresolved pointer: \\ref_csv{<file>}",
-        "Unresolved pointer: \\ref_csv{file}",
-        "Unresolved pointer: \\ref_ast{RandomOpponentAgent.get_move}",
-        "Unresolved pointer: \\ref_csv{results.csv}"
-      ]
+      "status": "SKIPPED_OUT_OF_EDGE_SCOPE",
+      "verdict": "PASS",
+      "skipped": "SKIPPED_OUT_OF_EDGE_SCOPE",
+      "issues": []
     },
     "redteam_critic_guard": {
-      "status": "SKIPPED_INTERMEDIATE_TASK",
+      "status": "SKIPPED_OUT_OF_EDGE_SCOPE",
       "verdict": "PASS",
-      "gate_3_approved": false,
+      "skipped": "SKIPPED_OUT_OF_EDGE_SCOPE",
       "issues": []
     }
   },
-  "summary": "Zakończono z brakami: 17 nierozwiązanych ustaleń.",
+  "summary": "Zakończono z brakami: 5 nierozwiązanych ustaleń.",
+  "warnings": [
+    "Parameter config.py:RANDOM_SEED is declared but no code uses it.",
+    "Parameter config.py:N_REPETITIONS is declared but no code uses it.",
+    "Parameter config.py:EPOCHES_PER_DECAY_STEP is declared but no code uses it.",
+    "Parameter src/plot_results.py:FIGURE_PATHS is declared but no code uses it.",
+    "Parameter src/ql_agent.py:EPOCHES_PER_DECAY_STEP is declared but no code uses it.",
+    "Parameter src/ql_agent.py:RANDOM_SEED is declared but no code uses it.",
+    "adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:30:50: F841 Local variable `mock_decay` is assigned to but never used\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:34:9: F841 Local variable `expected_new_q` is assigned to but never used\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:43:70: F841 Local variable `mock_choice` is assigned to but never used\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:48:5: F811 Redefinition of unused `test_q_value_update_validity` from line 21: `test_q_value_update_validity` redefined here\nFound 4 errors.\n3 unsafe fixes available with `--fix --unsafe-fixes`."
+  ],
   "gaps": [
     {
       "kind": "kod",
-      "detail": "Pytest failure: FF......                                                                                                                                                                                                                                                                                             [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n____________________________________________________________________________________________________________________________________ test_run_experiment_produces_csv _____________________________________________________________________________________________________________________________________\ntest_experiment.py:17: in test_run_experiment_produces_csv\n    with patch('src.experiment.write_csv'):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1497: in __enter__\n    original, local = self.get_original()\n                      ^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1467: in get_original\n    raise AttributeError(\nE   AttributeError: <module 'src.experiment' from 'D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\experiment.py'> does not have the attribute 'write_csv'\n_______________________________________________________________________________________________________________________________________ test_agent_loop_completion ________________________________________________________________________________________________________________________________________\ntests\\test_agents.py:127: in test_agent_loop_completion\n    current_state = test_env.state\n                    ^^^^^^^^^^^^^^\nE   AttributeError: 'GameEnvironment' object has no attribute 'state'\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED test_experiment.py::test_run_experiment_produces_csv - AttributeError: <module 'src.experiment' from 'D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\experiment.py'> does not have the attribute 'write_csv'\nFAILED tests\\test_agents.py::test_agent_loop_completion - AttributeError: 'GameEnvironment' object has no attribute 'state'\n2 failed, 6 passed in 0.57s"
+      "detail": "Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\n______________________________________________________________________________________________ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/tests/test_ql_agent.py ______________________________________________________________________________________________\ntests\\test_ql_agent.py:16: in <module>\n    with patch.object(agent, 'get_random_choice', return_value=0) as mock_choice:\n                      ^^^^^\nE   NameError: name 'agent' is not defined\n========================================================================================================================================= short test summary info =========================================================================================================================================\nERROR tests\\test_ql_agent.py - NameError: name 'agent' is not defined\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 error in 0.16s"
     },
     {
       "kind": "kod",
-      "detail": "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\game_environment.py:172:33: F821 Undefined name `idx`\nFound 1 error."
-    },
-    {
-      "kind": "wskaźnik",
-      "detail": "File '<file>' does not exist To placeholder skopiowany z instrukcji, nie wskaźnik: wybierz prawdziwy cel z 'available_ast_symbols'."
+      "detail": "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:16:19: F821 Undefined name `agent`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:17:14: F821 Undefined name `agent`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\tests\\test_ql_agent.py:17:31: F821 Undefined name `state_key`\nFound 3 errors."
     },
     {
       "kind": "wskaźnik",
       "detail": "CSV file '<file>' does not exist"
     },
     {
-      "kind": "wskaźnik",
-      "detail": "CSV file 'file' does not exist"
-    },
-    {
-      "kind": "wskaźnik",
-      "detail": "Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}."
-    },
-    {
-      "kind": "wskaźnik",
-      "detail": "Malformed symbolic tag missing ':' separator: \\ref_ast{RandomOpponentAgent.get_move}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}."
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Unresolved pointer: \\ref_csv{<file>}"
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Unresolved pointer: \\ref_csv{file}"
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Unresolved pointer: \\ref_ast{RandomOpponentAgent.get_move}"
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Unresolved pointer: \\ref_csv{results.csv}"
+      "kind": "zadanie",
+      "detail": "Q4_FIX1 (FAILED): Fix the file tests/test_ql_agent.py. Errors: Pytest failure: .FF.....                                                                                                                                                                                                                                                                                             [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n__________________________________________________________________________________________________________________________________ test_epsilon_greedy_action_selection ___________________________________________________________________________________________________________________________________\ntests\\test_ql_agent.py:24: in test_epsilon_greedy_action_selection\n    assert action == 0, 'With mocked choice returning 0, selected action should be 0'\nE   AssertionError: With mocked choice returning 0, selected action should be 0\nE   assert 1 == 0\n______________________________________________________________________________________________________________________________________ test_q_value_update_validity _______________________________________________________________________________________________________________________________________\ntests\\test_ql_agent.py:45: in test_q_value_update_validity\n    mock_decay.assert_called_once()\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:958: in assert_called_once\n    raise AssertionError(msg)\nE   AssertionError: Expected 'decay_epsilon' to have been called once. Called 0 times.\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_ql_agent.py::test_epsilon_greedy_action_selection - AssertionError: With mocked choice returning 0, selected action should be 0\nFAILED tests\\test_ql_agent.py::test_q_value_update_validity - AssertionError: Expected 'decay_epsilon' to have been called once. Called 0 times.\n2 failed, 6 passed in 0.15s"
     },
     {
       "kind": "zadanie",
-      "detail": "Q4_FIX1 (FAILED): Napraw plik test_experiment.py. Błędy: Pytest failure: FF......                                                                                                                                                                                                                                                                                             [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n____________________________________________________________________________________________________________________________________ test_run_experiment_produces_csv _____________________________________________________________________________________________________________________________________\ntest_experiment.py:46: in test_run_experiment_produces_csv\n    run_experiment()\nsrc\\experiment.py:17: in run_experiment\n    rng = np.random.default_rng(seed=config.seed)\n                                     ^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:690: in __getattr__\n    raise AttributeError(\"Mock object has no attribute %r\" % name)\nE   AttributeError: Mock object has no attribute 'seed'\n_______________________________________________________________________________________________________________________________________ test_agent_loop_completion ________________________________________________________________________________________________________________________________________\ntests\\test_agents.py:117: in test_agent_loop_completion\n    assert result is True\nE   assert False is True\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED test_experiment.py::test_run_experiment_produces_csv - AttributeError: Mock object has no attribute 'seed'\nFAILED tests\\test_agents.py::test_agent_loop_completion - assert False is True\n2 failed, 6 passed in 0.58s"
-    },
-    {
-      "kind": "zadanie",
-      "detail": "Q4_FIX2 (FAILED): Napraw plik tests/test_agents.py. Błędy: Pytest failure: FF......                                                                                                                                                                                                                                                                                             [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n____________________________________________________________________________________________________________________________________ test_run_experiment_produces_csv _____________________________________________________________________________________________________________________________________\ntest_experiment.py:46: in test_run_experiment_produces_csv\n    run_experiment()\nsrc\\experiment.py:17: in run_experiment\n    rng = np.random.default_rng(seed=config.seed)\n                                     ^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:690: in __getattr__\n    raise AttributeError(\"Mock object has no attribute %r\" % name)\nE   AttributeError: Mock object has no attribute 'seed'\n_______________________________________________________________________________________________________________________________________ test_agent_loop_completion ________________________________________________________________________________________________________________________________________\ntests\\test_agents.py:117: in test_agent_loop_completion\n    assert result is True\nE   assert False is True\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED test_experiment.py::test_run_experiment_produces_csv - AttributeError: Mock object has no attribute 'seed'\nFAILED tests\\test_agents.py::test_agent_loop_completion - assert False is True\n2 failed, 6 passed in 0.58s"
-    },
-    {
-      "kind": "zadanie",
-      "detail": "Q4_CODE (FAILED): Napraw kod tak, żeby testy przeszły. Błędy bez wskazanego pliku: Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\game_environment.py:172:33: F821 Undefined name `idx`\nFound 1 error."
-    },
-    {
-      "kind": "zadanie",
-      "detail": "Q4_CRITIC (FAILED): Popraw thesis.md tak, by usunąć każde z ustaleń krytyka. Odnieś się do każdego identyfikatora; jeśli ustalenia nie da się usunąć, opisz je wprost jako ograniczenie pracy.\n[K1] Unresolved pointer: \\ref_csv{results.csv}\n[K2] Unresolved pointer: \\ref_ast{test_random_agent_move}\n[K3] Unresolved pointer: \\ref_ast{test_q_learning_update}\n[K4] Unresolved pointer: \\ref_ast{RandomOpponentAgent.get_move}"
-    },
-    {
-      "kind": "błąd harnessu",
-      "detail": "Q4_CRITIC: Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie). Pliki: ['File <id> does not exist', 'Malformed symbolic tag missing <id> separator']"
-    },
-    {
-      "kind": "zadanie",
-      "detail": "Q4_REFS (BLOCKED): Popraw thesis.md tak, aby zostały tylko wskaźniki istniejące w plikach. Błędy: Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.; Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.; Malformed symbolic tag missing ':' separator: \\ref_ast{test_random_agent_move}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.; Malformed symbolic tag missing ':' separator: \\ref_ast{test_q_learning_update}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.; Malformed symbolic tag missing ':' separator: \\ref_csv{results.csv}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}.; Malformed symbolic tag missing ':' separator: \\ref_ast{RandomOpponentAgent.get_move}. Wskaźnik bez celu (sam plik) jest nieprawidłowy: wybierz pełny cel z 'available_ast_symbols' / 'available_csv_columns', a plik wymieniany w prozie zapisz jako \\texttt{...}."
+      "detail": "Q4_FIX_test_ql_agent_2 (BLOCKED): Fix the file tests/test_ql_agent.py according to the verification finding: Pytest failure: ..F                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n______________________________________________________________________________________________________________________________________ test_q_value_update_validity _______________________________________________________________________________________________________________________________________\ntests\\test_ql_agent.py:45: in test_q_value_update_validity\n    mock_decay.assert_called_once()\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:958: in assert_called_once\n    raise AssertionError(msg)\nE   AssertionError: Expected 'decay_epsilon' to have been called once. Called 0 times.\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_ql_agent.py::test_q_value_update_validity - AssertionError: Expected 'decay_epsilon' to have been called once. Called 0 times.\n1 failed, 2 passed in 0.14s"
     }
   ]
 }

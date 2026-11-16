@@ -1,347 +1,334 @@
 {
   "failures": [
     {
-      "agent": "seed_writer",
-      "context": "{\"pattern\": {\"category\": \"document\", \"occurrences\": 2, \"tasks\": [\"Q1_CH6\", \"Q2_CRITIC\"], \"examples\": [\"Unresolved pointer: \\\\ref_ast{test_random_agent_move}\", \"Unresolved pointer: \\\\ref_ast{test_random_agent_move}\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"thesis.md\", \"failed_agent\": \"seed_writer\", \"issues\": [\"Symbol 'RandomPlayerAgent.get_move' not found in 'random_agent.py'\", \"CSV file 'results.csv' does not exist\", \"Malformed symbolic tag missing ':' separator: \\\\ref_csv{results.csv}\"]}, \"failed_agent\": \"seed_writer\", \"agent_failure_count\": 6, \"cycle_index\": 27, \"task_id\": \"Q2_CRITIC\", \"target_node\": \"n5\", \"suggested_rule\": \"Zadanie Q2_CRITIC na węźle n5 (thesis.md) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
-      "injected_rule": "When referencing external symbols or files in the output, use their canonical names exactly as defined in the import contract or available packages list, because symbolic tags must resolve to existing entities without ambiguity."
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"contract\", \"occurrences\": 2, \"tasks\": [\"SKELETON\", \"T10\"], \"examples\": [\"Environment contract violation: src/plot_results.py imports the package 'mpl', which the environment does not have. The environment is fixed for the whole run: use the packages in 'available_packages' or the project's modules (their import paths are in 'exports').\", \"Environment contract violation: src/plot_results.py imports the package 'mpl', which the environment does not have. The environment is fixed for the whole run: use the packages in 'available_packages' or the project's modules (their import paths are in 'exports').\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/plot_results.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Environment contract violation: src/plot_results.py imports the package 'mpl', which the environment does not have. The environment is fixed for the whole run: use the packages in 'available_packages' or the project's modules (their import paths are in 'exports').\", \"Environment contract violation: src/plot_results.py imports the package 'ql_agent', which the environment does not have. The environment is fixed for the whole run: use the packages in 'available_packages' or the project's modules (their import paths are in 'exports').\", \"Import error in plot_results.py: Traceback (most recent call last):\\n  File \\\"<string>\\\", line 1, in <module>\\n    import src.plot_results\\n  File \\\"D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\src\\\\plot_results.py\\\", line 12, in <module>\\n    from mpl.fonts import FontProperties\\nModuleNotFoundError: No module named 'mpl'\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 12, \"cycle_index\": 16, \"task_id\": \"T10\", \"target_node\": \"n6\", \"suggested_rule\": \"Task T10 on node n6 (src/plot_results.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When implementing functionality that requires external libraries, verify their presence in the provided environment contract before writing imports or code, because using non-existent dependencies causes immediate runtime failure and wastes execution cycles."
     },
     {
       "agent": "seed_tester",
-      "context": "{\"pattern\": {\"category\": \"pytest:fail\", \"occurrences\": 2, \"tasks\": [\"Q3_FIX2\", \"T16\"], \"examples\": [\"Pytest failure: E.                                                                                                                                                                                                                                                                                                   [100%]\\n====================================================================================\", \"Pytest failure: E.                                                                                                                                                                                                                                                                                                   [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_agents.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: E.                                                                                                                                                                                                                                                                                                   [100%]\\n================================================================================================================================================= ERRORS ==================================================================================================================================================\\n______________________________________________________________________________________________________________________________ ERROR at setup of test_agent_loop_completion _______________________________________________________________________________________________________________________________\\nfile D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_agents.py, line 99\\n  def test_agent_loop_completion(self, seed):\\nE       fixture 'self' not found\\n>       available fixtures: capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, mock_env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory\\n>       use 'pytest --fixtures [testpath]' for help on them.\\n\\nD:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_agents.py:99\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nERROR tests\\\\test_agents.py::test_agent_loop_completion\\n1 passed, 1 error in 0.06s\", \"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_agents.py:62:22: F821 Undefined name `RandomPlayerAgent`\\nFound 1 error.\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 12, \"cycle_index\": 33, \"task_id\": \"Q3_FIX2\", \"target_node\": \"n14\", \"suggested_rule\": \"Zadanie Q3_FIX2 na węźle n14 (tests/test_agents.py) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
-      "injected_rule": "When writing a unit test case, verify that the class under test is actually imported and available in the module's namespace before referencing it in assertions or setup, because missing imports cause undefined name errors during execution."
+      "context": "{\"pattern\": {\"category\": \"pytest:fail\", \"occurrences\": 3, \"tasks\": [\"Q1_FIX2\", \"Q1_FIX3\", \"Q1_FIX_test_tictactoe_6\"], \"examples\": [\"Pytest failure: ..E.....                                                                                                                                                                                                                                                                                             [100%]\\n====================================================================================\", \"Pytest failure: EE..E.........                                                                                                                                                                                                                                                                                       [100%]\\n====================================================================================\", \"Pytest failure: ..E.........                                                                                                                                                                                                                                                                                         [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_tictactoe.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: ..E.........                                                                                                                                                                                                                                                                                         [100%]\\n================================================================================================================================================= ERRORS ==================================================================================================================================================\\n________________________________________________________________________________________________________________________________ ERROR at setup of test_make_move_validity ________________________________________________________________________________________________________________________________\\nfile D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_tictactoe.py, line 20\\n  def test_make_move_validity(self):\\nE       fixture 'self' not found\\n>       available fixtures: capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory\\n>       use 'pytest --fixtures [testpath]' for help on them.\\n\\nD:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_tictactoe.py:20\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nERROR tests\\\\test_tictactoe.py::test_make_move_validity\\n11 passed, 1 error in 0.04s\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 10, \"cycle_index\": 30, \"task_id\": \"Q1_FIX_test_tictactoe_6\", \"target_node\": \"n11\", \"suggested_rule\": \"Task Q1_FIX_test_tictactoe_6 on node n11 (tests/test_tictactoe.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When defining a test case without an accompanying class-based fixture setup, avoid using 'self' as a parameter name because pytest interprets it as a request for a fixture rather than a method instance reference; instead use 'case' or 'test_case', because the test is a standalone function."
     },
     {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"pytest:assert\", \"occurrences\": 2, \"tasks\": [\"Q1_FIX2\", \"Q3_FIX_random_agent_3\"], \"examples\": [\"Wyjątek wykonania zadania Q1_FIX2 na węźle n13 (tests/test_game_environment.py): Edycje symboli odrzucone (nic z tej odpowiedzi nie zapisano):\\n- test_game_environment.py:tests.test_game_environment.py:test_check_winner_complete_draw: SyntaxError in new_code: unexpected character after line continuation character (test_game_environment.py, line 2)\\n- test_game_environment.py:tests.test_game_environm\", \"Pytest failure: F.                                                                                                                                                                                                                                                                                                   [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/random_agent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: F.                                                                                                                                                                                                                                                                                                   [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_______________________________________________________________________________________________________________________________________ test_agent_loop_completion ________________________________________________________________________________________________________________________________________\\ntests\\\\test_agents.py:116: in test_agent_loop_completion\\n    assert result is True\\nE   assert False is True\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_agents.py::test_agent_loop_completion - assert False is True\\n1 failed, 1 passed in 0.12s\", \"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_agents.py:62:22: F821 Undefined name `RandomPlayerAgent`\\nFound 1 error.\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 18, \"cycle_index\": 36, \"task_id\": \"Q3_FIX_random_agent_3\", \"target_node\": \"n11\", \"suggested_rule\": \"Zadanie Q3_FIX_random_agent_3 na węźle n11 (src/random_agent.py) nie przeszło weryfikacji; ustalenia są w raporcie weryfikacji przekazanym obok. Zrób to: usuń ich przyczynę w pliku, którego dotyczą.\"}",
-      "injected_rule": "When modifying a file based on error reports, verify that all symbols referenced in the code are defined within that module or imported from explicitly declared dependencies, because undefined names cause both linting failures and runtime import errors which prevent validation."
+      "agent": "seed_writer",
+      "context": "{\"pattern\": {\"category\": \"document\", \"occurrences\": 2, \"tasks\": [\"Q1_CRITIC\", \"Q2_CRITIC\"], \"examples\": [\"Symbol 'test_q_value_update_convergence' not found in 'test_ql_agent.py' Closest existing targets: tests/test_ql_agent.py:test_initial_q_values_zero, tests/test_ql_agent.py:test_epsilon_greedy_action_selection.\", \"CSV file '<file>' does not exist\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"thesis.md\", \"failed_agent\": \"seed_writer\", \"issues\": [\"Symbol 'update' not found in 'ql_agent.py' Closest existing targets: src/ql_agent.py:QAgent, src/ql_agent.py:GAMMA.\", \"CSV file '<file>' does not exist\"]}, \"failed_agent\": \"seed_writer\", \"agent_failure_count\": 7, \"cycle_index\": 46, \"task_id\": \"Q2_CRITIC\", \"target_node\": \"n1\", \"suggested_rule\": \"Task Q2_CRITIC on node n1 (thesis.md) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When referencing code symbols or file paths from another module, always resolve them against the explicit contract definitions provided in the input payload rather than inferring names or locations from the current file's context, because the payload contains the ground truth for existing artifacts."
+    },
+    {
+      "agent": "seed_tester",
+      "context": "{\"pattern\": {\"category\": \"pytest:NameError\", \"occurrences\": 2, \"tasks\": [\"Q1_FIX3\", \"Q3_FIX1\"], \"examples\": [\"Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\\n____________________________________________________________________________________\", \"Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\\n____________________________________________________________________________________\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_ql_agent.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\\n______________________________________________________________________________________________ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/tests/test_ql_agent.py ______________________________________________________________________________________________\\ntests\\\\test_ql_agent.py:50: in <module>\\n    with patch.object(agent, 'update') as mock_update:\\n                      ^^^^^\\nE   NameError: name 'agent' is not defined\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nERROR tests\\\\test_ql_agent.py - NameError: name 'agent' is not defined\\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\\n1 error in 0.17s\", \"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_ql_agent.py:50:19: F821 Undefined name `agent`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_ql_agent.py:54:5: F821 Undefined name `agent`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_ql_agent.py:55:20: F821 Undefined name `agent`\\nadk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\tests\\\\test_ql_agent.py:56:20: F821 Undefined name `agent`\\nFound 4 errors.\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 18, \"cycle_index\": 49, \"task_id\": \"Q3_FIX1\", \"target_node\": \"n12\", \"suggested_rule\": \"Task Q3_FIX1 on node n12 (tests/test_ql_agent.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When defining a test case that interacts with a specific class instance, instantiate that instance in the local scope (e.g., via `fixture` or function body) before attempting to mock its methods, because mocked objects require an active instance of the target class to bind attributes to."
     }
   ],
   "category_log": [
     {
       "cycle": 1,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T4"
+      "category": "generic",
+      "task_id": "SKELETON"
     },
     {
       "cycle": 2,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T6"
+      "category": "generic",
+      "task_id": "SKELETON"
     },
     {
       "cycle": 3,
       "agent": "seed_coder",
-      "category": "pytest:TypeError",
-      "task_id": "T7"
+      "category": "contract",
+      "task_id": "SKELETON"
     },
     {
       "cycle": 4,
       "agent": "seed_coder",
-      "category": "ImportError",
-      "task_id": "T7"
+      "category": "harness",
+      "task_id": "T2"
     },
     {
       "cycle": 5,
-      "agent": "seed_coder",
-      "category": "pytest:TypeError",
-      "task_id": "T7"
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "T4"
     },
     {
       "cycle": 6,
-      "agent": "seed_tester",
-      "category": "pytest:TypeError",
-      "task_id": "T10"
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T5"
     },
     {
       "cycle": 7,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "T10"
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T5"
     },
     {
       "cycle": 8,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "T10"
+      "agent": "seed_coder",
+      "category": "pytest:AttributeError",
+      "task_id": "T7"
     },
     {
       "cycle": 9,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T13"
+      "category": "pytest:AttributeError",
+      "task_id": "T7"
     },
     {
       "cycle": 10,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "T16"
+      "agent": "seed_coder",
+      "category": "pytest:AttributeError",
+      "task_id": "T7"
     },
     {
       "cycle": 11,
       "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "T16"
+      "category": "pytest:TypeError",
+      "task_id": "T8"
     },
     {
       "cycle": 12,
       "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "T16"
+      "category": "pytest:TypeError",
+      "task_id": "T8"
     },
     {
       "cycle": 13,
-      "agent": "seed_coder",
+      "agent": "seed_tester",
       "category": "pytest:TypeError",
-      "task_id": "Q1_FIX1"
+      "task_id": "T8"
     },
     {
       "cycle": 14,
-      "agent": "seed_tester",
-      "category": "pytest:AttributeError",
-      "task_id": "Q1_FIX1"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "T10"
     },
     {
       "cycle": 15,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "Q1_FIX1"
+      "agent": "seed_coder",
+      "category": "contract",
+      "task_id": "T10"
     },
     {
       "cycle": 16,
       "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "Q1_FIX2"
-    },
-    {
-      "cycle": 17,
-      "agent": "seed_coder",
-      "category": "pytest:AttributeError",
-      "task_id": "Q1_FIX2"
-    },
-    {
-      "cycle": 18,
-      "agent": "seed_coder",
-      "category": "pytest:NameError",
-      "task_id": "Q1_FIX2"
-    },
-    {
-      "cycle": 19,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q1_CH6"
-    },
-    {
-      "cycle": 20,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q1_CH6"
-    },
-    {
-      "cycle": 21,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q1_CH6"
+      "category": "contract",
+      "task_id": "T10"
     },
     {
       "cycle": 22,
       "agent": "seed_coder",
-      "category": "pytest:TypeError",
-      "task_id": "Q2_FIX1"
+      "category": "contract",
+      "task_id": "Q1_FIX1"
     },
     {
       "cycle": 23,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q2_FIX1"
+      "category": "contract",
+      "task_id": "Q1_FIX1"
     },
     {
       "cycle": 24,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q2_FIX1"
+      "agent": "seed_tester",
+      "category": "pytest:fail",
+      "task_id": "Q1_FIX2"
     },
     {
       "cycle": 25,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q2_CRITIC"
+      "agent": "seed_tester",
+      "category": "pytest:fail",
+      "task_id": "Q1_FIX3"
     },
     {
       "cycle": 26,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q2_CRITIC"
+      "agent": "seed_tester",
+      "category": "pytest:fail",
+      "task_id": "Q1_FIX3"
     },
     {
       "cycle": 27,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q2_CRITIC"
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q1_FIX3"
     },
     {
       "cycle": 28,
       "agent": "seed_tester",
-      "category": "pytest:AttributeError",
-      "task_id": "Q3_FIX1"
+      "category": "pytest:fail",
+      "task_id": "Q1_FIX_test_tictactoe_6"
     },
     {
       "cycle": 29,
-      "agent": "seed_coder",
-      "category": "pytest:AttributeError",
-      "task_id": "Q3_FIX1"
+      "agent": "seed_tester",
+      "category": "pytest:Failed",
+      "task_id": "Q1_FIX_test_tictactoe_6"
     },
     {
       "cycle": 30,
-      "agent": "seed_coder",
-      "category": "pytest:AttributeError",
-      "task_id": "Q3_FIX1"
+      "agent": "seed_tester",
+      "category": "pytest:fail",
+      "task_id": "Q1_FIX_test_tictactoe_6"
     },
     {
       "cycle": 31,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q3_FIX2"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q1_CRITIC"
     },
     {
       "cycle": 32,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q3_FIX2"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q1_CRITIC"
     },
     {
       "cycle": 33,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q3_FIX2"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q1_CRITIC"
     },
     {
       "cycle": 34,
-      "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "Q3_FIX_random_agent_3"
+      "agent": "seed_tester",
+      "category": "pytest:fail",
+      "task_id": "Q2_FIX1"
     },
     {
       "cycle": 35,
-      "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "Q3_FIX_random_agent_3"
+      "agent": "seed_tester",
+      "category": "pytest:AttributeError",
+      "task_id": "Q2_FIX2"
     },
     {
       "cycle": 36,
-      "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "Q3_FIX_random_agent_3"
+      "agent": "seed_tester",
+      "category": "pytest:AttributeError",
+      "task_id": "Q2_FIX2"
     },
     {
       "cycle": 37,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q3_CRITIC"
+      "agent": "seed_tester",
+      "category": "pytest:AttributeError",
+      "task_id": "Q2_FIX2"
     },
     {
       "cycle": 38,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q3_CRITIC"
+      "agent": "seed_tester",
+      "category": "pytest:AttributeError",
+      "task_id": "Q2_FIX_test_ql_agent_3"
     },
     {
       "cycle": 39,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q3_CRITIC"
+      "agent": "seed_coder",
+      "category": "pytest:IndexError",
+      "task_id": "Q2_FIX_test_ql_agent_3"
     },
     {
       "cycle": 40,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "Q4_FIX1"
+      "agent": "seed_coder",
+      "category": "pytest:AssertionError",
+      "task_id": "Q2_FIX_test_ql_agent_3"
     },
     {
       "cycle": 41,
-      "agent": "seed_tester",
-      "category": "pytest:NameError",
-      "task_id": "Q4_FIX1"
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "Q2_FIX_test_tictactoe_4"
     },
     {
       "cycle": 42,
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "Q2_FIX_test_tictactoe_4"
+    },
+    {
+      "cycle": 43,
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "Q2_FIX_test_tictactoe_4"
+    },
+    {
+      "cycle": 44,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q2_CRITIC"
+    },
+    {
+      "cycle": 45,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q2_CRITIC"
+    },
+    {
+      "cycle": 46,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "Q2_CRITIC"
+    },
+    {
+      "cycle": 47,
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q3_FIX1"
+    },
+    {
+      "cycle": 48,
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q3_FIX1"
+    },
+    {
+      "cycle": 49,
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q3_FIX1"
+    },
+    {
+      "cycle": 50,
       "agent": "seed_tester",
       "category": "pytest:NameError",
       "task_id": "Q4_FIX1"
     },
     {
-      "cycle": 43,
-      "agent": "seed_tester",
-      "category": "pytest:fail",
-      "task_id": "Q4_FIX2"
-    },
-    {
-      "cycle": 44,
-      "agent": "seed_tester",
-      "category": "contract",
-      "task_id": "Q4_FIX2"
-    },
-    {
-      "cycle": 45,
-      "agent": "seed_tester",
-      "category": "contract",
-      "task_id": "Q4_FIX2"
-    },
-    {
-      "cycle": 46,
-      "agent": "seed_coder",
-      "category": "pytest:AttributeError",
-      "task_id": "Q4_CODE"
-    },
-    {
-      "cycle": 47,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q4_CODE"
-    },
-    {
-      "cycle": 48,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q4_CODE"
-    },
-    {
-      "cycle": 49,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "Q4_CRITIC"
-    },
-    {
-      "cycle": 50,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q4_CRITIC"
-    },
-    {
       "cycle": 51,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q4_CRITIC"
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q4_FIX1"
+    },
+    {
+      "cycle": 52,
+      "agent": "seed_tester",
+      "category": "pytest:NameError",
+      "task_id": "Q4_FIX1"
     }
   ],
   "rules": [
     {
-      "agent": "seed_writer",
-      "rule": "When referencing external symbols or files in the output, use their canonical names exactly as defined in the import contract or available packages list, because symbolic tags must resolve to existing entities without ambiguity.",
-      "category": "document",
-      "cycle": 27
+      "agent": "seed_coder",
+      "rule": "When implementing functionality that requires external libraries, verify their presence in the provided environment contract before writing imports or code, because using non-existent dependencies causes immediate runtime failure and wastes execution cycles.",
+      "category": "contract",
+      "cycle": 16
     },
     {
       "agent": "seed_tester",
-      "rule": "When writing a unit test case, verify that the class under test is actually imported and available in the module's namespace before referencing it in assertions or setup, because missing imports cause undefined name errors during execution.",
+      "rule": "When defining a test case without an accompanying class-based fixture setup, avoid using 'self' as a parameter name because pytest interprets it as a request for a fixture rather than a method instance reference; instead use 'case' or 'test_case', because the test is a standalone function.",
       "category": "pytest:fail",
-      "cycle": 33
+      "cycle": 30
     },
     {
-      "agent": "seed_coder",
-      "rule": "When modifying a file based on error reports, verify that all symbols referenced in the code are defined within that module or imported from explicitly declared dependencies, because undefined names cause both linting failures and runtime import errors which prevent validation.",
-      "category": "pytest:assert",
-      "cycle": 36
+      "agent": "seed_writer",
+      "rule": "When referencing code symbols or file paths from another module, always resolve them against the explicit contract definitions provided in the input payload rather than inferring names or locations from the current file's context, because the payload contains the ground truth for existing artifacts.",
+      "category": "document",
+      "cycle": 46
+    },
+    {
+      "agent": "seed_tester",
+      "rule": "When defining a test case that interacts with a specific class instance, instantiate that instance in the local scope (e.g., via `fixture` or function body) before attempting to mock its methods, because mocked objects require an active instance of the target class to bind attributes to.",
+      "category": "pytest:NameError",
+      "cycle": 49
     }
   ]
 }

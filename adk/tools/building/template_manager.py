@@ -24,11 +24,6 @@ TEMPLATES_DIR = Path(__file__).resolve().parent.parent.parent / "templates"
 SUPPORTED_TEMPLATES = ("thesis_plodz", "paper_ieee")
 
 
-def list_available_templates() -> list[str]:
-    """Return list of installed academic LaTeX templates."""
-    return [t for t in SUPPORTED_TEMPLATES if (TEMPLATES_DIR / t).is_dir()]
-
-
 def resolve_template_name(
     thesis_type: str | None = None,
     requested_template: str | None = None,
@@ -314,25 +309,6 @@ def _escape_latex_prose(text: str) -> str:
     return s
 
 
-def _parse_markdown_sections(md_file: Path) -> list[tuple[str, str]]:
-    """Parse all ## sections from thesis.md in order."""
-    if not md_file.exists():
-        return []
-    raw_md = md_file.read_text(encoding="utf-8", errors="ignore")
-    matches = list(re.finditer(r"^##\s+(.+?)\s*$", raw_md, flags=re.MULTILINE))
-    sections: list[tuple[str, str]] = []
-    for i, m in enumerate(matches):
-        t = m.group(1).strip()
-        start = m.end()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(raw_md)
-        b = raw_md[start:end].strip()
-        if b:
-            sections.append((t, b))
-    if not sections and raw_md.strip():
-        sections.append(("Wprowadzenie i Wyniki Badań", raw_md.strip()))
-    return sections
-
-
 def _build_canonical_6_chapters(
     base_chapters: list[tuple[str, str]],
     existing_chapters: dict[str, str],
@@ -408,9 +384,6 @@ def _build_canonical_6_chapters(
         final_chapters.append((k, existing_chapters[k]))
 
     return final_chapters
-
-
-_build_canonical_chapters = _build_canonical_6_chapters
 
 
 def render_template_latex(

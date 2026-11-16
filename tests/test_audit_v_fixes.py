@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from adk.orchestration.building import _plain_symbol
+from adk.orchestration.write_gate import _plain_symbol
 from adk.orchestration.common import MaterializationError, available_package_imports
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from adk.tools.building.import_sync import extract_hyperedge_exports

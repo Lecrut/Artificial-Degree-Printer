@@ -219,7 +219,7 @@ def test_reflexive_prompt_evolution_recovers_empty_tasks(tmp_path: Path) -> None
     assert call_count >= 2
     # Verify reflection feedback was included in the second call
     assert "reflection_feedback" in captured_payloads[1]
-    assert "BŁĄD" in captured_payloads[1]["reflection_feedback"]
+    assert "ERROR" in captured_payloads[1]["reflection_feedback"]
 
     saved_queue = json.loads(orch.task_queue_path.read_text(encoding="utf-8"))
     assert len(saved_queue) >= 3
@@ -294,6 +294,7 @@ def test_healing_keeps_planner_order_and_builds_entrypoint_after_its_modules(tmp
 
     assert order.index("run_experiment.py") > order.index("agents/q_agent.py")
     assert order.index("run_experiment.py") > order.index("envs/tictactoe_env.py")
-    # The planner's own order of the other tasks is kept; the healed results task comes after the code.
+    # The planner's own order of the other tasks is kept.
     assert order.index("envs/tictactoe_env.py") < order.index("tests/test_env.py") < order.index("agents/q_agent.py")
-    assert order.index("results.csv") > order.index("run_experiment.py")
+    # Results are written by the entrypoint module, so no task targets the results file (U5, 2026-11-15).
+    assert "results.csv" not in order

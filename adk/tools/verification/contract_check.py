@@ -96,8 +96,8 @@ def check_entrypoint_parameters(workspace_dir: str | Path, entrypoint: str | Non
             hidden = _numeric_defaults(node)
             if hidden:
                 return [
-                    f"Naruszenie kontraktu parametrów: punkt wejścia {entrypoint} ma liczbowe wartości domyślne "
-                    f"({', '.join(hidden)}). Przenieś je do pliku konfiguracyjnego jako symbole i czytaj je w funkcji."
+                    f"Parameter contract violation: the entrypoint {entrypoint} has numeric default values "
+                    f"({', '.join(hidden)}). Move them to the configuration module as symbols and read them in the function."
                 ]
     return []
 
@@ -128,7 +128,7 @@ def check_parameter_closure(workspace_dir: str | Path) -> list[str]:
             targets = node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, ast.AnnAssign) else []
             for target in targets:
                 if isinstance(target, ast.Name) and target.id.isupper() and target.id not in read_names:
-                    warnings.append(f"Parametr {rel}:{target.id} jest zadeklarowany, ale żaden kod go nie używa.")
+                    warnings.append(f"Parameter {rel}:{target.id} is declared but no code uses it.")
     return warnings
 
 
@@ -162,6 +162,41 @@ def public_api(source: str) -> dict[str, list[str]] | None:
                 ):
                     api[f"{node.name}.{item.name}"] = _param_names(item.args)
     return api
+
+
+_STUB_KEPT = (ast.Import, ast.ImportFrom, ast.Assign, ast.AnnAssign, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+
+
+def _stub_body(func: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+    doc = ast.get_docstring(func, clean=False)
+    func.body = ([ast.Expr(ast.Constant(doc))] if doc is not None else []) + [
+        ast.Raise(exc=ast.Name("NotImplementedError", ast.Load()), cause=None)
+    ]
+
+
+def stub_source(source: str) -> str | None:
+    """The interface of a module with every function and method body replaced by its docstring and
+    `raise NotImplementedError` (U2, 2026-11-15: the "skeleton" of a small model had 0 such bodies and 9 half
+    implementations with bugs, which then became the code every later task patched). Imports, constants and
+    class attributes stay; other top-level statements are dropped. None when the source does not parse."""
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return None
+    doc = ast.get_docstring(tree, clean=False)
+    body: list[ast.stmt] = [ast.Expr(ast.Constant(doc))] if doc is not None else []
+    for node in tree.body:
+        if not isinstance(node, _STUB_KEPT):
+            continue
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            _stub_body(node)
+        elif isinstance(node, ast.ClassDef):
+            for item in node.body:
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    _stub_body(item)
+        body.append(node)
+    tree.body = body
+    return ast.unparse(ast.fix_missing_locations(tree)) + "\n"
 
 
 def is_contract_module(rel_path: str) -> bool:
@@ -200,7 +235,7 @@ def interface_contract_breaches(contract: dict[str, dict[str, list[str]]], rel_p
     breaches: list[str] = []
     for symbol, params in expected.items():
         if symbol not in actual:
-            breaches.append(f"{rel_path}: usunięto {symbol}({', '.join(params)})")
+            breaches.append(f"{rel_path}: removed {symbol}({', '.join(params)})")
         elif actual[symbol] != params and not _is_placeholder_extension(params, actual[symbol]):
             breaches.append(f"{rel_path}: {symbol}({', '.join(params)}) -> {symbol}({', '.join(actual[symbol])})")
     return breaches
@@ -268,18 +303,18 @@ def check_import_contract(workspace_dir: str | Path, rel_file: str) -> list[str]
                 top = alias.name.split(".")[0]
                 if _package_unavailable(top, tops):
                     violations.append(
-                        f"Naruszenie kontraktu środowiska: {rel_file} importuje pakiet '{top}', którego nie ma "
-                        "w środowisku. Środowisko jest stałe na cały przebieg: użyj pakietów z 'available_packages' "
-                        "albo modułów projektu (ich ścieżki importu są w 'exports')."
+                        f"Environment contract violation: {rel_file} imports the package '{top}', which the "
+                        "environment does not have. The environment is fixed for the whole run: use the packages in "
+                        "'available_packages' or the project's modules (their import paths are in 'exports')."
                     )
             continue
         if not isinstance(node, ast.ImportFrom):
             continue
         if not node.level and _package_unavailable((node.module or "").split(".")[0], tops):
             violations.append(
-                f"Naruszenie kontraktu środowiska: {rel_file} importuje pakiet '{(node.module or '').split('.')[0]}', "
-                "którego nie ma w środowisku. Środowisko jest stałe na cały przebieg: użyj pakietów z "
-                "'available_packages' albo modułów projektu (ich ścieżki importu są w 'exports')."
+                f"Environment contract violation: {rel_file} imports the package '{(node.module or '').split('.')[0]}', "
+                "which the environment does not have. The environment is fixed for the whole run: use the packages in "
+                "'available_packages' or the project's modules (their import paths are in 'exports')."
             )
             continue
         target = _resolve_workspace_module(w_dir, rel_file, node.module, node.level)
@@ -300,8 +335,8 @@ def check_import_contract(workspace_dir: str | Path, rel_file: str) -> list[str]
         if missing:
             available = sorted(n for n in defined if not n.startswith("_"))
             violations.append(
-                f"Naruszenie kontraktu importu: {rel_file} importuje {', '.join(missing)} z {target}, "
-                f"a ten moduł tego nie definiuje. Dostępne w {target}: {', '.join(available) or '(brak)'}."
+                f"Import contract violation: {rel_file} imports {', '.join(missing)} from {target}, "
+                f"which that module does not define. Available in {target}: {', '.join(available) or '(none)'}."
             )
     return violations
 
@@ -343,7 +378,7 @@ def check_test_contract(
         if missing:
             available = sorted(n for n in defined if not n.startswith("_"))
             violations.append(
-                f"Naruszenie kontraktu hiperkrawędzi: {test_path} używa {', '.join(f'{stem}.{m}' for m in missing)}, "
-                f"których nie ma w {module_path}. Dostępne w {module_path}: {', '.join(available) or '(brak)'}."
+                f"Hyperedge contract violation: {test_path} uses {', '.join(f'{stem}.{m}' for m in missing)}, "
+                f"which {module_path} does not define. Available in {module_path}: {', '.join(available) or '(none)'}."
             )
     return violations

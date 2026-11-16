@@ -1,99 +1,144 @@
 {
-  "src/data/synthetic_data_generator.py": {
-    "SignalConfig": [],
-    "AnomalyConfig": [],
-    "BioSignalGenerator": [],
-    "BioSignalGenerator.__init__": [
-      "self",
-      "config",
-      "anomaly_config",
-      "rng_seed"
-    ],
-    "BioSignalGenerator.generate_normal_sample": [
-      "self",
-      "length"
-    ],
-    "BioSignalGenerator.generate_anomaly_sample": [
-      "self",
-      "start_idx",
-      "length"
-    ],
-    "BioSignalGenerator.generate_dataset": [
-      "self",
-      "num_segments"
-    ],
-    "SignalConfig.__init__": [
-      "self",
-      "num_channels",
-      "sample_length",
-      "num_segments"
+  "scripts/plot_results.py": {
+    "generate_plots": [
+      "results_df",
+      "output_dir"
     ]
   },
-  "config.py": {
-    "Hyperparameters": []
+  "src/data_generator.py": {
+    "generate_sample": [
+      "channel",
+      "noise_level",
+      "anomaly_rate",
+      "seed"
+    ],
+    "generate_dataset": [
+      "channels",
+      "noise_levels",
+      "n_samples",
+      "seeds"
+    ]
   },
-  "src/detectors/baseline_zscore.py": {
-    "UnivariateZScoreDetector": [],
-    "UnivariateZScoreDetector.__init__": [
+  "src/data_types.py": {
+    "SignalSample": [],
+    "DetectionResult": [],
+    "DetectionResult.__init__": [
+      "self",
+      "score",
+      "is_anomaly"
+    ]
+  },
+  "src/experiment.py": {
+    "run_experiment": [],
+    "fit": [
+      "self",
+      "samples"
+    ],
+    "predict": [
+      "self",
+      "sample"
+    ]
+  },
+  "src/methods/baseline_zscore.py": {
+    "ZScoreBaseline": [],
+    "ZScoreBaseline.__init__": [
       "self",
       "threshold"
     ],
-    "UnivariateZScoreDetector.detect": [
+    "ZScoreBaseline.fit": [
       "self",
-      "x"
-    ]
-  },
-  "src/detectors/ensemble_detector.py": {
-    "EnsembleDetectorConfig": [],
-    "EnsembleDetector": [],
-    "EnsembleDetector.__init__": [
+      "samples"
+    ],
+    "ZScoreBaseline.predict": [
       "self",
-      "config"
-    ],
-    "EnsembleDetector.detect_segments": [
+      "sample"
+    ]
+  },
+  "src/methods/robust_ensemble.py": {
+    "RobustEnsemble": [],
+    "RobustEnsemble.__init__": [
       "self",
-      "segments",
-      "training_stats"
+      "ensemble_size",
+      "threshold"
+    ],
+    "RobustEnsemble.fit": [
+      "self",
+      "samples"
+    ],
+    "RobustEnsemble.predict": [
+      "self",
+      "sample"
+    ],
+    "fit": [
+      "self",
+      "samples"
+    ],
+    "predict": [
+      "self",
+      "sample"
+    ],
+    "RobustEnsemble.fit_with_separation": [
+      "self",
+      "samples"
     ]
   },
-  "src/evaluation/metrics.py": {
-    "compute_precision_recall_f1": [
-      "true_labels",
-      "predicted_labels"
+  "src/config.py": {
+    "get_channels": [],
+    "get_noise_levels": [],
+    "get_anomaly_rate": [],
+    "get_ensemble_size": [],
+    "get_n_repetitions": [],
+    "get_seeds": [],
+    "get_test_split": [],
+    "get_data_dir": [],
+    "get_results_dir": []
+  },
+  "_iforest.py": {
+    "IForestEnsemble": [],
+    "IForestEnsemble.__init__": [
+      "self",
+      "ensemble_size",
+      "contamination_rate"
     ],
-    "compute_roc_auc": [
-      "true_labels",
-      "scores"
+    "IForestEnsemble.fit": [
+      "self",
+      "samples"
     ],
-    "optimize_threshold_grid": [
-      "true_labels",
-      "scores",
-      "threshold_min",
-      "threshold_max",
-      "step"
-    ],
-    "compute_detection_delay_mean": [
-      "true_anomaly_start_indices",
-      "detection_indices"
-    ],
-    "evaluate_detector": [
-      "true_labels",
-      "scores",
-      "known_starts",
-      "use_best_thresh"
+    "IForestEnsemble.predict": [
+      "self",
+      "sample"
     ]
   },
-  "plot_results.py": {
-    "generate_plots": [
-      "output_dir"
+  "src/methods/_iforest.py": {
+    "IForestEnsemble": [],
+    "IForestEnsemble.__init__": [
+      "self",
+      "ensemble_size",
+      "contamination_rate"
+    ],
+    "IForestEnsemble.fit": [
+      "self",
+      "samples"
+    ],
+    "IForestEnsemble.predict": [
+      "self",
+      "sample"
     ]
   },
-  "src/experiment/experiment_runner.py": {
-    "run_all": []
-  },
-  "figures/comparison.py": {
-    "generate_plots": [
-      "output_dir"
+  "validation.py": {
+    "ZScoreBaseline": [],
+    "ZScoreBaseline.__init__": [
+      "self",
+      "threshold"
+    ],
+    "ZScoreBaseline.fit": [
+      "self",
+      "samples"
+    ],
+    "ZScoreBaseline.predict": [
+      "self",
+      "sample"
     ]
-  }
+  },
+  "src/methods/__init__.py": {}
 }

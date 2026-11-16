@@ -56,7 +56,7 @@ def test_hung_test_is_a_finding_naming_the_test_not_an_exception(tmp_path: Path,
 
     assert res["status"] == "FAIL"
     hang = next(e for e in res["errors"] if e.startswith("Pytest failure"))
-    assert "zawiesił się" in hang and "test_loop.py" in hang and "loop.py" in hang
+    assert "a test hung" in hang and "test_loop.py" in hang and "loop.py" in hang
 
 
 def test_exports_carry_class_method_signatures(tmp_path: Path) -> None:
@@ -148,7 +148,7 @@ def test_rejected_symbol_edit_is_an_error_and_nothing_of_the_answer_is_written(t
     orch = _orch(tmp_path)
     _establish(orch)
 
-    with pytest.raises(MaterializationError, match="Edycje symboli odrzucone"):
+    with pytest.raises(MaterializationError, match="Symbol edits rejected"):
         orch._materialize_workspace_artifact(
             "agent.py",
             {

@@ -35,10 +35,10 @@ try:
         spec.loader.exec_module(module)
         fn = getattr(module, func_name or "main", None)
         if not callable(fn):
-            notes.append(f"Zadeklarowany punkt wejscia '{declared}' nie wskazuje funkcji.")
+            notes.append(f"The declared entrypoint '{declared}' does not name a function.")
             code = 1
     else:
-        notes.append("Brak zadeklarowanego punktu wejscia w planie; szukam po konwencji nazw.")
+        notes.append("The plan declares no entrypoint; looking for one by naming convention.")
         candidate_funcs = ["train_and_evaluate", "run_experiment", "run_benchmark", "evaluate", "train", "main", "run"]
         for mod_name in ["core", "main", "train", "run_experiment", "pipeline", "model"]:
             try:
@@ -50,7 +50,7 @@ try:
             if fn is not None:
                 break
         if fn is None:
-            notes.append("Nie znaleziono punktu wejscia eksperymentu.")
+            notes.append("No experiment entrypoint found.")
             code = 1
 
     if callable(fn):
@@ -61,8 +61,8 @@ try:
         ]
         if required:
             notes.append(
-                f"Punkt wejscia {fn.__name__} wymaga argumentow {required}. Zadeklaruj je jako symbole konfiguracji "
-                "i czytaj je w funkcji; harness wywoluje punkt wejscia bez argumentow."
+                f"The entrypoint {fn.__name__} requires the arguments {required}. Declare them as configuration "
+                "symbols and read them in the function; the harness calls the entrypoint without arguments."
             )
             code = 1
         else:
@@ -71,7 +71,9 @@ except Exception:
     code = 1
     notes.append(traceback.format_exc())
 
-if Path("plot_results.py").exists() or Path("code/plot_results.py").exists():
+# plot_results.py wherever the import resolves (workspace, code/, src/, the entry file's directory), not only at
+# the root: on 2026-11-15 src/plot_results.py was never run and no figure came from the code.
+if importlib.util.find_spec("plot_results") is not None:
     try:
         import plot_results
         if hasattr(plot_results, "generate_plots"):
@@ -118,7 +120,7 @@ def execute_workspace_experiment(
             return {
                 "ok": False,
                 "skipped": False,
-                "error": f"Zadeklarowany punkt wejścia '{entrypoint}' nie istnieje w workspace.",
+                "error": f"The declared entrypoint '{entrypoint}' does not exist in the workspace.",
             }
         env["ADK_ENTRYPOINT"] = f"{entry_file}:{func_name or 'main'}"
     else:
@@ -144,7 +146,7 @@ def execute_workspace_experiment(
             timeout=timeout,
         )
     except subprocess.TimeoutExpired as exc:
-        return {"ok": False, "skipped": False, "error": f"Eksperyment przekroczył {timeout}s: {exc}"}
+        return {"ok": False, "skipped": False, "error": f"The experiment exceeded {timeout}s: {exc}"}
     log_path = workspace / "logs" / "experiment.log"
     logged = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
     error = "\n".join(part for part in (logged, proc.stdout, proc.stderr) if part and part.strip())

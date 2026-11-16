@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
 from adk.tools.building import (
     ensure_node,
@@ -209,7 +210,7 @@ class RoutingMixin:
             return fallback, str(nodes[fallback].get("path", fallback))
         if fallback in ROLE_ALIASES or _looks_like_workspace_path(fallback):
             return self._resolve_target_node(fallback)
-        raise ValueError(f"Nie da się ustalić pliku docelowego dla węzła '{raw_id}'.")
+        raise ValueError(texts.unresolvable_node(raw_id))
 
     def _workspace_paths_in(self, issue: str) -> list[str]:
         """Workspace-relative paths of files named in a ruff / pytest / traceback diagnostic, in order."""
@@ -218,6 +219,11 @@ class RoutingMixin:
         raw += [m.group(1) for m in re.finditer(r"File \"(.+?\.py)\", line \d+", issue)]
         raw += [m.group(1) for m in re.finditer(r"(?:FAILED|ERROR)\s+(\S+?\.py)", issue)]
         raw += [m.group(2) for m in re.finditer(r"\b(Syntax|Import) error in (\S+?\.py)", issue)]
+        # ruff concise output (`path.py:172:33: F821 ...`) and pytest's short traceback (`path.py:17: in test_x`);
+        # without them a ruff finding was "unlocated" and went to the core module (U8, 2026-11-15: Q4_CODE).
+        path_re = r"((?:[A-Za-z]:)?[^\s'\"():]*?\.py)"
+        raw += [m.group(1) for m in re.finditer(rf"(?:^|[\s'\"(]){path_re}:\d+:\d+: [A-Z]+\d+", issue, re.MULTILINE)]
+        raw += [m.group(1) for m in re.finditer(rf"(?:^|\s){path_re}:\d+: in ", issue, re.MULTILINE)]
         ws = self.workspace_dir.resolve()
         known = {
             str(meta.get("path", "")): Path(str(meta.get("path", ""))).name

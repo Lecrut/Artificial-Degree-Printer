@@ -179,7 +179,7 @@ def _parse_bibtex_items(bib_path: Path) -> list[dict[str, str]]:
 
 
 def _sanitize_unresolved_latex_tags(tex_text: str) -> str:
-    """Replace any remaining unresolved \ref_ast, \ref_csv, \ref_fig tags, unescaped underscores in text macros, and empty list blocks so XeTeX/Tectonic never fails."""
+    r"""Replace any remaining unresolved \ref_ast, \ref_csv, \ref_fig tags, unescaped underscores in text macros, and empty list blocks so XeTeX/Tectonic never fails."""
     def _repl(m: re.Match[str]) -> str:
         inner = m.group(1).split(":")[-1]
         inner = re.sub(r"\\+_", "_", inner)
@@ -723,19 +723,26 @@ def publish_workspace_thesis_bundle(
     template_name: str | None = None,
     thesis_type: str | None = None,
     provider: str | None = None,
+    entrypoint: str | None = None,
 ) -> dict[str, Any]:
-    """Execute generated code & plot script, compile symbolic references in .md and .tex, and render thesis.pdf + thesis.html."""
+    """Execute generated code & plot script, compile symbolic references in .md and .tex, and render thesis.pdf + thesis.html.
+
+    `entrypoint` is the plan's declaration (`path.py:function`); the experiment runs through it, as during the run.
+    Without it (mock/legacy projects) the convention runner script run_experiment.py is written and found."""
     w_dir = Path(workspace_dir).resolve()
     w_dir.mkdir(parents=True, exist_ok=True)
     is_live_provider = provider is not None and str(provider).strip().lower() != "mock"
 
-    # 1. Write standalone runner script run_experiment.py
-    write_executable_runner_script(w_dir, spec)
+    # 1. Write the legacy runner script run_experiment.py only for a project without a declared entrypoint: it
+    # imports core.py, and with an entrypoint declared it was the file the convention search found and ran
+    # instead of the plan's entrypoint (2026-11-15: "No module named 'core'", no results in the bundle).
+    if not entrypoint:
+        write_executable_runner_script(w_dir, spec)
 
     # 2. Execute core.train_and_evaluate so results.csv is whatever the function just wrote.
     exec_env = os.environ.copy()
     exec_env["PYTHONPATH"] = str(w_dir) + os.pathsep + str(w_dir / "code") + os.pathsep + exec_env.get("PYTHONPATH", "")
-    experiment = execute_workspace_experiment(w_dir)
+    experiment = execute_workspace_experiment(w_dir, entrypoint=entrypoint)
     if not experiment.get("ok") or experiment.get("skipped"):
         if not is_live_provider and (not (w_dir / "results.csv").exists() or (w_dir / "results.csv").stat().st_size == 0):
             (w_dir / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
