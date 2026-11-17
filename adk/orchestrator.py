@@ -27,13 +27,15 @@ from adk.orchestration.common import (
 from adk.orchestration.gates import GatesMixin
 from adk.orchestration.routing import RoutingMixin
 from adk.orchestration.building import BuildingMixin
-from adk.orchestration.contract_gate import ContractGateMixin
 from adk.orchestration.write_gate import WriteGateMixin
 from adk.orchestration.verification import VerificationMixin
 from adk.orchestration.factual_audit import FactualAuditMixin
 from adk.orchestration.evolution import EvolutionMixin
 from adk.orchestration.planning import PlanningMixin
 from adk.orchestration.plan_healing import PlanHealingMixin
+from adk.orchestration.plan_spec import PlanSpecMixin
+from adk.orchestration.schedule import SchedulerMixin
+from adk.orchestration.spec_gate import SpecGateMixin
 from adk.orchestration.recovery import RecoveryMixin
 from adk.orchestration.repair import RepairMixin
 
@@ -54,7 +56,6 @@ class NeuroSymbolicOrchestrator(
     PlanHealingMixin,
     BuildingMixin,
     WriteGateMixin,
-    ContractGateMixin,
     VerificationMixin,
     FactualAuditMixin,
     RepairMixin,
@@ -62,6 +63,9 @@ class NeuroSymbolicOrchestrator(
     RecoveryMixin,
     RoutingMixin,
     GatesMixin,
+    PlanSpecMixin,
+    SpecGateMixin,
+    SchedulerMixin,
 ):
     """Main control loop for the Python-only Neuro-Symbolic Harness.
 
@@ -99,6 +103,8 @@ class NeuroSymbolicOrchestrator(
         self.evolution_history_path = self.state_dir / "evolution_history.json"
         self.hitl_flag_path = self.state_dir / "hitl_flag.json"
         self.blueprint_path = self.state_dir / "academic_blueprint.json"
+        # The project hypergraph (Audit VI §VII.12): the specification every task builds on, set by the plan.
+        self.hypergraph = None
         self._last_experiment_error = ""
         # Files written since the last verification: together with the task's node they are its verification scope.
         self._written_since_verification: set[str] = set()
@@ -157,15 +163,14 @@ class NeuroSymbolicOrchestrator(
 
         while True:
             # Layers 2 -> 3 -> [4] -> 1 -> 2 -> 3 for every task of the current queue generation.
-            for idx, task in enumerate(state.tasks):
-                if task.get("status") == "BLOCKED":
-                    continue
+            for idx, task in self._task_order(state):
                 stop = self._execute_task(state, idx, task, inject_failure=state.generation == 0 and idx in injected_failures)
                 if stop is not None:
                     return stop
 
             # A failed task leaves the workspace in an unknown state: audit it before defending the thesis.
-            if any(isinstance(t, dict) and t.get("status") == "FAILED" for t in state.tasks):
+            # WAITING (only with H): planned work whose dependencies never turned ready in this generation.
+            if any(isinstance(t, dict) and t.get("status") in ("FAILED", "WAITING") for t in state.tasks):
                 health = self._run_verification_step(
                     state.tasks[-1] if state.tasks else {"target_node": self._role_file("core"), "task_id": "QUEUE_FINAL"},
                     include_docs=self.include_docs,
@@ -249,11 +254,8 @@ class NeuroSymbolicOrchestrator(
             return {0}
         roles = [self._role_of(t.get("target_node")) for t in tasks]
         config_idx = next((i for i, r in enumerate(roles) if r == "config"), 0)
-        # No task targets the results file any more (U5): the results wave is the module that writes them.
-        results_idx = next(
-            (i for role in ("results", "core") for i, r in enumerate(roles) if r == role and tasks[i].get("task_id") != "SKELETON"),
-            min(2, len(tasks) - 1),
-        )
+        # No task targets the results file (U5): the results wave is the module that writes them.
+        results_idx = next((i for i, r in enumerate(roles) if r == "core"), min(2, len(tasks) - 1))
         thesis_idx = next((i for i in range(len(roles) - 1, -1, -1) if roles[i] == "thesis"), len(tasks) - 1)
         return {config_idx, results_idx, thesis_idx}
 
@@ -273,6 +275,7 @@ class NeuroSymbolicOrchestrator(
             flush=True,
         )
         print(f"  [WARSTWA 2: BUDOWANIE] Generowanie implementacji przez agenta '{t_agent}'...", flush=True)
+        self.logger.log_event("TASK_START", task_id=t_id, node=node_file, agent=t_agent, tier=tier)
 
         builder_error_msg: str | None = None
         try:
@@ -299,24 +302,22 @@ class NeuroSymbolicOrchestrator(
         if report["status"] == "PASS":
             task["status"] = "DONE"
             write_json_state(self.task_queue_path, state.tasks)
+            self.logger.log_event("TASK_DONE", task_id=t_id, node=node_file, repair_attempts=task.get("repair_attempts", 0))
+            self._on_task_result(task, passed=True)
             print(f"  [ZADANIE {t_id} ZATWIERDZONE] Status: DONE (Weryfikacja zakonczona sukcesem)", flush=True)
             return None
 
-        # A failed task blocks only the remaining tasks on the same file; the rest of the queue still runs
-        # (a `break` here used to kill e.g. the test-fixing task queued right after a code task).
+        # Nothing is blocked by file: what depends on the failed vertex waits through readiness (Audit VI A7;
+        # X1: the entrypoint blocked behind a failed skeleton).
         task["status"] = "FAILED"
-        same_file = [
-            t
-            for t in state.tasks[idx + 1 :]
-            if isinstance(t, dict) and t.get("status") == "TODO" and str(t.get("target_node")) in (node_id, node_file)
-        ]
-        for blocked in same_file:
-            blocked["status"] = "BLOCKED"
-            blocked["blocked_by"] = t_id
+        self._on_task_result(task, passed=False)
         write_json_state(self.task_queue_path, state.tasks)
+        self.logger.log_event(
+            "TASK_FAILED", task_id=t_id, node=node_file, repair_attempts=task.get("repair_attempts", 0),
+            failed_file=report.get("failed_file"), failed_agent=report.get("failed_agent"),
+        )
         print(
-            f"  [ZADANIE {t_id} NIENAPRAWIONE] po {task.get('repair_attempts', 0)} próbach. Wstrzymano {len(same_file)} "
-            f"zadań na pliku {node_file}; pozostałe zadania kolejki idą dalej.",
+            f"  [ZADANIE {t_id} NIENAPRAWIONE] po {task.get('repair_attempts', 0)} próbach; pozostałe zadania kolejki idą dalej.",
             flush=True,
         )
         return None

@@ -117,7 +117,7 @@ def ensure_node(rel_path: str, matrix_path: str | Path = "state/hypergraph_matri
         if meta.get("path") == rel_path:
             return node_id
     new_id = f"{NODE_ID_PREFIX}{_next_index(nodes)}"
-    nodes[new_id] = {"path": rel_path, "degree": 0, "weight": 1.0}
+    nodes[new_id] = {"path": rel_path, "degree": 0}
     data.setdefault("matrix", {})[new_id] = {e_id: 0 for e_id in data.get("edges", {})}
     write_json_state(matrix_path, data)
     return new_id
@@ -190,7 +190,7 @@ def sync_hypergraph_matrix(
                 continue
             if rel not in path_to_node:
                 new_id = f"{NODE_ID_PREFIX}{_next_index(nodes)}"
-                nodes[new_id] = {"path": rel, "degree": 0, "weight": 1.0}
+                nodes[new_id] = {"path": rel, "degree": 0}
                 matrix[new_id] = {e_id: 0 for e_id in edges}
                 path_to_node[rel] = new_id
                 stem_to_node[file_path.stem] = new_id

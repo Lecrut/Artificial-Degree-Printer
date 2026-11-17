@@ -1,24 +1,4 @@
 {
   "active": false,
-  "current_gate": "GATE_2_METHODOLOGY_APPROVAL",
-  "approved_gates": [
-    "GATE_1_OUTLINE_APPROVAL",
-    "GATE_2_METHODOLOGY_APPROVAL"
-  ],
-  "question": null,
-  "context": {
-    "guard_approved": true,
-    "blast_radius": {
-      "modified_node_id": "v1",
-      "modified_file": "v1",
-      "degree": 0,
-      "active_edges": [],
-      "affected_nodes": [
-        "v1"
-      ],
-      "affected_files": [
-        "v1"
-      ]
-    }
-  }
+  "approved_gates": []
 }

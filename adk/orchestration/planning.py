@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from adk.orchestration.plan_interfaces import _interface_gaps, _plan_interfaces
 from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
 from adk.tools.building.template_manager import (
@@ -152,25 +151,11 @@ class PlanningMixin:
                 if cand.get("tasks") and isinstance(cand.get("tasks"), list) and len(cand.get("tasks")) > 0:
                     plan_out = cand
 
-        # The plan's interfaces are the contract every later task builds on (U1): one retry when they are missing
-        # or do not cover what the tasks name; after that the run goes on with whatever there is.
-        interfaces = _plan_interfaces(plan_out)
-        gaps = _interface_gaps(plan_out.get("tasks") or [], interfaces)
-        if gaps:
-            self.logger.log_step("PLANNER_INTERFACE_FEEDBACK", "Plan bez spójnych interfejsów -> jedno ponowienie planisty", {"gaps": gaps})
-            retry_res = self._call_agent(
-                planner_md,
-                {**plan_payload, "error_feedback": texts.planner_interface_feedback(gaps)},
-                model_tier="LRM",
-                provider=self.provider,
-            )
-            cand = retry_res.get("output", {}) if retry_res.get("status") == "ok" else {}
-            cand_interfaces = _plan_interfaces(cand) if isinstance(cand, dict) else {}
-            if isinstance(cand, dict) and isinstance(cand.get("tasks"), list) and cand["tasks"] and cand_interfaces:
-                plan_out, interfaces = cand, cand_interfaces
-                still = _interface_gaps(cand["tasks"], cand_interfaces)
-                if still:
-                    self.logger.log_step("PLANNER_INTERFACE_GAPS", "Po ponowieniu interfejsy nadal niepełne", {"gaps": still})
+        # The plan's interfaces are the specification σ every later task builds on (Audit VI A3): imported as stubs
+        # before any code exists; two corrections by the planner, then an unexecutable plan stops the run.
+        plan_out, interfaces, spec_violations = self._validated_plan(plan_out, plan_payload, planner_md)
+        if spec_violations:
+            return self._plan_rejected(spec_violations, plan_out.get("tasks") or [])
 
         planned_thesis_type = str(
             (detected_thesis_type if template_is_certain else None)
@@ -203,9 +188,7 @@ class PlanningMixin:
             user_prompt, thesis_type=planned_thesis_type, prescribe_methodology=self.provider == "mock"
         )
         blueprint_raw = dict(plan_out.get("academic_blueprint") or {})
-        blueprint_raw.pop("interfaces", None)
-        if interfaces:
-            blueprint_raw["interfaces"] = interfaces
+        blueprint_raw["interfaces"] = interfaces
         # The verified bibliography goes to disk, not into every prompt; the recon keeps only the keys.
         verified_bibtex = str(recon_report.pop("verified_bibtex", "") or "")
         if recon_report.get("citation_source") == "arxiv":
@@ -311,14 +294,16 @@ class PlanningMixin:
         if multi_cycle_waves:
             tasks = self._normalize_and_heal_task_plan(
                 tasks,
-                user_prompt=user_prompt,
                 multi_cycle_waves=True,
                 preferred_coder=created_specialist_id or "seed_coder",
                 thesis_type=planned_thesis_type,
                 planned_chapters=planned_chapters if isinstance(planned_chapters, list) else None,
             )
 
+        # The stubs come from the validated specification (plan_spec); a planned skeleton task is redundant.
+        tasks = [t for t in tasks if str(t.get("task_id", "")).upper() != "SKELETON"]
         write_json_state(self.task_queue_path, tasks)
+        self.hypergraph = self._build_project_hypergraph(interfaces, blueprint_raw, tasks)
 
         # Gate 1 Promotor Checkpoint (Scope & Thesis Statement Approval)
         gate1_name = str(plan_out.get("hitl_gate") or "GATE_1_OUTLINE_APPROVAL")
@@ -363,7 +348,6 @@ class PlanningMixin:
             )
             tasks = self._normalize_and_heal_task_plan(
                 tasks,
-                user_prompt=user_prompt,
                 multi_cycle_waves=multi_cycle_waves,
                 preferred_coder=created_specialist_id or "seed_coder",
                 thesis_type=planned_thesis_type,

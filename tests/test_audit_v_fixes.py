@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from adk.orchestration.write_gate import _plain_symbol
-from adk.orchestration.common import MaterializationError, available_package_imports
+from adk.orchestration.common import available_package_imports
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from adk.tools.building.import_sync import extract_hyperedge_exports
 from adk.tools.building.hypergraph_sync import sync_hypergraph_matrix
@@ -39,11 +39,7 @@ PLOT = "def generate_diagram_text() -> str:\n    return 'diagram'\n"
 
 
 def _establish_plot_contract(orch: NeuroSymbolicOrchestrator) -> None:
-    orch._materialize_workspace_artifact(
-        "plot_results.py",
-        {"files": [{"filename": "plot_results.py", "content": PLOT}]},
-        establishes_contract=True,
-    )
+    orch._materialize_workspace_artifact("plot_results.py", {"files": [{"filename": "plot_results.py", "content": PLOT}]})
 
 
 def test_stale_plot_script_attached_to_a_test_repair_is_skipped(tmp_path: Path) -> None:
@@ -65,38 +61,6 @@ def test_stale_plot_script_attached_to_a_test_repair_is_skipped(tmp_path: Path) 
     assert (orch.workspace_dir / "plot_results.py").read_text(encoding="utf-8") == PLOT
     events = {e["type"] for e in json.loads(orch.evolution_history_path.read_text(encoding="utf-8"))["events"]}
     assert "SIDE_ARTIFACT_SKIPPED" in events
-
-
-def test_contract_breach_in_a_non_target_file_restores_it_and_keeps_the_rest(tmp_path: Path) -> None:
-    orch = _orch(tmp_path)
-    _establish_plot_contract(orch)
-
-    orch._materialize_workspace_artifact(
-        "test_env.py",
-        {
-            "files": [
-                {"filename": "test_env.py", "content": "def test_ok() -> None:\n    assert True\n"},
-                {"filename": "plot_results.py", "content": "def other() -> None:\n    pass\n"},
-            ]
-        },
-    )
-
-    assert (orch.workspace_dir / "test_env.py").exists()
-    assert (orch.workspace_dir / "plot_results.py").read_text(encoding="utf-8") == PLOT
-    events = {e["type"] for e in json.loads(orch.evolution_history_path.read_text(encoding="utf-8"))["events"]}
-    assert "CONTRACT_FILE_RESTORED" in events
-
-
-def test_breach_of_the_target_file_still_raises_and_hands_back_the_removed_source(tmp_path: Path) -> None:
-    orch = _orch(tmp_path)
-    _establish_plot_contract(orch)
-
-    with pytest.raises(MaterializationError, match=r"(?s)generate_diagram_text.*return 'diagram'"):
-        orch._materialize_workspace_artifact(
-            "plot_results.py",
-            {"files": [{"filename": "plot_results.py", "content": "def other() -> None:\n    pass\n"}]},
-        )
-    assert (orch.workspace_dir / "plot_results.py").read_text(encoding="utf-8") == PLOT
 
 
 def test_exports_carry_enum_members_and_the_import_path(tmp_path: Path) -> None:

@@ -10,7 +10,8 @@ The module structure and the public names come from the plan: they are the signa
 ## 1. ENGINEERING & ACADEMIC CODE RULES
 1. **Skeleton first, then fill in**:
    - The skeleton (`SKELETON`) is normally written by the harness from the plan's interfaces. If you get that task, write only the interface of every module (`"files"`): the classes, methods and functions the task descriptions name, with exactly those names, full signatures (parameters, types, return type; every `__init__` with all its parameters) and a one-sentence docstring that also states what is returned. Every body is `raise NotImplementedError`; any other body is replaced by it.
-   - After the skeleton, the public signatures are the contract between tasks (you see them in `exports.signatures`, including `Class.method`). A later task fills in bodies and may add new symbols freely. Changing or removing a contracted signature is allowed only with `"contract_change": {"reason": "<why the interface must change>"}` in your answer; without it the write is rejected.
+   - The public signatures are the contract between tasks: `specification` lists, for your module and the modules it uses, every public constant, function, class, method and declared attribute, the import path, and doctest examples of the expected behaviour (the implementation must give exactly those results). Fill in the bodies; a helper you add is private (`_name`); a public name outside `specification`, a file outside the plan, or an import of a name a module does not declare is rejected at once. Changing a signature or adding a public name is allowed only with `"contract_change": {"reason": "<why the interface must change>"}`; a name other modules use cannot be removed.
+   - `previous_attempts` (when present) lists what earlier attempts on this module produced and why they failed: do not repeat them.
 2. **Precision & Syntax Safety**:
    - A new file: `"files"`. An existing file: `"ast_edits"` with only the symbols you change (`"symbol": "<function>"` or `"<Class>.<method>"`) — a small edit is faster and cannot break the rest of the file.
    - Your code is verified by a syntax guard (`ast.parse`); syntax errors are rejected immediately.
@@ -70,6 +71,11 @@ Paths are relative to the workspace; subdirectories are created automatically.
 Optional in any form: `"contract_change": {"reason": "<why a contracted signature changes>"}`.
 Do not include conversational filler or explanatory prose outside the JSON object.
 
+---
+
+## CONSOLIDATED EVOLUTIONARY INVARIANTS
+- **INVARIANT**: When modifying code structure or signatures, always preserve strict AST compatibility for parameters and return types of exported symbols, because downstream modules rely on these contracts to function correctly.
+- **INVARIANT**: When implementing algorithms that aggregate values from derived data structures, always verify that the resulting iterable is non-empty before performing aggregation, because empty sequences cause runtime errors and invalidate doctest expectations.
+- **INVARIANT**: When defining methods intended to return sequences or arrays, ensure every execution path explicitly returns a valid object of the expected type rather than None, because callers and doctests rely on the contract that the result supports indexing or length operations.
+
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.
-- **RULE**: When implementing functionality that requires external libraries, verify their presence in the provided environment contract before writing imports or code, because using non-existent dependencies causes immediate runtime failure and wastes execution cycles.

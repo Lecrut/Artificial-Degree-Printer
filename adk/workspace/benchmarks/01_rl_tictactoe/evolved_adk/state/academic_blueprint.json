@@ -1,46 +1,47 @@
 {
-  "thesis_title": "Zastosowanie Q-Learningu do nauki gry w Tic-Tac-Toe i analiza porównawcza z przeciwnikiem losowym",
-  "thesis_statement": "Tabular Q-Learning agent jest w stanie nauczyć się optymalnej strategii w grze Tic-Tac-Toe, osiągając wynik równy losowanemu przeciwko sobie lub przewagę nad przeciwnikiem losowym w dłuższej perspektywie, co potwierdzono poprzez eksperyment symulacyjny z 1000 gier na ziarno. Kryterium sukcesu: osiągnięcie średniej wygranej > 50% po 500 epokach treningu.",
-  "baseline_comparison": "Porównanie agenta Q-Learning z przeciwnikiem losowym (Random Agent). Jako punkt odniesienia (Baseline) służy gra agenta losowego vs agent losowy oraz agent Q vs agent losowy. Wyniki agregowane jako średnie wygrane/remisy/przegrane.",
-  "entrypoint": "src/run_experiment.py:run_experiments",
+  "thesis_title": "Nauka gry w Kółko i Krzyżykiem przy użyciu algorytmu Q-Learning",
+  "thesis_statement": "Czy agent Q-Learning potrafi nauczyć się optymalnej strategii w grze Tic-Tac-Toe przeciwko losowemu przeciwnikowi w ciągu 100 000 epizodów? Kryterium sukcesu: osiągnięcie minimalnego wskaźnika porażek (<5%) i wysokiej szansy na remis/zwycięstwo po konwergencji.",
+  "baseline_comparison": "Porównanie z RandomAgent (gra losowa) oraz teoretycznym wynikiem minimax (bezstrategność). Wskaźniki: win_rate, draw_rate, loss_rate, average_reward per 10k epizodów.",
+  "entrypoint": "config.py:run_experiment",
   "metrics": [
-    "win_rate_agent",
+    "win_rate",
     "draw_rate",
-    "loss_rate_agent",
-    "average_reward_per_episode"
+    "loss_rate",
+    "average_reward"
   ],
   "planned_chapters": [
     {
       "index": 1,
       "title": "Rozdział 1: Wstęp i Cel Pracy",
-      "focus": "Definicja problemu gry Tic-Tac-Toe jako Markowskiego Procesu Decyzyjnego (MDP), teza pracy dotycząca skuteczności Q-Learningu oraz cel badawczy."
+      "focus": "Motywacja, definicja problemu gry w kółko i krzyżyk jako MDP, teza badawcza."
     },
     {
       "index": 2,
-      "title": "Rozdział 2: Przegląd Literatury i Podstawy Teoretyczne",
-      "focus": "Opis algorytmu Q-Learning, pojęcie tablicy wartości stan-akcja (Q-table), eksploracja vs wykorzystanie (exploration/exploitation) oraz wcześniejsze prace nad AI w grach planszowych."
+      "title": "Rozdział 2: Przegląd Literatury",
+      "focus": "Teoria procesów decyzyjnych Markowa (MDP), algorytm Q-Learning, wcześniejsze aplikacje RL w grach."
     },
     {
       "index": 3,
-      "title": "Rozdział 3: Metodologia i Eksperyment",
-      "focus": "Implementacja środowiska gry, definicja hiperparametrów (alpha, gamma, epsilon), procedura treningu, opis bazy losowej (Baseline) oraz metryki sukcesu."
+      "title": "Rozdział 3: Metodyka Badania",
+      "focus": "Opis środowiska (stan, akcje, nagrody), architektura agenta Q-Learning, hiperparametry i ustawienia eksperymentu."
     },
     {
       "index": 4,
-      "title": "Rozdział 4: Wyniki i Analiza",
-      "focus": "Prezentacja wykresów uczenia się, analiza porównawcza wygranych agenta Q vs losowego, wpływ parametrów eksploracji na stabilność nauki."
+      "title": "Rozdział 4: Wyniki Eksperymentu",
+      "focus": "Analiza krzywych konwergencji, statystyki zwycięstw/remisów/porażek, porównanie z basline losowym."
     },
     {
       "index": 5,
       "title": "Rozdział 5: Wnioski",
-      "focus": "Podsumowanie osiągnięć pracy, odpowiedź na tezę, ograniczenia podejścia tablicowego i kierunki przyszłych badań."
+      "focus": "Podsumowanie efektów nauki, ograniczenia podejścia tablicowego, kierunki przyszłych prac."
     }
   ],
   "interfaces": {
-    "src/tictactoe.py": "\"\"\"Module providing Tic-Tac-Toe board logic, state encoding, and simulation capabilities.\"\"\"\n\nclass Board:\n    \"\"\"Represents a standard 3x3 Tic-Tac-Toe board.\"\"\"\n    def __init__(self) -> None:\n        \"\"\"Initialize an empty 3x3 board.\"\"\"\n        pass\n\n    def reset(self) -> None:\n        \"\"\"Reset the board to an empty state.\"\"\"\n        pass\n\n    def make_move(self, position: int, player: int) -> bool:\n        \"\"\"Place a mark on the board. Returns True if successful, False if invalid.\"\"\"\n        pass\n\n    def get_legal_moves(self) -> list[int]:\n        \"\"\"Return a list of indices for empty cells.\"\"\"\n        pass\n\n    def check_win(self, player: int) -> bool:\n        \"\"\"Check if the specified player has won.\"\"\"\n        pass\n\n    def is_draw(self) -> bool:\n        \"\"\"Check if the game ended in a draw.\"\"\"\n        pass\n\n    def get_state_key(self) -> str:\n        \"\"\"Return a string representation of the current board state (e.g., 'OOX..X...').\"\"\"\n        pass\n\ndef simulate_game(config: dict) -> tuple[int, int]:\n    \"\"\"Run a single game between an Agent and a Random Opponent. Returns (agent_reward, opponent_reward).\"\"\"\n    pass\n",
-    "src/ql_agent.py": "\"\"\"Module implementing a Tabular Q-Learning agent.\"\"\"\n\nimport numpy as np\n\nclass QAgent:\n    \"\"\"A tabular Q-Learning agent with epsilon-greedy exploration.\"\"\"\n    def __init__(self, alpha: float, gamma: float, epsilon_start: float, epsilon_end: float, decay_rate: float) -> None:\n        \"\"\"Initialize Q-table and hyperparameters.\"\"\"\n        pass\n\n    def get_action(self, state_key: str) -> int:\n        \"\"\"Select an action using epsilon-greedy policy for the given state.\"\"\"\n        pass\n\n    def update(self, state_key: str, action: int, reward: float, next_state_key: str) -> None:\n        \"\"\"Update the Q-value for the state-action pair using the Bellman equation.\"\"\"\n        pass\n\n    def decay_epsilon(self) -> None:\n        \"\"\"Decrease epsilon by the decay rate towards epsilon_end.\"\"\"\n        pass\n",
-    "src/run_experiment.py": "\"\"\"Script to execute multiple training episodes and record metrics.\"\"\"\n\ndef run_experiments(config: dict) -> list[dict]:\n    \"\"\"Run the full experiment loop defined in config. Returns a list of result dictionaries (csv rows).\"\"\"\n    pass\n",
-    "src/plot_results.py": "\"\"\"Script to load experiment results and generate comparison plots.\"\"\"\n\ndef generate_plots(output_dir: str) -> None:\n    \"\"\"Read CSV results, compute aggregates, and save plot figures to output_dir.\"\"\"\n    pass"
+    "config.py": "\"\"\"Configuration for the Tic-Tac-Toe Q-Learning experiment.\"\"\"\n\nimport os\n\n# Hyperparameters\nLEARNING_RATE: float = 0.1\ndiscount_factor: float = 0.9\ninitial_epsilon: float = 0.2\nmin_epsilon: float = 0.01\nepsilon_decay: float = 0.995\nn_episodes: int = 100000\nseed: int = 42\noutput_dir: str = \"results\"\nfigures_dir: str = \"figures\"\n\ndef run_experiment() -> dict:\n    \"\"\"Run the full experiment and return summary metrics.\"\"\"\n    ...",
+    "environment.py": "\"\"\"Tic-Tac-Toe Environment implementation.\"\"\"\n\nfrom typing import List, Tuple\nimport numpy as np\n\nclass TicTacToeEnv:\n    \"\"\"A simple 3x3 Tic-Tac-Toe environment.\n    \n    State is a tuple of 9 integers: -1 (O), 0 (empty), 1 (X).\n    \"\"\"\n\n    def __init__(self) -> None:\n        \"\"\"Initialize empty board.\"\"\"\n        ...\n\n    def reset(self) -> Tuple[int, ...]:\n        \"\"\"Reset environment and return initial state.\n        \n        >>> env = TicTacToeEnv()\n        >>> state = env.reset()\n        >>> len(state) == 9 and all(s == 0 for s in state)\n        True\n        \"\"\"\n        ...\n\n    def step(self, action: int, player: int) -> Tuple[Tuple[int, ...], float, bool]:\n        \"\"\"Execute action for the given player.\n        \n        Args:\n            action: Index 0-8 on the board.\n            player: 1 for X, -1 for O.\n            \n        Returns:\n            Tuple of (next_state, reward, done).\n            \n        >>> env = TicTacToeEnv()\n        >>> env.reset()\n        >>> next_s, r, d = env.step(4, 1)\n        >>> next_s[4] == 1\n        True\n        \"\"\"\n        ...\n\n    def get_valid_actions(self, state: Tuple[int, ...]) -> List[int]:\n        \"\"\"Return list of valid move indices.\"\"\"\n        ...\n\n    def is_terminal(self, state: Tuple[int, ...]) -> bool:\n        \"\"\"Check if state is terminal (win/loss/draw).\"\"\"\n        ...\n\n    def check_win(self, state: Tuple[int, ...], player: int) -> bool:\n        \"\"\"Check if `player` has won.\"\"\"\n        ...",
+    "q_learning.py": "\"\"\"Tabular Q-Learning Agent implementation.\"\"\"\n\nfrom typing import Dict, List, Tuple\nimport numpy as np\n\nclass QAgent:\n    \"\"\"Q-Learning agent using a tabular approximation.\"\"\"\n\n    def __init__(self, lr: float = 0.1, gamma: float = 0.9, epsilon: float = 0.2) -> None:\n        \"\"\"Initialize Q-agent.\n        \n        Args:\n            lr: Learning rate (alpha).\n            gamma: Discount factor (gamma).\n            epsilon: Exploration rate.\n        \"\"\"\n        ...\n\n    def act(self, state: Tuple[int, ...], valid_actions: List[int]) -> int:\n        \"\"\"Select action using epsilon-greedy policy.\n        \n        Returns:\n            An integer index of the chosen action.\n            \n        >>> agent = QAgent(epsilon=1.0)\n        >>> # With epsilon=1.0, it always explores\n        >>> import random\n        >>> random.seed(42)\n        >>> valid = [0, 1]\n        >>> _ = agent.act((0,)*9, valid)\n        \"\"\"\n        ...\n\n    def learn(self, state: Tuple[int, ...], action: int, reward: float, next_state: Tuple[int, ...]) -> None:\n        \"\"\"Update Q-value for the given transition.\n        \n        >>> agent = QAgent(lr=0.1)\n        >>> s = (0,)*9\n        >>> ns = (0,)*9; ns[0]=1\n        >>> agent.learn(s, 0, 0.1, ns)\n        \"\"\"\n        ...",
+    "baseline.py": "\"\"\"Baseline opponent implementations.\"\"\"\n\nfrom typing import List, Tuple\nimport random\n\nclass RandomAgent:\n    \"\"\"Plays uniformly random valid moves.\"\"\"\n\n    def act(self, state: Tuple[int, ...], valid_actions: List[int]) -> int:\n        \"\"\"Return a random valid action.\n        \n        >>> valid = [0, 1]\n        >>> agent = RandomAgent()\n        >>> # Just ensures it returns one of the valid actions\n        >>> res = agent.act((0,)*9, valid)\n        >>> res in valid\n        True\n        \"\"\"\n        ...",
+    "plot_results.py": "\"\"\"Utilities to visualize experiment results.\"\"\"\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\ndef generate_plots(output_dir: str) -> None:\n    \"\"\"Generate convergence and win-rate plots from CSV logs.\n    \n    Saves figures to `output_dir/figures`.\n    \"\"\"\n    ..."
   },
   "literature_recon": {
     "task_key": "01_rl_tictactoe",
@@ -107,27 +108,27 @@
       {
         "index": 1,
         "title": "Rozdział 1: Wstęp i Cel Pracy",
-        "focus": "Definicja problemu gry Tic-Tac-Toe jako Markowskiego Procesu Decyzyjnego (MDP), teza pracy dotycząca skuteczności Q-Learningu oraz cel badawczy."
+        "focus": "Motywacja, definicja problemu gry w kółko i krzyżyk jako MDP, teza badawcza."
       },
       {
         "index": 2,
-        "title": "Rozdział 2: Przegląd Literatury i Podstawy Teoretyczne",
-        "focus": "Opis algorytmu Q-Learning, pojęcie tablicy wartości stan-akcja (Q-table), eksploracja vs wykorzystanie (exploration/exploitation) oraz wcześniejsze prace nad AI w grach planszowych."
+        "title": "Rozdział 2: Przegląd Literatury",
+        "focus": "Teoria procesów decyzyjnych Markowa (MDP), algorytm Q-Learning, wcześniejsze aplikacje RL w grach."
       },
       {
         "index": 3,
-        "title": "Rozdział 3: Metodologia i Eksperyment",
-        "focus": "Implementacja środowiska gry, definicja hiperparametrów (alpha, gamma, epsilon), procedura treningu, opis bazy losowej (Baseline) oraz metryki sukcesu."
+        "title": "Rozdział 3: Metodyka Badania",
+        "focus": "Opis środowiska (stan, akcje, nagrody), architektura agenta Q-Learning, hiperparametry i ustawienia eksperymentu."
       },
       {
         "index": 4,
-        "title": "Rozdział 4: Wyniki i Analiza",
-        "focus": "Prezentacja wykresów uczenia się, analiza porównawcza wygranych agenta Q vs losowego, wpływ parametrów eksploracji na stabilność nauki."
+        "title": "Rozdział 4: Wyniki Eksperymentu",
+        "focus": "Analiza krzywych konwergencji, statystyki zwycięstw/remisów/porażek, porównanie z basline losowym."
       },
       {
         "index": 5,
         "title": "Rozdział 5: Wnioski",
-        "focus": "Podsumowanie osiągnięć pracy, odpowiedź na tezę, ograniczenia podejścia tablicowego i kierunki przyszłych badań."
+        "focus": "Podsumowanie efektów nauki, ograniczenia podejścia tablicowego, kierunki przyszłych prac."
       }
     ]
   }

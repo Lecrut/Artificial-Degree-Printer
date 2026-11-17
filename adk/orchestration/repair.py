@@ -8,7 +8,6 @@ from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
 from adk.tools.planning import (
     calculate_blast_radius,
-    escalate_node_weight,
     get_scoped_hypergraph_context,
     select_model_tier,
 )
@@ -22,8 +21,6 @@ from adk.orchestration.common import (
     _fit_items,
     _is_document,
     _RunState,
-    is_skeleton_task,
-    SKELETON_TASK_ID,
 )
 
 
@@ -50,10 +47,6 @@ class RepairMixin:
             attempt = int(task["repair_attempts"])
             state.replan_count += 1
 
-            # EvoRoute: dynamically escalate node difficulty weight w(v) on failure
-            esc_res = escalate_node_weight(node_id, delta=0.4, matrix_path=self.matrix_path)
-            self._record_evolution_event({"type": "WEIGHT_ESCALATED", "details": esc_res})
-
             # The author of the file named in the findings (node `last_writer`), not the agent of this task:
             # a coder's task failing on a wrong test must discipline the tester (R5).
             failed_agent = str(report.get("failed_agent") or task.get("assigned_agent", "seed_coder"))
@@ -70,11 +63,7 @@ class RepairMixin:
                 "w1_remediation_task_id": f"{t_id}_FIX",
                 "w3_post_remediation_status": "PENDING",
             }
-            print(
-                f"  [WARSTWA 3 -> BLAD] Wykryto usterke w zadaniu {t_id} na wezle {node_id} ({node_file})!\n"
-                f"    Eskalacja wagi EvoRoute w({node_id}) -> {esc_res.get('new_weight')}",
-                flush=True,
-            )
+            print(f"  [WARSTWA 3 -> BLAD] Wykryto usterke w zadaniu {t_id} na wezle {node_id} ({node_file})!", flush=True)
 
             issues_list = _collect_report_issues(report)
             issues_summary = "; ".join(_fit_items(issues_list)) if issues_list else "Usterka weryfikacji warstwy 3"
@@ -216,6 +205,15 @@ class RepairMixin:
                         }
                     )
 
+            h = self._project_h()
+            if h is not None and failed_file in h.vertices:
+                # O7 (Audit VI A9): the oracle named the culprit and its author already had the local attempts; a
+                # planner's prose diagnosis of a known fault cost ~30% of the LLM time (T2). The vertex keeps its
+                # history and comes back in the next generation.
+                cycle_trace["w1_remediation_task_id"] = "SKIPPED_CULPRIT_KNOWN"
+                state.architecture_cycles.append(cycle_trace)
+                self.logger.log_event("REMEDIATION_SKIPPED", task_id=t_id, culprit=failed_file)
+                break
             print(f"  [POWROT DO WARSTWY 1: REMEDIACJA] Planowanie chirurgicznej naprawy dla zadania {t_id}...", flush=True)
             remediation_errors = self._repair_cycle(
                 state,
@@ -290,11 +288,9 @@ class RepairMixin:
                 "blast_radius": blast,
                 "hypergraph_matrix": get_scoped_hypergraph_context(self.matrix_path, blast_radius=blast),
                 "include_docs": self.include_docs,
-                # Without the signatures the planner dictated new APIs in prose (2026-11-12); now it can tell
-                # which side of a test/module mismatch departs from the agreed interface.
-                "interface_contract": (
-                    read_json_state(self.interface_contract_path) if self.interface_contract_path.exists() else {}
-                ),
+                # Without the signatures the planner dictated new APIs in prose (2026-11-12); σ tells it which side
+                # of a test/module mismatch departs from the planned interface.
+                "specification": self._specification_symbols(),
             },
             # The planner runs after the fast fixes failed, i.e. at the escalation point: the large model.
             model_tier=select_model_tier(failures=int(failed_task.get("repair_attempts", 0))),
@@ -331,9 +327,6 @@ class RepairMixin:
             stask["assigned_agent"] = self._resolve_active_agent(requested, fallback=default_agent)
             stask.setdefault("task_id", f"{failed_id}_FIX")
             stask["repair_of"] = failed_id
-            # A repair of the skeleton may still shape the interface; it re-establishes the contract.
-            if is_skeleton_task(failed_task) and not is_skeleton_task(stask):
-                stask["task_id"] = f"{SKELETON_TASK_ID}_{stask['task_id']}"
             if _is_document(st_file) and context and context[:30].lower() not in str(stask.get("description", "")).lower():
                 stask["description"] = texts.section_context(context, str(stask.get("description", "")))
             if cycle_trace is not None:

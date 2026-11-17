@@ -1,0 +1,135 @@
+"""Deterministic oracles Φ that need execution (Audit VI §VII.12.7). The static part of Φ_I is `observe.diff`."""
+
+from __future__ import annotations
+
+import ast
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+from adk.hypergraph.model import Hypergraph, Violation
+from adk.tools.verification.contract_check import stub_source
+
+_ALLOWED_ON_STUBS = ("NotImplementedError",)
+
+
+_BEHAVIOUR_PROBE = r"""
+import doctest, importlib, json, sys
+root, dotted, examples = sys.argv[1], sys.argv[2], json.loads(sys.argv[3])
+sys.path.insert(0, root)
+mod = importlib.import_module(dotted)
+failures = []
+parser, runner = doctest.DocTestParser(), doctest.DocTestRunner(optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
+for i, text in enumerate(examples):
+    test = parser.get_doctest(text, dict(vars(mod)), f"example{i}", None, 0)
+    out = []
+    result = runner.run(test, out=out.append, clear_globs=True)
+    if result.failed:
+        failures.append("".join(out)[-600:])
+print(json.dumps(failures))
+"""
+
+
+def is_stub(source: str) -> bool:
+    """True while some function or method has no implementation: its body (besides the docstring) is empty,
+    `...`, `pass` or only `raise NotImplementedError` (the e2e run: a body of `...` passed as implemented)."""
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            body = [
+                s for s in node.body
+                if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant)) and not isinstance(s, ast.Pass)
+            ]
+            if not body or (len(body) == 1 and isinstance(body[0], ast.Raise) and "NotImplementedError" in ast.unparse(body[0])):
+                return True
+    return False
+
+
+def check_behaviour(workspace: str | Path, rel: str, spec: dict, timeout: int = 120) -> list[Violation]:
+    """Φ_I.5: the doctest examples of σ — the plan's, not the file's own docstrings — run on the implementation."""
+    examples = [e for e in spec.get("behaviour", []) if ">>>" in e]
+    path = Path(workspace) / rel
+    if not examples or not path.is_file() or is_stub(path.read_text(encoding="utf-8")):
+        return []
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-c", _BEHAVIOUR_PROBE, str(Path(workspace).resolve()), spec["import"], json.dumps(examples)],
+            capture_output=True, text=True, timeout=timeout, cwd=str(workspace),
+        )
+        failures = json.loads(proc.stdout.strip().splitlines()[-1]) if proc.stdout.strip() else [proc.stderr[-600:]]
+    except subprocess.TimeoutExpired:
+        failures = [f"the examples did not finish in {timeout}s"]
+    except ValueError:
+        failures = [proc.stderr[-600:] or proc.stdout[-600:]]
+    if not failures:
+        return []
+    return [Violation("BEHAVIOUR_MISMATCH", "the implementation does not give the results the interface specifies:\n" + "\n".join(failures[:3]), rel, rel)]
+
+
+def validate_test_on_stubs(workspace: str | Path, test_rel: str, h: Hypergraph, timeout: int = 120) -> list[Violation]:
+    """Φ_I.4: run a test file against the stubs of every planned module. Each test must fail only with
+    `NotImplementedError` (or pass, e.g. on a declared constant). Anything else — a collection error, an
+    ImportError, a NameError, a TypeError from a wrong call — is a defect of the test itself, found before any
+    implementation exists (02, 2026-11-16: `np` without import, a wrong module path; the repairs went to the coder)."""
+    root = Path(workspace)
+    with tempfile.TemporaryDirectory(prefix="adk_test_on_stubs_") as tmp:
+        sandbox = Path(tmp)
+        for path in root.rglob("*.py"):
+            if "__pycache__" in path.parts:
+                continue
+            rel = path.relative_to(root).as_posix()
+            target = sandbox / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            vertex = h.vertices.get(rel)
+            source = path.read_text(encoding="utf-8")
+            if vertex is not None and vertex.kind in ("code", "entry"):
+                source = stub_source(source) or source
+            target.write_text(source, encoding="utf-8")
+        for extra in ("conftest.py", "pytest.ini", "pyproject.toml"):
+            if (root / extra).is_file() and not (sandbox / extra).exists():
+                shutil.copy2(root / extra, sandbox / extra)
+        report = sandbox / "_junit.xml"
+        env = {**os.environ, "PYTHONPATH": str(sandbox)}
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "pytest", test_rel, "-q", "-p", "no:cacheprovider", "--import-mode=importlib",
+                 f"--junitxml={report}", "--tb=line"],
+                cwd=str(sandbox), env=env, capture_output=True, text=True, timeout=timeout,
+            )
+        except subprocess.TimeoutExpired:
+            return [Violation("TEST_HANGS_ON_STUBS", f"did not finish in {timeout}s against the stubs", test_rel, test_rel)]
+        if not report.exists():
+            return [Violation("TEST_INVALID_ON_STUBS", "pytest produced no report (the file does not even collect)", test_rel, test_rel)]
+        problems: list[str] = []
+        for case in ET.parse(report).getroot().iter("testcase"):
+            for outcome in [*case.findall("failure"), *case.findall("error")]:
+                message = (outcome.get("message") or outcome.text or "").strip().splitlines()
+                first = message[0] if message else "unknown failure"
+                if not any(first.startswith(ok) or f"E   {ok}" in (outcome.text or "") for ok in _ALLOWED_ON_STUBS):
+                    problems.append(f"{case.get('name') or 'collection'}: {first[:200]}")
+    if not problems:
+        return []
+    return [Violation(
+        "TEST_INVALID_ON_STUBS",
+        "against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: "
+        + "; ".join(problems[:6]),
+        test_rel, test_rel,
+    )]
+
+
+def run_fingerprint(workspace: str | Path, h: Hypergraph) -> str | None:
+    """sha256 of the code the experiment runs: every module whose bag precedes R in ≺ (Φ_R freshness; the
+    original E2 contract: the data come from the current version of the code)."""
+    if "R:run" not in h.edges:
+        return None
+    modules = sorted(a.removeprefix("I:") for a, b in h.order if b == "R:run" and a.startswith("I:"))
+    digest = hashlib.sha256()
+    for rel in modules:
+        path = Path(workspace) / rel
+        digest.update(rel.encode("utf-8") + b"\0" + (path.read_bytes() if path.is_file() else b"<missing>") + b"\0")
+    return digest.hexdigest()

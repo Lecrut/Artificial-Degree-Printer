@@ -75,4 +75,3 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
-- **RULE**: When constructing cross-references to code files, ensure the path strictly points to a file (ending in an extension) rather than a directory or containing backslashes, because LaTeX resolution fails if the pointer targets a non-existent file.

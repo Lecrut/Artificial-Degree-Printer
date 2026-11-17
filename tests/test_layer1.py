@@ -6,7 +6,6 @@ from pathlib import Path
 from adk.core.llm import _extract_json_from_text, call_agent
 from adk.tools.planning import (
     calculate_blast_radius,
-    escalate_node_weight,
     get_scoped_hypergraph_context,
     scout_domain_conventions,
     select_model_tier,
@@ -116,33 +115,6 @@ def test_robust_json_extraction_with_think_tags_and_prose():
     assert parsed["approved"] is True
 
 
-def test_evoroute_escalate_node_weight_switches_sml_to_lrm(tmp_path: Path):
-    matrix_file = tmp_path / "hypergraph_matrix.json"
-    matrix_file.write_text(
-        json.dumps(
-            {
-                "nodes": {
-                    "v5": {"path": "test_core.py", "degree": 1, "weight": 1.0},
-                },
-                "edges": {"E4": ["v5"]},
-                "matrix": {"v5": {"E4": 1}},
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    esc1 = escalate_node_weight("v5", delta=0.4, matrix_path=matrix_file)
-    assert esc1["old_weight"] == 1.0
-    assert esc1["new_weight"] == 1.4
-
-    esc2 = escalate_node_weight("v5", delta=0.4, matrix_path=matrix_file)
-    assert esc2["old_weight"] == 1.4
-    assert esc2["new_weight"] == 1.8
-    # The weight records how much trouble a node gave; it no longer promotes the node to the large model.
-    assert "new_tier" not in esc2
-    assert select_model_tier(failures=0) == "SML"
-
-
 def test_get_scoped_hypergraph_context_omits_matrix_and_scopes_edges(tmp_path: Path):
     # Simulate a hypergraph with 100 edges and heavy 0/1 incidence matrix
     edges = {f"E{i}": [f"v{i % 5 + 1}"] for i in range(1, 101)}
@@ -223,14 +195,14 @@ def test_research_first_task_ordering_in_planner():
         assert "table_of_contents" in blueprint
         assert len(blueprint["table_of_contents"]["chapters"]) == 6
 
-        # First task must ALWAYS be a researcher on v4 (Research-First workflow)
+        # First task must ALWAYS be a researcher on the thesis (Research-First workflow)
         first_task = tasks[0]
-        assert first_task["target_node"] == "v4", f"First task in {task_id} must target v4 (research first)"
+        assert first_task["target_node"] == "thesis.md", f"First task in {task_id} must target the thesis (research first)"
         assert "researcher" in first_task["assigned_agent"], f"First task in {task_id} must be assigned to a researcher"
 
-        # Last task must ALWAYS be seed_writer on v4 (final thesis synthesis)
+        # Last task must ALWAYS be seed_writer on the thesis (final thesis synthesis)
         last_task = tasks[-1]
-        assert last_task["target_node"] == "v4"
+        assert last_task["target_node"] == "thesis.md"
         assert last_task["assigned_agent"] == "seed_writer"
 
 
@@ -349,7 +321,9 @@ def test_vertical_feature_slices_in_single_task_planner():
     tasks = planner_res["output"]["tasks"]
     assert len(tasks) >= 2
     target_nodes = {t["target_node"] for t in tasks}
-    assert "v1" in target_nodes or "v2" in target_nodes
+    assert {"config.py", "core.py"} <= target_nodes
+    # Every plan carries the specification its tasks build on (Audit VI).
+    assert set(planner_res["output"]["interfaces"]) == {"config.py", "core.py"}
 
     # Academic blueprint must be part of single task_planner output (not a separate thesis_architect)
     blueprint = planner_res["output"]["academic_blueprint"]

@@ -22,7 +22,9 @@ from adk.tools.verification import (
 )
 from adk.tools.verification.contract_check import check_import_contract
 from adk.orchestration.common import (
+    _agent_for_path,
     _clip_log,
+    _collect_report_issues,
     _declared_vs_measured_metrics,
 )
 
@@ -118,6 +120,16 @@ class VerificationMixin:
                 contract_violations += check_import_contract(self.workspace_dir, rel)
             if scope_paths is None or declared_entry.partition(":")[0] in scope_paths:
                 contract_violations += check_entrypoint_parameters(self.workspace_dir, declared_entry or None)
+        # Breaches of σ name their culprit exactly (Audit VI A5): they decide who repairs, before any heuristic.
+        spec_found = (
+            self._spec_violations(scope_paths) + self._behaviour_violations(scope_paths)
+            + self._unimplemented(None if is_final_gate else {node_path})
+        ) if code_checked else []
+        contract_violations += [str(v) for v in spec_found]
+        if code_checked:
+            test_res["errors"] = self._without_stub_failures(list(test_res.get("errors") or []))
+            if not test_res["errors"]:
+                test_res["status"] = "PASS"
         declared_metrics = [str(m) for m in (blueprint_now.get("metrics") or [])] if isinstance(blueprint_now, dict) else []
         metric_findings = _declared_vs_measured_metrics(declared_metrics, self.workspace_dir)
         contract_warnings = (
@@ -173,6 +185,7 @@ class VerificationMixin:
 
         if is_doc_scope:
             if effective_include_docs:
+                self._ensure_fresh_results()  # Φ_R: the thesis cites results of the current code, not of an older one
                 doc_files = list(self.workspace_dir.glob("*.md")) + list(self.workspace_dir.glob("*.tex"))
                 for doc_file in doc_files:
                     if ".compiled." in doc_file.name:
@@ -321,7 +334,8 @@ class VerificationMixin:
         failed_agent = None
         if not overall_pass:
             nodes_all = matrix_data.get("nodes", {})
-            for issue in code_audit.get("issues", []):
+            failed_file = next((v.culprit for v in spec_found if v.culprit), None)
+            for issue in [] if failed_file else code_audit.get("issues", []):
                 for culprit, is_code in _pytest_culprits(str(issue)):
                     if is_code and _is_test(culprit):
                         # Wrong result seen only in the test frame: the module under test, i.e. a code module
@@ -342,14 +356,17 @@ class VerificationMixin:
                 if failed_file:
                     break
             if failed_file is None:
+                # Pointer findings name the code file a pointer aims at, but the pointer is the writer's (X6).
                 named = [
                     p
-                    for issue in [*code_audit.get("issues", []), *ref_errors, *contract_violations]
+                    for issue in [*code_audit.get("issues", []), *contract_violations]
                     for p in self._workspace_paths_in(str(issue))
                 ]
                 failed_file = next((p for p in named if scope_paths is None or p in scope_paths), None) or node_path
             author = next((m.get("last_writer") for m in nodes_all.values() if str(m.get("path", "")) == failed_file), None)
             failed_agent = (author or {}).get("agent") or current_task.get("assigned_agent")
+            if failed_agent == "harness":  # the harness wrote the stubs; the file's work belongs to its owner
+                failed_agent = _agent_for_path(str(failed_file))
 
         report = ValidationReport(
             status="PASS" if overall_pass else "FAIL",
@@ -371,6 +388,13 @@ class VerificationMixin:
             report["warnings"] = list(dict.fromkeys(contract_warnings))[:12]
 
         write_json_state(self.validation_report_path, report)
+        issues = _collect_report_issues(report)  # the findings live in the supervisors' sections, not at the top
+        if not overall_pass:
+            self._remember_verdict(failed_file, current_task.get("task_id"), issues)
+        self.logger.log_event(
+            "VERDICT", task_id=current_task.get("task_id"), node=target_node, status=report.get("status"),
+            failed_file=failed_file, failed_agent=failed_agent, first_issue=str(issues[0])[:400] if issues else None,
+        )
         return report
 
 

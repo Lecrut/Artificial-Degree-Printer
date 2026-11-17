@@ -1,5 +1,5 @@
-"""Wave 1 of Audit III (§III.9): timeouts as findings, the skeleton task, the interface contract between tasks,
-symbol edits and the context of a repair."""
+"""Wave 1 of Audit III (§III.9): timeouts as findings, symbol edits and the context of a repair. (The skeleton task
+and the snapshot interface contract were replaced by σ in the project hypergraph: tests/test_audit_vi.py.)"""
 
 from __future__ import annotations
 
@@ -83,65 +83,7 @@ def test_symbol_edit_replaces_one_method_inside_its_class(tmp_path: Path) -> Non
 
 
 def _establish(orch: NeuroSymbolicOrchestrator) -> None:
-    orch._materialize_workspace_artifact(
-        "agent.py",
-        {"files": [{"filename": "agent.py", "content": SKELETON_AGENT}, {"filename": "test_agent.py", "content": "x = 1\n"}]},
-        establishes_contract=True,
-    )
-
-
-def test_skeleton_establishes_the_contract_of_code_modules_only(tmp_path: Path) -> None:
-    orch = _orch(tmp_path)
-    _establish(orch)
-
-    contract = json.loads(orch.interface_contract_path.read_text(encoding="utf-8"))
-
-    assert contract == {"agent.py": {"Agent": [], "Agent.__init__": ["self", "alpha"], "Agent.act": ["self", "state"]}}
-
-
-def test_unexplained_signature_change_is_rejected_and_the_file_restored(tmp_path: Path) -> None:
-    orch = _orch(tmp_path)
-    _establish(orch)
-    drifted = SKELETON_AGENT.replace("def act(self, state: tuple)", "def get_action(self, state: tuple, valid: list)")
-
-    with pytest.raises(MaterializationError, match="Agent.act"):
-        orch._materialize_workspace_artifact("agent.py", {"files": [{"filename": "agent.py", "content": drifted}]})
-
-    assert (orch.workspace_dir / "agent.py").read_text(encoding="utf-8") == SKELETON_AGENT
-
-
-def test_named_contract_change_is_accepted_and_recorded(tmp_path: Path) -> None:
-    orch = _orch(tmp_path)
-    _establish(orch)
-    changed = SKELETON_AGENT.replace("def act(self, state: tuple)", "def act(self, state: tuple, valid: list)")
-
-    orch._materialize_workspace_artifact(
-        "agent.py",
-        {"files": [{"filename": "agent.py", "content": changed}], "contract_change": {"reason": "akcje legalne z planszy"}},
-    )
-
-    contract = json.loads(orch.interface_contract_path.read_text(encoding="utf-8"))
-    assert contract["agent.py"]["Agent.act"] == ["self", "state", "valid"]
-    events = json.loads(orch.evolution_history_path.read_text(encoding="utf-8"))["events"]
-    assert any(e["type"] == "CONTRACT_CHANGED" and e["reason"] == "akcje legalne z planszy" for e in events)
-
-
-def test_filling_in_bodies_and_adding_symbols_is_free(tmp_path: Path) -> None:
-    orch = _orch(tmp_path)
-    _establish(orch)
-
-    orch._materialize_workspace_artifact(
-        "agent.py",
-        {
-            "ast_edits": [
-                {"symbol": "Agent.act", "file": "agent.py", "code": "def act(self, state: tuple) -> int:\n    return 0\n"},
-                {"symbol": "Agent.reset", "file": "agent.py", "code": "def reset(self) -> None:\n    return None\n"},
-            ]
-        },
-    )
-
-    contract = json.loads(orch.interface_contract_path.read_text(encoding="utf-8"))
-    assert "Agent.reset" in contract["agent.py"] and "return 0" in (orch.workspace_dir / "agent.py").read_text(encoding="utf-8")
+    orch._materialize_workspace_artifact("agent.py", {"files": [{"filename": "agent.py", "content": SKELETON_AGENT}]})
 
 
 def test_rejected_symbol_edit_is_an_error_and_nothing_of_the_answer_is_written(tmp_path: Path) -> None:
@@ -159,43 +101,6 @@ def test_rejected_symbol_edit_is_an_error_and_nothing_of_the_answer_is_written(t
 
     assert not (orch.workspace_dir / "helper.py").exists()
     assert (orch.workspace_dir / "agent.py").read_text(encoding="utf-8") == SKELETON_AGENT
-
-
-def test_healing_puts_a_skeleton_of_all_modules_before_the_first_code_task(tmp_path: Path) -> None:
-    orch = _orch(tmp_path)
-    orch.blueprint_path.write_text(json.dumps({"entrypoint": "run.py:main"}), encoding="utf-8")
-    planned = [
-        {"task_id": "T1", "description": "Literatura", "target_node": "thesis.md", "assigned_agent": "background_researcher"},
-        {"task_id": "T2", "description": "Środowisko", "target_node": "env.py", "assigned_agent": "seed_coder"},
-        {"task_id": "T3", "description": "Agent", "target_node": "agent.py", "assigned_agent": "seed_coder"},
-        {"task_id": "T4", "description": "Testy agenta", "target_node": "test_agent.py", "assigned_agent": "seed_tester"},
-        {"task_id": "T5", "description": "Eksperyment", "target_node": "run.py", "assigned_agent": "seed_coder"},
-    ]
-
-    healed = orch._normalize_and_heal_task_plan(planned, user_prompt="RL", multi_cycle_waves=True)
-    ids = [t["task_id"] for t in healed]
-
-    skeleton = next(t for t in healed if t["task_id"] == "SKELETON")
-    assert ids.index("SKELETON") == ids.index("T2") - 1
-    assert all(m in skeleton["description"] for m in ("env.py", "agent.py", "run.py"))
-    assert "test_agent.py" not in skeleton["description"]
-
-
-def test_planner_skeleton_task_is_kept_and_moved_before_the_code(tmp_path: Path) -> None:
-    orch = _orch(tmp_path)
-    planned = [
-        {"task_id": "T1", "description": "Środowisko", "target_node": "env.py", "assigned_agent": "seed_coder"},
-        {"task_id": "T2", "description": "Agent", "target_node": "agent.py", "assigned_agent": "seed_coder"},
-        {"task_id": "T3", "description": "Szkielet modułów projektu", "target_node": "env.py", "assigned_agent": "seed_coder"},
-    ]
-
-    healed = orch._normalize_and_heal_task_plan(planned, user_prompt="RL", multi_cycle_waves=True)
-
-    descriptions = [t["description"] for t in healed]  # healing renumbers task ids, descriptions stay
-    skeleton_at = next(i for i, t in enumerate(healed) if t["task_id"] == "SKELETON")
-    assert healed[skeleton_at]["description"].startswith("Szkielet modułów projektu")
-    assert skeleton_at < descriptions.index("Środowisko") < descriptions.index("Agent")
-    assert sum(1 for d in descriptions if "zkielet" in d) == 1
 
 
 def test_repair_payload_carries_the_source_of_the_failing_tests(tmp_path: Path) -> None:

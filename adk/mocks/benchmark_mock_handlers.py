@@ -1,7 +1,10 @@
 """Task-aware mock LLM handlers and validator synthesis fixtures for offline benchmark execution."""
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+from adk.mocks.default_responses import MOCK_ENTRYPOINT, mock_interfaces
 
 if TYPE_CHECKING:
     from adk.benchmarks.tasks import BenchmarkTaskSpec
@@ -17,6 +20,10 @@ VALIDATOR_SYNTHESIS_CODE = (
     "ast.parse(src)\n"
     "sys.exit(0)\n"
 )
+
+
+# Legacy role aliases of the hand-written mock task lists, as the files of the mock project.
+_ALIAS_PATHS = {"v1": "config.py", "v2": "core.py", "v3": "tests/test_core.py", "v4": "thesis.md", "v5": "tests/test_core.py"}
 
 
 def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
@@ -36,7 +43,12 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                 title_pl=spec.title_pl,
             )
             if spec.custom_tasks:
-                tasks = [dict(t) for t in spec.custom_tasks]
+                tasks = [
+                    {**t, "target_node": "plot_results.py", "assigned_agent": coder_agent}
+                    if "plot_results.py" in str(t.get("description"))
+                    else {**t, "target_node": _ALIAS_PATHS.get(t["target_node"], t["target_node"])}
+                    for t in spec.custom_tasks
+                ]
             else:
                 tasks = []
                 if t_type in ("magisterska", "master", "msc"):
@@ -45,14 +57,14 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                             {
                                 "task_id": "T1_BG",
                                 "description": f"[{spec.task_id}] Stage 1 Background Research (II stopień): Foundational funnel & monographs in references.bib",
-                                "target_node": "v4",
+                                "target_node": "thesis.md",
                                 "assigned_agent": "background_researcher",
                                 "status": "TODO",
                             },
                             {
                                 "task_id": "T1_DISC",
                                 "description": f"[{spec.task_id}] Stage 2 Discoverer Research (II stopień): Contemporary SOTA (2023-2026) & research gap in references.bib",
-                                "target_node": "v4",
+                                "target_node": "thesis.md",
                                 "assigned_agent": "discoverer_researcher",
                                 "status": "TODO",
                             },
@@ -63,7 +75,7 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                         {
                             "task_id": "T1",
                             "description": f"[{spec.task_id}] Discoverer Research (III stopień - Paper): Competitive SOTA (2023-2026) & superiority proof in references.bib",
-                            "target_node": "v4",
+                            "target_node": "thesis.md",
                             "assigned_agent": "discoverer_researcher",
                             "status": "TODO",
                         }
@@ -73,7 +85,7 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                         {
                             "task_id": "T1",
                             "description": f"[{spec.task_id}] Background Research (I stopień - Inżynierska): Foundational funnel from classical monographs to thesis problem in references.bib",
-                            "target_node": "v4",
+                            "target_node": "thesis.md",
                             "assigned_agent": "background_researcher",
                             "status": "TODO",
                         }
@@ -83,28 +95,35 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                         {
                             "task_id": "T2",
                             "description": f"[{spec.task_id}] Implement AST hyperparameters in config.py for {spec.title_en}",
-                            "target_node": "v1",
+                            "target_node": "config.py",
                             "assigned_agent": coder_agent,
                             "status": "TODO",
                         },
                         {
                             "task_id": "T3",
                             "description": f"[{spec.task_id}] Implement core algorithm and train_and_evaluate() in core.py",
-                            "target_node": "v2",
+                            "target_node": "core.py",
                             "assigned_agent": coder_agent,
                             "status": "TODO",
                         },
                         {
                             "task_id": "T4",
-                            "description": f"[{spec.task_id}] Implement unit tests, CSV benchmark, and plots for {spec.title_en}",
-                            "target_node": "v3",
+                            "description": f"[{spec.task_id}] Implement unit tests of core.py for {spec.title_en}",
+                            "target_node": "tests/test_core.py",
                             "assigned_agent": "seed_tester",
+                            "status": "TODO",
+                        },
+                        {
+                            "task_id": "T4_PLOT",
+                            "description": f"[{spec.task_id}] Implement generate_plots() in plot_results.py",
+                            "target_node": "plot_results.py",
+                            "assigned_agent": coder_agent,
                             "status": "TODO",
                         },
                         {
                             "task_id": "T5",
                             "description": f"[{spec.task_id}] Author all 6 chapters of thesis/paper following Table of Contents with \\ref_ast, \\ref_csv, and \\ref_fig pointers",
-                            "target_node": "v4",
+                            "target_node": "thesis.md",
                             "assigned_agent": "seed_writer",
                             "status": "TODO",
                         },
@@ -114,6 +133,8 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                 "thesis_type": getattr(spec, "thesis_type", "inzynierska"),
                 "template_name": getattr(spec, "template_name", "thesis_plodz"),
                 "hitl_gate": "GATE_1_OUTLINE_APPROVAL",
+                "interfaces": mock_interfaces(spec.config_ast_nodes, spec.core_code, **{"plot_results.py": spec.plot_script}),
+                "entrypoint": MOCK_ENTRYPOINT,
                 "academic_blueprint": {
                     "thesis_title": spec.title_pl,
                     "thesis_statement": spec.abstract_en,
@@ -226,22 +247,13 @@ def _make_task_mock_llm_handler(spec: BenchmarkTaskSpec):
                 "summary": f"Defined AST constants in config.py for {spec.task_id}.",
             }
 
-        if (
-            "core.py" in target_file
-            or "test_core" in target_file
-            or "results.csv" in target_file
-            or "tester" in assigned_agent
-        ):
-            return {
-                "source_code": spec.core_code,
-                "test_file": "test_core.py",
-                "test_code": spec.test_code,
-                "benchmark_file": "results.csv",
-                "csv_content": spec.initial_csv,
-                "plot_file": "plot_results.py",
-                "plot_script": spec.plot_script,
-                "summary": f"Generated core.py, test_core.py, results.csv, and plot_results.py for {spec.task_id}.",
-            }
+        # Answers follow the target file, not the agent: a repair of core.py may be handed to the tester.
+        if Path(target_file).name.startswith("test_"):
+            return {"test_file": target_file, "test_code": spec.test_code, "summary": f"Unit tests for {spec.task_id}."}
+        if target_file.endswith("plot_results.py"):
+            return {"source_code": spec.plot_script, "summary": f"Plots of the results for {spec.task_id}."}
+        if target_file.endswith(".py"):
+            return {"source_code": spec.core_code, "summary": f"Implemented core.py for {spec.task_id}."}
 
         if "background_researcher" in assigned_agent:
             bg_bib = spec.background_bibtex_entries or spec.bibtex_entries

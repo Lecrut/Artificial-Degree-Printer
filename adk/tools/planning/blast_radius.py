@@ -92,7 +92,6 @@ def get_scoped_hypergraph_context(
         scoped_nodes[n_id] = {
             "path": meta.get("path"),
             "degree": meta.get("degree", 0),
-            "weight": meta.get("weight", 1.0),
         }
 
     return {

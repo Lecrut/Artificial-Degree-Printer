@@ -205,12 +205,11 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
     assert [c["node_file"] for c in t_res["architecture_cycles"]] == ["config.py", "core.py", "thesis.md"]
     assert all(c["w3_post_remediation_status"] == "PASS" for c in t_res["architecture_cycles"])
 
-    # Layer 4 events: the missing specialization is created at planning time and every failure escalates the
-    # node weight. The architect itself is not called: each injected failure is one incident, repaired by the
-    # fast path (the split-agent path is covered by test_layer4_and_orchestrator at the tool level).
+    # Layer 4 events: the missing specialization is created at planning time. The architect itself is not called:
+    # each injected failure is one incident, repaired by the fast path (the split-agent path is covered by
+    # test_layer4_and_orchestrator at the tool level).
     evo_events = t_res["evolution"]["new_events_in_task"]
     assert "AGENT_CREATED" in evo_events
-    assert "WEIGHT_ESCALATED" in evo_events
     assert all(c["w4_action"] == "FAST_FIX" for c in t_res["architecture_cycles"])
 
     # Verify all 6 chapters exist in compiled thesis.compiled.md and thesis.compiled.tex
@@ -236,6 +235,7 @@ def test_benchmark_task_4_federated_runs_10_tasks(tmp_path: Path):
     assert t_res["task_id"] == "04_federated_learning"
     assert t_res["orchestrator_status"] == "COMPLETED"
     assert Path(t_res["artifacts"]["pdf_path"]).exists()
+    assert Path(t_res["artifacts"]["runner_script"]).name == "core.py"  # the declared entrypoint's file
     assert Path(t_res["artifacts"]["runner_script"]).exists()
     assert Path(res["master_summary_pdf"]).exists()
 

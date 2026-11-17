@@ -80,6 +80,14 @@ def edit_on_unparsable_file(rel: str, error: str, symbol: str) -> str:
     )
 
 
+def whole_module_loses_symbols(file_name: str, symbol: str, lost: list[str]) -> str:
+    return (
+        f"{file_name}:{symbol}: an ast_edits element named after the module replaces the WHOLE file, and this code "
+        f"would delete {', '.join(lost)}. To change one symbol, name that symbol; to replace the module, return "
+        "all of it in 'files'."
+    )
+
+
 def symbol_edits_rejected(errors: list[str]) -> str:
     return "Symbol edits rejected (nothing from this answer was saved):\n- " + "\n- ".join(errors)
 
@@ -251,6 +259,36 @@ PLANNER_NO_TASKS = (
 
 def planner_interface_feedback(gaps: list[str]) -> str:
     return "Fix the plan and return it whole. " + " ".join(gaps)
+
+
+def spec_breach(violations: list[str], refusals: list[str]) -> str:
+    lines = violations + refusals
+    return (
+        "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing "
+        "was saved. Keep every planned public name and signature, import only names the producer's interface "
+        "declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an "
+        "interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- "
+        + "\n- ".join(lines)
+    )
+
+
+def spec_change_refused(module: str, user: str, names: list[str]) -> str:
+    return f"{module}: cannot remove {', '.join(names)} — {user} is planned to use them"
+
+
+def planner_spec_feedback(problems: list[str]) -> str:
+    return (
+        "The harness imported every interface of your plan as a stub before any code exists, and the plan cannot work "
+        "as written. Fix each problem below in 'interfaces' (and the entrypoint), keep the rest, and return the whole "
+        "plan:\n- " + "\n- ".join(problems)
+    )
+
+
+PLAN_WITHOUT_INTERFACES = (
+    "The plan has no 'interfaces': every code module of the project needs its interface (signatures, docstrings, "
+    "constants) as Python source before any task can run."
+)
+PLAN_WITHOUT_TASKS = "The plan has no tasks."
 
 
 def modules_without_interface(modules: list[str]) -> str:

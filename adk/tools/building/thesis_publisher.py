@@ -602,118 +602,12 @@ def render_thesis_html(
     return html_path
 
 
-def write_executable_runner_script(workspace_dir: Path, spec: BenchmarkTaskSpec) -> Path:
-    """Create run_experiment.py inside workspace_dir so the user can run the generated code & open the PDF directly."""
-    runner_path = workspace_dir / "run_experiment.py"
-    script_code = f'''from __future__ import annotations
-
-import argparse
-import csv
-import inspect
-import os
-import subprocess
-import sys
-import webbrowser
-from pathlib import Path
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Uruchom wygenerowany eksperyment '{spec.task_id}', testy pytest, wykresy i otwórz PDF pracy."
-    )
-    parser.add_argument(
-        "--open-pdf",
-        action="store_true",
-        help="Otwórz wygenerowany plik thesis.pdf w domyślnej przeglądarce PDF systemu.",
-    )
-    parser.add_argument(
-        "--open-html",
-        action="store_true",
-        help="Otwórz interaktywny podgląd thesis.html w przeglądarce.",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Ziarno generatora losowego (domyślnie: 42).",
-    )
-    args = parser.parse_args()
-
-    here = Path(__file__).resolve().parent
-    if str(here) not in sys.path:
-        sys.path.insert(0, str(here))
-
-    import core
-    import plot_results
-
-    print("=" * 78)
-    print("URUCHAMIANIE KODU ZADANIA: {spec.task_id}")
-    print("Tytuł: {spec.title_pl}")
-    print("=" * 78)
-
-    results_dir = here.parent / "results" if (here.parent / "results").exists() else here
-    thesis_dir = here.parent / "thesis" if (here.parent / "thesis").exists() else here
-
-    csv_out = results_dir / "results.csv"
-    try:
-        sig = inspect.signature(core.train_and_evaluate)
-        if "csv_path" in sig.parameters:
-            core.train_and_evaluate(csv_path=csv_out, seed=args.seed)
-        elif len(sig.parameters) >= 2:
-            core.train_and_evaluate(csv_out, seed=args.seed)
-        elif "seed" in sig.parameters:
-            core.train_and_evaluate(seed=args.seed)
-        else:
-            core.train_and_evaluate()
-    except Exception as e:
-        print(f"Uwaga podczas uruchamiania train_and_evaluate: {{e}}")
-
-    if csv_out.exists():
-        print("\\n[1/3] Wyniki eksperymentu (results.csv):")
-        with csv_out.open("r", encoding="utf-8", newline="") as f:
-            for row in csv.DictReader(f):
-                print("   ", dict(row))
-
-    plots = plot_results.generate_plots(results_dir)
-    print(f"\\n[2/3] Wygenerowano wykresy wektorowe i rastrowe: {{plots}}")
-
-    print("\\n[3/3] Uruchamianie testów jednostkowych pytest...")
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(here) + os.pathsep + env.get("PYTHONPATH", "")
-    pytest_res = subprocess.run(
-        [sys.executable, "-m", "pytest", str(here / "test_core.py"), "-q", "-p", "no:cacheprovider"],
-        cwd=str(here),
-        env=env,
-    )
-    if pytest_res.returncode != 0:
-        sys.exit(pytest_res.returncode)
-
-    pdf_file = thesis_dir / "thesis.pdf"
-    tex_file = thesis_dir / "thesis.tex"
-    html_file = thesis_dir / "thesis.html"
-    print("=" * 78)
-    print("GOTOWE ARTEFAKTY PRACY DYPLOMOWEJ:")
-    print(f"  • PDF pracy:       {{pdf_file}}")
-    print(f"  • LaTeX (.tex):    {{tex_file}}")
-    print(f"  • Podgląd HTML:    {{html_file}}")
-    print(f"  • Skompilowany MD: {{thesis_dir / 'thesis.compiled.md'}}")
-    print("=" * 78)
-
-    if args.open_pdf and pdf_file.exists():
-        if hasattr(os, "startfile"):
-            os.startfile(str(pdf_file))
-        else:
-            webbrowser.open(pdf_file.as_uri())
-
-    if args.open_html and html_file.exists():
-        webbrowser.open(html_file.as_uri())
-
-
-if __name__ == "__main__":
-    main()
-'''
-    runner_path.write_text(script_code, encoding="utf-8")
-    return runner_path
+def _entry_file(w_dir: Path, code_dir: str, entrypoint: str | None) -> str:
+    rel = str(entrypoint or "").partition(":")[0]
+    if not rel:
+        return ""
+    moved = Path(code_dir) / rel
+    return str(moved if moved.exists() else w_dir / rel)
 
 
 def publish_workspace_thesis_bundle(
@@ -727,19 +621,12 @@ def publish_workspace_thesis_bundle(
 ) -> dict[str, Any]:
     """Execute generated code & plot script, compile symbolic references in .md and .tex, and render thesis.pdf + thesis.html.
 
-    `entrypoint` is the plan's declaration (`path.py:function`); the experiment runs through it, as during the run.
-    Without it (mock/legacy projects) the convention runner script run_experiment.py is written and found."""
+    `entrypoint` is the plan's declaration (`path.py:function`); the experiment runs through it, as during the run."""
     w_dir = Path(workspace_dir).resolve()
     w_dir.mkdir(parents=True, exist_ok=True)
     is_live_provider = provider is not None and str(provider).strip().lower() != "mock"
 
-    # 1. Write the legacy runner script run_experiment.py only for a project without a declared entrypoint: it
-    # imports core.py, and with an entrypoint declared it was the file the convention search found and ran
-    # instead of the plan's entrypoint (2026-11-15: "No module named 'core'", no results in the bundle).
-    if not entrypoint:
-        write_executable_runner_script(w_dir, spec)
-
-    # 2. Execute core.train_and_evaluate so results.csv is whatever the function just wrote.
+    # Run the declared entrypoint so results.csv is whatever it just wrote.
     exec_env = os.environ.copy()
     exec_env["PYTHONPATH"] = str(w_dir) + os.pathsep + str(w_dir / "code") + os.pathsep + exec_env.get("PYTHONPATH", "")
     experiment = execute_workspace_experiment(w_dir, entrypoint=entrypoint)
@@ -871,7 +758,8 @@ def publish_workspace_thesis_bundle(
         "thesis_dir": organized.get("thesis_dir", str(w_dir / "thesis")),
         "results_dir": organized.get("results_dir", str(w_dir / "results")),
         "logs_dir": organized.get("logs_dir", str(w_dir / "logs")),
-        "runner_script": str(organized.get("code_dir", str(w_dir / "code"))) + "/run_experiment.py",
+        # The file of the declared entrypoint: root modules are moved to code/, modules in packages stay.
+        "runner_script": _entry_file(w_dir, str(organized.get("code_dir", w_dir / "code")), entrypoint),
         "pdf_path": organized.get("pdf_path", str(pdf_path)),
         "root_pdf": organized.get("root_pdf", str(pdf_path)),
         "tex_path": organized.get("tex_path", str(tex_path)),

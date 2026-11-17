@@ -16,6 +16,7 @@ from adk.tools.building import (
     edit_ast_node,
     edit_document_section,
 )
+from adk.tools.building.ast_editor import declared_names, whole_module_loss
 from adk.tools.building.hypergraph_sync import ensure_node
 from adk.orchestration.common import (
     _agent_for_path,
@@ -53,20 +54,19 @@ class WriteGateMixin:
         self,
         node_path: str,
         llm_output: dict[str, Any],
-        establishes_contract: bool = False,
         writer: dict[str, Any] | None = None,
     ) -> None:
         """Write a builder's output to the workspace. Accepted shapes are listed in OUTPUT_SCHEMA; an answer that
         carries content in none of them is an error returned to the agent, never a silent no-op.
 
-        An answer is applied as a whole or not at all: a failed symbol edit or an unexplained change of the
-        interface contract restores every file the answer touched and raises MaterializationError.
+        An answer is applied as a whole or not at all: a failed symbol edit or a breach of the specification σ
+        restores every file the answer touched and raises MaterializationError.
         `writer` (`{agent, task_id}`) is remembered on every node written, so a later failure in that file is
         charged to its author, not to whichever task happened to run the verification (R5)."""
         originals: dict[Path, str | None] = {}
         try:
             self._apply_builder_output(node_path, llm_output, originals, str((writer or {}).get("agent") or ""))
-            self._enforce_interface_contract(originals, llm_output, establishes_contract, node_path)
+            self._enforce_spec_on_write(originals, llm_output)  # σ in the project hypergraph is the contract (A5)
         except MaterializationError:
             for dest, before in originals.items():
                 if before is None:
@@ -75,14 +75,23 @@ class WriteGateMixin:
                     dest.write_text(before, encoding="utf-8")
             raise
         plot_name = str(llm_output.get("plot_file") or "plot_results.py").replace("\\", "/")
-        self._record_written(node_path, originals, writer, establishes_contract, plot_name)
+        self._record_written(node_path, originals, writer, plot_name)
+
+    def _planned_names(self, rel: str) -> set[str] | None:
+        """Names the plan's interface declares for module `rel` (None: the plan has no interface for it)."""
+        blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+        interfaces = blueprint.get("interfaces") if isinstance(blueprint, dict) else None
+        source = interfaces.get(rel) if isinstance(interfaces, dict) else None
+        try:
+            return declared_names(str(source)) if source else None
+        except SyntaxError:
+            return None
 
     def _record_written(
         self,
         node_path: str,
         originals: dict[Path, str | None],
         writer: dict[str, Any] | None,
-        skeleton: bool,
         plot_name: str = "plot_results.py",
     ) -> None:
         """Remember who wrote which files (node `last_writer`) and queue them for the next verification's scope.
@@ -122,8 +131,8 @@ class WriteGateMixin:
                 self._record_evolution_event(
                     {"type": "CROSS_ROLE_WRITE", "node": node_path, "files": cross_role, **writer}
                 )
-        if skeleton:
-            return
+        if agent == "harness":
+            return  # the stubs of every planned module, written from σ
         own = by_path.get(node_path)
         allowed = {node_path}
         for members in data.get("edges", {}).values():
@@ -266,11 +275,15 @@ class WriteGateMixin:
                     parts.pop(0)
                 symbol = ".".join(parts)
                 if not symbol or symbol in (edit_path.name, edit_path.stem):
+                    lost = whole_module_loss(edit_path.read_text(encoding="utf-8"), code_str) if edit_path.exists() else []
+                    if lost:
+                        edit_errors.append(texts.whole_module_loses_symbols(edit_path.name, str(item["symbol"]), lost))
+                        continue
                     if _write(edit_path.relative_to(ws_root).as_posix(), code_str):
                         materialized_any = True
                     continue
                 _remember(edit_path)
-                result = edit_ast_node(edit_path, symbol, code_str)
+                result = edit_ast_node(edit_path, symbol, code_str, planned=self._planned_names(file_rel))
                 if result.get("status") == "ok":
                     materialized_any = True
                 elif str(result.get("error", "")).startswith("Existing file has SyntaxError"):

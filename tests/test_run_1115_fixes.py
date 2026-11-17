@@ -10,7 +10,6 @@ import pytest
 
 from adk.orchestration.common import MaterializationError, _issue_category
 from adk.orchestrator import NeuroSymbolicOrchestrator
-from adk.tools.verification.contract_check import interface_contract_breaches, interface_contract_extensions
 
 
 def _orch(tmp_path: Path) -> NeuroSymbolicOrchestrator:
@@ -108,23 +107,6 @@ def test_category_uses_the_full_exception_name_not_the_truncated_summary() -> No
         "E   AssertionError: no results\nFAILED test_e.py::test_run - AssertionEr...\n"
     )
     assert _issue_category([truncated]) == "pytest:AssertionError"
-
-
-def test_first_parameters_of_a_placeholder_signature_are_allowed_and_recorded() -> None:
-    """N6: `Config.__init__(self)` -> `Config.__init__(self, learning_rate, ...)` was rejected 9 times."""
-    contract = {"config.py": {"Config": [], "Config.__init__": ["self"], "Config.to_dict": ["self"]}}
-    filled = (
-        "class Config:\n"
-        "    def __init__(self, learning_rate: float, gamma: float) -> None:\n        self.lr = learning_rate\n\n"
-        "    def to_dict(self) -> dict:\n        return {}\n"
-    )
-    assert interface_contract_breaches(contract, "config.py", filled) == []
-    assert interface_contract_extensions(contract, "config.py", filled) == [
-        "config.py: Config.__init__(self) -> Config.__init__(self, learning_rate, gamma)"
-    ]
-    changed = filled.replace("learning_rate: float, gamma: float", "gamma: float")
-    contract_real = {"config.py": {"Config.__init__": ["self", "learning_rate", "gamma"]}}
-    assert interface_contract_breaches(contract_real, "config.py", changed)  # a real signature stays protected
 
 
 def test_ast_edits_on_a_document_and_malformed_elements_get_a_clear_reason(tmp_path: Path) -> None:

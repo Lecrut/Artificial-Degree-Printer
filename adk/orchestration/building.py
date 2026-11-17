@@ -18,18 +18,13 @@ from adk.tools.planning import (
     calculate_blast_radius,
     get_scoped_hypergraph_context,
 )
-from adk.tools.verification.contract_check import (
-    is_contract_module,
-    stub_source,
-)
+from adk.tools.verification.contract_check import is_contract_module
 from adk.orchestration.common import (
     available_package_imports,
     _collect_report_issues,
     _is_document,
     MaterializationError,
     build_grounded_symbols,
-    is_skeleton_task,
-    SKELETON_TASK_ID,
 )
 
 # pytest summary line: `FAILED path.py::Class::test_name - message` (or ERROR)
@@ -187,6 +182,7 @@ class BuildingMixin:
         done_when = self._done_when(node_id, node_path, grounded_state)
         if done_when:
             builder_payload["done_when"] = done_when
+        self._spec_payload(builder_payload, task)  # with H: σ instead of the whole project's exports (A8)
         # A repair sees the tests it has to satisfy, not only a prose summary of their failure.
         if task.get("repair_of") and not is_doc_or_research_agent:
             failing = self._failing_test_sources()
@@ -200,21 +196,9 @@ class BuildingMixin:
             builder_payload["sampled_methodologies"] = recon_data.get("sampled_methodologies", [])
 
         writer = {"agent": agent_id, "task_id": str(task.get("task_id", ""))}
-        interfaces = blueprint_data.get("interfaces") if isinstance(blueprint_data, dict) else None
-        if str(task.get("task_id", "")).upper() == SKELETON_TASK_ID and isinstance(interfaces, dict) and interfaces:
-            # The plan's interfaces are the contract: the harness writes them as stubs, no model in between (U1,
-            # 2026-11-15: the small model invented an API the plan's tasks did not name, and it became the contract).
-            files = [{"filename": rel, "content": stub} for rel, src in interfaces.items() if (stub := stub_source(str(src)))]
-            self.logger.log_step(
-                "SKELETON_FROM_PLAN", f"Szkielet z interfejsów planu: {len(files)} modułów", {"files": [f["filename"] for f in files]}
-            )
-            llm_res = {"status": "ok", "output": {"files": files, "summary": texts.SKELETON_SUMMARY}}
-        else:
-            llm_res = self._skeleton_stubbed(task, self._call_agent(agent_md, builder_payload, model_tier=model_tier, provider=self.provider))
+        llm_res = self._call_agent(agent_md, builder_payload, model_tier=model_tier, provider=self.provider)
         try:
-            self._materialize_workspace_artifact(
-                node_path, llm_res.get("output", {}), establishes_contract=is_skeleton_task(task), writer=writer
-            )
+            self._materialize_workspace_artifact(node_path, llm_res.get("output", {}), writer=writer)
         except MaterializationError as exc:
             # A rejected answer (unparsable code, wrong shape, unexplained contract change) is deterministic and
             # self-describing, so the same agent gets the exact message once, right away, before any planner or
@@ -234,10 +218,8 @@ class BuildingMixin:
                     "instruction": texts.RETRY_INSTRUCTION,
                 },
             }
-            llm_res = self._skeleton_stubbed(task, self._call_agent(agent_md, retry_payload, model_tier=model_tier, provider=self.provider))
-            self._materialize_workspace_artifact(
-                node_path, llm_res.get("output", {}), establishes_contract=is_skeleton_task(task), writer=writer
-            )
+            llm_res = self._call_agent(agent_md, retry_payload, model_tier=model_tier, provider=self.provider)
+            self._materialize_workspace_artifact(node_path, llm_res.get("output", {}), writer=writer)
         sync_hypergraph_matrix(self.workspace_dir, self.matrix_path)
         return llm_res
 
@@ -263,25 +245,6 @@ class BuildingMixin:
         if _is_document(node_path):
             return texts.done_when_document(bool(grounded_state.get("available_csv_rows")))
         return []
-
-    @staticmethod
-    def _skeleton_stubbed(task: dict[str, Any], llm_res: dict[str, Any]) -> dict[str, Any]:
-        """A skeleton written by a model keeps only its interface: every body becomes `raise NotImplementedError`
-        (U2). Code that does not parse is left as it is, for the write gate to reject with its message."""
-        out = llm_res.get("output")
-        if not is_skeleton_task(task) or not isinstance(out, dict):
-            return llm_res
-        out = dict(out)
-        if isinstance(out.get("files"), list):
-            files = []
-            for item in out["files"]:
-                name = str(item.get("filename") or item.get("path") or "") if isinstance(item, dict) else ""
-                stub = stub_source(str(item.get("content", ""))) if name.endswith(".py") else None
-                files.append({**item, "content": stub} if stub else item)
-            out["files"] = files
-        if isinstance(out.get("source_code"), str) and (stub := stub_source(out["source_code"])):
-            out["source_code"] = stub
-        return {**llm_res, "output": out}
 
     def _failing_test_sources(self, limit: int = 6, budget: int = 6000) -> dict[str, dict[str, str]]:
         """`file::Class::test` -> {error, source} for the failing tests of the last verification report."""
@@ -332,10 +295,9 @@ class BuildingMixin:
         }
 
     def _refresh_experiment_after_code(self, node_id: str) -> None:
-        """After any change to Python code, results are whatever the experiment pipeline just wrote."""
+        """After any change to Python code, results are whatever the declared entrypoint just wrote."""
         node_path = str(read_json_state(self.matrix_path).get("nodes", {}).get(node_id, {}).get("path", node_id))
-        touched_code = node_path.endswith(".py") or self._role_of(node_id) == "results"
-        if str(self.provider).strip().lower() == "mock" or not touched_code:
+        if not node_path.endswith(".py"):
             return
         from adk.tools.building.experiment_runner import execute_workspace_experiment
 
@@ -344,5 +306,8 @@ class BuildingMixin:
         result = execute_workspace_experiment(self.workspace_dir, entrypoint=entrypoint or None)
         if result.get("skipped") or result.get("ok"):
             self._last_experiment_error = ""
+            if result.get("ok"):
+                self._record_data_produced()
             return
         self._last_experiment_error = str(result.get("error") or texts.EXPERIMENT_NO_RESULTS)
+        self.logger.log_event("DATA_FAILED", error=self._last_experiment_error[:400])

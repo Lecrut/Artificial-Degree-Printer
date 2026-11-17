@@ -17,6 +17,7 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-14 | **Zbiorcza lista otwartych pozycji → §V** | wszystko, co z Audytów I–IV pozostaje do zrobienia, w etapach 0–4 według pilności i wpływu | etapy 0–2 wdrożone poza #10 (pomiar małego modelu) i częścią #14 (kształty odpowiedzi per rola); etapy 3–4 otwarte |
 | 2026-11-14 | **Audyt V — przebieg benchmarków 01–03 po etapach 0–2 → §VI** | pierwszy pomiar nowego kodu: 01 i 02 zakończone z listą braków, 03 urwane; 77 napraw po asercjach wysłanych do testera (błąd wprowadzony w etapie 1) | wszystkie 12 pozycji §VI.6 i decyzje D1–D3 wdrożone (§VI.8, 156/156); otwarte: przyczyna urwania 03 (diagnostyka `LLM_CALL_START` + limit zegarowy dodane) |
 | 2026-11-15 | **Przyczyny u podstaw → §VI.12** | przebieg 01 po §VI.11a (4 przebudowy, koniec z brakami): szkielet bez API z planu i z błędnymi ciałami, tester bez sygnatur testowanego modułu (`exports` z krawędzi importów), prompty testera/planera, pętla napraw (U1–U10) | U1–U6, U8–U10 wdrożone (§VI.12a, 178/178), U7 otwarte; teksty dla modelu po angielsku w `agent_texts.py`, rdzeń ≤ 400 linii; bez pomiaru na żywo |
+| 2026-11-16 | **Audyt VI — przebieg 01 i 02, błąd u podstaw hipergrafu → §VII** | 01 i 02 kończą się 4 przebudowami bez `results.csv`: punkt wejścia zablokowany po porażce `SKELETON` (blokada po pliku), plan zamrażany bez wykonania, `ast_editor` po cichu dopisuje i nadpisuje, kontrakt podąża za kodem, naprawy bez pamięci (X1–X6); diagnoza: nigdzie nie ma zapisanej intencji — hipergraf, kontrakt i `exports` są wyprowadzane z bieżących plików; pierwotne H=(V,E,Φ) zdegenerowało, bo worki nie miały σ, były za grube i bez porządku (L1–L3) | **projekt D4** (σ, worki I/R/N/S, porządek, H vs H_obs, harmonogram ze stanu) **wdrożony: A0–A10 (§VII.13, 215/215)**, bez przebiegu na żywo; ścieżka bez `interfaces` (mocki) zostaje po staremu; dalsze przyczyny T1–T3 (brak specyfikacji zachowania, harness jako maszyna napraw, brak werdyktów w logach) w §VII.10; **lista poprawek A0–A11 z priorytetami i nakładem: §VII.11**; obecna implementacja hipergrafu do przepisania (H1–H8, §VII.4a); **pełna specyfikacja hipergrafu — rdzeń harnessu: §VII.12** |
 
 ---
 
@@ -2778,3 +2779,610 @@ Na prośbę użytkownika: szukanie usterek tej samej klasy co U1–U3 (agent nie
 **Martwy kod usunięty** (skan: definicja bez żadnego odwołania w `adk/`, `main.py`, `scripts/`; dynamicznych odwołań brak): `LLMConnectionManager.resolve_active_provider/select_model_for_tier/test_connection_endpoints`, `models.EvolutionEvent`, `template_manager._parse_markdown_sections/_build_canonical_chapters/list_available_templates`, `ref_compiler.strip_dangling_symbolic_tags/_csv_path/_py_path`, `literature_engine.fetch_live_or_curated_papers`, `adk.ADK_ROOT`, `agent_texts.THESIS`, `benchmarks/mock_fixtures.py`; duplikat `common._default_agent` (= `_agent_for_path`); 23 nieużywane re-eksporty w `orchestrator.__all__`; nieużywane re-eksporty w `__init__.py` pakietów `benchmarks`, `core`, `mocks`, `tools.building`, `tools.evolution`. Ostatni skan: 0 nieużywanych definicji.
 
 **Dług techniczny, który zostaje** (do decyzji): bardzo długie funkcje (`_plan_phase`, `_run_verification_step`, `_apply_builder_output`, `_repair_task`: ~200–300 linii); pliki > 400 poza rdzeniem (`thesis_publisher.py`, `template_manager.py`, `core/llm.py` z odpowiedziami mock w środku, `research_recon.py` z polskimi danymi dziedzinowymi); szablon `write_executable_runner_script` związany z monolitem `core.py`; resztki roli `results` (`ROLE_DEFAULTS`, wstrzykiwanie porażek mock); U7.
+
+# Audyt VI — 2026-11-16: przebieg 01 i 02 po §VI.12a, błąd u podstaw hipergrafu → §VII
+
+Stan: **A0–A10 wdrożone 2026-11-16 (§VII.13), bez przebiegu na żywo.** **Najważniejsza część: specyfikacja hipergrafu w §VII.12** (decyzja użytkownika: hipergraf jest rdzeniem harnessu). Decyzja użytkownika (2026-11-16): kierunek D4 przyjęty, wdrożenie po dalszej rozmowie. Sekcja ma dwie części: co dokładnie zepsuło 01 i 02 (§VII.1–VII.2) oraz dlaczego od kilku audytów naprawiamy skutki, a nie przyczynę — wraz z projektem, który to domyka (§VII.3–VII.9).
+
+## §VII.1. Przebieg
+
+| | 01_rl_tictactoe | 02_ml_anomaly_detection |
+|---|---|---|
+| czas (UTC) | 15:44 → 16:35 (51 min) | 16:35 → 17:41 (66 min) |
+| wywołania LLM | 160, udział LRM 58% | 204, udział LRM 46% |
+| koniec | `PRZERWANIE` „WYCZERPANO CZTERY PRZEBUDOWY KOLEJKI” | to samo |
+| pytest na końcu | FAIL: `NameError` przy zbieraniu `tests/test_ql_agent.py` | FAIL: `ImportError` w 4 modułach (`N_REPETITIONS`, `SEED_VALUE`, …) |
+| punkt wejścia | `src/run_experiment.py` = stub `raise NotImplementedError` do końca | `src/experiment.py` nigdy nie zaimplementowany (tylko naprawy) |
+| `results.csv` | brak | brak |
+| porażki wg agenta | tester 21, koder 19, pisarz 7 | koder 80, pisarz 15, tester 12, specjalista 3 |
+| kategorie | `pytest:AttributeError` 7, `pytest:NameError` 7, `contract` 6 | `contract` 58, `document` 15, `pytest:NameError` 9 |
+
+Wykluczone jako przyczyna: obcinanie promptu. Ładunek SML ma medianę 13–20 tys. znaków (~4–6 tys. tokenów) przy `num_ctx`=32768; ostrzeżenie o ucięciu nie wystąpiło. „Krzaki” w polskich znakach widoczne w konsoli to artefakt konsoli Windows — w `agent_trace.jsonl` tekst jest poprawny.
+
+## §VII.2. Mechanizmy, które zepsuły 01 i 02 (X1–X6)
+
+| # | mechanizm | dowód | gdzie w kodzie |
+|---|---|---|---|
+| X1 | **porażka zadania blokuje wszystkie późniejsze zadania na tym samym pliku, a `SKELETON` jest przypięty do pliku punktu wejścia.** Szkielet z planu nie przechodzi weryfikacji (błędy w samym planie, X2), po 4 naprawach FAILED → zadanie implementacji punktu wejścia BLOCKED. Przebudowy kolejki tworzą tylko zadania `*_FIX` z audytu i nigdy nie przywracają zablokowanego zadania implementacji. Status BLOCKED jest tylko w `print`, nie w `harness_process.log` | 01: kolejka po leczeniu zawiera T9 i T12 na `src/run_experiment.py` oraz T13 na `src/plot_results.py`; żadne nie zostało uruchomione (po T11 od razu T14). 02: kolejka zawiera T13 „Create src/experiment.py with the entrypoint run_experiment()” — nieuruchomione; porażka T4 (rozdz. 1) zablokowała też T12, T15, T16, T17 (rozdz. 2–6), stąd zadania `Q*_CH*` w każdej generacji | `orchestrator.py:306-314` (blokada po pliku), `plan_healing._skeleton_first:255` (`entry_file if entry_file in modules`), `recovery._tasks_from_audit` |
+| X2 | **plan jest zamrażany jako kod bez sprawdzenia, że da się go wykonać** | 02: `interfaces["src/config.py"]` zawiera `SEEDS = field(default_factory=…)` poza dataclass (→ `TypeError: 'Field' object is not iterable` w szkielecie), `data_generator.py` używa `List` bez importu. 01: `run_experiments(config: dict)` — harness woła punkt wejścia bez argumentów (`experiment.log`: „requires the arguments ['config']”); planer naprawczy w `SKELETON_FIX_2` kazał tę sygnaturę zachować | `planning._plan_phase`, `plan_interfaces._interface_gaps` (sprawdza tylko obecność modułów i nazw) |
+| X3 | **`edit_ast_node` po cichu psuje pliki.** (a) nieznany symbol → dopisany na końcu modułu; (b) podmieniana pierwsza definicja, a Python używa ostatniej → po duplikacie naprawy trafiają w martwy kod; (c) importy tylko dopisywane (deduplikacja po `ast.dump`), żadnego sposobu usunięcia starego importu; (d) fragment z kilkoma definicjami → zostaje jedna, reszta znika bez błędu; (e) symbol = nazwa modułu (`src.experiment`, `src/experiment.py`) → **cały plik nadpisany fragmentem** | koder odpowiada `ast_edits` w 113/119 odpowiedzi (02). `experiment.py`: 3× `run_experiment`, 2× `predict`, `fit`/`predict` na poziomie modułu (edycje `__init__`, `fit`, `predict`, `__main__` o 16:53:35 i 17:25:00); dwa importy z `src.config` — stary `from src.config import CHANNELS, …, N_REPETITIONS` (l. 7) jest nieusuwalny i to on daje końcowy `ImportError`. 17:24:51: symbol `src.experiment` z trzema importami nadpisał cały plik. W 02 8 z 14 plików `.py` ma zdublowane definicje lub importy; 01: `test_ql_agent.py` z blokiem `with patch.object(agent…)` na poziomie modułu | `tools/building/ast_editor.py` (`if not replaced: new_body.append`, `and not replaced`, `deduped_imports`, `matching_stmt`), `write_gate.py:267` |
+| X4 | **kontrakt podąża za kodem, nie za planem.** `public_api` pomija stałe modułu → `config.py` (w planie same stałe) poza kontraktem; „nowe symbole publiczne wchodzą do kontraktu swobodnie”; każde `SKELETON_FIX*` robi nową migawkę wszystkich plików | 02: `CONTRACT_ESTABLISHED` ×4 z listą 6 plików bez `src/config.py`; T3 (zadanie dopisane przez leczenie planu: „Define the hyperparameters … in config.py”) przepisało config na `get_channels()` itd. **przed** zaplanowanym T5; od tego momentu kontrakt ma gettery, a importerzy stałe → 58 porażek `contract`. Śmieci z X3 (`experiment.py: fit, predict`, `_iforest.py` w katalogu głównym, `validation.py` z kopią `ZScoreBaseline`) są w `interface_contract.json` jako chronione API, a `done_when` każe modelowi zachować sygnatury z `exports` | `contract_gate._enforce_interface_contract:65-73, 115-120`, `contract_check.public_api` |
+| X5 | **naprawa jest lokalna dla pliku i bez pamięci.** Błąd importu przypisywany importerowi, nigdy plikowi definicji; ładunek naprawy nie ma pola z poprzednimi próbami; przebudowy Q1–Q4 odtwarzają te same zadania na tych samych plikach | 02: `experiment.py` naprawiany w każdej generacji tym samym `ImportError`; `_iforest.py` (n17) i `src/methods/_iforest.py` (n18) naprawiane na zmianę; `Q4_FIX_config_8_FIX1/2` → `_iforest.py`. 01: ostatnie ~25 min (Q2–Q4) tylko `tests/test_ql_agent.py` | `repair._repair_task`, `routing._repair_target`, `recovery._tasks_from_audit` |
+| X6 | **ustalenia o wskaźnikach w pracy trafiają do kodera** | `Fix the file src/config.py according to the verification finding: Symbol 'CONFIG' not found` — to błąd `\ref_ast` w `thesis.md`, a celem naprawy jest plik wskazany w odnośniku | `routing._repair_target` (ścieżka wyciągana z treści ustalenia) |
+
+Do tego: ewolucja (W4) dopisuje do promptów reguły „sprawdzaj, czy symbol istnieje”, „przypisuj zmienne przed użyciem” — leczenie wad X3/X4 regułami dla modelu. `HARNESS_BUG_REPORTED` ×19 w 02 dotyczy głównie `sklearn` spoza środowiska — to błąd modelu (D1). Pisarz w 01 napisał we wnioskach „wyniki eksperymentu nie potwierdziły założenia tezy” przy pustym `available_csv_rows`.
+
+## §VII.3. Dlaczego naprawiamy skutki: błąd u podstaw
+
+X1–X6 mają wspólne źródło: **w systemie nigdzie nie jest zapisana intencja — co ma istnieć, kto to produkuje i kto z tego korzysta.** Każda „prawda” harnessu jest wyprowadzana z bieżącego stanu plików:
+
+- krawędzie hipergrafu — `sync_hypergraph_matrix` przy każdej synchronizacji kasuje krawędzie dynamiczne i wyprowadza je od nowa z importów i `\ref` w bieżącym kodzie;
+- kontrakt — migawka plików po szkielecie, rozszerzana o każdy nowy symbol;
+- `exports` — sygnatury bieżącego kodu;
+- zakres weryfikacji — z bieżących krawędzi;
+- cel naprawy — plik, w którym wyszedł błąd.
+
+Skutek: **każde uszkodzenie natychmiast staje się prawdą.** Doklejone `fit`/`predict` stają się krawędzią, eksportem i chronionym kontraktem, bo nie ma z czym ich porównać. Bez punktu odniesienia nie da się wykryć, że coś „jest źle od początku”, więc każda poprawka (U1–U10, N2–N7, S1–S8, a teraz X1–X6) łata objaw tam, gdzie wyszedł.
+
+## §VII.4. Pierwotne założenie H=(V,E,Φ) a stan obecny
+
+Założenie pierwotne: hipergraf jest matematycznym szkieletem projektu, który zastępuje domysły agentów deterministyczną topologią.
+
+- **V** — artefakty repozytorium (kod, testy, konfiguracja, wyniki, wykresy, rozdziały).
+- **E** — worki spójności; każdy to kontrakt poprawności dla kilku plików naraz: E1 kod i testy (pytest, składnia), E2 kod–dane–wykres (dane pochodzą z bieżącej wersji kodu: mtime + sha256), E3 narracja (tekst cytuje kod i dane wyłącznie wskaźnikami `\ref_ast`/`\ref_csv`).
+- **Φ** — deterministyczne wyrocznie przypisane do hiperkrawędzi (i ich przecięć), sprawdzające inwarianty worka.
+- Reprezentacja: macierz incydencji H (wiersze V, kolumny E) w `hypergraph_matrix.json`; d(v) = suma wiersza.
+- Role: promień rażenia (wektor zmiany × H → które worki odświeżyć), d(v) ≥ 2 → hub → LRM, uziemienie symboliczne liczb w pracy.
+
+| element | stan 2026-11-16 |
+|---|---|
+| V — pliki | jest |
+| E — worki E1/E2/E3 | **zdegenerowane**: krawędzie dynamiczne z importów, wszystkie dwuelementowe (01: 8, 02: 30); „E1…E30” to identyfikatory bez znaczenia worka |
+| Φ — wyrocznia worka | **brak**: weryfikacja = ogólny pytest + ruff + L1 na zakresie z krawędzi; żadna krawędź nie ma własnego inwariantu |
+| E2 — świeżość danych | częściowo: `ref_compiler.py:252` porównuje mtime CSV z najnowszym `.py`; sha256 brak |
+| d(v) ≥ 2 → LRM | **wyłączone 2026-11-14** (`complexity_router.py:16`): przy trzech zgrubnych workach prawie każdy plik kodu miał d ≥ 2 → 83% czasu modelu na LRM |
+| uziemienie `\ref_ast`/`\ref_csv` | działa (jedyny filar zachowany w całości) |
+
+### §VII.4a. Implementacja hipergrafu jest zła — do przepisania, nie do łatania (H1–H8)
+
+Nie chodzi tylko o to, że założenie miało luki (§VII.5). Sam kod hipergrafu (`tools/building/hypergraph_sync.py`, `tools/building/import_sync.py`, `tools/planning/blast_radius.py`, `tools/planning/complexity_router.escalate_node_weight`, `state/hypergraph_matrix.json`) nie realizuje założenia H=(V,E,Φ) w żadnym z trzech filarów:
+
+| # | wada | dowód |
+|---|---|---|
+| H1 | **to graf, nie hipergraf.** Każda krawędź łączy dokładnie dwa pliki; worek spójności spinający kilka plików jednym kontraktem nie istnieje | `sync_hypergraph_matrix` buduje krawędzie z par `dynamic_couplings` (import, `\ref`, „produces”); 01: 8/8 krawędzi dwuelementowych, 02: 30/30 |
+| H2 | **krawędzie bez typu i bez znaczenia.** „E1…E30” to numery w kolejności odkrycia; jedyny typ to `produces`; z krawędzi nie wynika, jaki inwariant obowiązuje ani kto jest producentem, a kto konsumentem | `edge_meta`: `{"dynamic": true}` dla wszystkich krawędzi importów |
+| H3 | **resztka statycznego E1 dokleja przypadkową krawędź do kontekstu każdego węzła.** `extract_hyperedge_exports` zawsze dodaje „E1” do aktywnych krawędzi, a E1 to dziś pierwsza odkryta para importu — dowolne dwa pliki | `import_sync.py:51-52` (`if "E1" in edges and "E1" not in active_edges`); w 02 E1 = `[n10, n6]` (`data_types.py`, `experiment.py`) |
+| H4 | **wyprowadzany od nowa z kodu przy każdej synchronizacji** — lustro bieżących plików, nie model projektu (§VII.3) | `sync_hypergraph_matrix`: krawędzie `dynamic` usuwane i odtwarzane z importów |
+| H5 | **brak Φ:** żadna krawędź nie ma przypisanej wyroczni (§VII.4) | weryfikacja: ogólny pytest/ruff/L1 na zakresie wyliczonym z krawędzi |
+| H6 | **ta sama informacja zapisana dwa razy**: `edges` (krawędź → węzły) i `matrix` (węzeł → krawędź → 0/1) oraz przechowywane `degree`; każdy moduł czyta inną formę, więc mogą się rozjechać | `matrix` czytają `verification.py:62`, `import_sync.py`, `blast_radius.py`, `complexity_router.py`; `edges` — `hypergraph_sync`, `import_sync` |
+| H7 | **martwe pola zaśmiecają stan i ładunek.** `weight` jest eskalowany (`WEIGHT_ESCALATED`: 47 w 01, 110 w 02), ale od 2026-11-14 nic nie podejmuje na jego podstawie decyzji — trafia tylko do ładunku agenta w `blast_radius`; `degree` jest wyłącznie informacyjny (routing tieru po d(v) wyłączony) | `complexity_router.py:16, 47-49`, `blast_radius.py:95` |
+| H8 | **węzły tylko dla plików, które już istnieją albo są wspomniane** (`ensure_node` na żądanie): plan nie tworzy z góry wierzchołków jako celu, więc nie ma „wierzchołka w stanie spec”; pliki spoza planu (`_iforest.py` w katalogu głównym, `validation.py`) dostają węzły na równych prawach z planowanymi | 02: n17 `_iforest.py`, n19 `validation.py` w macierzy |
+
+Skutek dla promienia rażenia: to sąsiedzi o jeden skok po parach importów. Nie obejmuje konsumentów, którzy nie importują (testy przed napisaniem, rozdziały), dlatego tester nie widział testowanego modułu (U3) i trzeba było dokleić `exports` całego projektu — kolejna łatka na wadę H1/H8.
+
+**Wniosek:** obecnej implementacji nie da się doprowadzić do D4 poprawkami. Do zachowania jako H_obs nadaje się tylko skanowanie importów i wskaźników (`_declared_paths`, `_literal_refs`, `_mentions`) oraz `module_import_path`. Reszta (model krawędzi, `matrix` obok `edges`, `weight`, `degree` jako pole, wymuszone E1, węzły na żądanie) zostaje zastąpiona przez H planowaną z D4.1 (§VII.8, pozycja A3 w §VII.11).
+
+## §VII.5. Czego brakowało w samym założeniu (L1–L3)
+
+**L1. Wyrocznia sprawdza spójność worka, nie zgodność z zamiarem.** Φ₁ = „pytest przechodzi” mówi tylko, że pliki w worku zgadzają się ze sobą. W 02 config przeszedł na gettery, tester dopisał testy pod gettery — gdyby importerzy też przeszli, E1 byłby zielony przy projekcie rozjechanym z planem. Worek nie miał odniesienia σ (co ma w nim być). Brak σ łataliśmy kontraktem, `exports` i `interfaces`, a każde z nich wyprowadza prawdę z kodu (§VII.3).
+
+**L2. Worki za grube, żeby wskazać winnego.** E1 = cały kod i wszystkie testy. Czerwony E1 nie mówi, który wierzchołek złamał kontrakt → heurystyki przypisania winy (`_pytest_culprits`, `_repair_target`, `failed_file`; X5, X6). Z tego samego powodu d(v) przestał rozróżniać i został wyłączony.
+
+**L3. Worki bez porządku.** E3 ma sens dopiero przy spełnionym E2, a E2 — przy spełnionym E1. Bez porządku pisarz pisze wnioski bez danych, a liniowa kolejka zadań zastąpiła topologię i może zgubić pracę (X1).
+
+## §VII.6. D4 — projekt: hipergraf jako specyfikacja (σ, drobne worki, porządek, H vs H_obs)
+
+D4 kontynuuje serię decyzji projektowych D1–D3 z §VI.7 (nie mylić z D1–D6 długu technicznego `orchestrator.py` w §II.4). Ta sekcja opisuje kierunek; **docelowa, szczegółowa specyfikacja hipergrafu jest w §VII.12 i w razie rozbieżności obowiązuje ona.**
+
+Nadal H=(V,E,Φ). Dochodzą: σ (specyfikacja worka), stany wierzchołków, porządek worków i rozdzielenie macierzy planowanej od obserwowanej.
+
+### D4.1. Elementy
+
+- **V — wierzchołki.** Artefakty jak dotąd: `path`, `kind` (`code` | `test` | `config` | `data` | `figure` | `chapter` | `bib` | `research`), `owner` (rola buildera: koder, tester, pisarz, badacz), **`state`**: `spec → stub → impl → verified` (dla danych i rysunków: `spec → produced → verified`; dla rozdziałów: `spec → drafted → verified`). Rozdział pracy jest osobnym wierzchołkiem (`thesis.md#ch3`), bo jest osobną jednostką pracy i odpowiedzialności; plik `thesis.md` to tylko miejsce składowania.
+- **E — hiperkrawędzie, cztery typy:**
+
+  | typ | członkowie | σ (specyfikacja, ustalana w planowaniu) | Φ (wyrocznia) |
+  |---|---|---|---|
+  | **I — interfejs** (zastępuje E1, drobny) | jeden producent + wszyscy konsumenci jednego interfejsu modułu: moduły importujące, testy, rozdziały cytujące `\ref_ast` | publiczne API producenta: funkcje i metody z parametrami, klasy, **stałe z typem** (np. `CHANNELS: list[str]`) | (a) producent: publiczne API == σ (bez braków i bez nadmiaru); (b) każdy konsument importuje z producenta tylko nazwy z σ; (c) testy producenta zielone |
+  | **R — uruchomienie** (E2) | punkt wejścia + `results.csv` + rysunki + moduł wykresów | sygnatura punktu wejścia bez wymaganych argumentów, schemat kolumn CSV, lista rysunków | punkt wejścia uruchamia się bez argumentów; CSV i rysunki istnieją, kolumny == σ; **świeżość**: sha256 kodu na krawędziach I, z których korzysta punkt wejścia, zapisany przy produkcji danych i równy bieżącemu |
+  | **N — narracja** (E3) | rozdział + źródła, które cytuje (moduły, CSV, rysunki, bib) | które symbole, kolumny i rysunki rozdział ma cytować (z planu i spisu treści) | kompilator wskaźników: każdy `\ref_*` się rozwiązuje; brak liczb wpisanych z pamięci; cytowane źródła są w stanie `verified` |
+  | **S — struktura** (jedna na projekt) | wszystkie wierzchołki | lista plików z planu | H_obs nie ma wierszy spoza H (pliki spoza planu, np. `_iforest.py` w katalogu głównym, `validation.py`) |
+
+- **Porządek:** I ≺ R ≺ N (częściowy; wewnątrz I topologicznie po importach z σ, np. `config` ≺ `data_generator` ≺ `experiment`). Wyrocznia worka uruchamia się dopiero, gdy wszystkie worki, od których zależy, są spełnione. Rozdział wyników nie ma czego cytować, dopóki R nie jest `verified` — to zastępuje dzisiejsze reguły „brak wyników” w `done_when` i U9.
+- **Dwie macierze.** **H** (planowana) powstaje raz z planu i jest stała — zmienia ją tylko jawna zmiana specyfikacji (D4.6). **H_obs** (obserwowana) liczy obecny `sync_hypergraph_matrix` z plików i służy wyłącznie do porównania. **Różnica H_obs − H to naruszenia**: import spoza σ, plik spoza planu, symbol spoza σ. Dziś H_obs jest jedyną macierzą i dlatego legalizuje uszkodzenia.
+- **d(v)** liczony z H (planowanej, drobnej), nie z importów: `config.py` jest naprawdę hubem (producent kilku I, członek R), a test i rozdział są liśćmi. Ewentualny powrót d(v) do wyboru tieru — dopiero po pomiarze (pytanie O3); do tego czasu zostaje zasada „SML główny, LRM od drugiej porażki”.
+
+### D4.2. Planowanie i walidacja σ (przed pierwszą linią kodu)
+
+Planer (LRM, jedno wywołanie jak dziś) już zwraca `interfaces` (źródło interfejsu modułu). Harness buduje z nich H i σ deterministycznie i sprawdza:
+
+1. każdy stub z `interfaces` się parsuje **i importuje** w piaskownicy (w kolejności topologicznej, z `NotImplementedError` w ciałach) — łapie `List` bez importu, `field()` poza dataclass, cykle importów;
+2. każda nazwa importowana przez konsumenta z modułu projektu jest w σ producenta (stałe też);
+3. punkt wejścia istnieje, jest dokładnie jeden i nie ma wymaganych argumentów;
+4. każdy wierzchołek `code` ma zadanie implementacji, każdy rozdział ma zadanie pisarza, a R ma producenta (punkt wejścia) — **zadania wynikają z H, nie odwrotnie** (D4.4);
+5. pakiety zewnętrzne w σ są na liście `available_packages` (D1/D2);
+6. nie ma dwóch modułów o tej samej roli (np. `config.py` i `src/config.py`).
+
+Błąd → feedback do planera z listą naruszeń (dziś jedno ponowienie; do ustalenia: O1). Po walidacji szkielet = stuby z σ (jak dziś `SKELETON_FROM_PLAN`), zapisane bez LLM. Nie jest to zadanie, które może się nie udać, bo σ jest już sprawdzona — **znika zadanie `SKELETON` i jego naprawy, a z nimi X1 i X2.**
+
+### D4.3. Zapis i weryfikacja wobec σ
+
+- **Bramka zapisu** sprawdza zmianę wobec σ, nie wobec migawki: symbol publiczny spoza σ, usunięcie symbolu z σ, zmiana sygnatury, plik spoza H → odrzucenie z natychmiastowym ponowieniem u autora (jak dziś `MaterializationError`). Stałe są częścią σ. `interface_contract.json` przestaje istnieć jako osobny stan — kontraktem jest σ.
+- **Weryfikacja zadania** = wyrocznie worków, do których należy zmieniony wierzchołek (promień rażenia z H, jak w pierwotnym założeniu), w porządku I ≺ R ≺ N, bez worków jeszcze niewymagalnych (np. R przed implementacją punktu wejścia).
+- **Przypisanie winy jest mechaniczne:** wyrocznia worka I porównuje każdego członka z σ i winny jest ten, kto od niej odbiega (producent bez stałej z σ → producent; konsument importuje nazwę spoza σ → konsument; test wywołuje sygnaturę spoza σ → tester). Gdy wszyscy są zgodni z σ, a testy czerwone → producent (implementacja), z nazwą testu. Znikają heurystyki `_pytest_culprits` / `_repair_target` dla błędów kontraktowych; zostają tylko dla błędów czysto wykonawczych w obrębie jednego pliku. Ustalenie o wskaźniku w rozdziale należy do worka N → do pisarza (X6).
+
+### D4.4. Harmonogram ze stanu H zamiast kolejki
+
+- Następna praca = pierwszy (w porządku worków i topologii σ) wierzchołek w stanie < `verified`, którego wszystkie worki-zależności są spełnione. Rodzaj pracy wynika ze stanu: `stub` → implementacja; naruszenie Φ → naprawa u winnego z D4.3; rozdział `spec` przy spełnionych źródłach → pisanie.
+- **Nie ma kolejki do zgubienia ani blokady po pliku:** zablokowany jest wierzchołek, którego zależności są czerwone, i odblokowuje się sam, gdy się zazielenią. Punkt wejścia w stanie `stub` przy zielonych I jest z definicji następną pracą (X1).
+- Budżet: limit prób **na wierzchołek** (dziś 2 szybkie + 1 cykl na zadanie) i limit całkowity przebiegu. „Przebudowy kolejki” (`recovery._rebuild_queue`, 4 generacje) znikają.
+- Każda zmiana stanu wierzchołka i każde naruszenie trafia do `harness_process.log` (dziś BLOCKED jest tylko w `print`).
+
+### D4.5. Ładunek agenta z H (przy okazji U7)
+
+Agent dostaje: σ własnego wierzchołka, σ producentów, z których korzysta (gotowe linie importu — D2), treść pliku, naruszenia Φ z poprzednich prób **na tym wierzchołku** (historia prób, X5) oraz `done_when` = wyrocznie jego worków w języku zadania. Nie dostaje `exports` całego projektu ani bieżących sygnatur jako „prawdy”. Pisarz dostaje σ worka N rozdziału (co cytować) i grounding tylko ze źródeł `verified`.
+
+### D4.6. Zmiana specyfikacji
+
+σ nie jest nienaruszalna, ale zmienia się tylko jawnie: odpowiedź z `contract_change: {reason}` (jak dziś) albo propozycja planera naprawczego. Zmiana σ to operacja na H: unieważnia `verified` u wszystkich członków worka (promień rażenia) i jest logowana (`SPEC_CHANGED`). Poza tym każda rozbieżność z σ jest błędem pliku, a nie nowym kontraktem.
+
+### D4.7. Poza D4, ale konieczne razem z nim (X3)
+
+`ast_editor` niszczy pliki niezależnie od σ — to wada narzędzia, nie modelu danych:
+- nieznany symbol najwyższego poziomu → błąd `TARGET_NOT_FOUND` z listą istniejących symboli (zamiast dopisania), chyba że symbol jest w σ i jeszcze go nie ma (dodanie zgodne ze specyfikacją);
+- duplikat definicji w pliku → błąd z prośbą o cały plik (zamiast podmiany pierwszej);
+- import z modułu, który plik już importuje → **zastępuje** stary `ImportFrom` tego modułu (jedyny sposób usunięcia nazwy przez `ast_edits`);
+- fragment z kilkoma definicjami → każda definicja jako osobna edycja albo błąd, nie ciche pominięcie;
+- symbol = nazwa modułu → dozwolony tylko wtedy, gdy kod jest kompletnym modułem (zawiera wszystkie symbole σ); inaczej błąd.
+
+Bramka σ z D4.3 i tak złapie skutki (symbol spoza σ, brak symbolu z σ), ale narzędzie nie powinno ich produkować.
+
+### D4.8. Zgodność z zasadami D1–D3 i dwoma tierami
+
+- D1 (stałe środowisko), D2 (jedno źródło prawdy o importach — teraz σ) i D3 (kto diagnozuje, nie edytuje: wyrocznie tylko zgłaszają, edytuje winny z D4.3) zostają bez zmian, a D4 je wzmacnia.
+- Dwa tiery zostają: planowanie i walidacja σ to LRM + deterministyka, całą implementację robi SML. Drobne worki zmniejszają kontekst SML (σ sąsiadów zamiast `exports` projektu).
+- Ewolucja (W4) zostaje w trakcie przebiegu, ale naruszenia, których przyczyną jest narzędzie lub σ (np. `ast_editor`, błędna σ), nie są wzorcem zachowania modelu i nie generują reguł. To osobna kategoria `harness`/`spec`.
+
+## §VII.7. Jak D4 pokrywa porażki 01 i 02
+
+| porażka | element D4 |
+|---|---|
+| zablokowany punkt wejścia i zablokowane rozdziały (X1) | D4.4 — brak kolejki i blokady po pliku; brak zadania `SKELETON` (D4.2) |
+| `SEEDS = field(...)`, `List` bez importu, `run_experiments(config)` (X2) | D4.2 p. 1 i 3 — błąd planu w pierwszej minucie, zgłoszony planerowi |
+| config: stałe vs gettery (X4) | σ worka I ze stałymi; bramka D4.3 odrzuca przepisanie configu na gettery |
+| zadanie „config” dopisane przez leczenie planu przed zaplanowanym T5 | D4.2 p. 4 — zadania wynikają z H, leczenie planu nie dopisuje ról |
+| doklejone `fit`/`predict`, `_iforest.py` ×2, `validation.py` (X3/X4) | H stała, worek S; symbol lub plik spoza σ = odrzucenie |
+| naprawy importera zamiast configu, brak pamięci prób (X5) | D4.3 przypisanie winy wobec σ; D4.5 historia prób na wierzchołku |
+| ustalenia o wskaźnikach kierowane do kodera (X6) | ustalenie należy do worka N → pisarz |
+| wnioski bez danych (01) | porządek R ≺ N |
+| martwy kod przez duplikaty, nieusuwalne importy (X3) | D4.7 |
+
+## §VII.8. Mechanizmy do usunięcia lub zastąpienia po D4
+
+| mechanizm | plik | zastępuje go |
+|---|---|---|
+| obecny model hipergrafu (§VII.4a): krawędzie-pary z importów, `matrix` obok `edges`, `weight` i `escalate_node_weight`, `degree` jako pole, wymuszone „E1” w `extract_hyperedge_exports`, węzły na żądanie (`ensure_node`) | `hypergraph_sync.py`, `import_sync.py`, `blast_radius.py`, `complexity_router.py` | H planowana (D4.1) jako jedno źródło; ze starego kodu zostaje tylko skanowanie importów i wskaźników jako H_obs |
+| `interface_contract.json`, `CONTRACT_ESTABLISHED`, migawki po `SKELETON_FIX*`, „nowe symbole wchodzą swobodnie” | `contract_gate.py`, `contract_check.public_api` (w roli kontraktu) | σ + bramka D4.3 |
+| zadanie `SKELETON` i jego naprawy, `_skeleton_first`, `_skeleton_stubbed` | `plan_healing.py`, `building.py` | stuby z σ po walidacji D4.2 |
+| dopisywanie zadań ról (`role_tasks`), `_insert_missing_chapters`, `_entrypoint_after_modules`, przesuwanie testów za kod | `plan_healing.py` | zadania wynikają z H (D4.2 p. 4), kolejność z porządku worków i topologii σ |
+| blokada „reszty zadań na pliku”, przebudowy kolejki (4 generacje), `_tasks_from_audit` | `orchestrator.py`, `recovery.py` | harmonogram D4.4 |
+| przypisanie winy dla błędów kontraktowych: `_pytest_culprits`, `_repair_target`, `failed_file` z treści ustaleń | `failure_attribution.py`, `routing.py` | D4.3 |
+| `exports` całego projektu w ładunku (U3), reguły „brak wyników” w `done_when`, U9 | `building.py`, `recovery.py` | D4.5, porządek R ≺ N |
+| krawędzie dynamiczne jako źródło zakresu weryfikacji | `hypergraph_sync.py`, `verification._task_scope` | H planowana; `sync` liczy tylko H_obs do porównania |
+
+Szacunek do sprawdzenia przy wdrożeniu: kodu ubędzie więcej, niż przybędzie. Nowe elementy to walidacja σ, bramka σ, wyrocznie czterech typów worków i harmonogram.
+
+## §VII.9. Etapy wdrożenia i pytania otwarte
+
+Etapy (każdy kończy się `pytest` + `ruff` i testem regresji odtworzonym z logów 01/02 z 2026-11-16). **Obowiązująca kolejność z priorytetami i nakładem: §VII.11.**
+
+1. **σ i walidacja planu** (D4.1 bez stanów, D4.2): H planowana z `interfaces` w `state/`, sprawdzenia 1–6, feedback do planera. Kryterium: plany 01 i 02 z 2026-11-16 odrzucone z konkretnymi naruszeniami (`field()`, `List`, `run_experiments(config)`); poprawiony plan przechodzi; stuby importują się bez błędu.
+2. **`ast_editor` (D4.7).** Kryterium: odtworzone edycje z 02 (`__init__`/`fit`/`predict` na `experiment.py`, `src.experiment` z samymi importami, dwa importy z `src.config`) dają błąd albo poprawny wynik, nigdy dopisanie ani nadpisanie.
+3. **Bramka i wyrocznie wobec σ (D4.3, D4.6)**, usunięcie `interface_contract.json`. Kryterium: przepisanie configu na gettery odrzucone; winny błędu importu = strona odbiegająca od σ.
+4. **Harmonogram ze stanu H (D4.4, D4.5)**, usunięcie kolejki, blokady po pliku i przebudów. Kryterium: przy czerwonym szkielecie praca na punkcie wejścia nie może zostać pominięta; każda zmiana stanu jest w logu.
+5. **Pomiar na żywo 01–03**, potem decyzja O3.
+
+Pytania otwarte (do rozmowy przed wdrożeniem):
+- **O1.** Ile prób planera przy błędach σ i co po ich wyczerpaniu: przerwanie z listą naruszeń czy deterministyczna naprawa σ przez harness tam, gdzie się da (np. brakujące `from typing import List`)? Uwaga: drugi wariant łamie ducha D2/D3 („harness nie dopisuje importów”).
+- **O2.** Granulacja worka I: jeden worek na moduł-producenta (wszystkie jego symbole) czy na symbol? Propozycja: na moduł — mniej worków, a winę i tak przypisuje się po symbolu.
+- **O3.** Czy d(v) z drobnego H wraca do wyboru tieru (np. hub przy pierwszej próbie → LRM), czy zostaje „SML główny, LRM od drugiej porażki”? Do rozstrzygnięcia pomiarem po etapie 4.
+- **O4.** Testy jako członkowie worka I producenta (jak wyżej) czy osobny worek T na moduł? Od tego zależy, kto jest winny czerwonego testu przy zgodnych σ.
+- **O5.** Rozdział jako wierzchołek (`thesis.md#chN`) wymaga bramki zapisu pisarza działającej na sekcjach. „Zastąp sekcję” już istnieje — sprawdzić, czy wystarcza.
+- **O6.** Format σ: źródło stubów (jak dziś `interfaces`) parsowane do struktury czy struktura zwracana wprost przez planera? Propozycja: źródło (model lepiej pisze kod niż schematy JSON), strukturę liczy harness.
+
+## §VII.10. Dalsze przyczyny u podstaw, niezależne od D4 (T1–T3)
+
+Sprawdzone przy okazji i **w porządku**: prompty agentów w repo nie dryfują między przebiegami (brak reguł „When…” w `adk/agents`); ewolucja nie przechodzi z 01 do 02 (każde zadanie startuje z czystej piaskownicy, `runner._prepare_evolved_adk_sandbox(reset=True)`); kontekst mieści się w `num_ctx` (§VII.1).
+
+### T1. Brak specyfikacji zachowania — specyfikacją są testy pisane przez mały model
+
+D4 ustala sygnatury (σ), ale nie mówi, **co kod ma robić**. Tę lukę wypełnia tester (SML) i to on de facto definiuje prawdę: wymyśla atrybuty wewnętrzne i oczekiwane wartości, a gdy test jest czerwony, naprawa często trafia do kodera, który nagina kod pod wymyślony test.
+
+| zadanie | co test sprawdza | dokąd poszła naprawa |
+|---|---|---|
+| T8 (01) | `agent.Q == {}` — `Q` nie istnieje w żadnym interfejsie | tester |
+| T10 (02) | `hasattr(model, 'mean_')` — atrybut wymyślony | `T10_FIX1` → **koder** (dopisać `mean_` pod test) |
+| T7 (01) | `len(moves_final) == 6` — liczba policzona przez model (kod zwraca 8) | `T7_FIX1` → **koder** |
+| T11 (02) | `np` bez importu | tester |
+| T9 (02) | `ImportError` przy zbieraniu testu (zła ścieżka importu) | `T9_FIX1` → **koder** |
+
+Liczby: **5 z 5 pierwszych podejść testera** (01: T7, T8; 02: T9, T10, T11) nie przeszło weryfikacji; w 5 z 15 (01) i 7 z 14 (02) rodzin napraw wina przeskakuje między koderem a testerem. Nie ma wyroczni, która rozstrzyga, czy rację ma test, czy kod — L1 z §VII.5 na poziomie zachowania.
+
+**Kierunek (rozszerzenie σ w D4):**
+- **σ zachowania:** planer (LRM, w tym samym jednym wywołaniu) podaje dla funkcji i metod publicznych 1–3 przykłady lub własności (np. „pusta plansza, 3 ruchy → `get_legal_moves()` zwraca 6 pól”, „`fit` na stałym sygnale → `predict` nie zgłasza anomalii”). Źródłem może być docstring stubu w formie doctestu (O6: model lepiej pisze kod niż schematy).
+- **Test tylko przez σ:** sprawdzenie statyczne w bramce zapisu testu — test używa wyłącznie publicznego API z σ (bez atrybutów spoza σ, bez `_prywatnych`), importy z pola `import` (D2).
+- **Walidacja testu na stubach (deterministyczna, przed implementacją):** każdy nowy test uruchamiany na stubach z σ musi paść **wyłącznie** z `NotImplementedError`. Każdy inny wynik (`NameError`, `ImportError`, błąd kolekcji, `TypeError` sygnatury, test zielony na stubie) = błąd testu → natychmiastowe ponowienie u testera. Łapie T9, T11 i błędny kształt wywołań, zanim powstanie implementacja.
+- **Rozstrzyganie winy:** test przeszedł walidację na stubach i jest zgodny z σ zachowania → czerwony test po implementacji jest winą producenta. Test sprawdzający coś spoza σ nie przejdzie bramki, więc nie może stać się specyfikacją.
+
+### T2. Harness jest maszyną do napraw, nie do budowania
+
+| | 01 | 02 |
+|---|---|---|
+| pierwsze podejścia do zadań | 13 budowań, **3,8 min LLM (8%)** | 13 budowań, **2,9 min (5%)** |
+| budowania naprawcze | 95, 27,6 min (56%) | 140, 47,4 min (75%) |
+| diagnoza (planer naprawczy, krytycy, audytorzy, ewolucja) | 14,9 min (30%) | 10,9 min (17%) |
+| planowanie i badania | 3,3 min (7%) | 1,8 min (3%) |
+
+Pierwsze podejście to jeden strzał SML bez informacji zwrotnej poza błędem składni (natychmiastowe ponowienie przy `MaterializationError`). Każdy błąd merytoryczny idzie drogą ścieżką: pełna weryfikacja → diagnoza LLM (planer naprawczy, LRM ~30 s) → zadanie naprawcze z prozą diagnozy. Proza diagnozy bywa błędna i błędy dwóch modeli się składają: 01 `SKELETON_FIX_2` — „zachowaj `def run_experiments(config)` i `raise NotImplementedError`”; 02 `SKELETON_FIX_1` — „zdefiniuj listę seedów lokalnie w funkcji”.
+
+**Kierunek:** dźwignią jest pierwsze podejście z własną wyrocznią, nie kolejne warstwy napraw:
+- autor dostaje σ, σ zachowania i testy już zwalidowane na stubach (T1);
+- **lokalna pętla u autora:** po zapisie harness uruchamia wyrocznie worka tego wierzchołka i wynik wraca do tego samego autora w tym samym zadaniu (jak dziś ponowienie przy `MaterializationError`, ale dla wyników testów i naruszeń σ), z limitem prób;
+- planer naprawczy tylko wtedy, gdy wyrocznia nie wskazuje jednoznacznie winnego albo autor wyczerpał lokalne próby; jego wyjście to wskazanie winnego wierzchołka i naruszenia σ, nie gotowy przepis na kod.
+
+To decyzja projektowa do rozmowy (pytanie O7), nie gotowa poprawka. Mierzyć: udział czasu LLM na pierwsze podejścia i odsetek wierzchołków `verified` po pierwszym zadaniu.
+
+### T3. Logi nie zapisują wyników — nie da się zmierzyć postępu
+
+`harness_process.log` w 01: 86 wpisów `[VERIFICATION]` (start i zakres), **0 wpisów z werdyktem** — brak PASS/FAIL, DONE, FAILED, BLOCKED (`ZATWIERDZONE`, `NIENAPRAWIONE`, `Wstrzymano` istnieją tylko w `print` w `orchestrator._execute_task`). Każda analiza przebiegu (również ta) odtwarza wyniki pośrednio („po zadaniu nie było `_FIX`, więc przeszło”). Dlatego X1 był niewidoczny przez kilka przebiegów. `analyze_run.py`: sekcja „FINDINGS THAT TRIGGERED REPAIRS” jest pusta mimo setek zadań `*_FIX*`, bo nie ma czego czytać.
+
+Harness jest przedmiotem pracy: bez werdyktów w logu nie da się wykazać, że zmiana coś poprawiła.
+
+**Kierunek:** strukturalny dziennik zdarzeń `logs/events.jsonl` (jedno zdarzenie = jedna linia JSON): start i wynik zadania lub wierzchołka (`DONE`/`FAILED`/`BLOCKED` z `blocked_by`), werdykt weryfikacji (status, kategoria, winny plik i agent, pierwsze ustalenie), odrzucenie odpowiedzi w bramce, zmiana kontraktu lub σ, przebudowa kolejki, metryki z §VII.11 (czas LLM na pierwsze podejścia vs naprawy). `analyze_run.py` czyta `events.jsonl` jako źródło główne, a `harness_process.log` tylko dla szczegółów.
+
+### Drobne (nie u podstaw)
+
+- **Kod SML nie parsuje się w ~17% odpowiedzi** (02: 35/210; 01: 7/90; LRM: 1/96). Przyczyny: podwójnie escapowane cudzysłowy (`\"\"\"` — kod w stringu JSON przy `format: json`), wcięcia metod, niedomknięte docstringi. Bramka zapisu łapie to przed zapisem (natychmiastowe ponowienie) — koszt czasu, nie uszkodzenie.
+- **Dyrektywy pisarza w ładunku kodera i testera** (`DOCUMENT FORMAT`, TikZ/Mermaid, `\ref_ast` w `grounded_hypergraph_state`): 3/158 odpowiedzi w 02 miało `\ref_csv{…}` w kodzie Pythona. To otwarte U7; rozwiązuje D4.5.
+- **Benchmark 03** przestał pisać do logów ok. 17:54 UTC (stan sprawdzony o 20:00 UTC) — prawdopodobnie zawieszone wywołanie; do sprawdzenia, czy działa limit zegarowy `HARNESS_LLM_WALL_CLOCK_LIMIT_S`.
+
+## §VII.11. Lista poprawek z całego Audytu VI: priorytety i nakład
+
+Obowiązująca kolejność (zastępuje listę etapów z §VII.9; pytania O1–O7 trzeba rozstrzygnąć przed pozycją, która od nich zależy).
+
+Nakład (szacunek, do weryfikacji): **S** — do pół dnia, **M** — 1–2 dni, **L** — 3–5 dni; wliczone testy regresji odtworzone z logów 01/02 z 2026-11-16, `pytest` i `ruff`.
+
+Priorytety: **P0** — warunek pomiaru, przed wszystkim; **P1** — usuwa przyczynę, która sama zatrzymuje przebieg; **P2** — fundament D4 (największy wpływ na zbieżność); **P3** — po pomiarze.
+
+| # | co | źródło | prio | nakład | zależy od | kryterium „zrobione” |
+|---|---|---|---|---|---|---|
+| A0 | diagnoza zawieszenia 03 (czy limit zegarowy LLM działa, gdzie wisi) | §VII.10 drobne | P0 | S | — | przyczyna wskazana w logu; zawieszenie kończy się zdarzeniem i przebieg idzie dalej |
+| A1 | **dziennik zdarzeń `events.jsonl`** + `analyze_run.py` na nim (werdykty, DONE/FAILED/BLOCKED, winny, metryki czasu: pierwsze podejścia / naprawy / diagnoza) | T3 | P0 | M | — | z samego `events.jsonl` da się odtworzyć tabele §VII.1 i §VII.10 T2 dla nowego przebiegu; BLOCKED widoczne z `blocked_by` |
+| A2 | **`ast_editor` bez cichych uszkodzeń**: nieznany symbol → błąd z listą symboli; duplikat → błąd; import z tego samego modułu zastępuje stary; wiele definicji → osobne edycje albo błąd; symbol = moduł tylko dla pełnego modułu | X3, D4.7 | P1 | S–M | — | odtworzone edycje z 02 (`__init__`/`fit`/`predict` na `experiment.py`, `src.experiment` z samymi importami, dwa importy z `src.config`) nigdy nie dopisują ani nie nadpisują |
+| A3 | **hipergraf jako specyfikacja (§VII.12)**: σ z planu + walidacja planu (D4.1 bez stanów, D4.2 reguły 1–6); **przepisanie modelu hipergrafu** (§VII.4a: worki zamiast par, typy krawędzi, jedna reprezentacja, bez `weight`/wymuszonego E1; obecne skanowanie zostaje jako H_obs): H planowana w `state/`, stuby importowalne, każdy konsumowany symbol ma producenta, punkt wejścia bez wymaganych argumentów, zadania wynikają z H (koniec dopisywania ról), feedback do planera | X2, X1 (źródło), L1 | P1 | **L** (rozbicie: §VII.12.16) | O1, O6 | plany 01 i 02 z 2026-11-16 odrzucone z naruszeniami `field()`, `List`, `run_experiments(config)`; poprawiony plan przechodzi; szkielet z σ nie może nie przejść weryfikacji, więc zadanie `SKELETON` znika |
+| A4 | **σ zachowania + test tylko przez σ + walidacja testu na stubach** | T1 | P2 | M | A3, O4 | testy T9/T11 z 02 odrzucone przed implementacją; test z `mean_`/`Q` odrzucony w bramce; czerwony test zgodny z σ po implementacji ma winnego = producent |
+| A5 | **bramka zapisu i wyrocznie wobec σ** (D4.3, D4.6): stałe w σ, symbol lub plik spoza σ odrzucony, przypisanie winy wobec σ, ustalenia o wskaźnikach → pisarz, `SPEC_CHANGED`; usunięcie `interface_contract.json` i migawek kontraktu | X4, X5, X6, L1, L2 | P2 | L | A3, O2 | przepisanie configu na gettery odrzucone; winny błędu importu = strona odbiegająca od σ; X6 nie występuje |
+| A6 | **wyrocznia R**: punkt wejścia bez argumentów, kolumny CSV == σ, świeżość sha256 kodu z krawędzi I | §VII.4 (E2), D4.1 | P2 | S | A3 | zmiana kodu po wyprodukowaniu CSV unieważnia R; rozdział wyników nie cytuje nieświeżych danych |
+| A7 | **harmonogram ze stanu H** (D4.4): stany wierzchołków, porządek I ≺ R ≺ N, limit prób na wierzchołek; usunięcie kolejki, blokady po pliku, przebudów, `_tasks_from_audit` | X1, L3 | P2 | L | A1, A3, A5 | przy czerwonym rozdziale 1 pozostałe rozdziały i punkt wejścia dalej są wykonywane, gdy ich zależności są zielone; żadna praca nie znika bez zdarzenia w `events.jsonl` |
+| A8 | **ładunek agenta z H** (D4.5): σ własna i sąsiadów, historia prób na wierzchołku, `done_when` z wyroczni; pisarz tylko ze źródeł `verified` (zamyka U7) | X5, U7, §VII.10 drobne | P2 | M | A5, A7 | brak `exports` całego projektu i dyrektyw pisarza w ładunku kodera; naprawa widzi poprzednie próby |
+| A9 | **lokalna pętla u autora** (wyrocznie worka wracają do autora w tym samym zadaniu); planer naprawczy tylko przy niejednoznacznym winnym, wyjście = winny + naruszenie σ | T2 | P3 | M | A4, A5, O7 | pomiar: udział czasu LLM na pierwsze podejścia rośnie z 5–8%; odsetek wierzchołków `verified` po pierwszym zadaniu |
+| A10 | ewolucja (W4) nie tworzy reguł z naruszeń kategorii `harness`/`spec` | D4.8 | P3 | S | A5 | błędy narzędzia i σ nie dają `AGENT_MUTATED` |
+| A11 | decyzja o d(v) w wyborze tieru | O3 | P3 | S | A7, pomiar | decyzja zapisana w audycie na podstawie danych |
+
+**Punkty pomiaru na żywo (01–03):**
+1. po A0–A3: oczekiwane — plan odrzucany lub poprawiany w pierwszych minutach, brak zadań `SKELETON_FIX*`, brak dopisanych i zdublowanych symboli; `events.jsonl` daje pełne tabele;
+2. po A4–A8: oczekiwane — zbieżność bez przebudów kolejki, `results.csv` powstaje, rozdziały cytują tylko dane `verified`;
+3. po A9: porównanie udziału czasu na pierwsze podejścia i liczby budowań na wierzchołek.
+
+**Do usunięcia po drodze** (szczegóły w §VII.8): przy A3 — `SKELETON`, `_skeleton_first`, `_skeleton_stubbed`, dopisywanie zadań ról; przy A5 — `interface_contract.json`, `contract_gate` w obecnej postaci, heurystyki winy dla błędów kontraktowych; przy A7 — kolejka, blokada po pliku, `recovery._rebuild_queue`, `_tasks_from_audit`; przy A8 — `exports` całego projektu, reguły „brak wyników” w `done_when`.
+
+**Łączny nakład (szacunek):** P0 ≈ 1–2 dni, P1 ≈ 5–7 dni (A3 = przepisanie hipergrafu, §VII.12.16), P2 ≈ 9–14 dni, P3 ≈ 2–3 dni.
+
+**Pytania przed wdrożeniem:** O1–O6 z §VII.9 oraz:
+- **O7.** Lokalna pętla u autora (A9): ile prób w zadaniu, zanim przejmie planer naprawczy, i czy planer naprawczy w ogóle zostaje (jego rolę może przejąć wyrocznia, która wskazuje winnego wobec σ)?
+
+## §VII.12. Specyfikacja hipergrafu — rdzeń harnessu
+
+Decyzja użytkownika (2026-11-16): **hipergraf jest najważniejszą częścią harnessu i ma być rozpisany jako pierwszy.** Ta sekcja jest specyfikacją docelową. D4 (§VII.6) opisuje kierunek, §VII.4a — dlaczego obecny kod jest do przepisania, a tutaj jest to, co trzeba zbudować. W razie sprzeczności z §VII.6 obowiązuje ta sekcja.
+
+### §VII.12.1. Rola w systemie
+
+Hipergraf jest **jedynym źródłem prawdy o tym, co ma powstać**. Każda część harnessu tylko go czyta albo zgłasza do niego zdarzenia, a żadna nie ma własnej, równoległej prawdy:
+
+| część harnessu | dziś czyta | po zmianie czyta z H |
+|---|---|---|
+| planowanie | odpowiedź planera + leczenie planu | H budowany z planu (§VII.12.6), walidacja niezmienników (§VII.12.10) |
+| bramka zapisu | migawkę kontraktu (`interface_contract.json`) | σ krawędzi, do których należy wierzchołek |
+| weryfikacja | ogólny pytest + zakres z krawędzi-par | wyrocznie Φ krawędzi z promienia rażenia |
+| przypisanie winy | heurystyki z treści błędu (`_pytest_culprits`, `_repair_target`) | werdykt wyroczni ze wskazanym winnym |
+| harmonogram | liniową kolejkę zadań + przebudowy | stany wierzchołków i porządek krawędzi |
+| ładunek agenta | `exports` całego projektu, grounding dla wszystkich | σ wierzchołka i jego producentów, historia prób na wierzchołku |
+| pisarz | `available_*` z bieżących plików | źródła krawędzi N w stanie `verified` |
+| ewolucja (W4) | kategorie porażek | tylko porażki z winnym = agent (nie `spec` / `harness`) |
+| logi | `print` + `harness_process.log` | każde zdarzenie H w `events.jsonl` (A1) |
+
+### §VII.12.2. Model formalny
+
+**H = (V, E, ρ, σ, Φ, ≺, s)**:
+
+- **V** — wierzchołki: planowane artefakty projektu (§VII.12.3).
+- **E** — hiperkrawędzie: worki spójności, każda typu I, R, N albo S (§VII.12.4).
+- **ρ: V × E → {P, C, T, O, X, ∅}** — **rola** wierzchołka w krawędzi. To jest macierz incydencji z pierwotnego założenia, ale zamiast 0/1 ma rolę: P — producent, C — konsument, T — test, O — wynik (dane, rysunek), X — cytujący (rozdział); ∅ = nie należy. Pierwotne „1” to ρ ≠ ∅.
+- **σ: E → specyfikacja** — co ma być w worku (§VII.12.5).
+- **Φ: E → wyrocznia** — deterministyczna funkcja: (H, pliki) → werdykt z winnym (§VII.12.7).
+- **≺** — częściowy porządek na E: e₁ ≺ e₂, gdy wyrocznia e₂ ma sens dopiero przy spełnionej e₁ (§VII.12.4).
+- **s: V → stan** — stan wierzchołka (§VII.12.8).
+
+Wartości pochodne (liczone, nigdy przechowywane):
+
+- **d(v)** = |{e : ρ(v,e) ≠ ∅, typ(e) ≠ S}| — stopień, jak w założeniu, ale z worków planowanych, a nie z importów.
+- **E(v)** = {e : ρ(v,e) ≠ ∅} — krawędzie wierzchołka.
+- **promień rażenia B(v)** = E(v) ∪ {e' : e ≺* e' dla pewnego e ∈ E(v)} — krawędzie wierzchołka i wszystkie po nich w porządku. To, co trzeba ponownie ocenić po zmianie v. Mnożenie „wektor zmiany × H” z założenia to dokładnie E(v); domknięcie po ≺ dodaje to, czego założenie nie miało (L3).
+
+### §VII.12.3. Wierzchołki
+
+Identyfikator = ścieżka względem workspace (czytelny w logach, bez `n1…n19`); rozdział = `thesis.md#ch<N>`.
+
+| pole | znaczenie |
+|---|---|
+| `id` | ścieżka lub `thesis.md#chN` |
+| `kind` | `code` (moduł), `entry` (moduł punktu wejścia), `test`, `data` (CSV), `figure`, `chapter`, `bib`, `research` (np. `docs/literature_review.md`) |
+| `owner` | rola buildera: `coder` (code, entry), `tester` (test), `writer` (chapter, bib), `researcher` (research); `data` i `figure` nie mają właściciela — produkuje je uruchomienie (harness wykonuje punkt wejścia, D3 bez zmian: harness nie edytuje kodu) |
+| `state` | §VII.12.8 |
+| `attempts` | liczba prób na wierzchołku (budżet, D4.4) |
+| `history` | ostatnie werdykty wyroczni dla tego wierzchołka (do ładunku naprawy, X5) |
+| `last_writer` | agent i zadanie, jak dziś |
+
+Wierzchołki powstają **wyłącznie** z planu (§VII.12.6). Plik, który pojawi się na dysku bez wierzchołka, jest naruszeniem S (§VII.12.9), a nie nowym węzłem. Koniec z `ensure_node` na żądanie (H8).
+
+### §VII.12.4. Krawędzie: typy, członkowie, porządek
+
+| typ | id | członkowie (rola) | znaczenie | odpowiednik w założeniu |
+|---|---|---|---|---|
+| **I** — interfejs modułu | `I:<moduł>` | moduł (P), moduły go importujące (C), jego testy (T), rozdziały cytujące jego symbole przez `\ref_ast` (X) | kontrakt API jednego modułu i jego zachowania | E1, rozdrobniony na moduły (L2) |
+| **R** — uruchomienie | `R:run` (jedna na projekt) | punkt wejścia (P), moduł wykresów (C), `results.csv` i rysunki (O) | dane pochodzą z bieżącego kodu i mają zadany kształt | E2 |
+| **N** — narracja rozdziału | `N:thesis.md#chN` | rozdział (X), moduły / CSV / rysunki / bib / research, które cytuje (C — źródło) | rozdział cytuje tylko wskaźnikami i tylko zweryfikowane źródła | E3, rozdrobniony na rozdziały |
+| **S** — struktura | `S` (jedna) | wszystkie wierzchołki | na dysku jest dokładnie to, co w planie | nowe (H8) |
+
+Decyzje granulacji (rozstrzygają O2 i O4, do potwierdzenia): **jedna krawędź I na moduł** (nie na symbol); **testy są członkami (T) krawędzi I modułu, który testują** (nie osobny worek), bo winę i tak przypisuje się po symbolu i po roli.
+
+**Porządek ≺** (wyprowadzany z planu, nie z kodu):
+1. `I:a ≺ I:b`, gdy moduł b importuje z modułu a według σ (topologia importów planowanych; cykl = błąd planu);
+2. `I:m ≺ R:run` dla każdego modułu m w domknięciu importów punktu wejścia;
+3. `R:run ≺ N:ch`, gdy rozdział cytuje CSV lub rysunek; `I:m ≺ N:ch`, gdy cytuje symbol modułu m;
+4. S nie jest w porządku — jest sprawdzana przy każdym zapisie.
+
+### §VII.12.5. Specyfikacja σ
+
+σ powstaje z `interfaces` planera (źródło stubów, O6) — harness parsuje je do struktury. Model nie pisze JSON-schematów.
+
+**σ(I:m)** — publiczne API modułu m:
+```json
+{
+  "import": "src.config",
+  "symbols": {
+    "CHANNELS":        {"kind": "const", "type": "list[str]"},
+    "SEEDS":           {"kind": "const", "type": "list[int]"},
+    "generate_sample": {"kind": "func", "params": ["channel", "noise_level", "anomaly_rate", "seed"], "returns": "SignalSample"},
+    "ZScoreBaseline":  {"kind": "class", "methods": {"__init__": ["self", "threshold"], "fit": ["self", "samples"], "predict": ["self", "sample"]}}
+  },
+  "uses": {"src.data_types": ["SignalSample", "DetectionResult"]},
+  "behaviour": [">>> len(generate_sample('EEG', 0.1, 0.05, 0).labels) > 0\nTrue"]
+}
+```
+- `symbols` — pełna lista: stała, funkcja, klasa z metodami publicznymi i `__init__`. To, czego tu nie ma, nie jest publicznym API modułu. Konwencja: wszystko bez `_` na poziomie modułu jest publiczne, a pomocnicze funkcje muszą zaczynać się od `_` (bramka zapisu to wymusza).
+- `uses` — co moduł importuje z innych modułów projektu. Z tego powstają role C i porządek ≺.
+- `behaviour` — przykłady lub własności zachowania (T1), w formie doctestu z docstringów stubów. Minimum jeden na funkcję/metodę publiczną z wynikiem; planer (LRM) pisze je w tym samym wywołaniu co interfejsy.
+
+**σ(R:run)**: `{"entry": "src/experiment.py:run_experiment", "columns": ["method", "seed", "noise_level", "precision", "recall", "f1"], "figures": ["figures/comparison_chart.pdf"]}`. Punkt wejścia nie ma wymaganych argumentów (reguła walidacji, nie pole).
+
+**σ(N:ch)**: `{"title": "...", "cites": {"symbols": ["src/methods/robust_ensemble.py:RobustEnsemble"], "columns": ["f1"], "figures": [...], "bib": [...]}}` — z planu i spisu treści (`planned_chapters`). Pisarz może cytować więcej źródeł zweryfikowanych, ale musi zacytować te z σ.
+
+**σ(S)**: lista id wierzchołków (pochodna, nie osobne dane).
+
+### §VII.12.6. Budowa H z planu (`build_from_plan`)
+
+Wejście: odpowiedź planera (`tasks`, `interfaces`, `entrypoint`, `planned_chapters`) + lista dostępnych pakietów. Kroki deterministyczne:
+
+1. wierzchołki `code`/`entry` z kluczy `interfaces`; `entry` z `entrypoint`;
+2. σ(I:m) z parsowania źródła stubu (stałe z adnotacjami i przypisaniami, funkcje, klasy) + `behaviour` z doctestów;
+3. `uses` z importów modułów projektu w stubach → role C i porządek ≺;
+4. wierzchołki `test` — po jednym `tests/test_<m>.py` dla każdego modułu, którego plan dotyczy testami (zadania testera w planie) → rola T w I:m;
+5. wierzchołki `chapter` z `planned_chapters`, `bib`, `research` z zadań badaczy; σ(N) z opisu rozdziału w planie i spisu treści;
+6. `data`/`figure` z σ(R) (kolumny i rysunki z planu: pola `metrics`, `baseline_comparison`, planowane wizualizacje);
+7. walidacja niezmienników (§VII.12.10) — błąd → feedback do planera z listą naruszeń (O1), H nie powstaje;
+8. zapis `state/hypergraph.json`, stuby z σ do workspace (stan `stub`), zdarzenie `H_BUILT` w `events.jsonl`.
+
+**Zadania nie są już wejściem do H — wynikają z H** (§VII.12.8). Opisy zadań planera zostają tylko jako tekst dla agenta przy danym wierzchołku (`description` wierzchołka). Leczenie planu (`_normalize_and_heal_task_plan`, dopisywanie ról, `_skeleton_first`, `_entrypoint_after_modules`) znika.
+
+### §VII.12.7. Wyrocznie Φ
+
+Każda wyrocznia zwraca werdykt w jednym formacie:
+```json
+{"edge": "I:src/config.py", "status": "PASS|FAIL|WAIT",
+ "violations": [{"vertex": "src/experiment.py", "kind": "IMPORT_OUTSIDE_SPEC", "detail": "imports N_REPETITIONS; σ: CHANNELS, NOISE_LEVELS, …", "culprit": "src/experiment.py"}]}
+```
+`WAIT` = krawędź jeszcze nieoceniana (członkowie poniżej wymaganego stanu albo krawędź wcześniejsza w ≺ niespełniona). `WAIT` nie jest porażką i nie zużywa budżetu.
+
+**Φ_I(I:m)**, w kolejności (pierwsze naruszenie danego członka kończy jego ocenę):
+
+| # | sprawdzenie | narzędzie (istniejące) | winny |
+|---|---|---|---|
+| 1 | producent: publiczne API == σ (brak, nadmiar, sygnatura, stała) | `contract_check.public_api` rozszerzone o stałe | producent |
+| 2 | konsumenci: importują z m tylko nazwy z σ, wywołują zgodnie z sygnaturą (statycznie) | `check_import_contract` | konsument |
+| 3 | testy: używają tylko API z σ, importy z pola `import` | nowe sprawdzenie AST testu | test |
+| 4 | testy na stubach: każdy pada wyłącznie z `NotImplementedError` (raz, przy powstaniu testu, przed implementacją) | `test_runner` na stubach z σ | test |
+| 5 | `behaviour` z σ: doctesty na implementacji | `doctest` w izolowanym przebiegu | producent |
+| 6 | testy na implementacji | `run_isolated_tests(scope=)` | producent (test przeszedł 3–4, więc jest zgodny ze specyfikacją) |
+
+**Φ_R(R:run)**: (1) punkt wejścia uruchamia się bez argumentów, z limitem czasu → wyjątek: winny = wierzchołek najgłębszej ramki traceback w projekcie (to deterministyczne, bo pliki = wierzchołki); (2) `results.csv` istnieje, kolumny == σ → inaczej winny = `entry`; (3) rysunki z σ istnieją → winny = moduł wykresów; (4) **świeżość**: przy produkcji danych zapisywany jest odcisk sha256 plików z domknięcia importów punktu wejścia; różny od bieżącego → status `STALE` → harness ponownie uruchamia punkt wejścia (bez winnego, bez LLM).
+
+**Φ_N(N:ch)**: (1) źródła z σ(N) mają stan `verified`, inaczej `WAIT`; (2) każdy `\ref_*` się rozwiązuje (`ref_compiler`); (3) rozdział cytuje wszystkie źródła z σ(N); (4) brak liczb wpisanych z pamięci (istniejące reguły audytora symbolicznego, część deterministyczna) → winny = rozdział (pisarz).
+
+**Φ_S(S)**: pliki w workspace (w zakresie `is_in_scope`) == wierzchołki V → plik spoza V: odrzucenie już w bramce zapisu; jeśli pojawił się inną drogą — winny = `last_writer`.
+
+**Bramka zapisu = Φ w trybie „przed zapisem”** dla krawędzi wierzchołka, którego dotyczy odpowiedź: sprawdzenia I.1–I.3 i S na treści, która ma zostać zapisana. Naruszenie → `MaterializationError` → natychmiastowe ponowienie u autora (jak dziś). Dzięki temu do workspace nie trafia nic, co łamie σ, i X3/X4 nie mogą się utrwalić.
+
+### §VII.12.8. Stany wierzchołków i harmonogram
+
+Stany:
+
+| kind | stany |
+|---|---|
+| `code`, `entry` | `stub → impl → verified` (+ `stale`) |
+| `test` | `spec → written → validated → verified` (`validated` = przeszedł Φ_I.3–4 na stubach; `verified` = zielony na implementacji) |
+| `data`, `figure` | `spec → produced → verified` (+ `stale`) |
+| `chapter` | `spec → drafted → verified` (+ `stale`) |
+| `bib`, `research` | `spec → drafted → verified` |
+
+Przejścia wykonuje wyłącznie harness, każde jest zdarzeniem w `events.jsonl`: zapis przyjęty przez bramkę → `impl`/`written`/`drafted`; Φ wszystkich krawędzi wierzchołka PASS → `verified`; zmiana pliku, który jest członkiem krawędzi z `verified` wierzchołkiem po nim w ≺ → `stale` u tamtego (ponowna ocena Φ, nie przepisywanie); `R` z innym odciskiem → dane `stale` → ponowne uruchomienie.
+
+**Gotowość** — wierzchołek jest gotowy do pracy, gdy:
+- `code`/`entry` w `stub`: wszystkie krawędzie I jego producentów (`uses`) mają producenta co najmniej w `impl` (implementacja przeciw σ sąsiadów; weryfikacja i tak czeka na ich `verified` przez ≺);
+- `test` w `spec`: od razu po zbudowaniu H (**testy przed implementacją**, walidowane na stubach — T1);
+- `chapter` w `spec`: wszystkie źródła z σ(N) `verified` (rozdziały wstępne i przegląd literatury mają za źródła tylko `bib`/`research`, więc ruszają od razu);
+- każdy wierzchołek z naruszeniem Φ, w którym jest winnym: gotowy do naprawy.
+
+**Wybór następnej pracy**: wśród gotowych — najpierw naprawy, potem wierzchołki z krawędzi najwcześniejszych w ≺, potem `test` przed `code` tego samego modułu; remis → kolejność z planu. Zadanie = (wierzchołek, rodzaj pracy: `implement`/`write_test`/`draft`/`repair`, naruszenia z historii). Nie ma listy zadań, którą można zgubić, ani blokady po pliku: wierzchołek z czerwonymi zależnościami czeka (`WAIT`) i rusza sam, gdy się zazielenią.
+
+**Budżet**: `attempts` na wierzchołek (np. 2 próby SML + 1 LRM — istniejąca zasada tieru) i limit całkowity przebiegu. Wierzchołek po wyczerpaniu budżetu → `FAILED` (zdarzenie), jego następnicy w ≺ zostają w `WAIT` z jawną przyczyną w liście braków. Koniec przebiegu: brak gotowych wierzchołków.
+
+### §VII.12.9. H_obs — obserwacja i różnica
+
+H_obs liczy obecne skanowanie (zostaje z `hypergraph_sync`: `_declared_paths`, `_literal_refs`, `_mentions`, plus `module_import_path`) — tylko do porównania, nigdy nie zapisywane jako prawda:
+
+| różnica H_obs − H | rodzaj naruszenia | kto wykrywa |
+|---|---|---|
+| plik na dysku bez wierzchołka | `FILE_OUTSIDE_PLAN` | Φ_S, bramka zapisu |
+| import między modułami spoza `uses` | `IMPORT_OUTSIDE_SPEC` | Φ_I.2 |
+| symbol publiczny spoza σ / brak symbolu z σ | `API_MISMATCH` | Φ_I.1 |
+| wskaźnik `\ref_*` do źródła spoza σ(N) i spoza `verified` | `CITE_UNVERIFIED` | Φ_N |
+
+### §VII.12.10. Niezmienniki (sprawdzane przy budowie i w testach jednostkowych modułu)
+
+1. każdy wierzchołek poza S należy do co najmniej jednej krawędzi I, R lub N (pierwotny niezmiennik z §II.2.3 / P1);
+2. każda krawędź I ma dokładnie jednego producenta; każdy moduł jest producentem dokładnie jednej krawędzi I;
+3. każda nazwa w `uses` istnieje w σ krawędzi producenta (stałe też);
+4. ≺ jest acykliczny (brak cykli importów w planie);
+5. dokładnie jedna krawędź R, z jednym punktem wejścia bez wymaganych argumentów;
+6. każde źródło w σ(N) jest wierzchołkiem;
+7. stuby z σ importują się w piaskownicy (w kolejności ≺);
+8. każdy pakiet zewnętrzny w stubach jest w `available_packages` (D1/D2);
+9. brak dwóch wierzchołków o tej samej roli modułu (`config.py` i `src/config.py`);
+10. H zmienia się tylko przez `build_from_plan` i `change_spec` (zdarzenia `H_BUILT`, `SPEC_CHANGED`); stan wierzchołka tylko przez API harmonogramu.
+
+### §VII.12.11. Zmiana specyfikacji (`change_spec`)
+
+Wejście: krawędź, nowa σ (z odpowiedzi agenta z `contract_change: {reason}` albo od planera naprawczego), uzasadnienie. Kroki: walidacja niezmienników na H po zmianie → zapis → wszyscy członkowie krawędzi i krawędzie po niej w ≺ tracą `verified` (→ `stale`) → zdarzenie `SPEC_CHANGED` z diffem σ. Zmiana σ nie jest możliwa „przy okazji” zapisu pliku — to osobna, logowana operacja.
+
+### §VII.12.12. Format pliku `state/hypergraph.json`
+
+Jeden plik, jedna reprezentacja (koniec `edges` + `matrix` + `degree` obok siebie — H6). Macierz incydencji, d(v) i B(v) są liczone przy odczycie.
+```json
+{
+  "version": 2,
+  "built_from_plan": "sha256 odpowiedzi planera",
+  "vertices": {
+    "src/config.py":      {"kind": "code",  "owner": "coder",  "state": "stub", "attempts": 0, "history": []},
+    "src/experiment.py":  {"kind": "entry", "owner": "coder",  "state": "stub", "attempts": 0, "history": []},
+    "tests/test_data_generator.py": {"kind": "test", "owner": "tester", "state": "spec", "attempts": 0, "history": []},
+    "results.csv":        {"kind": "data",  "owner": null,     "state": "spec"},
+    "thesis.md#ch4":      {"kind": "chapter", "owner": "writer", "state": "spec", "attempts": 0, "history": []}
+  },
+  "edges": {
+    "I:src/config.py": {"type": "I", "members": {"src/config.py": "P", "src/data_generator.py": "C", "src/experiment.py": "C", "tests/test_data_generator.py": "T"}, "spec": {"…": "σ jak w §VII.12.5"}},
+    "R:run":           {"type": "R", "members": {"src/experiment.py": "P", "scripts/plot_results.py": "C", "results.csv": "O", "figures/comparison_chart.pdf": "O"}, "spec": {"entry": "src/experiment.py:run_experiment", "columns": ["…"]}, "fingerprint": null},
+    "N:thesis.md#ch4": {"type": "N", "members": {"thesis.md#ch4": "X", "results.csv": "C", "figures/comparison_chart.pdf": "C"}, "spec": {"cites": {"columns": ["f1"]}}}
+  },
+  "order": [["I:src/config.py", "I:src/data_generator.py"], ["I:src/experiment.py", "R:run"], ["R:run", "N:thesis.md#ch4"]]
+}
+```
+Stary `hypergraph_matrix.json` zostaje usunięty; czytające go moduły (§VII.4a H6) przechodzą na API modułu.
+
+### §VII.12.13. Moduł `adk/hypergraph/` (API)
+
+Jeden pakiet zamiast rozproszonych `hypergraph_sync`, `import_sync` (część o krawędziach), `blast_radius`, `complexity_router.escalate_node_weight`; pliki ≤ 400 linii:
+
+| plik | funkcje |
+|---|---|
+| `model.py` | dataclasses `Vertex`, `Edge`, `Hypergraph`; `load`, `save`; `incidence()`, `degree(v)`, `edges_of(v)`, `blast_radius(v)`; `check_invariants(h) -> list[Violation]` |
+| `build.py` | `build_from_plan(plan, available_packages) -> Hypergraph \| list[Violation]`; `spec_from_stub(source) -> ModuleSpec`; `stubs(h) -> dict[path, source]` |
+| `observe.py` | `observe(workspace) -> ObservedGraph` (przeniesione skanowanie importów i wskaźników); `diff(h, obs) -> list[Violation]` |
+| `oracles.py` | `phi_I`, `phi_R`, `phi_N`, `phi_S` → `Verdict`; `pre_write_check(h, vertex, new_content) -> list[Violation]` (bramka zapisu) |
+| `schedule.py` | `ready(h) -> list[Work]`, `next_work(h)`, `apply_write(h, v)`, `apply_verdicts(h, verdicts)`, `change_spec(h, edge, spec, reason)`; każde przejście emituje zdarzenie |
+
+Orkiestrator przestaje operować na liście zadań: pętla `while work := next_work(h): build → pre_write_check → zapis → oracles(blast_radius(v)) → apply_verdicts`.
+
+### §VII.12.14. Jak wyglądałoby 02 z tym hipergrafem
+
+- **Budowa H**: niezmiennik 7 łamią `SEEDS = field(...)` (stub `src/config.py`) i `List` bez importu (`src/data_generator.py`); niezmiennik 9 — `config.py` i `src/config.py` jednocześnie w liście modułów szkieletu. Planer dostaje te trzy naruszenia w pierwszej minucie. W 01 niezmiennik 5 łamie `run_experiments(config: dict)`.
+- **σ(I:src/config.py)** zawiera stałe `CHANNELS`, `NOISE_LEVELS`, …; zadanie dopisane dziś przez leczenie planu (T3) nie istnieje, a odpowiedź przepisująca config na `get_channels()` łamie Φ_I.1 przed zapisem → ponowienie u autora.
+- **Edycje `__init__`/`fit`/`predict` na `src/experiment.py`** — symbole spoza σ(I:src/experiment.py) → odrzucone przed zapisem. `_iforest.py` w katalogu głównym i `validation.py` → `FILE_OUTSIDE_PLAN`.
+- **Testy** powstają zaraz po H, na stubach: `np` bez importu (T11), zła ścieżka importu (T9), `hasattr(model, 'mean_')` (atrybut spoza σ, T10) → odrzucone u testera, zanim powstanie implementacja. Koder dostaje tylko testy, które przeszły walidację.
+- **Rozdziały**: porażka rozdziału 1 nie wstrzymuje rozdziałów 2–3 (osobne wierzchołki), a rozdział 4 czeka (`WAIT`) na R `verified`, więc nie da się w nim napisać wniosków bez danych.
+- **`src/experiment.py`** jest gotowy do implementacji, gdy producenci jego `uses` mają `impl` — nie ma zadania `SKELETON`, które mogłoby go zablokować.
+
+### §VII.12.15. Co zostaje z pierwotnego założenia, co się zmienia
+
+| pierwotnie | teraz |
+|---|---|
+| V = pliki projektu | V = planowane artefakty (pliki + rozdziały), powstają tylko z planu |
+| E1/E2/E3 — trzy worki na projekt | typy I (na moduł), R (jedna), N (na rozdział) + S; te same trzy kontrakty, drobniej |
+| macierz incydencji 0/1 | macierz ról ρ (P/C/T/O/X), liczona, nie przechowywana osobno |
+| Φ przypisane do worków | Φ_I, Φ_R, Φ_N, Φ_S z jednym formatem werdyktu i **winnym** |
+| promień rażenia = wektor zmiany × H | E(v) domknięte po ≺ |
+| d(v) ≥ 2 → LRM | d(v) liczone z drobnych worków; użycie do wyboru tieru — decyzja po pomiarze (O3) |
+| mtime + sha256 dla E2 | odcisk sha256 domknięcia importów punktu wejścia w R, `STALE` → ponowne uruchomienie |
+| `\ref_ast`/`\ref_csv` — zero liczb z pamięci | bez zmian, plus σ(N): co rozdział musi cytować i tylko ze źródeł `verified` |
+| (brak) | σ — specyfikacja worka, stany wierzchołków, porządek ≺, H planowana vs H_obs |
+
+### §VII.12.16. Nakład i kolejność
+
+To jest pozycja A3 w §VII.11 rozbita na części (nakład dla całego pakietu `adk/hypergraph/` z testami jednostkowymi niezmienników, odtworzeniem planów 01/02 z 2026-11-16 i przykładu §VII.12.14):
+
+| część | zawartość | nakład |
+|---|---|---|
+| A3.1 | `model.py` + format §VII.12.12 + niezmienniki §VII.12.10 | M |
+| A3.2 | `build.py`: σ ze stubów (z doctestami), budowa z planu, feedback do planera | M |
+| A3.3 | `observe.py` (przeniesienie skanowania) + `diff` | S |
+| A3.4 | przepięcie planowania na H, usunięcie leczenia planu i `SKELETON`, usunięcie `hypergraph_matrix.json` i jego czytelników | M |
+
+Razem **L (ok. 4–6 dni)**. `oracles.py` to A4–A6, a `schedule.py` to A7 (§VII.11). Kolejność bez zmian: A0–A1 (pomiar) → A2 (`ast_editor`) → **A3 (hipergraf)** → A4–A8.
+
+## §VII.13. Realizacja A0–A10 (2026-11-16)
+
+Decyzja użytkownika: „robimy ten harness i pozostałe błędy”. Pytania otwarte rozstrzygnięte propozycjami z §VII.9/§VII.11: **O1** — 2 poprawki planisty, potem `PLAN_REJECTED` z listą naruszeń (harness niczego nie dopisuje); **O2/O4** — jeden worek I na moduł, testy jako członkowie (T); **O3** — zasada tieru bez zmian (decyzja po pomiarze); **O5** — istniejące „zastąp sekcję”; **O6** — σ ze źródła stubów; **O7** — 2 próby u autora, planer naprawczy tylko bez jednoznacznego winnego. `pytest` **215/215** (+34 w `tests/test_audit_vi.py`, w tym 2 przebiegi end-to-end ze skryptowanym modelem), `ruff` czysty, pliki rdzenia ≤ 400 linii. **Bez przebiegu na żywo.**
+
+| # | co dokładnie | gdzie |
+|---|---|---|
+| A0 | 03 nie wisiał: proces zniknął tuż po `LLM_CALL_START` (17:54 UTC), bez `TimeoutError` po 600 s i bez obsługi `KeyboardInterrupt` (brak `benchmark_summary.json` po 03) → zabity z zewnątrz. Brakowało zdarzenia końca wywołania — dodane w A1 | — |
+| A1 | `logger.log_event` → `logs/events.jsonl`: `TASK_START/DONE/FAILED/BLOCKED/WAITING`, `VERDICT` (status, winny plik i agent, pierwsze ustalenie), `LLM_CALL_START/END` (czas, `done_reason`, błąd), `RUN_STOPPED`, `RUN_END`, każde zdarzenie ewolucji (`_record_evolution_event`), zdarzenia H (`PLAN_CHECKED`, `PLAN_REJECTED`, `H_BUILT`, `VERTEX_STATE`, `SPEC_CHANGED`, `SPEC_WRITE_REJECTED`, `DATA_PRODUCED/STALE/FAILED`, `TASKS_CARRIED`, `REMEDIATION_SKIPPED`). `analyze_run.py`: sekcja OUTCOMES (wyniki zadań, winni, minuty LLM: pierwsze podejścia / naprawy / diagnoza, wywołania bez końca); naprawiony pusty „FINDINGS” (znacznik po angielsku od §VI.12a) | `core/logger.py`, `core/llm.py`, `orchestrator.py`, `verification.py`, `gates.py`, `runner.py`, `scripts/analyze_run.py` |
+| A2 | `ast_editor`: nieznany symbol → `TARGET_NOT_FOUND` z listą symboli, chyba że plan go deklaruje (`planned` z `interfaces` w blueprincie), jest prywatny, jest w pliku testu albo to `__main__`; duplikat → `DUPLICATE_DEFINITION`; import z modułu już importowanego scala się w jedną instrukcję (nowe nazwy + stare nadal używane — nieaktualne znikają); fragment bez celu / z dodatkowymi definicjami → `TARGET_NOT_IN_CODE` / `EXTRA_DEFINITIONS`; symbol = moduł nie może usunąć publicznych symboli (`whole_module_loss`) | `tools/building/ast_editor.py`, `write_gate.py` |
+| A3 | pakiet **`adk/hypergraph/`**: `model.py` (H, role, `degree`, `incidence`, `blast_radius`, niezmienniki), `build.py` (σ ze źródła stubu, `code_violations` z importem stubów w osobnym procesie i kontrolą typów stałych, `build_from_plan`), `observe.py` (H_obs tym samym parserem, `diff`). Planowanie: `_validated_plan` (2 poprawki planisty → `PLAN_REJECTED`), `_build_project_hypergraph` (`state/hypergraph.json`, stuby z σ bez zadania `SKELETON`); przy specyfikacji leczenie planu nie dopisuje zadań ról ani `SKELETON`, zadanie `SKELETON` z planu jest pomijane; prompt planisty: bez zadania szkieletu, importy adnotacji, stałe bez `field()`, punkt wejścia bez argumentów, atrybuty jako adnotacje, doctesty | `adk/hypergraph/*`, `orchestration/plan_spec.py`, `planning.py`, `plan_healing.py`, `task_planner.md` |
+| A4 | σ zna atrybuty klas (adnotacje, `self.x = …`); `TEST_OUTSIDE_SPEC` dla atrybutów czytanych w teście (także `hasattr/getattr`); `validate_test_on_stubs` (każdy nowy test na stubach: wolno paść tylko z `NotImplementedError`) w bramce zapisu; `check_behaviour` (doctesty z σ na implementacji) w weryfikacji; prompt testera | `oracles.py`, `observe.py`, `spec_gate.py`, `seed_tester.md` |
+| A5 | `spec_gate.py`: bramka zapisu wobec σ zastępuje migawkowy kontrakt, gdy jest H (`API_*`, `IMPORT_OUTSIDE_SPEC`, `IMPORT_NOT_IN_PLAN`, `FILE_OUTSIDE_PLAN`); `contract_change` → `_change_spec` (nie usunie nazwy, której planowo używają inne moduły; `SPEC_CHANGED`); weryfikacja: ustalenia σ pierwsze, winny = ich `culprit`; ustalenia o wskaźnikach nie wskazują pliku kodu (verification + `recovery._is_pointer_finding`) — X6; prompt kodera (pomocnicze `_prywatne`, `specification`) | `spec_gate.py`, `write_gate.py`, `verification.py`, `recovery.py`, `seed_coder.md` |
+| A6 | `run_fingerprint` (sha256 modułów przed R w ≺) zapisywany przy udanym eksperymencie (`DATA_PRODUCED`, `results.csv` → `verified`); przed oceną pracy `_ensure_fresh_results` — inny odcisk → `DATA_STALE` i ponowne uruchomienie | `oracles.py`, `spec_gate.py`, `building.py`, `verification.py` |
+| A7 | `orchestration/schedule.py` + `hypergraph/schedule.py`: zadanie rusza, gdy jego wierzchołek jest gotowy (moduł — producenci mają kod; test — od razu; rozdział — aktualne wyniki i zaplanowane badania), inaczej `WAITING`; brak blokady po pliku; stany wierzchołków (`VERTEX_STATE`); budżet 8 zadań na wierzchołek; przebudowa kolejki przenosi niewykonaną pracę z planu (`TASKS_CARRIED`); `WAITING` po przejściu kolejki → audyt i nowa generacja | `schedule.py`, `orchestrator.py`, `recovery.py` |
+| A8 | `_spec_payload`: zadanie kodu/testu dostaje `specification` (σ swojego modułu i modułów, których używa), `exports` tylko tych modułów, `previous_attempts` (ostatnie 4 werdykty na wierzchołku); bez `grounded_hypergraph_state`, `hypergraph_nodes`, `active_edges`, `canonical_baselines` (zamyka U7) | `spec_gate.py`, `building.py`, `verification.py` |
+| A9 | przy specyfikacji, gdy winny jest wierzchołkiem H: po 2 próbach autora bez cyklu planera naprawczego (`REMEDIATION_SKIPPED`); wierzchołek wraca w następnej generacji z historią | `repair.py` |
+| A10 | kategoria `spec` (naruszenia σ, odrzucenia bramki σ) w `HARNESS_ENFORCED_CATEGORIES` → bez reguł ewolucji; `BEHAVIOUR_MISMATCH` pozostaje kategorią modelu | `common.py` |
+| (H7) | przy specyfikacji bez eskalacji martwego `weight` (`WEIGHT_ESCALATED`: 110 zdarzeń w 02) | `repair.py` |
+
+**Odstępstwa od §VII.12 (stwierdzone przy wdrożeniu, obowiązuje to, co tutaj):**
+- `SEEDS = field(default_factory=…)` **importuje się bez błędu** (poza dataclass `field()` zwraca obiekt `Field`). Niezmiennik 7 („stuby się importują”) tego nie łapie; doszło sprawdzenie wartości stałych względem zadeklarowanego typu (`CONSTANT_TYPE_MISMATCH`). Na planach z 2026-11-16: 01 → `ENTRYPOINT_HAS_ARGUMENTS`; 02 → `CONSTANT_TYPE_MISMATCH` (`SEEDS`) i 3× `STUB_DOES_NOT_IMPORT` (`List`).
+- Wyniki są w formacie „tidy” (kolumna `metric`), a zgodność metryk z planem była celowo ostrzeżeniem (P9). σ(R) przechowuje `metrics`, nie `columns`; Φ_R = istnienie i świeżość danych, zgodność metryk zostaje nieblokująca.
+- Worek S jest niejawny (wszystkie wierzchołki), nie zapisywany jako krawędź; Φ_S = `FILE_OUTSIDE_PLAN` w `diff` (bez `__init__.py`).
+- Dodatkowe atrybuty implementacji (`self.board`) nie są naruszeniem — tylko zadeklarowane muszą istnieć; testy mogą czytać wyłącznie zadeklarowane.
+- „Stub” = ciało puste, `...`, `pass` albo samo `raise NotImplementedError` (przebieg e2e: ciało `...` przeszło jako implementacja). Porażki pytesta wyłącznie z `NotImplementedError` przy specyfikacji nie są porażką (to otwarta praca producenta); moduł-cel zadania, który nadal jest stubem, oraz każdy moduł-stub przy bramce końcowej → `NOT_IMPLEMENTED`.
+- Wina zapisana na „agenta” `harness` (autor stubów) trafia do właściciela pliku.
+- Zadania i weryfikacja nadal mówią identyfikatorami starej macierzy (`n1`); harmonogram tłumaczy je na ścieżki H.
+
+**Błędy złapane przez przebiegi end-to-end** (`test_e2e_*`, przed jakimkolwiek przebiegiem na żywo): zadania nie mapowały się na wierzchołki (`target_node` przepisany na `n1`) → brak stanów, `specification` i wieczne `WAITING`; test oblewał weryfikację, bo producent był jeszcze stubem, a winę dostawał „harness”; przebieg kończył się `COMPLETED` z punktem wejścia jako stubem; `VERDICT.first_issue` zawsze puste (ustalenia są w sekcjach audytorów). Wszystkie naprawione i objęte testami.
+
+**Zostaje (świadomie):**
+- **Ścieżka bez specyfikacji** (plan bez `interfaces` — dziś tylko mocki) działa po staremu: `interface_contract.json`, `SKELETON`, zadania ról, blokada po pliku, `hypergraph_matrix.json` jako źródło zakresu i routingu. Usunięcie (§VII.8) wymaga, by planer mockowy zwracał `interfaces`, i przepięcia routingu oraz zakresu weryfikacji na H — osobny krok po pomiarze.
+- Stany wierzchołków nie unieważniają jeszcze `verified` u następników po zmianie producenta (promień rażenia jest liczony, ale stan `stale` dostają tylko dane).
+- **A11** (d(v) a tier) — po pomiarze.
+- **Pomiar na żywo 01–03** — pierwszy punkt kontrolny z §VII.11; oczekiwane: plan poprawiany lub odrzucany w pierwszych minutach, brak zadań `SKELETON_FIX*`, brak dopisanych/zdublowanych symboli, `events.jsonl` z pełnymi wynikami, `results.csv` powstaje.
+
+---

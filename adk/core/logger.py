@@ -18,6 +18,7 @@ class HarnessProcessLogger:
 
         self.text_log_path = self.log_dir / "harness_process.log"
         self.trace_jsonl_path = self.log_dir / "agent_trace.jsonl"
+        self.events_path = self.log_dir / "events.jsonl"
 
         if verbose_console is None:
             self.verbose_console = os.environ.get("HARNESS_VERBOSE_CONSOLE", "0") == "1"
@@ -38,6 +39,14 @@ class HarnessProcessLogger:
 
         if self.verbose_console:
             print(f"[{layer}] {event}")
+
+    def log_event(self, event: str, **fields: Any) -> None:
+        """One outcome per line in `events.jsonl`: the machine-readable timeline of a run (task and vertex
+        states, verdicts with their culprit, rejections, model calls). `harness_process.log` had no verdict at
+        all — every analysis reconstructed outcomes indirectly (Audit VI §VII.10 T3)."""
+        record = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "event": event, **fields}
+        with self.events_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
 
     def log_agent_exchange(
         self,

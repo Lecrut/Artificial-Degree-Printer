@@ -23,6 +23,16 @@ from adk.orchestration.common import (
 )
 
 
+_POINTER_FINDING = re.compile(
+    r"\\ref_|pointer|symbolic tag|^(?:Symbol|Row selector|Column|Figure reference|Citation key) '[^']*' not found in", re.I
+)
+
+
+def _is_pointer_finding(text: str) -> bool:
+    """A finding of the pointer compiler (`ref_compiler`): it concerns the thesis, whatever file it names."""
+    return bool(_POINTER_FINDING.search(text.strip()))
+
+
 class RecoveryMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
 
@@ -107,7 +117,9 @@ class RecoveryMixin:
             if text in handled or _waits_for_results(text) or any(tok in text.lower() for tok in ("tectonic", "latex", "kompilacja pdf", texts.PDF_FAILED.lower())):
                 continue
             named = [p for p in known_files if re.search(rf"(?<![\w/]){re.escape(Path(p).name)}\b", text)]
-            if named:
+            # A finding about a pointer in the thesis names the code file the pointer aims at, but the pointer is
+            # the writer's (N bag): on 2026-11-16 "Symbol 'CONFIG' not found in 'config.py'" went to the coder (X6).
+            if named and not _is_pointer_finding(text):
                 target = self._repair_target(named[0])
                 tasks.append(
                     {
@@ -185,7 +197,7 @@ class RecoveryMixin:
             _add("ustalenie weryfikacji", issue)
         queue = read_json_state(self.task_queue_path) if self.task_queue_path.exists() else []
         for task in queue if isinstance(queue, list) else []:
-            if isinstance(task, dict) and task.get("status") in ("FAILED", "BLOCKED"):
+            if isinstance(task, dict) and task.get("status") == "FAILED":
                 _add("zadanie", f"{task.get('task_id')} ({task.get('status')}): {task.get('description', '')}")
             if isinstance(task, dict) and task.get("harness_bug"):
                 bug = task["harness_bug"]
@@ -270,6 +282,6 @@ class RecoveryMixin:
             stop = rebuilt["stop"]
             stop.update(state.outcome(validation_report={**report, "gaps": stop.get("gaps", [])}))
             return stop
-        state.tasks = rebuilt["tasks"]
+        state.tasks = rebuilt["tasks"] + self._carry_over(state.tasks)
         state.generation += 1
         return None

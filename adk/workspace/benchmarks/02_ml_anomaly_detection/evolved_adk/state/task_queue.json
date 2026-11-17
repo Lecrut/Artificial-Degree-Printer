@@ -1,175 +1,121 @@
 [
   {
-    "task_id": "Q4_FIX1",
-    "description": "Fix the file _iforest.py. Errors: Import error in _iforest.py: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import _iforest\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\_iforest.py\", line 3, in <module>\n    from src.config import get_channels, get_noise_levels, get_anomaly_rate, get_ensemble_size, SEED_VALUE\nImportError: cannot import name 'SEED_VALUE' from 'src.config' (D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\config.py); Import error in _iforest.py: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import src.methods._iforest\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\methods\\_iforest.py\", line 2, in <module>\n    from config import get_channels, SEED_VALUE\nModuleNotFoundError: No module named 'config'",
-    "target_node": "n17",
-    "assigned_agent": "seed_coder",
-    "status": "FAILED",
-    "repair_attempts": 3,
-    "harness_bug": {
-      "files_in_error": [
-        "Environment contract violation",
-        "Import contract violation",
-        "Ruff lint failure",
-        "_iforest.py"
-      ],
-      "signature": "Environment contract violation: _iforest.py imports the package <id>, which the environment does not have. The environment is fixed for the whole run: use the packages in <id> or the project<id>export\nImport contract violation: _iforest.py imports SEED_VALUE from src/config.py, which that module does not define. Available in src/config.py: ANOMALY_RATE, CHANNELS, DATA_DIR, List, NOISE_LEVELS, get_a\nRuff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\#_ml_anomaly_detection\\workspace\\_iforest.py:#:#: F# Undefined name <id>\nadk\\workspace\\benchmarks\\_evolved_adk_state\\#_ml_anomaly_detecti\n_iforest.py:ImportError",
-      "task_id": "Q4_FIX1",
-      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-      "source": "harness"
-    }
+    "task_id": "T1",
+    "description": "[Increment 1: Assumptions] Chapter 1: introduction, aim of the work and thesis statement in thesis.md",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "TODO"
   },
   {
-    "task_id": "Q4_FIX2",
-    "description": "Fix the file src/experiment.py. Errors: Import error in experiment.py: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import src.experiment\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py\", line 7, in <module>\n    from src.config import CHANNELS, NOISE_LEVELS, ANOMALY_RATE, N_REPETITIONS, SEEDS, RESULTS_DIR\nImportError: cannot import name 'N_REPETITIONS' from 'src.config' (D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\config.py); Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:25:21: F821 Undefined name `get_ensemble_size`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:26:16: F821 Undefined name `get_data_dir`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:27:24: F821 Undefined name `os`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:43:16: F821 Undefined name `os`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:104:53: F821 Undefined name `get_ensemble_size`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:125:21: F821 Undefined name `get_ensemble_size`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:126:16: F821 Undefined name `get_data_dir`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:127:24: F821 Undefined name `os`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:143:16: F821 Undefined name `os`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py:20:19: F821 Undefined name `result`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py:21:19: F821 Undefined name `result`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py:22:19: F821 Undefined name `result`\nFound 12 errors.",
-    "target_node": "n6",
-    "assigned_agent": "seed_coder",
-    "status": "FAILED",
-    "repair_attempts": 3
+    "task_id": "T2",
+    "description": "[Increment 1: Assumptions] Chapter 2 (Part A): Background literature review on anomaly detection and bio-signal processing using `background_researcher`. Output: section content for thesis.md.",
+    "target_node": "thesis.md",
+    "assigned_agent": "background_researcher",
+    "status": "TODO"
   },
   {
-    "task_id": "Q4_FIX3",
-    "description": "Fix the file src/methods/baseline_zscore.py. Errors: Import error in baseline_zscore.py: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import src.methods.baseline_zscore\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\methods\\baseline_zscore.py\", line 6, in <module>\n    from src.data_types import SignalSample, DetectionResult, float64\nImportError: cannot import name 'float64' from 'src.data_types' (D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\data_types.py); Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\n______________________________________________________________________________________ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_baseline_zscore.py _______________________________________________________________________________________\nImportError while importing test module 'D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\ntests\\test_baseline_zscore.py:6: in <module>\n    from src.methods.baseline_zscore import ZScoreBaseline\nsrc\\methods\\baseline_zscore.py:6: in <module>\n    from src.data_types import SignalSample, DetectionResult, float64\nE   ImportError: cannot import name 'float64' from 'src.data_types' (D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\data_types.py)\n========================================================================================================================================= short test summary info =========================================================================================================================================\nERROR tests\\test_baseline_zscore.py\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 error in 1.01s",
-    "target_node": "n11",
-    "assigned_agent": "seed_coder",
-    "status": "FAILED",
-    "repair_attempts": 3,
-    "harness_bug": {
-      "files_in_error": [
-        "Environment contract violation",
-        "Import contract violation",
-        "Ruff lint failure",
-        "baseline_zscore.py",
-        "test_baseline_zscore.py"
-      ],
-      "signature": "Environment contract violation: src/methods/baseline_zscore.py imports the package <id>, which the environment does not have. The environment is fixed for the whole run: use the packages in <id> or th\nImport contract violation: src/methods/baseline_zscore.py imports float# from src/data_types.py, which that module does not define. Available in src/data_types.py: DetectionResult, List, NamedTuple, O\nRuff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\#_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py:#:#: F# Undefined name <id>\nadk\\workspace\\benchmarks\\_evolved_adk_state\\#_\nbaseline_zscore.py:ImportError\ntest_baseline_zscore.py::*:fail",
-      "task_id": "Q4_FIX3",
-      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-      "source": "harness"
-    }
+    "task_id": "T3",
+    "description": "[Increment 1: Assumptions] Chapter 2 (Part B): SOTA discovery on multi-feature ensemble detectors using `discoverer_researcher`. Output: section content for thesis.md.",
+    "target_node": "thesis.md",
+    "assigned_agent": "discoverer_researcher",
+    "status": "TODO"
   },
   {
-    "task_id": "Q4_FIX4",
-    "description": "Fix the file src/methods/_iforest.py. Errors: Import error in _iforest.py: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import src.methods._iforest\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\methods\\_iforest.py\", line 2, in <module>\n    from config import get_channels, SEED_VALUE\nModuleNotFoundError: No module named 'config'",
-    "target_node": "n18",
+    "task_id": "T4",
+    "description": "[Increment 1: Infrastructure] Configuration module with experiment parameters, seeds, and signal generation settings in src/config.py",
+    "target_node": "src/config.py",
     "assigned_agent": "seed_coder",
-    "status": "FAILED",
-    "repair_attempts": 3,
-    "harness_bug": {
-      "files_in_error": [
-        "Environment contract violation",
-        "Ruff lint failure",
-        "_iforest.py",
-        "test_baseline_zscore.py",
-        "test_robust_ensemble.py"
-      ],
-      "signature": "Environment contract violation: src/methods/_iforest.py imports the package <id>, which the environment does not have. The environment is fixed for the whole run: use the packages in <id> or the proje\nRuff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\#_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py:#:#: F# Undefined name <id>\nadk\\workspace\\benchmarks\\_evolved_adk_state\\#_\n_iforest.py:ImportError\ntest_baseline_zscore.py::*:fail\ntest_robust_ensemble.py::*:fail",
-      "task_id": "Q4_FIX4",
-      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-      "source": "harness"
-    }
+    "status": "TODO"
   },
   {
-    "task_id": "Q4_FIX5",
-    "description": "Fix the file tests/test_baseline_zscore.py. Errors: Pytest failure: ================================================================================================================================================= ERRORS ==================================================================================================================================================\n______________________________________________________________________________________ ERROR collecting adk/workspace/benchmarks/_evolved_adk_state/02_ml_anomaly_detection/workspace/tests/test_baseline_zscore.py _______________________________________________________________________________________\nImportError while importing test module 'D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\ntests\\test_baseline_zscore.py:6: in <module>\n    from src.methods.baseline_zscore import ZScoreBaseline\nsrc\\methods\\baseline_zscore.py:6: in <module>\n    from src.data_types import SignalSample, DetectionResult, float64\nE   ImportError: cannot import name 'float64' from 'src.data_types' (D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\data_types.py)\n========================================================================================================================================= short test summary info =========================================================================================================================================\nERROR tests\\test_baseline_zscore.py\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 error in 1.01s; Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:25:21: F821 Undefined name `get_ensemble_size`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:26:16: F821 Undefined name `get_data_dir`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:27:24: F821 Undefined name `os`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:43:16: F821 Undefined name `os`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:104:53: F821 Undefined name `get_ensemble_size`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:125:21: F821 Undefined name `get_ensemble_size`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:126:16: F821 Undefined name `get_data_dir`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:127:24: F821 Undefined name `os`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\experiment.py:143:16: F821 Undefined name `os`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py:20:19: F821 Undefined name `result`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py:21:19: F821 Undefined name `result`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py:22:19: F821 Undefined name `result`\nFound 12 errors.",
-    "target_node": "n15",
+    "task_id": "T5",
+    "description": "[Increment 2: Method] Synthetic Bio-Signal Generator module for creating multi-channel telemetry with injected anomalies in src/data/synthetic_generator.py",
+    "target_node": "src/data/synthetic_generator.py",
+    "assigned_agent": "seed_coder",
+    "status": "TODO"
+  },
+  {
+    "task_id": "T6",
+    "description": "[Increment 2: Method] Unit tests for SyntheticGenerator in tests/test_synthetic_generator.py",
+    "target_node": "tests/test_synthetic_generator.py",
     "assigned_agent": "seed_tester",
-    "status": "FAILED",
-    "repair_attempts": 3,
-    "harness_bug": {
-      "files_in_error": [
-        "Environment contract violation",
-        "Ruff lint failure",
-        "_iforest.py",
-        "test_baseline_zscore.py"
-      ],
-      "signature": "Environment contract violation: src/methods/_iforest.py imports the package <id>, which the environment does not have. The environment is fixed for the whole run: use the packages in <id> or the proje\nRuff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\#_ml_anomaly_detection\\workspace\\tests\\test_baseline_zscore.py:#:#: F# Undefined name <id>\nadk\\workspace\\benchmarks\\_evolved_adk_state\\#_\n_iforest.py:ImportError\ntest_baseline_zscore.py::*:fail",
-      "task_id": "Q4_FIX5",
-      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-      "source": "harness"
-    }
+    "status": "TODO"
   },
   {
-    "task_id": "Q4_CH5",
-    "description": "Write Chapter 5 in thesis.md. Replace the section, do not append a second copy.",
-    "target_node": "n13",
-    "assigned_agent": "seed_writer",
-    "status": "FAILED",
-    "repair_attempts": 3,
-    "harness_bug": {
-      "files_in_error": [
-        "File <id> does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash",
-        "File <id> does not exist This is a placeholder copied from the instructions, not a pointer",
-        "Malformed symbolic tag missing <id> separator",
-        "Symbol <id> not found in <id> Closest existing targets"
-      ],
-      "signature": "CSV file <id> does not exist\nFile <id> does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\ref_ast{src/data_generator.py:generate_dataset}.\nFile <id> does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\ref_ast{src/methods\\baselinescore.py:ZScoreBaseline}.\nFile <id> does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\ref_ast{src/methods\\robust_ensemble.py:RobustEnsemble}.\nFile <id> does not exist This is a placeholder copied from the instructions, not a pointer: choose a real target from <id>.\nMalformed symbolic tag missing <id> separator: \\ref_csv{experiment_results.csv}. A pointer without a target (a bare file) is invalid: choose a full target from <id> / <id>, and write a file named in t\nSymbol <id> not found in <id> Closest existing targets: src/methods/robust_ensemble.py:RobustEnsemble, src/methods/robust_ensemble.py:fit.",
-      "task_id": "Q4_CH5",
-      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-      "source": "harness"
-    }
+    "task_id": "T7",
+    "description": "[Increment 2: Method] Baseline Univariate Z-Score Detector module in src/baselines/z_score_baseline.py",
+    "target_node": "src/baselines/z_score_baseline.py",
+    "assigned_agent": "seed_coder",
+    "status": "TODO"
   },
   {
-    "task_id": "Q4_CH6",
-    "description": "Write Chapter 6 in thesis.md. Replace the section, do not append a second copy.",
+    "task_id": "T8",
+    "description": "[Increment 2: Method] Unit tests for ZScoreBaseline in tests/test_z_score_baseline.py",
+    "target_node": "tests/test_z_score_baseline.py",
+    "assigned_agent": "seed_tester",
+    "status": "TODO"
+  },
+  {
+    "task_id": "T9",
+    "description": "[Increment 2: Method] Proposed Multi-Feature Robust Ensemble Detector module in src/models/robust_ensemble_detector.py",
+    "target_node": "src/models/robust_ensemble_detector.py",
+    "assigned_agent": "seed_coder",
+    "status": "TODO"
+  },
+  {
+    "task_id": "T10",
+    "description": "[Increment 2: Method] Unit tests for RobustEnsembleDetector in tests/test_robust_ensemble_detector.py",
+    "target_node": "tests/test_robust_ensemble_detector.py",
+    "assigned_agent": "seed_tester",
+    "status": "TODO"
+  },
+  {
+    "task_id": "T11",
+    "description": "[Increment 3: Experiment] Experiment entrypoint script that runs the baseline and ensemble on synthetic data, computes metrics, saves results to CSV/JSON in src/experiments/run_benchmark.py",
+    "target_node": "src/experiments/run_benchmark.py",
+    "assigned_agent": "seed_coder",
+    "status": "TODO"
+  },
+  {
+    "task_id": "T12",
+    "description": "[Increment 3: Visualization] Plotting script to generate comparison figures from results in src/plots/plot_results.py",
+    "target_node": "src/plots/plot_results.py",
+    "assigned_agent": "seed_coder",
+    "status": "TODO"
+  },
+  {
+    "task_id": "T13",
+    "description": "[Increment 3: Experiment] Execute run_benchmark entrypoint to produce results/results.csv and figures/accuracy_plot.png. Target is the execution module; harness handles file output.",
+    "target_node": "src/experiments/run_benchmark.py",
+    "assigned_agent": "seed_coder",
+    "status": "TODO"
+  },
+  {
+    "task_id": "T14",
+    "description": "[Increment 3: Writing] Chapter 3: Methodology - Description of the proposed robust ensemble detector and baseline.",
     "target_node": "thesis.md",
     "assigned_agent": "seed_writer",
-    "status": "BLOCKED",
-    "blocked_by": "Q4_CH5"
+    "status": "TODO"
   },
   {
-    "task_id": "Q4_FIX_config_8",
-    "description": "Fix the file src/config.py according to the verification finding: Symbol 'CONFIG' not found in 'config.py' Closest existing targets: src/config.py:CHANNELS, src/config.py:DATA_DIR.",
-    "target_node": "n8",
-    "assigned_agent": "seed_coder",
-    "status": "FAILED",
-    "repair_attempts": 3,
-    "harness_bug": {
-      "files_in_error": [
-        "Environment contract violation",
-        "Ruff lint failure",
-        "_iforest.py",
-        "test_baseline_zscore.py"
-      ],
-      "signature": "Environment contract violation: src/methods/_iforest.py imports the package <id>, which the environment does not have. The environment is fixed for the whole run: use the packages in <id> or the proje\nRuff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\#_ml_anomaly_detection\\workspace\\src\\config.py:#:#: F# Undefined name <id>\nadk\\workspace\\benchmarks\\_evolved_adk_state\\#_ml_anomaly_detec\n_iforest.py:ImportError\ntest_baseline_zscore.py::*:fail",
-      "task_id": "Q4_FIX_config_8",
-      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-      "source": "harness"
-    }
-  },
-  {
-    "task_id": "Q4_FIX_robust_ensemble_9",
-    "description": "Fix the file src/methods/robust_ensemble.py according to the verification finding: Symbol 'RobustEnsemble:fit' not found in 'robust_ensemble.py' Closest existing targets: src/methods/robust_ensemble.py:RobustEnsemble, src/methods/robust_ensemble.py:fit.",
-    "target_node": "n12",
-    "assigned_agent": "seed_coder",
-    "status": "FAILED",
-    "repair_attempts": 3,
-    "harness_bug": {
-      "files_in_error": [
-        "Environment contract violation",
-        "_iforest.py",
-        "test_robust_ensemble.py"
-      ],
-      "signature": "Environment contract violation: src/methods/_iforest.py imports the package <id>, which the environment does not have. The environment is fixed for the whole run: use the packages in <id> or the proje\n_iforest.py:ImportError\ntest_robust_ensemble.py::*:fail",
-      "task_id": "Q4_FIX_robust_ensemble_9",
-      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-      "source": "harness"
-    }
-  },
-  {
-    "task_id": "Q4_FIX_robust_ensemble_10",
-    "description": "Fix the file src/methods/robust_ensemble.py according to the verification finding: File 'src' does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\ref_ast{src/methods\\robust_ensemble.py:RobustEnsemble}.",
-    "target_node": "src/methods/robust_ensemble.py",
-    "assigned_agent": "seed_coder",
-    "status": "BLOCKED",
-    "blocked_by": "Q4_FIX_robust_ensemble_9"
-  },
-  {
-    "task_id": "Q4_CRITIC",
-    "description": "Fix thesis.md so that every finding of the critic and of the pointer audit is removed (only pointers to targets in 'grounded_hypergraph_state' stay). Address every identifier; if a finding cannot be removed, describe it plainly as a limitation of the work.\n[K1] File 'src' does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\ref_ast{src/data_generator.py:generate_dataset}.\n[K2] File 'src' does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\ref_ast{src/methods\\baselinescore.py:ZScoreBaseline}.\n[K3] File 'file' does not exist This is a placeholder copied from the instructions, not a pointer: choose a real target from 'available_ast_symbols'.\n[K4] Symbol 'CONFIG' not found in 'config.py' Closest existing targets: src/config.py:CHANNELS, src/config.py:DATA_DIR.\n[K5] Symbol 'RobustEnsemble:fit' not found in 'robust_ensemble.py' Closest existing targets: src/methods/robust_ensemble.py:RobustEnsemble, src/methods/robust_ensemble.py:fit.\n[K6] File 'src' does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash: \\ref_ast{src/methods\\robust_ensemble.py:RobustEnsemble}.",
+    "task_id": "T15",
+    "description": "[Increment 3: Writing] Chapter 4: Experimental Setup - Synthetic data generation details, parameters, and evaluation metrics.",
     "target_node": "thesis.md",
     "assigned_agent": "seed_writer",
-    "status": "BLOCKED",
-    "blocked_by": "Q4_CH5"
+    "status": "TODO"
+  },
+  {
+    "task_id": "T16",
+    "description": "[Increment 3: Writing] Chapter 5: Results and Analysis - Reporting metrics from results/results.csv, comparing ensemble vs baseline.",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "TODO"
+  },
+  {
+    "task_id": "T17",
+    "description": "[Increment 3: Writing] Chapter 6: Conclusions - Thesis statement verification, limitations, and future work.",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "TODO"
   }
 ]

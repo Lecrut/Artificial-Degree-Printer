@@ -75,4 +75,3 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
-- **RULE**: When referencing code symbols or file paths from another module, always resolve them against the explicit contract definitions provided in the input payload rather than inferring names or locations from the current file's context, because the payload contains the ground truth for existing artifacts.

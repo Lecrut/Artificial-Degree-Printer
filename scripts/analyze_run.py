@@ -11,8 +11,9 @@ Usage (from the repository root):
     .venv/Scripts/python.exe scripts/analyze_run.py --date 2026-11-14 --grep "usunięto"   # examples of one group
 
 Sections: LLM calls per sandbox/agent/model, builder answer rejections, verification findings that triggered
-repairs (grouped), harness events (PRZERWANIE, ORCHESTRATOR_*, LLM_CALL_START without an answer), and the final
-state of every sandbox (task statuses, failure categories, evolution events). Mock calls are skipped.
+repairs (grouped), harness events (PRZERWANIE, ORCHESTRATOR_*, LLM_CALL_START without an answer), outcomes from
+events.jsonl (task DONE/FAILED/BLOCKED, verdict culprits, LLM minutes on first builds vs repairs vs diagnosis; runs
+since 2026-11-16), and the final state of every sandbox (task statuses, failure categories, evolution events). Mock calls are skipped.
 """
 
 from __future__ import annotations
@@ -84,7 +85,8 @@ def section_findings(rows: list[dict], grep: str | None) -> None:
         if not isinstance(task, dict) or "_FIX" not in str(task.get("task_id", "")):
             continue
         desc = str(task.get("description", ""))
-        i = desc.find("NAPRAW (ustalenia weryfikacji):")
+        # Task texts for the model are English since §VI.12a; the Polish marker is kept for older runs.
+        i = max(desc.find("FIX (verification findings):"), desc.find("NAPRAW (ustalenia weryfikacji):"))
         if i < 0:
             continue
         for item in desc[i:].split("\n- ")[1:]:
@@ -161,6 +163,56 @@ def section_sandboxes() -> None:
         print(f"   events {collections.Counter(e.get('type') for e in hist).most_common(10)}")
 
 
+_DIAGNOSIS_AGENTS = {"remediation_planner", "evolution_architect", "redteam_critic_guard", "code_auditor", "symbolic_auditor"}
+_PLANNING_AGENTS = {"task_planner", "task_critic_guard", "background_researcher", "discoverer_researcher", "sota_researcher"}
+
+
+def _work_kind(agent: str, task_id: str) -> str:
+    if agent in _PLANNING_AGENTS:
+        return "plan/research"
+    if agent in _DIAGNOSIS_AGENTS:
+        return "diagnosis"
+    return "repair" if re.search(r"_FIX|^Q\d|^GATE", task_id) else "first build"
+
+
+def section_events() -> None:
+    """Outcomes from `events.jsonl` (written since 2026-11-16, Audit VI A1): the only source with verdicts."""
+    path = LOGS_DIR / "events.jsonl"
+    print("\n=== OUTCOMES (events.jsonl) ===")
+    if not path.exists():
+        print("  no events.jsonl in this log folder (run older than 2026-11-16)")
+        return
+    events = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    kinds = collections.Counter(e["event"] for e in events)
+    print("  events:", dict(kinds.most_common()))
+    final: dict[str, str] = {}
+    for e in events:
+        if e["event"] in ("TASK_DONE", "TASK_FAILED", "TASK_BLOCKED"):
+            final[str(e.get("task_id"))] = e["event"].removeprefix("TASK_") + (f" by {e['blocked_by']}" if e.get("blocked_by") else "")
+    print("  final task outcomes:", dict(collections.Counter(v.split(" ")[0] for v in final.values())))
+    for tid, outcome in final.items():
+        if outcome.startswith("BLOCKED") or (outcome == "FAILED" and not re.search(r"_FIX|^Q\d|^GATE", tid)):
+            print(f"    {tid}: {outcome}")
+    blame = collections.Counter(str(e.get("failed_agent")) for e in events if e["event"] == "VERDICT" and e.get("status") == "FAIL")
+    print("  failed verdicts by culprit agent:", dict(blame.most_common()))
+    minutes: collections.Counter = collections.Counter()
+    open_calls: dict[str, dict] = {}
+    for e in events:
+        key = f"{e.get('agent')}|{e.get('task_id')}"
+        if e["event"] == "LLM_CALL_START":
+            open_calls[key] = e
+        elif e["event"] == "LLM_CALL_END":
+            open_calls.pop(key, None)
+            minutes[_work_kind(str(e.get("agent")), str(e.get("task_id") or ""))] += float(e.get("elapsed_s") or 0) / 60
+    total = sum(minutes.values()) or 1.0
+    print("  LLM minutes:", {k: f"{v:.1f} ({v / total:.0%})" for k, v in minutes.most_common()})
+    for e in open_calls.values():
+        print(f"  LLM call without an end: {e['ts']} {e.get('agent')} {e.get('model')} task={e.get('task_id')}")
+    for e in events:
+        if e["event"] in ("RUN_STOPPED", "RUN_END"):
+            print(f"  {e['ts']} {e['event']}: {e.get('status') or e.get('reason')}")
+
+
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")  # Polish findings print as mojibake in a cp1250 console otherwise
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -179,6 +231,7 @@ def main() -> None:
         section_calls(rows)
         section_findings(rows, args.grep)
     section_harness_log(args.date, args.since, args.until)
+    section_events()
     section_sandboxes()
 
 

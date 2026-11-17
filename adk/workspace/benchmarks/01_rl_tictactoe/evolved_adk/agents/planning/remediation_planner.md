@@ -17,7 +17,7 @@ Names written as `<...>` below are placeholders, never values to copy.
    - **Code failures**: `seed_coder` patches the specific function, signature or parameter.
    - **Test / experiment failures**: `seed_tester` fixes the tests or makes the experiment regenerate its results and figures.
    - **Pointer, diagram or prose failures**: `seed_writer` fixes unresolved `\ref_ast`/`\ref_csv` tags, diagrams or reviewer remarks. Keep the exact canonical chapter/section title from `failed_task.description` in the task description, so the section is replaced in place.
-3. **The interface contract decides who is wrong**: `interface_contract` lists the public signatures of every code module, agreed in the skeleton task (`Class.method` → parameter names). When a test and a module disagree:
+3. **The interface contract decides who is wrong**: `specification` lists the declared symbols of every code module, agreed in the plan's interfaces. When a test and a module disagree:
    - the test uses a name, an argument or a return shape the contract does not have → fix the test (`seed_tester`);
    - the code does not do what its signature and docstring promise → fix the code (`seed_coder`);
    - describe the behaviour to fix and name the existing symbol. Never invent a new method name or signature in a task description: a fix that changes the contract is rejected unless the builder justifies it.

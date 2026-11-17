@@ -1,6 +1,6 @@
-# CODEBASE_MAP — skrót dla agenta (stan 2026-11-15)
+# CODEBASE_MAP — skrót dla agenta (stan 2026-11-16)
 
-Cel: znaleźć właściwe miejsce bez przeszukiwania repo. Szczegóły decyzji: `audit_repairs.md` (indeks na górze, sekcje §II–§VI). `adk_architecture.txt` i `documentation/` są **sprzed listopada** — nie ufać im co do szczegółów.
+Cel: znaleźć właściwe miejsce bez przeszukiwania repo. Szczegóły decyzji: `audit_repairs.md` (indeks na górze, sekcje §II–§VII; hipergraf: §VII.12, realizacja §VII.13). `adk_architecture.txt` i `documentation/` są **sprzed listopada** — nie ufać im co do szczegółów.
 
 ## Zasady, których nie łamać
 - Teksty dla modelu tylko w `orchestration/agent_texts.py` (po angielsku); pliki rdzenia ≤ 400 linii.
@@ -9,6 +9,9 @@ Cel: znaleźć właściwe miejsce bez przeszukiwania repo. Szczegóły decyzji: 
 - Ewolucja działa **w trakcie** przebiegu, ale tylko na wzorzec (≥2 zadania, ta sama kategoria) i z regułami „When…, …, because…”.
 - Logi: od 2026-11-15 każde zadanie benchmarku loguje na żywo do `<piaskownica>/workspace/logs/` → kopia w `adk/workspace/benchmarks/<zadanie>/logs/` (`harness_process.log`, `agent_trace.jsonl`, `llm_interactions.*`). Globalne `adk/logs/` (~2 GB, stare przebiegi) — **nigdy nie czytać w całości**. Analiza: `scripts/analyze_run.py --logs <folder> --date …`.
 - Weryfikacja: `.venv/Scripts/python.exe -m pytest tests -q -p no:cacheprovider` (~60 s) + `.venv/Scripts/python.exe -m ruff check adk tests main.py`. Testy mają nie dotykać `adk/logs/` ani `adk/state/` (conftest + fikstury).
+
+## Hipergraf = specyfikacja projektu (od 2026-11-16, Audyt VI)
+Gdy plan ma `interfaces` (zawsze w przebiegach na żywo), `self.spec_driven=True` i jedynym źródłem prawdy jest `state/hypergraph.json` (`adk/hypergraph/`): wierzchołki = planowane artefakty (ścieżki, rozdziały `thesis.md#chN`) ze stanem; worki I (moduł: P/C/T), R (`R:run`: punkt wejścia, `results.csv`), N (rozdział); porządek ≺; σ = API z interfejsu planu (stałe, sygnatury, atrybuty, doctesty). Planowanie: `plan_spec._validated_plan` (import stubów, 2 poprawki planisty, potem `PLAN_REJECTED`) → `_build_project_hypergraph` (stuby bez zadania `SKELETON`). Zapis: `spec_gate._enforce_spec_on_write` (σ zamiast `interface_contract.json`; testy walidowane na stubach). Weryfikacja: ustalenia σ (`observe.diff`, doctesty, `NOT_IMPLEMENTED`) wskazują winnego. Harmonogram: `orchestration/schedule.py::_task_order` (gotowość wierzchołka, bez blokady po pliku, `WAITING`, przenoszenie pracy między generacjami). Bez `interfaces` (mocki) — stara ścieżka. Wyniki przebiegu: `logs/events.jsonl` (`logger.log_event`).
 
 ## Przebieg jednego zadania (gdzie jest co)
 `benchmarks/runner.py::run_benchmark_suite` → piaskownica `workspace/benchmarks/_evolved_adk_state/<task>/` (reset=True) → `orchestrator.py::run`
@@ -24,6 +27,10 @@ Cel: znaleźć właściwe miejsce bez przeszukiwania repo. Szczegóły decyzji: 
 |---|---|
 | `orchestrator.py` (~380) | `run`, `_execute_task`, `_defend`; klasa składa mixiny z `orchestration/` |
 | `orchestration/agent_texts.py` | **każdy tekst doklejany modelowi** (opisy zadań, `done_when`, odrzucenia, polecenia napraw, feedback planera, ustalenia weryfikacji) — po angielsku, w jednym miejscu; konsola i logi zostają po polsku |
+| `hypergraph/model.py`, `build.py`, `observe.py`, `oracles.py`, `schedule.py` | H: model i niezmienniki; σ ze stubu, `code_violations`, `build_from_plan`; H_obs i `diff`; walidacja testu na stubach, doctesty σ, `is_stub`, `run_fingerprint`; gotowość wierzchołków |
+| `orchestration/plan_spec.py` | walidacja planu wobec σ, budowa H, stuby |
+| `orchestration/spec_gate.py` | bramka zapisu wobec σ, `_change_spec`, ustalenia σ w weryfikacji, `_spec_payload` (A8), świeżość wyników |
+| `orchestration/schedule.py` | `_task_order`, stany wierzchołków, `_carry_over` |
 | `orchestration/repair.py` | `_repair_task` (szybkie naprawy, W4 bramkowane wzorcem), `_repair_cycle` |
 | `orchestration/common.py` | stałe i helpery: `OUTPUT_SCHEMA`, `_METADATA_KEYS`, `_RunState`, `_issue_category`, `HARNESS_ENFORCED_CATEGORIES`, `FAST_REPAIR_ATTEMPTS`, `_KNOWN_EVOLUTION_ACTIONS`, `available_package_imports`, `_fit_items` |
 | `orchestration/building.py` | `_execute_builder_step` (ładunek, `done_when`, szkielet z `interfaces`), eksperyment po kodzie |

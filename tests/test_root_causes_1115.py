@@ -58,32 +58,6 @@ def test_stub_source_keeps_the_interface_and_drops_every_body() -> None:
     assert stub_source("def broken(:\n") is None
 
 
-def test_skeleton_is_written_from_the_plan_interfaces_without_a_model(tmp_path: Path) -> None:
-    """U1: the skeleton came from a small model that never saw the plan's API."""
-    orch = _orch(tmp_path)
-    orch.blueprint_path.write_text(json.dumps({"interfaces": {"src/env.py": ENV_INTERFACE}}), encoding="utf-8")
-
-    def _no_model(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
-        raise AssertionError("the skeleton must not call a model when the plan has interfaces")
-
-    orch._call_agent = _no_model
-    orch._execute_builder_step({"task_id": "SKELETON", "target_node": "src/env.py", "assigned_agent": "seed_coder"}, "SML")
-
-    written = (orch.workspace_dir / "src" / "env.py").read_text(encoding="utf-8")
-    assert "class TicTacToeEnv" in written and "raise NotImplementedError" in written
-    contract = json.loads(orch.interface_contract_path.read_text(encoding="utf-8"))
-    assert contract["src/env.py"]["TicTacToeEnv.step"] == ["self", "action"]
-
-
-def test_a_model_written_skeleton_keeps_only_its_interface(tmp_path: Path) -> None:
-    """U2 without interfaces in the plan: the model's bodies are replaced before the contract is set."""
-    orch = _orch(tmp_path)
-    orch._call_agent = lambda *_a, **_k: {"status": "ok", "output": {"files": [{"filename": "src/env.py", "content": ENV_INTERFACE}]}}
-    orch._execute_builder_step({"task_id": "SKELETON", "target_node": "src/env.py", "assigned_agent": "seed_coder"}, "SML")
-    written = (orch.workspace_dir / "src" / "env.py").read_text(encoding="utf-8")
-    assert written.count("raise NotImplementedError") == 2 and "self.board" not in written
-
-
 def test_plan_interfaces_accept_a_list_and_drop_tests_and_unparsable_code() -> None:
     found = _plan_interfaces(
         {

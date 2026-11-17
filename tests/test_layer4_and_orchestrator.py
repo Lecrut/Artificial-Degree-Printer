@@ -186,19 +186,19 @@ def test_three_main_scenarios_and_logging(tmp_path: Path):
     assert r1["status"] == "COMPLETED"
     assert r1["mode"]["enable_layer4"] is False
     assert r1["mode"]["include_docs"] is False
-    assert len(r1["tasks"]) == 2
+    assert len(r1["tasks"]) == 3  # config, core and its tests
 
     r2 = run_scenario("2", provider="mock", adk_root=adk_dir)
     assert r2["status"] == "COMPLETED"
     assert r2["mode"]["enable_layer4"] is True
     assert r2["mode"]["include_docs"] is False
-    assert len(r2["tasks"]) == 2
+    assert len(r2["tasks"]) == 3
 
     r3 = run_scenario("3", provider="mock", adk_root=adk_dir)
     assert r3["status"] == "COMPLETED"
     assert r3["mode"]["enable_layer4"] is True
     assert r3["mode"]["include_docs"] is True
-    assert len(r3["tasks"]) == 3
+    assert len(r3["tasks"]) == 4  # + the thesis
     assert Path(r3["log_files"]["process_log"]).exists()
     assert Path(r3["log_files"]["agent_trace_jsonl"]).exists()
 
@@ -270,17 +270,14 @@ def test_split_agent_updates_task_queue_assigned_agents(tmp_path: Path):
     assert updated_queue[1]["assigned_agent"] == "seed_tester_edge_case_testing"
 
 
-def test_interactive_gates_callback_and_weight_escalation_in_orchestrator(tmp_path: Path):
+def test_interactive_gates_callback_and_repair_of_a_failed_task_in_orchestrator(tmp_path: Path):
     adk_dir = _clone_adk_env(tmp_path)
 
-    # 1. Verify WEIGHT_ESCALATED is recorded when a task fails in Layer 3
+    # 1. A task that fails in Layer 3 is repaired by its author and the run still completes
     orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, enable_layer4=True, include_docs=False, provider="mock")
-    res = orch.run("Test EvoRoute weight escalation", simulate_first_attempt_fail=True)
+    res = orch.run("Test repair of a failed task", simulate_first_attempt_fail=True)
     assert res["status"] == "COMPLETED"
-    history = json.loads((adk_dir / "state" / "evolution_history.json").read_text(encoding="utf-8"))
-    assert any(e["type"] == "WEIGHT_ESCALATED" for e in history["events"])
-    matrix_after = json.loads((adk_dir / "state" / "hypergraph_matrix.json").read_text(encoding="utf-8"))
-    assert max(meta["weight"] for meta in matrix_after["nodes"].values()) >= 1.4
+    assert any(c["w4_action"] == "FAST_FIX" for c in res["architecture_cycles"])
 
     # 2. Verify gate_approval_callback can pause execution at GATE_2_METHODOLOGY_APPROVAL
     visited_gates: list[str] = []
@@ -423,8 +420,9 @@ def test_evolution_waits_for_a_pattern_across_tasks(tmp_path: Path):
 
     actions = [c["w4_action"] for c in res.get("architecture_cycles", [])]
     assert actions[:5] == ["FAST_FIX", "FAST_FIX", "SKIPPED_NO_PATTERN", "FAST_FIX", "FAST_FIX"]
-    # The sixth cycle is the architect's own decision (the mock splits an agent with many failures).
-    assert len(actions) == 6 and not actions[5].startswith("SKIPPED")
+    # The sixth cycle is the architect's own decision (the mock splits an agent with many failures); the third
+    # task repeats the same category and gets no second rule.
+    assert not actions[5].startswith("SKIPPED")
     assert len(evolutions) == 1
     pattern = evolutions[0]["pattern"]
     assert pattern["category"] == "pytest:AssertionError" and pattern["occurrences"] == 2

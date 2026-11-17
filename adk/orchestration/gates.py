@@ -19,6 +19,7 @@ class GatesMixin:
         )
         history.setdefault("events", []).append(event)
         write_json_state(self.evolution_history_path, history)
+        self.logger.log_event(str(event.get("type", "EVOLUTION_EVENT")), **{k: v for k, v in event.items() if k != "type"})
 
     def _update_hitl_gate(
         self,
@@ -116,3 +117,4 @@ class GatesMixin:
         )
         print(banner, flush=True)
         self.logger.log_step("PRZERWANIE", banner, {"reason": reason})
+        self.logger.log_event("RUN_STOPPED", reason=reason)

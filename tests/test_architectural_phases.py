@@ -7,6 +7,7 @@ from typing import Any
 from unittest.mock import patch
 
 from adk.orchestrator import NeuroSymbolicOrchestrator
+from tests._plans import SPEC
 
 
 def _setup_test_orchestrator(tmp_path: Path) -> NeuroSymbolicOrchestrator:
@@ -89,6 +90,7 @@ def test_lightweight_planning_payload_and_blueprint_persistence(tmp_path: Path) 
         captured_payloads.append(payload)
         return {
             "output": {
+                **SPEC,
                 "thesis_type": "inzynierska",
                 "academic_blueprint": {
                     "thesis_title": "Badanie RL",
@@ -141,6 +143,7 @@ def test_dynamic_chapter_planning_adapts_to_custom_structure(tmp_path: Path) -> 
     def mock_call_agent(_agent_md: Any, _payload: dict[str, Any], **_kwargs: Any) -> dict[str, Any]:
         return {
             "output": {
+                **SPEC,
                 "thesis_type": "paper",
                 "academic_blueprint": {
                     "thesis_title": "Efficient Reinforcement Learning in Discrete State Spaces",
@@ -200,6 +203,7 @@ def test_reflexive_prompt_evolution_recovers_empty_tasks(tmp_path: Path) -> None
             return {
                 "status": "ok",
                 "output": {
+                    **SPEC,
                     "thesis_type": "inzynierska",
                     "tasks": [
                         {"task_id": "T1", "description": "Model", "target_node": "v1", "assigned_agent": "seed_coder", "status": "TODO"},
@@ -214,14 +218,16 @@ def test_reflexive_prompt_evolution_recovers_empty_tasks(tmp_path: Path) -> None
             }
 
     with patch("adk.orchestrator.call_agent", side_effect=mock_call_agent):
-        orch.run("01_rl_tictactoe", target_node="v1", multi_cycle_waves=False)
+        # Stopped at gate 1, right after planning: the queue is the recovered plan.
+        res = orch.run("01_rl_tictactoe", target_node="v1", multi_cycle_waves=False, gate_approval_callback=lambda *_a: False)
 
+    assert res["status"] == "HITL_PAUSED"
     assert call_count >= 2
     # Verify reflection feedback was included in the second call
     assert "reflection_feedback" in captured_payloads[1]
     assert "ERROR" in captured_payloads[1]["reflection_feedback"]
 
-    saved_queue = json.loads(orch.task_queue_path.read_text(encoding="utf-8"))
+    saved_queue = res["tasks"]
     assert len(saved_queue) >= 3
     assert saved_queue[0]["task_id"] == "T1"
     assert saved_queue[1]["task_id"] == "T2"
@@ -243,15 +249,7 @@ def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_cha
         {"task_id": "T8", "description": "Rozdział 5: Badania eksperymentalne i wyniki", "target_node": "v4", "assigned_agent": "seed_writer"},
         {"task_id": "T9", "description": "Rozdział 6: Podsumowanie i wnioski", "target_node": "v4", "assigned_agent": "seed_writer"},
     ]
-    # Plans with two or more code modules get exactly one SKELETON task (wave 1, §III.9); the counts below are
-    # of the planner's tasks.
-    def _without_skeleton(healed: list[dict]) -> list[dict]:
-        assert sum(1 for t in healed if t["task_id"] == "SKELETON") == 1
-        return [t for t in healed if t["task_id"] != "SKELETON"]
-
-    healed_9 = _without_skeleton(orch._normalize_and_heal_task_plan(
-        nine_tasks, user_prompt="Test 9 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
-    ))
+    healed_9 = orch._normalize_and_heal_task_plan(nine_tasks, multi_cycle_waves=True, thesis_type="inzynierska")
     assert len(healed_9) == 9
 
     # 2. A 16-task granular plan -> stays 16 tasks!
@@ -259,24 +257,21 @@ def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_cha
         {"task_id": f"T_EXTRA_{i}", "description": f"Dodatkowy podmoduł algorytmu #{i} w core.py", "target_node": "v2", "assigned_agent": "seed_coder"}
         for i in range(1, 8)
     ]
-    healed_16 = _without_skeleton(orch._normalize_and_heal_task_plan(
-        sixteen_tasks, user_prompt="Test 16 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
-    ))
+    healed_16 = orch._normalize_and_heal_task_plan(sixteen_tasks, multi_cycle_waves=True, thesis_type="inzynierska")
     assert len(healed_16) == 16
 
     # 3. A 7-task plan missing Chapters 5 and 6 -> only the 2 missing chapters are added (7 + 2 = 9 tasks, NOT 12)!
     seven_tasks_missing_5_6 = nine_tasks[:7]
-    healed_7_to_9 = _without_skeleton(orch._normalize_and_heal_task_plan(
-        seven_tasks_missing_5_6, user_prompt="Test 7 tasks", multi_cycle_waves=True, thesis_type="inzynierska"
-    ))
+    healed_7_to_9 = orch._normalize_and_heal_task_plan(seven_tasks_missing_5_6, multi_cycle_waves=True, thesis_type="inzynierska")
     assert len(healed_7_to_9) == 9
 
 
 
 
-def test_healing_keeps_planner_order_and_builds_entrypoint_after_its_modules(tmp_path: Path) -> None:
+def test_healing_keeps_planner_order_and_invents_no_tasks(tmp_path: Path) -> None:
     """Regression (2026-11-12 run): a healed plan was sorted by role, which put the experiment script before the
-    environment and agent modules it imports, so the coder had nothing to import."""
+    environment and agent modules it imports. The order of building now comes from the readiness of the vertices
+    of H (tests/test_audit_vi.py, A7); healing keeps the planner's order and adds nothing but chapters."""
     orch = _setup_test_orchestrator(tmp_path)
     orch.blueprint_path.write_text(json.dumps({"entrypoint": "run_experiment.py:main"}), encoding="utf-8")
     planned = [
@@ -288,13 +283,9 @@ def test_healing_keeps_planner_order_and_builds_entrypoint_after_its_modules(tmp
         {"task_id": "T6", "description": "Agent Q-learning", "target_node": "agents/q_agent.py", "assigned_agent": "seed_coder"},
         {"task_id": "T7", "description": "Rozdział 1-6 pracy", "target_node": "thesis.md", "assigned_agent": "seed_writer"},
     ]
-    healed = orch._normalize_and_heal_task_plan(planned, user_prompt="RL", multi_cycle_waves=True)
-    # The skeleton task (wave 1, §III.9) also targets the entrypoint; the order below is of the implementing tasks.
-    order = [t["target_node"] for t in healed if t["task_id"] != "SKELETON"]
+    healed = orch._normalize_and_heal_task_plan(planned, multi_cycle_waves=True)
+    code = [t["target_node"] for t in healed if str(t["target_node"]).endswith(".py")]
 
-    assert order.index("run_experiment.py") > order.index("agents/q_agent.py")
-    assert order.index("run_experiment.py") > order.index("envs/tictactoe_env.py")
-    # The planner's own order of the other tasks is kept.
-    assert order.index("envs/tictactoe_env.py") < order.index("tests/test_env.py") < order.index("agents/q_agent.py")
+    assert code == ["config.py", "run_experiment.py", "envs/tictactoe_env.py", "tests/test_env.py", "agents/q_agent.py"]
     # Results are written by the entrypoint module, so no task targets the results file (U5, 2026-11-15).
-    assert "results.csv" not in order
+    assert "results.csv" not in code

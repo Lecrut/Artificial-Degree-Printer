@@ -47,11 +47,10 @@ class EvolutionMixin:
             for p in self.workspace_dir.rglob("*.py"):
                 if "__pycache__" not in p.parts:
                     names.update({p.name, p.stem})
-        if self.interface_contract_path.exists():
-            for rel, api in read_json_state(self.interface_contract_path).items():
-                names.add(Path(rel).name)
-                for symbol in api or {}:
-                    names.update(symbol.split("."))
+        for rel, symbols in self._specification_symbols().items():
+            names.add(Path(rel).name)
+            for symbol in symbols or {}:
+                names.update(symbol.split("."))
         # Only names that look like identifiers. A module called `model.py`, `agent.py` or `game.py` must not
         # ban the ordinary words "model", "agent", "game" from every rule (§VI.9 P3); `q_learner`, `TicTacToeGame`,
         # `tictoc_game.py` stay forbidden.

@@ -85,6 +85,12 @@ def _issue_fingerprints(issue: str) -> list[str]:
 _GATE_REJECTION = texts.GATE_REJECTION
 
 
+_SPEC_FINDING = re.compile(
+    r"(?:API_\w+|IMPORT_OUTSIDE_SPEC|IMPORT_NOT_IN_PLAN|FILE_OUTSIDE_PLAN|TEST_OUTSIDE_SPEC|TEST_INVALID_ON_STUBS)\b"
+    r"|Write rejected: the answer breaks the specification"
+)
+
+
 def _issue_category(issues: list[Any]) -> str:
     """Kind of a failure, independent of the file: a ruff code (`F821`), `pytest:<Exception>`, `SyntaxError`,
     `ImportError`, `contract` (a verified finding: a test or module uses a name its neighbour does not define),
@@ -96,6 +102,9 @@ def _issue_category(issues: list[Any]) -> str:
     counts: Counter[str] = Counter()
     for item in issues:
         text = str(item)
+        if _SPEC_FINDING.match(text.strip()):
+            counts["spec"] += 1  # a breach of σ: enforced by the harness, never a prompt rule (Audit VI A10)
+            continue
         if _GATE_REJECTION.search(text):
             counts["harness"] += 1
             continue
@@ -120,7 +129,7 @@ def _issue_category(issues: list[Any]) -> str:
 
 # Categories the harness itself enforces (syntax guard, import resolution, answer shape): a prompt rule cannot
 # add anything, so they never trigger evolution (Audit IV §IV.6.3 B2).
-HARNESS_ENFORCED_CATEGORIES = {"SyntaxError", "invalid-syntax", "E999", "ImportError", "harness"}
+HARNESS_ENFORCED_CATEGORIES = {"SyntaxError", "invalid-syntax", "E999", "ImportError", "harness", "spec"}
 # Repairs sent straight back to the failed file's author with the verification findings, before the one
 # planner-and-evolution cycle a task gets (Audit IV §IV.7 pkt 6).
 FAST_REPAIR_ATTEMPTS = 2
@@ -354,14 +363,6 @@ _METADATA_KEYS = {
     # Echo of the payload: a small model sometimes copies the task back (N7, 2026-11-15: "fields ['task']").
     "task", "target_file", "task_id",
 }
-
-SKELETON_TASK_ID = "SKELETON"
-
-
-def is_skeleton_task(task: dict[str, Any] | None) -> bool:
-    """The task that lays out every planned module's public interface (and its repairs, `SKELETON_FIX…`)."""
-    return bool(task) and str(task.get("task_id", "")).upper().startswith(SKELETON_TASK_ID)
-
 
 def build_grounded_symbols(exports_info: dict[str, Any]) -> dict[str, list[str]]:
     """Flatten hyperedge exports into the pointer targets a writer may legally cite.

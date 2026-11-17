@@ -353,6 +353,7 @@ def run_benchmark_suite(
                 orch_res = {"status": "INTERRUPTED", "error": "KeyboardInterrupt"}
                 interrupted = True
 
+            orch.logger.log_event("RUN_END", task=spec.task_id, status=orch_res.get("status"))
             # Ensure all required benchmark files/sections exist so run_experiment.py & 6-chapter PDF compilation succeed
             mock_fallback = _make_task_mock_llm_handler(spec)
             t_type = effective_thesis_type.strip().lower()

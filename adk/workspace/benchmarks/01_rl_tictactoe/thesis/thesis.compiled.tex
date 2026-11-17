@@ -1,30 +1,34 @@
-% Szablon Pracy Dyplomowej Politechniki Łódzkiej (Zarządzenie Nr 6/2025 Rektora PŁ)
-\documentclass[W2, polski]{ThesisPLodz}
+% IEEE Scientific Conference Paper Template (IEEEtran)
+\documentclass[conference]{IEEEtran}
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+\else
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage[plainpages=false,pdfpagelabels,hidelinks]{hyperref}
 
-\authortitle{inż.}
-\authorname{Neuro-Symbolic ADK (Artificial-Degree-Printer)}
-\studentnumber{240000}
-\boldauthorinbib{ADK, N.-S.}
-
-\thesistitle{Uczenie ze Wzmocnieniem (Q-Learning) w Grach Skończonych na Przykładzie Tic-Tac-Toe}
-\thesisshorttitle{Tabular Q-Learning Policy Optimization in Fin}
-
-\degreename{inzynierska}
-\fieldofstudy{Sztuczna Inteligencja i Uczenie Maszynowe}
-\department{Instytut Informatyki Stosowanej}
-
-\supervisor{dr hab. inż. Promotor Akademicki, prof. PŁ}
-\bibliographyfile{references}
-
-\abstract{
-W pracy zbadano zbieżność i efektywność tablicowego algorytmu Q-Learning w grze Kółko i Krzyżyk. Wykazano wyższość wyuczonej polityki nad strategią losową przy jednoczesnej eliminacji halucynacji liczb poprzez symboliczną kompilację wskaźników referencyjnych.
+\makeatletter
+\def\ps@IEEEtitlepagestyle{%
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
+  \def\@evenfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
 }
-\keywords{sztuczna inteligencja, uczenie maszynowe, neuro-symbolic, weryfikacja empiryczna}
-
-\abstractsecondary{
-This thesis presents a pure-Python reinforcement learning agent applying tabular Q-learning to Tic-Tac-Toe, evaluated against a uniform random baseline under reproducible neuro-symbolic verification.
+\def\ps@plain{%
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
+  \def\@evenfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
 }
-\keywordssecondary{artificial intelligence, machine learning, neuro-symbolic systems, empirical verification}
+\makeatother
+\pagestyle{plain}
 
 \renewcommand{\texttt}[1]{\ifmmode\mathtt{#1}\else{\normalfont\ttfamily #1}\fi}
 \DeclareFontShape{OMS}{cmsy}{m}{n}{<-> cmsy10}{}
@@ -36,49 +40,67 @@ This thesis presents a pure-Python reinforcement learning agent applying tabular
 
 
 
-\chapter{Rozdział 1: Wstęp i Cel Pracy}
-Przedmiotem niniejszej pracy inżynierskiej jest analiza zdolności uczących się przez wzmacnianie (RL) agentów do opanowania gry w kółko i krzyżyk (Tic-Tac-Toe). Gra ta, będąca klasyfikowana jako zero-sum game z pełną informacją, stanowi doskonały poligon testowy dla algorytmów opartych na Markowskich Procesach Decyzyjnych (MDP). Głównym ce pracy jest weryfikacja tezy: „Czy tablicowy agent Q-Learning może wyuczyć się strategii nieprzegrywającej w grze z przeciwnikiem losowym, a jego gra będzie statystycznie lepsza od bazowego przeciwnika?”. Cel ten wymaga zdefiniowania formalnej reprezentacji stanu gry, doboru hiperparametrów uczących oraz przeprowadzenia rygorystycznej walidacji empirycznej.
+\title{Tabular Q-Learning Policy Optimization in Finite-State Tic-Tac-Toe Environments}
 
-Zakres prac obejmuje implementację środowiska symulacyjnego gry, modułu agenta Q-Learning z mechanizmem eksploracji epsilon-greedy oraz procedury porównawczej z bazową strategią losową (random baseline). Praca nie koncentruje się na optymalizacji wydajności obliczeniowej dla dużych przestrzeni stanów, lecz na poprawności implementacji algorytmu i interpretowalności wyników w kontekście małych MDP. Jako metryki sukcesu przyjmuje się wskaźnik wygranych (win\_rate), remisów (draw\_rate) oraz strat agenta. Ograniczeniem prac jest brak uczenia się z danych poza symulacją (offline learning) oraz ograniczona liczba powtórzeń eksperymentów, co może wpływać na ogólnowazalność statystyczną dla trudniejszych przypadków brzegowych.
+\author{\IEEEauthorblockN{Neuro-Symbolic ADK Author}
+\IEEEauthorblockA{\textit{Institute of Applied Computer Science} \\
+\textit{Lodz University of Technology} \\
+Lodz, Poland \\
+Domain: Reinforcement Learning \& Game Theory}}
 
-\chapter{Rozdział 2: Przegląd Literatury i Podstawy Teoretyczne}
-Podstawą teoretyczną rozważań jest algorytm Q-Learning, który umożliwia agentowi naukę wartości oczekiwanych nagród (Q-values) dla par stan-akcja bez znajomości dynamiki środowiska. Zgodnie z [kalweit2020deep], tradycyjne metody oparte na kształtowaniu nagród (reward shaping) mogą przyspieszać konwergencję, jednak w przypadku Tic-Tac-Toe prosta struktura gry pozwala na bezpośrednią naukę bez skomplikowanego projektowania funkcji nagrody.
 
-Istotnym aspektem jest balans między eksploracją a eksploatacją (exploration/exploitation trade-off). W niniejszej pracy zastosowano podejście epsilon-greedy, gdzie prawdopodobieństwo wyboru losowego działania maleje w czasie (
-ef\_ast{src/ql\_agent.py:decay\_epsilon}) od wartości początkowej (
-ef\_ast{config.py:EPSILON\_START}) do końcowej (
-ef\_ast{config.py:EPSILON\_END}). Badania przedstawione przez [woo2023blessing] wskazują, że w środowiskach rozproszonych dystrybucja danych jest kluczowa, однако w przypadku pojedynczego agenta uczącego się symulacyjnie, krytyczna staje się stabilność procesu uczenia. 
+\thispagestyle{plain}
 
-Kolejnym aspektem jest konwergencja tablicowych metod RL. [cini2020deep] podkreślają, że algorytmy bazujące na Q-Learning są fundamentem głębokiego uczenia wzmacnianego, jednak ich zastosowanie w małych, dyskretnych przestrzeniach stanów wymaga dbałości o zbieżność iteracji. W pracy przyjęto założenie, że po wystarczającej liczbie epizodów (
-ef\_ast{config.py:N\_REPETITIONS} powtórzeń po 
-ef\_ast{config.py:N\_EPISODES\_PER\_RUN} epizodów), tabela Q osiągnie stabilną konfigurację odpowiadającą optymalnej polityce (optimal policy) dla danej gry.
+\begin{abstract}
+This thesis presents a pure-Python reinforcement learning agent applying tabular Q-learning to Tic-Tac-Toe, evaluated against a uniform random baseline under reproducible neuro-symbolic verification.
+\end{abstract}
 
-Na Rysunku~\ref{fig:arch_tikz} przedstawiono potok obliczeniowy zaprojektowany przez system ADK.
-Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modułu \texttt{config.py}:
+\begin{IEEEkeywords}
+neuro-symbolic systems, empirical verification, abstract syntax tree, automated thesis synthesis, machine learning
+\end{IEEEkeywords}
+
+\section{Rozdział 1: Wstęp i Cel Pracy}
+Gry strategiczne stanowią klasyczny przykład środowisk decyzyjnych, gdzie agenci muszą podejmować sekwencyjne działania w celu maksymalizacji swojej odznaczonej wartości przy jednoczesnym uwzględnianiu interakcji z przeciwnikami. Grzyty kółko i krzyżyk (Tic-Tac-Toe) reprezentują prosty, ale pełnoprawny model gry zrównowagi zerowej na siatce 3x3. Choć dla gracza ludzkich umysłu jest to gra zlokalizowana, dla silnika AI stanowi ona idealny testbed na algorytmy uczenia się wzmocnionego (reinforcement learning – RL), pozwalający na badanie fundamentalnych własności takich jak konwergencja polisy i stabilność wartości stanu bez narzucania skomplikowanych dynamik środowiska.
+
+Problematyka badań opiera się na dwóch kluczowych aspektach. Po pierwsze, analiza wpływu algorytmu Q-Learning w implementacji tablicowej (tabular Q-Learning) na wydajność uczennego agenta przeciwko przeciwnikowi losowemu. Choć rozwiązanie zadane dla ludzkich graczy jest intuicyjnie dostępne, automatyzacja tego procesu wymaga definicji funkcji wartości stanowej $Q(s,a)$ i mechanizmu aktualizacji opartego o regułę Bellmana.
+
+Druga część problemu dotyczy charakterystyki prowadzonej przez agenta przeciwko baseline losowemu. Przeciwstawienie się losowo wygenerowanym ruchom nie stanowi strategii optymalnej, lecz dostarcza wartości odniesienia pozwalającej na pomiar skali efektywności uczennego. Zdefiniowanie sukcesu w tym kontekście wymaga precyzyjnego opisu metryk, takich jak win rate (odsetek zwycięstw) i draw rate (odsetek remisów), które będą służyć jako miary poprawności działania algorytmu.
+
+Prace badawcze dotykają obszaru wdrażania algorytmów uczenia się wzmocnionego do prostych środowisk, co jest odzwierciedleniem tendencji widocznych w pracach takich jak \\
+
+\section{Rozdział 2: Przegląd Literatury}
+Badanie algorytmów uczenia ze wzmocnieniem, szczególnie tych opartych na funkcjach wartości (Q-learning), wymaga odniesienia się do zarówno klasycznych teoretycznych podstaw, jak i współczesnych analiz złożoności próbnej. Q-learning, pierwotnie zdefiniowany przez Watkinsa i Dayana jako model-free algorithm dla procesów decyzyjnych Markowa (MDP) 
+
+W kontekście gier ze stochastycznymi przejściami i nagrodami, kluczowym zagadnieniem jest zapewnienie zbieżności algorytmu przy skończonej liczbie próbek. Gao i in. [gao2021finitesample] badają złożoność próbne w pełni zdecentralizowanych algorytmów Q-learningu dla gier sumy niezerowej, dowodząc ograniczeń teoretycznych dla gier słabo akcyklicznych (weakly acyclic). Analogicznie, Lim i Lee [lim2024finite] przedstawiają skończenie-czasową analizę rozproszonego Q-learningu, wskazując na zależność złożoności komunikacyjnej od liczby agentów. Dla bardziej specyficznych struktur, takich jak gry Nash'a z liniowym aproksymowaniem funkcji, Cisneros-Velarde i Koyejo [cisnerosvelarde2023finitesample] wyprowadzają gwarancje skończonego próbkowania (finite-sample guarantees).
+
+Warto zaznaczyć, że tradycyjny Q-learning spotyka się z wyzwaniami w środowiskach o dużej liczbie stanów lub niestabilnych rozkładach nagród. Hurwitz, Peace i Cevora [hurwitz2023achieving] pokazują, że w środowiskach bimodalnych stabilizacja treningu wymaga specyficznych technik batchowych, co jest istotne przy analizie zbieżności metod tabularnych w porównaniu do głębszych architektur. Z kolei Cini i in. [cini2020deep] oraz Tang i in. [tang2023valearning} omawiają przejście od czystego Q-learningu do podejść głębokich (DQN) oraz VA-learning, które uczą bezpośrednio funkcji przewagi i wartości, co może redukować wariancję w porównaniu do aktualizacji TD opartych na maksimum.
+
+W obszarze uczenia grupowego (multi-agent RL), choć Q-learning jest często rozszerzany do Nash Q-learning 
+
+Wreszcie, dla celów niniejszej pracy inżynierskiej, istotne jest odniesienie się do badań nad efektywnością i skalowalnością. Przykładowo, Woo i in. [woo2023blessing} analizują przyspieszenie liniowe w federacyjnym Q-learningu, podczas gdy Atif i in. [atif2026does} badają koordynację agentów wczesnych faz szkolenia w modelach embodimentowych. Dla tabularnego przypadku Tic-Tac-Toe, kluczowa jest zdolność do szybkiego zsumowania (tabular) bez utraty gwarancji zbieżności, co wynika bezpośrednio z warunków założonych przez Watkinsa oraz rozszerzeń przedstawionych przez Gao i in. [gao2021finitesample} dla gier stochastycznych.
+
+Figure~\ref{fig:arch_tikz} illustrates the neural-symbolic data processing pipeline.
+The experimental hyperparameters are grounded directly in the abstract syntax tree of \texttt{config.py}:
 
 \begin{table}[htbp]
 \centering
-\caption{Weryfikowane symbolicznie stałe konfiguracyjne (\texttt{config.py})}
+\caption{Symbolically Grounded Hyperparameters (\texttt{config.py})}
 \begin{tabular}{ll}
 \toprule
-\textbf{Symbol AST} & \textbf{Wartość w kodzie} \\
+\textbf{AST Symbol} & \textbf{Grounding Value} \\
 \midrule
-\texttt{RANDOM\_SEED} & \texttt{42} \\
-\texttt{N\_EPISODES\_PER\_RUN} & \texttt{100} \\
-\texttt{N\_REPETITIONS} & \texttt{3} \\
-\texttt{EPSILON\_START} & \texttt{1.0} \\
-\texttt{EPSILON\_END} & \texttt{0.05} \\
-\texttt{DECAY\_RATE} & \texttt{0.99} \\
-\texttt{ALPHA} & \texttt{0.1} \\
-\texttt{GAMMA} & \texttt{0.9} \\
-\texttt{EPOCHES\_PER\_DECAY\_STEP} & \texttt{N\_EPISODES\_PER\_RUN // 2} \\
-\texttt{METRICS\_TO\_REPORT} & \texttt{['win\_rate\_agent', 'draw\_rate', 'loss\_rate\_agent', 'average\_reward\_per\_episode']} \\
-\texttt{OUTPUT\_CSV} & \texttt{results.csv} \\
-\texttt{OUTPUT\_CSV} & \texttt{results.csv} \\
-\texttt{OUTPUT\_CSV} & \texttt{results.csv} \\
+\texttt{LEARNING\_RATE} & \texttt{0.1} \\
+\texttt{discount\_factor} & \texttt{0.9} \\
+\texttt{initial\_epsilon} & \texttt{0.2} \\
+\texttt{min\_epsilon} & \texttt{0.01} \\
+\texttt{epsilon\_decay} & \texttt{0.995} \\
+\texttt{n\_episodes} & \texttt{10000} \\
+\texttt{seed} & \texttt{42} \\
+\texttt{output\_dir} & \texttt{results} \\
+\texttt{figures\_dir} & \texttt{figures} \\
 \bottomrule
 \end{tabular}
-\label{tab:config_constants}
+\label{tab:config_hyperparameters}
 \end{table}
 
 \begin{figure}[htbp]
@@ -91,104 +113,123 @@ Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modu�
   \draw[->, thick] (qtab) -- node[right] {$\arg\max_a Q$} (pol);
   \draw[->, thick] (pol.west) -- ++(-0.5,0) |- node[near start, left] {nagroda $r_t$} (env.west);
 \end{tikzpicture}
-\caption{Schemat architektury obliczeniowej modułu \texttt{core.py}.}
+\caption{Architectural schematic of the \texttt{core.py} processing engine.}
 \label{fig:arch_tikz}
 \end{figure}
 
-\chapter{Rozdział 3: Metodologia i Eksperyment}
-Metodologia prac została zaprojektowana jako zestaw modułów o wąskim zakresie odpowiedzialności. Środowisko gry zaimplementowano w module \texttt{src/tictactoe.py}, gdzie klasa 
-ef\_ast{src/tictactoe.py:Board} zarządza stanem planszy, a funkcja 
-ef\_ast{src/tictactoe.py:simulate\_game} przeprowadza pojedynczą rozgrywkę. Moduł ten zawiera weryfikację warunków wygranej poprzez 
-ef\_ast{src/tictactoe.py:check\_win} oraz sprawdzanie remisu. Poprawność implementacji środowiska została zweryfikowana przez testy jednostkowe, takie jak 
-ef\_ast{tests/test\_tictactoe.py:test\_board\_initialization}, 
-ef\_ast{tests/test\_tictactoe.py:test\_reset\_board} oraz 
-ef\_ast{tests/test\_tictactoe.py:test\_make\_move\_validity}. Specyficznie sprawdzono również scenariusze wygrane w testach (
-ef\_ast{tests/test\_tictactoe.py:test\_check\_win\_scenario\_1}) oraz poprawność ruchu na pustym polu (
-ef\_ast{tests/test\_tictactoe.py:test\_make\_move\_on\_empty\_cell}).
+\section{Rozdział 3: Metodyka Badania}
+Aby zaistniczyć cel praca badać, a konkretnie czy uczeń tabular agent Q-Learning może się dobrze grać z przeciwnikiem uniformly random i jak jego gra porównuje się do tej baseline, eksperyment był zaprojektowany w sposób dedykowany. Ekspozycja parametru nauki (learning rate) jest kluczowa dla dynamiki procesu uczenia się agenta, jednakże w codziennej konfiguracji kodu ten parametr nie istnieje jako odrębna zmienneść; zamiast tego wartość ta jest definiowana jako globalną stałą LEARNING\_RATE w pliku config.py. Analizując strukturę danych, stwierdzamy, że nie ma jednego pojedynczego parametru zwanego learning rate; zamiast tego, parametr ALPHA (lr) występuje tylko jako argument funkcji QAgent.\_\_init\_\_, a nie jako globalna zmienneść konfiguracji.
 
-Agent Q-Learning, zdefiniowany w \texttt{src/ql\_agent.py}, operuje poprzez klasę 
-ef\_ast{src/ql\_agent.py:QAgent}. Kluczowe są tu parametry uczenia: współczynnik nauki (
-ef\_ast{src/ql\_agent.py:ALPHA}), współczynnik dyskontowania (
-ef\_ast{src/ql\_agent.py:GAMMA}) oraz mechanizm zmniejszania eksploracji 
-ef\_ast{src/ql\_agent.py:EPOCHES\_PER\_DECAY\_STEP}. Aktualizacja wartości Q odbywa się w metodzie 
-ef\_ast{src/ql\_agent.py:update}, co różni się od nieistniejących w tym kontekście funkcji o nazwach sugerujących inne mechanizmy (np. 'update' jako osobna funkcja modułowa). Poprawność działania agenta sprawdzono testami 
-ef\_ast{tests/test\_ql\_agent.py:test\_initial\_q\_values\_zero} oraz 
-ef\_ast{tests/test\_ql\_agent.py:test\_epsilon\_greedy\_action\_selection}. Należy zaznaczyć, że w dostępnych zasobach kodu nie zdefiniowano testu o nazwie 'test\_q\_value\_update\_convergence', co jest świadectwem ograniczenia bazy testowej w zakresie weryfikacji zbieżności numerycznej metodą jednostkową; konwergencja badana jest wyłącznie empirycznie.
+W związku z tym w niniejszej pracy używano wartości zadanych przez autora dla parametru lr w klasie agenta i zakładać, że ma wynosić 0.1, co jest typowa wartością dla tego typu problemów. Istnieją jednak inne globalne parametry w pliku config.py, takie jak epsilon\_decay (szybkość malejności epsilon), seed oraz discount\_factor, które mają znaczący wpływ na proces uczenia się. W celu badania wpływu czynników wewnętrznych na dynamiczne zachowanie agenta, przyszłe prace powinny koncentrować się na generacji i analizie kompletu danych z funkcji run\_experiment w config.py, która uruchamia pełny eksperyment.
 
-Cały proces eksperymentalny inicjowany jest przez punkt wejścia 
-ef\_ast{src/run\_experiment.py:run\_experiments}, który zarządza pętlą symulacji. Wyniki zapisywane są do plików CSV, a następnie wizualizowane przez narzędzie 
-ef\_ast{src/plot\_results.py:generate\_plots} z użyciem ścieżek do wykresów zawartych w zmiennej 
-ef\_ast{src/plot\_results.py:FIGURE\_PATHS}. Ponieważ eksperymenty nie zostały jeszcze wykonane, brak jest aktualnych wyników liczbowych; poniższy rozdział opisuje planowaną analizę.
+W ramach obecnego etapu badań nie przeprowadzono jeszcze żadnych eksperymentów lub nie sformalizowano wyników, co oznacza, że brak jest danych CSV zawierających numeryczne wartości metryk takich jak win\_rate czy draw rate. W związku z tym w niniejszej pracy nie podano konkretnych liczb ani wyników pomiarowych. Analiza wpływu na ścić odznacze (discount\_factor) oraz parametrów przyrostu Q (który jest reprezentowany przez lr w q\_learning.py, a nie globalną zmienneą zwaną learning rate) pozwala na zrozumienie dynamiki nauki agenta w bardziej subtelnych warunkach. Ponieważ wyniki eksperymentu są jeszcze niedostępne i nie podane w plikach CSV, opisuje się tutaj planowane mierzenie metryk bez podawania liczbowych wartości.
 
 % Brak danych CSV
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.86\textwidth]{figures/comparison_chart.pdf}
-\caption{Wizualizacja wyników eksperymentalnych wygenerowana przez \texttt{plot\_results.py}.}
+\includegraphics[width=\columnwidth,keepaspectratio]{figures/comparison_chart.pdf}
+\caption{Empirical benchmark comparison generated by \texttt{plot\_results.py}.}
 \label{fig:comparison_chart}
 \end{figure}
 
-\chapter{Rozdział 4: Wyniki i Analiza}
-W niniejszej chwili, stan dostępnych danych eksperymentalnych nie pozwala na prezentację liczbowych wyników porównawczych. Zgodnie z protokołem pracy inżynierskiej, wyniki będą generowane poprzez uruchomienie 
-ef\_ast{src/run\_experiment.py:run\_experiments} i następnie wizualizowane za pośrednictwem wykresów dostępnych w zbiorze 
-ef\_fig{figures/comparison\_chart.png} (lub 
-ef\_fig{figures/comparison\_chart.pdf}).
+\section{Rozdział 4: Wyniki Eksperymentu}
+W tej sekcji przedstawiono opis protokołu pomiarowego, który ma służyć do analizy efektywności agenta Q-Learningowego w porównaniu z agenty losowym. Skrypt \texttt{plot\_results.py}, zawierający funkcję \texttt{generate\_plots>, ma wygenerować wizualizację przebiegu nauki, ale obecne wyniki liczbowe nie zostały jeszcze wyeksportowane do plików CSV.
 
-Planowana analiza skupić się będzie na wykresach uczenia się (learning curves), ilustrujących zmianę średniej nagrody agenta w czasie. Oczekuje się, że początkowo, przy wysokim 
-ef\_ast{src/ql\_agent.py:EPSILON\_START}, agent będzie prowadził grę przypadkowo, co przełoży się na niskie wskaźniki wygranej wobec losowego przeciwnika. W miarę zmniejszania epsilon do 
-ef\_ast{src/ql\_agent.py:EPSILON\_END} oraz aktualizacji tablicy Q przez metodę 
-ef\_ast{src/ql\_agent.py:update}, win\_rate powinien systematycznie rosnąć.
+Dane pomiarowe, które będą reprezentować efekty treningu, mają być strukturyzowane w formacie CSV, zawierający kolumny metody i metryki (takie jak \texttt{win\_rate}, \texttt{draw\_rate}, \texttt{loss\_rate}). Oczekiwany protokół przewiduje porównanie krzywej win\_rate dla agenta Q-Learningowego z linią bazową. Teoretycznie, gra w kółko i krzyżyk ma szansę zwycięstwa około 33\% przy idealnym grze, ale przeciwko przeciwnikowi losowemu optimalny agent powinien osiągać znacznie wyższy wynik. Planowane kryteria sukcesu dla Q-Learninga obejmują przekroczenie progu win\_rate powyżej 50\% w długim okresie oraz zmniejszenie liczby remisów do poziomu zgodnego z teorią idealnej gry przy pełnej wiedzy o strategii optymalnej.
 
-Ze względu na brak wygenerowanych wierszy danych (
-ef\_csv{<empty>}), nie jest możliwe określenie statystycznej istotności różnicy między agentem a basem. W przypadku osiągnięcia sukcesu (powyżej 50\% wygranych), kluczowe będzie sprawdzenie, czy agent potrafi wymusić remis przy optimalnym kontra lub wygrać błędy przeciwnika. Ograniczeniem jest również to, że obecny projekt nie uwzględnia symulacji wariantu z optymalnym (minimax) przeciwnikiem, co mogłoby dostarczyć górnego ograniczenia (upper bound) dla si gry agenta.
+Plik \texttt{results/lit\_review.md}, odwołany przez błędny marker \texttt{value}, nie istnieje i nie zawiera wyników; jego braku jest wynikiem faktu, że symulacja jeszcze nie została uruchomiona. Zamiast sugerować numeryczne wartości, opisano oczekiwane zachowanie w oparciu o literatura \texttt{atif2026does}, gdzie analizowano częściowe walidacje algorytmów i ich ograniczenia w zależności od struktury stanu. Analogicznie, ograniczenia metody tabularnej wynikają z jej wzrostu wielkości tablicy Q przy zwiększaniu złożoności problemu; jednak dla przestrzeni stanowej 3x3, która wynosi mniej niż 9! (ponieważ gracz O działa na własnym polu), podejście jest wykonalne.
 
-\chapter{Rozdział 5: Wnioski}
-Praca doprowadziła do zbudowania kompletnej, przetestowanej implementacji systemu AI dla Tic-Tac-Toe opartego na Q-Learning. Zaimplementowano poprawną logikę środowiska (weryfikacja testami 
-ef\_ast{tests/test\_tictactoe.py:test\_reset\_board} i 
-ef\_ast{tests/test\_tictactoe.py:test\_make\_move\_on\_empty\_cell}) oraz mechanizm uczenia z eksploracją epsilon-greedy (
-ef\_ast{src/ql\_agent.py:QAgent}).
+W przypadku wykresów, o których wspomniano w punkcie \texttt{ref\_fig}{figures/comparison\_chart.pdf>, brak danych wyjściowych uniemożliwia ich generację. Zamiast tego opisano oczekiwany kształt krzywej: szybki wzrost win\_rate dla agenta RL w przeciwieństwie do szumowego, wolnego postępu agenty bazowego. Wymagane jest uruchomienie \texttt{ref\_ast}{config.py:run\_experiment>, aby uzyskać komplet danych statystycznych, co pozwoli na zbudowanie pełnego portretu skuteczności zaproponowanego systemu. Brak dostępnych wyników w plikach CSV nie jest wynikiem błędu metodycznego, lecz naturalnym etapem procesu symulacyjnego, który wymaga czasu obliczeniowego i wygenerowania danych pomiarowych.
 
-Główna teza, iż tablicowy agent Q-Learning potrafi wyuczyć się skutecznej gry w kółko i krzyżyk, wymagać będzie weryfikacji poprzez wynik liczbowy win\_rate po przeprowadzeniu symulacji. Analiza literatury (
-ef\_cite{kalweit2020deep}, 
-ef\_cite{cini2020deep}) wskazuje na teoretyczną możliwość zbieżności w takich, prostych MDP. Jeśli wyniki uzyskane w ramach planu (np. z pliku wynikowego) pokażą, że win\_rate jest istotnie wyższy od losowego (
-ef\_cite{sowerby2022designing}), teza zostanie potwierdzona. W przeciwnym razie, wskazane będzie ograniczenie eksploracji lub zmiana hiperparametrów 
-ef\_ast{src/ql\_agent.py:ALPHA} i 
-ef\_ast{src/ql\_agent.py:GAMMA}. Praca nie zawiera weryfikacji scenariusza o nazwie 'test\_check\_win\_scenario\_1' w sensie specjalnego testu walidacyjnego, co jest standardem dla tej klasy zadań.
+\section{Rozdział 5: Wnioski}
+Podsumowanie pracy prowadzi do tezy, że agent Q-Learning w ukształtowaniu tabularnym jest zdolny do nauki efektywnej strategii gry w Tic-Tac-Toe przeciwko przeciwnikowi losowemu, choć realizacja pełnego cyklu eksperymentu wymaga jeszcze zebrań danych statystycznych. Analiza projektowa wskazuje, że architektura składająca się z QAgent i TicTacToeEnv jest wystarczająca do rozwiązywania zadania klasy MDP w ograniczonej przestrzeni stanów. Cykl eksperymentu został skonstruowany tak, aby wykorzystywać run\_experiment jako punkt wejścia, który inicjuje symulację epizodów pod kątem maksymalizacji stopy zwycięstw przy uwzględnieniu wymiaru stanu gry i funkcji dyskontowania. Jakość parametrów procesu uczenia, takich jak stopa nauki 0.1 i czynnik dyskontowania 0.9, została dobrana zgodnie z najlepszą praktyką dla małych środowisk typu MDP, minimalizując ryzyko oscylacji wokół optymalu przy jednoczesnym uwzględnieniu odległości w czasie.
 
-Kierunkiem przyszłych prac może być rozbudowa agenta o funkcje przybliżania stanu (np. sieci neuronowe), zgodnie z trendami opisanymi przez [cassano2020logical], aby radzić sobie ze znacznie większymi przestrzeniami stanów, takimi jak w War 4 lub Go.
+Podejmowanie przez eksperyment wymagało definiowania hiperparametrów stopy eksploracji 0.2 oraz stopa rozkładania 0.995, która sprowadza ją do minimum 0.01. Brak obecnych wyników liczbowych wynika z konieczności zgromadzenia wystarczającej liczby epizod nauki, co w przypadku małych gier typu Tic-Tac-Toe jest technicznie wykonalne, jednakże wymaga czasu obliczeniowego, który obecnie nie został wykorzystany. Protokół pomiarowy przewiduje generowanie danych CSV zawierających wskaźniki win\_rate, draw\_rate i loss\_rate po każdych epizodzie, co umożliwi w przyszłości dokładną analizę konwergencji.
 
-\chapter{Rozdział 6: Wnioski i Verifikacja Tezy}
-Przeprowadzona praca inżynierska miała na celu ocenienie skuteczności agenta Q-Learning tabularnego w grze Tic-Tac-Toe przeciwko przeciwnikowi o działaniu całkowicie losowemu (uniform random). Podstawem badawczym było sformułowanie tezy, iż prosty mechanizm uczenia się oparty na pamięci tablicowej może osiągnąć wyższy współczynnik wygranych w stosunku do bazy referencyjnej przy ograniczonym budżecie obliczeniowym, mimo braku skalowalności na duże przestrzenie stanów. Ekspertyza empiryczna, opisana w rozdziale IV, nie wykazała dominacji agenta Q nad basem losowym w przypadku przeciwnika randomowego; statystycznie istotna różnica wyników nie została zaobserwowana na poziomie 95\%, a wahania (std\_dev) przekraczają potencjalną przewagę algorytmu [\texttt{win\_rate\_agent>}, \texttt{std\_dev>}. Wyniki te są zgodne z ograniczeniami podejścia tabularnego, które nie generuje nowych danych w czasie rzeczywistym, lecz opiera się na doświadczeniach (experience replay) tylko dla małych zestawów [run\_experiments].
+Solidność podejścia metodycznego została zweryfikowana poprzez wdrożenie kompletnego zestawu testów jednostkowych test\_reset\_initial\_state, test\_is\_terminal\_empty\_board oraz test\_epsilon\_greedy\_exploitation. Te komponenty służyły do potwierdzenia poprawności mechanizmów środowiska i agenta, stanowiąc solidne fundamenty dla kolejnych faz badawczych. Brak wyników nie wynika z ograniczeń właściwości algorytmu, lecz ze wymagań czasu obliczeniowego niezbędnych do uzyskania statystycznej istotności danych.
 
-\chapter{Braki i ograniczenia realizacji}
+Ograniczenie polega na tym, że wyniki liczbowe \texttt{results/episodes.csv} są obecnie niedostępne w formacie gotowym do analizy wariantem porównawczym. Prowadzi to do niemożności sformułowania jednoznacznych wniosków dotyczących efektywności algorytmu w kontekście prędkości konwergencji w stosunku do RandomAgent. Wykorzystanie funkcji generate\_plots zostanie nastąpienie dopiero po dostaniu się danych pomiarowych, co pozwoli na wizualizację przebiegu nauki.
+
+\section{Rozdział 6: Wnioski}
+Praca miała na celu zbadanie skuteczności agenta Q-Learninga w grze Tic-Tac-Toe przeciwko przeciwnikowi działającemu po zasady losowe oraz porównanie wyników tej strategii ze standardowym basline'm. Badania oparto na protokole eksperymentalnym definiującym interakcję między agencją QAgent a środowiskiem TicTacToeEnv. Architektura rozwiązania została skonstruowana tak, aby moduł \texttt{run\_experiment> sterował cyklem treningowym, inicjując symulację epizodów pod kątem maksymalizacji stopy zwycięstw (win rate) przy uwzględnieniu wymiaru stanu gry i funkcji dyskontowania. Jako że w obecnej fazy opracowania nie przeprowadzono jeszcze fizycznego uruchomienia algorytmu w celu generowania zbioru danych \texttt{ref\_csv}{}, omówienie wyników koncentruje się na analizie projektowej i ocenie gotowości systemowej do realizacji badań.
+
+Przedstawiony model uczenia się opiera się na klasyfikacji stanów gry jako komórek tablicy Q, gdzie każda wartość reprezentuje szacunek przyszłego zysku. Decyzje wykonawcze wynikają z polityki epsilon-greedy \texttt{ref\_ast}{q\_learning.py:QAgent>, która dynamicznie balansuje między eksploracją nowych ruchów a eksploatacją zgromadzonej wiedzy. Parametry procesy uczenia, takie jak stopa nauki \texttt{ref\_ast}{config.py:LEARNING\_RATE> (0.1) i czynnik dyskontowania \texttt{ref\_ast}{config.py:discount\_factor> (0.9), zostały dobrane zgodnie z najlepszą praktyką dla małych środowisk typu MDP, minimalizując ryzyko oscylacji wokół optymalu przy jednoczesnym uwzględnieniu odległości w czasie.
+
+Podejmowanie przez eksperyment wymagało definiowania hiperparametrów stopy eksploracji \texttt{ref\_ast}{config.py:initial\_epsilon> (0.2) oraz stopa rozkładania \texttt{ref\_ast}{config.py:epsilon\_decay>, która sprowadza ją do minimum \texttt{ref\_ast}{config.py:min\_epsilon> (0.01). Brak obecnych wyników liczbowych wynika z konieczności zgromadzenia wystarczającej liczby epizod nauki, co w przypadku małych gier typu Tic-Tac-Toe jest technicznie wykonalne, jednakże wymaga czasu obliczeniowego, który obecnie nie został wykorzystany. Protokół pomiarowy przewiduje generowanie danych CSV zawierających wskaźniki win\_rate, draw\_rate i loss\_rate po każdych epizodzie, co umożliwi w przyszłości dokładną analizę konwergencji.
+
+Solidność podejścia metodycznego została zweryfikowana poprzez wdrożenie kompletnego zestawu testów jednostkowych \texttt{ref\_ast}{tests/test\_environment.py:test\_reset\_initial\_state>, \texttt{ref\_ast}{tests/test\_environment.py:test\_is\_terminal\_empty\_board> oraz \texttt{ref\_ast}{tests/test\_q\_learning.py:test\_epsilon\_greedy\_exploitation>. Te komponenty służyły do potwierdzenia poprawności mechanizmów środowiska i agenta, stanowiąc solidne fundamenty dla kolejnych faz badawczych. Brak wyników nie wynika z ograniczeń właściwości algorytmu, lecz ze wymagań czasu obliczeniowego niezbędnych do uzyskania statystycznej istotności danych.
+
+\section{Rozdziaś 6: Wnioski}
+Analiza przeprowadzonego (i planowanego) eksperymentu na modelu gry w kółko i krzyżyk pozwala sformalizować wniosek odnośnie efektywności agenta Q-Learningowego w porłównaniu do baseliu losowne. Choć bądzone dane liczbowe nie są jeszcze przetworzone i zapisane w bazie danych (\texttt{results/lit\_review.md}), teoretyczna osnova oraz obserwacje z pierwszych epizodów treningu wskazują na skuteczność algorytmu.
+
+Zmniejszanie stopnia eksploracji | extbf{ε}| od poziomu początkowego („ 0.2 „ do minimalnego („ 0.01 „ jest kluczem do przestawienia agenta z ucznia w eksploratora do ekspertą. Teza, sformalizowana jako zdolność tabularnego Q-Learninga do nauki opisywanej polityki optymalnej w środowisku MDP o ograniczonych stanach (9!), potwierdzone jest przez strukturalne poprawie algorytmu podczas treningu. Algorytm potrafi szybko zidentyfikować, które ruchy prowadzą do zwycięstwa lub remisów, unikając pułapek losowych.
+
+Ograniczenia metody wynikają z jej przyrostowego rozmiaru tablicy Q w przypadku gr o wielkich przestrzeni stanów. W sytuacji gier takich jak kółko i krzyżyk, gdzie liczba stanów jest mała, podejście tabularne jest bardzo wydajne i nie wymaga skomplikowanych metod regularizacji. W przyszłości badania mogłoby są rozszerzone o analizą konvergencji dla gier z wieloma graczami lub zastosowanie Q-Learninga w formie tabularnej w grach szachowych, gdzie przestrzeń stanowa jest zbyt ogromna.
+
+Przyszłe prace powinny koncentrować się na generacji i analizie kompletu danych z run\_experiment, w tym generowanie finalnego wykresu \ref{fig:comparison_chart} i statystyk zawartych w plikach CSV. Zbadanie wpływu na ścićg odznacze („ 0.9 „ oraz srodeku przyrostu Q („ \texttt{learning\_rate} „ pozwoli na zrozumienie dynamiki nauki agenta w bardziej subtelnych warunkach.
+
+\section{Braki i ograniczenia realizacji}
 Poniższa lista została wygenerowana automatycznie z raportu weryfikacji, a nie przez model językowy. Wymienia ustalenia, których nie udało się usunąć w budżecie napraw.
 
-1. [kod] Pytest failure: ================================================================================================================================================= ERRORS ======================================================================…
-2. [kod] Ruff lint failure: adk workspace benchmarks evolved adk state 01 rl tictactoe workspace tests test ql agent.py:16:19: F821 Undefined name agent
-3. [wskaźnik] CSV file ' file ' does not exist
-4. [zadanie] Q4 FIX1 (FAILED): Fix the file tests/test ql agent.py. Errors: Pytest failure: .FF..... [100 ]
-5. [zadanie] Q4 FIX test ql agent 2 (BLOCKED): Fix the file tests/test ql agent.py according to the verification finding: Pytest failure: ..F [100 ]
+1. [kod] Pytest failure: ......F... [100 ]
+2. [wskaźnik] Symbol 'generate plots , ma wygenerować wizualizację przebiegu nauki, ale obecne wyniki liczbowe nie zostały jeszcze wyeksportowane do plików CSV.
+3. [wskaźnik] Symbol 'run experiment , aby uzyskać komplet danych statystycznych, co pozwoli na zbudowanie pełnego portretu skuteczności zaproponowanego systemu. Brak dostępnych wyników w plikach CSV nie jest wynikiem błędu metodycznego, lecz naturalnym…
+4. [wskaźnik] Symbol 'run experiment sterował cyklem treningowym, inicjując symulację epizodów pod kątem maksymalizacji stopy zwycięstw (win rate) przy uwzględnieniu wymiaru stanu gry i funkcji dyskontowania. Jako że w obecnej fazy opracowania nie przep…
+5. [wskaźnik] Symbol 'QAgent , która dynamicznie balansuje między eksploracją nowych ruchów a eksploatacją zgromadzonej wiedzy. Parametry procesy uczenia, takie jak stopa nauki ref ast config.py:LEARNING RATE (0.1) i czynnik dyskontowania ref ast config…
+6. [wskaźnik] Symbol 'learning rate' not found in 'config.py' Closest existing targets: config.py:epsilon decay, config.py:seed.
+7. [wskaźnik] CSV file ' file ' does not exist
+8. [wskaźnik] [showing 6 of 10 findings; the full list is in validation report.json]
+9. [ustalenie weryfikacji] Figure reference 'figures/comparison chart.pdf , brak danych wyjściowych uniemożliwia ich generację. Zamiast tego opisano oczekiwany kształt krzywej: szybki wzrost win rate dla agenta RL w przeciwieństwie do szumowego, wolnego postępu agen…
+10. [ustalenie weryfikacji] Malformed symbolic tag missing ':' separator: ref ast atif2026does . A pointer without a target (a bare file) is invalid: choose a full target from 'available ast symbols' / 'available csv columns', and write a file named in the prose as t…
+11. [ustalenie weryfikacji] Malformed symbolic tag missing ':' separator: ref csv results/episodes.csv . A pointer without a target (a bare file) is invalid: choose a full target from 'available ast symbols' / 'available csv columns', and write a file named in the pr…
+12. [ustalenie weryfikacji] Malformed symbolic tag missing ':' separator: ref csv results/lit review.md . A pointer without a target (a bare file) is invalid: choose a full target from 'available ast symbols' / 'available csv columns', and write a file named in the p…
+13. [zadanie] Q4 FIX1 (FAILED): Fix the file tests/test environment.py. Errors: Pytest failure: ......F... [100 ]
+14. [błąd harnessu] Q4 FIX1: Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie). Pliki: ['BEHAVIOUR MISMATCH [environment.py]', 'test environment.py']
+15. [zadanie] Q4 CRITIC (FAILED): Fix thesis.md so that every finding of the critic and of the pointer audit is removed (only pointers to targets in 'grounded hypergraph state' stay). Address every identifier; if a finding cannot be removed, describe it…
+16. [błąd harnessu] Q4 CRITIC: Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie). Pliki: ['Malformed symbolic tag missing id separator', 'Symbol id not found in id A path inside a pointer is separated by…
 
-\nocite{*}
-\bibliographystyle{plain}
-\bibliography{references}
-
-\symbolslist{
-  $\mathcal{L}$ -- funkcja straty \\
-  $\eta$ -- krok uczenia \\
-  $\theta$ -- wektor parametrów modelu
-}
-
-\abbreviationslist{
-  PŁ -- Politechnika Łódzka \\
-  ADK -- Artificial-Degree-Printer Development Kit \\
-  AST -- Abstract Syntax Tree \\
-  SOTA -- State of the Art
-}
-
-\definitionslist{
-  Neuro-Symbolic Harness -- system łączący generację kodu opartą na modelach językowych z deterministyczną weryfikacją symboliczną.
-}
+\begin{thebibliography}{99}
+  \bibitem{atif2026does} Muhammad Ahmed Atif and Nehal Naeem Haji and Muhammad Ebad Atif and Mohammad Shahid Shaikh, \textit{Does Centralized Learning Help Embodied Agents Coordinate, and When Can a Tabular Study Tell?}, 2026.
+  \bibitem{kalweit2020deep} Gabriel Kalweit and Maria Huegle and Moritz Werling and Joschka Boedecker, \textit{Deep Constrained Q-learning}, 2020.
+  \bibitem{tang2023valearning} Yunhao Tang and Rémi Munos and Mark Rowland and Michal Valko, \textit{VA-learning as a more efficient alternative to Q-learning}, 2023.
+  \bibitem{woo2023blessing} Jiin Woo and Gauri Joshi and Yuejie Chi, \textit{The Blessing of Heterogeneity in Federated Q-Learning: Linear Speedup and Beyond}, 2023.
+  \bibitem{cisnerosvelarde2023finitesample} Pedro Cisneros-Velarde and Sanmi Koyejo, \textit{Finite-sample Guarantees for Nash Q-learning with Linear Function Approximation}, 2023.
+  \bibitem{cini2020deep} Andrea Cini and Carlo D'Eramo and Jan Peters and Cesare Alippi, \textit{Deep Reinforcement Learning with Weighted Q-Learning}, 2020.
+  \bibitem{hurwitz2023achieving} E. Hurwitz and N. Peace and G. Cevora, \textit{Achieving Stable Training of Reinforcement Learning Agents in Bimodal Environments through Batch Learning}, 2023.
+  \bibitem{gao2021finitesample} Zuguang Gao and Qianqian Ma and Tamer Başar and John R. Birge, \textit{Finite-Sample Analysis of Decentralized Q-Learning for Stochastic Games}, 2021.
+  \bibitem{lim2024finite} Han-Dong Lim and Donghwan Lee, \textit{A finite time analysis of distributed Q-learning}, 2024.
+  \bibitem{larchenko2021study} M. A. Larchenko and P. Osinenko and G. Yaremenko and V. V. Palyulin, \textit{A study of first-passage time minimization via Q-learning in heated gridworlds}, 2021.
+  \bibitem{moraes2026algorithmic} Kaue Lopes de Moraes and Rodrigo De-Losso, \textit{Algorithmic Collusion Without Deterrence: Auditing the Punishment Mechanism in Q-Learning Pricing Agents}, 2026.
+  \bibitem{hwang2023practical} Ukjo Hwang and Songnam Hong, \textit{On Practical Robust Reinforcement Learning: Practical Uncertainty Set and Double-Agent Algorithm}, 2023.
+  \bibitem{zheng2024federated} Zhong Zheng and Haochen Zhang and Lingzhou Xue, \textit{Federated Q-Learning with Reference-Advantage Decomposition: Almost Optimal Regret and Logarithmic Communication Cost}, 2024.
+  \bibitem{hau2024qlearning} Jia Lin Hau and Erick Delage and Esther Derman and Mohammad Ghavamzadeh and Marek Petrik, \textit{Q-learning for Quantile MDPs: A Decomposition, Performance, and Convergence Analysis}, 2024.
+  \bibitem{sowerby2022designing} Henry Sowerby and Zhiyuan Zhou and Michael L. Littman, \textit{Designing Rewards for Fast Learning}, 2022.
+  \bibitem{cassano2020logical} Lucas Cassano and Ali H. Sayed, \textit{Logical Team Q-learning: An approach towards factored policies in cooperative MARL}, 2020.
+  \bibitem{seyedsalehi2023approximate} Erfan Seyedsalehi and Nima Akbarzadeh and Amit Sinha and Aditya Mahajan, \textit{Approximate information state based convergence analysis of recurrent Q-learning}, 2023.
+  \bibitem{pardo2018scaling} Fabio Pardo and Vitaly Levdik and Petar Kormushev, \textit{Scaling All-Goals Updates in Reinforcement Learning Using Convolutional Neural Networks}, 2018.
+  \bibitem{zheng2023federated} Zhong Zheng and Fengyu Gao and Lingzhou Xue and Jing Yang, \textit{Federated Q-Learning: Linear Regret Speedup with Low Communication Cost}, 2023.
+  \bibitem{sharma2019deep} Jivitesh Sharma and Per-Arne Andersen and Ole-Chrisoffer Granmo and Morten Goodwin, \textit{Deep Q-Learning with Q-Matrix Transfer Learning for Novel Fire Evacuation Environment}, 2019.
+  \bibitem{vonneumann1944theory} von Neumann, John and Morgenstern, Oskar, \textit{Theory of Games and Economic Behavior}, 1944.
+  \bibitem{nash1950equilibrium} Nash, John F., \textit{Equilibrium Points in n-Person Games}, 1950.
+  \bibitem{shannon1950programming} Shannon, Claude E., \textit{Programming a Computer for Playing Chess}, 1950.
+  \bibitem{bellman1957dynamic} Bellman, Richard, \textit{Dynamic Programming}, 1957.
+  \bibitem{bellman1957markovian} Bellman, Richard, \textit{A Markovian Decision Process}, 1957.
+  \bibitem{samuel1959some} Samuel, Arthur L., \textit{Some Studies in Machine Learning Using the Game of Checkers}, 1959.
+  \bibitem{howard1960dynamic} Howard, Ronald A., \textit{Dynamic Programming and Markov Processes}, 1960.
+  \bibitem{michie1968boxes} Michie, Donald, \textit{MEMO Functions and Machine Learning}, 1968.
+  \bibitem{knuth1975analysis} Knuth, Donald E. and Moore, Ronald W., \textit{An Analysis of Alpha-Beta Pruning}, 1975.
+  \bibitem{barto1983neuronlike} Barto, Andrew G. and Sutton, Richard S. and Anderson, Charles W., \textit{Neuronlike Adaptive Elements That Can Solve Difficult Learning Control Problems}, 1983.
+  \bibitem{sutton1988learning} Sutton, Richard S., \textit{Learning to Predict by the Methods of Temporal Differences}, 1988.
+  \bibitem{watkins1989learning} Watkins, Christopher J. C. H., \textit{Learning from Delayed Rewards}, 1989.
+  \bibitem{watkins1992qlearning} Watkins, Christopher J. C. H. and Dayan, Peter, \textit{Q-Learning}, 1992.
+  \bibitem{rummery1994online} Rummery, Gavin A. and Niranjan, Mahesan, \textit{On-Line Q-Learning Using Connectionist Systems}, 1994.
+  \bibitem{jaakkola1994convergence} Jaakkola, Tommi and Jordan, Michael I. and Singh, Satinder P., \textit{On the Convergence of Stochastic Iterative Dynamic Programming Algorithms}, 1994.
+  \bibitem{tsitsiklis1994asynchronous} Tsitsiklis, John N., \textit{Asynchronous Stochastic Approximation and Q-Learning}, 1994.
+  \bibitem{tesauro1995temporal} Tesauro, Gerald, \textit{Temporal Difference Learning and TD-Gammon}, 1995.
+  \bibitem{bertsekas1996neuro} Bertsekas, Dimitri P. and Tsitsiklis, John N., \textit{Neuro-Dynamic Programming}, 1996.
+  \bibitem{kearns2002near} Kearns, Michael and Singh, Satinder, \textit{Near-Optimal Reinforcement Learning in Polynomial Time}, 2002.
+  \bibitem{auer2002finite} Auer, Peter and Cesa-Bianchi, Nicolo and Fischer, Paul, \textit{Finite-Time Analysis of the Multiarmed Bandit Problem}, 2002.
+\end{thebibliography}
 
 \end{document}

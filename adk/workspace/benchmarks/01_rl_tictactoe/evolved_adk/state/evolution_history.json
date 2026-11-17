@@ -1,227 +1,28 @@
 {
   "events": [
     {
-      "type": "CONTRACT_ESTABLISHED",
-      "files": [
-        "src/plot_results.py",
-        "src/ql_agent.py",
-        "src/run_experiment.py",
-        "src/tictactoe.py"
-      ]
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 0
-      }
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T3_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.step: SyntaxError in new_code: unexpected indent (environment.py, line 17)"
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "SKELETON_FIX1",
+      "task_id": "T3_FIX2",
       "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- plot_results.py:src.plot_results.py:generate_plots: SyntaxError in new_code: unexpected character after line continuation character (plot_results.py, line 2)"
-    },
-    {
-      "type": "CONTRACT_ESTABLISHED",
-      "files": [
-        "src/plot_results.py",
-        "src/ql_agent.py",
-        "src/run_experiment.py",
-        "src/tictactoe.py"
-      ]
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 0
-      }
-    },
-    {
-      "type": "CONTRACT_ESTABLISHED",
-      "files": [
-        "src/plot_results.py",
-        "src/ql_agent.py",
-        "src/run_experiment.py",
-        "src/tictactoe.py"
-      ]
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n5",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 0
-      }
-    },
-    {
-      "type": "CONTRACT_ESTABLISHED",
-      "files": [
-        "src/plot_results.py",
-        "src/ql_agent.py",
-        "src/run_experiment.py",
-        "src/tictactoe.py"
-      ]
-    },
-    {
-      "type": "CONTRACT_ESTABLISHED",
-      "files": [
-        "src/plot_results.py",
-        "src/ql_agent.py",
-        "src/run_experiment.py",
-        "src/tictactoe.py"
-      ]
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.board: environment.py has no `TicTacToeEnv.board` and the planned interface of this module does not declare it (the file has: TicTacToeEnv, TicTacToeEnv.__init__, TicTacToeEnv.check_win, TicTacToeEnv.get_valid_actions, TicTacToeEnv.is_terminal, TicTacToeEnv.reset, TicTacToeEnv.step); nothing was saved. Edit one of these symbols, or check that this edit belongs to this file.\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 7) (environment.py, line 2)\n- environment.py:TicTacToeEnv.step: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 15) (environment.py, line 2)"
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T2",
+      "task_id": "T4",
       "agent": "seed_coder",
-      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- config.py:31: unterminated triple-quoted string literal (detected at line 33)\n    30: \n    31: \"\"\"\n    32: The module defines all fixed hyperparameters, experimental budgets, and metadata required to run the experiment reproducibly."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n10",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 0
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n1",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n8",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 0
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n8",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 0
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 1
-      }
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning.py:q_learning.QAgent: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 70) (q_learning.py, line 70)"
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T7_FIX_1",
+      "task_id": "T4_FIX2",
       "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- tictactoe.py:check_win: Provided new_code contains no AST statements."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n6",
-        "old_weight": 1.0,
-        "new_weight": 1.4,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n6",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n6",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 4
-      }
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning.py:QAgent.learn: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 26) (q_learning.py, line 2)"
     },
     {
       "type": "AGENT_MUTATED",
@@ -229,7 +30,7 @@
         "status": "mutated",
         "agent": "seed_coder",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
-        "injected_rule": "When implementing functionality that requires external libraries, verify their presence in the provided environment contract before writing imports or code, because using non-existent dependencies causes immediate runtime failure and wastes execution cycles.",
+        "injected_rule": "When implementing algorithms that aggregate values (e.g., finding max, min, sum) over data structures derived from model state or cache, always verify that the resulting iterable is non-empty before calling aggregation functions, because empty sequences cause runtime errors and break doctest expectations.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
@@ -237,9 +38,75 @@
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "GATE_3_FIX_2_FIX2",
+      "task_id": "T5",
       "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- tictactoe.py:src/tictactoe.py:Board.make_move: SyntaxError in new_code: unexpected indent (tictactoe.py, line 3)"
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- baseline.py:baseline.RandomAgent.act: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 9) (baseline.py, line 2)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T8_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unexpected indent (environment.py, line 9)\n- environment.py:TicTacToeEnv.step: SyntaxError in new_code: unexpected indent (environment.py, line 17)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T9",
+      "agent": "seed_tester",
+      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_q_learning.py:60: unmatched '}'\n    59:     assert isinstance(agent.q_table, dict)\n    60: }"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T9_FIX1",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_q_learning.py:<module>: The new code of <module> contains no definition of `<module>`; nothing was saved."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T13_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- config.py:config.py: The new code of py contains no definition of `py`; nothing was saved."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T15_FIX",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unexpected indent (environment.py, line 9)\n- environment.py:TicTacToeEnv.step: SyntaxError in new_code: unexpected indent (environment.py, line 17)\n- environment.py:TicTacToeEnv.get_valid_actions: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 13) (environment.py, line 2)\n- environment.py:TicTacToeEnv.is_terminal: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 13) (environment.py, line 2)\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 13) (environment.py, line 2)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T15_FIX_QLEARN",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning.py:QAgent.learn: SyntaxError in new_code: unexpected indent (q_learning.py, line 13)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T15_FIX_ENV",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unexpected indent (environment.py, line 9)\n- environment.py:TicTacToeEnv.step: SyntaxError in new_code: unexpected indent (environment.py, line 17)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T15_FIX_1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unexpected indent (environment.py, line 11)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T15_FIX_4",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- plot_results.py:plot_results: an ast_edits element named after the module replaces the WHOLE file, and this code would delete generate_plots. To change one symbol, name that symbol; to replace the module, return all of it in 'files'."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T15_FIX_2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 12) (environment.py, line 2)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T15_FIX_3",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 16) (environment.py, line 2)"
     },
     {
       "type": "QUEUE_REBUILT",
@@ -248,172 +115,216 @@
         "Q1_FIX1",
         "Q1_FIX2",
         "Q1_FIX3",
-        "Q1_FIX_test_tictactoe_4",
-        "Q1_FIX_plot_results_5",
-        "Q1_FIX_test_tictactoe_6",
-        "Q1_FIX_test_ql_agent_7",
-        "Q1_FIX_config_8",
+        "Q1_FIX4",
+        "Q1_CH6",
+        "Q1_FIX_environment_6",
+        "Q1_FIX_q_learning_7",
+        "Q1_FIX_environment_8",
+        "Q1_FIX_environment_9",
+        "Q1_FIX_q_learning_10",
+        "Q1_FIX_environment_11",
+        "Q1_FIX_q_learning_12",
         "Q1_CRITIC",
         "Q1_PDF"
       ]
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n6",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 4
-      }
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX1",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_environment.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_step_updates_state: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_tasp686q\\tests\\test_environment.py, line 12"
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX1_FIX1",
+      "task_id": "Q1_FIX1_FIX2",
       "agent": "seed_coder",
-      "error": "Write rejected: it changes public signatures fixed by the skeleton (the contract between tasks):\n- src/plot_results.py: removed generate_plots(output_dir)\nEither keep these signatures and change only the implementation, or add 'contract_change': {'reason': '<why the API must change>'} to the answer. The modules that use it are adapted in later tasks."
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n6",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
-        "delta": 0.4,
-        "degree": 4
-      }
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- API_MISSING [environment.py]: the interface declares TicTacToeEnv.check_win, TicTacToeEnv.get_valid_actions, TicTacToeEnv.is_terminal, the file lacks them"
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
       "task_id": "Q1_FIX2",
-      "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_tictactoe.py:test_make_move_validity: SyntaxError in new_code: unexpected indent (test_tictactoe.py, line 2)"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "OFF_TARGET_WRITE",
-      "node": "tests/test_ql_agent.py",
-      "files": [
-        "tests/test_tictactoe.py"
-      ],
-      "agent": "seed_tester",
-      "task_id": "Q1_FIX3"
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 3.0,
-        "new_weight": 3.4,
-        "delta": 0.4,
-        "degree": 2
-      }
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.__init__: SyntaxError in new_code: unexpected indent (environment.py, line 1)\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unexpected indent (environment.py, line 1)\n- environment.py:TicTacToeEnv.step: SyntaxError in new_code: unexpected indent (environment.py, line 1)\n- environment.py:TicTacToeEnv.get_valid_actions: SyntaxError in new_code: unexpected indent (environment.py, line 1)\n- environment.py:TicTacToeEnv.is_terminal: SyntaxError in new_code: unexpected indent (environment.py, line 1)\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unexpected indent (environment.py, line 1)"
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q1_FIX_test_tictactoe_4",
+      "task_id": "Q1_FIX2_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.step: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)"
+    },
+    {
+      "type": "MUTATION_REJECTED",
+      "agent": "seed_coder",
+      "rule": "When implementing a method with multiple return values, ensure all variables are assigned before any conditional branch returns or raises an exception, because unassigned variables referenced in the return statement cause NameError.",
+      "reason": "encodes a symptom (error code, exception type, line number) instead of a working method"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX3_FIX2",
+      "agent": "seed_coder",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- FILE_OUTSIDE_PLAN [helpers.py]: no planned artefact has this path"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX4",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- plot_results.py:plot_results.generate_plots: The new code of generate_plots also contains Expr, Assign, Assign, Assign; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX4_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- plot_results.py:plot_results.generate_plots: The new code of generate_plots also contains Expr, Assign, Assign, Assign; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_CH6_FIX_3",
       "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_tictactoe.py:test_make_move_validity: SyntaxError in new_code: unmatched '}' (test_tictactoe.py, line 16)"
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- FILE_OUTSIDE_PLAN [tests/test_config.py]: no planned artefact has this path"
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
-        "delta": 0.4,
-        "degree": 2
-      }
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_environment_6_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.__init__: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)\n- environment.py:TicTacToeEnv.step: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)"
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 3.0,
-        "new_weight": 3.4,
-        "delta": 0.4,
-        "degree": 2
-      }
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_q_learning_7_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning.py:QAgent.learn: SyntaxError in new_code: unexpected indent (q_learning.py, line 14)"
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 3.4,
-        "new_weight": 3.8,
-        "delta": 0.4,
-        "degree": 2
-      }
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_q_learning_7_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning.py:q_learning.QAgent.learn: SyntaxError in new_code: unexpected indent (q_learning.py, line 14)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_environment_8",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.__init__: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_environment_8_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.__init__: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unexpected character after line continuation character (environment.py, line 2)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_environment_8_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unexpected indent (environment.py, line 9)\n- environment.py:TicTacToeEnv.__init__: SyntaxError in new_code: unexpected indent (environment.py, line 3)\n- environment.py:TicTacToeEnv.step: SyntaxError in new_code: unexpected indent (environment.py, line 17)\n- environment.py:TicTacToeEnv.get_valid_actions: SyntaxError in new_code: unexpected indent (environment.py, line 3)\n- environment.py:TicTacToeEnv.is_terminal: SyntaxError in new_code: unexpected indent (environment.py, line 4)\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unexpected indent (environment.py, line 11)"
     },
     {
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_tester.md",
-        "injected_rule": "When defining a test case without an accompanying class-based fixture setup, avoid using 'self' as a parameter name because pytest interprets it as a request for a fixture rather than a method instance reference; instead use 'case' or 'test_case', because the test is a standalone function.",
-        "active_rules_count": 1,
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When implementing a method that returns a sequence or array, ensure every execution path (including implicit ones via missing return statements) explicitly returns a valid object of the expected type rather than None, because doctests and callers rely on the contract that the result is usable for operations like len() or indexing.",
+        "active_rules_count": 3,
         "compacted": false,
         "compaction_details": null
       }
     },
     {
-      "type": "WEIGHT_ESCALATED",
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_environment_9",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.reset: SyntaxError in new_code: unexpected indent (environment.py, line 11)"
+    },
+    {
+      "type": "MUTATION_REJECTED",
+      "agent": "seed_coder",
+      "rule": "When implementing a method documented in docstring examples, strictly follow the return value specification of those examples rather than making assumptions about standard library conventions or previous behavior, because the doctest examples define the immediate contract for the caller.",
+      "reason": "concerns what the harness enforces (syntax, answer shape, imports)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_q_learning_10_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning.py:QAgent.learn: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 215) (q_learning.py, line 2)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_q_learning_10_FIX2",
+      "agent": "seed_coder",
+      "error": "The answer for 'q_learning.py' was not saved: the fields ['error', 'issues', 'raw_response'] match no allowed shape. Allowed: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section_content}]'). Return files in 'files' as a list of {'filename', 'content'}."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_environment_11",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unexpected indent (environment.py, line 1)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_environment_11_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unexpected indent (environment.py, line 1)"
+    },
+    {
+      "type": "AGENT_MUTATED",
       "details": {
-        "node_id": "n1",
-        "old_weight": 1.4,
-        "new_weight": 1.8,
-        "delta": 0.4,
-        "degree": 9
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When generating nested loops or comprehensions, ensure that every variable referenced in an inner scope is defined by an outer loop variable in the same expression chain, because undefined names cause runtime NameErrors.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "seed_coder",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+          "cycle": 1,
+          "rules_consolidated": 4,
+          "dropped_ineffective": [],
+          "invariants": [
+            "When modifying code structure or signatures, always preserve strict AST compatibility for parameters and return types of exported symbols, because downstream modules rely on these contracts to function correctly.",
+            "When implementing algorithms that aggregate values from derived data structures, always verify that the resulting iterable is non-empty before performing aggregation, because empty sequences cause runtime errors and invalidate doctest expectations.",
+            "When defining methods intended to return sequences or arrays, ensure every execution path explicitly returns a valid object of the expected type rather than None, because callers and doctests rely on the contract that the result supports indexing or length operations."
+          ]
+        }
       }
     },
     {
-      "type": "WEIGHT_ESCALATED",
+      "type": "PROMPT_CONSOLIDATED",
       "details": {
-        "node_id": "n1",
-        "old_weight": 1.8,
-        "new_weight": 2.2,
-        "delta": 0.4,
-        "degree": 9
+        "status": "consolidated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "cycle": 1,
+        "rules_consolidated": 4,
+        "dropped_ineffective": [],
+        "invariants": [
+          "When modifying code structure or signatures, always preserve strict AST compatibility for parameters and return types of exported symbols, because downstream modules rely on these contracts to function correctly.",
+          "When implementing algorithms that aggregate values from derived data structures, always verify that the resulting iterable is non-empty before performing aggregation, because empty sequences cause runtime errors and invalidate doctest expectations.",
+          "When defining methods intended to return sequences or arrays, ensure every execution path explicitly returns a valid object of the expected type rather than None, because callers and doctests rely on the contract that the result supports indexing or length operations."
+        ]
       }
     },
     {
-      "type": "WEIGHT_ESCALATED",
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_q_learning_12_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning.py:QAgent.__init__: SyntaxError in new_code: invalid syntax (q_learning.py, line 1)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q1_FIX_q_learning_12_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning.py:q_learning.QAgent.learn: SyntaxError in new_code: unexpected indent (q_learning.py, line 14)"
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
       "details": {
-        "node_id": "n1",
-        "old_weight": 2.2,
-        "new_weight": 2.6,
-        "delta": 0.4,
-        "degree": 9
+        "file": "thesis.md",
+        "line": null,
+        "reason": "The validation report issues refer to symbols in 'environment.py' and 'config.py', but the failed agent is 'seed_writer' tasked with writing 'thesis.md'. The validator appears to be checking code references within a document file against the project source code without providing the necessary context or allowing the writer to locate them, which is outside the seed_writer's capability. Furthermore, the pattern indicates missing files (CSV, PDF) which suggests the agent is trying to reference outputs that haven't been generated or placed correctly by previous steps, yet it is being blamed for the writing task rather than the build orchestration.",
+        "source": "evolution_architect"
       }
     },
     {
@@ -422,218 +333,102 @@
       "task_ids": [
         "Q2_FIX1",
         "Q2_FIX2",
-        "Q2_FIX_test_ql_agent_3",
-        "Q2_FIX_test_tictactoe_4",
+        "Q2_FIX3",
+        "Q2_FIX4",
         "Q2_CRITIC"
       ]
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 3.8,
-        "new_weight": 4.2,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 3.4,
-        "new_weight": 3.8,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 3.8,
-        "new_weight": 4.2,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 4.2,
-        "new_weight": 4.6,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_FIX_test_ql_agent_3",
+      "task_id": "Q2_FIX1",
       "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_ql_agent.py:tests.test_ql_agent:QAgent.update_convergence_check: The edit code of QAgent.update_convergence_check has no `def update_convergence_check` definition."
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_environment.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_check_win_player_x: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_ckoijo5n\\tests\\test_environment.py, line 37"
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 4.6,
-        "new_weight": 5.0,
-        "delta": 0.4,
-        "degree": 2
-      }
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q2_FIX2",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_q_learning.py:test_q_value_update: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 5) (test_q_learning.py, line 2)"
     },
     {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 5.0,
-        "new_weight": 5.4,
-        "delta": 0.4,
-        "degree": 2
-      }
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q2_FIX3",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv._board: The new code of TicTacToeEnv._board also contains board; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`."
     },
     {
-      "type": "WEIGHT_ESCALATED",
+      "type": "HARNESS_BUG_REPORTED",
       "details": {
-        "node_id": "n12",
-        "old_weight": 5.4,
-        "new_weight": 5.8,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 4.2,
-        "new_weight": 4.6,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 4.6,
-        "new_weight": 5.0,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n11",
-        "old_weight": 5.0,
-        "new_weight": 5.4,
-        "delta": 0.4,
-        "degree": 2
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n1",
-        "old_weight": 2.6,
-        "new_weight": 3.0,
-        "delta": 0.4,
-        "degree": 3
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n1",
-        "old_weight": 3.0,
-        "new_weight": 3.4,
-        "delta": 0.4,
-        "degree": 4
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n1",
-        "old_weight": 3.4,
-        "new_weight": 3.8,
-        "delta": 0.4,
-        "degree": 7
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_writer",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_writer.md",
-        "injected_rule": "When referencing code symbols or file paths from another module, always resolve them against the explicit contract definitions provided in the input payload rather than inferring names or locations from the current file's context, because the payload contains the ground truth for existing artifacts.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
+        "files_in_error": [
+          "BEHAVIOUR_MISMATCH [environment.py]",
+          "test_environment.py"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [environment.py]: the implementation does not give the results the interface specifies:\n**********************************************************************\nLine #, in example#\nFa\ntest_environment.py::test_check_win_player_o:assert",
+        "task_id": "Q2_FIX3",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
       }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "Q2_CRITIC_FIX_3",
+      "task_id": "Q2_FIX4_FIX2",
       "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- ast_edits element without the required 'symbol' or 'code' (it has keys: ['simulate_game', \"} \\n            # We should probably use simulate_game if available with agent support.\\n            # But QAgent is not integrated into Board yet. \\n            # Let's assume the loop implements one run.\\n            \\n            total_steps += step\\n        \\n        # Calculate aggregates for this run\\n        avg_reward = sum(run_rewards) / len(run_rewards) if run_rewards else 0.0\\n        # Win/Loss logic needs to be stored in Board or returned by simulate_game equivalent\\n        # Since I am implementing the body, I will assume Board tracks winner or we get it from reward\\n        # Reward usually: +1 for win, -1 for loss, 0 for draw for agent.\\n        \\n        if avg_reward > 0:\\n            wins += 1\\n        elif avg_reward < 0:\\n            losses += 1\\n        else:\\n            draws += 1\\n            \\n    n_runs = config.get('N_REPETITIONS', 10)\\n    win_rate = wins / n_runs if n_runs else 0\\n    draw_rate = draws / n_runs if n_runs else 0\\n    loss_rate = losses / n_runs if n_runs else 0\\n    \\n    row = {\\n        'method': 'Q-Learning',\\n        'N_EPISODES': config.get('N_EPISODES_PER_RUN', 1000),\\n        'N_REPETITIONS': n_runs,\\n        'win_rate_agent': win_rate,\\n        'draw_rate': draw_rate,\\n        'loss_rate_agent': loss_rate\\n    }\\n    results.append(row)\\n    \\n    return results\"]); every element is {'symbol': '<name or Class.method>', 'code': '<code>', 'file': '<path.py>'}"
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning.py:QAgent.learn: SyntaxError in new_code: unexpected indent (q_learning.py, line 14)"
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "BEHAVIOUR_MISMATCH [q_learning.py]",
+          "Exception raised",
+          "Failed example"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [q_learning.py]: the implementation does not give the results the interface specifies:\n\nFailed example:\n    ns = (#,)*#; ns[#]=#\nException raised:\n    Traceback (most recent call la",
+        "task_id": "Q2_FIX4",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
     },
     {
       "type": "QUEUE_REBUILT",
       "generation": 3,
       "task_ids": [
-        "Q3_FIX1"
+        "Q3_FIX1",
+        "Q3_CRITIC",
+        "Q3_PDF"
       ]
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
       "task_id": "Q3_FIX1",
       "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_ql_agent.py:test_q_value_update_convergence: SyntaxError in new_code: expected an indented block after 'with' statement on line 2 (test_ql_agent.py, line 2)"
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_environment.py:tests.test_environment::test_check_win_player_o: The new code of test_check_win_player_o contains no definition of `test_check_win_player_o`; nothing was saved."
     },
     {
-      "type": "WEIGHT_ESCALATED",
+      "type": "HARNESS_BUG_REPORTED",
       "details": {
-        "node_id": "n12",
-        "old_weight": 5.8,
-        "new_weight": 6.2,
-        "delta": 0.4,
-        "degree": 1
+        "files_in_error": [
+          "BEHAVIOUR_MISMATCH [environment.py]",
+          "test_environment.py"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [environment.py]: the implementation does not give the results the interface specifies:\n**********************************************************************\nLine #, in example#\nFa\ntest_environment.py::test_check_win_player_o:assert",
+        "task_id": "Q3_FIX1",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
       }
     },
     {
-      "type": "WEIGHT_ESCALATED",
+      "type": "HARNESS_BUG_REPORTED",
       "details": {
-        "node_id": "n12",
-        "old_weight": 6.2,
-        "new_weight": 6.6,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 6.6,
-        "new_weight": 7.0,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_tester.md",
-        "injected_rule": "When defining a test case that interacts with a specific class instance, instantiate that instance in the local scope (e.g., via `fixture` or function body) before attempting to mock its methods, because mocked objects require an active instance of the target class to bind attributes to.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
+        "files_in_error": [
+          "Malformed symbolic tag missing <id> separator",
+          "Symbol <id> not found in <id> A path inside a pointer is separated by a slash",
+          "Symbol <id> not found in <id> Closest existing targets"
+        ],
+        "signature": "CSV file <id> does not exist\nFigure reference <id> not found in workspace.\nMalformed symbolic tag missing <id> separator: \\ref_ast{atif#does}. A pointer without a target (a bare file) is invalid: choose a full target from <id> / <id>, and write a file named in the prose as \\\nMalformed symbolic tag missing <id> separator: \\ref_csv{results/lit_review.md}. A pointer without a target (a bare file) is invalid: choose a full target from <id> / <id>, and write a file named in th\nSymbol <id> not found in <id>\nSymbol <id> not found in <id> A path inside a pointer is separated by a slash: \\ref_ast{environment.py/TicTacToeEnv>, która zarządza cyklem gry, generuje ruchy, a także zwraca informacje o terminacji \nSymbol <id> not found in <id> A path inside a pointer is separated by a slash: \\ref_ast{q_learning.py/QAgent>, która dynamicznie balansuje między eksploracją nowych ruchów a eksploatacją zgromadzonej \nSymbol <id> not found in <id> Closest existing targets: config.py:epsilon_decay, config.py:seed.",
+        "task_id": "Q3_CRITIC",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
       }
     },
     {
@@ -641,37 +436,47 @@
       "generation": 4,
       "task_ids": [
         "Q4_FIX1",
-        "Q4_FIX_test_ql_agent_2"
+        "Q4_CRITIC",
+        "Q4_PDF"
       ]
     },
     {
-      "type": "WEIGHT_ESCALATED",
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q4_FIX1",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_environment.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_check_win_player_o: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_whdpp9tj\\tests\\test_environment.py, line 45"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "Q4_FIX1_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.check_win: SyntaxError in new_code: unexpected indent (environment.py, line 1)"
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
       "details": {
-        "node_id": "n12",
-        "old_weight": 7.0,
-        "new_weight": 7.4,
-        "delta": 0.4,
-        "degree": 1
+        "files_in_error": [
+          "BEHAVIOUR_MISMATCH [environment.py]",
+          "test_environment.py"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [environment.py]: the implementation does not give the results the interface specifies:\n**********************************************************************\nLine #, in example#\nFa\ntest_environment.py::test_check_win_player_o:assert",
+        "task_id": "Q4_FIX1",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
       }
     },
     {
-      "type": "WEIGHT_ESCALATED",
+      "type": "HARNESS_BUG_REPORTED",
       "details": {
-        "node_id": "n12",
-        "old_weight": 7.4,
-        "new_weight": 7.8,
-        "delta": 0.4,
-        "degree": 1
-      }
-    },
-    {
-      "type": "WEIGHT_ESCALATED",
-      "details": {
-        "node_id": "n12",
-        "old_weight": 7.8,
-        "new_weight": 8.2,
-        "delta": 0.4,
-        "degree": 1
+        "files_in_error": [
+          "Malformed symbolic tag missing <id> separator",
+          "Symbol <id> not found in <id> A path inside a pointer is separated by a slash",
+          "Symbol <id> not found in <id> Closest existing targets"
+        ],
+        "signature": "CSV file <id> does not exist\nFigure reference <id> not found in workspace.\nMalformed symbolic tag missing <id> separator: \\ref_ast{atif#does}. A pointer without a target (a bare file) is invalid: choose a full target from <id> / <id>, and write a file named in the prose as \\\nMalformed symbolic tag missing <id> separator: \\ref_csv{results/episodes.csv}. A pointer without a target (a bare file) is invalid: choose a full target from <id> / <id>, and write a file named in the\nMalformed symbolic tag missing <id> separator: \\ref_csv{results/lit_review.md}. A pointer without a target (a bare file) is invalid: choose a full target from <id> / <id>, and write a file named in th\nSymbol <id> not found in <id>\nSymbol <id> not found in <id> A path inside a pointer is separated by a slash: \\ref_ast{q_learning.py/QAgent>, która dynamicznie balansuje między eksploracją nowych ruchów a eksploatacją zgromadzonej \nSymbol <id> not found in <id> Closest existing targets: config.py:epsilon_decay, config.py:seed.",
+        "task_id": "Q4_CRITIC",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
       }
     }
   ]
