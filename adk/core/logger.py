@@ -2,15 +2,29 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+
+def _tolerant_console() -> None:
+    """A character the console's code page cannot show is replaced, never raised: on a Windows console (cp1250)
+    printing `σ` crashed a run right after planning (2026-11-18). The log files are always written in UTF-8."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(errors="replace")
+            except (ValueError, OSError):
+                pass
 
 
 class HarnessProcessLogger:
     """Logs every prompt sent to agents, raw/parsed responses, and orchestrator steps."""
 
     def __init__(self, log_dir: str | Path | None = None, verbose_console: bool | None = None) -> None:
+        _tolerant_console()
         default_dir = Path(__file__).resolve().parent.parent / "logs"
         env_dir = os.environ.get("HARNESS_LOG_DIR")
         self.log_dir = Path(log_dir) if log_dir else (Path(env_dir) if env_dir else default_dir)
@@ -48,9 +62,15 @@ class HarnessProcessLogger:
         with self.events_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
 
+    def log_trace(self, record: dict[str, Any]) -> None:
+        """One record of an agent call in `agent_trace.jsonl` (phase: request, answer or error)."""
+        with self.trace_jsonl_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
+
     def log_agent_exchange(
         self,
         *,
+        step: int,
         agent_md: str,
         provider: str,
         model_tier: str,
@@ -64,8 +84,10 @@ class HarnessProcessLogger:
     ) -> None:
         """Record the exact prompt sent to an agent and the exact response returned."""
         ts = datetime.now(timezone.utc).isoformat()
-        record = {
+        self.log_trace({
             "timestamp": ts,
+            "phase": "answer",
+            "step": step,
             "agent_md": agent_md,
             "provider": provider,
             "model_tier": model_tier,
@@ -75,13 +97,11 @@ class HarnessProcessLogger:
             "user_payload": user_payload,
             "raw_response": raw_response,
             "parsed_output": parsed_output,
-        }
-        with self.trace_jsonl_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        })
 
         readable_block = (
             f"\n{'=' * 80}\n"
-            f"[{ts}] AGENT CALL: {agent_md}\n"
+            f"[{ts}] AGENT CALL #{step}: {agent_md}\n"
             f"Provider: {provider} | Tier: {model_tier} | Model: {model_name} | Time: {elapsed_ms:.1f} ms\n"
             f"{'-' * 80}\n"
             f">>> WYSŁANO DO AGENTA (PROMPT + PAYLOAD):\n"

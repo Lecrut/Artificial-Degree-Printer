@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -23,9 +22,6 @@ def _setup_test_orchestrator(tmp_path: Path) -> NeuroSymbolicOrchestrator:
     orch.hitl_flag_path = orch.state_dir / "hitl_flag.json"
     # Without this every test run appended events to the tracked adk/state/evolution_history.json (§V pkt 21).
     orch.evolution_history_path = orch.state_dir / "evolution_history.json"
-    # The hypergraph is state too: without this the tests rewrote the repository seed adk/state/hypergraph_matrix.json.
-    orch.matrix_path = orch.state_dir / "hypergraph_matrix.json"
-    shutil.copy2(Path("adk") / "state" / "hypergraph_matrix.json", orch.matrix_path)
     return orch
 
 
@@ -34,11 +30,11 @@ def test_intermediate_task_ignores_pending_future_dependencies(tmp_path: Path) -
     orch = _setup_test_orchestrator(tmp_path)
 
     tasks = [
-        {"task_id": "T1", "target_node": "v4", "assigned_agent": "background_researcher", "status": "IN_PROGRESS"},
-        {"task_id": "T2", "target_node": "v1", "assigned_agent": "seed_coder", "status": "TODO"},
-        {"task_id": "T3", "target_node": "v2", "assigned_agent": "seed_coder", "status": "TODO"},
-        {"task_id": "T4", "target_node": "v3", "assigned_agent": "seed_tester", "status": "TODO"},
-        {"task_id": "T5", "target_node": "v4", "assigned_agent": "seed_writer", "status": "TODO"},
+        {"task_id": "T1", "target_node": "thesis.md", "assigned_agent": "background_researcher", "status": "IN_PROGRESS"},
+        {"task_id": "T2", "target_node": "config.py", "assigned_agent": "seed_coder", "status": "TODO"},
+        {"task_id": "T3", "target_node": "core.py", "assigned_agent": "seed_coder", "status": "TODO"},
+        {"task_id": "T4", "target_node": "results.csv", "assigned_agent": "seed_tester", "status": "TODO"},
+        {"task_id": "T5", "target_node": "thesis.md", "assigned_agent": "seed_writer", "status": "TODO"},
     ]
     orch.task_queue_path.write_text(json.dumps(tasks), encoding="utf-8")
 
@@ -61,11 +57,11 @@ def test_final_defense_gate_enforces_all_references_and_redteam(tmp_path: Path) 
     orch = _setup_test_orchestrator(tmp_path)
 
     tasks = [
-        {"task_id": "T1", "target_node": "v4", "assigned_agent": "background_researcher", "status": "DONE"},
-        {"task_id": "T2", "target_node": "v1", "assigned_agent": "seed_coder", "status": "DONE"},
-        {"task_id": "T3", "target_node": "v2", "assigned_agent": "seed_coder", "status": "DONE"},
-        {"task_id": "T4", "target_node": "v3", "assigned_agent": "seed_tester", "status": "DONE"},
-        {"task_id": "T5", "target_node": "v4", "assigned_agent": "seed_writer", "status": "DONE"},
+        {"task_id": "T1", "target_node": "thesis.md", "assigned_agent": "background_researcher", "status": "DONE"},
+        {"task_id": "T2", "target_node": "config.py", "assigned_agent": "seed_coder", "status": "DONE"},
+        {"task_id": "T3", "target_node": "core.py", "assigned_agent": "seed_coder", "status": "DONE"},
+        {"task_id": "T4", "target_node": "results.csv", "assigned_agent": "seed_tester", "status": "DONE"},
+        {"task_id": "T5", "target_node": "thesis.md", "assigned_agent": "seed_writer", "status": "DONE"},
     ]
     orch.task_queue_path.write_text(json.dumps(tasks), encoding="utf-8")
 
@@ -103,17 +99,17 @@ def test_lightweight_planning_payload_and_blueprint_persistence(tmp_path: Path) 
                     ],
                 },
                 "tasks": [
-                    {"task_id": "T1", "description": "Lit", "target_node": "v4", "assigned_agent": "background_researcher", "status": "TODO"},
-                    {"task_id": "T2", "description": "Cfg", "target_node": "v1", "assigned_agent": "seed_coder", "status": "TODO"},
-                    {"task_id": "T3", "description": "Core", "target_node": "v2", "assigned_agent": "seed_coder", "status": "TODO"},
-                    {"task_id": "T4", "description": "Test", "target_node": "v3", "assigned_agent": "seed_tester", "status": "TODO"},
-                    {"task_id": "T5", "description": "Doc", "target_node": "v4", "assigned_agent": "seed_writer", "status": "TODO"},
+                    {"task_id": "T1", "description": "Lit", "target_node": "thesis.md", "assigned_agent": "background_researcher", "status": "TODO"},
+                    {"task_id": "T2", "description": "Cfg", "target_node": "config.py", "assigned_agent": "seed_coder", "status": "TODO"},
+                    {"task_id": "T3", "description": "Core", "target_node": "core.py", "assigned_agent": "seed_coder", "status": "TODO"},
+                    {"task_id": "T4", "description": "Test", "target_node": "results.csv", "assigned_agent": "seed_tester", "status": "TODO"},
+                    {"task_id": "T5", "description": "Doc", "target_node": "thesis.md", "assigned_agent": "seed_writer", "status": "TODO"},
                 ],
             }
         }
 
     with patch("adk.orchestrator.call_agent", side_effect=mock_call_agent):
-        orch.run("01_rl_tictactoe", target_node="v1", multi_cycle_waves=False)
+        orch.run("01_rl_tictactoe", multi_cycle_waves=False)
 
     planner_payload = captured_payloads[0]
     assert "domain_context" in planner_payload
@@ -150,17 +146,17 @@ def test_dynamic_chapter_planning_adapts_to_custom_structure(tmp_path: Path) -> 
                     "planned_chapters": custom_chapters,
                 },
                 "tasks": [
-                    {"task_id": "T1", "description": "Related work review", "target_node": "v4", "assigned_agent": "discoverer_researcher", "status": "TODO"},
-                    {"task_id": "T2", "description": "Configuration AST", "target_node": "v1", "assigned_agent": "seed_coder", "status": "TODO"},
-                    {"task_id": "T3", "description": "Core algorithm", "target_node": "v2", "assigned_agent": "seed_coder", "status": "TODO"},
-                    {"task_id": "T4", "description": "Empirical benchmarks", "target_node": "v3", "assigned_agent": "seed_tester", "status": "TODO"},
-                    {"task_id": "T5", "description": "Paper drafting according to planned_chapters", "target_node": "v4", "assigned_agent": "seed_writer", "status": "TODO"},
+                    {"task_id": "T1", "description": "Related work review", "target_node": "thesis.md", "assigned_agent": "discoverer_researcher", "status": "TODO"},
+                    {"task_id": "T2", "description": "Configuration AST", "target_node": "config.py", "assigned_agent": "seed_coder", "status": "TODO"},
+                    {"task_id": "T3", "description": "Core algorithm", "target_node": "core.py", "assigned_agent": "seed_coder", "status": "TODO"},
+                    {"task_id": "T4", "description": "Empirical benchmarks", "target_node": "results.csv", "assigned_agent": "seed_tester", "status": "TODO"},
+                    {"task_id": "T5", "description": "Paper drafting according to planned_chapters", "target_node": "thesis.md", "assigned_agent": "seed_writer", "status": "TODO"},
                 ],
             }
         }
 
     with patch("adk.orchestrator.call_agent", side_effect=mock_call_agent):
-        orch.run("01_rl_tictactoe", target_node="v1", multi_cycle_waves=False)
+        orch.run("01_rl_tictactoe", multi_cycle_waves=False)
 
     saved_blueprint = json.loads(orch.blueprint_path.read_text(encoding="utf-8"))
     assert saved_blueprint["thesis_type"] == "paper"
@@ -206,9 +202,9 @@ def test_reflexive_prompt_evolution_recovers_empty_tasks(tmp_path: Path) -> None
                     **SPEC,
                     "thesis_type": "inzynierska",
                     "tasks": [
-                        {"task_id": "T1", "description": "Model", "target_node": "v1", "assigned_agent": "seed_coder", "status": "TODO"},
-                        {"task_id": "T2", "description": "Core", "target_node": "v2", "assigned_agent": "seed_coder", "status": "TODO"},
-                        {"task_id": "T3", "description": "Tests", "target_node": "v3", "assigned_agent": "seed_tester", "status": "TODO"},
+                        {"task_id": "T1", "description": "Model", "target_node": "config.py", "assigned_agent": "seed_coder", "status": "TODO"},
+                        {"task_id": "T2", "description": "Core", "target_node": "core.py", "assigned_agent": "seed_coder", "status": "TODO"},
+                        {"task_id": "T3", "description": "Tests", "target_node": "results.csv", "assigned_agent": "seed_tester", "status": "TODO"},
                     ],
                     "academic_blueprint": {
                         "thesis_title": "Badanie RL - Evolved",
@@ -219,7 +215,7 @@ def test_reflexive_prompt_evolution_recovers_empty_tasks(tmp_path: Path) -> None
 
     with patch("adk.orchestrator.call_agent", side_effect=mock_call_agent):
         # Stopped at gate 1, right after planning: the queue is the recovered plan.
-        res = orch.run("01_rl_tictactoe", target_node="v1", multi_cycle_waves=False, gate_approval_callback=lambda *_a: False)
+        res = orch.run("01_rl_tictactoe", multi_cycle_waves=False, gate_approval_callback=lambda *_a: False)
 
     assert res["status"] == "HITL_PAUSED"
     assert call_count >= 2
@@ -239,22 +235,22 @@ def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_cha
 
     # 1. A 9-task plan that already covers all nodes and chapters 1..6 -> stays 9 tasks!
     nine_tasks = [
-        {"task_id": "T1", "description": "Rozdział 2: Przegląd literatury SOTA", "target_node": "v4", "assigned_agent": "background_researcher"},
-        {"task_id": "T2", "description": "Rozdział 1: Wstęp, cel i teza pracy", "target_node": "v4", "assigned_agent": "seed_writer"},
-        {"task_id": "T3", "description": "Parametry w config.py", "target_node": "v1", "assigned_agent": "seed_coder"},
-        {"task_id": "T4", "description": "Algorytm w core.py", "target_node": "v2", "assigned_agent": "seed_coder"},
-        {"task_id": "T5", "description": "Rozdział 3: Architektura systemu", "target_node": "v4", "assigned_agent": "seed_writer"},
-        {"task_id": "T6", "description": "Rozdział 4: Implementacja algorytmu", "target_node": "v4", "assigned_agent": "seed_writer"},
-        {"task_id": "T7", "description": "Ewaluacja results.csv i test_core.py", "target_node": "v3", "assigned_agent": "seed_tester"},
-        {"task_id": "T8", "description": "Rozdział 5: Badania eksperymentalne i wyniki", "target_node": "v4", "assigned_agent": "seed_writer"},
-        {"task_id": "T9", "description": "Rozdział 6: Podsumowanie i wnioski", "target_node": "v4", "assigned_agent": "seed_writer"},
+        {"task_id": "T1", "description": "Rozdział 2: Przegląd literatury SOTA", "target_node": "thesis.md", "assigned_agent": "background_researcher"},
+        {"task_id": "T2", "description": "Rozdział 1: Wstęp, cel i teza pracy", "target_node": "thesis.md", "assigned_agent": "seed_writer"},
+        {"task_id": "T3", "description": "Parametry w config.py", "target_node": "config.py", "assigned_agent": "seed_coder"},
+        {"task_id": "T4", "description": "Algorytm w core.py", "target_node": "core.py", "assigned_agent": "seed_coder"},
+        {"task_id": "T5", "description": "Rozdział 3: Architektura systemu", "target_node": "thesis.md", "assigned_agent": "seed_writer"},
+        {"task_id": "T6", "description": "Rozdział 4: Implementacja algorytmu", "target_node": "thesis.md", "assigned_agent": "seed_writer"},
+        {"task_id": "T7", "description": "Ewaluacja results.csv i test_core.py", "target_node": "results.csv", "assigned_agent": "seed_tester"},
+        {"task_id": "T8", "description": "Rozdział 5: Badania eksperymentalne i wyniki", "target_node": "thesis.md", "assigned_agent": "seed_writer"},
+        {"task_id": "T9", "description": "Rozdział 6: Podsumowanie i wnioski", "target_node": "thesis.md", "assigned_agent": "seed_writer"},
     ]
     healed_9 = orch._normalize_and_heal_task_plan(nine_tasks, multi_cycle_waves=True, thesis_type="inzynierska")
     assert len(healed_9) == 9
 
     # 2. A 16-task granular plan -> stays 16 tasks!
     sixteen_tasks = nine_tasks + [
-        {"task_id": f"T_EXTRA_{i}", "description": f"Dodatkowy podmoduł algorytmu #{i} w core.py", "target_node": "v2", "assigned_agent": "seed_coder"}
+        {"task_id": f"T_EXTRA_{i}", "description": f"Dodatkowy podmoduł algorytmu #{i} w core.py", "target_node": "core.py", "assigned_agent": "seed_coder"}
         for i in range(1, 8)
     ]
     healed_16 = orch._normalize_and_heal_task_plan(sixteen_tasks, multi_cycle_waves=True, thesis_type="inzynierska")

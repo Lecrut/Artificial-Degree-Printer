@@ -9,19 +9,17 @@ from adk.orchestration.failure_attribution import _is_test, _pytest_culprits
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.factual_audit import thesis_missing_chapters
 from adk.core.models import ValidationReport, read_json_state, write_json_state
-from adk.tools.building import (
-    sync_hypergraph_matrix,
-)
+from adk.hypergraph import Hypergraph
 from adk.tools.verification import (
     check_entrypoint_parameters,
     check_parameter_closure,
-    check_test_contract,
     compile_symbolic_references,
     iter_workspace_python_files,
     run_isolated_tests,
 )
 from adk.tools.verification.contract_check import check_import_contract
 from adk.orchestration.common import (
+    THESIS_FILE,
     _agent_for_path,
     _clip_log,
     _collect_report_issues,
@@ -29,19 +27,17 @@ from adk.orchestration.common import (
 )
 
 
-def _task_scope(node_path: str, written: set[str], matrix_data: dict[str, Any]) -> dict[str, list[str]]:
-    """Scope of an intermediate task (R4): its node, the files written since the last verification and the tests
-    coupled to them by a hyperedge. The whole workspace is judged only at the milestones (factual audit, Gate 3);
-    a writer's task is not judged on code at all."""
+def _task_scope(node_path: str, written: set[str], h: Hypergraph | None) -> dict[str, list[str]]:
+    """Scope of an intermediate task (R4): its file, the files written since the last verification, and from H
+    the tests of every module among them (T members of its I bag) and the helper files they own. The whole
+    workspace is judged only at the milestones (factual audit, Gate 3); a writer's task is not judged on code."""
     candidates = {node_path, *written}
+    if h is not None:
+        owners = {h.owner_of(p) for p in candidates} - {None}
+        candidates |= {f for v in owners for f in h.files_of(v) if f.endswith(".py")}
+        candidates |= {t for v in owners for t in h.tests_of(v)}
     files = {p for p in candidates if p.endswith(".py") and not _is_test(p)}
-    tests = {p for p in candidates if _is_test(p)}
-    nodes = matrix_data.get("nodes", {})
-    by_path = {str(m.get("path", "")): n_id for n_id, m in nodes.items()}
-    scope_ids = {by_path[p] for p in files | tests if p in by_path}
-    for members in matrix_data.get("edges", {}).values():
-        if scope_ids & set(members):
-            tests.update(p for p in (str(nodes.get(m, {}).get("path", "")) for m in members) if _is_test(p))
+    tests = {p for p in candidates if p.endswith(".py") and _is_test(p)}
     return {"files": sorted(files), "tests": sorted(tests)}
 
 
@@ -54,23 +50,20 @@ class VerificationMixin:
         current_task: dict[str, Any],
         include_docs: bool | None = None,
         is_final_gate: bool = False,
-        inject_failure: bool = False,
     ) -> dict[str, Any]:
         """Run Edge-Scoped Layer 3 verification tools and supervisor agents, writing state/validation_report.json."""
         effective_include_docs = self.include_docs if include_docs is None else bool(include_docs)
-        if self.workspace_dir.exists():
-            sync_hypergraph_matrix(self.workspace_dir, self.matrix_path)
-        matrix_data = read_json_state(self.matrix_path)
-        matrix_inc: dict[str, dict[str, int]] = matrix_data.get("matrix", {})
-
-        raw_target_node = str(current_task.get("target_node", "v1"))
-        target_node, node_path = self._resolve_target_node(raw_target_node, task=current_task, fallback="v1")
+        h = self._project_h()
+        target_node, node_path = self._resolve_target_node(
+            str(current_task.get("target_node") or THESIS_FILE), task=current_task, fallback=THESIS_FILE
+        )
         current_task["target_node"] = target_node
-        active_edges = [e_id for e_id, val in matrix_inc.get(target_node, {}).items() if int(val) == 1]
+        active_edges = sorted(h.edges_of(target_node)) if h is not None and target_node in h.vertices else []
 
         is_doc_scope = is_final_gate or node_path.endswith((".md", ".tex"))
-        node_kind = str(matrix_data.get("nodes", {}).get(target_node, {}).get("kind", ""))
-        is_data_scope = (not is_doc_scope) and (node_path.endswith(".csv") or node_kind == "derived")
+        is_data_scope = (not is_doc_scope) and (
+            node_path.endswith(".csv") or (h is not None and h.output_producer(node_path) is not None)
+        )
 
         self.logger.log_step(
             "VERIFICATION",
@@ -81,13 +74,12 @@ class VerificationMixin:
                 "is_data_scope": is_data_scope,
                 "is_final_gate": is_final_gate,
                 "include_docs": effective_include_docs,
-                "inject_failure": inject_failure,
             },
         )
         written = set(self._written_since_verification)
         self._written_since_verification = set()
         code_checked = is_final_gate or not is_doc_scope
-        scope = _task_scope(node_path, written, matrix_data) if not is_final_gate and code_checked else None
+        scope = _task_scope(node_path, written, h) if not is_final_gate and code_checked else None
         scope_paths = None if scope is None else set(scope["files"]) | set(scope["tests"])
 
         if code_checked:
@@ -109,7 +101,6 @@ class VerificationMixin:
         declared_entry = str(blueprint_now.get("entrypoint") or "") if isinstance(blueprint_now, dict) else ""
         contract_violations: list[str] = []
         if code_checked:
-            contract_violations += check_test_contract(self.workspace_dir, self.matrix_path, only_paths=scope_paths)
             ws_root = self.workspace_dir.resolve()
             import_checked = (
                 scope["files"]
@@ -171,7 +162,6 @@ class VerificationMixin:
                 self.agents_dir / "verification" / "code_auditor.md",
                 {
                     "issues": test_res["errors"],
-                    "force_fail": inject_failure,
                     "test_report": test_res,
                     "code_files": snapshot["code_files"],
                 },
@@ -206,7 +196,9 @@ class VerificationMixin:
                     md_thesis = self.workspace_dir / "thesis.md"
                     t_type_check = str(getattr(self, "planned_thesis_type", "inzynierska") or "inzynierska").strip().lower()
                     if md_thesis.exists() and t_type_check not in ("paper", "article", "scientific_paper"):
-                        missing_ch = thesis_missing_chapters(md_thesis.read_text(encoding="utf-8", errors="ignore"))
+                        missing_ch = thesis_missing_chapters(
+                            md_thesis.read_text(encoding="utf-8", errors="ignore"), self._expected_chapters()
+                        )
                         if missing_ch:
                             ref_errors.append(texts.missing_chapters([texts.CHAPTER_LABELS.get(i, f"Chapter {i}") for i in missing_ch]))
                 if not is_final_gate:
@@ -285,7 +277,7 @@ class VerificationMixin:
         # Enforce deterministic symbolic ground truth so small LLMs (e.g. gemma4:e2b) cannot ignore
         # real pytest/ruff/ref_compiler errors OR hallucinate failures when all deterministic checks pass.
         deterministic_code_fail = bool(
-            inject_failure or test_res.get("status") == "FAIL" or test_res.get("errors")
+            test_res.get("status") == "FAIL" or test_res.get("errors")
         )
         if deterministic_code_fail:
             code_audit["status"] = "FAIL"
@@ -300,7 +292,7 @@ class VerificationMixin:
             code_audit["issues"] = []
 
         if is_doc_scope:
-            deterministic_doc_fail = bool(inject_failure or ref_errors)
+            deterministic_doc_fail = bool(ref_errors)
             if deterministic_doc_fail:
                 symbolic_audit["status"] = "FAIL"
                 # The compiler's findings always come first; the model's issues only supplement them.
@@ -333,24 +325,14 @@ class VerificationMixin:
         failed_file = None
         failed_agent = None
         if not overall_pass:
-            nodes_all = matrix_data.get("nodes", {})
             failed_file = next((v.culprit for v in spec_found if v.culprit), None)
             for issue in [] if failed_file else code_audit.get("issues", []):
                 for culprit, is_code in _pytest_culprits(str(issue)):
                     if is_code and _is_test(culprit):
-                        # Wrong result seen only in the test frame: the module under test, i.e. a code module
-                        # coupled to the test by a hyperedge (in scope first).
-                        by_path = {str(m.get("path", "")): n for n, m in nodes_all.items()}
-                        test_id = by_path.get(culprit)
-                        coupled = [
-                            str(nodes_all.get(m, {}).get("path", ""))
-                            for members in matrix_data.get("edges", {}).values()
-                            if test_id in members
-                            for m in members
-                        ]
-                        modules = [p for p in coupled if p.endswith(".py") and not _is_test(p)]
-                        modules.sort(key=lambda p: scope_paths is not None and p not in scope_paths)
-                        culprit = modules[0] if modules else (node_path if not _is_test(node_path) else culprit)
+                        # Wrong result seen only in the test frame: the module under test (the producer of the I
+                        # bag the test belongs to in H).
+                        module = h.tested_module(culprit) if h is not None else None
+                        culprit = module or (node_path if not _is_test(node_path) else culprit)
                     failed_file = culprit
                     break
                 if failed_file:
@@ -363,7 +345,8 @@ class VerificationMixin:
                     for p in self._workspace_paths_in(str(issue))
                 ]
                 failed_file = next((p for p in named if scope_paths is None or p in scope_paths), None) or node_path
-            author = next((m.get("last_writer") for m in nodes_all.values() if str(m.get("path", "")) == failed_file), None)
+            owner = h.owner_of(str(failed_file)) if h is not None else None
+            author = h.vertices[owner].last_writer if owner is not None else None
             failed_agent = (author or {}).get("agent") or current_task.get("assigned_agent")
             if failed_agent == "harness":  # the harness wrote the stubs; the file's work belongs to its owner
                 failed_agent = _agent_for_path(str(failed_file))
@@ -390,7 +373,10 @@ class VerificationMixin:
         write_json_state(self.validation_report_path, report)
         issues = _collect_report_issues(report)  # the findings live in the supervisors' sections, not at the top
         if not overall_pass:
-            self._remember_verdict(failed_file, current_task.get("task_id"), issues)
+            self._remember_verdict(
+                (h.owner_of(str(failed_file)) if h is not None and failed_file else None) or failed_file,
+                current_task.get("task_id"), issues,
+            )
         self.logger.log_event(
             "VERDICT", task_id=current_task.get("task_id"), node=target_node, status=report.get("status"),
             failed_file=failed_file, failed_agent=failed_agent, first_issue=str(issues[0])[:400] if issues else None,

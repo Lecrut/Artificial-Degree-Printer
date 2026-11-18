@@ -1,9 +1,11 @@
-"""The project hypergraph H = (V, E, ρ, σ, Φ, ≺, s): the one record of what the project must contain (Audit VI §VII.12).
+"""The project hypergraph H = (V, E, ρ, σ, Φ, ≺, s): the one record of the project (Audit VI §VII.12, Audit VIII §X).
 
 Vertices are planned artefacts, edges are typed bags of coherence (I interface of one module, R the experiment
 run, N one chapter's narrative, S the structure), ρ is the role of a vertex in an edge, σ the edge's specification
-and ≺ the order in which edges become checkable. The incidence matrix, d(v) and the blast radius are computed,
-never stored next to the edges (the old `hypergraph_matrix.json` kept `edges`, `matrix` and `degree` side by side).
+and ≺ the order in which edges become checkable. The plan sets the minimum; what the agents add (a helper file, an
+import of another planned module, a test of a planned module, a pointer of a chapter) is recorded here too, so H
+stays the truth about the workspace. Task targets, verification scope, culprits, agent context and the blast radius
+are all computed from H; nothing about the project's structure is kept anywhere else.
 """
 
 from __future__ import annotations
@@ -17,6 +19,12 @@ EDGE_TYPES = ("I", "R", "N", "S")
 ROLES = ("P", "C", "T", "O", "X")  # producer, consumer/source, test, output, citing chapter
 VERTEX_KINDS = ("code", "entry", "test", "data", "figure", "chapter", "bib", "research")
 INITIAL_STATE = {"code": "stub", "entry": "stub"}  # every other kind starts at "spec"
+
+
+def module_import_path(rel_path: str) -> str:
+    """Dotted import path of a workspace module (`src/data/gen.py` -> `src.data.gen`, `src/__init__.py` -> `src`)."""
+    parts = Path(rel_path).with_suffix("").parts
+    return ".".join(p for p in parts if p != "__init__")
 
 
 @dataclass
@@ -42,6 +50,8 @@ class Vertex:
     description: str = ""
     attempts: int = 0
     history: list[dict[str, Any]] = field(default_factory=list)
+    last_writer: dict[str, Any] | None = None  # {agent, task_id} of the last accepted write
+    files: list[str] = field(default_factory=list)  # helper files the module owns (imported only through it)
 
 
 @dataclass
@@ -51,6 +61,7 @@ class Edge:
     members: dict[str, str]  # vertex id -> role
     spec: dict[str, Any] = field(default_factory=dict)
     fingerprint: str | None = None
+    observed: list[str] = field(default_factory=list)  # members recorded from the workspace, not planned
 
 
 @dataclass
@@ -58,7 +69,6 @@ class Hypergraph:
     vertices: dict[str, Vertex]
     edges: dict[str, Edge]
     order: list[tuple[str, str]] = field(default_factory=list)  # (earlier, later)
-    built_from_plan: str = ""
 
     def edges_of(self, vertex: str) -> list[str]:
         return [e.id for e in self.edges.values() if vertex in e.members]
@@ -91,10 +101,43 @@ class Hypergraph:
     def producer(self, edge: str) -> str | None:
         return next((v for v, role in self.edges[edge].members.items() if role == "P"), None)
 
+    def owner_of(self, rel: str) -> str | None:
+        """The vertex a workspace file belongs to: the file's own vertex, or the module owning it as a helper."""
+        if rel in self.vertices:
+            return rel
+        return next((v.id for v in self.vertices.values() if rel in v.files), None)
+
+    def files_of(self, vertex: str) -> list[str]:
+        """Workspace files of a vertex: its own path (a chapter lives in thesis.md) and its helper files."""
+        v = self.vertices[vertex]
+        return [vertex.partition("#")[0], *v.files]
+
+    def tests_of(self, module: str) -> list[str]:
+        """Test vertices of a module: the T members of its I bag."""
+        edge = self.edges.get(f"I:{module}")
+        return sorted(m for m, role in edge.members.items() if role == "T") if edge else []
+
+    def tested_module(self, test: str) -> str | None:
+        """The module a test vertex tests (the producer of the I bag it is a T member of)."""
+        return next((self.producer(e.id) for e in self.edges.values() if e.type == "I" and e.members.get(test) == "T"), None)
+
+    def output_producer(self, rel: str) -> str | None:
+        """The vertex that produces an output (results, figures): the producer of the R bag it is an O member of."""
+        return next((self.producer(e.id) for e in self.edges.values() if e.type == "R" and e.members.get(rel) == "O"), None)
+
+    def entry(self) -> str | None:
+        """The experiment's entrypoint module."""
+        if "R:run" in self.edges:
+            return self.producer("R:run")
+        return next((v.id for v in self.vertices.values() if v.kind == "entry"), None)
+
+    def would_cycle(self, earlier: str, later: str) -> bool:
+        """Whether adding `earlier ≺ later` to the order closes a cycle."""
+        return earlier == later or earlier in self.later(later)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "version": 2,
-            "built_from_plan": self.built_from_plan,
             "vertices": {k: {kk: vv for kk, vv in asdict(v).items() if kk != "id"} for k, v in self.vertices.items()},
             "edges": {k: {kk: vv for kk, vv in asdict(e).items() if kk != "id"} for k, e in self.edges.items()},
             "order": [list(pair) for pair in self.order],
@@ -106,7 +149,6 @@ class Hypergraph:
             vertices={k: Vertex(id=k, **v) for k, v in data.get("vertices", {}).items()},
             edges={k: Edge(id=k, **e) for k, e in data.get("edges", {}).items()},
             order=[(a, b) for a, b in data.get("order", [])],
-            built_from_plan=str(data.get("built_from_plan", "")),
         )
 
 

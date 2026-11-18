@@ -10,21 +10,12 @@ from typing import Any
 
 from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state
-from adk.tools.building import (
-    extract_hyperedge_exports,
-    sync_hypergraph_matrix,
-)
-from adk.tools.planning import (
-    calculate_blast_radius,
-    get_scoped_hypergraph_context,
-)
-from adk.tools.verification.contract_check import is_contract_module
 from adk.orchestration.common import (
+    THESIS_FILE,
     available_package_imports,
     _collect_report_issues,
     _is_document,
     MaterializationError,
-    build_grounded_symbols,
 )
 
 # pytest summary line: `FAILED path.py::Class::test_name - message` (or ERROR)
@@ -98,8 +89,7 @@ class BuildingMixin:
         if not agent_md.exists():
             agent_md = self.adk_root / "agents" / "building" / "seed_coder.md"
 
-        raw_node_id = task.get("target_node", "v1")
-        node_id, node_path = self._resolve_target_node(raw_node_id, task=task, fallback="v1")
+        node_id, node_path = self._resolve_target_node(task.get("target_node") or THESIS_FILE, task=task, fallback=THESIS_FILE)
         task["target_node"] = node_id
         full_target = self.workspace_dir / node_path
         existing_content = full_target.read_text(encoding="utf-8") if full_target.exists() else ""
@@ -110,90 +100,33 @@ class BuildingMixin:
         else:
             payload_existing_content = existing_content
 
-        exports_info = extract_hyperedge_exports(
-            "ALL",
-            self.matrix_path,
-            self.workspace_dir,
-            node_id=node_id,
-        )
-        if node_path.endswith(".py"):
-            # Hyperedges come from imports, so a new file (every new test) had none and saw only E1's
-            # plot_results.py, never the module it tests (U3, 2026-11-15: T7, T10 guessed names -> NameError x7).
-            # A code or test task always sees the signatures of every code module of the contract.
-            all_exports = extract_hyperedge_exports("ALL", self.matrix_path, self.workspace_dir).get("exports", {})
-            exports_info["exports"] = {
-                **{rel: api for rel, api in all_exports.items() if is_contract_module(rel)},
-                **exports_info.get("exports", {}),
-            }
         self.logger.log_step(
             "BUILDING",
-            f"Zadanie {task.get('task_id')} -> agent '{agent_id}' na węźle {node_id} ({node_path})",
+            f"Zadanie {task.get('task_id')} -> agent '{agent_id}' na wierzchołku {node_id} ({node_path})",
             {"model_tier": model_tier, "include_docs": self.include_docs},
         )
-        builder_blast = calculate_blast_radius(node_id, self.matrix_path)
-        scoped_graph = get_scoped_hypergraph_context(self.matrix_path, blast_radius=builder_blast)
-
-        # Deterministyczny stan hipergrafu: dostępne pliki graficzne, symbole AST i kolumny CSV
-        existing_figures: list[str] = []
-        if self.workspace_dir.exists():
-            for fig_p in sorted(self.workspace_dir.rglob("*")):
-                if fig_p.is_file() and fig_p.suffix.lower() in (".pdf", ".png", ".svg") and "figures" in fig_p.parts:
-                    existing_figures.append(fig_p.relative_to(self.workspace_dir).as_posix())
-        if not existing_figures:
-            existing_figures = ["figures/comparison_chart.pdf"]
-
-        # Grounding covers the whole graph (every .py and .csv), not only the files coupled to this node.
-        grounded_state: dict[str, Any] = {
-            "available_figures": existing_figures,
-            **build_grounded_symbols(extract_hyperedge_exports("ALL", self.matrix_path, self.workspace_dir)),
-            "mandatory_directives": [
-                "DO NOT invent figure paths. Only reference figures explicitly listed in 'available_figures'.",
-                "Draw an architecture diagram inline (TikZ or Mermaid, small) instead of referencing a figure file that does not exist.",
-                "Only reference CSV columns present in 'available_csv_columns'.",
-            ],
-        }
-
-        blueprint_data = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
-        recon_data = blueprint_data.get("literature_recon", {}) if isinstance(blueprint_data, dict) else {}
-        is_doc_or_research_agent = (
-            _is_document(node_path)
-            or agent_id in ("seed_writer", "background_researcher", "discoverer_researcher", "sota_researcher")
-        )
-
+        # The task's content and the slice of H its vertex determines; nothing else about the project (Audit VIII §X).
         builder_payload: dict[str, Any] = {
             "user_prompt": self.current_user_prompt,
             "task": task,
             "target_file": node_path,
             "existing_content": payload_existing_content,
-            "exports": exports_info.get("exports", {}),
-            "csv_schemas": exports_info.get("csv_schemas", {}),
-            "hypergraph_nodes": scoped_graph.get("nodes", {}),
-            "active_edges": scoped_graph.get("active_edges", {}),
-            "grounded_hypergraph_state": grounded_state,
             # One source of truth for external imports (D2): the canonical import line of every package this
             # fixed environment provides. Anything else is unavailable for the whole run (D1).
             "available_packages": available_package_imports(),
-            # The metrics the plan declared (P9 pre-registration) take the place of a prescribed list.
-            "standard_metrics": blueprint_data.get("metrics") or recon_data.get("standard_metrics", []),
-            "canonical_baselines": recon_data.get("canonical_baselines", []),
-            # The function the harness calls without arguments to run the experiment (declared in the plan).
-            "academic_blueprint": {"entrypoint": blueprint_data.get("entrypoint", "")},
+            **self._context_for(self._task_vertex(task), node_path),
         }
-        done_when = self._done_when(node_id, node_path, grounded_state)
+        done_when = self._done_when(node_path, builder_payload)
         if done_when:
             builder_payload["done_when"] = done_when
-        self._spec_payload(builder_payload, task)  # with H: σ instead of the whole project's exports (A8)
         # A repair sees the tests it has to satisfy, not only a prose summary of their failure.
+        is_doc_or_research_agent = _is_document(node_path) or agent_id in (
+            "seed_writer", "background_researcher", "discoverer_researcher", "sota_researcher"
+        )
         if task.get("repair_of") and not is_doc_or_research_agent:
             failing = self._failing_test_sources()
             if failing:
                 builder_payload["failing_tests"] = failing
-        if is_doc_or_research_agent:
-            builder_payload["thesis_type"] = blueprint_data.get("thesis_type", "inzynierska")
-            builder_payload["template_name"] = blueprint_data.get("template_name", "thesis_plodz")
-            builder_payload["table_of_contents"] = blueprint_data.get("table_of_contents", {})
-            builder_payload["available_citation_keys"] = recon_data.get("available_citation_keys", [])
-            builder_payload["sampled_methodologies"] = recon_data.get("sampled_methodologies", [])
 
         writer = {"agent": agent_id, "task_id": str(task.get("task_id", ""))}
         llm_res = self._call_agent(agent_md, builder_payload, model_tier=model_tier, provider=self.provider)
@@ -220,30 +153,18 @@ class BuildingMixin:
             }
             llm_res = self._call_agent(agent_md, retry_payload, model_tier=model_tier, provider=self.provider)
             self._materialize_workspace_artifact(node_path, llm_res.get("output", {}), writer=writer)
-        sync_hypergraph_matrix(self.workspace_dir, self.matrix_path)
         return llm_res
 
-    def _done_when(self, node_id: str, node_path: str, grounded_state: dict[str, Any]) -> list[str]:
+    def _done_when(self, node_path: str, payload: dict[str, Any]) -> list[str]:
         """What the verification of this task will check, stated up front (U6, 2026-11-15: a task was prose only;
-        the agent learned what counts as done from its first failure)."""
+        the agent learned what counts as done from its first failure). The tests of a module come from its I bag."""
         if node_path.endswith(".py"):
             name = Path(node_path).name
             if name.startswith("test_") or name.endswith("_test.py"):
                 return texts.done_when_test(node_path)
-            data = read_json_state(self.matrix_path) if Path(self.matrix_path).exists() else {}
-            nodes = data.get("nodes", {})
-            tests = sorted(
-                {
-                    str(nodes.get(m, {}).get("path", ""))
-                    for members in data.get("edges", {}).values()
-                    if node_id in members
-                    for m in members
-                    if Path(str(nodes.get(m, {}).get("path", ""))).name.startswith("test_")
-                }
-            )
-            return texts.done_when_module(node_path, tests)
+            return texts.done_when_module(node_path, list(payload.get("tested_by") or []))
         if _is_document(node_path):
-            return texts.done_when_document(bool(grounded_state.get("available_csv_rows")))
+            return texts.done_when_document(bool((payload.get("may_cite") or {}).get("available_csv_rows")))
         return []
 
     def _failing_test_sources(self, limit: int = 6, budget: int = 6000) -> dict[str, dict[str, str]]:
@@ -294,10 +215,33 @@ class BuildingMixin:
             "bib_files": bib_files,
         }
 
+    def _experiment_still_stubbed(self) -> bool:
+        """A module the experiment runs (a code member of R in H) is still a stub: running it can only raise
+        NotImplementedError (mock 01, 2026-11-18: DATA_FAILED after config.py while core.py was a stub)."""
+        from adk.hypergraph.oracles import is_stub
+
+        h = self._project_h()
+        run = h.edges.get("R:run") if h is not None else None
+        if run is None:
+            return False
+        for member, role in run.members.items():
+            path = self.workspace_dir / member
+            if role not in ("P", "C") or not member.endswith(".py") or not path.is_file():
+                continue
+            try:
+                if is_stub(path.read_text(encoding="utf-8", errors="replace")):
+                    return True
+            except (SyntaxError, ValueError):
+                continue  # an unparsable module is the syntax guard's finding; the run shows the real error
+        return False
+
     def _refresh_experiment_after_code(self, node_id: str) -> None:
         """After any change to Python code, results are whatever the declared entrypoint just wrote."""
-        node_path = str(read_json_state(self.matrix_path).get("nodes", {}).get(node_id, {}).get("path", node_id))
+        node_path = str(node_id).partition("#")[0]
         if not node_path.endswith(".py"):
+            return
+        if self._experiment_still_stubbed():
+            self._last_experiment_error = ""
             return
         from adk.tools.building.experiment_runner import execute_workspace_experiment
 

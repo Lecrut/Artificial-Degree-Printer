@@ -11,6 +11,8 @@ from pathlib import Path
 
 from adk.benchmarks import BENCHMARK_TASKS, get_benchmark_task, run_benchmark_suite
 from adk.core.connection import LLMConnectionManager
+from adk.mocks import install_simulated_agents
+from adk.mocks.scenarios import SCENARIOS
 from adk.tools.building.thesis_publisher import publish_workspace_thesis_bundle
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -107,7 +109,8 @@ def test_llm_connection_manager_diagnostics():
 
 
 def test_benchmark_tasks_specifications_and_syntax():
-    """Verify all 4 benchmark tasks have valid AST in core_code, test_code, and plot_script."""
+    """The benchmark tasks are inputs only (prompt, type, starting files); the answers the simulated agents give for
+    them live in adk/mocks and must be valid Python and pointer-bearing prose."""
     assert set(BENCHMARK_TASKS.keys()) == {
         "01_rl_tictactoe",
         "02_ml_anomaly_detection",
@@ -119,7 +122,6 @@ def test_benchmark_tasks_specifications_and_syntax():
     assert get_benchmark_task("3").task_id == "03_graph_pathfinding"
     assert get_benchmark_task("evolution").task_id == "03_graph_pathfinding"
     assert get_benchmark_task("4").task_id == "04_federated_learning"
-    assert len(get_benchmark_task("4").custom_tasks) == 10
 
     # Greenfield vs Evolution verification
     assert get_benchmark_task("1").task_type == "greenfield"
@@ -131,16 +133,19 @@ def test_benchmark_tasks_specifications_and_syntax():
     assert "config.py" in t3.initial_workspace_files
     assert "Dijkstra" in t3.initial_workspace_files["core.py"]
 
-    for task_id, spec in BENCHMARK_TASKS.items():
-        ast.parse(spec.core_code, filename=f"{task_id}_core.py")
-        ast.parse(spec.test_code, filename=f"{task_id}_test.py")
-        ast.parse(spec.plot_script, filename=f"{task_id}_plot.py")
-        for sym_name, sym_code in spec.config_ast_nodes:
+    assert len(SCENARIOS["04_federated_learning"].custom_tasks) == 10
+    for task_id in BENCHMARK_TASKS:
+        sc = SCENARIOS[task_id]
+        ast.parse(sc.core_code, filename=f"{task_id}_core.py")
+        ast.parse(sc.test_code, filename=f"{task_id}_test.py")
+        ast.parse(sc.plot_script, filename=f"{task_id}_plot.py")
+        for sym_name, sym_code in sc.config_ast_nodes:
             assert sym_name in sym_code
             ast.parse(sym_code, filename=f"{task_id}_config.py")
-        assert "\\ref_ast{" in spec.doc_section_content
-        assert "\\ref_csv{" in spec.doc_section_content
-        assert "\\ref_fig{" in spec.doc_section_content
+        prose = "".join(content for _title, content in sc.thesis_chapters)
+        assert "\\ref_ast{" in prose
+        assert "\\ref_csv{" in prose
+        assert "\\ref_fig{" in prose
 
 
 def test_thesis_publisher_generates_pdf_tex_html_and_runner(tmp_path: Path):
@@ -149,18 +154,14 @@ def test_thesis_publisher_generates_pdf_tex_html_and_runner(tmp_path: Path):
     ws = tmp_path / "anomaly_ws"
     ws.mkdir(parents=True, exist_ok=True)
 
-    # Seed workspace files for task 2
-    config_src = "".join(code for _, code in spec.config_ast_nodes)
-    (ws / "config.py").write_text(config_src, encoding="utf-8")
-    (ws / "core.py").write_text(spec.core_code, encoding="utf-8")
-    (ws / "test_core.py").write_text(spec.test_code, encoding="utf-8")
-    (ws / "plot_results.py").write_text(spec.plot_script, encoding="utf-8")
-    (ws / "references.bib").write_text(spec.bibtex_entries, encoding="utf-8")
-    (ws / "thesis.md").write_text(
-        f"## {spec.sota_section_title}\n{spec.sota_section_content}\n\n"
-        f"## {spec.doc_section_title}\n{spec.doc_section_content}\n",
-        encoding="utf-8",
-    )
+    # Seed workspace files for task 2 with what its simulated agents would have written
+    sc = SCENARIOS["02_ml_anomaly_detection"]
+    (ws / "config.py").write_text("".join(code for _, code in sc.config_ast_nodes), encoding="utf-8")
+    (ws / "core.py").write_text(sc.core_code, encoding="utf-8")
+    (ws / "test_core.py").write_text(sc.test_code, encoding="utf-8")
+    (ws / "plot_results.py").write_text(sc.plot_script, encoding="utf-8")
+    (ws / "references.bib").write_text(sc.background_bibtex + "\n" + sc.discoverer_bibtex, encoding="utf-8")
+    (ws / "thesis.md").write_text("".join(f"## {t}\n{c}\n\n" for t, c in sc.thesis_chapters), encoding="utf-8")
 
     pub = publish_workspace_thesis_bundle(
         spec=spec,
@@ -187,9 +188,10 @@ def test_thesis_publisher_generates_pdf_tex_html_and_runner(tmp_path: Path):
 
 
 def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
-    """Verify run_benchmark_suite executes multiple W1->W2->W3->W4->W1 cycles and generates full 6-chapter thesis PDF & JSON."""
+    """A benchmark with simulated agents that make the first-try mistakes of a small model: every mistake is caught
+    by its own gate and corrected, and the run still ends with the full thesis bundle."""
     out_dir = tmp_path / "bench_out"
-    res = run_benchmark_suite(task_keys=["2"], provider="mock", output_root=out_dir)
+    res = run_benchmark_suite(task_keys=["2"], provider="mock", output_root=out_dir, simulate_agents=install_simulated_agents)
     assert res["status"] == "COMPLETED"
     assert len(res["tasks"]) == 1
     # Each task runs in its own sandbox (decision H): nothing it learns or writes reaches another task.
@@ -197,22 +199,27 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
 
     t_res = res["tasks"][0]
     assert t_res["orchestrator_status"] == "COMPLETED"
-    # Verify multi-cycle architectural traversal (3 full W2->W3->W4->W1->W2->W3 loops across Code, Tests/CSV, and Thesis)
-    assert t_res["replan_count"] == 3
-    assert len(t_res["architecture_cycles"]) == 3
-    # Node ids are opaque; the cycles are identified by the files they repaired.
-    # The results wave is the module that writes the results (U5): no task targets results.csv itself.
-    assert [c["node_file"] for c in t_res["architecture_cycles"]] == ["config.py", "core.py", "thesis.md"]
-    assert all(c["w3_post_remediation_status"] == "PASS" for c in t_res["architecture_cycles"])
+    events = [json.loads(line) for line in (out_dir / "02_ml_anomaly_detection" / "logs" / "events.jsonl").read_text(encoding="utf-8").splitlines()]
 
-    # Layer 4 events: the missing specialization is created at planning time. The architect itself is not called:
-    # each injected failure is one incident, repaired by the fast path (the split-agent path is covered by
-    # test_layer4_and_orchestrator at the tool level).
-    evo_events = t_res["evolution"]["new_events_in_task"]
-    assert "AGENT_CREATED" in evo_events
-    assert all(c["w4_action"] == "FAST_FIX" for c in t_res["architecture_cycles"])
+    def of(kind: str) -> list[dict]:
+        return [e for e in events if e["event"] == kind]
 
-    # Verify all 6 chapters exist in compiled thesis.compiled.md and thesis.compiled.tex
+    # planner_unrunnable_plan + critic_blocks_once: the plan is rejected, then blocked once, then accepted.
+    assert len(of("PLAN_CHECKED")) >= 2 and len(of("PLAN_REVIEWED")) >= 2
+    # ... each time by a patch of the plan the planner was shown, which the harness applied.
+    assert [(e["accepted"], e["changed"]) for e in of("PLAN_PATCHED")] == [
+        (True, ["-metrics_helpers.py"]), (True, ["academic_blueprint.thesis_statement"])
+    ]
+    # coder_breaks_signature + tester_uses_undeclared_name: both answers are refused before they reach the disk.
+    assert len(of("SPEC_WRITE_REJECTED")) == 2
+    # coder_adds_helper: the helper file is an extension recorded in H.
+    assert len(of("H_EXTENDED")) == 1
+    # writer_bad_pointer: one verification failure, repaired by the author (fast path).
+    assert [c["w4_action"] for c in t_res["architecture_cycles"]] == ["FAST_FIX"]
+    assert t_res["architecture_cycles"][0]["node_file"] == "thesis.md"
+    assert t_res["architecture_cycles"][0]["w3_post_remediation_status"] == "PASS"
+    assert "AGENT_CREATED" in t_res["evolution"]["new_events_in_task"]  # the missing specialization
+
     compiled_md = Path(t_res["artifacts"]["compiled_md_path"]).read_text(encoding="utf-8")
     compiled_tex = Path(t_res["artifacts"]["compiled_tex_path"]).read_text(encoding="utf-8")
     assert "Rozdział 1: Wstęp, Cel i Teza Pracy" in compiled_md
@@ -228,7 +235,7 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
 def test_benchmark_task_4_federated_runs_10_tasks(tmp_path: Path):
     """Verify task 4 (04_federated_learning) runs all 10 custom tasks in isolated tmp and generates valid thesis bundle."""
     out_dir = tmp_path / "bench_out4"
-    res = run_benchmark_suite(task_keys=["4"], provider="mock", output_root=out_dir)
+    res = run_benchmark_suite(task_keys=["4"], provider="mock", output_root=out_dir, simulate_agents=install_simulated_agents)
     assert res["status"] == "COMPLETED"
     assert len(res["tasks"]) == 1
     t_res = res["tasks"][0]

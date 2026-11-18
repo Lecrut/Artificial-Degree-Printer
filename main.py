@@ -8,9 +8,9 @@ from typing import Any
 
 from adk.benchmarks.llm_logging import export_task_llm_interactions
 from adk.benchmarks.runner import run_benchmark_suite
-from adk.benchmarks.tictactoe import TICTACTOE_BENCHMARK_PROMPT
+from adk.benchmarks.inputs import TICTACTOE_BENCHMARK_PROMPT
 from adk.core.connection import LLMConnectionManager
-from adk.core.llm import get_llm_telemetry, reset_llm_telemetry
+from adk.core.llm_trace import get_llm_telemetry, reset_llm_telemetry
 from adk.core.logger import get_process_logger
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from adk.tools.building.template_manager import (
@@ -23,8 +23,8 @@ DEFAULT_BENCHMARK_TASK = TICTACTOE_BENCHMARK_PROMPT
 
 # Per-run state that must start clean for every scenario so evolution history, failure ledger,
 # HITL gate status, validation report and the task queue do not leak across scenarios.
-# The hypergraph matrix is NOT reset here: its node/edge structure is part of the harness state and
-# is reconciled with the workspace by sync_hypergraph_matrix during the run.
+# The project hypergraph and the blueprint belong to one run's plan: they are removed, and the plan builds them anew.
+_PLAN_STATE_FILES = ("hypergraph.json", "academic_blueprint.json")
 _VOLATILE_STATE_FILES = (
     "task_queue.json",
     "validation_report.json",
@@ -66,6 +66,8 @@ def _reset_volatile_state(adk_root: str | Path | None) -> None:
             json.dumps(empty_forms[fname], ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
+    for fname in _PLAN_STATE_FILES:
+        (state_dir / fname).unlink(missing_ok=True)
 
 
 SCENARIO_DEFINITIONS: dict[str, dict[str, Any]] = {
@@ -102,11 +104,15 @@ SCENARIO_DEFINITIONS: dict[str, dict[str, Any]] = {
 }
 
 
+def _simulated(provider: str) -> bool:
+    """The `mock` provider means simulated agents answer: this entry point is the one place that wires them in."""
+    return LLMConnectionManager(provider=provider).resolve_provider() == "mock"
+
+
 def run_scenario(
     scenario_key: str,
     provider: str = "auto",
     task_prompt: str = DEFAULT_BENCHMARK_TASK,
-    simulate_fail: bool = True,
     adk_root: str | Path | None = None,
     interactive_gates: bool = False,
     multi_cycle_waves: bool = False,
@@ -136,6 +142,10 @@ def run_scenario(
 
     reset_llm_telemetry()
     _reset_volatile_state(adk_root)
+    if _simulated(provider):
+        from adk.mocks import install_simulated_agents
+
+        install_simulated_agents()
     orch = NeuroSymbolicOrchestrator(
         adk_root=adk_root,
         enable_layer4=cfg["enable_layer4"],
@@ -145,8 +155,6 @@ def run_scenario(
     )
     result = orch.run(
         user_prompt=task_prompt,
-        target_node="v1",
-        simulate_first_attempt_fail=simulate_fail,
         interactive_gates=interactive_gates,
         multi_cycle_waves=multi_cycle_waves,
         template_name=tpl_name,
@@ -206,11 +214,6 @@ def main() -> None:
         "-t",
         default=DEFAULT_BENCHMARK_TASK,
         help="Zadanie wejściowe dla systemu (domyślnie: Kółko i Krzyżyk z Q-Learningiem w Pythonie).",
-    )
-    parser.add_argument(
-        "--no-fail-sim",
-        action="store_true",
-        help="Wyłącz symulację błędu w 1. podejściu (domyślnie włączona, by pokazać pętlę naprawczą W1/W4).",
     )
     parser.add_argument(
         "--single-cycle",
@@ -284,10 +287,14 @@ def main() -> None:
 
     if args.benchmark_suite or args.benchmark_task:
         selected = [k.strip() for k in args.benchmark_task.split(',') if k.strip()] if args.benchmark_task else None
+        simulate = None
+        if _simulated(args.provider):
+            from adk.mocks import install_simulated_agents as simulate
         suite_res = run_benchmark_suite(
             task_keys=selected,
             provider=args.provider,
             template_override=args.template,
+            simulate_agents=simulate,
         )
         print("=" * 80)
         print(
@@ -349,7 +356,6 @@ def main() -> None:
             scenario_key=sc,
             provider=args.provider,
             task_prompt=args.task,
-            simulate_fail=not args.no_fail_sim,
             interactive_gates=args.interactive_gates,
             multi_cycle_waves=not args.single_cycle,
             template_override=args.template,

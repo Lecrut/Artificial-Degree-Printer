@@ -35,12 +35,6 @@
       "path": "agents/building/discoverer_researcher.md",
       "specialization": "sota_discovery",
       "active": true
-    },
-    "dyn_anomaly_ml_specialist": {
-      "domain": "building",
-      "path": "agents/building/dyn_anomaly_ml_specialist.md",
-      "specialization": "anomaly_ml_specialist",
-      "active": true
     }
   }
 }

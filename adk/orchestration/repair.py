@@ -6,11 +6,7 @@ from typing import Any
 
 from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
-from adk.tools.planning import (
-    calculate_blast_radius,
-    get_scoped_hypergraph_context,
-    select_model_tier,
-)
+from adk.tools.planning import select_model_tier
 from adk.orchestration.common import (
     _agent_for_path,
     _issue_signature,
@@ -82,12 +78,15 @@ class RepairMixin:
                 # A derived artifact (CSV, figure) is repaired through its producer: on 2026-11-14 agents were
                 # sent to "fix" figures/comparison.pdf and results.csv, files no one can edit.
                 fast_target = self._repair_target(failed_file)
+                h = self._project_h()
                 if fast_target != failed_file:
-                    nodes_now = read_json_state(self.matrix_path).get("nodes", {})
-                    author = next(
-                        (m.get("last_writer") for m in nodes_now.values() if str(m.get("path", "")) == fast_target), None
-                    )
+                    owner = h.owner_of(fast_target) if h is not None else None
+                    author = h.vertices[owner].last_writer if owner is not None else None
                     failed_agent = str((author or {}).get("agent") or _agent_for_path(fast_target))
+                # Controlled change of the plan (Audit VII B4): the same breach of σ again on the same vertex means
+                # the specification may be what is wrong (2026-11-17: an impossible doctest, 51 failures). The
+                # planner decides before the next attempt: amend the interface, or keep it and the coder goes on.
+                self._amend_spec_if_wrong(failed_file, issues_list, t_id)
                 fast_task = {
                     **task,
                     "repair_of": t_id,
@@ -111,7 +110,7 @@ class RepairMixin:
                     builder_error = texts.fast_repair_exception(fast_task["task_id"], fast_target, exc)
                     print(f"  [OSTRZEŻENIE: BŁĄD SZYBKIEJ NAPRAWY] {builder_error}", flush=True)
                     cycle_trace["builder_error"] = str(exc)
-                report = self._run_verification_step(task, include_docs=self.include_docs, is_final_gate=False, inject_failure=False)
+                report = self._run_verification_step(task, include_docs=self.include_docs, is_final_gate=False)
                 if builder_error:
                     report["status"] = "FAIL"
                     report["failed_agent"] = report.get("failed_agent") or failed_agent
@@ -225,7 +224,7 @@ class RepairMixin:
                 cycle_trace=cycle_trace,
             )
             print(f"  [WARSTWA 3: RE-WERYFIKACJA] Ponowny audyt zadania {t_id} po petli W4 -> W1 -> W2...", flush=True)
-            report = self._run_verification_step(task, include_docs=self.include_docs, is_final_gate=False, inject_failure=False)
+            report = self._run_verification_step(task, include_docs=self.include_docs, is_final_gate=False)
             if remediation_errors:
                 report["status"] = "FAIL"
                 report.setdefault("issues", []).extend(remediation_errors)
@@ -265,7 +264,6 @@ class RepairMixin:
     ) -> list[str]:
         """One W1 -> W2 repair shared by task repairs and the Gate 3 defense: the remediation planner proposes
         surgical tasks, each is routed to its file and built. Returns the builder errors, never swallows them."""
-        blast = calculate_blast_radius(node_id, self.matrix_path)
         planner_out = self._call_agent(
             self.agents_dir / "planning" / "remediation_planner.md",
             {
@@ -285,8 +283,8 @@ class RepairMixin:
                 "failed_task": failed_task,
                 "remediation_directive": directive,
                 "agent_registry": read_json_state(self.registry_path),
-                "blast_radius": blast,
-                "hypergraph_matrix": get_scoped_hypergraph_context(self.matrix_path, blast_radius=blast),
+                # The bags of the failed vertex (members, roles, states, σ): where a fix may go and what it touches.
+                "hypergraph": self._h_slice(self._task_vertex(failed_task)),
                 "include_docs": self.include_docs,
                 # Without the signatures the planner dictated new APIs in prose (2026-11-12); σ tells it which side
                 # of a test/module mismatch departs from the planned interface.

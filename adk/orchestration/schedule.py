@@ -6,11 +6,10 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Any
 
-from adk.core.models import read_json_state
 from adk.hypergraph import save
 from adk.hypergraph.oracles import is_stub
 from adk.hypergraph.schedule import CONTENT_STATE, readiness, vertex_of
-from adk.orchestration.common import _RunState
+from adk.orchestration.common import THESIS_FILE, _RunState
 
 VERTEX_BUDGET = 8  # tasks (first build + repairs) on one vertex in one run, over all queue generations
 _OPEN = ("TODO", "WAITING")
@@ -23,10 +22,10 @@ class SchedulerMixin:
         h = self._project_h()
         if h is None:
             return None
-        target = str(task.get("target_node", ""))
-        # `_execute_task` rewrites the target to an id of the old matrix (`n1`); H speaks in paths.
-        target = str(read_json_state(self.matrix_path).get("nodes", {}).get(target, {}).get("path", target))
-        return vertex_of(h, target, str(task.get("description", "")))
+        target = str(task.get("target_node", "")).replace("\\", "/")
+        vertex = vertex_of(h, target, str(task.get("description", "")))
+        # A helper file is worked on as part of the module that owns it.
+        return vertex or h.owner_of(target)
 
     def _set_vertex_state(self, vertex: str, state: str, **why: Any) -> None:
         h = self._project_h()
@@ -74,6 +73,8 @@ class SchedulerMixin:
         """Vertex state after a task: verified when its verification passed, otherwise the content it now has."""
         vertex = self._task_vertex(task)
         if vertex is None:
+            if str(task.get("target_node", "")).startswith(THESIS_FILE):
+                self._chapter_states_from_thesis(passed, task)
             return
         kind = self._project_h().vertices[vertex].kind
         if passed:
@@ -85,6 +86,20 @@ class SchedulerMixin:
         if kind not in ("code", "entry") and not path.is_file():
             return
         self._set_vertex_state(vertex, CONTENT_STATE.get(kind, "drafted"), task_id=task.get("task_id"))
+
+    def _chapter_states_from_thesis(self, passed: bool, task: dict[str, Any]) -> None:
+        """A thesis task that names no single chapter (several at once, a critic's fixes): every planned chapter
+        now present in thesis.md takes the task's outcome (mock 01, 2026-11-18: six chapters written, all `spec`)."""
+        from adk.orchestration.factual_audit import thesis_missing_chapters
+
+        h = self._project_h()
+        thesis = self.workspace_dir / THESIS_FILE
+        if h is None or not thesis.is_file():
+            return
+        chapters = sorted(int(v.rpartition("#ch")[2]) for v in h.vertices if v.startswith(f"{THESIS_FILE}#ch"))
+        missing = set(thesis_missing_chapters(thesis.read_text(encoding="utf-8", errors="replace"), chapters))
+        for number in (n for n in chapters if n not in missing):
+            self._set_vertex_state(f"{THESIS_FILE}#ch{number}", "verified" if passed else "drafted", task_id=task.get("task_id"))
 
     def _carry_over(self, tasks: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Planned work a queue generation did not get to: it goes on into the next one (02, 2026-11-16: the

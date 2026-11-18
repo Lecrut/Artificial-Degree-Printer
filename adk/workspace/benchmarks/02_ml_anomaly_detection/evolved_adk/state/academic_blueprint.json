@@ -1,51 +1,8 @@
 {
-  "thesis_title": "Porównanie statycznej detekcji Z-score z wielofunkcyjnym zespołowym detektorem anomalii w syntetycznych sygnałach biomedycznych",
-  "thesis_statement": "Zespółowy detektor anomalii wykorzystujący kilka cech sygnaturowych osiąga istotnie wyższą dokładność (accuracy) i precyzję (F1-score) w wykrywaniu anomalii w wielokanałowych, syntetycznych sygnałach telemetrycznych niż statyczny, jednowymiarowy detektor oparty na odchyleniu standardowym Z-score, przy zachowaniu lepszej odporności na szum.",
-  "baseline_comparison": "Statyczny uniwaryjny detektor Z-score (src/baselines/z_score_baseline.py) vs Propozycja: Robust Ensemble Detector (src/models/robust_ensemble_detector.py). Porównanie przeprowadzone poprzez symulację 10 powtórzeń na różnych ziarnach losowości, z metrykami accuracy i F1-score.",
-  "entrypoint": "src/experiments/run_benchmark.py:run_benchmark",
-  "metrics": [
-    "accuracy",
-    "f1_score"
-  ],
-  "planned_chapters": [
-    {
-      "index": 1,
-      "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-      "focus": "Formalna definicja problemu detekcji anomalii w sygnałach biomedycznych, cel badawczy, teza oraz zakres pracy."
-    },
-    {
-      "index": 2,
-      "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-      "focus": "Przegląd metod detekcji anomalii w sygnałach biomedycznych, techniki ensemblingu oraz specyfikacja metody odniesienia (Z-score)."
-    },
-    {
-      "index": 3,
-      "title": "Rozdział 3: Metodologia",
-      "focus": "Opis zaproponowanego wielofunkcyjnego zespołowego detektora anomalii oraz syntetycznego generatora sygnałów."
-    },
-    {
-      "index": 4,
-      "title": "Rozdział 4: Eksperyment",
-      "focus": "Szczegółowy opis środowiska symulacyjnego, parametrów danych i procesu ewaluacji."
-    },
-    {
-      "index": 5,
-      "title": "Rozdział 5: Wyniki i Analiza",
-      "focus": "Prezentacja wyników porównawczych (accuracy, F1-score) oraz analiza statystyczna różnic między metodami."
-    },
-    {
-      "index": 6,
-      "title": "Rozdział 6: Zakończenie",
-      "focus": "Weryfikacja tezy pracy, wnioski końcowe, ograniczenia i kierunki przyszłych prac."
-    }
-  ],
-  "interfaces": {
-    "src/config.py": "\"\"\"Central configuration for the anomaly detection experiment.\"\"\"\nimport dataclasses\n\n@dataclasses.dataclass\nclass Config:\n    \"\"\"Configuration parameters for simulation and evaluation.\"\"\"\n    n_channels: int = 4\n    sequence_length: int = 1000\n    noise_std: float = 0.1\n    anomaly_ratio: float = 0.05\n    n_seeds: int = 10\n    ensemble_size: int = 5\n    output_dir: str = \"results\"",
-    "src/data/synthetic_generator.py": "\"\"\"Generates synthetic multi-channel bio-signal telemetry with anomalies.\"\"\"\nimport numpy as np\n\ndef generate_signal(config: 'src.config.Config', seed: int) -> tuple:\n    \"\"\"Generate synthetic signal and ground truth labels.\n\n    Returns:\n        Tuple of (signal_data: np.ndarray, labels: np.ndarray) where signal_data shape is (n_channels, seq_len)\n        and labels are 1 for anomaly points, 0 otherwise.\n    \"\"\"\n    pass",
-    "src/baselines/z_score_baseline.py": "\"\"\"Static univariate Z-score baseline detector.\"\"\"\nimport numpy as np\n\nclass ZScoreBaseline:\n    \"\"\"Univariate Z-score based anomaly detection per channel.\"\"\"\n\n    def __init__(self, threshold: float = 3.0) -> None:\n        \"\"\"Initialize with a Z-score threshold.\n        \n        Args:\n            threshold: The Z-score cutoff for anomaly classification.\n        \"\"\"\n        self.threshold = threshold\n\n    def detect(self, signal: np.ndarray) -> np.ndarray:\n        \"\"\"Detect anomalies in the given signal.\n        \n        Args:\n            signal: Array of shape (n_channels, seq_len).\n        \n        Returns:\n            Boolean array of shape (seq_len,) indicating anomaly points.\n        \"\"\"\n        pass",
-    "src/models/robust_ensemble_detector.py": "\"\"\"Multi-feature robust ensemble detector.\"\"\"\nimport numpy as np\n\nclass RobustEnsembleDetector:\n    \"\"\"Ensemble of multiple anomaly detectors for robust detection.\"\"\"\n\n    def __init__(self, n_estimators: int = 5, threshold_percentile: float = 95.0) -> None:\n        \"\"\"Initialize the ensemble detector.\n        \n        Args:\n            n_estimators: Number of base detectors in the ensemble.\n            threshold_percentile: Percentile for voting threshold.\n        \"\"\"\n        self.n_estimators = n_estimators\n        self.threshold_percentile = threshold_percentile\n\n    def fit(self, signal: np.ndarray) -> None:\n        \"\"\"Fit the base detectors on normal data (or full data in unsupervised setting).\n        \n        Args:\n            signal: Array of shape (n_channels, seq_len).\n        \"\"\"\n        pass\n\n    def detect(self, signal: np.ndarray) -> np.ndarray:\n        \"\"\"Detect anomalies using the ensemble voting mechanism.\n        \n        Args:\n            signal: Array of shape (n_channels, seq_len).\n        \n        Returns:\n            Boolean array of shape (seq_len,) indicating anomaly points.\n        \"\"\"\n        pass",
-    "src/experiments/run_benchmark.py": "\"\"\"Benchmark entrypoint for comparing ensemble vs baseline.\"\"\"\nimport numpy as np\nfrom sklearn.metrics import accuracy_score, f1_score\nimport pandas as pd\n\ndef run_benchmark() -> dict:\n    \"\"\"Run the full experiment pipeline.\n    \n    Loads config, generates synthetic data, runs both detectors,\n    computes metrics, and saves results to 'results/results.csv'.\n    \n    Returns:\n        Dictionary of aggregated metrics for printing/logging.\n    \"\"\"\n    pass"
-  },
+  "thesis_type": "magisterska",
+  "template_name": "thesis_plodz",
+  "template_certain": true,
+  "thesis_title": "[DOCUMENT FORMAT: Praca Magisterska Politechniki Łódzkiej (II stopień) | thesis_type=magisterska | template_name=thesis_plodz (ThesisPLodz.cls)] Research question (anomaly detection): does a multi-feature robust ensemble detector find anomalies in synthetic multi-channel bio-signal telemetry more reliably than a static univariate Z-score baseline? Design the experiment yourself: choose the parameters, training or search budget, number of repetitions and seeds, the metrics you will report and the success criterion, and declare the metrics and the experiment entrypoint in the plan before running anything. Implement the solution as small, single-purpose modules with unit tests, produce every result by running the declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or to a results file.",
   "literature_recon": {
     "task_key": "02_ml_anomaly_detection",
     "domain": "Biomedical Signal Processing & Unsupervised Anomaly Detection",
@@ -73,42 +30,5 @@
       "mohammad2026sift"
     ],
     "citation_source": "arxiv"
-  },
-  "thesis_type": "magisterska",
-  "template_name": "thesis_plodz",
-  "template_certain": true,
-  "table_of_contents": {
-    "chapters": [
-      {
-        "index": 1,
-        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-        "focus": "Formalna definicja problemu detekcji anomalii w sygnałach biomedycznych, cel badawczy, teza oraz zakres pracy."
-      },
-      {
-        "index": 2,
-        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
-        "focus": "Przegląd metod detekcji anomalii w sygnałach biomedycznych, techniki ensemblingu oraz specyfikacja metody odniesienia (Z-score)."
-      },
-      {
-        "index": 3,
-        "title": "Rozdział 3: Metodologia",
-        "focus": "Opis zaproponowanego wielofunkcyjnego zespołowego detektora anomalii oraz syntetycznego generatora sygnałów."
-      },
-      {
-        "index": 4,
-        "title": "Rozdział 4: Eksperyment",
-        "focus": "Szczegółowy opis środowiska symulacyjnego, parametrów danych i procesu ewaluacji."
-      },
-      {
-        "index": 5,
-        "title": "Rozdział 5: Wyniki i Analiza",
-        "focus": "Prezentacja wyników porównawczych (accuracy, F1-score) oraz analiza statystyczna różnic między metodami."
-      },
-      {
-        "index": 6,
-        "title": "Rozdział 6: Zakończenie",
-        "focus": "Weryfikacja tezy pracy, wnioski końcowe, ograniczenia i kierunki przyszłych prac."
-      }
-    ]
   }
 }

@@ -123,11 +123,16 @@ def validate_test_on_stubs(workspace: str | Path, test_rel: str, h: Hypergraph, 
 
 
 def run_fingerprint(workspace: str | Path, h: Hypergraph) -> str | None:
-    """sha256 of the code the experiment runs: every module whose bag precedes R in ≺ (Φ_R freshness; the
+    """sha256 of the code the experiment runs: every code member of R with its helper files (Φ_R freshness; the
     original E2 contract: the data come from the current version of the code)."""
     if "R:run" not in h.edges:
         return None
-    modules = sorted(a.removeprefix("I:") for a, b in h.order if b == "R:run" and a.startswith("I:"))
+    modules = sorted({
+        rel
+        for member, role in h.edges["R:run"].members.items()
+        if role in ("P", "C") and h.vertices.get(member) is not None and h.vertices[member].kind in ("code", "entry")
+        for rel in h.files_of(member)
+    })
     digest = hashlib.sha256()
     for rel in modules:
         path = Path(workspace) / rel

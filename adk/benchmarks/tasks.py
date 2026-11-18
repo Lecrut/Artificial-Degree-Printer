@@ -1,65 +1,24 @@
+"""The benchmark tasks: what the harness is asked to do. A task carries its prompt, its titles and the kind of
+document, and for a brownfield task the workspace it starts from. Answers (code, tests, chapters, bibliography)
+belong to the simulated agents in `adk/mocks`, never to the task."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
-from adk.mocks.code_fixtures import (
-    ANOMALY_BACKGROUND_BIBTEX,
-    ANOMALY_BACKGROUND_CONTENT,
-    ANOMALY_BIBTEX,
-    ANOMALY_CONFIG_AST_NODES,
-    ANOMALY_CORE_CODE,
-    ANOMALY_DISCOVERER_BIBTEX,
-    ANOMALY_DISCOVERER_CONTENT,
-    ANOMALY_DOC_CONTENT,
-    ANOMALY_INITIAL_CSV,
-    ANOMALY_PLOT_SCRIPT,
+from adk.benchmarks.inputs import (
     ANOMALY_PROMPT,
-    ANOMALY_SOTA_CONTENT,
-    ANOMALY_TEST_CODE,
-    ANOMALY_THESIS_CHAPTERS,
-    ANOMALY_TIKZ,
     FEDERATED_BENCHMARK_PROMPT,
-    FEDERATED_BIBTEX,
-    FEDERATED_CONFIG_AST_NODES,
-    FEDERATED_CORE_CODE,
-    FEDERATED_CUSTOM_TASKS,
-    FEDERATED_DOC_CONTENT,
-    FEDERATED_INITIAL_CSV,
-    FEDERATED_PLOT_SCRIPT,
-    FEDERATED_SOTA_CONTENT,
-    FEDERATED_TEST_CODE,
-    FEDERATED_THESIS_CHAPTERS,
-    FEDERATED_TIKZ,
     PATHFINDING_BASELINE_CONFIG_CODE,
     PATHFINDING_BASELINE_CORE_CODE,
-    PATHFINDING_BIBTEX,
-    PATHFINDING_CONFIG_AST_NODES,
-    PATHFINDING_CORE_CODE,
-    PATHFINDING_DOC_CONTENT,
-    PATHFINDING_INITIAL_CSV,
-    PATHFINDING_PLOT_SCRIPT,
-    PATHFINDING_SOTA_CONTENT,
-    PATHFINDING_TEST_CODE,
-    PATHFINDING_THESIS_CHAPTERS,
-    PATHFINDING_TIKZ,
+    PATHFINDING_EVOLUTION_PROMPT,
     TICTACTOE_BENCHMARK_PROMPT,
-    TICTACTOE_BIBTEX,
-    TICTACTOE_CONFIG_AST_NODES,
-    TICTACTOE_CORE_CODE,
-    TICTACTOE_DOC_FULL_CONTENT,
-    TICTACTOE_INITIAL_CSV,
-    TICTACTOE_PLOT_SCRIPT,
-    TICTACTOE_SOTA_CONTENT,
-    TICTACTOE_TEST_CODE,
-    TICTACTOE_THESIS_CHAPTERS,
-    TICTACTOE_TIKZ,
 )
 
 
 @dataclass(frozen=True)
 class BenchmarkTaskSpec:
-    """Specification of an ADK benchmark task defining contracts, evaluation criteria, and reference fixtures."""
+    """One benchmark task as the harness receives it."""
 
     task_id: str
     slug: str
@@ -67,59 +26,10 @@ class BenchmarkTaskSpec:
     title_en: str
     domain: str
     prompt: str
-    task_type: str = "greenfield"  # "greenfield" (from scratch) or "evolution" (brownfield evolution)
+    task_type: str = "greenfield"  # "greenfield" (from scratch) or "evolution" (starts from initial_workspace_files)
     initial_workspace_files: dict[str, str] = field(default_factory=dict)
-    expected_files: list[str] = field(
-        default_factory=lambda: [
-            "config.py",
-            "core.py",
-            "test_core.py",
-            "results.csv",
-            "plot_results.py",
-            "thesis.md",
-        ]
-    )
-    abstract_pl: str = ""
-    abstract_en: str = ""
-    architecture_tikz: str = ""
-    thesis_chapters: list[tuple[str, str]] = field(default_factory=list)
-    bibtex_entries: str = ""
-    sota_section_title: str = ""
-    sota_section_content: str = ""
-    background_bibtex_entries: str = ""
-    background_section_content: str = ""
-    discoverer_bibtex_entries: str = ""
-    discoverer_section_content: str = ""
-    doc_section_title: str = ""
-    doc_section_content: str = ""
-    config_ast_nodes: list[tuple[str, str]] = field(default_factory=list)
-    core_code: str = ""
-    test_code: str = ""
-    initial_csv: str = ""
-    plot_script: str = ""
-    missing_specialization: str | None = None
-    trigger_agent_split: bool = False
-    trigger_tool_synthesis: bool = False
-    trigger_prompt_consolidation: bool = False
-    simulate_first_fail: bool = True
-    custom_tasks: list[dict[str, Any]] = field(default_factory=list)
-    thesis_type: str = "engineering"
+    thesis_type: str = "inzynierska"
     template_name: str | None = None
-
-
-PATHFINDING_EVOLUTION_PROMPT = (
-    '[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | '
-    'template_name=paper_ieee (IEEEtran.cls)] The workspace already contains a graph pathfinding project '
-    'with a baseline Dijkstra search; read it before changing anything and keep the baseline working. '
-    'Research question: does a weighted A* pathfinding search with an admissible octile heuristic expand '
-    'fewer nodes than the baseline on 8-connected obstacle grids, and at what cost in path optimality? '
-    'Design the experiment yourself: choose the parameters, training or search budget, number of '
-    'repetitions and seeds, the metrics you will report and the success criterion, and declare the '
-    'metrics and the experiment entrypoint in the plan before running anything. Implement the solution as '
-    'small, single-purpose modules with unit tests, produce every result by running the declared '
-    'entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or '
-    'to a results file.'
-)
 
 
 BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
@@ -130,36 +40,6 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
         title_en="Tabular Q-Learning Policy Optimization in Finite-State Tic-Tac-Toe Environments",
         domain="Reinforcement Learning & Game Theory",
         prompt=TICTACTOE_BENCHMARK_PROMPT,
-        task_type="greenfield",
-        initial_workspace_files={},
-        config_ast_nodes=TICTACTOE_CONFIG_AST_NODES,
-        core_code=TICTACTOE_CORE_CODE,
-        test_code=TICTACTOE_TEST_CODE,
-        initial_csv=TICTACTOE_INITIAL_CSV,
-        plot_script=TICTACTOE_PLOT_SCRIPT,
-        bibtex_entries=TICTACTOE_BIBTEX,
-        sota_section_title="Analiza Stanu Wiedzy i Podstawy Teoretyczne: Od Teorii Gier do Tablicowego Q-Learningu",
-        sota_section_content=TICTACTOE_SOTA_CONTENT,
-        background_bibtex_entries=TICTACTOE_BIBTEX,
-        background_section_content=TICTACTOE_SOTA_CONTENT,
-        doc_section_title="Tabular Q-Learning Empirical Evaluation",
-        doc_section_content=TICTACTOE_DOC_FULL_CONTENT,
-        abstract_pl=(
-            "W pracy zbadano zbieżność i efektywność tablicowego algorytmu Q-Learning w grze Kółko i Krzyżyk. "
-            "Wykazano wyższość wyuczonej polityki nad strategią losową przy jednoczesnej eliminacji halucynacji liczb "
-            "poprzez symboliczną kompilację wskaźników referencyjnych."
-        ),
-        abstract_en=(
-            "This thesis presents a pure-Python reinforcement learning agent applying tabular Q-learning to "
-            "Tic-Tac-Toe, evaluated against a uniform random baseline under reproducible neuro-symbolic verification."
-        ),
-        architecture_tikz=TICTACTOE_TIKZ,
-        thesis_chapters=TICTACTOE_THESIS_CHAPTERS,
-        missing_specialization=None,
-        trigger_agent_split=False,
-        trigger_tool_synthesis=False,
-        trigger_prompt_consolidation=False,
-        simulate_first_fail=True,
         thesis_type="inzynierska",
         template_name="thesis_plodz",
     ),
@@ -170,37 +50,6 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
         title_en="Robust Anomaly Detection in Multi-Channel Physiological Telemetry via Random Subspace Ensembles",
         domain="Machine Learning & Biomedical Signal Processing",
         prompt=ANOMALY_PROMPT,
-        task_type="greenfield",
-        initial_workspace_files={},
-        config_ast_nodes=ANOMALY_CONFIG_AST_NODES,
-        core_code=ANOMALY_CORE_CODE,
-        test_code=ANOMALY_TEST_CODE,
-        initial_csv=ANOMALY_INITIAL_CSV,
-        plot_script=ANOMALY_PLOT_SCRIPT,
-        bibtex_entries=ANOMALY_BIBTEX,
-        sota_section_title="Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej",
-        sota_section_content=ANOMALY_SOTA_CONTENT,
-        background_bibtex_entries=ANOMALY_BACKGROUND_BIBTEX,
-        background_section_content=ANOMALY_BACKGROUND_CONTENT,
-        discoverer_bibtex_entries=ANOMALY_DISCOVERER_BIBTEX,
-        discoverer_section_content=ANOMALY_DISCOVERER_CONTENT,
-        doc_section_title="Bio-Signal Anomaly Detection Evaluation",
-        doc_section_content=ANOMALY_DOC_CONTENT,
-        abstract_pl=(
-            "Niniejsza praca prezentuje odporny algorytm detekcji anomalii w trójkanałowej telemetrii fizjologicznej "
-            "(HR, HRV, SpO2) oparty na komitecie losowych podprzestrzeni oraz medianowej estymacji rozproszenia (MAD)."
-        ),
-        abstract_en=(
-            "This thesis proposes a robust multi-channel anomaly detector combining median absolute deviation "
-            "scaling with a random subspace ensemble, demonstrating superior precision and recall over univariate Z-score."
-        ),
-        architecture_tikz=ANOMALY_TIKZ,
-        thesis_chapters=ANOMALY_THESIS_CHAPTERS,
-        missing_specialization="anomaly_ml_specialist",
-        trigger_agent_split=True,
-        trigger_tool_synthesis=False,
-        trigger_prompt_consolidation=False,
-        simulate_first_fail=True,
         thesis_type="magisterska",
         template_name="thesis_plodz",
     ),
@@ -216,33 +65,6 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
             "config.py": PATHFINDING_BASELINE_CONFIG_CODE,
             "core.py": PATHFINDING_BASELINE_CORE_CODE,
         },
-        config_ast_nodes=PATHFINDING_CONFIG_AST_NODES,
-        core_code=PATHFINDING_CORE_CODE,
-        test_code=PATHFINDING_TEST_CODE,
-        initial_csv=PATHFINDING_INITIAL_CSV,
-        plot_script=PATHFINDING_PLOT_SCRIPT,
-        bibtex_entries=PATHFINDING_BIBTEX,
-        sota_section_title="Analiza Stanu Wiedzy (SOTA): Heurystyczne Przeszukiwanie Grafów",
-        sota_section_content=PATHFINDING_SOTA_CONTENT,
-        discoverer_bibtex_entries=PATHFINDING_BIBTEX,
-        discoverer_section_content=PATHFINDING_SOTA_CONTENT,
-        doc_section_title="Weighted Octile A* Pathfinding Evaluation",
-        doc_section_content=PATHFINDING_DOC_CONTENT,
-        abstract_pl=(
-            "W pracy zbadano efektywność heurystycznego przeszukiwania grafów na siatkach 8-spójnych z przeszkodami. "
-            "Porównano niepoinformowany algorytm Dijkstry z ważonym algorytmem A* stosującym metrykę oktilową."
-        ),
-        abstract_en=(
-            "This thesis evaluates Weighted Octile A* pathfinding on 8-connected obstacle grids against uninformed "
-            "Dijkstra search, demonstrating over 5x reduction in vertex expansions while preserving path optimality."
-        ),
-        architecture_tikz=PATHFINDING_TIKZ,
-        thesis_chapters=PATHFINDING_THESIS_CHAPTERS,
-        missing_specialization="graph_optimization_specialist",
-        trigger_agent_split=False,
-        trigger_tool_synthesis=True,
-        trigger_prompt_consolidation=True,
-        simulate_first_fail=True,
         thesis_type="paper",
         template_name="paper_ieee",
     ),
@@ -253,36 +75,6 @@ BENCHMARK_TASKS: dict[str, BenchmarkTaskSpec] = {
         title_en="Federated Learning Optimization under Statistical Heterogeneity: Adaptive FedProx vs. FedAvg",
         domain="Distributed Systems & Federated Machine Learning",
         prompt=FEDERATED_BENCHMARK_PROMPT,
-        task_type="greenfield",
-        initial_workspace_files={},
-        config_ast_nodes=FEDERATED_CONFIG_AST_NODES,
-        core_code=FEDERATED_CORE_CODE,
-        test_code=FEDERATED_TEST_CODE,
-        initial_csv=FEDERATED_INITIAL_CSV,
-        plot_script=FEDERATED_PLOT_SCRIPT,
-        bibtex_entries=FEDERATED_BIBTEX,
-        sota_section_title="Analiza Stanu Wiedzy (SOTA 2023--2026): Optymalizacja Sfederowana",
-        sota_section_content=FEDERATED_SOTA_CONTENT,
-        discoverer_bibtex_entries=FEDERATED_BIBTEX,
-        discoverer_section_content=FEDERATED_SOTA_CONTENT,
-        doc_section_title="Adaptive FedProx Federated Optimization Evaluation",
-        doc_section_content=FEDERATED_DOC_CONTENT,
-        abstract_pl=(
-            "Praca bada stabilność zbieżności i odporność na opóźnienia klientów w algorytmie Adaptive FedProx "
-            "w warunkach asymetrii danych Dirichlet non-IID w porównaniu ze standardowym FedAvg."
-        ),
-        abstract_en=(
-            "This thesis evaluates the convergence stability and straggler resilience of Adaptive FedProx "
-            "under Dirichlet non-IID data heterogeneity compared to standard FedAvg across 25 communication rounds."
-        ),
-        architecture_tikz=FEDERATED_TIKZ,
-        thesis_chapters=FEDERATED_THESIS_CHAPTERS,
-        missing_specialization="federated_ml_specialist",
-        trigger_agent_split=False,
-        trigger_tool_synthesis=False,
-        trigger_prompt_consolidation=False,
-        simulate_first_fail=True,
-        custom_tasks=FEDERATED_CUSTOM_TASKS,
         thesis_type="paper",
         template_name="paper_ieee",
     ),

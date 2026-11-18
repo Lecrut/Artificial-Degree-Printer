@@ -7,15 +7,11 @@ Manages deterministic LaTeX templates for academic degree theses and scientific 
 
 from __future__ import annotations
 
-import ast
 import csv
 import re
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-
-from adk.mocks.thesis_mock_expander import expand_academic_chapters
-from adk.tools.building.literature_engine import get_domain_bibtex
 
 if TYPE_CHECKING:
     from adk.benchmarks.tasks import BenchmarkTaskSpec
@@ -196,19 +192,6 @@ def copy_template_assets(template_name: str, target_dir: Path) -> list[Path]:
     return copied
 
 
-def _get_effective_chapters(spec: BenchmarkTaskSpec) -> list[tuple[str, str]]:
-    if spec.thesis_chapters:
-        return list(spec.thesis_chapters)
-    return [
-        ("Rozdział 1: Wstęp, Cel i Teza Pracy", spec.abstract_pl),
-        (f"Rozdział 2: {spec.sota_section_title}", spec.sota_section_content),
-        ("Rozdział 3: Architektura Systemu i Formalizm Matematyczny", spec.abstract_en),
-        ("Rozdział 4: Implementacja Algorytmiczna", spec.sota_section_content),
-        (spec.doc_section_title, spec.doc_section_content),
-        ("Rozdział 6: Podsumowanie i Wnioski", spec.abstract_pl),
-    ]
-
-
 def _read_csv_rows(csv_path: Path) -> tuple[list[str], list[dict[str, str]]]:
     if not csv_path.exists():
         return [], []
@@ -217,32 +200,6 @@ def _read_csv_rows(csv_path: Path) -> tuple[list[str], list[dict[str, str]]]:
         headers = list(reader.fieldnames or [])
         rows = [dict(r) for r in reader]
     return headers, rows
-
-
-def _extract_config_constants(config_path: Path) -> list[tuple[str, str]]:
-    if not config_path.exists():
-        return []
-    pairs: list[tuple[str, str]] = []
-    try:
-        tree = ast.parse(config_path.read_text(encoding="utf-8"))
-        for node in tree.body:
-            if isinstance(node, ast.Assign):
-                for t in node.targets:
-                    if isinstance(t, ast.Name):
-                        try:
-                            val = repr(ast.literal_eval(node.value))
-                        except (ValueError, SyntaxError):
-                            val = ast.unparse(node.value)
-                        pairs.append((t.id, val))
-            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.value is not None:
-                try:
-                    val = repr(ast.literal_eval(node.value))
-                except (ValueError, SyntaxError):
-                    val = ast.unparse(node.value)
-                pairs.append((node.target.id, val))
-    except SyntaxError:
-        pass
-    return pairs
 
 
 def _escape_latex_prose(text: str) -> str:
@@ -309,81 +266,31 @@ def _escape_latex_prose(text: str) -> str:
     return s
 
 
-def _build_canonical_6_chapters(
-    base_chapters: list[tuple[str, str]],
-    existing_chapters: dict[str, str],
-    is_live_llm: bool = False,
-    mock_chapters: list[tuple[str, str]] | None = None,
-) -> list[tuple[str, str]]:
-    """Build chapters dynamically from authentic authored text or base specs without truncation or mock leakage."""
-    if not existing_chapters:
-        if not is_live_llm and mock_chapters:
-            return list(mock_chapters)
-        return list(base_chapters) if base_chapters else [("Wstęp", "")]
+def _thesis_chapters(workspace_dir: Path) -> list[tuple[str, str]]:
+    """The chapters exactly as the agents wrote them: every `## ` section of thesis.md, in order. Nothing is
+    filled in from the task spec or from fixtures (2026-11-18: missing chapters of live theses were taken from the
+    benchmark spec)."""
+    md_file = workspace_dir / "thesis.md"
+    if not md_file.exists():
+        return []
+    raw_md = md_file.read_text(encoding="utf-8", errors="ignore")
+    matches = list(re.finditer(r"^##\s+(.+?)\s*$", raw_md, flags=re.MULTILINE))
+    return [
+        (m.group(1).strip(), raw_md[m.end() : matches[i + 1].start() if i + 1 < len(matches) else len(raw_md)].strip())
+        for i, m in enumerate(matches)
+    ]
 
-    # If existing_chapters already has enough or more chapters than base, preserve all of them directly!
-    if len(existing_chapters) >= len(base_chapters):
-        return [(k, v) for k, v in existing_chapters.items()]
 
-    target_len = max(len(base_chapters), len(existing_chapters))
-    kw_map = {
-        0: ("1", "wstęp", "wstep", "cel", "teza", "intro"),
-        1: ("2", "sota", "stan wiedzy", "literatur", "przegląd", "przeglad", "related", "background"),
-        2: ("3", "architektur", "formalizm", "matematyczn", "system", "design", "model"),
-        3: ("4", "implementacj", "algorytm", "struktury", "implementation", "ast"),
-        4: ("5", "wyniki", "ewaluacj", "eksperyment", "badani", "evaluation", "metodologia", "empirical", "results"),
-        5: ("6", "podsumowan", "wnioski", "conclusi", "kierunki", "summary"),
-    }
-    assigned: dict[int, tuple[str, str]] = {}
-    used_keys: set[str] = set()
-
-    for idx in range(target_len):
-        prefix_pl = f"rozdział {idx + 1}"
-        prefix_pl_alt = f"rozdzia\u0142 {idx + 1}"
-        prefix_en = f"chapter {idx + 1}"
-        for k, v in existing_chapters.items():
-            if k in used_keys:
-                continue
-            kl = k.lower()
-            if kl.startswith(prefix_pl) or kl.startswith(prefix_pl_alt) or kl.startswith(prefix_en):
-                assigned[idx] = (k, v)
-                used_keys.add(k)
-                break
-
-    for idx in range(target_len):
-        if idx in assigned:
-            continue
-        kws = kw_map.get(idx, ())
-        for k, v in existing_chapters.items():
-            if k in used_keys:
-                continue
-            kl = k.lower()
-            if any(w in kl for w in kws):
-                assigned[idx] = (k, v)
-                used_keys.add(k)
-                break
-
-    remaining = [k for k in existing_chapters if k not in used_keys]
-    for idx in range(target_len):
-        if idx not in assigned and remaining:
-            k = remaining.pop(0)
-            assigned[idx] = (k, existing_chapters[k])
-
-    final_chapters: list[tuple[str, str]] = []
-    for idx in range(target_len):
-        if idx in assigned:
-            final_chapters.append(assigned[idx])
-        elif not is_live_llm and mock_chapters and idx < len(mock_chapters):
-            final_chapters.append(mock_chapters[idx])
-        elif idx < len(base_chapters):
-            final_chapters.append(base_chapters[idx])
-        else:
-            final_chapters.append((f"Rozdział {idx + 1}", ""))
-
-    for k in remaining:
-        final_chapters.append((k, existing_chapters[k]))
-
-    return final_chapters
+def _figure_files(workspace_dir: Path) -> list[str]:
+    """Figures the experiment produced (`figures/*.pdf|png`, one per name, PDF preferred)."""
+    fig_dir = workspace_dir / "figures"
+    if not fig_dir.is_dir():
+        return []
+    by_stem: dict[str, str] = {}
+    for p in sorted(fig_dir.iterdir()):
+        if p.suffix.lower() in (".pdf", ".png") and (p.stem not in by_stem or p.suffix.lower() == ".pdf"):
+            by_stem[p.stem] = f"figures/{p.name}"
+    return list(by_stem.values())
 
 
 def render_template_latex(
@@ -391,9 +298,10 @@ def render_template_latex(
     workspace_dir: Path,
     template_name: str | None = None,
     thesis_type: str | None = None,
-    provider: str | None = None,
+    abstract: str = "",
 ) -> Path:
-    """Render complete, verified academic LaTeX source thesis.tex using the chosen template."""
+    """Typeset the thesis the agents wrote (thesis.md), the experiment's results table and figures, and the
+    bibliography in the workspace, with the chosen template. `abstract` comes from the plan (thesis statement)."""
     chosen_template = resolve_template_name(
         thesis_type=thesis_type or getattr(spec, "thesis_type", None),
         requested_template=template_name or getattr(spec, "template_name", None),
@@ -401,54 +309,11 @@ def render_template_latex(
     copy_template_assets(chosen_template, workspace_dir)
 
     bib_path = workspace_dir / "references.bib"
-    full_domain_bib = getattr(spec, "bibtex_entries", "") or get_domain_bibtex(spec.task_id)
     if bib_path.exists():
-        bib_raw = bib_path.read_text(encoding="utf-8", errors="ignore")
-        if full_domain_bib and len(re.findall(r"@\w+\{", bib_raw)) < len(re.findall(r"@\w+\{", full_domain_bib)):
-            from adk.orchestrator import _merge_bibtex_entries
-            bib_raw = _merge_bibtex_entries(bib_raw, full_domain_bib)
-        cleaned_bib = re.sub(r"(?<!\\)&", r"\\&", bib_raw)
-        bib_path.write_text(cleaned_bib, encoding="utf-8")
-    elif full_domain_bib:
-        cleaned_bib = re.sub(r"(?<!\\)&", r"\\&", full_domain_bib)
-        bib_path.write_text(cleaned_bib, encoding="utf-8")
+        bib_path.write_text(re.sub(r"(?<!\\)&", r"\\&", bib_path.read_text(encoding="utf-8", errors="ignore")), encoding="utf-8")
 
     headers, rows = _read_csv_rows(workspace_dir / "results.csv")
-    config_pairs = _extract_config_constants(workspace_dir / "config.py")
-    base_chapters = _get_effective_chapters(spec)
-
-    is_live_llm = provider is not None and provider.strip().lower() != "mock"
-    md_file = workspace_dir / "thesis.md"
-    existing_chapters: dict[str, str] = {}
-    if md_file.exists():
-        raw_md = md_file.read_text(encoding="utf-8", errors="ignore")
-        matches = list(re.finditer(r"^##\s+(.+?)\s*$", raw_md, flags=re.MULTILINE))
-        for i, m in enumerate(matches):
-            t = m.group(1).strip()
-            start = m.end()
-            end = matches[i + 1].start() if i + 1 < len(matches) else len(raw_md)
-            b = raw_md[start:end].strip()
-            if len(b) > 20:
-                existing_chapters[t] = b
-
-    mock_ch = None
-    if not is_live_llm:
-        mock_ch = expand_academic_chapters(
-            spec=spec,
-            base_chapters=base_chapters,
-            workspace_dir=workspace_dir,
-            config_pairs=config_pairs,
-            headers=headers,
-            rows=rows,
-            is_ieee=(chosen_template == "paper_ieee"),
-        )
-
-    chapters = _build_canonical_6_chapters(
-        base_chapters=base_chapters,
-        existing_chapters=existing_chapters,
-        is_live_llm=is_live_llm,
-        mock_chapters=mock_ch,
-    )
+    chapters = _thesis_chapters(workspace_dir) or [("Rozdział 1", "")]
 
     # LaTeX table for CSV metrics
     if headers and rows:
@@ -477,21 +342,6 @@ def render_template_latex(
     else:
         csv_table_tex = "% Brak danych CSV"
 
-    config_rows_tex = "\n".join(
-        f"\\texttt{{{sym.replace('_', '\\_')}}} & \\texttt{{\\ref_ast{{config.py:{sym}}}}} \\\\"
-        for sym, _ in config_pairs
-    ) or "\\texttt{CONFIG} & \\texttt{DEFAULT} \\\\"
-
-    # Determine which chapter hosts the architecture TikZ & config AST table
-    arch_idx = -1
-    for i, (ch_title, _) in enumerate(chapters):
-        ch_l = ch_title.lower()
-        if any(w in ch_l for w in ("architektur", "formalizm", "matematyczn", "system", "design", "model", "methodology", "metod")):
-            arch_idx = i
-            break
-    if arch_idx == -1:
-        arch_idx = min(2, len(chapters) - 1)
-
     # Determine which chapter hosts the empirical results CSV table & comparison chart
     results_idx = -1
     for i, (ch_title, _) in enumerate(chapters):
@@ -502,14 +352,8 @@ def render_template_latex(
     if results_idx == -1:
         results_idx = max(0, len(chapters) - 2) if len(chapters) >= 3 else len(chapters) - 1
 
-    if arch_idx == results_idx and len(chapters) > 1:
-        if arch_idx > 0:
-            arch_idx -= 1
-        elif results_idx < len(chapters) - 1:
-            results_idx += 1
-
-    esc_abstract_pl = _escape_latex_prose(spec.abstract_pl)
-    esc_abstract_en = _escape_latex_prose(spec.abstract_en)
+    figures = _figure_files(workspace_dir)
+    esc_abstract_pl = esc_abstract_en = _escape_latex_prose(abstract)
 
     t_type = (thesis_type or getattr(spec, "thesis_type", "engineering")).strip().lower()
     if t_type in ("magisterska", "master", "msc"):
@@ -526,39 +370,14 @@ def render_template_latex(
             esc_t = _escape_latex_prose(c_title)
             esc_b = _escape_latex_prose(c_body)
             c_parts = [f"\\chapter{{{esc_t}}}\n{esc_b}"]
-            if i == arch_idx:
-                c_parts.append(
-                    "Na Rysunku~\\ref{fig:arch_tikz} przedstawiono potok obliczeniowy zaprojektowany przez system ADK.\n"
-                    "Wszystkie stałe i hiperparametry są pobierane bezpośrednio z drzewa AST modułu \\texttt{config.py}:\n\n"
-                    "\\begin{table}[htbp]\n"
-                    "\\centering\n"
-                    "\\caption{Weryfikowane symbolicznie stałe konfiguracyjne (\\texttt{config.py})}\n"
-                    "\\begin{tabular}{ll}\n"
-                    "\\toprule\n"
-                    "\\textbf{Symbol AST} & \\textbf{Wartość w kodzie} \\\\\n"
-                    "\\midrule\n"
-                    f"{config_rows_tex}\n"
-                    "\\bottomrule\n"
-                    "\\end{tabular}\n"
-                    "\\label{tab:config_constants}\n"
-                    "\\end{table}\n\n"
-                    "\\begin{figure}[htbp]\n"
-                    "\\centering\n"
-                    f"{spec.architecture_tikz}\n"
-                    "\\caption{Schemat architektury obliczeniowej modułu \\texttt{core.py}.}\n"
-                    "\\label{fig:arch_tikz}\n"
-                    "\\end{figure}"
-                )
             if i == results_idx:
-                c_parts.append(
-                    f"{csv_table_tex}\n\n"
-                    "\\begin{figure}[htbp]\n"
-                    "\\centering\n"
-                    "\\includegraphics[width=0.86\\textwidth]{figures/comparison_chart.pdf}\n"
-                    "\\caption{Wizualizacja wyników eksperymentalnych wygenerowana przez \\texttt{plot\\_results.py}.}\n"
-                    "\\label{fig:comparison_chart}\n"
-                    "\\end{figure}"
-                )
+                c_parts.append(csv_table_tex)
+                c_parts += [
+                    "\\begin{figure}[htbp]\n\\centering\n"
+                    f"\\includegraphics[width=0.86\\textwidth,keepaspectratio]{{{fig}}}\n"
+                    f"\\caption{{Wynik eksperymentu: \\texttt{{{_escape_latex_prose(fig)}}}.}}\n\\end{{figure}}"
+                    for fig in figures
+                ]
             rendered_chapters.append("\n\n".join(c_parts))
         chapters_body_tex = "\n\n".join(rendered_chapters)
 
@@ -630,39 +449,14 @@ def render_template_latex(
             esc_t = _escape_latex_prose(c_title)
             esc_b = _escape_latex_prose(c_body)
             s_parts = [f"\\section{{{esc_t}}}\n{esc_b}"]
-            if i == arch_idx:
-                s_parts.append(
-                    "Figure~\\ref{fig:arch_tikz} illustrates the neural-symbolic data processing pipeline.\n"
-                    "The experimental hyperparameters are grounded directly in the abstract syntax tree of \\texttt{config.py}:\n\n"
-                    "\\begin{table}[htbp]\n"
-                    "\\centering\n"
-                    "\\caption{Symbolically Grounded Hyperparameters (\\texttt{config.py})}\n"
-                    "\\begin{tabular}{ll}\n"
-                    "\\toprule\n"
-                    "\\textbf{AST Symbol} & \\textbf{Grounding Value} \\\\\n"
-                    "\\midrule\n"
-                    f"{config_rows_tex}\n"
-                    "\\bottomrule\n"
-                    "\\end{tabular}\n"
-                    "\\label{tab:config_hyperparameters}\n"
-                    "\\end{table}\n\n"
-                    "\\begin{figure}[htbp]\n"
-                    "\\centering\n"
-                    f"{spec.architecture_tikz}\n"
-                    "\\caption{Architectural schematic of the \\texttt{core.py} processing engine.}\n"
-                    "\\label{fig:arch_tikz}\n"
-                    "\\end{figure}"
-                )
             if i == results_idx:
-                s_parts.append(
-                    f"{csv_table_tex}\n\n"
-                    "\\begin{figure}[htbp]\n"
-                    "\\centering\n"
-                    "\\includegraphics[width=\\columnwidth,keepaspectratio]{figures/comparison_chart.pdf}\n"
-                    "\\caption{Empirical benchmark comparison generated by \\texttt{plot\\_results.py}.}\n"
-                    "\\label{fig:comparison_chart}\n"
-                    "\\end{figure}"
-                )
+                s_parts.append(csv_table_tex)
+                s_parts += [
+                    "\\begin{figure}[htbp]\n\\centering\n"
+                    f"\\includegraphics[width=\\columnwidth,keepaspectratio]{{{fig}}}\n"
+                    f"\\caption{{Experiment output: \\texttt{{{_escape_latex_prose(fig)}}}.}}\n\\end{{figure}}"
+                    for fig in figures
+                ]
             rendered_sections.append("\n\n".join(s_parts))
         sections_body_tex = "\n\n".join(rendered_sections)
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 from typing import Any
 
@@ -24,8 +23,6 @@ def _orch(tmp_path: Path) -> NeuroSymbolicOrchestrator:
     orch.failure_ledger_path = orch.state_dir / "failure_ledger.json"
     orch.hitl_flag_path = orch.state_dir / "hitl_flag.json"
     orch.evolution_history_path = orch.state_dir / "evolution_history.json"
-    orch.matrix_path = orch.state_dir / "hypergraph_matrix.json"
-    shutil.copy2(Path("adk") / "state" / "hypergraph_matrix.json", orch.matrix_path)
     return orch
 
 
@@ -83,15 +80,18 @@ def test_interface_gaps_name_missing_modules_and_unknown_names_only() -> None:
     names = next(g for g in gaps if "names" in g)
     assert "get_state_hash" in names
     assert "argmax" not in names and "step" not in names and "py" not in names.split(": ")[1]
-    assert _interface_gaps([{"description": "Rozdział 1", "target_node": "v1"}], {}) == []
+    assert _interface_gaps([{"description": "Rozdział 1", "target_node": "thesis.md"}], {}) == []
 
 
 def test_a_new_test_file_sees_the_signatures_of_every_code_module(tmp_path: Path) -> None:
     """U3: exports came from import edges, so a new test saw only plot_results.py (T7, T10)."""
+    from tests._plans import with_plan
+
     orch = _orch(tmp_path)
     (orch.workspace_dir / "src").mkdir()
     (orch.workspace_dir / "src" / "env.py").write_text(ENV_INTERFACE, encoding="utf-8")
-    orch._resolve_target_node("src/env.py")  # every written file is a node (the skeleton's writes register it)
+    tasks = [{"task_id": "T7", "target_node": "tests/test_env.py", "description": "tests", "assigned_agent": "seed_tester"}]
+    with_plan(orch, {"src/env.py": ENV_INTERFACE}, None, tasks)
     seen: dict[str, Any] = {}
 
     def _capture(_md: Any, payload: dict[str, Any], **_kwargs: Any) -> dict[str, Any]:
@@ -100,7 +100,9 @@ def test_a_new_test_file_sees_the_signatures_of_every_code_module(tmp_path: Path
 
     orch._call_agent = _capture
     orch._execute_builder_step({"task_id": "T7", "target_node": "tests/test_env.py", "assigned_agent": "seed_tester"}, "SML")
-    assert "TicTacToeEnv.step" in seen["exports"]["src/env.py"]["signatures"]
+    # The test of src/env.py sees that module's σ from H (its I bag), nothing of the rest of the project.
+    assert "TicTacToeEnv.step" in seen["specification"]["src/env.py"]["symbols"]
+    assert "exports" not in seen and "grounded_hypergraph_state" not in seen
     assert any("tests/" in item for item in seen["done_when"])
 
 

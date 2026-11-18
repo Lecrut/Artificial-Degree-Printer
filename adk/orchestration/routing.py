@@ -1,4 +1,4 @@
-"""Where a task goes: roles, target files, agents, paths named in diagnostics."""
+"""Where a task goes: its vertex and file in H, its agent, the files a diagnostic names."""
 
 from __future__ import annotations
 
@@ -9,21 +9,27 @@ from typing import Any
 
 from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
-from adk.tools.building import (
-    ensure_node,
-)
+from adk.hypergraph.schedule import vertex_of
 from adk.orchestration.common import (
     _looks_like_workspace_path,
     THESIS_FILE,
-    ROLE_DEFAULTS,
-    ROLE_ALIASES,
-    _CONFIG_STEMS,
 )
+
+# Artifacts produced by running code or compiling the thesis: nobody edits them, a repair goes to their producer.
+DERIVED_SUFFIXES = {".csv", ".png", ".pdf", ".svg", ".jpg", ".jpeg", ".html"}
 
 
 def _names_file(text: str, name: str) -> bool:
     """`name` appears in `text` as a whole filename, not as the tail of a longer one."""
     return bool(name) and re.search(rf"(?<![\w/.-]){re.escape(name)}(?![\w-])", text) is not None
+
+
+def _canonical_path(raw: str) -> str:
+    """Workspace-relative path as meant: no `./` or `workspace/` prefix, forward slashes, no `#chapter` part."""
+    rel = str(raw).replace("\\", "/").strip().partition("#")[0]
+    while rel.startswith(("./", "workspace/")):
+        rel = rel.removeprefix("./").removeprefix("workspace/")
+    return rel
 
 
 class RoutingMixin:
@@ -119,98 +125,57 @@ class RoutingMixin:
         return queue_tasks
 
     def _verified_citation_keys(self) -> set[str] | None:
-        """Citation keys of the arXiv-verified bibliography, or None when the run uses the offline catalog (mock)."""
+        """Citation keys of the verified bibliography planning wrote, or None before planning found any literature."""
         blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
         recon = blueprint.get("literature_recon", {}) if isinstance(blueprint, dict) else {}
-        if not isinstance(recon, dict) or recon.get("citation_source") != "arxiv":
+        if not isinstance(recon, dict) or not recon.get("citation_source"):
             return None
         return set(recon.get("available_citation_keys") or [])
 
-    def _role_file(self, role: str) -> str:
-        """File currently playing `role`. What the system created wins; the default name only while nothing exists."""
-        if role == "thesis":
-            return THESIS_FILE
-        if role == "core" and self.blueprint_path.exists():
-            blueprint = read_json_state(self.blueprint_path)
-            entry = str(blueprint.get("entrypoint") or "").partition(":")[0] if isinstance(blueprint, dict) else ""
-            if entry and _looks_like_workspace_path(entry):
-                return entry
-        nodes = read_json_state(self.matrix_path).get("nodes", {}) if self.matrix_path.exists() else {}
-        existing = [
-            (str(m.get("path", "")), m) for m in nodes.values() if (self.workspace_dir / str(m.get("path", ""))).is_file()
-        ]
-        for path, meta in existing:
-            p = Path(path)
-            if role == "config" and p.suffix == ".py" and p.stem.lower() in _CONFIG_STEMS:
-                return path
-            if role == "tests" and p.suffix == ".py" and p.name.startswith("test_"):
-                return path
-            if role == "results" and p.suffix == ".csv" and meta.get("kind") == "derived":
-                return path
-        return ROLE_DEFAULTS[role]
-
-    def _role_of(self, target: Any) -> str | None:
-        """Role of a task target given as a node id, a file path or a legacy alias (v1..v5); None for other files."""
-        raw = str(target or "").strip()
-        nodes = read_json_state(self.matrix_path).get("nodes", {}) if self.matrix_path.exists() else {}
-        if raw not in nodes and raw in ROLE_ALIASES:
-            return ROLE_ALIASES[raw]
-        path = str(nodes.get(raw, {}).get("path", raw))
-        return next((role for role in ROLE_DEFAULTS if path == self._role_file(role)), None)
+    def _entry_file(self) -> str | None:
+        """The experiment's entrypoint module: the producer of R in H, or the plan's declaration before H exists."""
+        h = self._project_h()
+        if h is not None and h.entry():
+            return h.entry()
+        blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+        entry = str(blueprint.get("entrypoint") or "").partition(":")[0] if isinstance(blueprint, dict) else ""
+        return entry if entry and _looks_like_workspace_path(entry) else None
 
     def _resolve_target_node(
         self,
         node_id: Any,
         task: dict[str, Any] | None = None,
-        fallback: str = "v1",
+        fallback: str | None = None,
     ) -> tuple[str, str]:
-        """Resolve arbitrary or hallucinated node identifiers (e.g. 'v7', 'core.py') to a valid hypergraph node and path."""
-        matrix_data = read_json_state(self.matrix_path)
-        nodes: dict[str, Any] = matrix_data.get("nodes", {})
-
-        raw_id = str(node_id or "").strip()
-        # 1. Direct hit in nodes
-        if raw_id in nodes:
-            return raw_id, str(nodes[raw_id].get("path", raw_id))
-
-        # 2. Legacy role alias (v1..v5) that is not a node of this graph: the file currently playing the role.
-        if raw_id in ROLE_ALIASES:
-            role_path = self._role_file(ROLE_ALIASES[raw_id])
-            return ensure_node(role_path, self.matrix_path), role_path
-
-        # 3. An explicit file path (the id itself or the task's target file): the node with that exact path, the
-        #    only node with that basename, or a new node. Never a node whose name merely contains it: the
-        #    substring match sent `tictoc_config.py` to `config.py` (2026-11-13) and test files to their modules.
-        target_f = str(task.get("target_file") or task.get("file") or "").strip() if task else ""
-        for candidate in (raw_id, target_f):
-            if not (candidate and _looks_like_workspace_path(candidate)):
+        """(vertex, file) a task works on, read from H: the vertex is the chapter (`thesis.md#chN`) for a thesis
+        task that names its chapter, otherwise the file path. A path the plan does not know stays what it is (the
+        spec gate judges what is written there); an id that is not a path is looked up among the files the task
+        description names. Nothing is guessed from roles (Audit VIII C1: `v1..v5`, `n*` and keyword routing)."""
+        h = self._project_h()
+        description = str((task or {}).get("description", ""))
+        target_f = str((task or {}).get("target_file") or (task or {}).get("file") or "").strip()
+        for candidate in (str(node_id or "").strip(), target_f):
+            if not candidate:
                 continue
-            cand = candidate.replace("\\", "/")
-            exact = next((n_id for n_id, m in nodes.items() if str(m.get("path", "")) == cand), None)
-            if exact:
-                return exact, cand
-            same_name = [
-                (n_id, str(m.get("path", ""))) for n_id, m in nodes.items() if Path(str(m.get("path", ""))).name == Path(cand).name
-            ]
-            if len(same_name) == 1:
-                return same_name[0]
-            return ensure_node(cand, self.matrix_path), cand
-
-        # 4. A known file the description names as a whole word (`config.py`, not the tail of `tictoc_config.py`);
-        #    longer paths first so `src/config.py` wins over `config.py`.
-        if task:
-            desc = str(task.get("description", "")).strip().lower()
-            for n_id, n_meta in sorted(nodes.items(), key=lambda kv: -len(str(kv[1].get("path", "")))):
-                n_path = str(n_meta.get("path", ""))
-                if n_path and (_names_file(desc, n_path.lower()) or _names_file(desc, Path(n_path).name.lower())):
-                    return n_id, n_path
-
-        # 5. Hallucinated non-path ids ('v7', 'node_core'): use the declared fallback (node, alias or path).
-        if fallback in nodes:
-            return fallback, str(nodes[fallback].get("path", fallback))
-        if fallback in ROLE_ALIASES or _looks_like_workspace_path(fallback):
+            if h is not None and candidate in h.vertices:
+                return candidate, candidate.partition("#")[0]
+            path = _canonical_path(candidate)
+            if not _looks_like_workspace_path(path):
+                continue
+            if h is not None and path not in h.vertices and h.owner_of(path) is None:
+                same_name = [v for v in h.vertices if "#" not in v and Path(v).name == Path(path).name]
+                if len(same_name) == 1:
+                    path = same_name[0]  # the planned file, named without its directory
+            vertex = vertex_of(h, path, description) if h is not None else None
+            return vertex or path, path
+        if task and h is not None:
+            # A label that is not a path ('node_core'): the planned file the description names as a whole word.
+            for vertex in sorted((v for v in h.vertices if "#" not in v), key=len, reverse=True):
+                if _names_file(description.lower(), vertex.lower()) or _names_file(description.lower(), Path(vertex).name.lower()):
+                    return vertex, vertex
+        if fallback is not None and fallback != node_id:
             return self._resolve_target_node(fallback)
-        raise ValueError(texts.unresolvable_node(raw_id))
+        raise ValueError(texts.unresolvable_node(str(node_id)))
 
     def _workspace_paths_in(self, issue: str) -> list[str]:
         """Workspace-relative paths of files named in a ruff / pytest / traceback diagnostic, in order."""
@@ -225,10 +190,8 @@ class RoutingMixin:
         raw += [m.group(1) for m in re.finditer(rf"(?:^|[\s'\"(]){path_re}:\d+:\d+: [A-Z]+\d+", issue, re.MULTILINE)]
         raw += [m.group(1) for m in re.finditer(rf"(?:^|\s){path_re}:\d+: in ", issue, re.MULTILINE)]
         ws = self.workspace_dir.resolve()
-        known = {
-            str(meta.get("path", "")): Path(str(meta.get("path", ""))).name
-            for meta in read_json_state(self.matrix_path).get("nodes", {}).values()
-        }
+        h = self._project_h()
+        known = {rel: Path(rel).name for v in (h.vertices if h else {}) for rel in h.files_of(v)}
         found: list[str] = []
         for item in raw:
             cand = Path(item.replace("\\", "/"))
@@ -240,7 +203,7 @@ class RoutingMixin:
                     rel = None  # site-packages / stdlib frames are not workspace files
             else:
                 rel = cand.as_posix()
-                if rel not in known and "/" in rel:
+                if rel not in known and "/" in rel and not (self.workspace_dir / rel).is_file():
                     # ruff prints the path relative to the cwd; keep the part below the workspace directory.
                     tail = rel.split("/workspace/")[-1]
                     rel = tail if tail != rel else cand.name
@@ -252,9 +215,23 @@ class RoutingMixin:
         return found
 
     def _repair_target(self, rel_path: str) -> str:
-        """A derived artifact (CSV, figure, compiled document) is repaired through the file that produces it."""
-        nodes = read_json_state(self.matrix_path).get("nodes", {})
-        for meta in nodes.values():
-            if meta.get("path") == rel_path and meta.get("kind") == "derived" and meta.get("producer") in nodes:
-                return str(nodes[meta["producer"]].get("path", rel_path))
-        return rel_path
+        """A derived artifact is repaired through the file that produces it: results and figures through the
+        experiment (the producer of R in H), the compiled thesis through `thesis.md`."""
+        rel = _canonical_path(rel_path)
+        name = Path(rel).name
+        if name.startswith("thesis.") and rel != THESIS_FILE:
+            return THESIS_FILE
+        h = self._project_h()
+        if h is not None and h.output_producer(rel):
+            return str(h.output_producer(rel))
+        if Path(rel).suffix.lower() in DERIVED_SUFFIXES and (h is None or h.owner_of(rel) is None):
+            # A figure comes from the plotting module the experiment calls (`generate_plots`), other data from the
+            # experiment itself.
+            plotter = next(
+                (e.id.removeprefix("I:") for e in (h.edges.values() if h else []) if e.type == "I" and "generate_plots" in e.spec.get("symbols", {})),
+                None,
+            )
+            if plotter and Path(rel).suffix.lower() in (".png", ".pdf", ".svg", ".jpg", ".jpeg"):
+                return plotter
+            return self._entry_file() or rel
+        return rel

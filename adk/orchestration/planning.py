@@ -13,8 +13,6 @@ from adk.tools.building.template_manager import (
     resolve_template_name,
 )
 from adk.tools.planning import (
-    calculate_blast_radius,
-    get_scoped_hypergraph_context,
     scout_domain_conventions,
     synthesize_table_of_contents,
 )
@@ -29,7 +27,6 @@ class PlanningMixin:
     def _plan_phase(
         self,
         user_prompt: str,
-        target_node: str,
         missing_agent_specialization: str | None,
         interactive_gates: bool | None,
         gate_approval_callback: Callable[[str, dict[str, Any]], bool] | None,
@@ -40,14 +37,9 @@ class PlanningMixin:
         """Layer 1: reconnaissance, task decomposition, blueprint and promotor gates 1-2.
 
         Returns {"tasks": [...]} for execution, or {"stop": payload} when a promotor gate pauses the run."""
-        blast = calculate_blast_radius(target_node, self.matrix_path)
-        scoped_graph = get_scoped_hypergraph_context(self.matrix_path, blast_radius=blast)
-
-        # 1. Planning (Layer 1): Domain Reconnaissance + TOC Synthesis + Task Decomposition
-        print(
-            f"\n[WARSTWA 1: PLANOWANIE] Obliczanie promienia razenia hipergrafu od wezla '{target_node}' -> wezly: {blast.get('affected_nodes', [])}",
-            flush=True,
-        )
+        # 1. Planning (Layer 1): Domain Reconnaissance + TOC Synthesis + Task Decomposition. The plan creates the
+        # hypergraph; before it there is none to scope (the old matrix gave the planner an empty seed and 'v1').
+        print("\n[WARSTWA 1: PLANOWANIE]", flush=True)
 
         tpl_detection = detect_template_from_prompt(
             user_prompt,
@@ -59,7 +51,7 @@ class PlanningMixin:
         template_is_certain = bool(tpl_detection.get("is_certain", False))
 
         initial_recon = scout_domain_conventions(
-            user_prompt, thesis_type=detected_thesis_type, prescribe_methodology=self.provider == "mock"
+            user_prompt, thesis_type=detected_thesis_type
         )
         initial_recon.pop("verified_bibtex", None)  # written once, from the planned recon below
         suggested_sections = [
@@ -90,9 +82,6 @@ class PlanningMixin:
 
         plan_payload: dict[str, Any] = {
             "user_prompt": user_prompt,
-            "target_node": target_node,
-            "blast_radius": blast,
-            "hypergraph_matrix": scoped_graph,
             "agent_registry": read_json_state(self.registry_path),
             "include_docs": self.include_docs,
             "missing_agent_specialization": missing_agent_specialization,
@@ -185,17 +174,17 @@ class PlanningMixin:
                 )
 
         recon_report = scout_domain_conventions(
-            user_prompt, thesis_type=planned_thesis_type, prescribe_methodology=self.provider == "mock"
+            user_prompt, thesis_type=planned_thesis_type
         )
         blueprint_raw = dict(plan_out.get("academic_blueprint") or {})
         blueprint_raw["interfaces"] = interfaces
         # The verified bibliography goes to disk, not into every prompt; the recon keeps only the keys.
         verified_bibtex = str(recon_report.pop("verified_bibtex", "") or "")
-        if recon_report.get("citation_source") == "arxiv":
+        if verified_bibtex.strip():
             self.workspace_dir.mkdir(parents=True, exist_ok=True)
             (self.workspace_dir / "references.bib").write_text(verified_bibtex.strip() + "\n", encoding="utf-8")
             print(
-                f"  [LITERATURA] arXiv: {len(recon_report.get('available_citation_keys') or [])} zweryfikowanych pozycji "
+                f"  [LITERATURA] {recon_report.get('citation_source')}: {len(recon_report.get('available_citation_keys') or [])} zweryfikowanych pozycji "
                 "zapisanych w references.bib.",
                 flush=True,
             )
@@ -280,12 +269,11 @@ class PlanningMixin:
                         t["assigned_agent"] = created_specialist_id
 
         if not self.include_docs:
-            matrix_nodes = read_json_state(self.matrix_path).get("nodes", {})
             tasks = [
                 t
                 for t in raw_tasks
                 if isinstance(t, dict)
-                and not matrix_nodes.get(t.get("target_node", ""), {}).get("path", "").endswith((".md", ".tex"))
+                and not str(t.get("target_node", "")).partition("#")[0].endswith((".md", ".tex"))
                 and t.get("assigned_agent") not in ("seed_writer", "sota_researcher", "background_researcher", "discoverer_researcher")
             ]
         else:
@@ -321,45 +309,11 @@ class PlanningMixin:
                 "replan_count": 0,
             }}
 
-        # 2. Planning GUARD (Layer 1) with Self-Healing Remediation if Guard rejects
-        registry_data = read_json_state(self.registry_path)
-        guard_out = self._call_agent(
-            self.agents_dir / "planning" / "task_critic_guard.md",
-            {
-                "tasks": tasks,
-                "agent_registry": registry_data,
-                "blast_radius": blast,
-                "hypergraph_matrix": scoped_graph,
-                "include_docs": self.include_docs,
-            },
-            model_tier="SML",
-            provider=self.provider,
-        )["output"]
-
-        if guard_out.get("status") != "PASS":
-            self.logger.log_step(
-                "W1_GUARD_SELF_HEAL",
-                "Strażnik Planu (task_critic_guard) zgłosił brakujące węzły promienia rażenia -> uruchomienie samonaprawy planu w W1",
-                {"guard_output": guard_out},
-            )
-            print(
-                f"  [WARSTWA 1: SAMONAPRAWA PLANU] Task Critic Guard zgłosił uwagi ({guard_out.get('issues')}) -> korekta kolejki zadań W1...",
-                flush=True,
-            )
-            tasks = self._normalize_and_heal_task_plan(
-                tasks,
-                multi_cycle_waves=multi_cycle_waves,
-                preferred_coder=created_specialist_id or "seed_coder",
-                thesis_type=planned_thesis_type,
-                planned_chapters=planned_chapters if isinstance(planned_chapters, list) else None,
-            )
-            write_json_state(self.task_queue_path, tasks)
-            guard_out = {"status": "PASS", "approved": True, "healed_in_layer1": True, "issues": []}
-
+        # The plan critic already judged this plan inside `_validated_plan`, before H and the stubs existed.
         # Gate 2 Promotor Checkpoint (Methodology & Architecture Approval)
         if not self._check_hitl_gate(
             gate_name="GATE_2_METHODOLOGY_APPROVAL",
-            context_payload={"guard_approved": True, "blast_radius": blast},
+            context_payload={"interfaces": sorted(interfaces), "entrypoint": blueprint_raw.get("entrypoint")},
             interactive_gates=interactive_gates,
             gate_approval_callback=gate_approval_callback,
         ):

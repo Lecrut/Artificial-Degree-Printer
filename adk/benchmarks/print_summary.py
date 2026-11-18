@@ -58,7 +58,7 @@ def extract_step_prompt_context(ix: dict[str, Any]) -> str:
         errs = payload.get("issues") or []
         return f"Bramka obrony Red-Team (łączna liczba zastrzeżeń={len(errs)})"
 
-    # 6. Task Critic Guard
+    # 6. Plan critic
     if "tasks" in payload and isinstance(payload["tasks"], list):
         t_ids = [str(x.get("task_id", "?")) for x in payload["tasks"] if isinstance(x, dict)]
         return f"Walidacja planu zadań: [{', '.join(t_ids)}]"
@@ -197,20 +197,11 @@ def format_benchmark_markdown(data: dict[str, Any]) -> str:
 
 if __name__ == "__main__":
     repo_root = Path(__file__).resolve().parents[2]
-    summary_file = repo_root / "benchmarks" / "benchmark_summary.json"
-    ws_summary_file = repo_root / "adk" / "workspace" / "benchmarks" / "benchmark_summary.json"
-
-    cleaned_data = slim_summary_json_in_place(summary_file)
-    if ws_summary_file.exists():
-        slim_summary_json_in_place(ws_summary_file)
+    bench_dir = repo_root / "adk" / "workspace" / "benchmarks"
+    cleaned_data = slim_summary_json_in_place(bench_dir / "benchmark_summary.json")
 
     report_md = format_benchmark_markdown(cleaned_data)
-    out_md = repo_root / "benchmarks" / "benchmark_steps.md"
+    out_md = bench_dir / "benchmark_steps.md"
     out_md.write_text(report_md, encoding="utf-8")
-
-    # Remove old .txt file if present
-    old_txt = repo_root / "benchmarks" / "READABLE_BENCHMARK_STEPS.txt"
-    if old_txt.exists():
-        old_txt.unlink()
 
     print(f"Zapisano czytelny raport Markdown do: {out_md}")

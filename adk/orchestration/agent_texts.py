@@ -31,22 +31,7 @@ def repair_task_exception(task_id: Any, node_id: str, node_file: str, exc: Any) 
     return f"Repair task {task_id} on node {node_id} ({node_file}) raised an exception: {exc}"
 
 
-def contract_breach(breaches: list[str], help_sources: str) -> str:
-    return (
-        "Write rejected: it changes public signatures fixed by the skeleton (the contract between tasks):\n- "
-        + "\n- ".join(breaches)
-        + "\nEither keep these signatures and change only the implementation, or add "
-        "'contract_change': {'reason': '<why the API must change>'} to the answer. The modules that use it are "
-        "adapted in later tasks."
-        + help_sources
-    )
-
-
 REMOVED = "removed"  # contract_check marks a removed symbol as `file: removed name(...)`
-
-
-def removed_symbols_help(sources: list[str]) -> str:
-    return "\nSource of these symbols from the previous version of the file (paste them back):\n" + "\n\n".join(sources)
 
 
 PLACEHOLDER_EXTENSION_REASON = "placeholder signature from the skeleton filled in"
@@ -132,8 +117,8 @@ def unresolvable_node(raw_id: Any) -> str:
 def done_when_test(node_path: str) -> list[str]:
     return [
         f"The test file is {node_path}, in the tests/ directory.",
-        "Tests use only the classes, methods and functions listed in 'exports' (the test contract checks this); "
-        "modules are imported through their 'import' field.",
+        "Tests use only the classes, methods, functions and attributes in 'specification' (checked against the "
+        "interface); modules are imported through their 'import' path.",
         "pytest passes for this file against the current module code; ruff check reports no errors.",
     ]
 
@@ -141,7 +126,7 @@ def done_when_test(node_path: str) -> list[str]:
 def done_when_module(node_path: str, tests: list[str]) -> list[str]:
     return [
         f"{node_path} compiles and imports; ruff check reports no errors.",
-        "The public signatures in 'exports.signatures' are unchanged (a change only with 'contract_change').",
+        "Every name of 'specification' for this module exists with its planned parameters (additions need a default).",
         f"These tests pass: {', '.join(tests)}." if tests
         else "This module has no tests yet: its behaviour must match its signatures and docstrings, because the "
         "tests are written from them.",
@@ -150,11 +135,11 @@ def done_when_module(node_path: str, tests: list[str]) -> list[str]:
 
 def done_when_document(has_results: bool) -> list[str]:
     done = [
-        "Every \\ref_ast / \\ref_csv / \\ref_fig pointer names a target listed in 'grounded_hypergraph_state' "
+        "Every \\ref_ast / \\ref_csv / \\ref_fig pointer names a target listed in 'may_cite' "
         "(the symbolic audit checks this)."
     ]
     if not has_results:
-        done.append("There are no results yet ('available_csv_rows' is empty): no \\ref_csv; describe the planned measurement without numbers.")
+        done.append("There are no results yet ('may_cite.available_csv_rows' is empty): no \\ref_csv; describe the planned measurement without numbers.")
     return done
 
 
@@ -222,7 +207,7 @@ MISSING_CHAPTERS_PATTERN = re.compile(r"missing chapters.*?\[(.*?)\]", re.IGNORE
 
 
 def missing_chapters(labels: list[str]) -> str:
-    return f"{MISSING_CHAPTERS}: {labels}. All 6 chapters are required."
+    return f"{MISSING_CHAPTERS}: {labels}. Every planned chapter is required."
 
 
 def chapter_covers(number: int) -> str:
@@ -236,29 +221,10 @@ def node_task(node_id: str) -> str:
     return f"Work on node {node_id}"
 
 
-def skeleton_task(module_list: str, entry_file: str, entrypoint: str) -> str:
-    return (
-        f"[Increment 1: Skeleton] Interface of every planned module: {module_list}. In each module the public classes "
-        "and functions with full signatures (parameters, types, return value; every `__init__` with all its "
-        "parameters, never a bare `__init__(self)`), a one-sentence docstring and the body `raise NotImplementedError`; "
-        "configuration constants may already have values"
-        + (f"; in {entry_file} the entrypoint function `{entrypoint}`" if entrypoint else "")
-        + ". No implementation: later tasks fill in the bodies and keep these signatures."
-    )
-
-
-def skeleton_modules(module_list: str) -> str:
-    return f" Modules: {module_list}."
-
-
 PLANNER_NO_TASKS = (
     "ERROR: the previous answer had no task list in the field 'tasks'. Put the 'tasks' array as the first key of the "
     "JSON, with at least 3 increments (vertical feature slices): code, unit tests and the thesis text."
 )
-
-
-def planner_interface_feedback(gaps: list[str]) -> str:
-    return "Fix the plan and return it whole. " + " ".join(gaps)
 
 
 def spec_breach(violations: list[str], refusals: list[str]) -> str:
@@ -276,12 +242,45 @@ def spec_change_refused(module: str, user: str, names: list[str]) -> str:
     return f"{module}: cannot remove {', '.join(names)} — {user} is planned to use them"
 
 
-def planner_spec_feedback(problems: list[str]) -> str:
-    return (
-        "The harness imported every interface of your plan as a stub before any code exists, and the plan cannot work "
-        "as written. Fix each problem below in 'interfaces' (and the entrypoint), keep the rest, and return the whole "
-        "plan:\n- " + "\n- ".join(problems)
+def _place(problem: str) -> str:
+    match = re.search(r"\[([^\]]+)\]", problem)
+    return match.group(1) if match else ""
+
+
+def planner_patch_feedback(
+    blockers: list[str], rejected_patch: list[str], warnings: list[str] | None = None
+) -> str:
+    """Feedback on the plan in `current_plan`: blockers (must fix) separated from warnings (optional), plus why any
+    previous patch (or module in it) was not applied."""
+    text = (
+        "The harness imported every interface of your plan (`current_plan`) as a stub, ran the doctests up to the "
+        "first call into a stub, and the plan critic reviewed the plan: it has blocking issues that must be fixed. "
+        "Correct `current_plan`, do not write a new plan. Return a patch with only what you change: `interfaces` with "
+        "the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, "
+        "`entrypoint` if it changes, `academic_blueprint` with only the fields that change, and `tasks` as a dict "
+        "mapping only the changed `task_id` to its updated fields (do NOT add, remove, or rewrite unrelated tasks). "
+        "Everything you do not return stays as it is.\n"
+        "BLOCKERS (must fix — the plan cannot proceed until resolved):\n- "
+        + "\n- ".join(sorted(blockers, key=_place))
     )
+    if warnings:
+        text += (
+            "\nWARNINGS (non-blocking suggestions — address only if trivial; do NOT rewrite working modules for these):\n- "
+            + "\n- ".join(sorted(warnings, key=_place))
+        )
+    if rejected_patch:
+        text += (
+            "\nYour previous patch (or part of it) was NOT applied because it introduced new problems:\n- "
+            + "\n- ".join(rejected_patch)
+        )
+    return text
+
+
+PATCH_CHANGED_NOTHING = "it changed nothing in `current_plan` (return only the parts you change, in the patch fields)"
+
+
+def critic_finding(where: str, problem: str, fix: str) -> str:
+    return f"PLAN_CRITIC{f' [{where}]' if where else ''}: {problem}" + (f" Fix: {fix}" if fix else "")
 
 
 PLAN_WITHOUT_INTERFACES = (
@@ -326,7 +325,7 @@ def fix_finding_task(target: str, finding: str) -> str:
 def critic_task(numbered: str) -> str:
     return (
         "Fix thesis.md so that every finding of the critic and of the pointer audit is removed (only pointers to "
-        "targets in 'grounded_hypergraph_state' stay). Address every identifier; if a finding cannot be removed, "
+        "targets in 'may_cite' stay). Address every identifier; if a finding cannot be removed, "
         f"describe it plainly as a limitation of the work.\n{numbered}"
     )
 

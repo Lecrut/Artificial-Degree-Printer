@@ -5,6 +5,7 @@ import shutil
 import tempfile
 import time
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 os.environ.setdefault("MPLCONFIGDIR", str(Path(tempfile.gettempdir()) / "adk_mpl_cache"))
@@ -16,13 +17,9 @@ from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
 from adk.benchmarks.llm_logging import export_task_llm_interactions  # noqa: E402
 from adk.benchmarks.tasks import BENCHMARK_TASKS, BenchmarkTaskSpec, get_benchmark_task  # noqa: E402
 from adk.core.connection import LLMConnectionManager  # noqa: E402
-from adk.core.llm import get_llm_telemetry, reset_llm_telemetry, set_llm_handler  # noqa: E402
+from adk.core.llm_trace import get_llm_telemetry, reset_llm_telemetry  # noqa: E402
 from adk.core.logger import set_process_log_dir  # noqa: E402
 from adk.core.models import read_json_state, write_json_state  # noqa: E402
-from adk.mocks.benchmark_mock_handlers import (  # noqa: E402
-    VALIDATOR_SYNTHESIS_CODE,
-    _make_task_mock_llm_handler,
-)
 from adk.orchestrator import NeuroSymbolicOrchestrator  # noqa: E402
 from adk.tools.building.template_manager import (  # noqa: E402
     parse_template_flag,
@@ -206,8 +203,12 @@ def run_benchmark_suite(
     adk_root: str | Path | None = None,
     output_root: str | Path | None = None,
     template_override: str | None = None,
+    simulate_agents: Callable[[str], Any] | None = None,
 ) -> dict[str, Any]:
-    """Run the self-expanding ADK benchmark suite, producing runnable code, LaTeX, HTML, and PDFs per task."""
+    """Run the self-expanding ADK benchmark suite, producing runnable code, LaTeX, HTML, and PDFs per task.
+
+    `simulate_agents(task_id)` (e.g. `adk.mocks.install_simulated_agents`) installs simulated agents before each task;
+    without it the provider's model answers. The suite itself never knows which."""
     base_adk = Path(adk_root).resolve() if adk_root else Path(__file__).resolve().parent.parent
     bench_out_root = (
         Path(output_root).resolve()
@@ -281,44 +282,8 @@ def run_benchmark_suite(
                 init_p.parent.mkdir(parents=True, exist_ok=True)
                 init_p.write_text(init_content, encoding="utf-8")
 
-            # Pre-seed figures/comparison_chart.pdf as a valid PDF so XeTeX and Layer 3 \ref_fig checks pass
-            (sandbox_ws / "figures").mkdir(parents=True, exist_ok=True)
-            try:
-                import matplotlib
-                matplotlib.use("Agg")
-                import matplotlib.pyplot as plt
-                fig, ax = plt.subplots(figsize=(6, 3))
-                ax.text(0.5, 0.5, "Empirical Evaluation Pending", ha="center", va="center")
-                ax.axis("off")
-                fig.savefig(sandbox_ws / "figures" / "comparison_chart.pdf", bbox_inches="tight")
-                fig.savefig(sandbox_ws / "figures" / "comparison_chart.png", bbox_inches="tight")
-                plt.close(fig)
-            except Exception:
-                pass
-
-            # Pre-seed references.bib with domain catalog so background_researcher has verified BibTeX entries
-            domain_bib = getattr(spec, "bibtex_entries", "") or getattr(spec, "background_bibtex_entries", "")
-            if domain_bib and resolved_provider == "mock":
-                # Live runs get their bibliography from arXiv during planning (verified records only).
-                (sandbox_ws / "references.bib").write_text(domain_bib.strip() + "\n", encoding="utf-8")
-
-            # If task triggers prompt consolidation (Task 3), ensure coder has 3 prior rules so the 4th triggers consolidation
-            if spec.trigger_prompt_consolidation:
-                from adk.tools.evolution.agent_mutator import mutate_agent_prompt
-                coder_md = evolved_adk_dir / "agents" / "building" / "seed_coder.md"
-                ledger_p = evolved_adk_dir / "state" / "failure_ledger.json"
-                for extra_rule in (
-                    "Ensure all benchmark CSV files contain both baseline and proposed rows.",
-                    "Avoid unbound global variables in train_and_evaluate.",
-                    "Maintain strict float rounding in exported CSV metrics.",
-                ):
-                    mutate_agent_prompt(coder_md, new_rule=extra_rule, failure_ledger_path=ledger_p, provider=resolved_provider)
-
-            # Install task-specific mock LLM handler ONLY when running in offline mock mode
-            if resolved_provider == "mock":
-                set_llm_handler(_make_task_mock_llm_handler(spec))
-            else:
-                set_llm_handler(None)
+            if simulate_agents is not None:
+                simulate_agents(spec.task_id)
 
             orch = NeuroSymbolicOrchestrator(
                 adk_root=evolved_adk_dir,
@@ -332,9 +297,6 @@ def run_benchmark_suite(
             try:
                 orch_res = orch.run(
                     user_prompt=spec.prompt,
-                    target_node="v1",
-                    simulate_first_attempt_fail=(spec.simulate_first_fail if resolved_provider == "mock" else False),
-                    missing_agent_specialization=spec.missing_specialization,
                     multi_cycle_waves=True,
                     template_name=effective_template,
                     thesis_type=effective_thesis_type,
@@ -354,45 +316,6 @@ def run_benchmark_suite(
                 interrupted = True
 
             orch.logger.log_event("RUN_END", task=spec.task_id, status=orch_res.get("status"))
-            # Ensure all required benchmark files/sections exist so run_experiment.py & 6-chapter PDF compilation succeed
-            mock_fallback = _make_task_mock_llm_handler(spec)
-            t_type = effective_thesis_type.strip().lower()
-            if resolved_provider == "mock":
-                orch._materialize_workspace_artifact("config.py", mock_fallback("", {"target_file": "config.py"}, "SML"))
-                orch._materialize_workspace_artifact("core.py", mock_fallback("", {"target_file": "core.py", "task": {"assigned_agent": "seed_tester"}}, "SML"))
-                if t_type in ("magisterska", "master", "msc"):
-                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
-                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "discoverer_researcher"}}, "SML"))
-                elif t_type in ("paper", "article", "scientific_paper"):
-                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "discoverer_researcher"}}, "SML"))
-                else:
-                    orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "background_researcher"}}, "SML"))
-                orch._materialize_workspace_artifact("thesis.md", mock_fallback("", {"target_file": "thesis.md", "task": {"assigned_agent": "seed_writer"}}, "SML"))
-            else:
-                # Live LLM provider: NEVER inject mock fallback artifacts!
-                # Preserve genuine LLM output so Layer 3 / Gate 3 can evaluate actual performance.
-                pass
-
-            # If task also demonstrates tool synthesis + prompt consolidation, ensure both are recorded if live LLM chose another action
-            if spec.trigger_tool_synthesis and spec.trigger_prompt_consolidation:
-                ver_files = list((evolved_adk_dir / "tools" / "verification").glob("*.py"))
-                if len(ver_files) <= 3:
-                    from adk.tools.evolution.sandbox_verifier import evaluate_and_promote_validator
-                    evaluate_and_promote_validator(
-                        validator_name="ast_safety_contract_validator.py",
-                        validator_code=VALIDATOR_SYNTHESIS_CODE,
-                        bad_sample_input="# FORBIDDEN_UNSAFE_EVAL\nx = 1\n",
-                        good_sample_input="x = 42\n",
-                        verification_dir=evolved_adk_dir / "tools" / "verification",
-                        evolution_history_path=evolved_adk_dir / "state" / "evolution_history.json",
-                    )
-                orch._run_evolution_step(
-                    {
-                        "failed_agent": "seed_coder",
-                        "suggested_rule": "Final rule triggering automatic prompt consolidation.",
-                    }
-                )
-
             adk_elapsed_ms = (time.perf_counter() - adk_t0) * 1000.0
             llm_stats = get_llm_telemetry()
             total_llm_calls += llm_stats["calls_count"]
@@ -454,7 +377,6 @@ def run_benchmark_suite(
                     },
                     template_name=effective_template,
                     thesis_type=effective_thesis_type,
-                    provider=resolved_provider,
                     entrypoint=_declared_entrypoint(evolved_adk_dir / "state" / "academic_blueprint.json"),
                 )
             except Exception as exc:  # noqa: BLE001 - one task's publishing must not end the whole suite
@@ -524,7 +446,6 @@ def run_benchmark_suite(
             if interrupted:
                 break
     finally:
-        set_llm_handler(None)
         set_process_log_dir(None)
 
     suite_elapsed_ms = (time.perf_counter() - suite_start) * 1000.0
@@ -556,19 +477,4 @@ def run_benchmark_suite(
     summary_payload["master_summary_pdf"] = str(master_pdf_path)
     summary_payload["summary_json"] = str(summary_json_path)
     write_json_state(summary_json_path, summary_payload)
-
-    # Mirror to root 'benchmarks/' folder in the repository so user can easily find all subdirectories at top-level
-    repo_root = base_adk.parent
-    root_benchmarks = repo_root / "benchmarks"
-    if output_root is None and bench_out_root.resolve() != root_benchmarks.resolve():
-        root_benchmarks.mkdir(parents=True, exist_ok=True)
-        for item in bench_out_root.glob("*"):
-            if item.name == "_evolved_adk_state":
-                continue
-            dest_item = root_benchmarks / item.name
-            if item.is_dir():
-                shutil.copytree(item, dest_item, dirs_exist_ok=True)
-            else:
-                shutil.copy2(item, dest_item)
-
     return summary_payload

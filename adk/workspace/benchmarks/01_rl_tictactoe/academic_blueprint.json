@@ -1,47 +1,50 @@
 {
-  "thesis_title": "Nauka gry w Kółko i Krzyżykiem przy użyciu algorytmu Q-Learning",
-  "thesis_statement": "Czy agent Q-Learning potrafi nauczyć się optymalnej strategii w grze Tic-Tac-Toe przeciwko losowemu przeciwnikowi w ciągu 100 000 epizodów? Kryterium sukcesu: osiągnięcie minimalnego wskaźnika porażek (<5%) i wysokiej szansy na remis/zwycięstwo po konwergencji.",
-  "baseline_comparison": "Porównanie z RandomAgent (gra losowa) oraz teoretycznym wynikiem minimax (bezstrategność). Wskaźniki: win_rate, draw_rate, loss_rate, average_reward per 10k epizodów.",
-  "entrypoint": "config.py:run_experiment",
+  "thesis_title": "Zastosowanie algorytmu Q-Learning do gry w Kółko i Krzyżyk",
+  "thesis_statement": "Czy agent uczący się metodą Q-Learning może nauczyć się grać w Tic-Tac-Toe przeciwko przeciwnikowi losowemu, osiągając wysoką częstość zwycięstw (np. >80%) i pozytywny średni zysk?",
+  "baseline_comparison": "Przeciwnikiem jest uniformly random agent. Bazową mierzą jest częstość wygranych (win_rate) uczącego się agenta (X) w grach przeciwko temu losowemu przeciwnikowi (O). Sukces oznacza win_rate znacznie większy niż 0.5 (czyli więcej niż remisów/wygranych przeciwnika).",
+  "entrypoint": "experiment.py:run",
   "metrics": [
     "win_rate",
-    "draw_rate",
-    "loss_rate",
-    "average_reward"
+    "avg_reward"
   ],
   "planned_chapters": [
     {
       "index": 1,
-      "title": "Rozdział 1: Wstęp i Cel Pracy",
-      "focus": "Motywacja, definicja problemu gry w kółko i krzyżyk jako MDP, teza badawcza."
+      "title": "Rozdział 1: Wstęp",
+      "focus": "Uzasadnienie tematu, cel pracy, teza badawcza i zakres opracowania."
     },
     {
       "index": 2,
       "title": "Rozdział 2: Przegląd Literatury",
-      "focus": "Teoria procesów decyzyjnych Markowa (MDP), algorytm Q-Learning, wcześniejsze aplikacje RL w grach."
+      "focus": "Podstawy uczenia przez wzmacnianie (MDP), algorytm Q-Learning, aplikacje w grach."
     },
     {
       "index": 3,
-      "title": "Rozdział 3: Metodyka Badania",
-      "focus": "Opis środowiska (stan, akcje, nagrody), architektura agenta Q-Learning, hiperparametry i ustawienia eksperymentu."
+      "title": "Rozdział 3: Modelowanie i Projekt Systemu",
+      "focus": "Reprezentacja stanu Tic-Tac-Toe jako MDP, architektura agenta Q-Learning."
     },
     {
       "index": 4,
-      "title": "Rozdział 4: Wyniki Eksperymentu",
-      "focus": "Analiza krzywych konwergencji, statystyki zwycięstw/remisów/porażek, porównanie z basline losowym."
+      "title": "Rozdział 4: Metodologia Badania",
+      "focus": "Parametry eksperymentu (LR, Gamma, Epsilon), procedura trenowania i ewaluacji."
     },
     {
       "index": 5,
-      "title": "Rozdział 5: Wnioski",
-      "focus": "Podsumowanie efektów nauki, ograniczenia podejścia tablicowego, kierunki przyszłych prac."
+      "title": "Rozdział 5: Wyniki Eksperymentu",
+      "focus": "Analiza wyników (win_rate, avg_reward) w zależności od etapu trenowania."
+    },
+    {
+      "index": 6,
+      "title": "Rozdział 6: Wnioski",
+      "focus": "Podsumowanie, weryfikacja tezy i kierunki dalszych prac."
     }
   ],
   "interfaces": {
-    "config.py": "\"\"\"Configuration for the Tic-Tac-Toe Q-Learning experiment.\"\"\"\n\nimport os\n\n# Hyperparameters\nLEARNING_RATE: float = 0.1\ndiscount_factor: float = 0.9\ninitial_epsilon: float = 0.2\nmin_epsilon: float = 0.01\nepsilon_decay: float = 0.995\nn_episodes: int = 100000\nseed: int = 42\noutput_dir: str = \"results\"\nfigures_dir: str = \"figures\"\n\ndef run_experiment() -> dict:\n    \"\"\"Run the full experiment and return summary metrics.\"\"\"\n    ...",
-    "environment.py": "\"\"\"Tic-Tac-Toe Environment implementation.\"\"\"\n\nfrom typing import List, Tuple\nimport numpy as np\n\nclass TicTacToeEnv:\n    \"\"\"A simple 3x3 Tic-Tac-Toe environment.\n    \n    State is a tuple of 9 integers: -1 (O), 0 (empty), 1 (X).\n    \"\"\"\n\n    def __init__(self) -> None:\n        \"\"\"Initialize empty board.\"\"\"\n        ...\n\n    def reset(self) -> Tuple[int, ...]:\n        \"\"\"Reset environment and return initial state.\n        \n        >>> env = TicTacToeEnv()\n        >>> state = env.reset()\n        >>> len(state) == 9 and all(s == 0 for s in state)\n        True\n        \"\"\"\n        ...\n\n    def step(self, action: int, player: int) -> Tuple[Tuple[int, ...], float, bool]:\n        \"\"\"Execute action for the given player.\n        \n        Args:\n            action: Index 0-8 on the board.\n            player: 1 for X, -1 for O.\n            \n        Returns:\n            Tuple of (next_state, reward, done).\n            \n        >>> env = TicTacToeEnv()\n        >>> env.reset()\n        >>> next_s, r, d = env.step(4, 1)\n        >>> next_s[4] == 1\n        True\n        \"\"\"\n        ...\n\n    def get_valid_actions(self, state: Tuple[int, ...]) -> List[int]:\n        \"\"\"Return list of valid move indices.\"\"\"\n        ...\n\n    def is_terminal(self, state: Tuple[int, ...]) -> bool:\n        \"\"\"Check if state is terminal (win/loss/draw).\"\"\"\n        ...\n\n    def check_win(self, state: Tuple[int, ...], player: int) -> bool:\n        \"\"\"Check if `player` has won.\"\"\"\n        ...",
-    "q_learning.py": "\"\"\"Tabular Q-Learning Agent implementation.\"\"\"\n\nfrom typing import Dict, List, Tuple\nimport numpy as np\n\nclass QAgent:\n    \"\"\"Q-Learning agent using a tabular approximation.\"\"\"\n\n    def __init__(self, lr: float = 0.1, gamma: float = 0.9, epsilon: float = 0.2) -> None:\n        \"\"\"Initialize Q-agent.\n        \n        Args:\n            lr: Learning rate (alpha).\n            gamma: Discount factor (gamma).\n            epsilon: Exploration rate.\n        \"\"\"\n        ...\n\n    def act(self, state: Tuple[int, ...], valid_actions: List[int]) -> int:\n        \"\"\"Select action using epsilon-greedy policy.\n        \n        Returns:\n            An integer index of the chosen action.\n            \n        >>> agent = QAgent(epsilon=1.0)\n        >>> # With epsilon=1.0, it always explores\n        >>> import random\n        >>> random.seed(42)\n        >>> valid = [0, 1]\n        >>> _ = agent.act((0,)*9, valid)\n        \"\"\"\n        ...\n\n    def learn(self, state: Tuple[int, ...], action: int, reward: float, next_state: Tuple[int, ...]) -> None:\n        \"\"\"Update Q-value for the given transition.\n        \n        >>> agent = QAgent(lr=0.1)\n        >>> s = (0,)*9\n        >>> ns = (0,)*9; ns[0]=1\n        >>> agent.learn(s, 0, 0.1, ns)\n        \"\"\"\n        ...",
-    "baseline.py": "\"\"\"Baseline opponent implementations.\"\"\"\n\nfrom typing import List, Tuple\nimport random\n\nclass RandomAgent:\n    \"\"\"Plays uniformly random valid moves.\"\"\"\n\n    def act(self, state: Tuple[int, ...], valid_actions: List[int]) -> int:\n        \"\"\"Return a random valid action.\n        \n        >>> valid = [0, 1]\n        >>> agent = RandomAgent()\n        >>> # Just ensures it returns one of the valid actions\n        >>> res = agent.act((0,)*9, valid)\n        >>> res in valid\n        True\n        \"\"\"\n        ...",
-    "plot_results.py": "\"\"\"Utilities to visualize experiment results.\"\"\"\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\ndef generate_plots(output_dir: str) -> None:\n    \"\"\"Generate convergence and win-rate plots from CSV logs.\n    \n    Saves figures to `output_dir/figures`.\n    \"\"\"\n    ..."
+    "config.py": "\"\"\"Konfiguracja parametrow eksperymentu Q-Learning dla Tic-Tac-Toe.\"\"\"\n\nimport os\nfrom typing import List\n\n# --- Hyperparameters ---\nLEARNING_RATE: float = 0.1\nDISCOUNT_FACTOR: float = 0.95\nEPSILON_START: float = 0.9\nEPSILON_END: float = 0.05\nEPSILON_DECAY: float = 0.998\nMAX_EPISODES: int = 100000\nNUM_EVAL_GAMES: int = 1000\n\n# --- Seeding for Reproducibility ---\nTRAIN_SEED: int = 42\nEVAL_SEED: int = 42\n\ndef get_results_dir() -> str:\n    \"\"\"Returns the directory path for saving experiment results.\"\"\"\n    return os.path.join(os.getcwd(), \"results\")",
+    "env.py": "\"\"\"Implementacja gry Kółko i Krzyżyk jako środowiska MDP.\"\"\"\n\nfrom typing import List, Tuple, Optional\nimport copy\n\nclass TicTacToeEnv:\n    \"\"\"Środowisko gry Kółko i Krzyżyk. Stan to lista 9 elementów [0:puste, 1:X, 2:O].\"\"\"\n\n    def __init__(self) -> None:\n        \"\"\"Inicjalizuje pustą planszę.\"\"\"\n        self.reset()\n\n    def reset(self) -> List[int]:\n        \"\"\"Resets the board to initial empty state and returns it.\n        \n        >>> env = TicTacToeEnv()\n        >>> s = env.reset()\n        >>> s\n        [0, 0, 0, 0, 0, 0, 0, 0, 0]\n        \"\"\"\n        self.board = [0] * 9\n        self.current_player = 1  # 1 moves first (X)\n        self.done = False\n        self.winner: Optional[int] = None  # 1=X wins, 2=O wins, 0=Draw\n        return list(self.board)\n\n    def get_valid_moves(self) -> List[int]:\n        \"\"\"Returns a list of indices (0-8) for empty cells.\n        \n        >>> env = TicTacToeEnv()\n        >>> env.board[4] = 1\n        >>> env.get_valid_moves() == [0,1,2,3,5,6,7,8]\n        True\n        \"\"\"\n        return [i for i, cell in enumerate(self.board) if cell == 0]\n\n    def step(self, action: int) -> Tuple[List[int], float, bool]:\n        \"\"\"Executes an action. Returns (new_state, reward, done).\n        \n        >>> env = TicTacToeEnv()\n        >>> env.reset()\n        [0, 0, 0, 0, 0, 0, 0, 0, 0]\n        >>> new_s, r, d = env.step(4)\n        >>> new_s[4] == 1\n        True\n        \"\"\"\n        if self.done:\n            raise RuntimeError(\"Cannot step on a finished game.\")\n        if action not in self.get_valid_moves():\n            raise ValueError(f\"Invalid action {action}\")\n        \n        # Execute move\n        self.board[action] = self.current_player\n        winner = self._check_win()\n        \n        done = False\n        reward = 0.0\n        \n        if winner is not None:\n            done = True\n            self.winner = winner\n            # Reward: +1 for X win, -1 for O win (from X's perspective usually, but here raw)\n            reward = 1.0 if winner == 1 else -1.0\n        elif len(self.get_valid_moves()) == 0:\n            done = True\n            self.winner = 0  # Draw\n            reward = 0.0\n        \n        # Switch player for next turn if game continues\n        if not done:\n            self.current_player = 2 if self.current_player == 1 else 1\n            \n        return list(self.board), reward, done\n\n    def _check_win(self) -> Optional[int]:\n        \"\"\"Checks for win condition. Returns 1 (X wins), 2 (O wins), or None.\"\"\"\n        lines = [\n            [0, 1, 2], [3, 4, 5], [6, 7, 8], # rows\n            [0, 3, 6], [1, 4, 7], [2, 5, 8], # cols\n            [0, 4, 8], [2, 4, 6]             # diagonals\n        ]\n        for line in lines:\n            if self.board[line[0]] == self.board[line[1]] == self.board[line[2]] and self.board[line[0]] != 0:\n                return self.board[line[0]]\n        return None",
+    "qagent.py": "\"\"\"Implementacja agenta Q-Learning do gry w Tic-Tac-Toe.\"\"\"\n\nfrom typing import Dict, List, Tuple\nimport random\n\nclass QLearningAgent:\n    \"\"\"Agent uczący się poprzez Q-Learning z epsilon-greedy polityką.\"\"\"\n\n    def __init__(self, learning_rate: float = 0.1, discount_factor: float = 0.95,\n                 epsilon_start: float = 0.8, epsilon_end: float = 0.05,\n                 epsilon_decay: float = 0.995) -> None:\n        \"\"\"Inicjalizuje agenta z podanymi hiperparametrami.\"\"\"\n        self.lr: float = learning_rate\n        self.gamma: float = discount_factor\n        self.epsilon: float = epsilon_start\n        self.epsilon_end: float = epsilon_end\n        self.epsilon_decay: float = epsilon_decay\n        self.q_table: Dict[Tuple[int, ...], List[float]] = {}\n\n    def reset(self) -> None:\n        \"\"\"Resets the exploration rate to start value for new training sessions.\"\"\"\n        self.epsilon = self.epsilon_start\n\n    def get_q_values(self, state: List[int]) -> List[float]:\n        \"\"\"Returns Q-values for all possible actions in the given state. Returns zeros if state unseen.\n        \n        >>> agent = QLearningAgent()\n        >>> s = [0]*9\n        >>> len(agent.get_q_values(s))\n        9\n        \"\"\"\n        state_key = self._state_to_key(state)\n        if state_key not in self.q_table:\n            self.q_table[state_key] = [0.0] * 9\n        return list(self.q_table[state_key])\n\n    def choose_action(self, state: List[int], valid_moves: List[int]) -> int:\n        \"\"\"Chooses an action using epsilon-greedy policy based on valid moves.\n        \n        >>> import unittest.mock as mock\n        >>> agent = QLearningAgent(epsilon_start=0.0)\n        >>> s = [0]*9\n        >>> # Ensure q_table has entry for s to avoid default zeros bias if needed, though here it's fine\n        >>> agent.get_q_values(s) \n        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]\n        >>> valid = list(range(9))\n        >>> # With epsilon=0, it should pick a random best (all equal here)\n        >>> with mock.patch('random.random', return_value=0.9): # Exploit\n        ...     action = agent.choose_action(s, valid)\n        >>> assert action in valid\n        \"\"\"\n        if random.random() < self.epsilon:\n            return random.choice(valid_moves)\n        \n        q_vals = self.get_q_values(state)\n        # Mask invalid moves by ignoring them when finding max\n        best_val = -float('inf')\n        for m in valid_moves:\n            if q_vals[m] > best_val:\n                best_val = q_vals[m]\n        \n        best_moves = [m for m in valid_moves if q_vals[m] == best_val]\n        return random.choice(best_moves)\n\n    def update(self, state: List[int], action: int, reward: float, next_state: List[int]) -> None:\n        \"\"\"Updates the Q-value for the given state-action pair.\n        \n        >>> agent = QLearningAgent()\n        >>> s1 = [0]*9; s2 = [0]*9\n        >>> agent.update(s1, 4, 0.1, s2)\n        \"\"\"\n        state_key = self._state_to_key(state)\n        next_state_key = self._state_to_key(next_state)\n        \n        if state_key not in self.q_table:\n            self.q_table[state_key] = [0.0] * 9\n        if next_state_key not in self.q_table:\n            self.q_table[next_state_key] = [0.0] * 9\n            \n        current_q = self.q_table[state_key][action]\n        max_next_q = max(self.q_table[next_state_key])\n        new_q = current_q + self.lr * (reward + self.gamma * max_next_q - current_q)\n        self.q_table[state_key][action] = new_q\n\n    def decay_epsilon(self) -> None:\n        \"\"\"Decreases epsilon towards epsilon_end.\"\"\"\n        self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)\n\n    def _state_to_key(self, state: List[int]) -> Tuple[int, ...]:\n        \"\"\"Converts state list to tuple key for dictionary lookup.\"\"\"\n        return tuple(state)",
+    "opponent.py": "\"\"\"Implementacja przeciwnika losowego (Random Opponent).\"\"\"\n\nfrom typing import List\nimport random\n\nclass RandomOpponent:\n    \"\"\"Agent wykonujący ruchy losowe z dostepnej listy prawidlowych ruchow.\"\"\"\n\n    def __init__(self, player_symbol: int = 2) -> None:\n        \"\"\"Inicjalizuje przeciwnika. Symbol gracza to 1 (X) lub 2 (O).\"\"\"\n        self.player_symbol = player_symbol\n\n    def choose_action(self, valid_moves: List[int]) -> int:\n        \"\"\"Wybiera randomowy ruch z listy dostepnych.\n        \n        >>> opp = RandomOpponent()\n        >>> valid = [0, 1]\n        >>> action = opp.choose_action(valid)\n        >>> assert action in valid\n        \"\"\"\n        return random.choice(valid_moves)",
+    "experiment.py": "\"\"\"Wejsciowy modul eksperymentu: trenuje agenta i generuje wyniki.\"\"\"\n\nimport os\nimport csv\nimport random\nfrom typing import Dict, List\n\nfrom config import (\n    LEARNING_RATE, DISCOUNT_FACTOR,\n    EPSILON_START, EPSILON_END, EPSILON_DECAY,\n    MAX_EPISODES, NUM_EVAL_GAMES,\n    TRAIN_SEED, EVAL_SEED, get_results_dir\n)\nfrom env import TicTacToeEnv\nfrom qagent import QLearningAgent\nfrom opponent import RandomOpponent\n\ndef train_agent() -> Dict:\n    \"\"\"Trains the Q-Learning agent against a Random Opponent.\n    \n    Returns stats dict: {'win_rate', 'avg_reward'}.\n    \"\"\"\n    # Set seeds for reproducibility\n    random.seed(TRAIN_SEED)\n\n    env = TicTacToeEnv()\n    agent = QLearningAgent(LEARNING_RATE, DISCOUNT_FACTOR, EPSILON_START, EPSILON_END, EPSILON_DECAY)\n    opponent = RandomOpponent(player_symbol=2)\n    \n    rewards_history: List[float] = []\n    wins_x_count: int = 0\n    \n    for ep in range(MAX_EPISODES):\n        state = env.reset()\n        episode_reward = 0.0\n        done = False\n        \n        while not done:\n            valid_moves = env.get_valid_moves()\n            \n            # Determine whose turn it is before the step to apply Q-update correctly later\n            current_player_turn = env.current_player \n            \n            # Agent (X) moves\n            if current_player_turn == 1: # X moves first usually, or whenever it is X's turn\n                action = agent.choose_action(state, valid_moves)\n            else: # Opponent (O) moves\n                action = opponent.choose_action(valid_moves)\n            \n            next_state, reward, done = env.step(action)\n            episode_reward += reward\n            \n            # Apply Q-update only for the agent's move. \n            # The agent is Player 1 (X). We update when Player 1 just moved.\n            if current_player_turn == 1:\n                agent.update(state, action, reward, next_state)\n\n            state = next_state\n        \n        agent.decay_epsilon()\n        \n        if env.winner == 1:\n            wins_x_count += 1\n        rewards_history.append(episode_reward)\n    \n    results = {\n        'win_rate': wins_x_count / MAX_EPISODES,\n        'avg_reward': sum(rewards_history) / len(rewards_history) if rewards_history else 0.0,\n        'final_epsilon': agent.epsilon\n    }\n    return results\n\ndef evaluate_agent() -> Dict:\n    \"\"\"Evaluates the trained agent against a Random Opponent in NUM_EVAL_GAMES.\"\"\"\n    random.seed(EVAL_SEED)\n\n    env = TicTacToeEnv()\n    # Assuming we pass the trained agent's Q-table or retrain with frozen weights?\n    # For this simple task, let's assume we continue from the trained agent in train_and_evaluate logic below.\n    return {}\n\ndef run() -> None:\n    \"\"\"Main entrypoint for the experiment. Runs train_and_evaluate and saves results.\"\"\"\n    stats = train_agent()\n    \n    # Save results\n    os.makedirs(get_results_dir(), exist_ok=True)\n    csv_path = os.path.join(get_results_dir(), \"results.csv\")\n    with open(csv_path, \"w\", newline=\"\") as f:\n        writer = csv.DictWriter(f, fieldnames=stats.keys())\n        writer.writeheader()\n        writer.writerow(stats)\n    \n    print(f\"Results saved to {csv_path}\")\n    print(stats)"
   },
   "literature_recon": {
     "task_key": "01_rl_tictactoe",
@@ -107,28 +110,33 @@
     "chapters": [
       {
         "index": 1,
-        "title": "Rozdział 1: Wstęp i Cel Pracy",
-        "focus": "Motywacja, definicja problemu gry w kółko i krzyżyk jako MDP, teza badawcza."
+        "title": "Rozdział 1: Wstęp",
+        "focus": "Uzasadnienie tematu, cel pracy, teza badawcza i zakres opracowania."
       },
       {
         "index": 2,
         "title": "Rozdział 2: Przegląd Literatury",
-        "focus": "Teoria procesów decyzyjnych Markowa (MDP), algorytm Q-Learning, wcześniejsze aplikacje RL w grach."
+        "focus": "Podstawy uczenia przez wzmacnianie (MDP), algorytm Q-Learning, aplikacje w grach."
       },
       {
         "index": 3,
-        "title": "Rozdział 3: Metodyka Badania",
-        "focus": "Opis środowiska (stan, akcje, nagrody), architektura agenta Q-Learning, hiperparametry i ustawienia eksperymentu."
+        "title": "Rozdział 3: Modelowanie i Projekt Systemu",
+        "focus": "Reprezentacja stanu Tic-Tac-Toe jako MDP, architektura agenta Q-Learning."
       },
       {
         "index": 4,
-        "title": "Rozdział 4: Wyniki Eksperymentu",
-        "focus": "Analiza krzywych konwergencji, statystyki zwycięstw/remisów/porażek, porównanie z basline losowym."
+        "title": "Rozdział 4: Metodologia Badania",
+        "focus": "Parametry eksperymentu (LR, Gamma, Epsilon), procedura trenowania i ewaluacji."
       },
       {
         "index": 5,
-        "title": "Rozdział 5: Wnioski",
-        "focus": "Podsumowanie efektów nauki, ograniczenia podejścia tablicowego, kierunki przyszłych prac."
+        "title": "Rozdział 5: Wyniki Eksperymentu",
+        "focus": "Analiza wyników (win_rate, avg_reward) w zależności od etapu trenowania."
+      },
+      {
+        "index": 6,
+        "title": "Rozdział 6: Wnioski",
+        "focus": "Podsumowanie, weryfikacja tezy i kierunki dalszych prac."
       }
     ]
   }

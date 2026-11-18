@@ -1,0 +1,71 @@
+% IEEE Scientific Conference Paper Template (IEEEtran)
+\documentclass[conference]{IEEEtran}
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{fontspec}
+\else
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage[plainpages=false,pdfpagelabels,hidelinks]{hyperref}
+
+\makeatletter
+\def\ps@IEEEtitlepagestyle{%
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
+  \def\@evenfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
+}
+\def\ps@plain{%
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \def\@oddfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
+  \def\@evenfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
+}
+\makeatother
+\pagestyle{plain}
+
+\renewcommand{\texttt}[1]{\ifmmode\mathtt{#1}\else{\normalfont\ttfamily #1}\fi}
+\DeclareFontShape{OMS}{cmsy}{m}{n}{<-> cmsy10}{}
+\DeclareFontShape{OML}{cmm}{m}{it}{<-> cmmi10}{}
+\DeclareFontShape{OT1}{cmr}{m}{n}{<-> cmr10}{}
+\DeclareFontShape{OMX}{cmex}{m}{n}{<-> cmsy10}{}
+
+\begin{document}
+
+
+
+\title{Heuristic Pathfinding Optimization on Spatial Grids: Weighted Octile A* vs. Dijkstra}
+
+\author{\IEEEauthorblockN{Neuro-Symbolic ADK Author}
+\IEEEauthorblockA{\textit{Institute of Applied Computer Science} \\
+\textit{Lodz University of Technology} \\
+Lodz, Poland \\
+Domain: Graph Algorithms \& Heuristic Search}}
+
+
+\thispagestyle{plain}
+
+\begin{abstract}
+
+\end{abstract}
+
+\begin{IEEEkeywords}
+neuro-symbolic systems, empirical verification, abstract syntax tree, automated thesis synthesis, machine learning
+\end{IEEEkeywords}
+
+\section{Rozdział 1}
+
+
+% Brak danych CSV
+
+\begin{thebibliography}{99}
+  \bibitem{adk2025} Neuro-Symbolic ADK, \textit{Dokumentacja i literatura przedmiotowa}, 2025.
+\end{thebibliography}
+
+\end{document}

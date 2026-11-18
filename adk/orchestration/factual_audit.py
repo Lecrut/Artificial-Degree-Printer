@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -29,8 +30,8 @@ _CHAPTER_HEADING_WORDS = {
 }
 
 
-def thesis_missing_chapters(thesis_text: str) -> list[int]:
-    """Canonical chapters (1-6) with no `## ` heading in the thesis: a heading counts by its number
+def thesis_missing_chapters(thesis_text: str, expected: list[int] | range = range(1, 7)) -> list[int]:
+    """Expected chapters with no `## ` heading in the thesis: a heading counts by its number
     (`Rozdział 3`, `Chapter 3`) or, without one, by the first chapter whose words it contains."""
     found: set[int] = set()
     for match in re.finditer(r"^##\s+([^\n]+)", thesis_text, flags=re.MULTILINE):
@@ -42,11 +43,22 @@ def thesis_missing_chapters(thesis_text: str) -> list[int]:
         hit = next((n for n, words in _CHAPTER_HEADING_WORDS.items() if any(w in heading for w in words)), None)
         if hit is not None:
             found.add(hit)
-    return [n for n in range(1, 7) if n not in found]
+    return [n for n in expected if n not in found]
 
 
 class FactualAuditMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
+
+    def _expected_chapters(self) -> list[int]:
+        """The chapters this thesis must have: the plan's (`planned_chapters`, the N bags of H). The canonical six
+        remain only for a run without a planned outline (2026-11-17: 5 planned chapters, the final gate demanded a
+        sixth, and `Q1_CH6` wrote a chapter outside the plan)."""
+        planned = (read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}).get("planned_chapters")
+        indices = sorted({
+            int(ch["index"]) for ch in planned or []
+            if isinstance(ch, dict) and str(ch.get("index", "")).isdigit()
+        })
+        return indices or list(range(1, 7))
 
     def _get_pending_future_files(self, current_task: dict[str, Any]) -> set[str]:
         """Return filenames scheduled to be created by subsequent TODO tasks in the queue."""
@@ -59,8 +71,8 @@ class FactualAuditMixin:
 
         current_id = str(current_task.get("task_id", ""))
         found_current = False
-        matrix_data = read_json_state(self.matrix_path)
-        matrix_nodes = matrix_data.get("nodes", {})
+        h = self._project_h()
+        run = h.edges.get("R:run") if h is not None else None
 
         for t in tasks:
             if not isinstance(t, dict):
@@ -69,18 +81,14 @@ class FactualAuditMixin:
             if t_id == current_id:
                 found_current = True
                 continue
-            if found_current and t.get("status") == "TODO":
-                t_node = str(t.get("target_node", ""))
-                node_meta = matrix_nodes.get(t_node, {})
-                path_str = str(node_meta.get("path", ""))
+            if found_current and t.get("status") in ("TODO", "WAITING"):
+                path_str = str(t.get("target_node", "")).partition("#")[0]
                 if path_str:
                     pending.add(Path(path_str).name)
                     pending.add(path_str)
-                role = self._role_of(t_node)
-                if role in ("config", "core"):
-                    pending.update({self._role_file("config"), self._role_file("core")})
-                elif role in ("results", "tests"):
-                    pending.update({self._role_file("results"), "figures", "plot_results.py", self._role_file("tests")})
+                # Code the experiment still has to run: its results and figures are pending too (from R in H).
+                if run is not None and run.members.get(path_str) in ("P", "C"):
+                    pending.update({m for m, role in run.members.items() if role == "O"} | {"figures", "plot_results.py"})
         return pending
 
     def _audit_factual_state(self, report: dict[str, Any]) -> dict[str, Any]:
@@ -97,13 +105,14 @@ class FactualAuditMixin:
                     files.append(path.relative_to(self.workspace_dir).as_posix())
 
         chapters_present: list[int] = []
+        expected = self._expected_chapters()
         thesis = self.workspace_dir / "thesis.md"
         if thesis.exists():
             for match in re.finditer(r"^##\s+.*?(\d+)", thesis.read_text(encoding="utf-8"), flags=re.MULTILINE):
                 number = int(match.group(1))
-                if 1 <= number <= 6 and number not in chapters_present:
+                if number in expected and number not in chapters_present:
                     chapters_present.append(number)
-        chapters_missing = [n for n in range(1, 7) if n not in chapters_present] if self.include_docs else []
+        chapters_missing = [n for n in expected if n not in chapters_present] if self.include_docs else []
 
         symbolic_errors: list[str] = []
         if thesis.exists() and self.include_docs:
@@ -131,8 +140,9 @@ class FactualAuditMixin:
         return audit
 
     def _pdf_failure_report(self) -> dict[str, Any] | None:
-        """Compile the thesis. A live failure comes back as a queue-rebuild reason. Mock stays out of this path."""
-        if str(self.provider).strip().lower() == "mock":
+        """Compile the thesis. A failure comes back as a queue-rebuild reason. `HARNESS_SKIP_PDF=1` (the test suite)
+        skips the LaTeX build; which agents answered — a model or a simulation — never changes this path."""
+        if os.environ.get("HARNESS_SKIP_PDF") == "1":
             return None
         thesis_md = self.workspace_dir / "thesis.md"
         if not thesis_md.exists():
@@ -157,7 +167,7 @@ class FactualAuditMixin:
                 self.workspace_dir,
                 template_name=spec.template_name,
                 thesis_type=spec.thesis_type,
-                provider=self.provider,
+                abstract=str(blueprint.get("thesis_statement") or ""),
             )
             pdf_path = self.workspace_dir / "thesis.pdf"
             compiled = compile_latex_to_pdf(tex_path, pdf_path)

@@ -68,7 +68,7 @@ class RecoveryMixin:
                     {
                         "task_id": f"{prefix}_CODE",
                         "description": texts.fix_code_task(detail),
-                        "target_node": self._role_file("core"),
+                        "target_node": self._entry_file() or THESIS_FILE,
                         "assigned_agent": "seed_coder",
                         "status": "TODO",
                     }
@@ -79,7 +79,7 @@ class RecoveryMixin:
                 {
                     "task_id": f"{prefix}_RESULTS",
                     "description": texts.RESULTS_TASK,
-                    "target_node": self._role_file("core"),
+                    "target_node": self._entry_file() or THESIS_FILE,
                     "assigned_agent": "seed_coder",
                     "status": "TODO",
                 }
@@ -106,11 +106,8 @@ class RecoveryMixin:
         def _waits_for_results(text: str) -> bool:
             return code_red and ("ref_csv" in text or "csv" in text.lower())
 
-        known_files = [
-            str(m.get("path", ""))
-            for m in read_json_state(self.matrix_path).get("nodes", {}).values()
-            if str(m.get("path", "")).endswith(".py")
-        ]
+        h = self._project_h()
+        known_files = sorted({f for v in (h.vertices if h else {}) for f in h.files_of(v) if f.endswith(".py")})
         content_findings: list[str] = []
         for issue in audit.get("trigger_issues") or []:
             text = str(issue)

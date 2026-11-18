@@ -83,18 +83,17 @@ def test_adk_neuro_symbolic_harness_structure():
         "core/llm.py",
         "core/logger.py",
         "core/models.py",
-        "benchmarks/tictactoe.py",
+        "benchmarks/inputs.py",
         "benchmarks/tasks.py",
         "benchmarks/runner.py",
         "state/task_queue.json",
-        "state/hypergraph_matrix.json",
         "state/agent_registry.json",
         "state/validation_report.json",
         "state/failure_ledger.json",
         "state/evolution_history.json",
         "state/hitl_flag.json",
         "agents/planning/task_planner.md",
-        "agents/planning/task_critic_guard.md",
+        "agents/planning/plan_critic_guard.md",
         "agents/building/seed_coder.md",
         "agents/building/seed_tester.md",
         "agents/building/seed_writer.md",
@@ -102,13 +101,10 @@ def test_adk_neuro_symbolic_harness_structure():
         "agents/verification/symbolic_auditor.md",
         "agents/verification/redteam_critic_guard.md",
         "agents/evolution/evolution_architect.md",
-        "tools/planning/blast_radius.py",
         "tools/planning/complexity_router.py",
         "tools/building/ast_editor.py",
         "tools/building/doc_editor.py",
         "tools/building/thesis_publisher.py",
-        "tools/building/import_sync.py",
-        "tools/building/hypergraph_sync.py",
         "tools/verification/test_runner.py",
         "tools/verification/ref_compiler.py",
         "tools/evolution/agent_creator.py",
@@ -116,6 +112,12 @@ def test_adk_neuro_symbolic_harness_structure():
         "tools/evolution/agent_mutator.py",
         "tools/evolution/sandbox_verifier.py",
         "orchestrator.py",
+        "hypergraph/model.py",
+        "hypergraph/build.py",
+        "hypergraph/observe.py",
+        "orchestration/context.py",
+        "orchestration/plan_change.py",
+        "agents/planning/plan_change_guard.md",
     ]
     missing = [rel for rel in expected_paths if not (adk_root / rel).exists()]
     assert not missing, f"Brakujące pliki w strukturze adk/: {missing}"
@@ -126,6 +128,29 @@ def test_no_mock_files_in_tools_directory():
     tools_root = Path(__file__).resolve().parent.parent / "adk" / "tools"
     mock_files = [str(p.relative_to(tools_root)) for p in tools_root.rglob("*") if "mock" in p.name.lower()]
     assert not mock_files, f"Wykryto pliki mock wewnątrz katalogu adk/tools/: {mock_files}"
+
+
+def test_harness_never_knows_its_agents_are_simulated():
+    """The simulated agents sit behind the model and literature seams (set_llm_handler, set_paper_source). No harness
+    module outside adk/mocks imports them or compares anything to "mock"; only the provider name lives in connection.py."""
+    import ast
+
+    adk_root = Path(__file__).resolve().parent.parent / "adk"
+    offenders = []
+    for path in adk_root.rglob("*.py"):
+        rel = path.relative_to(adk_root).as_posix()
+        if rel.startswith(("mocks/", "workspace/")) or rel == "core/connection.py":  # workspace: run outputs
+            continue
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("adk.mocks"):
+                offenders.append(f"{rel}:{node.lineno} imports {node.module}")
+            elif isinstance(node, ast.Import) and any(n.name.startswith("adk.mocks") for n in node.names):
+                offenders.append(f"{rel}:{node.lineno} imports adk.mocks")
+            elif isinstance(node, ast.Compare) and any(
+                isinstance(c, ast.Constant) and c.value == "mock" for c in [node.left, *node.comparators]
+            ):
+                offenders.append(f"{rel}:{node.lineno} branches on 'mock'")
+    assert not offenders, "Harness zna symulowanych agentów:\n" + "\n".join(offenders)
 
 
 

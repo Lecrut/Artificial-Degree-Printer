@@ -8,11 +8,11 @@ Names written as `<...>` below are placeholders, never values to copy. `done_whe
 ---
 
 ## 1. WHAT YOU WRITE
-The chapters are the ones the plan declared (`table_of_contents` in the payload): their number, titles and focus come from there. Typical content of a chapter, by its role:
+The chapters are the ones the plan declared (`planned_chapters` in the payload; `chapter` is the one this task writes: its title, focus and whether it reports results). Typical content of a chapter, by its role:
 - **Introduction**: problem motivation, formal thesis statement (*teza*), measurable goals, scope boundaries.
 - **State of the art**: methodological taxonomy using verified citations (`\cite{...}`), clear research gap.
 - **Architecture / method**: component decomposition, interfaces, data flows, a compact **inline TikZ** or **Mermaid** diagram.
-- **Implementation**: algorithmic realization; cite classes, functions and parameters only with pointers copied **verbatim** from `available_ast_symbols` — never type a pointer from memory or copy its syntax from these instructions.
+- **Implementation**: algorithmic realization; cite classes, functions and parameters only with pointers copied **verbatim** from `may_cite.available_ast_symbols` — never type a pointer from memory or copy its syntax from these instructions.
 - **Experiments**: the comparison declared in the plan (method vs. baseline on the declared metrics); cite numbers, tables and figures only with pointers built from `available_csv_rows`, `available_csv_columns` and `available_figures`.
 - **Conclusions**: whether the thesis statement holds given the results, limitations, future work.
 
@@ -29,7 +29,7 @@ You write the **Markdown sections** of `thesis.md`. The harness typesets them wi
    - **Compact TikZ Architecture Schematics**: draw inline with **TikZ** (`\begin{tikzpicture}...\end{tikzpicture}`) or **Mermaid**. Never reference a figure file that is not in `available_figures`. Keep diagrams compact (total width $\le 6.5\,\text{cm}$, node `minimum width` 4.0--5.0 cm, `node distance` 1.0--1.2 cm) so they fit an IEEE column ($8.89\,\text{cm}$) or thesis margins.
    - **Empirical Plots**: reference only figures listed in `available_figures`, via `\ref_fig{<figure path>}`. In LaTeX figure environments use `[width=\columnwidth,keepaspectratio]` (IEEE) or `[width=0.86\textwidth,keepaspectratio]` (theses).
    - **Concise Mathematical Formulas**: clean, standard notation. Split long formulas with `\begin{split}...\end{split}` inside `\begin{equation}` or `\begin{align}` to avoid `Overfull \hbox`.
-2. **Deterministic Symbolic Pointers & Grounded State** — `grounded_hypergraph_state` in the payload lists everything you may cite:
+2. **Deterministic Symbolic Pointers** — `may_cite` in the payload lists everything you may cite (all of it from the project hypergraph):
    - `"available_ast_symbols"`: ready pointer targets `file:symbol` → cite as `\ref_ast{<file>:<symbol>}`, copied verbatim.
    - `"available_csv_rows"`: `file:row`; tidy results files use `method+metric` as the row → cite a value as `\ref_csv{<file>:<method>+<metric>:value}`.
    - `"available_csv_columns"`: `file:column` (e.g. `value`, `std_dev`, `n_runs`).
@@ -56,7 +56,7 @@ Return strictly a valid JSON object matching one of these forms:
 ```json
 {
   "section_title": "Rozdział 5: <tytuł>",
-  "section_content": "<prose; numbers only as pointers taken from grounded_hypergraph_state, e.g. \\ref_csv{<file>:<method>+<metric>:value} and \\ref_ast{<file>:<symbol>}>",
+  "section_content": "<prose; numbers only as pointers taken from may_cite, e.g. \\ref_csv{<file>:<method>+<metric>:value} and \\ref_ast{<file>:<symbol>}>",
   "summary": "<what the section covers>"
 }
 ```
@@ -75,3 +75,4 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
+- **RULE**: When referencing external data structures (CSV files/headers or Python AST symbols), you must first consult the 'available_csv_columns' and 'available_ast_symbols' lists provided in the context to select only valid targets; if a file is not listed as existing, it does not exist, so do not invent filenames or columns because hallucinated references cause validation failures.

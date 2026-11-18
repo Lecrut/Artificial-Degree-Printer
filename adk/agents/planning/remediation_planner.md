@@ -12,7 +12,7 @@ Names written as `<...>` below are placeholders, never values to copy.
    - **NEVER** wipe, reset or restart the project or completed chapters. Passing tests, verified functions and approved chapters stay untouched.
 2. **Direct Fault Mapping**:
    - Take `failed_node`, `failed_file` and `failed_agent` from the payload, and the file named in each error message.
-   - **Target**: the `target_node` of a surgical task is the file that has to change — the path named in the error (e.g. the file and line a linter or a traceback reports) or a node id from `hypergraph_matrix`. Never send a fix for file A to file B.
+   - **Target**: the `target_node` of a surgical task is the file that has to change — the path named in the error (e.g. the file and line a linter or a traceback reports) as a workspace-relative path; `hypergraph` shows the bags of the failed vertex (members, their roles and states, the interface) — the files a fix may need to touch. Never send a fix for file A to file B.
    - Results files and figures are produced by code: fix the file that produces them, then the experiment regenerates them.
    - **Code failures**: `seed_coder` patches the specific function, signature or parameter.
    - **Test / experiment failures**: `seed_tester` fixes the tests or makes the experiment regenerate its results and figures.

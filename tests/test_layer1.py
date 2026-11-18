@@ -5,19 +5,15 @@ from pathlib import Path
 
 from adk.core.llm import _extract_json_from_text, call_agent
 from adk.tools.planning import (
-    calculate_blast_radius,
-    get_scoped_hypergraph_context,
     scout_domain_conventions,
     select_model_tier,
     synthesize_table_of_contents,
 )
 
 
-
 def test_state_files_initialized():
     root = Path(__file__).resolve().parent.parent / "adk" / "state"
     expected = [
-        "hypergraph_matrix.json",
         "task_queue.json",
         "agent_registry.json",
         "validation_report.json",
@@ -32,44 +28,11 @@ def test_state_files_initialized():
         assert data is not None
 
 
-def test_blast_radius_and_complexity_router(tmp_path: Path):
-    # The repository seed is empty (the graph is built from files), so this test brings its own graph.
-    matrix_path = tmp_path / "hypergraph_matrix.json"
-    matrix_path.write_text(
-        json.dumps(
-            {
-                "nodes": {
-                    "v1": {"path": "config.py", "degree": 2, "weight": 1.4},
-                    "v2": {"path": "core.py", "degree": 3, "weight": 1.2},
-                    "v3": {"path": "results.csv", "degree": 2, "weight": 1.4},
-                    "v4": {"path": "thesis.md", "degree": 1, "weight": 9.2},
-                },
-                "edges": {"E1": ["v1", "v2"], "E2": ["v2", "v3"], "E3": ["v1", "v3", "v4"]},
-                "matrix": {
-                    "v1": {"E1": 1, "E2": 0, "E3": 1},
-                    "v2": {"E1": 1, "E2": 1, "E3": 0},
-                    "v3": {"E1": 0, "E2": 1, "E3": 1},
-                    "v4": {"E1": 0, "E2": 0, "E3": 1},
-                },
-            }
-        ),
-        encoding="utf-8",
-    )
-    res = calculate_blast_radius("v1", matrix_path)
-    assert res["degree"] >= 2
-    assert "E1" in res["active_edges"]
-    assert "v2" in res["affected_nodes"]
-
+def test_complexity_router_follows_the_attempt():
     # The tier follows the attempt, not the node: the small model works, the large one steps in after two failures.
     assert select_model_tier() == "SML"
     assert select_model_tier(failures=1) == "SML"
     assert select_model_tier(failures=2) == "LRM"
-
-    # Unknown node in calculate_blast_radius returns safe fallback dict
-    blast_unknown = calculate_blast_radius("v7", matrix_path)
-    assert blast_unknown["modified_node_id"] == "v7"
-    assert blast_unknown["degree"] == 0
-    assert "v7" in blast_unknown["affected_nodes"]
 
 
 def test_call_planning_agents():
@@ -83,7 +46,7 @@ def test_call_planning_agents():
     assert len(planner_res["output"]["tasks"]) >= 1
 
     guard_res = call_agent(
-        "agents/planning/task_critic_guard.md",
+        "agents/planning/plan_critic_guard.md",
         {
             "tasks": planner_res["output"]["tasks"],
             "agent_registry": {
@@ -115,103 +78,50 @@ def test_robust_json_extraction_with_think_tags_and_prose():
     assert parsed["approved"] is True
 
 
-def test_get_scoped_hypergraph_context_omits_matrix_and_scopes_edges(tmp_path: Path):
-    # Simulate a hypergraph with 100 edges and heavy 0/1 incidence matrix
-    edges = {f"E{i}": [f"v{i % 5 + 1}"] for i in range(1, 101)}
-    edges["E1"] = ["v1", "v2"]
-    nodes = {f"v{i}": {"path": f"module_{i}.py", "degree": i, "weight": 1.0} for i in range(1, 6)}
-    matrix = {n_id: {e_id: 1 if n_id in members else 0 for e_id, members in edges.items()} for n_id, members in [(f"v{i}", edges) for i in range(1, 6)]}
-    
-    matrix_file = tmp_path / "heavy_matrix.json"
-    matrix_file.write_text(json.dumps({"nodes": nodes, "edges": edges, "matrix": matrix}), encoding="utf-8")
-
-    blast = calculate_blast_radius("v1", matrix_file)
-    scoped = get_scoped_hypergraph_context(matrix_file, blast_radius=blast)
-
-    assert "matrix" not in scoped
-    assert "nodes" in scoped
-    assert "active_edges" in scoped
-    assert "v1" in scoped["nodes"]
-    assert "E1" in scoped["active_edges"]
-    # Only active edges related to blast radius should be present, not all 100
-    assert len(scoped["active_edges"]) < len(edges)
-
-
 def test_scout_domain_conventions_and_synthesize_toc():
-    """Verify Layer 1 research reconnaissance and dynamic Table-of-Contents (TOC) synthesis tools."""
-    # 1. Stage I (Inżynierska) reconnaissance & TOC
+    """Reconnaissance routes the research by degree and takes its literature from the installed paper source (here
+    the simulated catalog); it never prescribes metrics or baselines. The TOC is built from it."""
     recon_rl = scout_domain_conventions("01_rl_tictactoe", thesis_type="inzynierska")
-    assert recon_rl["task_key"] == "01_rl_tictactoe"
     assert recon_rl["research_routing"] == ["background_researcher"]
-    assert len(recon_rl["canonical_baselines"]) >= 3
-    assert "win_rate" in recon_rl["standard_metrics"]
-    assert len(recon_rl["available_citation_keys"]) >= 20
+    assert recon_rl["citation_source"] == "catalog"
+    assert len(recon_rl["available_citation_keys"]) >= 10
+    assert recon_rl["standard_metrics"] == [] and recon_rl["canonical_baselines"] == []
+    assert "@" in recon_rl["verified_bibtex"]
 
     toc_rl = synthesize_table_of_contents("01_rl_tictactoe", thesis_type="inzynierska", recon_report=recon_rl)
-    chapters_rl = toc_rl["chapters"]
-    assert len(chapters_rl) == 6
-    assert chapters_rl[1]["chapter_index"] == 2
-    assert chapters_rl[1]["assigned_agent"] == "background_researcher"
-    assert len(chapters_rl[1]["subsections"]) >= 3
+    assert len(toc_rl["chapters"]) == 6
+    assert toc_rl["chapters"][1]["assigned_agent"] == "background_researcher"
 
-    # 2. Stage II (Magisterska) reconnaissance & TOC
     recon_anom = scout_domain_conventions("02_ml_anomaly_detection", thesis_type="magisterska")
-    assert recon_anom["task_key"] == "02_ml_anomaly_detection"
     assert recon_anom["research_routing"] == ["background_researcher", "discoverer_researcher"]
-    assert "f1_score" in recon_anom["standard_metrics"]
-    assert len(recon_anom["available_citation_keys"]) >= 30
-
     toc_anom = synthesize_table_of_contents("02_ml_anomaly_detection", thesis_type="magisterska", recon_report=recon_anom)
-    chapters_anom = toc_anom["chapters"]
-    assert len(chapters_anom) == 6
-    assert chapters_anom[1]["assigned_agent"] == "background_researcher + discoverer_researcher"
+    assert toc_anom["chapters"][1]["assigned_agent"] == "background_researcher + discoverer_researcher"
 
-    # 3. Stage III (Paper) reconnaissance & TOC
     recon_fl = scout_domain_conventions("04_federated_learning", thesis_type="paper")
-    assert recon_fl["task_key"] == "04_federated_learning"
     assert recon_fl["research_routing"] == ["discoverer_researcher"]
-    assert "final_accuracy" in recon_fl["standard_metrics"]
-
     toc_fl = synthesize_table_of_contents("04_federated_learning", thesis_type="paper", recon_report=recon_fl)
-    chapters_fl = toc_fl["chapters"]
-    assert len(chapters_fl) == 6
-    assert chapters_fl[1]["assigned_agent"] == "discoverer_researcher"
-    assert "Related Work" in chapters_fl[1]["chapter_title"]
+    assert toc_fl["chapters"][1]["assigned_agent"] == "discoverer_researcher"
 
 
 def test_research_first_task_ordering_in_planner():
-    """Verify that Task Planner schedules Literature Research FIRST (on v4) before config (v1), core (v2), tests (v3), and thesis writer (v4)."""
+    """The simulated planner of every benchmark plans the research first and the chapters last."""
     from adk.benchmarks import BENCHMARK_TASKS
-    from adk.benchmarks.runner import _make_task_mock_llm_handler
+    from adk.mocks.agents import SimulatedAgents
+    from adk.mocks.scenarios import SCENARIOS
 
     for task_id, spec in BENCHMARK_TASKS.items():
-        handler = _make_task_mock_llm_handler(spec)
-        plan_out = handler("Task Planner", {"user_prompt": spec.prompt, "blast_radius": {}}, "LRM")
+        agents = SimulatedAgents(SCENARIOS[task_id])
+        plan_out = agents("task_planner", "", {"user_prompt": spec.prompt, "error_feedback": "none"}, "LRM")
         tasks = plan_out["tasks"]
-        blueprint = plan_out["academic_blueprint"]
-
-        # Blueprint must include literature_recon and 6-chapter table_of_contents
-        assert "literature_recon" in blueprint
-        assert "table_of_contents" in blueprint
-        assert len(blueprint["table_of_contents"]["chapters"]) == 6
-
-        # First task must ALWAYS be a researcher on the thesis (Research-First workflow)
-        first_task = tasks[0]
-        assert first_task["target_node"] == "thesis.md", f"First task in {task_id} must target the thesis (research first)"
-        assert "researcher" in first_task["assigned_agent"], f"First task in {task_id} must be assigned to a researcher"
-
-        # Last task must ALWAYS be seed_writer on the thesis (final thesis synthesis)
-        last_task = tasks[-1]
-        assert last_task["target_node"] == "thesis.md"
-        assert last_task["assigned_agent"] == "seed_writer"
+        assert plan_out["academic_blueprint"]["planned_chapters"], task_id
+        assert tasks[0]["target_node"] == "thesis.md" and "researcher" in tasks[0]["assigned_agent"], task_id
+        assert tasks[-1]["target_node"] == "thesis.md" and tasks[-1]["assigned_agent"] == "seed_writer", task_id
 
 
-def test_paper_card_extraction_and_arxiv_openalex_parsers():
-    """Verify dynamic PaperCard extraction from arXiv Atom XML and OpenAlex inverted-index JSON."""
+def test_paper_card_extraction_and_arxiv_parser():
+    """Verify dynamic PaperCard extraction from abstracts and from arXiv Atom XML."""
     from adk.tools.building.literature_engine import (
         _parse_arxiv_atom_xml,
-        _parse_openalex_json,
-        _reconstruct_openalex_abstract,
         extract_paper_card_from_abstract,
         format_bibtex,
     )
@@ -233,10 +143,8 @@ def test_paper_card_extraction_and_arxiv_openalex_parsers():
     assert "benchmark" in card["dataset"].lower()
     assert "94.2%" in card["reported_metrics"]
     assert "limitation" in card["limitation"].lower()
-    bib = format_bibtex(card)
-    assert f"@article{{{card['key']}," in bib
+    assert f"@article{{{card['key']}," in format_bibtex(card)
 
-    # Test arXiv Atom XML parser
     sample_xml = """<?xml version="1.0" encoding="UTF-8"?>
     <feed xmlns="http://www.w3.org/2005/Atom">
       <entry>
@@ -251,62 +159,7 @@ def test_paper_card_extraction_and_arxiv_openalex_parsers():
     assert arxiv_cards[0]["key"].startswith("rostova2024")
     assert "99.1%" in arxiv_cards[0]["reported_metrics"]
 
-    # Test OpenAlex inverted-index reconstruction and JSON parser
-    inv_idx = {"We": [0], "propose": [1], "robust": [2], "subspace": [3], "ensembles": [4], "with": [5], "96.5%": [6], "F1.": [7]}
-    assert _reconstruct_openalex_abstract(inv_idx) == "We propose robust subspace ensembles with 96.5% F1."
 
-    oa_payload = {
-        "results": [
-            {
-                "title": "Robust Subspace Ensembles for Physiological Telemetry",
-                "publication_year": 2024,
-                "cited_by_count": 42,
-                "authorships": [{"author": {"display_name": "Piotr Wiśniewski"}}],
-                "primary_location": {"source": {"display_name": "IEEE JBHI"}},
-                "abstract_inverted_index": inv_idx,
-            }
-        ]
-    }
-    oa_cards = _parse_openalex_json(oa_payload, stage="discoverer")
-    assert len(oa_cards) == 1
-    assert oa_cards[0]["venue"] == "IEEE JBHI"
-    assert "96.5%" in oa_cards[0]["reported_metrics"]
-
-
-def test_dynamic_toc_subsection_injection_into_thesis_mock_expander(tmp_path: Path):
-    """Verify that expand_academic_chapters dynamically injects subsection titles from academic_blueprint.json / TOC."""
-    from adk.benchmarks import get_benchmark_task
-    from adk.mocks.thesis_mock_expander import expand_academic_chapters
-    from adk.tools.planning import synthesize_table_of_contents
-
-    spec = get_benchmark_task("01_rl_tictactoe")
-    ws = tmp_path / "ws_toc"
-    ws.mkdir(parents=True, exist_ok=True)
-    (ws / "core.py").write_text(spec.core_code, encoding="utf-8")
-
-    toc = synthesize_table_of_contents(spec.task_id, thesis_type="inzynierska", title_pl=spec.title_pl)
-    custom_sub_title = "Niestandardowa Sekcja Rekonesansu Planera 1.1"
-    toc["chapters"][0]["subsections"][0]["title"] = custom_sub_title
-    (ws / "academic_blueprint.json").write_text(
-        json.dumps({"table_of_contents": toc}, ensure_ascii=False),
-        encoding="utf-8",
-    )
-
-    expanded = expand_academic_chapters(
-        spec=spec,
-        base_chapters=spec.thesis_chapters,
-        workspace_dir=ws,
-        config_pairs=[("ALPHA", "0.15"), ("GAMMA", "0.95")],
-        headers=["method", "win_rate", "draw_rate", "loss_rate"],
-        rows=[
-            {"method": "baseline", "win_rate": "0.42", "draw_rate": "0.12", "loss_rate": "0.46"},
-            {"method": "proposed", "win_rate": "0.89", "draw_rate": "0.09", "loss_rate": "0.02"},
-        ],
-        is_ieee=False,
-    )
-    assert len(expanded) == 6
-    assert custom_sub_title in expanded[0][1]
-    assert "\\section{Niestandardowa Sekcja Rekonesansu Planera 1.1}" in expanded[0][1]
 
 
 def test_vertical_feature_slices_in_single_task_planner():
@@ -332,10 +185,13 @@ def test_vertical_feature_slices_in_single_task_planner():
     assert len(blueprint["planned_chapters"]) >= 4
 
 
-def test_unknown_topic_gets_no_borrowed_methodology():
+def test_unknown_topic_gets_no_borrowed_methodology(monkeypatch):
+    from adk.tools.building.literature_engine import set_paper_source
     from adk.tools.planning.research_recon import scout_domain_conventions
 
-    recon = scout_domain_conventions("Kompresja modeli językowych metodą destylacji wiedzy", prescribe_methodology=True)
+    set_paper_source(None)
+    _fake_arxiv(monkeypatch, None)
+    recon = scout_domain_conventions("Kompresja modeli językowych metodą destylacji wiedzy")
     assert recon["task_key"] == ""
     assert recon["standard_metrics"] == []
     assert recon["available_citation_keys"] == []
@@ -386,8 +242,11 @@ def _fake_arxiv(monkeypatch, body: bytes | None):
 def test_live_recon_leaves_metrics_and_structure_to_the_plan(monkeypatch):
     from adk.tools.planning.research_recon import scout_domain_conventions
 
+    from adk.tools.building.literature_engine import set_paper_source
+
+    set_paper_source(None)  # the harness's own source: arXiv
     calls = _fake_arxiv(monkeypatch, _ARXIV_ATOM)
-    recon = scout_domain_conventions("tabular Q-Learning for Tic-Tac-Toe", prescribe_methodology=False)
+    recon = scout_domain_conventions("tabular Q-Learning for Tic-Tac-Toe")
     assert recon["standard_metrics"] == []
     assert recon["canonical_baselines"] == []
     assert recon["common_structural_patterns"] == []
@@ -402,8 +261,11 @@ def test_live_recon_leaves_metrics_and_structure_to_the_plan(monkeypatch):
 def test_live_recon_without_arxiv_gets_no_substitute_literature(monkeypatch):
     from adk.tools.planning.research_recon import scout_domain_conventions
 
+    from adk.tools.building.literature_engine import set_paper_source
+
+    set_paper_source(None)
     _fake_arxiv(monkeypatch, None)
-    recon = scout_domain_conventions("tabular Q-Learning for Tic-Tac-Toe", prescribe_methodology=False)
+    recon = scout_domain_conventions("tabular Q-Learning for Tic-Tac-Toe")
     assert recon["available_citation_keys"] == []
     assert recon["verified_bibtex"] == ""
 

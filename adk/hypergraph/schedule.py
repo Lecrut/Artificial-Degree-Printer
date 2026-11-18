@@ -7,7 +7,9 @@ import re
 
 from adk.hypergraph.model import Hypergraph
 
-_CHAPTER = re.compile(r"(?:chapter|rozdzia[lł])\s*(\d+)", re.I)
+# "Chapter 3", "Rozdział 3", and the sections of a chapter ("Section 1.1", "podrozdział 2.3"): 2026-11-17, T1 wrote
+# "Section 1.1 (Introduction)", matched no chapter, and chapter 1 stayed `spec` although its task was DONE.
+_CHAPTER = re.compile(r"(?:chapter|rozdzia[lł]u?|section|sekcj[ai]|podrozdzia[lł]u?)\s*(\d+)", re.I)
 HAS_CONTENT = {"impl", "written", "drafted", "verified"}
 CONTENT_STATE = {"code": "impl", "entry": "impl", "test": "written", "chapter": "drafted", "research": "drafted", "bib": "drafted"}
 
@@ -44,8 +46,3 @@ def readiness(h: Hypergraph, vertex: str, planned: set[str]) -> list[str]:
             elif source.kind == "research" and member in planned and source.state not in HAS_CONTENT:
                 reasons.append(f"{member} is not written yet")
     return reasons
-
-
-def dependents(h: Hypergraph, vertex: str) -> set[str]:
-    """Vertices whose verdict depends on `vertex`: members of every bag in its blast radius, except itself."""
-    return {m for e in h.blast_radius(vertex) for m in h.edges[e].members} - {vertex}

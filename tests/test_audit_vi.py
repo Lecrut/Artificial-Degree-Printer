@@ -195,7 +195,10 @@ def test_a3_build_gives_typed_bags_roles_and_order():
     assert problems == []
     assert h.edges["I:src/config.py"].members == {"src/config.py": "P", "src/data_generator.py": "C", "src/experiment.py": "C"}
     assert h.edges["I:src/data_generator.py"].members["tests/test_data_generator.py"] == "T"
-    assert h.edges["R:run"].members == {"src/experiment.py": "P", "results.csv": "O"}
+    # R holds every module the experiment runs (Audit VIII): a change to any of them makes the results stale.
+    assert h.edges["R:run"].members == {
+        "src/experiment.py": "P", "results.csv": "O", "src/config.py": "C", "src/data_generator.py": "C"
+    }
     assert ("R:run", "N:thesis.md#ch4") in h.order and ("R:run", "N:thesis.md#ch1") not in h.order
     assert h.vertices["src/experiment.py"].kind == "entry" and h.vertices["src/config.py"].state == "stub"
     # blast radius = own bags + everything after them in ≺: a config change reaches the results chapter
@@ -203,21 +206,26 @@ def test_a3_build_gives_typed_bags_roles_and_order():
     assert "N:thesis.md#ch1" not in h.blast_radius("src/config.py")
 
 
-def test_a3_diff_finds_appended_symbols_stale_imports_and_files_outside_the_plan(tmp_path: Path):
-    """X3/X4 as seen by H_obs − H: `fit` appended to experiment.py, getters instead of constants, `_iforest.py`."""
+def test_a3_diff_finds_broken_promises_and_files_outside_the_plan(tmp_path: Path):
+    """X3/X4 as seen by H_obs − H: getters instead of the planned constants (a broken promise), `_iforest.py` that
+    no planned module imports. An appended public `fit` is an addition, allowed since Audit VIII (§X)."""
     h, _ = _h()
     ws = tmp_path / "ws"
     for rel, source in _GOOD.items():
         (ws / rel).parent.mkdir(parents=True, exist_ok=True)
         (ws / rel).write_text(source, encoding="utf-8")
-    assert diff(h, observe(ws, h)) == []
+    assert diff(h, observe(ws)) == []
     (ws / "src/experiment.py").write_text(_EXPERIMENT_IFACE + "\n\ndef fit(self, samples):\n    pass\n", encoding="utf-8")
     (ws / "src/config.py").write_text('def get_channels() -> list[str]:\n    return ["EEG"]\n', encoding="utf-8")
     (ws / "_iforest.py").write_text("X = 1\n", encoding="utf-8")
-    found = {(v.rule, v.culprit) for v in diff(h, observe(ws, h))}
-    assert ("API_EXTRA", "src/experiment.py") in found
-    assert ("API_MISSING", "src/config.py") in found and ("API_EXTRA", "src/config.py") in found
+    found = {(v.rule, v.culprit) for v in diff(h, observe(ws))}
+    assert not any(culprit == "src/experiment.py" for _rule, culprit in found)
+    assert ("API_MISSING", "src/config.py") in found
     assert ("FILE_OUTSIDE_PLAN", "_iforest.py") in found
+    # A helper the planned module imports is part of that module, not a file outside the plan.
+    (ws / "src/_math.py").write_text("def _mean(xs):\n    return sum(xs) / len(xs)\n", encoding="utf-8")
+    (ws / "src/data_generator.py").write_text(_GENERATOR.replace("from src.config", "from src._math import _mean\nfrom src.config"), encoding="utf-8")
+    assert not any(culprit == "src/_math.py" for _rule, culprit in {(v.rule, v.culprit) for v in diff(h, observe(ws))})
 
 
 def test_a3_planning_returns_violations_to_the_planner_then_builds_h_and_stubs(tmp_path: Path):
@@ -227,19 +235,26 @@ def test_a3_planning_returns_violations_to_the_planner_then_builds_h_and_stubs(t
     broken = {"tasks": [{"task_id": "T1", "target_node": "src/experiment.py", "description": "x"}],
               "interfaces": {**_GOOD, "src/experiment.py": _EXPERIMENT_IFACE.replace("run_experiment()", "run_experiment(config)")},
               "entrypoint": _ENTRY}
-    fixed = {**broken, "interfaces": _GOOD}
+    fixed = {"interfaces": {"src/experiment.py": _EXPERIMENT_IFACE}}  # a patch: only the module it corrects
     sent: list[dict] = []
+    reviewed: list[dict] = []
 
-    def planner(_md, payload, **_kw):
+    def agents(md, payload, **_kw):
+        if Path(md).name == "plan_critic_guard.md":
+            reviewed.append(payload)
+            return {"status": "ok", "output": {"status": "PASS", "issues": []}}
         sent.append(payload)
         return {"status": "ok", "output": fixed}
 
-    orch._call_agent = planner
+    orch._call_agent = agents
     plan, interfaces, violations = orch._validated_plan(broken, {"user_prompt": "p"}, tmp_path / "planner.md")
-    assert violations == [] and plan is fixed and len(sent) == 1
+    assert violations == [] and plan["interfaces"] == _GOOD and plan["tasks"] == broken["tasks"] and len(sent) == 1
     assert "ENTRYPOINT_HAS_ARGUMENTS" in sent[0]["error_feedback"]
+    assert sent[0]["current_plan"]["interfaces"] == broken["interfaces"]  # the planner corrects the plan it sees
+    # The critic judges only the plan the code accepted, and sees its interfaces.
+    assert len(reviewed) == 1 and reviewed[0]["interfaces"] == _GOOD
 
-    h = orch._build_project_hypergraph(interfaces, {"entrypoint": _ENTRY, "metrics": ["f1"]}, fixed["tasks"])
+    h = orch._build_project_hypergraph(interfaces, {"entrypoint": _ENTRY, "metrics": ["f1"]}, plan["tasks"])
     assert h is not None and load(orch.hypergraph_path).edges.keys() == h.edges.keys()
     stub = (orch.workspace_dir / "src/experiment.py").read_text(encoding="utf-8")
     assert "raise NotImplementedError" in stub
@@ -373,7 +388,7 @@ def test_a4_tests_may_read_only_declared_attributes(tmp_path: Path):
         "    assert m.threshold == 3.0\n    assert hasattr(m, 'mean_')\n",
         encoding="utf-8",
     )
-    found = [v for v in diff(h, observe(ws, h)) if v.rule == "TEST_OUTSIDE_SPEC"]
+    found = [v for v in diff(h, observe(ws)) if v.rule == "TEST_OUTSIDE_SPEC"]
     assert len(found) == 1 and "ZScoreBaseline.mean_" in found[0].detail and "threshold" not in found[0].detail
 
 
@@ -475,20 +490,17 @@ def test_a7_a_results_chapter_waits_for_current_results():
 
 
 def test_a8_a_code_task_sees_its_specification_and_history_not_the_writers_grounding(tmp_path: Path):
-    """X5 (no memory of earlier attempts) and U7 (writer directives in the coder's payload, `\ref_csv` in code)."""
+    """X5 (no memory of earlier attempts) and U7 (writer directives in the coder's payload, `\ref_csv` in code).
+    Since Audit VIII the whole project context of a task is this slice of H."""
     orch = _spec_orch(tmp_path)
     orch._remember_verdict("src/data_generator.py", "T6", ["IMPORT_OUTSIDE_SPEC: imports SEED_VALUE"])
-    payload = {
-        "exports": {"src/config.py": {}, "src/data_generator.py": {}, "src/experiment.py": {}},
-        "grounded_hypergraph_state": {"mandatory_directives": ["Draw TikZ"]},
-        "hypergraph_nodes": {}, "active_edges": {},
-    }
-    orch._spec_payload(payload, {"task_id": "T6_FIX1", "target_node": "src/data_generator.py", "description": "x"})
-    assert sorted(payload["specification"]) == ["src/config.py", "src/data_generator.py"]
-    assert payload["specification"]["src/config.py"]["symbols"]["CHANNELS"]["kind"] == "const"
-    assert sorted(payload["exports"]) == ["src/config.py", "src/data_generator.py"]
-    assert payload["previous_attempts"][0]["task_id"] == "T6"
-    assert "grounded_hypergraph_state" not in payload and "hypergraph_nodes" not in payload
+    context = orch._context_for("src/data_generator.py", "src/data_generator.py")
+    assert sorted(context["specification"]) == ["src/config.py", "src/data_generator.py"]
+    assert context["specification"]["src/config.py"]["symbols"]["CHANNELS"]["kind"] == "const"
+    assert context["previous_attempts"][0]["task_id"] == "T6"
+    # The generator is run by the experiment: it learns the entrypoint and metrics from R, nothing else.
+    assert context["experiment"]["entrypoint"] == _ENTRY
+    assert not {"may_cite", "exports", "grounded_hypergraph_state", "hypergraph_nodes"} & set(context)
 
 
 # --- A9/A10: a known culprit goes back to its author, not to the planner; σ breaches make no prompt rules -------
@@ -539,8 +551,8 @@ def _e2e(tmp_path: Path, implement_entry: bool = True) -> tuple[dict, list[str],
 
     built: list[str] = []
 
-    def handler(system_prompt, payload, _tier):
-        if "Task Planner" in system_prompt:
+    def handler(agent, _system_prompt, payload, _tier):
+        if agent == "task_planner":
             return {
                 "tasks": [
                     {"task_id": "T1", "target_node": "src/experiment.py", "description": "Implement run_experiment", "assigned_agent": "seed_coder"},
@@ -551,7 +563,7 @@ def _e2e(tmp_path: Path, implement_entry: bool = True) -> tuple[dict, list[str],
                 "interfaces": _E2E_IFACES,
                 "entrypoint": "src/experiment.py:run_experiment",
             }
-        if "Critic Guard" in system_prompt:
+        if agent == "plan_critic_guard":
             return {"status": "PASS", "approved": True, "issues": []}
         target = str(payload.get("target_file") or "")
         built.append(target)

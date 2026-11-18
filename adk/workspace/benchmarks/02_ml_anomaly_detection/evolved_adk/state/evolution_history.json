@@ -1,14 +1,3 @@
 {
-  "events": [
-    {
-      "type": "AGENT_CREATED",
-      "details": {
-        "status": "created",
-        "agent_id": "dyn_anomaly_ml_specialist",
-        "specialization": "anomaly_ml_specialist",
-        "domain": "building",
-        "path": "agents/building/dyn_anomaly_ml_specialist.md"
-      }
-    }
-  ]
+  "events": []
 }

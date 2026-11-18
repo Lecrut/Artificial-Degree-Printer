@@ -1,25 +1,74 @@
-"""ADK Literature Search, Paper Reading, and Extraction Engine (Layer 2 — building Domain).
-
-Provides tools for `background_researcher` and `discoverer_researcher` to:
-1. Query arXiv / OpenAlex / CrossRef APIs (with deterministic offline academic catalog fallback).
-2. Read and extract structured Paper Analysis Cards (methodology, equations, datasets, metrics, limitations).
-3. Format verified BibTeX entries (20–40 sources per thesis/paper) and generate comparative literature tables.
-"""
+"""Literature for a thesis: verifiable records only (arXiv, each with its identifier), read into Paper Analysis
+Cards and formatted as BibTeX. Where the papers come from is a seam (`set_paper_source`): the harness searches
+arXiv; an offline simulation installs its own source. Nothing here falls back to a fixture catalog."""
 
 from __future__ import annotations
 
-import json
 import re
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from collections.abc import Callable
 from typing import Any
 
-from adk.mocks.paper_catalogs import (
-    DOMAIN_CATALOG_MAP,
-    format_bibtex,
-    resolve_offline_catalog,
-)
+PaperSource = Callable[[str, "str | None"], list[dict[str, Any]]]
+_PAPER_SOURCE: tuple[str, PaperSource] | None = None
+
+
+def set_paper_source(name: str | None, source: PaperSource | None = None) -> None:
+    """Install where papers come from (`None`: arXiv). Offline simulations install a catalog here."""
+    global _PAPER_SOURCE
+    _PAPER_SOURCE = (name, source) if name and source else None
+
+
+def find_papers(topic: str, stage: str | None = None) -> tuple[str, list[dict[str, Any]]]:
+    """(source name, paper cards) for a topic and research stage."""
+    if _PAPER_SOURCE is not None:
+        return _PAPER_SOURCE[0], _PAPER_SOURCE[1](topic, stage)
+    return "arxiv", search_arxiv_only(topic, stage=stage)
+
+
+def _clean_bib_field(val: Any) -> str:
+    s = str(val or "").strip()
+    s = s.replace("\\&", "&").replace("&", "\\&")
+    s = s.replace("\\%", "%").replace("%", "\\%")
+    s = s.replace("\\_", "_").replace("_", "\\_")
+    return s
+
+
+def format_bibtex(entry: dict[str, Any]) -> str:
+    """Format a structured paper metadata dict into a clean, LaTeX-safe BibTeX entry."""
+    entry_type = str(entry.get("entry_type") or "article").strip().lower()
+    cite_key = str(entry.get("key") or "unknown2024").strip()
+    author = _clean_bib_field(entry.get("author") or "Unknown Author")
+    title = _clean_bib_field(entry.get("title") or "Untitled Publication")
+    year = str(entry.get("year") or "2024").strip()
+    venue = _clean_bib_field(entry.get("venue") or "arXiv preprint")
+    volume = str(entry.get("volume") or "").strip()
+    pages = str(entry.get("pages") or "").strip()
+    publisher = _clean_bib_field(entry.get("publisher") or "Academic Press")
+
+    lines = [f"@{entry_type}{{{cite_key},"]
+    lines.append(f"  author = {{{author}}},")
+    lines.append(f"  title = {{{title}}},")
+    if entry_type == "book":
+        lines.append(f"  publisher = {{{publisher}}},")
+    elif entry_type == "inproceedings":
+        lines.append(f"  booktitle = {{{venue}}},")
+    else:
+        lines.append(f"  journal = {{{venue}}},")
+    if volume:
+        lines.append(f"  volume = {{{volume}}},")
+    if pages:
+        lines.append(f"  pages = {{{pages}}},")
+    if entry.get("eprint"):
+        lines.append(f"  eprint = {{{entry['eprint']}}},")
+        lines.append("  archivePrefix = {arXiv},")
+    if entry.get("url"):
+        lines.append(f"  url = {{{entry['url']}}},")
+    lines.append(f"  year = {{{year}}}")
+    lines.append("}")
+    return "\n".join(lines)
 
 
 def extract_paper_card_from_abstract(
@@ -114,21 +163,6 @@ def extract_paper_card_from_abstract(
     }
 
 
-def _reconstruct_openalex_abstract(inverted_index: dict[str, list[int]] | None) -> str:
-    """Reconstruct plain-text abstract from OpenAlex's `abstract_inverted_index` object."""
-    if not inverted_index or not isinstance(inverted_index, dict):
-        return ""
-    position_map: dict[int, str] = {}
-    for word, positions in inverted_index.items():
-        if isinstance(positions, list):
-            for pos in positions:
-                if isinstance(pos, int):
-                    position_map[pos] = str(word)
-    if not position_map:
-        return ""
-    return " ".join(position_map[idx] for idx in sorted(position_map.keys()))
-
-
 def _parse_arxiv_atom_xml(xml_data: bytes | str, stage: str | None = None) -> list[dict[str, Any]]:
     """Parse arXiv Atom XML response into structured PaperCard dictionaries."""
     cards: list[dict[str, Any]] = []
@@ -220,155 +254,3 @@ def search_arxiv_only(topic: str, stage: str | None = None, max_results: int = 2
                     card["key"] = f"{base}{chr(ord('a') + seen[base] - 2)}"
             return cards
     return []
-
-
-def _parse_openalex_json(payload: dict[str, Any], stage: str | None = None) -> list[dict[str, Any]]:
-    """Parse OpenAlex `/works` JSON response into structured PaperCard dictionaries."""
-    cards: list[dict[str, Any]] = []
-    works = payload.get("results", []) if isinstance(payload, dict) else []
-    for idx, work in enumerate(works):
-        if not isinstance(work, dict):
-            continue
-        title_raw = str(work.get("title") or work.get("display_name") or "").strip()
-        if not title_raw:
-            continue
-        year = str(work.get("publication_year") or "2024")
-        authorships = work.get("authorships") or []
-        authors: list[str] = []
-        for auth in authorships:
-            if isinstance(auth, dict):
-                author_obj = auth.get("author") or {}
-                disp = author_obj.get("display_name")
-                if disp:
-                    authors.append(str(disp))
-        prim_loc = work.get("primary_location") or {}
-        source_obj = prim_loc.get("source") or {} if isinstance(prim_loc, dict) else {}
-        venue = str(source_obj.get("display_name") or "OpenAlex Indexed Journal")
-        abstract_text = _reconstruct_openalex_abstract(work.get("abstract_inverted_index"))
-        cited_by = int(work.get("cited_by_count") or 0)
-        card = extract_paper_card_from_abstract(
-            title=title_raw,
-            abstract=abstract_text,
-            authors=authors or ["OpenAlex Author"],
-            year=year,
-            venue=venue,
-            stage=stage or ("background" if int(year[:4] or 2024) < 2023 else "discoverer"),
-            index=idx,
-            entry_type="article",
-        )
-        if cited_by > 0 and "empirical performance" in card["reported_metrics"]:
-            card["reported_metrics"] = f"Cited by {cited_by} scholarly works; {card['reported_metrics']}"
-        cards.append(card)
-    return cards
-
-
-def search_openalex(
-    query: str,
-    max_results: int = 15,
-    stage: str | None = None,
-    attempt_live_network: bool = True,
-    timeout: float = 5.0,
-) -> list[dict[str, Any]]:
-    """Query OpenAlex API for foundational (`background`) or recent SOTA (`discoverer`) scholarly works."""
-    if not attempt_live_network or not query or not query.strip():
-        return []
-    try:
-        encoded_q = urllib.parse.quote(query.strip())
-        per_page = max(1, min(max_results, 25))
-        if stage == "background":
-            url = f"https://api.openalex.org/works?search={encoded_q}&sort=cited_by_count:desc&per-page={per_page}"
-        elif stage == "discoverer":
-            url = (
-                f"https://api.openalex.org/works?search={encoded_q}"
-                f"&filter=from_publication_date:2023-01-01&sort=cited_by_count:desc&per-page={per_page}"
-            )
-        else:
-            url = f"https://api.openalex.org/works?search={encoded_q}&per-page={per_page}"
-        req = urllib.request.Request(
-            url,
-            headers={"User-Agent": "Artificial-Degree-Printer-ADK/2.0 (mailto:adk@politechnika.lodz.pl)"},
-        )
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw_json = json.loads(resp.read().decode("utf-8", errors="replace"))
-        return _parse_openalex_json(raw_json, stage=stage)[:max_results]
-    except Exception:
-        return []
-
-
-def search_arxiv(
-    query: str,
-    max_results: int = 25,
-    task_id: str | None = None,
-    stage: str | None = None,
-    attempt_live_network: bool = False,
-) -> list[dict[str, Any]]:
-    """Search arXiv Atom API + OpenAlex API (if attempt_live_network=True) and enrich with verified domain catalog papers."""
-    results: list[dict[str, Any]] = []
-    seen_keys: set[str] = set()
-    seen_titles: set[str] = set()
-
-    def _add_card(c: dict[str, Any]) -> None:
-        k = str(c.get("key") or "").strip()
-        t_norm = re.sub(r"[^a-z0-9]", "", str(c.get("title") or "").lower())
-        if not k or k in seen_keys or (t_norm and t_norm in seen_titles):
-            return
-        seen_keys.add(k)
-        if t_norm:
-            seen_titles.add(t_norm)
-        results.append(dict(c))
-
-    if attempt_live_network and query and query.strip():
-        try:
-            encoded = urllib.parse.quote(query.strip())
-            url = f"http://export.arxiv.org/api/query?search_query=all:{encoded}&start=0&max_results={min(max_results, 15)}"
-            req = urllib.request.Request(url, headers={"User-Agent": "Artificial-Degree-Printer-ADK/2.0"})
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                xml_bytes = resp.read()
-            for card in _parse_arxiv_atom_xml(xml_bytes, stage=stage):
-                _add_card(card)
-        except Exception:
-            pass
-
-        for oa_card in search_openalex(query, max_results=min(max_results, 15), stage=stage, attempt_live_network=True):
-            _add_card(oa_card)
-
-    # Merge with deterministic verified domain catalog
-    catalog = _resolve_catalog(task_id=task_id, query=query)
-    for item in catalog:
-        if stage and item.get("stage") != stage:
-            continue
-        _add_card(item)
-
-    return results[:max_results]
-
-
-def _resolve_catalog(task_id: str | None = None, query: str = "") -> list[dict[str, Any]]:
-    return resolve_offline_catalog(task_id=task_id, query=query)
-
-
-def get_domain_papers(task_id: str, stage: str | None = None, attempt_live_network: bool = False) -> list[dict[str, Any]]:
-    """Return all curated (or live-augmented) structured Paper Analysis Cards for a task and optional research stage."""
-    if attempt_live_network or task_id not in DOMAIN_CATALOG_MAP:
-        catalog = _resolve_catalog(task_id=task_id, query=task_id)
-        if attempt_live_network:
-            return search_arxiv(
-                query=task_id,
-                max_results=36,
-                task_id=task_id if task_id in DOMAIN_CATALOG_MAP else None,
-                stage=stage,
-                attempt_live_network=True,
-            )
-    else:
-        catalog = DOMAIN_CATALOG_MAP[task_id]
-    if stage:
-        filtered = [dict(p) for p in catalog if p.get("stage") == stage]
-        if filtered:
-            return filtered
-    return [dict(p) for p in catalog]
-
-
-def get_domain_bibtex(task_id: str, stage: str | None = None, attempt_live_network: bool = False) -> str:
-    """Return formatted BibTeX string for all papers in a task's catalog (optionally filtered by stage)."""
-    papers = get_domain_papers(task_id, stage=stage, attempt_live_network=attempt_live_network)
-    return "\n\n".join(format_bibtex(p) for p in papers) + "\n"
-

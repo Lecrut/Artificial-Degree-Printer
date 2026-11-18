@@ -1,21 +1,14 @@
-"""H from the plan: σ of every module parsed from the plan's interface source, validation of the code part of the
-plan before any code exists, and the full hypergraph (Audit VI §VII.12.5–§VII.12.6)."""
+"""H from the plan: σ of every module parsed from the plan's interface source, and the full hypergraph (Audit VI
+§VII.12.5–§VII.12.6). The validation of the plan's code before any code exists is in `validate.py`."""
 
 from __future__ import annotations
 
 import ast
-import importlib.util
-import json
 import re
-import subprocess
-import sys
-import tempfile
 from pathlib import Path
 from typing import Any
 
-from adk.hypergraph.model import Edge, Hypergraph, Vertex, Violation, check_invariants
-from adk.tools.building.import_sync import module_import_path
-from adk.tools.verification.contract_check import stub_source
+from adk.hypergraph.model import Edge, Hypergraph, Vertex, Violation, check_invariants, module_import_path
 
 _RESEARCH_AGENTS = {"background_researcher", "discoverer_researcher", "sota_researcher"}
 _RESULTS_WORDS = re.compile(r"wynik|eksperyment|ewaluac|dyskusj|wniosk|result|experiment|evaluat|discussion|conclusion", re.I)
@@ -69,6 +62,7 @@ def spec_from_stub(rel: str, source: str, modules: dict[str, str]) -> dict[str, 
     symbols: dict[str, dict[str, Any]] = {}
     uses: dict[str, list[str]] = {}
     packages: set[str] = set()
+    module_aliases: dict[str, str] = {}
     behaviour: list[str] = []
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)):
@@ -87,6 +81,8 @@ def spec_from_stub(rel: str, source: str, modules: dict[str, str]) -> dict[str, 
                 target = modules.get(alias.name)
                 if target:
                     uses.setdefault(target, [])
+                    if alias.asname or "." not in alias.name:
+                        module_aliases[alias.asname or alias.name] = target
                 else:
                     packages.add(alias.name.split(".")[0])
         elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and not node.target.id.startswith("_"):
@@ -108,6 +104,13 @@ def spec_from_stub(rel: str, source: str, modules: dict[str, str]) -> dict[str, 
                     symbols[f"{node.name}.{item.name}"] = {"kind": "method", "params": names, "required": required}
             for attr in _public_attributes(node):
                 symbols.setdefault(f"{node.name}.{attr}", {"kind": "attr"})
+    # `import core` + `core.is_terminal(...)` uses `is_terminal` as much as `from core import is_terminal` does.
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load)
+            and isinstance(node.value, ast.Name) and node.value.id in module_aliases
+        ):
+            uses[module_aliases[node.value.id]].append(node.attr)
     return {
         "import": module_import_path(rel),
         "symbols": symbols,
@@ -115,122 +118,6 @@ def spec_from_stub(rel: str, source: str, modules: dict[str, str]) -> dict[str, 
         "packages": sorted(packages),
         "behaviour": behaviour,
     }
-
-
-_IMPORT_PROBE = r"""
-import importlib, json, sys, traceback, typing
-root, plan = sys.argv[1], json.loads(sys.argv[2])
-sys.path.insert(0, root)
-out = {}
-_SIMPLE = {"list": list, "dict": dict, "tuple": tuple, "set": set, "int": int, "float": (int, float), "str": str, "bool": bool}
-for rel, (dotted, consts) in plan.items():
-    try:
-        mod = importlib.import_module(dotted)
-    except BaseException as exc:
-        frames = [f.filename for f in traceback.extract_tb(exc.__traceback__) if f.filename.startswith(root)]
-        origin = getattr(exc, "filename", None) if isinstance(exc, SyntaxError) else (frames[-1] if frames else None)
-        out[rel] = {"error": f"{type(exc).__name__}: {exc}", "origin": origin}
-        continue
-    bad = []
-    for name, declared in consts.items():
-        expected = _SIMPLE.get((declared or "").split("[")[0].strip())
-        if expected and not isinstance(getattr(mod, name, None), expected):
-            bad.append(f"{name}: declared {declared}, value is {type(getattr(mod, name, None)).__name__}")
-    out[rel] = {"const_mismatch": bad}
-print(json.dumps(out))
-"""
-
-
-def _stub_problems(specs: dict[str, dict[str, Any]], interfaces: dict[str, str]) -> list[Violation]:
-    """Import every stub in a scratch directory: a plan whose interfaces do not even import (a name used without
-    its import, a broken constant) used to become the skeleton and fail for an hour (Audit VI X2)."""
-    found: list[Violation] = []
-    with tempfile.TemporaryDirectory(prefix="adk_stub_probe_") as tmp:
-        root = Path(tmp).resolve()
-        for rel, source in interfaces.items():
-            target = root / rel
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(stub_source(source) or source, encoding="utf-8")
-        plan = {
-            rel: (spec["import"], {n: s.get("type") for n, s in spec["symbols"].items() if s["kind"] == "const"})
-            for rel, spec in specs.items()
-        }
-        proc = subprocess.run(
-            [sys.executable, "-c", _IMPORT_PROBE, str(root), json.dumps(plan)],
-            capture_output=True, text=True, timeout=120, cwd=str(root),
-        )
-        try:
-            results = json.loads(proc.stdout.strip().splitlines()[-1])
-        except (IndexError, json.JSONDecodeError):
-            return [Violation("STUB_PROBE_FAILED", (proc.stderr or proc.stdout)[-400:])]
-        for rel, res in results.items():
-            if res.get("error"):
-                origin = res.get("origin")
-                culprit = Path(origin).resolve().relative_to(root).as_posix() if origin and str(origin).startswith(str(root)) else rel
-                found.append(Violation("STUB_DOES_NOT_IMPORT", res["error"], rel, culprit))
-            for mismatch in res.get("const_mismatch", []):
-                found.append(Violation("CONSTANT_TYPE_MISMATCH", mismatch, rel, rel))
-    # A failure inside one module is reported once, at the module where it happens.
-    unique: dict[tuple[str, str | None], Violation] = {}
-    for v in found:
-        unique.setdefault((v.detail, v.culprit), v)
-    return list(unique.values())
-
-
-def _package_available(top: str) -> bool:
-    if top in sys.stdlib_module_names:
-        return True
-    try:
-        return importlib.util.find_spec(top) is not None
-    except (ImportError, ValueError):
-        return False
-
-
-def code_violations(interfaces: dict[str, str], entrypoint: str | None) -> tuple[dict[str, dict[str, Any]], list[Violation]]:
-    """σ of every planned module and every reason the code part of the plan cannot work as written
-    (invariants 2–5, 7–9 of §VII.12.10)."""
-    found: list[Violation] = []
-    modules = {module_import_path(rel): rel for rel in interfaces}
-    stems: dict[str, list[str]] = {}
-    for rel in interfaces:
-        stems.setdefault(Path(rel).stem, []).append(rel)
-    for stem, rels in stems.items():
-        if len(rels) > 1 and stem != "__init__":
-            found.append(Violation("DUPLICATE_MODULE", f"{', '.join(sorted(rels))} play the same role; keep one", rels[0]))
-    specs: dict[str, dict[str, Any]] = {}
-    for rel, source in interfaces.items():
-        try:
-            specs[rel] = spec_from_stub(rel, source, modules)
-        except SyntaxError as exc:
-            found.append(Violation("INTERFACE_DOES_NOT_PARSE", str(exc), rel, rel))
-    planned_tops = {dotted.split(".")[0] for dotted in modules}
-    for rel, spec in specs.items():
-        for producer, names in spec["uses"].items():
-            missing = [n for n in names if n not in specs.get(producer, {}).get("symbols", {}) and n != "*"]
-            if missing:
-                found.append(Violation("USES_UNDECLARED", f"imports {', '.join(missing)} from {producer}, whose interface does not declare them", rel, rel))
-        for top in spec["packages"]:
-            if top not in planned_tops and not _package_available(top):
-                found.append(Violation("PACKAGE_UNAVAILABLE", f"imports `{top}`, which is neither a planned module nor installed", rel, rel))
-    entry_file, _, entry_func = (entrypoint or "").partition(":")
-    if specs and not entry_file:
-        found.append(Violation("NO_ENTRYPOINT", "the plan declares no experiment entrypoint (path.py:function)"))
-    elif entry_file and entry_file not in specs:
-        found.append(Violation("ENTRYPOINT_NOT_PLANNED", f"{entry_file} has no interface in the plan", entry_file))
-    elif entry_file:
-        func = specs[entry_file]["symbols"].get(entry_func or "")
-        if not func or func["kind"] != "func":
-            found.append(Violation("ENTRYPOINT_NOT_DECLARED", f"{entry_file} declares no function `{entry_func}`", entry_file, entry_file))
-        elif func["required"]:
-            found.append(Violation(
-                "ENTRYPOINT_HAS_ARGUMENTS",
-                f"{entry_func}({', '.join(func['required'])}): the harness calls the entrypoint without arguments; "
-                "read configuration inside the function",
-                entry_file, entry_file,
-            ))
-    if specs and not any(v.rule in ("INTERFACE_DOES_NOT_PARSE", "DUPLICATE_MODULE") for v in found):
-        found += _stub_problems(specs, interfaces)
-    return specs, found
 
 
 def _test_target(rel: str) -> str:
@@ -306,6 +193,10 @@ def build_from_plan(
                 if producer not in closure:
                     closure.add(producer)
                     frontier.append(producer)
+        # Every module the experiment runs is a member of R: a change to any of them makes the results stale
+        # (2026-11-17: only the entrypoint was hashed, so a change of the method left old results "fresh").
+        for module in sorted(closure - {entry_file}):
+            members.setdefault(module, "C")
         order += [(f"I:{m}", "R:run") for m in sorted(closure | {entry_file})]
 
     if chapters:

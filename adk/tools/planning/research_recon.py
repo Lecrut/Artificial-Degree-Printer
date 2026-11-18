@@ -13,8 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from adk.mocks.paper_catalogs import format_bibtex
-from adk.tools.building.literature_engine import get_domain_papers, search_arxiv_only
+from adk.tools.building.literature_engine import find_papers, format_bibtex
 
 
 # An unrecognised topic gets no profile at all. It used to get the Tic-Tac-Toe Q-learning profile (metrics,
@@ -28,7 +27,7 @@ _EMPTY_PROFILE: dict[str, Any] = {
     "standard_datasets": [],
     "common_structural_patterns": [],
 }
-# What the system must choose itself in a live run; prescribed only for the offline (mock) fixtures.
+# What the system must choose itself and declare in its plan; never prescribed by the harness.
 _METHODOLOGY_KEYS = ("canonical_baselines", "standard_metrics", "standard_datasets", "common_structural_patterns")
 
 
@@ -149,16 +148,10 @@ def _detect_domain_profile(topic_or_task_id: str) -> dict[str, Any]:
 def scout_domain_conventions(
     topic_or_task_id: str,
     thesis_type: str = "inzynierska",
-    prescribe_methodology: bool = True,
 ) -> dict[str, Any]:
-    """Scout how existing papers and theses in the domain are built before planning tasks and sections.
-
-    With `prescribe_methodology=False` (live runs) only curated literature is returned; metrics, baselines,
-    datasets and chapter structure are left for the system to choose and declare in its plan.
-    """
-    profile = _detect_domain_profile(topic_or_task_id)
-    if not prescribe_methodology:
-        profile = {**profile, **{key: [] for key in _METHODOLOGY_KEYS}}
+    """Scout the literature of the domain before planning: verifiable papers (from the installed paper source,
+    arXiv by default). Metrics, baselines, datasets and chapter structure are left for the plan to declare."""
+    profile = {**_detect_domain_profile(topic_or_task_id), **{key: [] for key in _METHODOLOGY_KEYS}}
     t_type = (thesis_type or "inzynierska").strip().lower()
 
     if t_type in ("inzynierska", "licencjacka", "bachelor", "engineering"):
@@ -174,15 +167,14 @@ def scout_domain_conventions(
         stage_filter = None
         research_routing = ["background_researcher", "discoverer_researcher"]
 
-    if prescribe_methodology:
-        papers = get_domain_papers(profile["task_key"], stage=stage_filter) if profile["task_key"] else []
-    else:
-        # Live run: every citation must be checkable, so the literature comes from arXiv only (with arXiv ids).
-        stages = [stage_filter] if stage_filter else ["background", "discoverer"]
-        papers = []
-        for stage in stages:
-            known = {p["key"] for p in papers}
-            papers.extend(p for p in search_arxiv_only(topic_or_task_id, stage=stage) if p["key"] not in known)
+    # Every citation must be checkable: the literature comes from the paper source only, with its records.
+    stages = [stage_filter] if stage_filter else ["background", "discoverer"]
+    papers: list[dict[str, Any]] = []
+    source = "arxiv"
+    for stage in stages:
+        known = {p["key"] for p in papers}
+        source, found = find_papers(topic_or_task_id, stage)
+        papers.extend(p for p in found if p["key"] not in known)
     cite_keys = [p["key"] for p in papers]
     limitations = [
         f"{p['author']} ({p['year']}) [{p['key']}]: {p.get('limitation', '')}"
@@ -209,8 +201,8 @@ def scout_domain_conventions(
         "sampled_methodologies": methodologies,
         "key_limitations_to_overcome": limitations,
         "available_citation_keys": cite_keys,
-        "citation_source": "catalog" if prescribe_methodology else "arxiv",
-        "verified_bibtex": "" if prescribe_methodology else "\n\n".join(format_bibtex(p) for p in papers),
+        "citation_source": source,
+        "verified_bibtex": "\n\n".join(format_bibtex(p) for p in papers),
     }
 
 

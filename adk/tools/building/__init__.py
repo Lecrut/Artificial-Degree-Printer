@@ -1,14 +1,9 @@
-"""Building domain tools (Layer 2): AST node editor, document section editor, literature engine, and hypergraph bridges."""
+"""Building domain tools (Layer 2): AST node editor and document section editor."""
 
 from adk.tools.building.ast_editor import edit_ast_node
 from adk.tools.building.doc_editor import edit_document_section
-from adk.tools.building.hypergraph_sync import ensure_node, sync_hypergraph_matrix
-from adk.tools.building.import_sync import extract_hyperedge_exports
 
 __all__ = [
     "edit_ast_node",
     "edit_document_section",
-    "ensure_node",
-    "extract_hyperedge_exports",
-    "sync_hypergraph_matrix",
 ]

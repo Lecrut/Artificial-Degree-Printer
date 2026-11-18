@@ -4,7 +4,6 @@ the fixed environment (D1/D2), qualified edit symbols, and derived-artifact repa
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 
 import pytest
@@ -12,8 +11,8 @@ import pytest
 from adk.orchestration.write_gate import _plain_symbol
 from adk.orchestration.common import available_package_imports
 from adk.orchestrator import NeuroSymbolicOrchestrator
-from adk.tools.building.import_sync import extract_hyperedge_exports
-from adk.tools.building.hypergraph_sync import sync_hypergraph_matrix
+from adk.hypergraph import spec_from_stub
+from tests._plans import with_plan
 from adk.tools.verification.contract_check import check_import_contract
 from adk.tools.verification.ref_compiler import compile_symbolic_references
 
@@ -30,8 +29,6 @@ def _orch(tmp_path: Path) -> NeuroSymbolicOrchestrator:
     orch.failure_ledger_path = orch.state_dir / "failure_ledger.json"
     orch.hitl_flag_path = orch.state_dir / "hitl_flag.json"
     orch.evolution_history_path = orch.state_dir / "evolution_history.json"
-    orch.matrix_path = orch.state_dir / "hypergraph_matrix.json"
-    shutil.copy2(Path("adk") / "state" / "hypergraph_matrix.json", orch.matrix_path)
     return orch
 
 
@@ -63,22 +60,11 @@ def test_stale_plot_script_attached_to_a_test_repair_is_skipped(tmp_path: Path) 
     assert "SIDE_ARTIFACT_SKIPPED" in events
 
 
-def test_exports_carry_enum_members_and_the_import_path(tmp_path: Path) -> None:
+def test_specification_carries_enum_members_and_the_import_path() -> None:
     """2026-11-14: a tester guessed `Player.PLAYER_ONE` and `import synthetic_data_generator` (module in src/)."""
-    ws = tmp_path / "ws"
-    (ws / "src").mkdir(parents=True)
-    (ws / "src" / "__init__.py").write_text("", encoding="utf-8")
-    (ws / "src" / "game.py").write_text(
-        "from enum import Enum\n\n\nclass Player(Enum):\n    X = 1\n    O = 2\n", encoding="utf-8"
-    )
-    matrix = tmp_path / "m.json"
-    matrix.write_text(json.dumps({"nodes": {}, "edges": {}, "matrix": {}}), encoding="utf-8")
-    sync_hypergraph_matrix(ws, matrix)
-
-    exports = extract_hyperedge_exports("ALL", matrix, ws)["exports"]
-
-    assert exports["src/game.py"]["import"] == "src.game"
-    assert "Player.X" in exports["src/game.py"]["signatures"]
+    spec = spec_from_stub("src/game.py", "from enum import Enum\n\n\nclass Player(Enum):\n    X = 1\n    O = 2\n", {})
+    assert spec["import"] == "src.game"
+    assert "Player.X" in spec["symbols"]
 
 
 def test_import_of_a_package_absent_from_the_environment_is_an_l1_finding(tmp_path: Path) -> None:
@@ -119,19 +105,15 @@ def test_unresolved_pointer_hint_names_the_closest_real_target(tmp_path: Path) -
 
 
 def test_fast_repair_of_a_derived_artifact_goes_to_its_producer(tmp_path: Path) -> None:
+    """Results go to the experiment, figures to the plotting module, the compiled thesis to thesis.md (from H)."""
     orch = _orch(tmp_path)
-    matrix = {
-        "nodes": {
-            "n1": {"path": "plot_results.py", "degree": 1, "weight": 1.0, "kind": "authored"},
-            "n2": {"path": "figures/comparison.pdf", "degree": 1, "weight": 1.0, "kind": "derived", "producer": "n1"},
-        },
-        "edges": {"E1": ["n1", "n2"]},
-        "matrix": {"n1": {"E1": 1}, "n2": {"E1": 1}},
-        "edge_meta": {"E1": {"dynamic": True, "kind": "produces", "producer": "n1"}},
-    }
-    orch.matrix_path.write_text(json.dumps(matrix), encoding="utf-8")
+    plots = '"""Plots."""\n\n\ndef generate_plots(output_dir: str) -> list:\n    """Paths."""\n'
+    run = '"""Run."""\n\n\ndef main() -> None:\n    """Run."""\n'
+    with_plan(orch, {"plot_results.py": plots, "run.py": run}, "run.py:main")
 
     assert orch._repair_target("figures/comparison.pdf") == "plot_results.py"
+    assert orch._repair_target("results.csv") == "run.py"
+    assert orch._repair_target("thesis.compiled.md") == "thesis.md"
 
 
 def test_pointer_naming_a_directory_is_a_finding_not_a_crash(tmp_path: Path) -> None:

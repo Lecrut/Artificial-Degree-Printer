@@ -139,7 +139,7 @@ def test_gate_3_does_not_send_a_missing_pdf_back_to_the_writer(tmp_path: Path):
     )
 
     orch = NeuroSymbolicOrchestrator(adk_root=dst_adk, enable_layer4=False, include_docs=True, provider="mock")
-    defense_task = {"task_id": "GATE_3_DEFENSE", "target_node": "v4", "assigned_agent": "seed_writer"}
+    defense_task = {"task_id": "GATE_3_DEFENSE", "target_node": "thesis.md", "assigned_agent": "seed_writer"}
 
     report = orch._run_verification_step(defense_task, include_docs=True, is_final_gate=True)
     assert report["status"] == "PASS"

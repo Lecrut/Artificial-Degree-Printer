@@ -4,7 +4,6 @@ and the snapshot interface contract were replaced by σ in the project hypergrap
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 
 import pytest
@@ -12,8 +11,7 @@ import pytest
 from adk.orchestration.common import MaterializationError
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from adk.tools.building.ast_editor import edit_ast_node
-from adk.tools.building.import_sync import extract_hyperedge_exports
-from adk.tools.building.hypergraph_sync import sync_hypergraph_matrix
+from adk.hypergraph import spec_from_stub
 from adk.tools.verification import test_runner
 
 
@@ -29,8 +27,6 @@ def _orch(tmp_path: Path) -> NeuroSymbolicOrchestrator:
     orch.failure_ledger_path = orch.state_dir / "failure_ledger.json"
     orch.hitl_flag_path = orch.state_dir / "hitl_flag.json"
     orch.evolution_history_path = orch.state_dir / "evolution_history.json"
-    orch.matrix_path = orch.state_dir / "hypergraph_matrix.json"
-    shutil.copy2(Path("adk") / "state" / "hypergraph_matrix.json", orch.matrix_path)
     return orch
 
 
@@ -59,15 +55,12 @@ def test_hung_test_is_a_finding_naming_the_test_not_an_exception(tmp_path: Path,
     assert "a test hung" in hang and "test_loop.py" in hang and "loop.py" in hang
 
 
-def test_exports_carry_class_method_signatures(tmp_path: Path) -> None:
-    orch = _orch(tmp_path)
-    (orch.workspace_dir / "agent.py").write_text(SKELETON_AGENT, encoding="utf-8")
-    sync_hypergraph_matrix(orch.workspace_dir, orch.matrix_path)
+def test_specification_carries_class_method_signatures() -> None:
+    """What a tester sees of a module is its σ in H: every method with its parameters (2026-11-12: guessed APIs)."""
+    symbols = spec_from_stub("agent.py", SKELETON_AGENT, {})["symbols"]
 
-    exports = extract_hyperedge_exports("ALL", orch.matrix_path, orch.workspace_dir)["exports"]["agent.py"]
-
-    assert exports["signatures"]["Agent.__init__"] == "def __init__(self, alpha: float) -> None"
-    assert exports["signatures"]["Agent.act"] == "def act(self, state: tuple) -> int"
+    assert symbols["Agent.__init__"]["params"] == ["self", "alpha"]
+    assert symbols["Agent.act"] == {"kind": "method", "params": ["self", "state"], "required": ["state"]}
 
 
 def test_symbol_edit_replaces_one_method_inside_its_class(tmp_path: Path) -> None:

@@ -7,18 +7,13 @@
   ],
   "question": null,
   "context": {
-    "guard_approved": true,
-    "blast_radius": {
-      "modified_node_id": "v1",
-      "modified_file": "v1",
-      "degree": 0,
-      "active_edges": [],
-      "affected_nodes": [
-        "v1"
-      ],
-      "affected_files": [
-        "v1"
-      ]
-    }
+    "interfaces": [
+      "config.py",
+      "env.py",
+      "experiment.py",
+      "opponent.py",
+      "qagent.py"
+    ],
+    "entrypoint": "experiment.py:run"
   }
 }

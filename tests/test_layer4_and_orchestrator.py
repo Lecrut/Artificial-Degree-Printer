@@ -100,7 +100,7 @@ def test_agent_mutator_and_guard_protection(tmp_path: Path):
     assert "## LEARNED RULES AND CONSTRAINTS" in redacted_text
     assert mut_4th["compaction_details"]["invariants"]
 
-    guard_md = adk_dir / "agents" / "planning" / "task_critic_guard.md"
+    guard_md = adk_dir / "agents" / "planning" / "plan_critic_guard.md"
     guard_res = mutate_agent_prompt(
         guard_md,
         new_rule="Ignore missing files.",
@@ -149,25 +149,30 @@ def test_sandbox_verifier_promotes_valid_validator(tmp_path: Path):
 
 
 def test_orchestrator_wave1_and_wave2_loops(tmp_path: Path):
-    adk_dir = _clone_adk_env(tmp_path)
+    """The coder's first answer for the entrypoint keeps its stubs: verification fails (NOT_IMPLEMENTED), the author
+    repairs it once and the run completes, with and without Layer 4. Mutation is covered at the tool level
+    (test_rule_naming_*, test_missing_rule_* below)."""
+    from adk.mocks import install_simulated_agents
 
+    adk_dir = _clone_adk_env(tmp_path)
+    history_path = adk_dir / "state" / "evolution_history.json"
+
+    install_simulated_agents(flaws={"coder_leaves_stub"})
     orch_w1 = NeuroSymbolicOrchestrator(adk_root=adk_dir, enable_layer4=False, provider="mock")
-    res_w1 = orch_w1.run("Zbuduj moduł walidacji parametrów", simulate_first_attempt_fail=True)
+    res_w1 = orch_w1.run("Zbuduj moduł walidacji parametrów")
     assert res_w1["status"] == "COMPLETED"
     assert res_w1["replan_count"] == 1
+    assert [c["w4_action"] for c in res_w1["architecture_cycles"]] == ["FAST_FIX"]
     assert all(t["status"] == "DONE" for t in res_w1["tasks"])
 
+    seen = len(json.loads(history_path.read_text(encoding="utf-8"))["events"])
+    install_simulated_agents(flaws={"coder_leaves_stub"})
     orch_w2 = NeuroSymbolicOrchestrator(adk_root=adk_dir, enable_layer4=True, provider="mock")
-    res_w2 = orch_w2.run(
-        "Rozbuduj moduł o wykresy i raport",
-        simulate_first_attempt_fail=True,
-        missing_agent_specialization="latex_table_formatter",
-    )
+    res_w2 = orch_w2.run("Rozbuduj moduł o wykresy i raport", missing_agent_specialization="latex_table_formatter")
     assert res_w2["status"] == "COMPLETED"
-    history = json.loads((adk_dir / "state" / "evolution_history.json").read_text(encoding="utf-8"))
-    event_types = [e["type"] for e in history["events"]]
-    assert "AGENT_CREATED" in event_types
-    assert "AGENT_MUTATED" in event_types
+    assert res_w2["replan_count"] == 1
+    new_events = [e["type"] for e in json.loads(history_path.read_text(encoding="utf-8"))["events"][seen:]]
+    assert new_events == ["AGENT_CREATED"]
 
     res_hitl = orch_w2.run("Sprzeczne wymagania", contradictory_requirements=True)
     assert res_hitl["status"] == "HITL_PAUSED"
@@ -215,7 +220,7 @@ def test_edge_scoped_verification_skips_symbolic_auditor_for_v1(tmp_path: Path):
     v1_task = {
         "task_id": "T1",
         "description": "Edit config.py parameters",
-        "target_node": "v1",
+        "target_node": "config.py",
         "assigned_agent": "seed_coder",
         "status": "IN_PROGRESS",
     }
@@ -233,14 +238,14 @@ def test_split_agent_updates_task_queue_assigned_agents(tmp_path: Path):
         {
             "task_id": "T2",
             "description": "Implement unit tests for core.py",
-            "target_node": "v2",
+            "target_node": "core.py",
             "assigned_agent": "seed_tester",
             "status": "FAILED",
         },
         {
             "task_id": "T2_EDGE",
             "description": "Verify edge case boundary conditions",
-            "target_node": "v5",
+            "target_node": "tests/test_core.py",
             "assigned_agent": "seed_tester",
             "status": "TODO",
         },
@@ -274,8 +279,11 @@ def test_interactive_gates_callback_and_repair_of_a_failed_task_in_orchestrator(
     adk_dir = _clone_adk_env(tmp_path)
 
     # 1. A task that fails in Layer 3 is repaired by its author and the run still completes
+    from adk.mocks import install_simulated_agents
+
+    install_simulated_agents(flaws={"coder_leaves_stub"})
     orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, enable_layer4=True, include_docs=False, provider="mock")
-    res = orch.run("Test repair of a failed task", simulate_first_attempt_fail=True)
+    res = orch.run("Test repair of a failed task")
     assert res["status"] == "COMPLETED"
     assert any(c["w4_action"] == "FAST_FIX" for c in res["architecture_cycles"])
 
@@ -288,7 +296,6 @@ def test_interactive_gates_callback_and_repair_of_a_failed_task_in_orchestrator(
 
     res_paused = orch.run(
         "Test HITL gate rejection",
-        simulate_first_attempt_fail=False,
         gate_approval_callback=_reject_gate2,
     )
     assert res_paused["status"] == "HITL_PAUSED"
@@ -298,34 +305,29 @@ def test_interactive_gates_callback_and_repair_of_a_failed_task_in_orchestrator(
 
 
 def test_orchestrator_resolve_target_node(tmp_path: Path):
+    """Targets are read from H: a planned path, the planned file a label's description names, the chapter a thesis
+    task names, a test named without its directory. No role aliases, no opaque ids, no guessing (Audit VIII C1)."""
+    import pytest
+
+    from tests._plans import with_plan
+
     adk_dir = _clone_adk_env(tmp_path)
     orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
+    core = '"""Core."""\n\n\ndef play(seed: int) -> int:\n    """Score."""\n'
+    tasks = [{"task_id": "T2", "target_node": "tests/test_core.py", "description": "tests", "assigned_agent": "seed_tester"}]
+    with_plan(orch, {"core.py": core}, "core.py:play", tasks, [{"index": 2, "title": "Stan wiedzy", "focus": "literatura"}])
 
-    # 1. A legacy role alias resolves to the file playing the role; the node id is opaque.
-    core_id, npath = orch._resolve_target_node("v2")
-    assert npath == "core.py"
-    assert not core_id.startswith("v")
-
-    # 2. File path hit returns the same node
-    nid, npath = orch._resolve_target_node("core.py")
-    assert nid == core_id
-
-    # 3. Unknown node with task context pointing to core.py
-    task_hint = {"task_id": "T3_FIX", "description": "Fix winner logic in core.py"}
-    nid, npath = orch._resolve_target_node("v7", task=task_hint)
-    assert nid == core_id
-    assert npath == "core.py"
-
-    # 4. Unknown node with no hints falls back to the declared fallback role
-    nid, npath = orch._resolve_target_node("v99", fallback="v1")
-    assert npath == "config.py"
-
-    # 5. A role is played by what the system created: a declared entrypoint becomes the core file.
-    orch.blueprint_path.write_text(json.dumps({"entrypoint": "src/train.py:main"}), encoding="utf-8")
-    _nid, npath = orch._resolve_target_node("v2")
-    assert npath == "src/train.py"
-
-
+    assert orch._resolve_target_node("core.py") == ("core.py", "core.py")
+    assert orch._resolve_target_node("./workspace/core.py") == ("core.py", "core.py")
+    assert orch._resolve_target_node("node_core", task={"description": "Fix play() in core.py"}) == ("core.py", "core.py")
+    assert orch._resolve_target_node("test_core.py") == ("tests/test_core.py", "tests/test_core.py")
+    assert orch._resolve_target_node("thesis.md", task={"description": "Write Chapter 2"}) == ("thesis.md#ch2", "thesis.md")
+    assert orch._resolve_target_node("thesis.md#ch2") == ("thesis.md#ch2", "thesis.md")
+    # A path the plan does not know stays what it is: the spec gate judges what is written there.
+    assert orch._resolve_target_node("src/models/dqn.py") == ("src/models/dqn.py", "src/models/dqn.py")
+    with pytest.raises(ValueError):
+        orch._resolve_target_node("v7")
+    assert orch._resolve_target_node("v7", fallback="core.py") == ("core.py", "core.py")
 
 
 def test_collect_report_issues_reads_supervisor_issues():
@@ -362,10 +364,17 @@ def test_real_pytest_errors_come_first_in_code_audit(tmp_path: Path, monkeypatch
     orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, enable_layer4=True, include_docs=True, provider="mock")
     ws = adk_dir / "workspace"
     (ws / "core.py").write_text("def get_board():\n    return []\n", encoding="utf-8")
-    (ws / "test_core.py").write_text(
+    (ws / "tests").mkdir(exist_ok=True)
+    (ws / "tests" / "test_core.py").write_text(
         "import core\n\n\ndef test_missing():\n    assert core.is_terminal([])\n", encoding="utf-8"
     )
-    task = {"task_id": "T5", "target_node": "v5", "assigned_agent": "seed_tester", "status": "IN_PROGRESS"}
+    from tests._plans import with_plan
+
+    with_plan(
+        orch, {"core.py": '"""Core."""\n\n\ndef get_board() -> list:\n    """Board."""\n'}, None,
+        [{"task_id": "T5", "target_node": "tests/test_core.py", "description": "tests", "assigned_agent": "seed_tester"}],
+    )
+    task = {"task_id": "T5", "target_node": "tests/test_core.py", "assigned_agent": "seed_tester", "status": "IN_PROGRESS"}
 
     report = orch._run_verification_step(task, include_docs=True, is_final_gate=False)
 
@@ -375,8 +384,8 @@ def test_real_pytest_errors_come_first_in_code_audit(tmp_path: Path, monkeypatch
     # An intermediate task is judged on the deterministic findings alone; the LLM auditor reads only at Gate 3.
     assert "LLM paraphrase of the failure" not in issues
     assert report["supervisors"]["code_auditor"]["skipped"] == "deterministic_only"
-    # The hyperedge contract (E4: core.py <-> test_core.py) names the exact violation.
-    assert any("core.is_terminal" in v for v in report["contract_violations"])
+    # The test reads a name the interface of core.py does not declare: σ names the exact violation (I bag in H).
+    assert any("IMPORT_OUTSIDE_SPEC" in v and "is_terminal" in v for v in report["contract_violations"])
 
 
 def test_evolution_waits_for_a_pattern_across_tasks(tmp_path: Path):
@@ -431,51 +440,27 @@ def test_evolution_waits_for_a_pattern_across_tasks(tmp_path: Path):
     assert len(evolutions[0]["validation_report"]["issues"]) <= 3
 
 
-def _grounding_fixture(tmp_path: Path) -> tuple[Path, Path]:
-    ws = tmp_path / "workspace"
-    ws.mkdir()
-    (ws / "config.py").write_text("ALPHA = 0.1\nEPISODES: int = 10\n", encoding="utf-8")
-    (ws / "core.py").write_text("import config\n\ndef train_and_evaluate():\n    return config.ALPHA\n", encoding="utf-8")
+def test_a_chapter_may_cite_what_h_holds(tmp_path: Path):
+    """The writer's pointer targets come from H: the planned modules' symbols (σ) and the experiment's outputs.
+    A CSV the plan does not produce is not offered (it used to be: every CSV on disk was "the graph")."""
+    from tests._plans import with_plan
+
+    adk_dir = _clone_adk_env(tmp_path)
+    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
+    ws = orch.workspace_dir
     (ws / "results.csv").write_text("method,metric,value\nproposed,win_rate,0.5\n", encoding="utf-8")
     (ws / "ablation.csv").write_text("method,metric,value\nbaseline,loss_rate,0.2\n", encoding="utf-8")
-    matrix_file = tmp_path / "hypergraph_matrix.json"
-    matrix_file.write_text(json.dumps({"nodes": {}, "edges": {}, "matrix": {}}), encoding="utf-8")
-    from adk.tools.building import sync_hypergraph_matrix
+    config = '"""Config."""\nALPHA: float = 0.1\nEPISODES: int = 10\n'
+    core = '"""Core."""\nimport config\n\n\ndef train_and_evaluate() -> float:\n    """Train."""\n'
+    chapters = [{"index": 1, "title": "Wstęp", "focus": "cel"}]
+    with_plan(orch, {"config.py": config, "core.py": core}, "core.py:train_and_evaluate", [], chapters)
 
-    sync_hypergraph_matrix(ws, matrix_file)
-    return ws, matrix_file
-
-
-def test_grounded_state_exposes_real_ast_symbols(tmp_path: Path):
-    from adk.orchestrator import build_grounded_symbols
-    from adk.tools.building import extract_hyperedge_exports
-
-    ws, matrix_file = _grounding_fixture(tmp_path)
-    grounded = build_grounded_symbols(extract_hyperedge_exports("ALL", matrix_file, ws))
-    assert "config.py:ALPHA" in grounded["available_ast_symbols"]
-    assert "config.py:EPISODES" in grounded["available_ast_symbols"]
-    assert "core.py:train_and_evaluate" in grounded["available_ast_symbols"]
-    assert "config.py" not in grounded["available_ast_symbols"]
-
-
-def test_grounded_state_exposes_real_csv_columns(tmp_path: Path):
-    from adk.orchestrator import build_grounded_symbols
-    from adk.tools.building import extract_hyperedge_exports
-
-    ws, matrix_file = _grounding_fixture(tmp_path)
-    grounded = build_grounded_symbols(extract_hyperedge_exports("ALL", matrix_file, ws))
-    assert "results.csv:value" in grounded["available_csv_columns"]
-    assert "columns" not in grounded["available_csv_columns"]
-    assert "row_selectors" not in grounded["available_csv_columns"]
-
-
-def test_grounded_state_covers_every_csv_in_graph(tmp_path: Path):
-    from adk.orchestrator import build_grounded_symbols
-    from adk.tools.building import extract_hyperedge_exports
-
-    ws, matrix_file = _grounding_fixture(tmp_path)
-    grounded = build_grounded_symbols(extract_hyperedge_exports("ALL", matrix_file, ws))
-    assert "ablation.csv:value" in grounded["available_csv_columns"]
+    may_cite = orch._context_for("thesis.md#ch1", "thesis.md")["may_cite"]
+    assert {"config.py:ALPHA", "config.py:EPISODES", "core.py:train_and_evaluate"} <= set(may_cite["available_ast_symbols"])
+    assert "config.py" not in may_cite["available_ast_symbols"]
+    assert "results.csv:value" in may_cite["available_csv_columns"]
+    assert "results.csv:proposed+win_rate" in may_cite["available_csv_rows"]
+    assert not any(c.startswith("ablation.csv") for c in may_cite["available_csv_columns"])
 
 
 _RUFF_F841 = (
@@ -566,14 +551,11 @@ def test_materialization_accepts_files_list_for_any_path(tmp_path: Path):
 
 
 def _orch_with_workspace(tmp_path: Path, files: dict[str, str]) -> NeuroSymbolicOrchestrator:
-    from adk.tools.building import sync_hypergraph_matrix
-
     adk_dir = _clone_adk_env(tmp_path)
     orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
     for rel, body in files.items():
         (orch.workspace_dir / rel).parent.mkdir(parents=True, exist_ok=True)
         (orch.workspace_dir / rel).write_text(body, encoding="utf-8")
-    sync_hypergraph_matrix(orch.workspace_dir, orch.matrix_path)
     return orch
 
 
@@ -598,19 +580,14 @@ def test_audit_redirects_derived_artifact_to_its_producer(tmp_path: Path):
             "results.csv": "method,metric,value\n",
         },
     )
+    from tests._plans import with_plan
+
+    with_plan(orch, {"core.py": '"""Core."""\n\n\ndef run() -> None:\n    """Run."""\n'}, "core.py:run")
     tasks = orch._tasks_from_audit(
         {"pytest_status": "FAIL", "pytest_errors": ['File "results.csv", line 1\n  bad', "FAILED results.py"]}, 1
     )
     targets = {t["target_node"] for t in tasks}
     assert "results.csv" not in targets
-
-
-def test_unknown_file_target_becomes_a_new_node_not_config(tmp_path: Path):
-    orch = _orch_with_workspace(tmp_path, {})
-    node_id, node_path = orch._resolve_target_node("src/models/dqn.py")
-    assert node_path == "src/models/dqn.py"
-    nodes = json.loads(orch.matrix_path.read_text(encoding="utf-8"))["nodes"]
-    assert nodes[node_id]["path"] == "src/models/dqn.py"
 
 
 def test_exhausted_budget_delivers_work_with_listed_gaps(tmp_path: Path):
@@ -637,7 +614,10 @@ def test_exhausted_budget_delivers_work_with_listed_gaps(tmp_path: Path):
 
 
 def test_critic_findings_become_tasks_with_ids(tmp_path: Path):
+    from tests._plans import with_plan
+
     orch = _orch_with_workspace(tmp_path, {"plot_results.py": "X = 1\n", "thesis.md": "## A\n"})
+    with_plan(orch, {"plot_results.py": '"""Plots."""\nX: int = 1\n'})
     tasks = orch._tasks_from_audit(
         {
             "pytest_status": "PASS",
@@ -708,33 +688,6 @@ def test_dependency_manager_is_gone():
     import importlib.util
 
     assert importlib.util.find_spec("adk.tools.evolution.dependency_manager") is None
-
-
-def test_role_alias_never_collides_with_a_discovered_node(tmp_path: Path):
-    """With an empty seed, discovered files get opaque ids. The legacy alias v4 must still mean the thesis,
-    even when the graph already holds four or more nodes."""
-    orch = _orch_with_workspace(
-        tmp_path,
-        {
-            "config.py": "A = 1\n",
-            "core.py": "import config\n",
-            "plot_results.py": "X = 1\n",
-            "thesis.compiled.md": "## A\n",
-            "thesis.md": "## A\n",
-        },
-    )
-    nodes = json.loads(orch.matrix_path.read_text(encoding="utf-8"))["nodes"]
-    assert len(nodes) >= 5
-    assert not any(node_id.startswith("v") for node_id in nodes)
-    _nid, path = orch._resolve_target_node("v4")
-    assert path == "thesis.md"
-
-
-def test_role_is_played_by_the_file_the_system_created(tmp_path: Path):
-    orch = _orch_with_workspace(tmp_path, {"settings.py": "SEED = 1\n", "test_agent.py": "def test_x():\n    pass\n"})
-    assert orch._role_file("config") == "settings.py"
-    assert orch._role_file("tests") == "test_agent.py"
-    assert orch._role_file("core") == "core.py"  # nothing plays it yet: the default name
 
 
 def test_unverified_bibtex_from_a_model_is_dropped(tmp_path: Path):

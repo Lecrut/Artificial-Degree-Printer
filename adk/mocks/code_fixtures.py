@@ -2,18 +2,14 @@
 from __future__ import annotations
 
 from adk.mocks.paper_catalogs import get_offline_domain_bibtex as get_domain_bibtex
-
-TICTACTOE_BENCHMARK_PROMPT = (
-    '[DOCUMENT FORMAT: Praca Inżynierska Politechniki Łódzkiej | thesis_type=inzynierska | '
-    'template_name=thesis_plodz (ThesisPLodz.cls)] Research question: can a tabular Q-Learning agent '
-    'learn to play Tic-Tac-Toe well against a uniformly random opponent, and how does its play compare '
-    'with that baseline? Design the experiment yourself: choose the parameters, training or search '
-    'budget, number of repetitions and seeds, the metrics you will report and the success criterion, and '
-    'declare the metrics and the experiment entrypoint in the plan before running anything. Implement the '
-    'solution as small, single-purpose modules with unit tests, produce every result by running the '
-    'declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the '
-    'code or to a results file.'
+from adk.benchmarks.inputs import (  # noqa: F401 - the tasks' inputs, kept importable from the fixtures
+    ANOMALY_PROMPT,
+    FEDERATED_BENCHMARK_PROMPT,
+    PATHFINDING_BASELINE_CONFIG_CODE,
+    PATHFINDING_BASELINE_CORE_CODE,
+    TICTACTOE_BENCHMARK_PROMPT,
 )
+
 
 TICTACTOE_CONFIG_AST_NODES: list[tuple[str, str]] = [('RESULTS_PATH', 'RESULTS_PATH = "results.csv"\n'), ('SEED', 'SEED = 42\n'), 
     ("ALPHA", "ALPHA = 0.2\n"),
@@ -167,83 +163,7 @@ TICTACTOE_DOC_SECTION_CONTENT = (
 
 
 # Baseline initial files for Evolution Benchmark Tasks (Brownfield testing)
-PATHFINDING_BASELINE_CONFIG_CODE = """RESULTS_PATH = "results.csv"
-SEED = 42
-GRID_SIZE = 32
-OBSTACLE_DENSITY = 0.22
-HEURISTIC_WEIGHT = 1.15
-TRIALS = 40
-"""
 
-PATHFINDING_BASELINE_CORE_CODE = '''import csv
-import heapq
-import math
-import random
-from pathlib import Path
-import config
-
-
-def generate_obstacle_grid(size: int = getattr(config, "GRID_SIZE", 32), density: float = getattr(config, "OBSTACLE_DENSITY", 0.22), seed: int = 42) -> list[list[int]]:
-    rng = random.Random(seed)
-    grid = [[0 for _ in range(size)] for _ in range(size)]
-    for r in range(size):
-        for c in range(size):
-            if (r, c) in ((0, 0), (size - 1, size - 1)):
-                continue
-            if rng.random() < density:
-                grid[r][c] = 1
-    for i in range(size):
-        grid[0][i] = 0
-        grid[i][size - 1] = 0
-    return grid
-
-
-def search_grid(
-    grid: list[list[int]],
-    start: tuple[int, int],
-    goal: tuple[int, int],
-    heuristic_weight: float = 0.0,
-) -> tuple[float, int]:
-    """Baseline uninformed Dijkstra search (high node expansion, no A* heuristic)."""
-    n = len(grid)
-    pq: list[tuple[float, tuple[int, int]]] = [(0.0, start)]
-    dist: dict[tuple[int, int], float] = {start: 0.0}
-    visited: set[tuple[int, int]] = set()
-    expanded = 0
-
-    neighbors = [
-        (-1, 0, 1.0), (1, 0, 1.0), (0, -1, 1.0), (0, 1, 1.0),
-        (-1, -1, math.sqrt(2.0)), (-1, 1, math.sqrt(2.0)),
-        (1, -1, math.sqrt(2.0)), (1, 1, math.sqrt(2.0)),
-    ]
-
-    while pq:
-        d, curr = heapq.heappop(pq)
-        if curr in visited:
-            continue
-        visited.add(curr)
-        expanded += 1
-        if curr == goal:
-            return d, expanded
-
-        cr, cc = curr
-        for dr, dc, cost in neighbors:
-            nr, nc = cr + dr, cc + dc
-            if 0 <= nr < n and 0 <= nc < n and grid[nr][nc] == 0:
-                nxt = (nr, nc)
-                nxt_d = d + cost
-                if nxt not in dist or nxt_d < dist[nxt]:
-                    dist[nxt] = nxt_d
-                    heapq.heappush(pq, (nxt_d, nxt))
-    return float("inf"), expanded
-
-
-def train_and_evaluate(csv_out_path: str | Path | None = config.RESULTS_PATH, seed: int = config.SEED) -> dict[str, float]:
-    grid = generate_obstacle_grid(seed=seed)
-    n = len(grid)
-    cost, exp = search_grid(grid, (0, 0), (n - 1, n - 1), 0.0)
-    return {"baseline_expanded": float(exp), "path_cost": cost}
-'''
 
 TICTACTOE_PLOT_SCRIPT = '''from __future__ import annotations
 
@@ -361,17 +281,6 @@ TICTACTOE_TIKZ = r"""\begin{tikzpicture}[auto, >=stealth, node distance=1.05cm]
 # TASK 2: Machine Learning / Bio-Signal Anomaly Detection
 # ============================================================================
 
-ANOMALY_PROMPT = (
-    '[DOCUMENT FORMAT: Praca Magisterska Politechniki Łódzkiej (II stopień) | thesis_type=magisterska | '
-    'template_name=thesis_plodz (ThesisPLodz.cls)] Research question (anomaly detection): does a multi-feature '
-    'robust ensemble detector find anomalies in synthetic multi-channel bio-signal telemetry more reliably than '
-    'a static univariate Z-score baseline? Design the experiment yourself: choose the parameters, '
-    'training or search budget, number of repetitions and seeds, the metrics you will report and the '
-    'success criterion, and declare the metrics and the experiment entrypoint in the plan before running '
-    'anything. Implement the solution as small, single-purpose modules with unit tests, produce every '
-    'result by running the declared entrypoint, and write the thesis so that every reported number is a '
-    'symbolic pointer to the code or to a results file.'
-)
 
 ANOMALY_CONFIG_AST_NODES: list[tuple[str, str]] = [('RESULTS_PATH', 'RESULTS_PATH = "results.csv"\n'), ('SEED', 'SEED = 42\n'), 
     ("N_SAMPLES", "N_SAMPLES = 600\n"),
@@ -1060,18 +969,6 @@ PATHFINDING_THESIS_CHAPTERS: list[tuple[str, str]] = [
 # TASK 4: Distributed & Federated Learning (Adaptive FedProx Optimization)
 # ============================================================================
 
-FEDERATED_BENCHMARK_PROMPT = (
-    '[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | '
-    'template_name=paper_ieee (IEEEtran.cls)] Research question: does a proximal federated optimizer '
-    '(FedProx-style) converge more robustly than FedAvg on non-IID Dirichlet-partitioned clients with '
-    'straggler dropout? Ground the related work in contemporary federated optimization literature '
-    '(2023-2026). Design the experiment yourself: choose the parameters, training or search budget, '
-    'number of repetitions and seeds, the metrics you will report and the success criterion, and declare '
-    'the metrics and the experiment entrypoint in the plan before running anything. Implement the '
-    'solution as small, single-purpose modules with unit tests, produce every result by running the '
-    'declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the '
-    'code or to a results file.'
-)
 
 FEDERATED_CONFIG_AST_NODES: list[tuple[str, str]] = [('RESULTS_PATH', 'RESULTS_PATH = "results.csv"\n'), ('SEED', 'SEED = 42\n'), ('NUM_CLIENTS', 'NUM_CLIENTS = 10\n'), ('DIRICHLET_ALPHA', 'DIRICHLET_ALPHA = 0.5\n'), ('LOCAL_EPOCHS', 'LOCAL_EPOCHS = 3\n'), ('LEARNING_RATE', 'LEARNING_RATE = 0.05\n'), ('MU_PROXIMAL', 'MU_PROXIMAL = 0.01\n'), ('ROUNDS', 'ROUNDS = 25\n')]
 

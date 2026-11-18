@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from adk.benchmarks import get_benchmark_task
+from adk.mocks import code_fixtures as fx
 from adk.tools.building.template_manager import (
     copy_template_assets,
     render_template_latex,
@@ -32,10 +33,10 @@ def test_thesis_plodz_template_rendering_and_compilation(tmp_path: Path):
     ws = tmp_path / "plodz_ws"
     ws.mkdir(parents=True, exist_ok=True)
 
-    config_src = "".join(code for _, code in spec.config_ast_nodes)
+    config_src = "".join(code for _, code in fx.ANOMALY_CONFIG_AST_NODES)
     (ws / "config.py").write_text(config_src, encoding="utf-8")
-    (ws / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
-    (ws / "references.bib").write_text(spec.bibtex_entries, encoding="utf-8")
+    (ws / "results.csv").write_text(fx.ANOMALY_INITIAL_CSV, encoding="utf-8")
+    (ws / "references.bib").write_text(fx.ANOMALY_BIBTEX, encoding="utf-8")
 
     tex_path = render_template_latex(spec=spec, workspace_dir=ws, template_name="thesis_plodz")
     assert tex_path.exists()
@@ -67,10 +68,12 @@ def test_paper_ieee_template_rendering_and_compilation(tmp_path: Path):
     ws = tmp_path / "paper_ws"
     ws.mkdir(parents=True, exist_ok=True)
 
-    config_src = "".join(code for _, code in spec.config_ast_nodes)
+    config_src = "".join(code for _, code in fx.ANOMALY_CONFIG_AST_NODES)
     (ws / "config.py").write_text(config_src, encoding="utf-8")
-    (ws / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
-    (ws / "references.bib").write_text(spec.bibtex_entries, encoding="utf-8")
+    (ws / "results.csv").write_text(fx.ANOMALY_INITIAL_CSV, encoding="utf-8")
+    (ws / "references.bib").write_text(fx.ANOMALY_BIBTEX, encoding="utf-8")
+    (ws / "figures").mkdir()
+    (ws / "figures" / "comparison_chart.png").write_bytes(b"PNG")  # a figure the experiment produced
 
     tex_path = render_template_latex(spec=spec, workspace_dir=ws, template_name="paper_ieee")
     assert tex_path.exists()
@@ -84,10 +87,7 @@ def test_paper_ieee_template_rendering_and_compilation(tmp_path: Path):
     assert "\\bibliographystyle{IEEEtran}" in content
     assert "\\pagestyle{plain}" in content
     assert "\\thispagestyle{plain}" in content
-    assert "width=\\columnwidth,keepaspectratio" in content
-    assert "\\pagestyle{plain}" in content
-    assert "\\thispagestyle{plain}" in content
-    assert "width=\\columnwidth,keepaspectratio" in content
+    assert "figures/comparison_chart.png" in content
 
     # Verify symbolic compilation
     comp = compile_symbolic_references(tex_path, ws, write_compiled=True)
@@ -105,12 +105,12 @@ def test_publish_bundle_with_both_templates(tmp_path: Path):
     # 1. Test bundle with Politechnika Łódzka template
     ws_plodz = tmp_path / "bundle_plodz"
     ws_plodz.mkdir(parents=True, exist_ok=True)
-    (ws_plodz / "config.py").write_text("".join(c for _, c in spec.config_ast_nodes), encoding="utf-8")
-    (ws_plodz / "core.py").write_text(spec.core_code, encoding="utf-8")
-    (ws_plodz / "test_core.py").write_text(spec.test_code, encoding="utf-8")
-    (ws_plodz / "plot_results.py").write_text(spec.plot_script, encoding="utf-8")
-    (ws_plodz / "references.bib").write_text(spec.bibtex_entries, encoding="utf-8")
-    (ws_plodz / "thesis.md").write_text(f"## {spec.doc_section_title}\n{spec.doc_section_content}\n", encoding="utf-8")
+    (ws_plodz / "config.py").write_text("".join(c for _, c in fx.TICTACTOE_CONFIG_AST_NODES), encoding="utf-8")
+    (ws_plodz / "core.py").write_text(fx.TICTACTOE_CORE_CODE, encoding="utf-8")
+    (ws_plodz / "test_core.py").write_text(fx.TICTACTOE_TEST_CODE, encoding="utf-8")
+    (ws_plodz / "plot_results.py").write_text(fx.TICTACTOE_PLOT_SCRIPT, encoding="utf-8")
+    (ws_plodz / "references.bib").write_text(fx.TICTACTOE_BIBTEX, encoding="utf-8")
+    (ws_plodz / "thesis.md").write_text(f"## {fx.TICTACTOE_DOC_SECTION_TITLE}\n{fx.TICTACTOE_DOC_SECTION_CONTENT}\n", encoding="utf-8")
 
     pub_plodz = publish_workspace_thesis_bundle(
         spec=spec,
@@ -126,12 +126,12 @@ def test_publish_bundle_with_both_templates(tmp_path: Path):
     # 2. Test bundle with IEEEtran scientific paper template
     ws_paper = tmp_path / "bundle_paper"
     ws_paper.mkdir(parents=True, exist_ok=True)
-    (ws_paper / "config.py").write_text("".join(c for _, c in spec.config_ast_nodes), encoding="utf-8")
-    (ws_paper / "core.py").write_text(spec.core_code, encoding="utf-8")
-    (ws_paper / "test_core.py").write_text(spec.test_code, encoding="utf-8")
-    (ws_paper / "plot_results.py").write_text(spec.plot_script, encoding="utf-8")
-    (ws_paper / "references.bib").write_text(spec.bibtex_entries, encoding="utf-8")
-    (ws_paper / "thesis.md").write_text(f"## {spec.doc_section_title}\n{spec.doc_section_content}\n", encoding="utf-8")
+    (ws_paper / "config.py").write_text("".join(c for _, c in fx.TICTACTOE_CONFIG_AST_NODES), encoding="utf-8")
+    (ws_paper / "core.py").write_text(fx.TICTACTOE_CORE_CODE, encoding="utf-8")
+    (ws_paper / "test_core.py").write_text(fx.TICTACTOE_TEST_CODE, encoding="utf-8")
+    (ws_paper / "plot_results.py").write_text(fx.TICTACTOE_PLOT_SCRIPT, encoding="utf-8")
+    (ws_paper / "references.bib").write_text(fx.TICTACTOE_BIBTEX, encoding="utf-8")
+    (ws_paper / "thesis.md").write_text(f"## {fx.TICTACTOE_DOC_SECTION_TITLE}\n{fx.TICTACTOE_DOC_SECTION_CONTENT}\n", encoding="utf-8")
 
     pub_paper = publish_workspace_thesis_bundle(
         spec=spec,
@@ -192,50 +192,29 @@ def test_benchmark_tasks_use_distinct_thesis_types(tmp_path: Path):
 def test_two_researchers_and_three_tier_routing():
     """Verify 2-researcher architecture (background_researcher & discoverer_researcher) and 3-tier routing."""
     from adk.benchmarks import BENCHMARK_TASKS
-    from adk.benchmarks.runner import _make_task_mock_llm_handler
     from adk.core.models import read_json_state
+    from adk.mocks.agents import SimulatedAgents
+    from adk.mocks.scenarios import SCENARIOS
     from adk.orchestrator import _merge_bibtex_entries
 
-    # 1. Verify both researchers are active in agent_registry.json
     reg_path = Path(__file__).resolve().parent.parent / "adk" / "state" / "agent_registry.json"
     agents = read_json_state(reg_path)["agents"]
     assert agents["background_researcher"]["active"] is True
     assert agents["discoverer_researcher"]["active"] is True
 
-    # 2. Verify Tier I (inzynierska -> background_researcher only)
-    h1 = _make_task_mock_llm_handler(BENCHMARK_TASKS["01_rl_tictactoe"])
-    plan1 = h1("Task Planner", {"user_prompt": "x", "blast_radius": {}}, "LRM")
-    research_agents_1 = [
-        t["assigned_agent"]
-        for t in plan1["tasks"]
-        if "researcher" in t["assigned_agent"]
-    ]
-    assert research_agents_1 == ["background_researcher"]
+    def _research(key: str) -> list[str]:
+        spec = BENCHMARK_TASKS[key]
+        plan = SimulatedAgents(SCENARIOS[key])(
+            "task_planner", "", {"user_prompt": "x", "error_feedback": "-", "detected_template": {"thesis_type": spec.thesis_type}}, "LRM"
+        )
+        return [t["assigned_agent"] for t in plan["tasks"] if "researcher" in t["assigned_agent"]]
 
-    # 3. Verify Tier II (magisterska -> background_researcher THEN discoverer_researcher)
-    h2 = _make_task_mock_llm_handler(BENCHMARK_TASKS["02_ml_anomaly_detection"])
-    plan2 = h2("Task Planner", {"user_prompt": "x", "blast_radius": {}}, "LRM")
-    research_agents_2 = [
-        t["assigned_agent"]
-        for t in plan2["tasks"]
-        if "researcher" in t["assigned_agent"]
-    ]
-    assert research_agents_2 == ["background_researcher", "discoverer_researcher"]
-
-    # 4. Verify Tier III (paper -> discoverer_researcher only)
+    assert _research("01_rl_tictactoe") == ["background_researcher"]
+    assert _research("02_ml_anomaly_detection") == ["background_researcher", "discoverer_researcher"]
     for key in ("03_graph_pathfinding", "04_federated_learning"):
-        h3 = _make_task_mock_llm_handler(BENCHMARK_TASKS[key])
-        plan3 = h3("Task Planner", {"user_prompt": "x", "blast_radius": {}}, "LRM")
-        research_agents_3 = [
-            t["assigned_agent"]
-            for t in plan3["tasks"]
-            if "researcher" in t["assigned_agent"]
-        ]
-        assert research_agents_3 == ["discoverer_researcher"]
+        assert _research(key) == ["discoverer_researcher"]
 
-    # 5. Verify BibTeX merging preserves both background and discoverer entries without duplicates
-    spec2 = BENCHMARK_TASKS["02_ml_anomaly_detection"]
-    merged = _merge_bibtex_entries(spec2.background_bibtex_entries, spec2.discoverer_bibtex_entries)
+    merged = _merge_bibtex_entries(fx.ANOMALY_BACKGROUND_BIBTEX, fx.ANOMALY_DISCOVERER_BIBTEX)
     assert "hampel1974influence" in merged
     assert "liu2008isolation" in merged
     assert "xu2023deep" in merged
@@ -245,7 +224,6 @@ def test_two_researchers_and_three_tier_routing():
 def test_detect_template_from_prompt_and_live_mock_isolation(tmp_path: Path):
     """Verify automatic template detection, uncertainty question when ambiguous, and zero mock injection in live runs."""
     from adk.benchmarks import BENCHMARK_TASKS
-    from adk.mocks import _make_task_mock_llm_handler, render_thesis_pdf
     from adk.orchestrator import NeuroSymbolicOrchestrator
     from adk.tools.building.template_manager import detect_template_from_prompt
 
@@ -276,10 +254,6 @@ def test_detect_template_from_prompt_and_live_mock_isolation(tmp_path: Path):
     assert d_ambig["question"] is not None
     assert "thesis_plodz" in d_ambig["question"]
     assert "paper_ieee" in d_ambig["question"]
-
-    # 3. Mocks and mock PDF template are isolated in adk.mocks
-    assert render_thesis_pdf.__module__ == "adk.mocks.mock_pdf_template"
-    assert _make_task_mock_llm_handler.__module__ == "adk.mocks.benchmark_mock_handlers"
 
     # 4. Live provider mode never injects Tic-Tac-Toe mock code or mock chapters
     orch = NeuroSymbolicOrchestrator(adk_root=tmp_path / "live_adk", provider="ollama")
@@ -317,10 +291,10 @@ def test_dynamic_arbitrary_chapter_counts_in_latex_rendering(tmp_path: Path):
     # 1. Test 10 chapters in thesis_plodz
     ws_10 = tmp_path / "ws_10_chapters"
     ws_10.mkdir(parents=True, exist_ok=True)
-    config_src = "".join(code for _, code in spec.config_ast_nodes)
+    config_src = "".join(code for _, code in fx.TICTACTOE_CONFIG_AST_NODES)
     (ws_10 / "config.py").write_text(config_src, encoding="utf-8")
-    (ws_10 / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
-    (ws_10 / "references.bib").write_text(spec.bibtex_entries, encoding="utf-8")
+    (ws_10 / "results.csv").write_text(fx.TICTACTOE_INITIAL_CSV, encoding="utf-8")
+    (ws_10 / "references.bib").write_text(fx.TICTACTOE_BIBTEX, encoding="utf-8")
 
     md_10_content = "\n\n".join(
         f"## Rozdział {i}: Dziedzinowa sekcja numer {i}\nTreść rozdziału {i} ze wskaźnikiem \\ref_ast{{config.py:ALPHA}} i wynikiem \\ref_csv{{results.csv:win_rate}}."
@@ -328,7 +302,7 @@ def test_dynamic_arbitrary_chapter_counts_in_latex_rendering(tmp_path: Path):
     )
     (ws_10 / "thesis.md").write_text(md_10_content, encoding="utf-8")
 
-    tex_10 = render_template_latex(spec=spec, workspace_dir=ws_10, template_name="thesis_plodz", provider="live")
+    tex_10 = render_template_latex(spec=spec, workspace_dir=ws_10, template_name="thesis_plodz")
     assert tex_10.exists()
     tex_10_content = tex_10.read_text(encoding="utf-8")
 
@@ -344,8 +318,8 @@ def test_dynamic_arbitrary_chapter_counts_in_latex_rendering(tmp_path: Path):
     ws_4 = tmp_path / "ws_4_sections"
     ws_4.mkdir(parents=True, exist_ok=True)
     (ws_4 / "config.py").write_text(config_src, encoding="utf-8")
-    (ws_4 / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
-    (ws_4 / "references.bib").write_text(spec.bibtex_entries, encoding="utf-8")
+    (ws_4 / "results.csv").write_text(fx.TICTACTOE_INITIAL_CSV, encoding="utf-8")
+    (ws_4 / "references.bib").write_text(fx.TICTACTOE_BIBTEX, encoding="utf-8")
 
     md_4_content = "\n\n".join(
         f"## Section {i}: Focused Paper Segment {i}\nDetailed methodology segment {i} using \\ref_ast{{config.py:GAMMA}}."
@@ -353,7 +327,7 @@ def test_dynamic_arbitrary_chapter_counts_in_latex_rendering(tmp_path: Path):
     )
     (ws_4 / "thesis.md").write_text(md_4_content, encoding="utf-8")
 
-    tex_4 = render_template_latex(spec=spec, workspace_dir=ws_4, template_name="paper_ieee", provider="live")
+    tex_4 = render_template_latex(spec=spec, workspace_dir=ws_4, template_name="paper_ieee")
     assert tex_4.exists()
     tex_4_content = tex_4.read_text(encoding="utf-8")
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ast
 import base64
 import csv
 import html
@@ -19,73 +18,34 @@ os.environ.setdefault("MPLCONFIGDIR", str(Path(tempfile.gettempdir()) / "adk_mpl
 import matplotlib  # noqa: E402
 
 from adk.benchmarks.tasks import BenchmarkTaskSpec  # noqa: E402
-from adk.mocks.mock_pdf_template import (  # noqa: E402
-    _parse_compiled_sections,
-)
-from adk.mocks.thesis_mock_expander import expand_academic_chapters  # noqa: E402
-from adk.tools.building.doc_editor import edit_document_section  # noqa: E402
 from adk.tools.building.experiment_runner import execute_workspace_experiment  # noqa: E402
-from adk.tools.building.template_manager import render_template_latex, resolve_template_name  # noqa: E402
+from adk.tools.building.template_manager import render_template_latex  # noqa: E402
 from adk.tools.verification.ref_compiler import compile_symbolic_references  # noqa: E402
 
 matplotlib.use("Agg")
 
 
-def _get_effective_chapters(spec: BenchmarkTaskSpec) -> list[tuple[str, str]]:
-    """Return the 6 canonical thesis chapters for spec, falling back to SOTA + empirical section if empty."""
-    if spec.thesis_chapters:
-        return list(spec.thesis_chapters)
+def _sections(markdown: str) -> list[tuple[str, str]]:
+    """`## ` sections of a (compiled) thesis, as written."""
+    heads = list(re.finditer(r"^##\s+(.+?)\s*$", markdown, flags=re.MULTILINE))
     return [
-        ("Rozdział 1: Wstęp, Cel i Teza Pracy", spec.abstract_pl),
-        (f"Rozdział 2: {spec.sota_section_title}", spec.sota_section_content),
-        ("Rozdział 3: Architektura Systemu i Formalizm Matematyczny", spec.abstract_en),
-        ("Rozdział 4: Implementacja Algorytmiczna", spec.sota_section_content),
-        (spec.doc_section_title, spec.doc_section_content),
-        ("Rozdział 6: Podsumowanie i Wnioski", spec.abstract_pl),
+        (m.group(1).strip(), markdown[m.end() : heads[i + 1].start() if i + 1 < len(heads) else len(markdown)].strip())
+        for i, m in enumerate(heads)
     ]
 
 
-def ensure_full_6_chapter_markdown(
-    spec: BenchmarkTaskSpec,
-    workspace_dir: Path,
-    force_mock_expand: bool = False,
-    provider: str | None = None,
-) -> Path:
-    """Ensure thesis.md contains all 6 canonical chapters, preserving LLM-authored chapters and only expanding missing sections."""
-    md_path = workspace_dir / "thesis.md"
-    existing_md = md_path.read_text(encoding="utf-8") if md_path.exists() else ""
+def _abstract(workspace_dir: Path) -> str:
+    """The thesis statement the plan declared (the run copies its blueprint into the workspace)."""
+    blueprint = workspace_dir / "academic_blueprint.json"
+    if not blueprint.is_file():
+        return ""
+    try:
+        import json
 
-    # When running with a live LLM provider (Ollama, OpenAI, Gemini), NEVER silently inject mock chapters.
-    # Preserve authentic LLM-authored chapters so Layer 3 / Gate 3 can audit real work.
-    is_live_llm = provider is not None and provider.strip().lower() != "mock"
-    if is_live_llm and not force_mock_expand:
-        return md_path
-
-    headers, rows = _read_csv_rows(workspace_dir / "results.csv")
-    config_pairs = _extract_config_constants(workspace_dir / "config.py")
-    chosen_template = resolve_template_name(
-        thesis_type=getattr(spec, "thesis_type", None),
-        requested_template=getattr(spec, "template_name", None),
-    )
-    expanded = expand_academic_chapters(
-        spec=spec,
-        base_chapters=_get_effective_chapters(spec),
-        workspace_dir=workspace_dir,
-        config_pairs=config_pairs,
-        headers=headers,
-        rows=rows,
-        is_ieee=(chosen_template == "paper_ieee"),
-    )
-    for ch_title, ch_body in expanded:
-        if not force_mock_expand and existing_md:
-            m_idx = re.match(r"^(Rozdział\s+\d+|Chapter\s+\d+)", ch_title, re.IGNORECASE)
-            prefix = m_idx.group(1) if m_idx else ch_title
-            pattern = re.compile(rf"^##+\s+{re.escape(prefix)}[^\n]*\n(.*?)(?=^##+\s+|\Z)", re.MULTILINE | re.DOTALL)
-            m = pattern.search(existing_md)
-            if m and len(m.group(1).strip()) > 80:
-                continue
-        edit_document_section(md_path, ch_title, ch_body)
-    return md_path
+        data = json.loads(blueprint.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ""
+    return str(data.get("thesis_statement") or "") if isinstance(data, dict) else ""
 
 
 def _read_csv_rows(csv_path: Path) -> tuple[list[str], list[dict[str, str]]]:
@@ -96,32 +56,6 @@ def _read_csv_rows(csv_path: Path) -> tuple[list[str], list[dict[str, str]]]:
         headers = list(reader.fieldnames or [])
         rows = [dict(r) for r in reader]
     return headers, rows
-
-
-def _extract_config_constants(config_path: Path) -> list[tuple[str, str]]:
-    if not config_path.exists():
-        return []
-    pairs: list[tuple[str, str]] = []
-    try:
-        tree = ast.parse(config_path.read_text(encoding="utf-8"))
-        for node in tree.body:
-            if isinstance(node, ast.Assign):
-                for t in node.targets:
-                    if isinstance(t, ast.Name):
-                        try:
-                            val = repr(ast.literal_eval(node.value))
-                        except Exception:
-                            val = ast.unparse(node.value)
-                        pairs.append((t.id, val))
-            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.value is not None:
-                try:
-                    val = repr(ast.literal_eval(node.value))
-                except Exception:
-                    val = ast.unparse(node.value)
-                pairs.append((node.target.id, val))
-    except SyntaxError:
-        pass
-    return pairs
 
 
 def _balance_braces(s: str) -> str:
@@ -433,7 +367,7 @@ def build_latex_source(
     workspace_dir: Path,
     template_name: str | None = None,
     thesis_type: str | None = None,
-    provider: str | None = None,
+    abstract: str | None = None,
 ) -> Path:
     """Create complete academic LaTeX document thesis.tex with symbolic tags strictly using templates."""
     return render_template_latex(
@@ -441,7 +375,7 @@ def build_latex_source(
         workspace_dir,
         template_name=template_name,
         thesis_type=thesis_type,
-        provider=provider,
+        abstract=_abstract(workspace_dir) if abstract is None else abstract,
     )
 
 
@@ -474,7 +408,8 @@ def render_thesis_html(
 
     evo_info = evolution_summary or {}
     evo_events = ", ".join(str(e) for e in evo_info.get("events_triggered", ["WEIGHT_ESCALATED", "MUTATE_AGENT"]))
-    chapters = _parse_compiled_sections(compiled_md_text, spec)
+    chapters = _sections(compiled_md_text)
+    abstract = _abstract(workspace_dir)
     chapters_html = "\n".join(
         f"    <h2>{idx + 1}. {html.escape(ch_t)}</h2>\n    <p>{html.escape(ch_b)}</p>"
         for idx, (ch_t, ch_b) in enumerate(chapters)
@@ -572,8 +507,7 @@ def render_thesis_html(
     <div class="subtitle">{html.escape(spec.title_en)}</div>
 
     <div class="abstract-box">
-      <p><strong>Streszczenie (PL):</strong> {html.escape(spec.abstract_pl)}</p>
-      <p><strong>Abstract (EN):</strong> {html.escape(spec.abstract_en)}</p>
+      <p><strong>Teza:</strong> {html.escape(abstract)}</p>
     </div>
 
 {chapters_html}
@@ -616,7 +550,6 @@ def publish_workspace_thesis_bundle(
     evolution_summary: dict[str, Any] | None = None,
     template_name: str | None = None,
     thesis_type: str | None = None,
-    provider: str | None = None,
     entrypoint: str | None = None,
 ) -> dict[str, Any]:
     """Execute generated code & plot script, compile symbolic references in .md and .tex, and render thesis.pdf + thesis.html.
@@ -624,15 +557,11 @@ def publish_workspace_thesis_bundle(
     `entrypoint` is the plan's declaration (`path.py:function`); the experiment runs through it, as during the run."""
     w_dir = Path(workspace_dir).resolve()
     w_dir.mkdir(parents=True, exist_ok=True)
-    is_live_provider = provider is not None and str(provider).strip().lower() != "mock"
 
     # Run the declared entrypoint so results.csv is whatever it just wrote.
     exec_env = os.environ.copy()
     exec_env["PYTHONPATH"] = str(w_dir) + os.pathsep + str(w_dir / "code") + os.pathsep + exec_env.get("PYTHONPATH", "")
     experiment = execute_workspace_experiment(w_dir, entrypoint=entrypoint)
-    if not experiment.get("ok") or experiment.get("skipped"):
-        if not is_live_provider and (not (w_dir / "results.csv").exists() or (w_dir / "results.csv").stat().st_size == 0):
-            (w_dir / "results.csv").write_text(spec.initial_csv, encoding="utf-8")
 
     # Ensure real vector and raster plots are generated (never broken placeholder)
     fig_dir = w_dir / "figures"
@@ -661,25 +590,6 @@ def publish_workspace_thesis_bundle(
                         mod_scope["generate_plots"](str(w_dir))
                     elif "main" in mod_scope and callable(mod_scope["main"]):
                         mod_scope["main"]()
-            if not _is_real_pdf(chart_pdf) and not is_live_provider:
-                mod_scope = {"__name__": "__main__", "__file__": str(w_dir / "plot_results.py")}
-                exec(spec.plot_script, mod_scope)
-                if "generate_plots" in mod_scope and callable(mod_scope["generate_plots"]):
-                    mod_scope["generate_plots"](str(w_dir))
-        except Exception:
-            pass
-
-    if not _is_real_pdf(chart_pdf) and not is_live_provider:
-        try:
-            import matplotlib.pyplot as plt
-            fig, ax = plt.subplots(figsize=(6, 3), dpi=150)
-            ax.set_title(f"Empirical Evaluation: {spec.title_en[:45]}", fontsize=9, fontweight="bold")
-            ax.bar(["Baseline", "Proposed"], [0.55, 0.90], color=["#94a3b8", "#3b82f6"])
-            ax.set_ylabel("Normalized Metric")
-            fig.tight_layout()
-            fig.savefig(chart_pdf, bbox_inches="tight")
-            fig.savefig(fig_dir / "comparison_chart.png", bbox_inches="tight")
-            plt.close(fig)
         except Exception:
             pass
 
@@ -699,14 +609,8 @@ def publish_workspace_thesis_bundle(
     tex_comp: dict[str, Any] = {"status": "SKIPPED", "resolved_references": {}}
 
     try:
-        md_path = ensure_full_6_chapter_markdown(spec, w_dir, provider=provider)
-        tex_path = build_latex_source(
-            spec,
-            w_dir,
-            template_name=template_name,
-            thesis_type=thesis_type,
-            provider=provider,
-        )
+        md_path = w_dir / "thesis.md"
+        tex_path = build_latex_source(spec, w_dir, template_name=template_name, thesis_type=thesis_type)
 
         md_comp = compile_symbolic_references(md_path, w_dir, write_compiled=True)
         tex_comp = compile_symbolic_references(tex_path, w_dir, write_compiled=True)
@@ -728,13 +632,7 @@ def publish_workspace_thesis_bundle(
 
         # Fallback: if the primary template failed to compile, re-render on the IEEEtran scientific paper template (NEVER use Matplotlib PDF)
         if not compiled_ok or not pdf_path.exists() or pdf_path.stat().st_size < 1000:
-            fallback_tex = build_latex_source(
-                spec,
-                w_dir,
-                template_name="paper_ieee",
-                thesis_type="paper",
-                provider=provider,
-            )
+            fallback_tex = build_latex_source(spec, w_dir, template_name="paper_ieee", thesis_type="paper")
             fallback_comp = compile_symbolic_references(fallback_tex, w_dir, write_compiled=True)
             fallback_sanitized = _sanitize_unresolved_latex_tags(fallback_comp.get("compiled_text", ""))
             if fallback_sanitized:

@@ -247,18 +247,6 @@ def _is_document(rel_path: str) -> bool:
 
 # The document is a format convention of the publisher, not a research decision.
 THESIS_FILE = "thesis.md"
-# Roles a thesis project needs. A role is played by whatever file the system created for it; the default name is
-# used only while nothing exists yet. v1..v5 are accepted as input aliases (planners and fixtures emit them) and
-# never stored: graph node ids are opaque.
-ROLE_DEFAULTS = {
-    "config": "config.py",
-    "core": "core.py",
-    "results": "results.csv",
-    "thesis": THESIS_FILE,
-    "tests": "test_core.py",
-}
-ROLE_ALIASES = {"v1": "config", "v2": "core", "v3": "results", "v4": "thesis", "v5": "tests"}
-_CONFIG_STEMS = {"config", "settings", "params", "parameters", "hyperparameters"}
 
 
 def _declared_vs_measured_metrics(declared: list[str], workspace_dir: Path) -> list[str]:
@@ -363,24 +351,3 @@ _METADATA_KEYS = {
     # Echo of the payload: a small model sometimes copies the task back (N7, 2026-11-15: "fields ['task']").
     "task", "target_file", "task_id",
 }
-
-def build_grounded_symbols(exports_info: dict[str, Any]) -> dict[str, list[str]]:
-    """Flatten hyperedge exports into the pointer targets a writer may legally cite.
-
-    `exports` maps file -> {functions, classes, variables}; `csv_schemas` maps file -> {columns, row_selectors}.
-    Returns `file:symbol`, `file:column` and `file:row` strings for every file in the graph.
-    """
-    symbols: list[str] = []
-    for rel_path, groups in (exports_info.get("exports") or {}).items():
-        for kind in ("variables", "functions", "classes"):
-            symbols.extend(f"{rel_path}:{name}" for name in groups.get(kind, []))
-    columns: list[str] = []
-    rows: list[str] = []
-    for rel_path, schema in (exports_info.get("csv_schemas") or {}).items():
-        columns.extend(f"{rel_path}:{col}" for col in schema.get("columns", []))
-        rows.extend(f"{rel_path}:{row}" for row in schema.get("row_selectors", []))
-    return {
-        "available_ast_symbols": list(dict.fromkeys(symbols)),
-        "available_csv_columns": list(dict.fromkeys(columns)),
-        "available_csv_rows": list(dict.fromkeys(rows)),
-    }

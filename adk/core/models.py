@@ -35,30 +35,6 @@ class TaskItem:
 
 
 @dataclass(slots=True)
-class HypergraphMatrix:
-    """Structured representation of state/hypergraph_matrix.json."""
-
-    nodes: dict[str, dict[str, Any]] = field(default_factory=dict)
-    edges: dict[str, list[str]] = field(default_factory=dict)
-    matrix: dict[str, dict[str, int]] = field(default_factory=dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "nodes": self.nodes,
-            "edges": self.edges,
-            "matrix": self.matrix,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> HypergraphMatrix:
-        return cls(
-            nodes=dict(data.get("nodes", {})),
-            edges={k: list(v) for k, v in data.get("edges", {}).items()},
-            matrix={k: dict(v) for k, v in data.get("matrix", {}).items()},
-        )
-
-
-@dataclass(slots=True)
 class ValidationReport:
     """Structured representation of state/validation_report.json."""
 

@@ -6,9 +6,8 @@ import ast
 import importlib.util
 import sys
 from pathlib import Path
-from typing import Any
 
-from adk.core.models import read_json_state, resolve_adk_path
+from adk.core.models import resolve_adk_path
 
 _NESTED_BODIES = ("body", "orelse", "finalbody", "handlers")
 
@@ -38,28 +37,6 @@ def _module_names(tree: ast.Module) -> set[str] | None:
             for field in _NESTED_BODIES:
                 stack.extend(getattr(node, field, None) or [])
     return names
-
-
-def _used_symbols(tree: ast.Module, module_stem: str) -> set[str]:
-    """Symbols a test reads from `module_stem` via `import m [as a]` + `a.X` or `from m import X`."""
-    aliases: set[str] = set()
-    used: set[str] = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                if alias.name.split(".")[-1] == module_stem:
-                    aliases.add(alias.asname or alias.name)
-        elif isinstance(node, ast.ImportFrom) and node.module and node.module.split(".")[-1] == module_stem:
-            used.update(alias.name for alias in node.names if alias.name != "*")
-    for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.Attribute)
-            and isinstance(node.ctx, ast.Load)
-            and isinstance(node.value, ast.Name)
-            and node.value.id in aliases
-        ):
-            used.add(node.attr)
-    return used
 
 
 def _parse(path: Path) -> ast.Module | None:
@@ -174,6 +151,32 @@ def _stub_body(func: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
     ]
 
 
+def _instance_attributes(cls: ast.ClassDef) -> dict[str, str]:
+    """Public attributes a class assigns only through `self.x = ...` in its methods -> their annotation as text."""
+    in_body = {
+        t.id
+        for item in cls.body
+        for t in (item.targets if isinstance(item, ast.Assign) else [item.target] if isinstance(item, ast.AnnAssign) else [])
+        if isinstance(t, ast.Name)
+    }
+    found: dict[str, str] = {}
+    for item in cls.body:
+        if not isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        for node in ast.walk(item):
+            pairs = (
+                [(t, None) for t in node.targets] if isinstance(node, ast.Assign)
+                else [(node.target, node.annotation)] if isinstance(node, ast.AnnAssign) else []
+            )
+            for target, annotation in pairs:
+                if (
+                    isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) and target.value.id == "self"
+                    and not target.attr.startswith("_") and target.attr not in in_body
+                ):
+                    found.setdefault(target.attr, ast.unparse(annotation) if annotation is not None else "object")
+    return found
+
+
 def stub_source(source: str) -> str | None:
     """The interface of a module with every function and method body replaced by its docstring and
     `raise NotImplementedError` (U2, 2026-11-15: the "skeleton" of a small model had 0 such bodies and 9 half
@@ -191,9 +194,17 @@ def stub_source(source: str) -> str | None:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             _stub_body(node)
         elif isinstance(node, ast.ClassDef):
+            declared = _instance_attributes(node)
             for item in node.body:
                 if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     _stub_body(item)
+            # Public `self.x = ...` would vanish with the method bodies, and σ declares it (2026-11-17: 02 crashed
+            # on its own stubs, API_MISSING ZScoreBaseline.threshold). Kept as a class annotation, not evaluated.
+            first = 1 if ast.get_docstring(node, clean=False) is not None else 0
+            node.body[first:first] = [
+                ast.AnnAssign(target=ast.Name(name, ast.Store()), annotation=ast.Constant(ann), value=None, simple=1)
+                for name, ann in declared.items()
+            ]
         body.append(node)
     tree.body = body
     return ast.unparse(ast.fix_missing_locations(tree)) + "\n"
@@ -269,7 +280,7 @@ def check_import_contract(workspace_dir: str | Path, rel_file: str) -> list[str]
                     violations.append(
                         f"Environment contract violation: {rel_file} imports the package '{top}', which the "
                         "environment does not have. The environment is fixed for the whole run: use the packages in "
-                        "'available_packages' or the project's modules (their import paths are in 'exports')."
+                        "'available_packages' or the project's modules (their import paths are in 'specification')."
                     )
             continue
         if not isinstance(node, ast.ImportFrom):
@@ -278,7 +289,7 @@ def check_import_contract(workspace_dir: str | Path, rel_file: str) -> list[str]
             violations.append(
                 f"Environment contract violation: {rel_file} imports the package '{(node.module or '').split('.')[0]}', "
                 "which the environment does not have. The environment is fixed for the whole run: use the packages in "
-                "'available_packages' or the project's modules (their import paths are in 'exports')."
+                "'available_packages' or the project's modules (their import paths are in 'specification')."
             )
             continue
         target = _resolve_workspace_module(w_dir, rel_file, node.module, node.level)
@@ -301,48 +312,5 @@ def check_import_contract(workspace_dir: str | Path, rel_file: str) -> list[str]
             violations.append(
                 f"Import contract violation: {rel_file} imports {', '.join(missing)} from {target}, "
                 f"which that module does not define. Available in {target}: {', '.join(available) or '(none)'}."
-            )
-    return violations
-
-
-def check_test_contract(
-    workspace_dir: str | Path = "workspace",
-    matrix_path: str | Path = "state/hypergraph_matrix.json",
-    only_paths: set[str] | None = None,
-) -> list[str]:
-    """For every hyperedge coupling a `test_*.py` node with a `.py` module node, report module symbols the
-    test uses that the module does not define. Returns one message per (test, module) pair with violations.
-    `only_paths` limits the pairs to those touching the given files (the scope of one task)."""
-    w_dir = resolve_adk_path(workspace_dir)
-    data: dict[str, Any] = read_json_state(matrix_path)
-    nodes: dict[str, Any] = data.get("nodes", {})
-    pairs: set[tuple[str, str]] = set()
-    for members in data.get("edges", {}).values():
-        paths = [str(nodes.get(m, {}).get("path", "")) for m in members]
-        py_paths = [p for p in paths if p.endswith(".py")]
-        for test_path in py_paths:
-            if Path(test_path).name.startswith("test_"):
-                pairs.update(
-                    (test_path, mod) for mod in py_paths if mod != test_path and not Path(mod).name.startswith("test_")
-                )
-    if only_paths is not None:
-        pairs = {(t, m) for t, m in pairs if t in only_paths or m in only_paths}
-
-    violations: list[str] = []
-    for test_path, module_path in sorted(pairs):
-        test_tree = _parse(w_dir / test_path)
-        module_tree = _parse(w_dir / module_path)
-        if test_tree is None or module_tree is None:
-            continue  # missing or unparsable files are reported by py_compile/pytest
-        defined = _module_names(module_tree)
-        if defined is None:
-            continue
-        stem = Path(module_path).stem
-        missing = sorted(_used_symbols(test_tree, stem) - defined)
-        if missing:
-            available = sorted(n for n in defined if not n.startswith("_"))
-            violations.append(
-                f"Hyperedge contract violation: {test_path} uses {', '.join(f'{stem}.{m}' for m in missing)}, "
-                f"which {module_path} does not define. Available in {module_path}: {', '.join(available) or '(none)'}."
             )
     return violations

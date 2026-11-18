@@ -48,7 +48,7 @@ def trace_rows(date: str, since: str, until: str):
             if hhmm < since or hhmm > until:
                 continue
             d = json.loads(line)
-            if d.get("provider") in ("mock", "custom_handler"):
+            if d.get("phase", "answer") != "answer" or d.get("provider") in ("mock", "custom_handler"):
                 continue
             m = re.search(r"_evolved_adk_state[\\/](\w+)[\\/]", d["agent_md"])
             d["_sandbox"] = m.group(1) if m else "?"
@@ -164,7 +164,7 @@ def section_sandboxes() -> None:
 
 
 _DIAGNOSIS_AGENTS = {"remediation_planner", "evolution_architect", "redteam_critic_guard", "code_auditor", "symbolic_auditor"}
-_PLANNING_AGENTS = {"task_planner", "task_critic_guard", "background_researcher", "discoverer_researcher", "sota_researcher"}
+_PLANNING_AGENTS = {"task_planner", "plan_critic_guard", "plan_change_guard", "background_researcher", "discoverer_researcher", "sota_researcher"}
 
 
 def _work_kind(agent: str, task_id: str) -> str:

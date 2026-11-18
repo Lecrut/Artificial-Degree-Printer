@@ -11,19 +11,21 @@ from pathlib import Path
 from typing import Any
 
 from adk.orchestration import agent_texts as texts
-from adk.core.models import read_json_state, write_json_state
+from adk.core.models import read_json_state
+from adk.hypergraph import save
+from adk.hypergraph.schedule import vertex_of
 from adk.tools.building import (
     edit_ast_node,
     edit_document_section,
 )
 from adk.tools.building.ast_editor import declared_names, whole_module_loss
-from adk.tools.building.hypergraph_sync import ensure_node
 from adk.orchestration.common import (
     _agent_for_path,
     _filter_bibtex,
     _merge_bibtex_entries,
     MaterializationError,
     OUTPUT_SCHEMA,
+    THESIS_FILE,
     _METADATA_KEYS,
 )
 
@@ -94,9 +96,9 @@ class WriteGateMixin:
         writer: dict[str, Any] | None,
         plot_name: str = "plot_results.py",
     ) -> None:
-        """Remember who wrote which files (node `last_writer`) and queue them for the next verification's scope.
-        Two kinds of write are logged, not blocked (R6; the hard ban of Q12 waits for a measurement):
-        `OFF_TARGET_WRITE` — outside the task's node and its hyperedge neighbours;
+        """Remember who wrote which files (`last_writer` on their vertex in H) and queue them for the next
+        verification's scope. Two kinds of write are logged, not blocked (R6):
+        `OFF_TARGET_WRITE` — outside the task's vertex and the members of its bags;
         `CROSS_ROLE_WRITE` — a Python file of the other role (a coder's test, a tester's module)."""
         ws_root = self.workspace_dir.resolve()
         written = sorted(dest.relative_to(ws_root).as_posix() for dest in originals if dest.exists())
@@ -105,17 +107,15 @@ class WriteGateMixin:
         pending: set[str] = getattr(self, "_written_since_verification", set())
         pending.update(written)
         self._written_since_verification = pending
-        if not Path(self.matrix_path).exists():
-            return  # no hypergraph yet (bare state directory): nothing to annotate
-        for rel in written:
-            ensure_node(rel, self.matrix_path)
-        data = read_json_state(self.matrix_path)
-        nodes: dict[str, dict[str, Any]] = data.get("nodes", {})
-        by_path = {str(meta.get("path", "")): node_id for node_id, meta in nodes.items()}
-        if writer:
+        h = self._project_h()
+        if h is not None and writer:
             for rel in written:
-                nodes[by_path[rel]]["last_writer"] = dict(writer)
-            write_json_state(self.matrix_path, data)
+                owner = h.owner_of(rel)
+                if owner is not None:
+                    h.vertices[owner].last_writer = dict(writer)
+            save(h, self.hypergraph_path)
+        if h is not None and THESIS_FILE in written:
+            self._record_citations()
         if not writer:
             return
         agent = str(writer.get("agent") or "")
@@ -131,14 +131,16 @@ class WriteGateMixin:
                 self._record_evolution_event(
                     {"type": "CROSS_ROLE_WRITE", "node": node_path, "files": cross_role, **writer}
                 )
-        if agent == "harness":
-            return  # the stubs of every planned module, written from σ
-        own = by_path.get(node_path)
+        if agent == "harness" or h is None:
+            return  # the stubs of every planned module, written from σ; without a plan there are no bags
+        own = h.owner_of(node_path) or vertex_of(h, node_path, "")
+        # A thesis task belongs to the chapters' bags: the bibliography and research files they cite are its own.
+        owns = {own} if own else {v for v in h.vertices if node_path == THESIS_FILE and v.startswith(f"{THESIS_FILE}#ch")}
         allowed = {node_path}
-        for members in data.get("edges", {}).values():
-            if own in members:
-                allowed.update(str(nodes.get(m, {}).get("path", "")) for m in members)
-        off_target = [rel for rel in written if rel not in allowed]
+        for edge in h.edges.values():
+            if edge.type != "S" and owns & set(edge.members):
+                allowed.update(f for member in edge.members if member in h.vertices for f in h.files_of(member))
+        off_target = [rel for rel in written if rel not in allowed and h.owner_of(rel) not in (*owns, None)]
         if off_target:
             self._record_evolution_event(
                 {"type": "OFF_TARGET_WRITE", "node": node_path, "files": off_target, **writer}

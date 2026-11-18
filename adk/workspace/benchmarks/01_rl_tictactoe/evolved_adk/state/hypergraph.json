@@ -1,227 +1,332 @@
 {
   "version": 2,
-  "built_from_plan": "",
   "vertices": {
     "config.py": {
-      "kind": "entry",
+      "kind": "code",
       "owner": "coder",
-      "state": "impl",
-      "description": "[Increment 1] Create configuration module `config.py` defining hyperparameters (learning_rate, discount_factor, epsilon, episodes, seed) and the experiment entrypoint function `run_experiment()` which loads config, trains, evaluates against random opponent, and saves results to `results/`. No arguments required.",
+      "state": "verified",
+      "description": "[Increment 1: Assumptions] Configuration module with experiment parameters and constants in config.py",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "T3",
+          "issues": [
+            "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py:34:32: F821 Undefined name `self`\nFound 1 error."
+          ]
+        },
+        {
+          "task_id": "T3",
+          "issues": [
+            "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py:28:32: F821 Undefined name `self`\nFound 1 error."
+          ]
+        },
+        {
+          "task_id": "T3",
+          "issues": [
+            "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py:28:32: F821 Undefined name `self`\nFound 1 error."
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "Q3_FIX_config_6"
+      },
+      "files": []
+    },
+    "env.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "[Increment 1: Assumptions] Tic-Tac-Toe game environment (board, moves, win detection) in env.py",
       "attempts": 4,
       "history": [
         {
-          "task_id": "T13",
+          "task_id": "T14",
           "issues": [
-            "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py:52:29: F821 Undefined name `get_state`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py:57:44: F821 Undefined name `get_state`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py:65:39: F821 Undefined name `get_state`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py:74:50: F821 Undefined name `get_state`\nadk\\w",
-            "Traceback (most recent call last):\n  File \"<string>\", line 56, in <module>\n    fn()\n    ~~^^\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py\", line 35, in run_experiment\n    from .helpers import check_win, count_x, count_o\nImportError: attempted relative import with no known parent package\n\nTraceback (most recent call last):\n  File \"<string>\", line 67, in <module>\n    plot_results.generate_plots(\".\")\n    ~~~~~~~~~~"
+            "Pytest failure: F....                                                                                                                                                                                                                                                                                                [100%]\n================================================================================================================================================ FAILURES ==============================",
+            "Pytest failure: tests/test_env.py:11 - assert None is False",
+            "Critical Implementation Error: The `env.py` implementation of `TicTacToeEnv` contains a fatal logic flaw in `_check_win`. Specifically, the line `if all((cell != 0 for cell in self.board)):` followed by `return None` incorrectly interprets a full board (draw condition) as 'no winner' but fails to return a specific draw signal or handle the termination state correctly according to the MDP definition. More critically, `experiment.py` attempts to unpack `done` from `env.step()` assuming it might be"
           ]
         },
         {
-          "task_id": "Q1_FIX3",
+          "task_id": "T14",
           "issues": [
-            "Traceback (most recent call last):\n  File \"<string>\", line 56, in <module>\n    fn()\n    ~~^^\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py\", line 35, in run_experiment\n    from .helpers import check_win, count_x, count_o, get_state\nImportError: attempted relative import with no known parent package\n\nTraceback (most recent call last):\n  File \"<string>\", line 67, in <module>\n    plot_results.generate_plots(\".\")\n   "
+            "BEHAVIOUR_MISMATCH [env.py]: the implementation does not give the results the interface specifies:\n**********************************************************************\nLine 5, in example0\nFailed example:\n    s\nExpected:\n    [0, 0, 0, 0, 0, 0, 0, 0, 0]\nGot:\n    [0, 2, 1, 0, 0, 1, 0, 1, 1]\n\n**********************************************************************\nLine 4, in example2\nFailed example:\n    env.reset()\nExpected:\n    [0, 0, 0, 0, 0, 0, 0, 0, 0]\nGot:\n    [1, 2, 0, 1, 0, 0, 2, 0, 2]",
+            "Pytest failure: F....                                                                                                                                                                                                                                                                                                [100%]\n================================================================================================================================================ FAILURES ==============================",
+            "Malformed symbolic tag missing ':' separator: \\ref_ast{scipy}. A pointer without a target (a bare file) is invalid: choose a full target from 'available_ast_symbols' / 'available_csv_columns', and write a file named in the prose as \\texttt{...}."
           ]
         },
         {
-          "task_id": "Q1_FIX3",
+          "task_id": "T14",
           "issues": [
-            "Traceback (most recent call last):\n  File \"<string>\", line 56, in <module>\n    fn()\n    ~~^^\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py\", line 35, in run_experiment\n    from helpers import check_win, count_x, count_o, get_state\nModuleNotFoundError: No module named 'helpers'\n\nTraceback (most recent call last):\n  File \"<string>\", line 67, in <module>\n    plot_results.generate_plots(\".\")\n    ~~~~~~~~~~~~~~~~~~~~~"
+            "BEHAVIOUR_MISMATCH [env.py]: the implementation does not give the results the interface specifies:\n**********************************************************************\nLine 5, in example0\nFailed example:\n    s\nExpected:\n    [0, 0, 0, 0, 0, 0, 0, 0, 0]\nGot:\n    [1, 2, 0, 0, 0, 2, 0, 1, 1]\n\n**********************************************************************\nLine 4, in example2\nFailed example:\n    env.reset()\nExpected:\n    [0, 0, 0, 0, 0, 0, 0, 0, 0]\nGot:\n    [0, 0, 2, 0, 1, 1, 1, 0, 1]",
+            "Pytest failure: F....                                                                                                                                                                                                                                                                                                [100%]\n================================================================================================================================================ FAILURES ==============================",
+            "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\experiment.py:154:24: F821 Undefined name `get_results`\nFound 1 error."
           ]
         },
-        {
-          "task_id": "Q1_FIX3",
-          "issues": [
-            "Traceback (most recent call last):\n  File \"<string>\", line 56, in <module>\n    fn()\n    ~~^^\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py\", line 35, in run_experiment\n    from helpers import check_win, count_x, count_o, get_state\nModuleNotFoundError: No module named 'helpers'\n\nTraceback (most recent call last):\n  File \"<string>\", line 67, in <module>\n    plot_results.generate_plots(\".\")\n    ~~~~~~~~~~~~~~~~~~~~~"
-          ]
-        }
-      ]
-    },
-    "environment.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "impl",
-      "description": "[Increment 1] Create `environment.py` defining the `TicTacToeEnv` class with methods `reset()`, `step(action)`, and `is_terminal()`. Include doctests for state representation (9-tuple of 0/1/-1).",
-      "attempts": 7,
-      "history": [
         {
           "task_id": "Q3_FIX1",
           "issues": [
-            "BEHAVIOUR_MISMATCH [environment.py]: the implementation does not give the results the interface specifies:\n**********************************************************************\nLine 11, in example1\nFailed example:\n    env.reset()\nExpected nothing\nGot:\n    (0, 0, 0, 0, 0, 0, 0, 0, 0)",
-            "Pytest failure: .....F                                                                                                                                                                                                                                                                                               [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        },
-        {
-          "task_id": "Q4_FIX1",
-          "issues": [
-            "Pytest failure: .....F                                                                                                                                                                                                                                                                                               [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        },
-        {
-          "task_id": "Q4_FIX1",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [environment.py]: the implementation does not give the results the interface specifies:\n**********************************************************************\nLine 11, in example1\nFailed example:\n    env.reset()\nExpected nothing\nGot:\n    (0, 0, 0, 0, 0, 0, 0, 0, 0)",
-            "Pytest failure: .....F                                                                                                                                                                                                                                                                                               [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        },
-        {
-          "task_id": "Q4_FIX1",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [environment.py]: the implementation does not give the results the interface specifies:\n**********************************************************************\nLine 11, in example1\nFailed example:\n    env.reset()\nExpected nothing\nGot:\n    (0, 0, 0, 0, 0, 0, 0, 0, 0)",
-            "Pytest failure: .....F                                                                                                                                                                                                                                                                                               [100%]\n================================================================================================================================================ FAILURES =============================="
+            "Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         }
-      ]
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "Q4_FIX_env_4"
+      },
+      "files": []
     },
-    "q_learning.py": {
+    "qagent.py": {
       "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "[Increment 2: Method] Q-Learning Agent (Q-table, epsilon-greedy, update rule) in qagent.py. NOTE: Fixed doctest for choose_action to be deterministic by mocking random.",
+      "attempts": 3,
+      "history": [
+        {
+          "task_id": "T14",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [qagent.py]: the implementation does not give the results the interface specifies:\nsource, filename, \"single\",\n        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                     compileflags, True), test.globs)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n      File \"<doctest example2[2]>\", line 1, in <module>\n        agent.update(s1, 4, 0.1, s2)\n        ~~~~~~~~~~~~^^^^^^^^^^^^^^^^\n      File \"qagent.py\", line 89, in update\n        self.q_table[key][act_id",
+            "Pytest failure: ..F....FF                                                                                                                                                                                                                                                                                            [100%]\n================================================================================================================================================ FAILURES ==============================",
+            "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py:28:32: F821 Undefined name `self`\nFound 1 error."
+          ]
+        },
+        {
+          "task_id": "T14",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [qagent.py]: the implementation does not give the results the interface specifies:\nLine 13, in example1\nFailed example:\n    assert action in valid\nException raised:\n    Traceback (most recent call last):\n      File \"C:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\doctest.py\", line 1395, in __run\n        exec(compile(example.source, filename, \"single\",\n        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                     compileflags, True), test.globs)\n     ",
+            "Pytest failure: F....F.                                                                                                                                                                                                                                                                                              [100%]\n================================================================================================================================================ FAILURES ==============================",
+            "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\config.py:28:32: F821 Undefined name `self`\nFound 1 error."
+          ]
+        },
+        {
+          "task_id": "T14",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [qagent.py]: the implementation does not give the results the interface specifies:\nLine 13, in example1\nFailed example:\n    assert action in valid\nException raised:\n    Traceback (most recent call last):\n      File \"C:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\doctest.py\", line 1395, in __run\n        exec(compile(example.source, filename, \"single\",\n        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                     compileflags, True), test.globs)\n     ",
+            "Pytest failure: F....F.                                                                                                                                                                                                                                                                                              [100%]\n================================================================================================================================================ FAILURES ==============================",
+            "BEHAVIOUR_MISMATCH [qagent.py]: the implementation does not give the results the interface specifies:\nLine 13, in example1\nFailed example:\n    assert action in valid\nException raised:\n    Traceback (most recent call last):\n      File \"C:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\doctest.py\", line 1395, in __run\n        exec(compile(example.source, filename, \"single\",\n        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                     compileflags, True), test.globs)\n     "
+          ]
+        },
+        {
+          "task_id": "T14",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [qagent.py]: the implementation does not give the results the interface specifies:\nLine 13, in example1\nFailed example:\n    assert action in valid\nException raised:\n    Traceback (most recent call last):\n      File \"C:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\doctest.py\", line 1395, in __run\n        exec(compile(example.source, filename, \"single\",\n        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                     compileflags, True), test.globs)\n     ",
+            "Pytest failure: F...F                                                                                                                                                                                                                                                                                                [100%]\n================================================================================================================================================ FAILURES ==============================",
+            "BEHAVIOUR_MISMATCH [qagent.py]: the implementation does not give the results the interface specifies:\nLine 13, in example1\nFailed example:\n    assert action in valid\nException raised:\n    Traceback (most recent call last):\n      File \"C:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\doctest.py\", line 1395, in __run\n        exec(compile(example.source, filename, \"single\",\n        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                     compileflags, True), test.globs)\n     "
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "Q4_FIX_qagent_8_FIX1"
+      },
+      "files": []
+    },
+    "opponent.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "[Increment 2: Method] Random Opponent (uniform selection) in opponent.py",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "T7",
+          "issues": [
+            "NOT_IMPLEMENTED [opponent.py]: a function still only raises NotImplementedError"
+          ]
+        },
+        {
+          "task_id": "T7",
+          "issues": [
+            "NOT_IMPLEMENTED [opponent.py]: a function still only raises NotImplementedError"
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "Q4_FIX_opponent_5"
+      },
+      "files": []
+    },
+    "experiment.py": {
+      "kind": "entry",
       "owner": "coder",
       "state": "impl",
-      "description": "[Increment 1] Create `q_learning.py` defining the `QAgent` class with `__init__(lr, gamma, epsilon)`, `act(state)`, `learn(state, action, reward, next_state)`. Include doctests for Q-table updates.",
-      "attempts": 5,
+      "description": "[Increment 3: Experiment] Experiment entrypoint: train Q-agent vs Random opponent, record metrics to results.csv in experiment.py. Fixed Q-update logic and removed numpy dependency.",
+      "attempts": 8,
       "history": [
         {
-          "task_id": "Q2_FIX2",
+          "task_id": "Q4_FIX_experiment_2",
           "issues": [
-            "BEHAVIOUR_MISMATCH [q_learning.py]: the implementation does not give the results the interface specifies:\n\nFailed example:\n    ns = (0,)*9; ns[0]=1\nException raised:\n    Traceback (most recent call last):\n      File \"C:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\doctest.py\", line 1395, in __run\n        exec(compile(example.source, filename, \"single\",\n        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                     compileflags, True), test.globs)\n                     ^^"
+            "Pytest failure: no tests ran in 0.05s",
+            "Traceback (most recent call last):\n  File \"<string>\", line 56, in <module>\n    fn()\n    ~~^^\n  File \"experiment.py\", line 125, in run\n    np = __import__('numpy').__dict__['np']\n         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\nKeyError: 'np'"
           ]
         },
         {
-          "task_id": "Q2_FIX4",
+          "task_id": "Q4_FIX_experiment_6",
           "issues": [
-            "BEHAVIOUR_MISMATCH [q_learning.py]: the implementation does not give the results the interface specifies:\n\nFailed example:\n    ns = (0,)*9; ns[0]=1\nException raised:\n    Traceback (most recent call last):\n      File \"C:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\doctest.py\", line 1395, in __run\n        exec(compile(example.source, filename, \"single\",\n        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                     compileflags, True), test.globs)\n                     ^^"
+            "Pytest failure: no tests ran in 0.05s"
           ]
         },
         {
-          "task_id": "Q2_FIX4",
+          "task_id": "Q4_FIX_experiment_6",
           "issues": [
-            "BEHAVIOUR_MISMATCH [q_learning.py]: the implementation does not give the results the interface specifies:\n\nFailed example:\n    ns = (0,)*9; ns[0]=1\nException raised:\n    Traceback (most recent call last):\n      File \"C:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\doctest.py\", line 1395, in __run\n        exec(compile(example.source, filename, \"single\",\n        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                     compileflags, True), test.globs)\n                     ^^"
+            "Pytest failure: no tests ran in 0.05s"
           ]
         },
         {
-          "task_id": "Q2_FIX4",
+          "task_id": "Q4_FIX_experiment_6",
           "issues": [
-            "BEHAVIOUR_MISMATCH [q_learning.py]: the implementation does not give the results the interface specifies:\n\nFailed example:\n    ns = (0,)*9; ns[0]=1\nException raised:\n    Traceback (most recent call last):\n      File \"C:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\doctest.py\", line 1395, in __run\n        exec(compile(example.source, filename, \"single\",\n        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                     compileflags, True), test.globs)\n                     ^^"
+            "Pytest failure: no tests ran in 0.05s"
           ]
         }
-      ]
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "Q4_CRITIC_FIX_2"
+      },
+      "files": []
     },
-    "baseline.py": {
-      "kind": "code",
-      "owner": "coder",
+    "tests/test_env.py": {
+      "kind": "test",
+      "owner": "tester",
       "state": "verified",
-      "description": "[Increment 1] Create `baseline.py` defining `RandomAgent` class inheriting from or compatible with interface, implementing `act(state)` returning uniform random valid action. Include doctests.",
-      "attempts": 1,
-      "history": []
+      "description": "[Increment 1: Assumptions] Unit tests for TicTacToeEnv (reset, valid_moves, step logic) in tests/test_env.py",
+      "attempts": 3,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "Q3_FIX_test_env_4_FIX1"
+      },
+      "files": []
     },
-    "plot_results.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "verified",
-      "description": "",
-      "attempts": 1,
-      "history": [
-        {
-          "task_id": "Q1_FIX4",
-          "issues": [
-            "Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\plot_results.py:69:13: F821 Undefined name `sns`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\plot_results.py:82:13: F821 Undefined name `sns`\nFound 2 errors."
-          ]
-        }
-      ]
-    },
-    "tests/test_environment.py": {
+    "tests/test_qagent.py": {
       "kind": "test",
       "owner": "tester",
       "state": "written",
-      "description": "[Increment 2] Write unit tests for `environment.py` in `tests/test_environment.py`. Test state transitions, win/loss/draw detection.",
-      "attempts": 5,
-      "history": []
+      "description": "[Increment 2: Method] Unit tests for QLearningAgent (get_q_values, update, decay) in tests/test_qagent.py",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "T14_FIX_3"
+      },
+      "files": []
     },
-    "tests/test_q_learning.py": {
-      "kind": "test",
-      "owner": "tester",
-      "state": "written",
-      "description": "[Increment 2] Write unit tests for `q_learning.py` in `tests/test_q_learning.py`. Test epsilon-greedy action selection and Q-value updates with known inputs.",
-      "attempts": 2,
-      "history": []
-    },
-    "tests/test_baseline.py": {
+    "tests/test_opponent.py": {
       "kind": "test",
       "owner": "tester",
       "state": "verified",
-      "description": "[Increment 2] Write unit tests for `baseline.py` in `tests/test_baseline.py`. Test that random agent only picks valid moves.",
+      "description": "[Increment 2: Method] Unit tests for RandomOpponent (valid move selection) in tests/test_opponent.py",
       "attempts": 1,
-      "history": []
-    },
-    "results/lit_review.md": {
-      "kind": "research",
-      "owner": "researcher",
-      "state": "verified",
-      "description": "[Increment 1] Perform background research. Write `results/lit_review.md` covering MDP definition, Tabular Q-Learning convergence conditions, and Tic-Tac-Toe game theory (drawn game).",
-      "attempts": 1,
-      "history": []
+      "history": [],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "T9"
+      },
+      "files": []
     },
     "results.csv": {
       "kind": "data",
       "owner": null,
-      "state": "stale",
+      "state": "verified",
       "description": "",
       "attempts": 0,
-      "history": []
+      "history": [],
+      "last_writer": null,
+      "files": []
     },
     "references.bib": {
       "kind": "bib",
       "owner": "writer",
-      "state": "spec",
+      "state": "verified",
       "description": "",
       "attempts": 0,
-      "history": []
+      "history": [],
+      "last_writer": null,
+      "files": []
     },
     "thesis.md#ch1": {
       "kind": "chapter",
       "owner": "writer",
-      "state": "spec",
-      "description": "Rozdział 1: Wstęp i Cel Pracy — Motywacja, definicja problemu gry w kółko i krzyżyk jako MDP, teza badawcza.",
-      "attempts": 0,
-      "history": []
+      "state": "verified",
+      "description": "Rozdział 1: Wstęp — Uzasadnienie tematu, cel pracy, teza badawcza i zakres opracowania.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": []
     },
     "thesis.md#ch2": {
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Rozdział 2: Przegląd Literatury — Teoria procesów decyzyjnych Markowa (MDP), algorytm Q-Learning, wcześniejsze aplikacje RL w grach.",
-      "attempts": 1,
-      "history": []
+      "description": "Rozdział 2: Przegląd Literatury — Podstawy uczenia przez wzmacnianie (MDP), algorytm Q-Learning, aplikacje w grach.",
+      "attempts": 2,
+      "history": [],
+      "last_writer": null,
+      "files": []
     },
     "thesis.md#ch3": {
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Rozdział 3: Metodyka Badania — Opis środowiska (stan, akcje, nagrody), architektura agenta Q-Learning, hiperparametry i ustawienia eksperymentu.",
+      "description": "Rozdział 3: Modelowanie i Projekt Systemu — Reprezentacja stanu Tic-Tac-Toe jako MDP, architektura agenta Q-Learning.",
       "attempts": 1,
-      "history": []
+      "history": [],
+      "last_writer": null,
+      "files": []
     },
     "thesis.md#ch4": {
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Rozdział 4: Wyniki Eksperymentu — Analiza krzywych konwergencji, statystyki zwycięstw/remisów/porażek, porównanie z basline losowym.",
+      "description": "Rozdział 4: Metodologia Badania — Parametry eksperymentu (LR, Gamma, Epsilon), procedura trenowania i ewaluacji.",
       "attempts": 1,
-      "history": []
+      "history": [],
+      "last_writer": null,
+      "files": []
     },
     "thesis.md#ch5": {
       "kind": "chapter",
       "owner": "writer",
-      "state": "spec",
-      "description": "Rozdział 5: Wnioski — Podsumowanie efektów nauki, ograniczenia podejścia tablicowego, kierunki przyszłych prac.",
+      "state": "drafted",
+      "description": "Rozdział 5: Wyniki Eksperymentu — Analiza wyników (win_rate, avg_reward) w zależności od etapu trenowania.",
+      "attempts": 3,
+      "history": [],
+      "last_writer": null,
+      "files": []
+    },
+    "thesis.md#ch6": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Rozdział 6: Wnioski — Podsumowanie, weryfikacja tezy i kierunki dalszych prac.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": []
+    },
+    "tests/test_experiment.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "written",
+      "description": "",
       "attempts": 0,
-      "history": []
+      "history": [],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "T14_FIX_7"
+      },
+      "files": []
     }
   },
   "edges": {
     "I:config.py": {
       "type": "I",
       "members": {
-        "config.py": "P"
+        "config.py": "P",
+        "experiment.py": "C"
       },
       "spec": {
         "import": "config",
@@ -230,39 +335,39 @@
             "kind": "const",
             "type": "float"
           },
-          "discount_factor": {
+          "DISCOUNT_FACTOR": {
             "kind": "const",
             "type": "float"
           },
-          "initial_epsilon": {
+          "EPSILON_START": {
             "kind": "const",
             "type": "float"
           },
-          "min_epsilon": {
+          "EPSILON_END": {
             "kind": "const",
             "type": "float"
           },
-          "epsilon_decay": {
+          "EPSILON_DECAY": {
             "kind": "const",
             "type": "float"
           },
-          "n_episodes": {
+          "MAX_EPISODES": {
             "kind": "const",
             "type": "int"
           },
-          "seed": {
+          "NUM_EVAL_GAMES": {
             "kind": "const",
             "type": "int"
           },
-          "output_dir": {
+          "TRAIN_SEED": {
             "kind": "const",
-            "type": "str"
+            "type": "int"
           },
-          "figures_dir": {
+          "EVAL_SEED": {
             "kind": "const",
-            "type": "str"
+            "type": "int"
           },
-          "run_experiment": {
+          "get_results_dir": {
             "kind": "func",
             "params": [],
             "required": []
@@ -270,20 +375,23 @@
         },
         "uses": {},
         "packages": [
-          "os"
+          "os",
+          "typing"
         ],
         "behaviour": []
       },
-      "fingerprint": null
+      "fingerprint": null,
+      "observed": []
     },
-    "I:environment.py": {
+    "I:env.py": {
       "type": "I",
       "members": {
-        "environment.py": "P",
-        "tests/test_environment.py": "T"
+        "env.py": "P",
+        "experiment.py": "C",
+        "tests/test_env.py": "T"
       },
       "spec": {
-        "import": "environment",
+        "import": "env",
         "symbols": {
           "TicTacToeEnv": {
             "kind": "class"
@@ -302,98 +410,105 @@
             ],
             "required": []
           },
+          "TicTacToeEnv.get_valid_moves": {
+            "kind": "method",
+            "params": [
+              "self"
+            ],
+            "required": []
+          },
           "TicTacToeEnv.step": {
             "kind": "method",
             "params": [
               "self",
-              "action",
-              "player"
+              "action"
             ],
             "required": [
-              "action",
-              "player"
+              "action"
             ]
           },
-          "TicTacToeEnv.get_valid_actions": {
-            "kind": "method",
-            "params": [
-              "self",
-              "state"
-            ],
-            "required": [
-              "state"
-            ]
+          "TicTacToeEnv.board": {
+            "kind": "attr"
           },
-          "TicTacToeEnv.is_terminal": {
-            "kind": "method",
-            "params": [
-              "self",
-              "state"
-            ],
-            "required": [
-              "state"
-            ]
+          "TicTacToeEnv.current_player": {
+            "kind": "attr"
           },
-          "TicTacToeEnv.check_win": {
-            "kind": "method",
-            "params": [
-              "self",
-              "state",
-              "player"
-            ],
-            "required": [
-              "state",
-              "player"
-            ]
+          "TicTacToeEnv.done": {
+            "kind": "attr"
+          },
+          "TicTacToeEnv.winner": {
+            "kind": "attr"
           }
         },
         "uses": {},
         "packages": [
-          "numpy",
+          "copy",
           "typing"
         ],
         "behaviour": [
-          "Reset environment and return initial state.\n\n>>> env = TicTacToeEnv()\n>>> state = env.reset()\n>>> len(state) == 9 and all(s == 0 for s in state)\nTrue",
-          "Execute action for the given player.\n\nArgs:\n    action: Index 0-8 on the board.\n    player: 1 for X, -1 for O.\n    \nReturns:\n    Tuple of (next_state, reward, done).\n    \n>>> env = TicTacToeEnv()\n>>> env.reset()\n>>> next_s, r, d = env.step(4, 1)\n>>> next_s[4] == 1\nTrue"
+          "Resets the board to initial empty state and returns it.\n\n>>> env = TicTacToeEnv()\n>>> s = env.reset()\n>>> s\n[0, 0, 0, 0, 0, 0, 0, 0, 0]",
+          "Returns a list of indices (0-8) for empty cells.\n\n>>> env = TicTacToeEnv()\n>>> env.board[4] = 1\n>>> env.get_valid_moves() == [0,1,2,3,5,6,7,8]\nTrue",
+          "Executes an action. Returns (new_state, reward, done).\n\n>>> env = TicTacToeEnv()\n>>> env.reset()\n[0, 0, 0, 0, 0, 0, 0, 0, 0]\n>>> new_s, r, d = env.step(4)\n>>> new_s[4] == 1\nTrue"
         ]
       },
-      "fingerprint": null
+      "fingerprint": null,
+      "observed": []
     },
-    "I:q_learning.py": {
+    "I:qagent.py": {
       "type": "I",
       "members": {
-        "q_learning.py": "P",
-        "tests/test_q_learning.py": "T"
+        "qagent.py": "P",
+        "experiment.py": "C",
+        "tests/test_qagent.py": "T"
       },
       "spec": {
-        "import": "q_learning",
+        "import": "qagent",
         "symbols": {
-          "QAgent": {
+          "QLearningAgent": {
             "kind": "class"
           },
-          "QAgent.__init__": {
+          "QLearningAgent.__init__": {
             "kind": "method",
             "params": [
               "self",
-              "lr",
-              "gamma",
-              "epsilon"
+              "learning_rate",
+              "discount_factor",
+              "epsilon_start",
+              "epsilon_end",
+              "epsilon_decay"
             ],
             "required": []
           },
-          "QAgent.act": {
+          "QLearningAgent.reset": {
+            "kind": "method",
+            "params": [
+              "self"
+            ],
+            "required": []
+          },
+          "QLearningAgent.get_q_values": {
+            "kind": "method",
+            "params": [
+              "self",
+              "state"
+            ],
+            "required": [
+              "state"
+            ]
+          },
+          "QLearningAgent.choose_action": {
             "kind": "method",
             "params": [
               "self",
               "state",
-              "valid_actions"
+              "valid_moves"
             ],
             "required": [
               "state",
-              "valid_actions"
+              "valid_moves"
             ]
           },
-          "QAgent.learn": {
+          "QLearningAgent.update": {
             "kind": "method",
             "params": [
               "self",
@@ -408,43 +523,31 @@
               "reward",
               "next_state"
             ]
-          }
-        },
-        "uses": {},
-        "packages": [
-          "numpy",
-          "typing"
-        ],
-        "behaviour": [
-          "Select action using epsilon-greedy policy.\n\nReturns:\n    An integer index of the chosen action.\n    \n>>> agent = QAgent(epsilon=1.0)\n>>> # With epsilon=1.0, it always explores\n>>> import random\n>>> random.seed(42)\n>>> valid = [0, 1]\n>>> _ = agent.act((0,)*9, valid)",
-          "Update Q-value for the given transition.\n\n>>> agent = QAgent(lr=0.1)\n>>> s = (0,)*9\n>>> ns = (0,)*9; ns[0]=1\n>>> agent.learn(s, 0, 0.1, ns)"
-        ]
-      },
-      "fingerprint": null
-    },
-    "I:baseline.py": {
-      "type": "I",
-      "members": {
-        "baseline.py": "P",
-        "tests/test_baseline.py": "T"
-      },
-      "spec": {
-        "import": "baseline",
-        "symbols": {
-          "RandomAgent": {
-            "kind": "class"
           },
-          "RandomAgent.act": {
+          "QLearningAgent.decay_epsilon": {
             "kind": "method",
             "params": [
-              "self",
-              "state",
-              "valid_actions"
+              "self"
             ],
-            "required": [
-              "state",
-              "valid_actions"
-            ]
+            "required": []
+          },
+          "QLearningAgent.lr": {
+            "kind": "attr"
+          },
+          "QLearningAgent.gamma": {
+            "kind": "attr"
+          },
+          "QLearningAgent.epsilon": {
+            "kind": "attr"
+          },
+          "QLearningAgent.epsilon_end": {
+            "kind": "attr"
+          },
+          "QLearningAgent.epsilon_decay": {
+            "kind": "attr"
+          },
+          "QLearningAgent.q_table": {
+            "kind": "attr"
           }
         },
         "uses": {},
@@ -453,138 +556,266 @@
           "typing"
         ],
         "behaviour": [
-          "Return a random valid action.\n\n>>> valid = [0, 1]\n>>> agent = RandomAgent()\n>>> # Just ensures it returns one of the valid actions\n>>> res = agent.act((0,)*9, valid)\n>>> res in valid\nTrue"
+          "Returns Q-values for all possible actions in the given state. Returns zeros if state unseen.\n\n>>> agent = QLearningAgent()\n>>> s = [0]*9\n>>> len(agent.get_q_values(s))\n9",
+          "Chooses an action using epsilon-greedy policy based on valid moves.\n\n>>> import unittest.mock as mock\n>>> agent = QLearningAgent(epsilon_start=0.0)\n>>> s = [0]*9\n>>> # Ensure q_table has entry for s to avoid default zeros bias if needed, though here it's fine\n>>> agent.get_q_values(s) \n[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]\n>>> valid = list(range(9))\n>>> # With epsilon=0, it should pick a random best (all equal here)\n>>> with mock.patch('random.random', return_value=0.9): # Exploit\n...     action = agent.choose_action(s, valid)\n>>> assert action in valid",
+          "Updates the Q-value for the given state-action pair.\n\n>>> agent = QLearningAgent()\n>>> s1 = [0]*9; s2 = [0]*9\n>>> agent.update(s1, 4, 0.1, s2)"
         ]
       },
-      "fingerprint": null
+      "fingerprint": null,
+      "observed": []
     },
-    "I:plot_results.py": {
+    "I:opponent.py": {
       "type": "I",
       "members": {
-        "plot_results.py": "P"
+        "opponent.py": "P",
+        "experiment.py": "C",
+        "tests/test_opponent.py": "T"
       },
       "spec": {
-        "import": "plot_results",
+        "import": "opponent",
         "symbols": {
-          "generate_plots": {
-            "kind": "func",
+          "RandomOpponent": {
+            "kind": "class"
+          },
+          "RandomOpponent.__init__": {
+            "kind": "method",
             "params": [
-              "output_dir"
+              "self",
+              "player_symbol"
+            ],
+            "required": []
+          },
+          "RandomOpponent.choose_action": {
+            "kind": "method",
+            "params": [
+              "self",
+              "valid_moves"
             ],
             "required": [
-              "output_dir"
+              "valid_moves"
             ]
+          },
+          "RandomOpponent.player_symbol": {
+            "kind": "attr"
           }
         },
         "uses": {},
         "packages": [
-          "matplotlib",
-          "pandas"
+          "random",
+          "typing"
+        ],
+        "behaviour": [
+          "Wybiera randomowy ruch z listy dostepnych.\n\n>>> opp = RandomOpponent()\n>>> valid = [0, 1]\n>>> action = opp.choose_action(valid)\n>>> assert action in valid"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:experiment.py": {
+      "type": "I",
+      "members": {
+        "experiment.py": "P",
+        "tests/test_experiment.py": "T"
+      },
+      "spec": {
+        "import": "experiment",
+        "symbols": {
+          "train_agent": {
+            "kind": "func",
+            "params": [],
+            "required": []
+          },
+          "evaluate_agent": {
+            "kind": "func",
+            "params": [],
+            "required": []
+          },
+          "run": {
+            "kind": "func",
+            "params": [],
+            "required": []
+          }
+        },
+        "uses": {
+          "config.py": [
+            "DISCOUNT_FACTOR",
+            "EPSILON_DECAY",
+            "EPSILON_END",
+            "EPSILON_START",
+            "EVAL_SEED",
+            "LEARNING_RATE",
+            "MAX_EPISODES",
+            "NUM_EVAL_GAMES",
+            "TRAIN_SEED",
+            "get_results_dir"
+          ],
+          "env.py": [
+            "TicTacToeEnv"
+          ],
+          "qagent.py": [
+            "QLearningAgent"
+          ],
+          "opponent.py": [
+            "RandomOpponent"
+          ]
+        },
+        "packages": [
+          "csv",
+          "os",
+          "random",
+          "typing"
         ],
         "behaviour": []
       },
-      "fingerprint": null
+      "fingerprint": null,
+      "observed": [
+        "tests/test_experiment.py"
+      ]
     },
     "R:run": {
       "type": "R",
       "members": {
-        "config.py": "P",
+        "experiment.py": "P",
         "results.csv": "O",
-        "plot_results.py": "C"
+        "config.py": "C",
+        "env.py": "C",
+        "opponent.py": "C",
+        "qagent.py": "C"
       },
       "spec": {
-        "entry": "config.py:run_experiment",
+        "entry": "experiment.py:run",
         "metrics": [
           "win_rate",
-          "draw_rate",
-          "loss_rate",
-          "average_reward"
+          "avg_reward"
         ]
       },
-      "fingerprint": "19b654b41d37b52ba8560b0f3b7f46ef2b7446fe0f071913fe38df8da62c0034"
+      "fingerprint": "80b1b29877a7d79a4aa21d83e09f0562066dc5c1ef323aeafe20527a5ff24ee5",
+      "observed": []
     },
     "N:thesis.md#ch1": {
       "type": "N",
       "members": {
         "thesis.md#ch1": "X",
-        "references.bib": "C",
-        "results/lit_review.md": "C"
+        "references.bib": "C"
       },
       "spec": {
-        "title": "Rozdział 1: Wstęp i Cel Pracy",
-        "focus": "Motywacja, definicja problemu gry w kółko i krzyżyk jako MDP, teza badawcza.",
+        "title": "Rozdział 1: Wstęp",
+        "focus": "Uzasadnienie tematu, cel pracy, teza badawcza i zakres opracowania.",
         "uses_results": false
       },
-      "fingerprint": null
+      "fingerprint": null,
+      "observed": []
     },
     "N:thesis.md#ch2": {
       "type": "N",
       "members": {
         "thesis.md#ch2": "X",
-        "references.bib": "C",
-        "results/lit_review.md": "C"
+        "references.bib": "C"
       },
       "spec": {
         "title": "Rozdział 2: Przegląd Literatury",
-        "focus": "Teoria procesów decyzyjnych Markowa (MDP), algorytm Q-Learning, wcześniejsze aplikacje RL w grach.",
+        "focus": "Podstawy uczenia przez wzmacnianie (MDP), algorytm Q-Learning, aplikacje w grach.",
         "uses_results": false
       },
-      "fingerprint": null
+      "fingerprint": null,
+      "observed": []
     },
     "N:thesis.md#ch3": {
       "type": "N",
       "members": {
         "thesis.md#ch3": "X",
-        "references.bib": "C",
-        "results/lit_review.md": "C",
-        "results.csv": "C"
+        "references.bib": "C"
       },
       "spec": {
-        "title": "Rozdział 3: Metodyka Badania",
-        "focus": "Opis środowiska (stan, akcje, nagrody), architektura agenta Q-Learning, hiperparametry i ustawienia eksperymentu.",
-        "uses_results": true
+        "title": "Rozdział 3: Modelowanie i Projekt Systemu",
+        "focus": "Reprezentacja stanu Tic-Tac-Toe jako MDP, architektura agenta Q-Learning.",
+        "uses_results": false
       },
-      "fingerprint": null
+      "fingerprint": null,
+      "observed": []
     },
     "N:thesis.md#ch4": {
       "type": "N",
       "members": {
         "thesis.md#ch4": "X",
         "references.bib": "C",
-        "results/lit_review.md": "C",
         "results.csv": "C"
       },
       "spec": {
-        "title": "Rozdział 4: Wyniki Eksperymentu",
-        "focus": "Analiza krzywych konwergencji, statystyki zwycięstw/remisów/porażek, porównanie z basline losowym.",
+        "title": "Rozdział 4: Metodologia Badania",
+        "focus": "Parametry eksperymentu (LR, Gamma, Epsilon), procedura trenowania i ewaluacji.",
         "uses_results": true
       },
-      "fingerprint": null
+      "fingerprint": null,
+      "observed": []
     },
     "N:thesis.md#ch5": {
       "type": "N",
       "members": {
         "thesis.md#ch5": "X",
         "references.bib": "C",
-        "results/lit_review.md": "C",
         "results.csv": "C"
       },
       "spec": {
-        "title": "Rozdział 5: Wnioski",
-        "focus": "Podsumowanie efektów nauki, ograniczenia podejścia tablicowego, kierunki przyszłych prac.",
+        "title": "Rozdział 5: Wyniki Eksperymentu",
+        "focus": "Analiza wyników (win_rate, avg_reward) w zależności od etapu trenowania.",
         "uses_results": true
       },
-      "fingerprint": null
+      "fingerprint": null,
+      "observed": []
+    },
+    "N:thesis.md#ch6": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch6": "X",
+        "references.bib": "C",
+        "results.csv": "C"
+      },
+      "spec": {
+        "title": "Rozdział 6: Wnioski",
+        "focus": "Podsumowanie, weryfikacja tezy i kierunki dalszych prac.",
+        "uses_results": true
+      },
+      "fingerprint": null,
+      "observed": []
     }
   },
   "order": [
     [
       "I:config.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:config.py",
       "R:run"
     ],
     [
-      "R:run",
-      "N:thesis.md#ch3"
+      "I:env.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:env.py",
+      "R:run"
+    ],
+    [
+      "I:experiment.py",
+      "R:run"
+    ],
+    [
+      "I:opponent.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:opponent.py",
+      "R:run"
+    ],
+    [
+      "I:qagent.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:qagent.py",
+      "R:run"
     ],
     [
       "R:run",
@@ -593,6 +824,10 @@
     [
       "R:run",
       "N:thesis.md#ch5"
+    ],
+    [
+      "R:run",
+      "N:thesis.md#ch6"
     ]
   ]
 }

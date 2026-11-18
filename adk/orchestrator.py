@@ -22,11 +22,12 @@ from adk.orchestration.common import (
     _RunState,
     _agent_for_path,
     MaterializationError,
-    build_grounded_symbols,
 )
 from adk.orchestration.gates import GatesMixin
 from adk.orchestration.routing import RoutingMixin
 from adk.orchestration.building import BuildingMixin
+from adk.orchestration.context import ContextMixin
+from adk.orchestration.plan_change import PlanChangeMixin
 from adk.orchestration.write_gate import WriteGateMixin
 from adk.orchestration.verification import VerificationMixin
 from adk.orchestration.factual_audit import FactualAuditMixin
@@ -47,7 +48,6 @@ __all__ = [
     "_fit_items",
     "_declared_vs_measured_metrics",
     "MaterializationError",
-    "build_grounded_symbols",
 ]
 
 
@@ -55,6 +55,7 @@ class NeuroSymbolicOrchestrator(
     PlanningMixin,
     PlanHealingMixin,
     BuildingMixin,
+    ContextMixin,
     WriteGateMixin,
     VerificationMixin,
     FactualAuditMixin,
@@ -64,6 +65,7 @@ class NeuroSymbolicOrchestrator(
     RoutingMixin,
     GatesMixin,
     PlanSpecMixin,
+    PlanChangeMixin,
     SpecGateMixin,
     SchedulerMixin,
 ):
@@ -95,7 +97,6 @@ class NeuroSymbolicOrchestrator(
         self.current_user_prompt: str = ""
         self.logger = get_process_logger()
 
-        self.matrix_path = self.state_dir / "hypergraph_matrix.json"
         self.task_queue_path = self.state_dir / "task_queue.json"
         self.registry_path = self.state_dir / "agent_registry.json"
         self.validation_report_path = self.state_dir / "validation_report.json"
@@ -116,8 +117,6 @@ class NeuroSymbolicOrchestrator(
     def run(
         self,
         user_prompt: str,
-        target_node: str = "v1",
-        simulate_first_attempt_fail: bool = False,
         missing_agent_specialization: str | None = None,
         contradictory_requirements: bool = False,
         max_replan_retries: int | None = None,
@@ -133,7 +132,7 @@ class NeuroSymbolicOrchestrator(
         self.logger.log_step(
             "ORCHESTRATOR_START",
             f"Start scenariusza: enable_layer4={self.enable_layer4}, include_docs={self.include_docs}, multi_cycle_waves={multi_cycle_waves}",
-            {"user_prompt": user_prompt, "target_node": target_node, "multi_cycle_waves": multi_cycle_waves},
+            {"user_prompt": user_prompt, "multi_cycle_waves": multi_cycle_waves},
         )
         if contradictory_requirements and self.enable_layer4:
             l4_res = self._run_evolution_step({"contradictory_requirements": True, "user_prompt": user_prompt})
@@ -141,7 +140,6 @@ class NeuroSymbolicOrchestrator(
 
         planned = self._plan_phase(
             user_prompt,
-            target_node=target_node,
             missing_agent_specialization=missing_agent_specialization,
             interactive_gates=interactive_gates,
             gate_approval_callback=gate_approval_callback,
@@ -159,12 +157,11 @@ class NeuroSymbolicOrchestrator(
             tasks=planned["tasks"],
         )
         self._print_queue(state.tasks)
-        injected_failures = self._simulated_failure_indices(state.tasks, simulate_first_attempt_fail, multi_cycle_waves)
 
         while True:
             # Layers 2 -> 3 -> [4] -> 1 -> 2 -> 3 for every task of the current queue generation.
             for idx, task in self._task_order(state):
-                stop = self._execute_task(state, idx, task, inject_failure=state.generation == 0 and idx in injected_failures)
+                stop = self._execute_task(state, idx, task)
                 if stop is not None:
                     return stop
 
@@ -172,10 +169,9 @@ class NeuroSymbolicOrchestrator(
             # WAITING (only with H): planned work whose dependencies never turned ready in this generation.
             if any(isinstance(t, dict) and t.get("status") in ("FAILED", "WAITING") for t in state.tasks):
                 health = self._run_verification_step(
-                    state.tasks[-1] if state.tasks else {"target_node": self._role_file("core"), "task_id": "QUEUE_FINAL"},
+                    state.tasks[-1] if state.tasks else {"target_node": self._entry_file() or THESIS_FILE, "task_id": "QUEUE_FINAL"},
                     include_docs=self.include_docs,
                     is_final_gate=False,
-                    inject_failure=False,
                 )
                 if health.get("status") != "PASS":
                     stop = self._next_generation(state, health)
@@ -231,12 +227,10 @@ class NeuroSymbolicOrchestrator(
             )
 
     def _print_queue(self, tasks: list[dict[str, Any]]) -> None:
-        matrix_nodes = read_json_state(self.matrix_path).get("nodes", {})
         print("\n" + "=" * 80, flush=True)
         print(f"[KOLEJKA ZADAN ZATWIERDZONA] Laczna liczba zadan do wykonania: {len(tasks)}", flush=True)
         for i, t in enumerate(tasks, 1):
-            n_id = str(t.get("target_node", "v1"))
-            n_file = matrix_nodes.get(n_id, {}).get("path", n_id)
+            n_file = str(t.get("target_node", ""))
             print(
                 f"  * Zadanie {t.get('task_id', f'T{i}')} ({i}/{len(tasks)}): "
                 f"[{n_file}] {t.get('description', 'Brak opisu')} -> Agent: {t.get('assigned_agent', 'seed_coder')}",
@@ -244,27 +238,12 @@ class NeuroSymbolicOrchestrator(
             )
         print("=" * 80 + "\n", flush=True)
 
-    def _simulated_failure_indices(
-        self, tasks: list[dict[str, Any]], simulate_first_attempt_fail: bool, multi_cycle_waves: bool
-    ) -> set[int]:
-        """Queue positions whose first verification is forced to fail. Mock testing only, never in live runs."""
-        if not simulate_first_attempt_fail or str(self.provider).strip().lower() != "mock":
-            return set()
-        if not multi_cycle_waves:
-            return {0}
-        roles = [self._role_of(t.get("target_node")) for t in tasks]
-        config_idx = next((i for i, r in enumerate(roles) if r == "config"), 0)
-        # No task targets the results file (U5): the results wave is the module that writes them.
-        results_idx = next((i for i, r in enumerate(roles) if r == "core"), min(2, len(tasks) - 1))
-        thesis_idx = next((i for i in range(len(roles) - 1, -1, -1) if roles[i] == "thesis"), len(tasks) - 1)
-        return {config_idx, results_idx, thesis_idx}
-
-    def _execute_task(self, state: _RunState, idx: int, task: dict[str, Any], inject_failure: bool) -> dict[str, Any] | None:
+    def _execute_task(self, state: _RunState, idx: int, task: dict[str, Any]) -> dict[str, Any] | None:
         """Build one task, verify it, repair it within budget. Returns a terminal payload only for a promotor pause."""
         task["status"] = "IN_PROGRESS"
         write_json_state(self.task_queue_path, state.tasks)
 
-        node_id, node_file = self._resolve_target_node(str(task.get("target_node", "v1")), task=task, fallback="v1")
+        node_id, node_file = self._resolve_target_node(str(task.get("target_node") or THESIS_FILE), task=task, fallback=THESIS_FILE)
         task["target_node"] = node_id
         tier = select_model_tier()
         t_id = str(task.get("task_id", f"T{idx + 1}"))
@@ -287,7 +266,7 @@ class NeuroSymbolicOrchestrator(
 
         print(f"  [WARSTWA 3: WERYFIKACJA] Audyt zadania {t_id} (pytest + ruff + kompilator symboliczny)...", flush=True)
         report = self._run_verification_step(
-            task, include_docs=self.include_docs, is_final_gate=False, inject_failure=inject_failure
+            task, include_docs=self.include_docs, is_final_gate=False
         )
         if builder_error_msg:
             report["status"] = "FAIL"
@@ -329,7 +308,7 @@ class NeuroSymbolicOrchestrator(
             "\n  [WARSTWA 3: BRAMKA KONCOWA OBRONY PRACY (GATE_3_DEFENSE_APPROVAL)] Pelna walidacja kodu, CSV i 6 rozdzialow pracy...",
             flush=True,
         )
-        final_report = self._run_verification_step(defense_task, include_docs=self.include_docs, is_final_gate=True, inject_failure=False)
+        final_report = self._run_verification_step(defense_task, include_docs=self.include_docs, is_final_gate=True)
         retries = 0
         while final_report.get("status") != "PASS" and retries < state.max_retries:
             retries += 1
@@ -358,7 +337,7 @@ class NeuroSymbolicOrchestrator(
             )
             print(f"  [WARSTWA 3: RE-AUDYT GATE 3] Ponowna weryfikacja obrony po naprawie #{retries}...", flush=True)
             final_report = self._run_verification_step(
-                defense_task, include_docs=self.include_docs, is_final_gate=True, inject_failure=False
+                defense_task, include_docs=self.include_docs, is_final_gate=True
             )
             if errors:
                 final_report.setdefault("warnings", []).extend(errors)

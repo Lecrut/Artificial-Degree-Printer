@@ -37,7 +37,7 @@ def test_failure_category_ignores_the_file() -> None:
 def test_every_gate_rejection_wrapper_is_harness_not_generic_and_outweighs_quoted_errors() -> None:
     """§VI.9 P2: two of the three builder-exception wrappers fell into `generic` (2026-11-14)."""
     for wrapper in (
-        texts.task_exception("T3", "n2", "a.py", texts.contract_breach(["a.py: f(x) -> f(y)"], "")),
+        texts.task_exception("T3", "n2", "a.py", texts.spec_breach(["API_MISSING [a.py]: f"], [])),
         texts.fast_repair_exception("T3_FIX1", "a.py", texts.symbol_edits_rejected(["a.py:f: SyntaxError"])),
         texts.repair_task_exception("T3_FIX", "n2", "a.py", texts.unparsable_code(["a.py:3: invalid syntax"])),
     ):

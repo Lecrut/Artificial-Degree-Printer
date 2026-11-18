@@ -18,6 +18,9 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-14 | **Audyt V — przebieg benchmarków 01–03 po etapach 0–2 → §VI** | pierwszy pomiar nowego kodu: 01 i 02 zakończone z listą braków, 03 urwane; 77 napraw po asercjach wysłanych do testera (błąd wprowadzony w etapie 1) | wszystkie 12 pozycji §VI.6 i decyzje D1–D3 wdrożone (§VI.8, 156/156); otwarte: przyczyna urwania 03 (diagnostyka `LLM_CALL_START` + limit zegarowy dodane) |
 | 2026-11-15 | **Przyczyny u podstaw → §VI.12** | przebieg 01 po §VI.11a (4 przebudowy, koniec z brakami): szkielet bez API z planu i z błędnymi ciałami, tester bez sygnatur testowanego modułu (`exports` z krawędzi importów), prompty testera/planera, pętla napraw (U1–U10) | U1–U6, U8–U10 wdrożone (§VI.12a, 178/178), U7 otwarte; teksty dla modelu po angielsku w `agent_texts.py`, rdzeń ≤ 400 linii; bez pomiaru na żywo |
 | 2026-11-16 | **Audyt VI — przebieg 01 i 02, błąd u podstaw hipergrafu → §VII** | 01 i 02 kończą się 4 przebudowami bez `results.csv`: punkt wejścia zablokowany po porażce `SKELETON` (blokada po pliku), plan zamrażany bez wykonania, `ast_editor` po cichu dopisuje i nadpisuje, kontrakt podąża za kodem, naprawy bez pamięci (X1–X6); diagnoza: nigdzie nie ma zapisanej intencji — hipergraf, kontrakt i `exports` są wyprowadzane z bieżących plików; pierwotne H=(V,E,Φ) zdegenerowało, bo worki nie miały σ, były za grube i bez porządku (L1–L3) | **projekt D4** (σ, worki I/R/N/S, porządek, H vs H_obs, harmonogram ze stanu) **wdrożony: A0–A10 (§VII.13, 215/215)**, bez przebiegu na żywo; ścieżka bez `interfaces` (mocki) zostaje po staremu; dalsze przyczyny T1–T3 (brak specyfikacji zachowania, harness jako maszyna napraw, brak werdyktów w logach) w §VII.10; **lista poprawek A0–A11 z priorytetami i nakładem: §VII.11**; obecna implementacja hipergrafu do przepisania (H1–H8, §VII.4a); **pełna specyfikacja hipergrafu — rdzeń harnessu: §VII.12** |
+| 2026-11-18 | **Audyt VII — pierwszy przebieg na żywo po D4 (01, 02 z 2026-11-17) → §VIII** | 01: `COMPLETED_WITH_GAPS` po 4 przebudowach — plan przeszedł walidację, ale był niewykonalny: doctesty planera niespełnialne (51/89 werdyktów FAIL, Y1), punkt wejścia `config.py` nie używa modułów planu (83× `DATA_FAILED`, Y2), krytyk planu nie widzi `interfaces`, a jego odrzucenie jest zamieniane na PASS (Y3); 02: `CRASHED` — `stub_source` usuwa `self.x = …` z `__init__`, bramka σ odrzuca stuby harnessu | **B1–B3, B5, B6 wdrożone 2026-11-18 (§IX.9, 215/215)**, bez przebiegu na żywo; otwarte B4, B7, B8 |
+| 2026-11-18 | **Audyt VIII — nieużywane i przestarzałe elementy → §IX** | martwych funkcji prawie brak; dług to kod poprzednich iteracji wykonywany obok D4: stara `hypergraph_matrix.json` nadal nadaje id, cel, kontekst i zakres weryfikacji (15 modułów); rozdziały mapowane regexem i reguła „6 rozdziałów” sprzeczna z planem; przełączniki demo mocków na żywo (wymuszony `AGENT_CREATED` w 02, atrapa wykresu); trzy kopie przebiegu (piaskownica → `benchmarks/<slug>` → lustro w korzeniu, publikacja uruchamia eksperyment drugi raz); mocki 26% kodu, importowane przez publikator | **C2, C3 wdrożone; C1, C4, C5, C6 częściowo (§IX.9)**; lustro `benchmarks/` usunięte; otwarte: rdzeń C1 (id `n*`, zakres, `last_writer` ze starej macierzy), reszta C4, C7, C8 |
+| 2026-11-18 | **Jeden hipergraf + kontrolowana zmiana planu → §X** | stara macierz i jej narzędzia usunięte; H jedynym zapisem struktury (cel, zakres, winny, kontekst agenta liczone z H); zasada „obietnic nie wolno złamać, rozszerzać wolno” z rejestrowaniem rozszerzeń w H; R obejmuje wszystkie moduły eksperymentu; cytowania jako członkowie N; ocena interfejsu przez planera po powtórzonym błędzie σ (B4) | **wdrożone (211/211)**, bez przebiegu na żywo; otwarte: odcisk dla każdego worka, rodzaj `config`, C4, B7, B8, C7, C8 |
 
 ---
 
@@ -3386,3 +3389,311 @@ Decyzja użytkownika: „robimy ten harness i pozostałe błędy”. Pytania otw
 - **Pomiar na żywo 01–03** — pierwszy punkt kontrolny z §VII.11; oczekiwane: plan poprawiany lub odrzucany w pierwszych minutach, brak zadań `SKELETON_FIX*`, brak dopisanych/zdublowanych symboli, `events.jsonl` z pełnymi wynikami, `results.csv` powstaje.
 
 ---
+# Audyt VII — 2026-11-18: pierwszy przebieg na żywo po D4 (01 i 02 z 2026-11-17) — plan niewykonalny od startu → §VIII
+
+Stan: **diagnoza, nic nie wdrożone.** Źródła: `adk/workspace/benchmarks/0{1,2}_*/logs/events.jsonl`, `evolved_adk/state/{hypergraph,academic_blueprint,evolution_history}.json`.
+
+## §VIII.1. Przebieg
+
+| | 01_rl_tictactoe | 02_ml_anomaly_detection |
+|---|---|---|
+| czas (UTC) | 20:50 → 22:08 (78 min) | 22:08 → 22:15 (7 min) |
+| wywołania LLM | 200 (SML 176 / 46,8 min, LRM 24 / 21,4 min) | 4 (3× planer, 1× architekt) |
+| plan | `PLAN_CHECKED` attempt 0 bez naruszeń | 2 poprawki planisty, potem przeszedł |
+| koniec | `COMPLETED_WITH_GAPS` — „WYCZERPANO CZTERY PRZEBUDOWY KOLEJKI” | `CRASHED` zaraz po `H_BUILT` |
+| zadania | 11 DONE / 26 FAILED | żadne nie wystartowało |
+| `results.csv` | `stale` od 21:09 do końca; 83× `DATA_FAILED` | brak |
+| ewolucja | 3× `AGENT_MUTATED` (seed_coder), 1× konsolidacja, 2× `MUTATION_REJECTED`, 7× `HARNESS_BUG_REPORTED` | 1× `AGENT_CREATED` (`dyn_anomaly_ml_specialist`) |
+
+Co zadziałało w 01 (D4 robi to, co miał): walidacja planu, budowa H, stuby bez zadania `SKELETON`, `baseline.py` + test, `plot_results.py`, przegląd literatury, rozdziały 2–4 `verified`; `FILE_OUTSIDE_PLAN` poprawnie blokował wymyślone pliki; `WAITING` poprawnie wstrzymywał rozdział 5 przy nieaktualnych wynikach.
+
+**Wniosek główny: to nie było „blisko, zabrakło prób”.** Specyfikacja z planu była w dwóch miejscach niespełnialna, walidacja planu tego nie wykryła, a harness traktował σ jako nieomylne i przypisywał winę koderowi. Więcej prób nie mogło pomóc.
+
+## §VIII.2. Przyczyny (01)
+
+### Y1. Doctesty planera nie mogą przejść — 51 z 89 werdyktów FAIL
+
+`BEHAVIOUR_MISMATCH`: `environment.py` 35×, `q_learning.py` 16×. Oba moduły wracały we wszystkich 4 generacjach (`Q1_FIX_environment_6…11`, `Q1_FIX_q_learning_7…12`, `Q2_FIX3/4`).
+
+- `q_learning.py`, `QAgent.learn`: `>>> ns = (0,)*9; ns[0]=1` — przypisanie do krotki, zawsze `TypeError`, niezależnie od implementacji.
+- `environment.py`, `TicTacToeEnv.step`: `>>> env.reset()` **bez oczekiwanego wyjścia**, a doctest `reset` wymaga, by `reset()` zwracał planszę → doctest `step` zawsze dostaje nieoczekiwany wydruk krotki. Dwa przykłady σ są wzajemnie sprzeczne.
+
+Dlaczego przeszło: `code_violations` sprawdza tylko formę (import stubów, typy stałych, punkt wejścia bez argumentów, nazwy w opisach). Doctesty nie są wykonywane przy walidacji planu — dopiero `check_behaviour` na implementacji.
+
+Dlaczego się zapętliło: winny = `culprit` ustalenia σ = plik modułu → koder. A9 (2 próby autora, potem `REMEDIATION_SKIPPED`) odcina planera naprawczego, a tylko on mógł zmienić σ. `_change_spec` istnieje, ale wyzwala go wyłącznie `contract_change` zgłoszony przez buildera. Nie ma ścieżki „wyrocznia jest błędna”.
+
+### Y2. Punkt wejścia nie używa zaplanowanych modułów — 83× `DATA_FAILED`
+
+Planer: `entrypoint = config.py:run_experiment`, a interfejs `config.py` nie importuje `environment.py` ani `q_learning.py` (σ: `uses = {}`). W H porządek ma tylko `I:config.py ≺ R:run`; worki I metody i środowiska nie poprzedzają eksperymentu.
+
+Skutki:
+- koder `config.py` pisał całą grę od nowa w `run_experiment` i wymyślał `helpers.py` (`FILE_OUTSIDE_PLAN` ×2 — słusznie); eksperyment padał na `No module named 'helpers'` (40×), `attempted relative import` (17×), pusty `max()` (16×), `NameError get_state` (7×);
+- `results.csv` `stale` od 21:09 do końca → rozdział 5 i `Q3_PDF`/`Q4_PDF` w `WAITING` przez wszystkie generacje;
+- promień rażenia błędny: zmiana `q_learning.py` nie unieważnia wyników, bo eksperyment formalnie od niego nie zależy.
+
+Dlaczego przeszło: żaden niezmiennik nie wymaga, by punkt wejścia (P w `R:run`) importował cokolwiek z planu.
+
+### Y3. Krytyk planu jest atrapą
+
+`task_critic_guard` (`planning.py:325-357`):
+- wołany **po** `_build_project_hypergraph` — stuby już zapisane, σ zamrożone;
+- dostaje `tasks` i starą `hypergraph_matrix`, **nie dostaje `interfaces`** (tam były Y1 i Y2);
+- odrzucenie → `_normalize_and_heal_task_plan` i wpisanie `{"status": "PASS", "healed_in_layer1": True}`; nic nie wraca do planera;
+- tier SML.
+
+Założenie z `adk_architecture.txt` („strażnicy jako sztywne bramki jakości”) w praktyce nie obowiązuje.
+
+### Y4. Mniejsze (01)
+
+- **Wskaźniki pisarza:** `\ref_*` z całymi zdaniami w środku i zepsutym kodowaniem (`Symbol 'generate_plots>, ma wygenerowa� …'`); wszystkie zadania `Q*_CRITIC` i `Q*_PDF` FAILED.
+- **`TEST_INVALID_ON_STUBS` z „failed on setup … line 12”** dla `tests/test_environment.py`, którego ostatnia wersja nie ma fixture'ów — do sprawdzenia, czy to nie usterka `validate_test_on_stubs` (katalog tymczasowy, `conftest`, ścieżki).
+- **18 min bez zadań** między `TASK_WAITING T15` (21:09:42) a `QUEUE_REBUILT` gen. 1 (21:27:58) — audyt stanu / weryfikacja zdrowia; do rozbicia w `analyze_run.py`.
+
+## §VIII.3. Przyczyna (02): harness odrzuca własne stuby — potwierdzone w kodzie
+
+`SPEC_WRITE_REJECTED` na zapisie `H_STUBS`: `API_MISSING … ZScoreBaseline.threshold`, `RobustEnsembleDetector.n_estimators, threshold_percentile`.
+
+- σ (A4) zbiera atrybuty klas także z `self.x = …` w `__init__` (interfejs planera: `self.threshold = threshold`);
+- `contract_check.stub_source` zamienia **każde** ciało metody, także `__init__`, na docstring + `raise NotImplementedError` → przypisanie znika → H_obs stuba nie ma atrybutu → bramka σ odrzuca zapis harnessu → wyjątek, `CRASHED`.
+
+Każdy plan, w którym atrybut publiczny jest deklarowany przypisaniem w `__init__` zamiast adnotacją klasy, wywraca przebieg przed pierwszym zadaniem. Testy e2e z §VII.13 tego nie łapią (skryptowany planer deklaruje atrybuty adnotacjami).
+
+## §VIII.4. Plan napraw (propozycja, do decyzji)
+
+| # | co | gdzie | nakład | zamyka |
+|---|---|---|---|---|
+| B1 | **doctesty σ wykonywane przy walidacji planu na stubach**: wolno paść tylko z `NotImplementedError` (ta sama reguła co `validate_test_on_stubs`) → `DOCTEST_INVALID_ON_STUBS` | `hypergraph/build.py::code_violations`, `oracles.py` | mały | Y1 (`ns[0]=1`) |
+| B2 | **statycznie: wywołanie bez oczekiwanego wyjścia do funkcji/metody o typie zwrotnym ≠ `None`** → `DOCTEST_DISCARDS_RETURN` (albo wymóg `_ = …`) | jw. | mały | Y1 (`env.reset()`) |
+| B3 | **punkt wejścia musi importować zaplanowany moduł kodu** (gdy plan ma inne moduły niż konfiguracja i wykresy) → `ENTRYPOINT_USES_NO_MODULE` | `code_violations` | mały | Y2, porządek ≺, promień rażenia |
+| B4 | **wina na σ po powtórzeniu**: ten sam przykład doctestu pada w ≥ 2 kolejnych zadaniach na wierzchołku → winny plan; poprawka jednego docstringu przez planera (`_change_spec`, `SPEC_CHANGED`) zamiast kolejnego zadania kodera | `repair.py`, `spec_gate.py` | średni | Y1 w trakcie przebiegu; zawór na to, czego B1–B3 nie złapią |
+| B5 | **krytyk planu przed budową H, z `interfaces`, bez wymuszonego PASS**: uwagi → `error_feedback` planisty w pętli `_validated_plan`; zakres: semantyka (eksperyment odpowiada na tezę, baseline, sens doctestów), nie to, co sprawdza kod | `planning.py`, `plan_spec.py`, `task_critic_guard.md` | średni | Y3 |
+| B6 | **stub zachowuje publiczne przypisania `self.<nazwa> = …`** jako adnotacje klasy (albo `__init__` zostawia przypisania przed `raise`) | `contract_check.stub_source` | mały | §VIII.3 (crash 02) |
+| B7 | wskaźniki pisarza: odrzucać `\ref_*` z prozą w celu już w bramce zapisu; sprawdzić kodowanie w ścieżce pisarza | `write_gate.py`, `ref_compiler.py` | mały | Y4 |
+| B8 | zweryfikować „failed on setup” w `validate_test_on_stubs` | `oracles.py` | mały | Y4 |
+
+Kolejność proponowana: **B6** (bez tego 02 nie startuje) → **B1–B3** (niewykonalny plan odrzucany w pierwszych minutach) → B4 → B5 → B7, B8.
+
+Kryterium następnego pomiaru: 01 i 02 bez `BEHAVIOUR_MISMATCH` na przykładach, które nie mogą przejść; `results.csv` `verified` przed rozdziałami wyników; zero `DATA_FAILED` z powodu plików spoza planu; 02 dochodzi do pierwszego zadania.
+
+Kierunek (bez zmian względem §VII): hipergraf jako specyfikacja zostaje. Audyt pokazuje, że **σ trzeba walidować co do treści, nie tylko formy**, a harness musi dopuszczać błąd wyroczni.
+
+---
+# Audyt VIII — 2026-11-18: nieużywane i przestarzałe elementy, narzut poprzednich iteracji na hipergrafie → §IX
+
+Stan: **diagnoza, nic nie wdrożone.** Zlecenie użytkownika: „kopiowanie do folderu benchmarks nie ma sensu, a hipergraf wygląda, jakby miał narzut starych rzeczy z poprzednich iteracji”. Metoda: odczyt `runner.py`, `orchestration/*`, `hypergraph/*`, `tools/*`; skan definicji bez odwołań (`scan_dead.py`: nazwa występuje tylko w swojej definicji); porównanie z artefaktami przebiegu 01 z 2026-11-17.
+
+**Wniosek główny:** martwych funkcji prawie nie ma (sprzątanie z §VI.12b zadziałało). Dług jest gdzie indziej: **kod trzech poprzednich iteracji nadal się wykonuje obok D4**. Stara macierz `hypergraph_matrix.json` wciąż nadaje identyfikatory, wybiera cel zadania, liczy kontekst i zakres weryfikacji; przełączniki demonstracyjne mocków działają w przebiegach na żywo; publikacja i benchmarki kopiują ten sam przebieg w trzy miejsca. Zdanie z §VII.13 „ścieżka bez `interfaces` zostaje po staremu” jest dziś nieprawdziwe w obie strony: osobnej ścieżki już nie ma (`contract_gate.py` usunięty 17.11), ale jej mechanizmy żyją w ścieżce głównej.
+
+## §IX.1. Kopiowanie wyników: trzy kopie jednego przebiegu
+
+Łańcuch w `benchmarks/runner.py`:
+1. `_prepare_evolved_adk_sandbox` → `_evolved_adk_state/<zadanie>/` ze `state/`, `agents/` i **całym `tools/`** (5,4 tys. linii, kopiowane od nowa przy każdym zadaniu). Z kopii `tools/` korzysta tylko `tools/verification/` jako katalog walidatorów promowanych przez ewolucję (`tools/evolution/sandbox_verifier.py`); reszta (`thesis_publisher.py`, `template_manager.py` …) jest martwą kopią — kod i tak importuje `adk.tools`.
+2. Po przebiegu: `copytree(sandbox_ws → benchmarks/<slug>/)` + `evolved_adk/{agents,state}` (`runner.py:419-429`).
+3. `publish_workspace_thesis_bundle` działa **na kopii**, nie na piaskownicy: ponownie uruchamia eksperyment, przenosi kod do `code/`, pracę do `thesis/`, wyniki do `results/` (`thesis_publisher.py:613+`). W `benchmarks/01_rl_tictactoe/` zostają `__pycache__` po plikach z korzenia i pusty katalog `rl_tictactoe/`.
+4. Lustro do korzenia repo: `benchmarks/` (`runner.py:560-572`). Ostatni commit w `benchmarks/`: **2026-11-08**; leżą tam `03_graph_pathfinding`, `04_federated_learning`, `benchmark_steps.md` sprzed 10 dni — lustro jest nieaktualne i śledzone w gicie.
+
+Skutki: 26 MB w `benchmarks/01_rl_tictactoe` + 31 MB w `_evolved_adk_state`; wynik publikacji (eksperyment uruchomiony drugi raz, w innym układzie katalogów) **nie jest tym, co zweryfikował harness**; analizując przebieg trzeba wiedzieć, która kopia jest „prawdziwa” (`analyze_run.py` czyta `benchmarks/<slug>/logs`, a w trakcie przebiegu — piaskownicę). `_evolved_adk_state/` trzyma też śmieci: `03_graph_pathfinding/` z wcześniejszego przebiegu oraz `agents/ state/ tools/ workspace/` w korzeniu (układ sprzed per-zadaniowych piaskownic).
+
+## §IX.2. Dwa hipergrafy naraz
+
+`state/hypergraph.json` (H, D4) i `state/hypergraph_matrix.json` (stara macierz, `n1…nK`, krawędzie z importów i wskaźników pracy) są **oba utrzymywane i oba używane**. `matrix_path` czyta 15 modułów (`building`, `factual_audit`, `planning`, `plan_healing`, `recovery`, `repair`, `routing`, `schedule`, `verification`, `write_gate`, `orchestrator`, `hypergraph_sync`, `import_sync`, `blast_radius`, `contract_check`).
+
+Co nadal robi stara macierz:
+| funkcja | gdzie | skutek w 01 (2026-11-17) |
+|---|---|---|
+| identyfikator zadania | `_execute_task` / `_resolve_target_node` przepisują `target_node` na `n6`, `n12`… | kolejka miesza `n6` i `thesis.md`; `schedule._task_vertex` tłumaczy `n*` z powrotem na ścieżki |
+| cel zadania z „ról” | `ROLE_ALIASES`, `_role_file("core"/"tests"/"thesis"/"config")`, `PLAN_OVERRIDE` w `_clean_task` | nieznany cel zgadywany słowami kluczowymi (`config` → plik konfiguracji, reszta → `core`) — mechanizm sprzed P1 |
+| kontekst agenta | `building.py:112-175`: `extract_hyperedge_exports`, `calculate_blast_radius`, `get_scoped_hypergraph_context`, `grounded_hypergraph_state` | dla kodu i testów liczone, a potem **wyrzucane** przez `_spec_payload` (`spec_gate.py:95`); pisarz i researcherzy dostają je nadal |
+| zakres weryfikacji, `done_when`, testy na krawędziach | `verification._task_scope(matrix_data)`, `building._done_when` | testy modułu brane z krawędzi importów, nie z worka I |
+| `last_writer`, odpowiedzialność | `write_gate._record_written` | wina z macierzy, σ-winny z H — dwa źródła |
+| planer naprawczy i krytyk planu | `repair.py:289`, `planning.py:43-44, 325-335` | dostają `hypergraph_matrix`, nie H (Y3 z §VIII) |
+
+Struktura starej macierzy w 01: `thesis.md` (`n6`) ma krawędź z **każdym** plikiem kodu i testu (E1–E8, stopień 9), bo krawędzie pochodzą ze wskaźników `\ref_ast`. Dlatego „hipergraf wygląda dziwnie”: to, co widać w stanie i w kontekście, to w dużej części stara macierz, nie H.
+
+## §IX.3. Niedokończone i dziwne miejsca w samym H
+
+- **Rozdziały mapowane wyrażeniem regularnym** (`hypergraph/schedule.vertex_of`: `chapter|rozdział N` w opisie). T1 („draft Section 1.1 (Introduction)…”) nie trafił na `thesis.md#ch1` → rozdział 1 został w stanie `spec` mimo `TASK_DONE`; jego praca nie istnieje dla H.
+- **Dwa spisy rozdziałów:** `planned_chapters` (planer, 5 rozdziałów → H) i kanoniczne 6 rozdziałów harnessu (`factual_audit.thesis_missing_chapters`, `CHAPTER_LABELS`, `_insert_missing_chapters` przy `multi_cycle_waves`), do tego `table_of_contents` z `research_recon` w blueprincie. W 01 bramka końcowa zażądała rozdziału 6, którego plan nie przewidywał → zadanie `Q1_CH6` poza H, FAILED.
+- **`references.bib` jako wierzchołek bez producenta:** żadne zadanie go nie tworzy, stan `spec` na zawsze; jest C w każdym worku N.
+- **Research jako C w każdym rozdziale**, także we wstępie (wszystkie pliki `research` doklejane do każdego N bez względu na treść).
+- **`built_from_plan` zawsze `""`** — pole nigdy nieustawiane; `Edge.fingerprint` używane tylko przez `R:run`.
+- **Porządek ≺ zależy wyłącznie od importów w stubach** — gdy punkt wejścia ich nie ma (Y2 z §VIII), metoda i środowisko nie poprzedzają eksperymentu, a promień rażenia ich pomija.
+- **`Vertex.history` trzyma surowe komunikaty** (ścieżki absolutne, tracebacki po kilkaset znaków) — trafiają do `previous_attempts` w ładunku; brak skrócenia jak `_fit_items`.
+- **`hypergraph.schedule.dependents`** — nieużywane (zapowiedziane unieważnianie następników nie powstało).
+- **Wierzchołek `entry` = plik konfiguracji** — H nie odróżnia konfiguracji od eksperymentu; planer może zlać je w jeden plik (01), a niezmienniki tego nie widzą.
+
+## §IX.4. Przełączniki demonstracyjne mocków działające na żywo
+
+`benchmarks/tasks.py` niesie flagi pisane pod demonstrację warstwy 4 w trybie mock; część nie jest bramkowana providerem:
+- **`missing_specialization`** → `orch.run(missing_agent_specialization=…)` → `planning.py:265` tworzy agenta niezależnie od planera. **Jedyne zdarzenie ewolucji w 02 (2026-11-17, `AGENT_CREATED dyn_anomaly_ml_specialist`) zostało wymuszone przez specyfikację benchmarku, nie przez planera.** Dotyczy 02, 03, 04.
+- **`trigger_prompt_consolidation`** (03): przed przebiegiem wstrzykuje do `seed_coder.md` trzy gotowe reguły („Avoid unbound global variables in train_and_evaluate” …) — bez bramki `mock` (`runner.py:303-312`).
+- **`trigger_tool_synthesis` + `trigger_prompt_consolidation`** (03): po przebiegu promuje gotowy walidator i woła `_run_evolution_step` z regułą „Final rule triggering automatic prompt consolidation.” — bez bramki `mock` (`runner.py:376-392`).
+- `trigger_agent_split` — pole bez żadnego czytelnika.
+- `orch.run(target_node="v1", multi_cycle_waves=True)` zawsze; `multi_cycle_waves` steruje dopisywaniem rozdziałów i regułą 6 rozdziałów (§IX.3).
+- **Atrapa wykresu na żywo:** przed każdym przebiegiem `figures/comparison_chart.{pdf,png}` z napisem „Empirical Evaluation Pending” (`runner.py:284-296`, bez bramki), a `building.py:143` podaje go w `available_figures`, gdy nie ma żadnego — pisarz może cytować wykres, którego eksperyment nie wygenerował.
+
+## §IX.5. Mocki i publikacja w kodzie produkcyjnym
+
+- `adk/mocks/` = 4 783 linie (**26% kodu `adk/`**); `tasks.py` niesie dla każdego benchmarku gotowy kod, testy, CSV, rozdziały i BibTeX dla mocków.
+- **Kod produkcyjny importuje mocki:** `thesis_publisher.py:25` i `template_manager.py:17` (`expand_academic_chapters`); w trybie live gałąź jest pomijana, ale zależność produkcja → mocki zostaje.
+- `thesis_publisher.py` (886 l.) i `template_manager.py` (740 l.) — największe pliki narzędzi; publikacja ma własne uruchamianie eksperymentu i wykresów (`exec` kodu `plot_results.py` w procesie harnessu), równoległe do `experiment_runner` używanego w trakcie przebiegu.
+- `research_recon.py` (501 l., polskie dane dziedzinowe) produkuje `literature_recon`/`table_of_contents`/`standard_metrics` — w trybie live częściowo nieużywane po P10, ale nadal wołane i logowane („Metryki: …”).
+
+## §IX.6. Martwy kod (skan nazw)
+
+Bez żadnego odwołania poza definicją: `agent_texts.removed_symbols_help`, `skeleton_task`, `skeleton_modules`, `planner_interface_feedback` (po usunięciu `SKELETON` i `contract_gate`), `hypergraph/schedule.dependents`. Tylko w testach: `agent_texts.contract_breach`. Pola bez czytelnika: `BenchmarkTaskSpec.trigger_agent_split`, `Hypergraph.built_from_plan`.
+
+## §IX.7. Repozytorium i dokumentacja
+
+- **Wyniki benchmarków w gicie:** `adk/workspace/benchmarks/` (104 pliki) z `llm_interactions.md` — każdy commit „benchmarks DD.MM” to ±150 tys. linii diffu; do tego lustro `benchmarks/` (§IX.1).
+- **`adk/state/` w gicie ze stanem runtime** (stara kolejka „[Etap 1/5 …]”, `failure_ledger`, `evolution_history`) — przy starcie piaskownicy i tak nadpisywane przez `_RUNTIME_STATE`.
+- `adk/bin/tectonic.exe` (51 MB) + `adk/cache/tectonic` (526 plików, 50 MB) w gicie; `adk/logs/` 1,9 GB lokalnie (stare przebiegi, §V #22).
+- **Dokumentacja nieaktualna:** `adk_architecture.txt`, `documentation/` (sprzed listopada — `CODEBASE_MAP.md` to przyznaje); `CODEBASE_MAP.md` (stan 2026-11-16) opisuje `spec_driven`, `contract_gate.py`, `interface_contract.json` i „starą ścieżkę bez `interfaces`”, których po 17.11 nie ma.
+- `adk/main.py` — wrapper na `main.py`; nieśledzone w korzeniu: `gemini-code-1792501985121.txt` (pierwotny plan „Fala 1/Fala 2”), `ideas/`, `__pycache__/`.
+- **Kodowanie:** `academic_blueprint.json` z 01 zawiera znaki zastępcze U+FFFD w tytułach rozdziałów (`Rozdzia� 1`) — polskie znaki giną już przy odbiorze odpowiedzi modelu, nie tylko w konsoli; ten sam objaw we wskaźnikach pisarza (§VIII Y4).
+
+## §IX.8. Plan porządków (propozycja, do decyzji)
+
+| # | co | nakład | ryzyko | zamyka |
+|---|---|---|---|---|
+| C1 | **jeden hipergraf:** zadania adresowane ścieżką wierzchołka H; `_resolve_target_node`, `ROLE_ALIASES`, `_role_file`, `PLAN_OVERRIDE`-zgadywanie, `hypergraph_matrix.json`, `hypergraph_sync`, `import_sync`, `blast_radius.py`, `get_scoped_hypergraph_context` usunięte; zakres weryfikacji, `done_when`, `last_writer`, kontekst planera naprawczego i krytyka z H | duży | średnie (dotyka 15 modułów i wielu testów) | §IX.2 |
+| C2 | **rozdziały jako jawne wierzchołki zadań:** planer podaje `chapter` (indeks) przy zadaniu pisarza zamiast regexu; reguła „6 rozdziałów”, `CHAPTER_LABELS`, `_insert_missing_chapters`, `table_of_contents` z recon usunięte — kompletność = wszystkie N z H | średni | niskie | §IX.3 (ch1, `Q1_CH6`) |
+| C3 | **przełączniki demo tylko w mock:** `missing_specialization`, `trigger_*`, `simulate_first_fail` czytane wyłącznie przy `provider == "mock"`; `trigger_agent_split` usunięte; atrapa wykresu i domyślne `available_figures` usunięte | mały | niskie | §IX.4 |
+| C4 | **jedna kopia wyniku:** piaskownica = katalog wyniku (`benchmarks/<slug>/` bez `copytree`), publikacja na miejscu i bez ponownego uruchamiania eksperymentu (wyniki tylko z `DATA_PRODUCED`); kopia `tools/` → tylko katalog na promowane walidatory; lustro `benchmarks/` w korzeniu usunięte | średni | niskie | §IX.1 |
+| C5 | H: `references.bib` i `research` tylko tam, gdzie zadanie je produkuje/cytuje; `built_from_plan` wypełnione albo usunięte; `history` skracane; `dependents` użyte do `stale` następników albo usunięte; σ odróżnia konfigurację od punktu wejścia (razem z B3 z §VIII) | mały–średni | niskie | §IX.3 |
+| C6 | martwy kod z §IX.6; zależność `tools → mocks` odwrócona (mock wstrzykuje treść, publikator jej nie importuje) | mały | niskie | §IX.5–6 |
+| C7 | repo: `adk/workspace/benchmarks/` i `adk/state/` runtime do `.gitignore` (zostaje wzorzec stanu); tectonic poza gitem albo Git LFS; `CODEBASE_MAP.md` zaktualizowana, `adk_architecture.txt`/`documentation/` oznaczone jako historyczne | mały | niskie (decyzja, co ma zostać w historii) | §IX.7 |
+| C8 | kodowanie: znaleźć miejsce utraty polskich znaków w odbiorze odpowiedzi (`core/llm.py`, dekodowanie strumienia) | mały | niskie | §IX.7, §VIII Y4 |
+
+Kolejność proponowana: **C3** (fałszuje pomiar ewolucji już dziś) → **B6, B1–B3 z §VIII** → **C2** → **C1** (największy zysk, największa zmiana — po przebiegu, który przejdzie) → C4 → C5, C6, C8 → C7.
+
+Zależność z §VIII: B3 (punkt wejścia używa modułów planu) i C5 (konfiguracja ≠ punkt wejścia) najlepiej zrobić razem; B5 (krytyk z `interfaces`) jest częścią C1.
+
+## §IX.9. Realizacja (2026-11-18) — §VIII B1–B3, B5, B6 i §IX C2, C3, części C1/C4/C5/C6
+
+Zlecenie użytkownika: „zacznij od usunięcia kopiowania adk/workspace/benchmark do benchmark, potem krytyk planu, żeby nie przepuszczał luźno planów z założenia złych, potem hipergraf i reszta według uznania”. `pytest` **215/215** (w tym 13 nowych w `tests/test_audit_vii.py`), `ruff` czysty. **Bez przebiegu na żywo.**
+
+| # | co dokładnie | gdzie |
+|---|---|---|
+| C4 (część) | lustro `adk/workspace/benchmarks/` → `benchmarks/` w korzeniu usunięte; `print_summary.py` czyta i pisze w `adk/workspace/benchmarks/` | `runner.py`, `print_summary.py` |
+| B1 | sonda stubów wykonuje doctesty: przykład, który nie zależy od wyniku stuba, musi przejść (`DOCTEST_INVALID_ON_STUBS`); nazwy związane przez przykład, który wywołał stub, są „w toku” i przykłady je czytające nie są oceniane; przekroczenie 120 s → `STUB_PROBE_TIMEOUT` zamiast wyjątku | `hypergraph/build.py` (`_IMPORT_PROBE`, `_stub_problems`) |
+| B2 | statycznie: przykład bez oczekiwanego wyjścia wywołujący funkcję/metodę/klasę, której wszystkie deklaracje zwracają wartość → `DOCTEST_DISCARDS_RETURN` | `build._discarded_returns` |
+| B3 | każdy zaplanowany moduł kodu musi być osiągalny z punktu wejścia przez importy na poziomie modułu (poza modułem z `generate_plots` i `__init__.py`) → `ENTRYPOINT_DOES_NOT_USE` | `build._unused_by_entrypoint` |
+| B5 | krytyk planu przepisany: działa **wewnątrz** `_validated_plan`, po kodzie i przed budową H, tylko na planie, który kod przyjął; dostaje `interfaces`, zadania, blueprint i listę agentów; LRM; uwagi `blocking: true` wracają do planisty razem z naruszeniami kodu, a jeśli zostają po 2 poprawkach → `PLAN_REJECTED`; uwagi `blocking: false` idą do planisty tylko przy innej przyczynie poprawki i nigdy nie blokują; nieczytelna odpowiedź krytyka → `PLAN_REVIEW_NO_VERDICT`, nic nie blokuje. Stare wywołanie po budowie H z wymuszonym PASS usunięte | `plan_spec._plan_review`, `planning.py`, `task_critic_guard.md`, `agent_texts.critic_finding` |
+| B6 | `stub_source` zachowuje publiczne `self.x = …` z metod jako adnotacje klasy (`x: 'float'`, bez adnotacji `'object'`) | `contract_check._instance_attributes` |
+| planer | prompt mówi wprost o doctestach na stubach (`_ = …`, zgodność między metodami), o osobnym module konfiguracji i eksperymentu z importami na górze, o krytyku i o „Chapter N” w zadaniach pisarza | `task_planner.md` |
+| C3 | przełączniki demo tylko przy `provider == "mock"`: `missing_specialization`, wstrzykiwanie reguł (`trigger_prompt_consolidation`), synteza walidatora i reguła „Final rule…” (`trigger_tool_synthesis`), atrapa wykresu „Empirical Evaluation Pending”; domyślne `available_figures = ["figures/comparison_chart.pdf"]` usunięte | `runner.py`, `building.py` |
+| C2 | rozdziały z planu: `_expected_chapters()` = indeksy `planned_chapters` (kanoniczne 1–6 tylko bez spisu); audyt stanu, bramka końcowa i leczenie planu używają tej listy; komunikat „All 6 chapters” → „Every planned chapter”; `vertex_of` rozpoznaje też „Section 1.1”, „Rozdział/podrozdział/sekcja N” | `factual_audit.py`, `verification.py`, `plan_healing.py`, `hypergraph/schedule.py`, `agent_texts.py` |
+| C5 (część) | `references.bib` zapisany przez planowanie → wierzchołek `verified` od startu; pole `Hypergraph.built_from_plan` usunięte; `history` wierzchołka z relatywnymi ścieżkami; nieużywane `schedule.dependents` usunięte | `plan_spec.py`, `hypergraph/model.py`, `spec_gate.py` |
+| C1 (część) | planer nie dostaje już `blast_radius`/`hypergraph_matrix` (pusty zasiew i `v1`); przy H żaden agent nie dostaje `hypergraph_nodes`/`active_edges` starej macierzy (pisarz dostawał `thesis.md` połączony z każdym plikiem) | `planning.py`, `spec_gate._spec_payload` |
+| C6 (część) | martwe teksty `removed_symbols_help`, `skeleton_task`, `skeleton_modules`, `planner_interface_feedback` usunięte | `agent_texts.py` |
+| mapa | `CODEBASE_MAP.md` zaktualizowana (bez `spec_driven`, `contract_gate`, `interface_contract`; krytyk; uwaga o starej macierzy) | `CODEBASE_MAP.md` |
+
+**Sprawdzenie na planach z 2026-11-17** (bez modelu, `code_violations` na `academic_blueprint.json`): 01 → `ENTRYPOINT_DOES_NOT_USE [config.py]` (baseline, environment, q_learning), `DOCTEST_DISCARDS_RETURN` (`env.reset()`), `DOCTEST_INVALID_ON_STUBS` (`ns[0]=1`, TypeError) — wszystkie trzy przyczyny Y1/Y2 łapane przed pierwszym zadaniem; 02 → `ENTRYPOINT_DOES_NOT_USE` (interfejs `run_benchmark.py` nie importuje żadnego modułu planu — trafne), stuby 02 bez `API_MISSING` (B6). Plany mocków 01–04 przechodzą bez naruszeń.
+
+**Korekta §IX.4 / §IX.6:** `trigger_agent_split` ma czytelnika (`mocks/benchmark_mock_handlers.py:192`) — skan pominął `adk/mocks/`; pole zostaje.
+
+**Zostaje (świadomie):**
+- **C1 rdzeń:** identyfikatory zadań `n*`, zgadywanie celu po rolach, zakres weryfikacji, `done_when`, `last_writer`, kontekst planera naprawczego — nadal ze starej macierzy. Do zrobienia po przebiegu, który przejdzie (zmiana w ~15 modułach).
+- **C4 reszta:** piaskownica → `benchmarks/<slug>/` + publikacja na kopii z ponownym uruchomieniem eksperymentu; kopia całego `tools/`.
+- B4 (wina na σ po powtórzeniu), B7 (wskaźniki pisarza), B8 („failed on setup”), C7 (repo), C8 (kodowanie).
+- Krytyk to dodatkowe wywołanie LRM na każdą wersję planu (do 3). Jego blokada kończy przebieg — decyzja użytkownika („nie może luźno przepuszczać”); fałszywy alarm krytyka będzie widać w `PLAN_REVIEWED` w `events.jsonl`.
+
+---
+# §X — 2026-11-18: jeden hipergraf (rdzeń C1 z §IX.8) i kontrolowana zmiana planu (B4 z §VIII.4)
+
+Stan: **wdrożone, `pytest` 211/211, `ruff` czysty, bez przebiegu na żywo.** Decyzja użytkownika: „hipergraf miał być źródłem prawdy: plan buduje szkielet i hipergraf, a agenci dostają tylko zależności z worków i treść zadania”; „wdrażaj, dokładnie usuwając stare narzuty, żeby nie było trzech rodzajów plików z grafem”; „kontrolowaną zmianę planów też wdróż”.
+
+## §X.1. Zasady (obowiązują)
+
+1. **Jeden graf.** `state/hypergraph.json` to jedyny zapis struktury projektu. Wszystko inne (cel zadania, zakres weryfikacji, winny, `done_when`, kontekst agenta, promień rażenia, świeżość wyników, macierz incydencji) jest **liczone** z H.
+2. **Identyfikator = ścieżka** (rozdział `thesis.md#chN`). Cel, którego plan nie zna i który nie jest ścieżką, jest błędem planu, nie zgadywaniem.
+3. **Plan zmienia tylko planer** (kontrolowana zmiana, §X.3) albo jawne `contract_change` buildera; harness zmienia stan i rejestruje rozszerzenia.
+4. **Obietnic nie wolno złamać, rozszerzać wolno** — rozszerzenie trafia do H, więc H opisuje rzeczywistość, nie tylko plan.
+5. **Agent dostaje treść zadania i wycinek H** wynikający z worków swojego wierzchołka; spoza H tylko własny plik i pakiety środowiska.
+
+Warunki z rozmowy (2026-11-18), pod którymi ten projekt działa: twarda walidacja planu na wejściu (§IX.9), kontrolowana zmiana planu w trakcie (§X.3), rejestrowanie rozszerzeń (§X.2).
+
+## §X.2. Co wdrożono
+
+| obszar | zmiana | gdzie |
+|---|---|---|
+| model | `Vertex.last_writer`, `Vertex.files` (pliki pomocnicze), `Edge.observed`; zapytania `owner_of`, `files_of`, `tests_of`, `tested_module`, `output_producer`, `entry`, `would_cycle`; `module_import_path` przeniesione do H | `hypergraph/model.py` |
+| R | worek eksperymentu obejmuje **każdy moduł, który punkt wejścia uruchamia** (domknięcie importów, role C); `run_fingerprint` liczy po członkach R z ich plikami pomocniczymi | `build.py`, `oracles.py` |
+| obietnice | `API_EXTRA` usunięte; `API_SIGNATURE` tylko gdy zaplanowane parametry nie są zachowane w kolejności albo nowy parametr nie ma wartości domyślnej; `IMPORT_NOT_IN_PLAN` → `IMPORT_CYCLE` (tylko cykl); `FILE_OUTSIDE_PLAN` nie dotyczy pliku importowanego przez zaplanowany moduł ani testu zaplanowanego modułu; dostęp `import m; m.x` liczy się jako użycie `x` (zastępuje `check_test_contract`) | `observe.py`, `build.spec_from_stub` |
+| rozszerzenia | `observe.absorbable` + `spec_gate._absorb` po zaakceptowanym zapisie: plik pomocniczy → `files` właściciela; test → wierzchołek `test` i T w worku I; nowy import → C i ≺ (oraz członkostwo w R, gdy importuje go moduł eksperymentu); zdarzenie `H_EXTENDED` | `observe.py`, `spec_gate.py` |
+| cytowania | wskaźniki `\ref_*` rozdziału → członkowie C jego worka N (obserwowani, przeliczani przy każdym zapisie pracy) | `spec_gate._record_citations` |
+| routing | `_resolve_target_node` → (wierzchołek, plik) z H; `_entry_file`; `_repair_target`: wyniki → producent R, rysunki → moduł z `generate_plots`, skompilowana praca → `thesis.md`; `_workspace_paths_in` zna pliki z H i istniejące ścieżki | `routing.py` |
+| leczenie planu | `_clean_task` na planie (interfejsy, punkt wejścia — H powstaje zaraz potem): ścieżka, test → `tests/`, artefakt pochodny → punkt wejścia; cel niebędący ścieżką → plik z opisu albo zadanie pominięte (`PLAN_OVERRIDE`) | `plan_healing.py` |
+| weryfikacja | zakres: plik zadania + zapisane pliki + ich pliki pomocnicze i testy T z H; winny testu: `tested_module`; autor: `last_writer` wierzchołka | `verification.py` |
+| zapis | `last_writer` na wierzchołku H; `OFF_TARGET_WRITE` z worków H; `CROSS_ROLE_WRITE` także bez planu | `write_gate.py` |
+| kontekst agenta | `_context_for(vertex)`: koder/tester — `specification` (σ swojego worka i używanych modułów), `tested_by`, `experiment` (dla członków R), `previous_attempts`; pisarz — `chapter`, `planned_chapters`, `may_cite` (symbole σ, kolumny/wiersze wyjść R, rysunki, klucze cytowań); researcher — klucze cytowań. Usunięte z ładunku: `exports` wszystkich modułów, `csv_schemas`, `hypergraph_nodes`, `active_edges`, `grounded_hypergraph_state`, `standard_metrics`, `canonical_baselines`, `table_of_contents`, `sampled_methodologies`, `academic_blueprint` | `orchestration/context.py`, `building.py` |
+| planer naprawczy | `hypergraph` = wycinek H wierzchołka (worki, role, stany, σ) zamiast `blast_radius` + `hypergraph_matrix` | `context._h_slice`, `repair.py` |
+| prompty | koder/tester: `specification`, zasada obietnic i rozszerzeń, `experiment.entrypoint`; pisarz: `may_cite`, `chapter`; planer: cel = ścieżka (bez aliasów `v1..v5`); planer naprawczy: `hypergraph` | `agents/*` |
+| podział | walidacja planu wydzielona z `build.py` (474 → 220 linii) do `hypergraph/validate.py` | `validate.py` |
+
+**Usunięte:** `state/hypergraph_matrix.json` (zasiew), `tools/building/hypergraph_sync.py`, `tools/building/import_sync.py`, `tools/planning/blast_radius.py`, `models.HypergraphMatrix`, `contract_check.check_test_contract` (+ `_used_symbols`), `common.ROLE_DEFAULTS/ROLE_ALIASES/_CONFIG_STEMS/build_grounded_symbols`, `routing._role_file/_role_of`, `spec_gate._spec_payload`, `Orchestrator.matrix_path`. `main.py` usuwa `hypergraph.json` i `academic_blueprint.json` przed scenariuszem (wcześniej stary H mógł zostać wczytany przed planowaniem).
+
+**Nazwy agentów (2026-11-18):** `task_critic_guard` → `plan_critic_guard` (krytyk ocenia cały plan, nie zadania); `spec_amender` → `plan_change_guard`. Sufiks `guard` = odporność na mutację i podział przez ewolucję. Starsze wpisy dziennika używają dawnych nazw.
+
+## §X.3. Kontrolowana zmiana planu (B4)
+
+`orchestration/plan_change.py` + `agents/planning/plan_change_guard.md` (LRM). Przed każdą szybką naprawą: jeżeli ten sam błąd σ (`BEHAVIOUR_MISMATCH`, `API_MISSING`, `API_KIND`, `API_SIGNATURE`, `TEST_OUTSIDE_SPEC`, `IMPORT_OUTSIDE_SPEC` z tym samym wierzchołkiem) wystąpił w dwóch kolejnych werdyktach wierzchołka, planer ocenia interfejs modułu (dla testu: modułu testowanego):
+- **AMEND** — nowy interfejs walidowany jak plan (`code_violations` na całym planie), nie może usunąć nazwy używanej przez inny moduł; σ, `uses`/≺ i `interfaces` w blueprincie aktualizowane; `SPEC_AMENDED`, wpis w historii wierzchołka;
+- **KEEP** — interfejs zostaje, powód trafia do historii wierzchołka (następna próba go widzi); `SPEC_KEPT`;
+- odrzucona poprawka → `SPEC_AMEND_REJECTED`; limit 2 ocen na moduł na przebieg.
+
+## §X.4. Odstępstwa i otwarte
+
+- Świeżość „każdy worek ma odcisk” (§rozmowa, punkt 4) zrobiona tylko dla R (wyniki); rozdziały są ponownie sprawdzane przez kompilator wskaźników na bramce końcowej, nie przez odcisk N.
+- Rodzaj wierzchołka `config` (odróżnienie konfiguracji od eksperymentu) — niewdrożony; zamiast niego reguła `ENTRYPOINT_DOES_NOT_USE` i prompt planera.
+- Krytyk i ocena planu to dodatkowe wywołania LRM (krytyk ≤ 3 na plan, ocena ≤ 2 na moduł).
+- Do pomiaru na żywo: `PLAN_CHECKED`, `PLAN_REVIEWED`, `H_EXTENDED`, `SPEC_AMENDED`/`SPEC_KEPT` w `events.jsonl`; reszta C4, B7, B8, C7, C8 bez zmian.
+
+## §X.5. Pełny przebieg na mocku (2026-11-18)
+
+Benchmarki 01 i 02 przez `runner.py` z providerem `mock` (wyniki poza repo): oba `COMPLETED`, jeden plik grafu, PDF powstaje. Znalezione i naprawione (`pytest` 214/214):
+- crash zaraz po planowaniu: `print` znaku `σ` na konsoli cp1250 → `logger._tolerant_console` (konsola zastępuje znak, pliki logów w UTF-8);
+- rozdziały zostawały `spec`, gdy zadanie pisarza obejmowało kilka rozdziałów → `schedule._chapter_states_from_thesis` (stan z rozdziałów obecnych w `thesis.md`);
+- fałszywy `OFF_TARGET_WRITE` dla `references.bib` w zadaniu na `thesis.md` → zadanie na pracy należy do worków wszystkich rozdziałów;
+- `DATA_FAILED` przy każdym zapisie kodu, dopóki moduł eksperymentu był stubem → `building._experiment_still_stubbed` (eksperyment rusza dopiero, gdy żaden członek R nie jest stubem).
+
+## §X.6. Mocki tylko symulują agentów; logowanie wywołań LLM (2026-11-18)
+
+Uwagi użytkownika: „mocki mega słabo sprawdzają … powinny tylko symulować odpowiedzi agentów, na maxa wydzielone z kodu”; „problem z logowaniem LLM … krytyk nie obejrzał w teorii planu w żadnym przebiegu”; „logowanie, mocki itd. ładnie podzielone, kod modułowy”.
+
+**Co było nie tak z mockami.** Kod produkcyjny znał symulację i ją wspierał: `template_manager`/`thesis_publisher` dokładały bibliografię z fikstur, gotowe streszczenia, TikZ i sztuczne wykresy także w przebiegach na żywo; `ref_compiler` „leczył” brakujące klucze cytowań z fikstur; `research_recon` przepisywał metodologię z katalogu; orkiestrator miał `inject_failure`/`simulate_first_attempt_fail` (porażka wstrzykiwana przez harness, nie przez agenta). Mock odpowiadał zawsze poprawnie, więc przebieg nie ćwiczył żadnej bramki.
+
+**Teraz.**
+- Harness ma dwa szwy: `set_llm_handler(handler(agent, system_prompt, payload, tier))` i `literature_engine.set_paper_source(name, fn)`. `adk/mocks` podłącza do nich `SimulatedAgents` i katalog offline (`install_simulated_agents`); provider `mock` bez podłączonych agentów to `RuntimeError`. Test higieny `test_harness_never_knows_its_agents_are_simulated` pilnuje, że żaden moduł spoza `mocks/` nie importuje `adk.mocks` ani nie porównuje niczego z `"mock"`.
+- `scenarios.FLAWS` — błędy, które symulowany agent robi raz i poprawia po informacji zwrotnej harnessu: `planner_unrunnable_plan` (moduł z niemożliwym doctestem, którego eksperyment nie importuje → `PLAN_CHECKED`), `critic_blocks_once` (→ `PLAN_REVIEWED` FAIL, poprawka planisty), `coder_breaks_signature` i `tester_uses_undeclared_name` (→ `SPEC_WRITE_REJECTED`), `coder_adds_helper` (→ `H_EXTENDED`), `writer_bad_pointer` (→ porażka weryfikacji, `FAST_FIX`), `coder_leaves_stub` (→ `NOT_IMPLEMENTED`, `FAST_FIX`). Scenariusze benchmarków mają wszystkie (poza wykluczającym się `coder_leaves_stub`); `default` — żadnej.
+- Zadania benchmarku (`benchmarks/tasks.py`) to tylko wejścia; fikstury odpowiedzi są w `mocks/scenarios.py`. Usunięte: `mocks/benchmark_mock_handlers.py`, `default_responses.py`, `mock_pdf_template.py`, `thesis_mock_expander.py`, `benchmarks/tictactoe.py`, flaga CLI `--no-fail-sim`.
+- Wynik: 4 benchmarki na symulowanych agentach `COMPLETED`; w każdym `PLAN_CHECKED`×3, `PLAN_REVIEWED`×2, `SPEC_WRITE_REJECTED`×2, `H_EXTENDED`×1, naprawa `FAST_FIX` (04: także `SPLIT_AGENT`).
+- Przy okazji: stara asercja `AGENT_MUTATED` w teście fal przechodziła tylko dzięki historii ewolucji skopiowanej ze stanu repo (4171 starych zdarzeń); test liczy teraz tylko nowe zdarzenia.
+
+**Logowanie LLM.** Dlaczego „krytyk nigdy nie oglądał planu”: w przebiegu 02 z 17.11 plan trzy razy nie przeszedł walidacji kodu, a krytyk ocenia tylko plan, który się uruchamia — w logach nie było tego widać, bo `LLM_CALL_START/END` trafiały do `events.jsonl` wyłącznie dla wywołań sieciowych, bez decyzji, a payload zapisywano dopiero po odpowiedzi. Zmiany:
+- `core/llm_trace.py` (nowy) odpowiada za to, **co** zapisać: `start_call` (przed wywołaniem: `LLM_CALL_START` z krokiem, agentem, modelem, zadaniem i kluczami payloadu; rekord `request` z pełnym payloadem w `agent_trace.jsonl`), `finish_call` (`LLM_CALL_END` z `verdict` i `decision`; rekord `answer`; blok w `harness_process.log`; konsola z numerem kroku; telemetria), `fail_call` (`LLM_CALL_END ok=false`, rekord `error`). Dotyczy **każdego** wywołania, także symulowanych agentów.
+- `core/llm.py` tylko buduje prompt, wywołuje i parsuje (`_parse_model_answer`); `core/logger.py` tylko zapisuje pliki (`log_trace`).
+- Krytyk dostaje `entrypoint` także wtedy, gdy planista podał go poza blueprintem; podsumowanie decyzji krytyka pokazuje ustalenia (`BLOKUJĄCE <gdzie>: <problem>`), nie `repr` słownika.
+- `scripts/analyze_run.py` liczy tylko rekordy `answer`. Test: `test_every_agent_call_is_logged_before_and_after_it_runs`.
+
+Stan: `pytest` 215/215, `ruff` czysty. Bez commitów.
+
+## §X.7. Poprawka planu = łatka, nie nowy plan (2026-11-18)
+
+Przebieg na żywo 01 (qwen3.6:35b, 15:44): trzy wersje planu, za każdym razem inne moduły i inne błędy, `PLAN_REJECTED`; krytyk ani razu nie został wywołany. Uwaga użytkownika: „mamy poprawiać błędy i ogarniać co jest nie tak, a nie pisać zły plan, słuchać, że zły, i powtarzać sztuczkę, aż się odczepi”.
+
+**Przyczyna (błąd harnessu).** `_validated_plan` wysyłał planiście „popraw te problemy, resztę zostaw i zwróć cały plan”, ale **bez jego planu** — w payloadzie był tylko prompt użytkownika i lista błędów. Model pisał więc plan od nowa z pamięci:
+- próba 0: `tictac_*`, eksperyment nie importuje modułów, doctest z nieznaną nazwą;
+- próba 1: to naprawione, nowy błąd (`env.reset()` w doctestach bez `_ =` — poprawka jednej linii);
+- próba 2: inne moduły (`config.py`, `qlearning_agent.py`), interfejs eksperymentu zniknął → `ENTRYPOINT_NOT_PLANNED`.
+Symulowany planista to maskował, bo „pamiętał” swój plan.
+
+**Zmiana** (`orchestration/plan_spec.py`, `agent_texts.planner_patch_feedback`, `task_planner.md`):
+- Planista dostaje `current_plan` (zadania, interfejsy, entrypoint, blueprint) i zwraca **łatkę**: `interfaces` (pełne źródło tylko zmienianych/dodawanych modułów), `remove_interfaces`, `entrypoint`, zmienione pola `academic_blueprint`, `tasks` tylko gdy się zmieniają. Harness scala łatkę (`_apply_patch`); reszta planu zostaje bez zmian. Problemy w informacji zwrotnej są pogrupowane po miejscu (`[moduł]`).
+- **Postęp, nie losowanie:** łatka jest przyjmowana, jeśli nie wnosi nowych problemów albo naprawia ich więcej, niż wnosi (blokujące uwagi krytyka liczą się jako jedna naprawa — zmieniony plan wraca do krytyka). Inaczej plan zostaje w poprzedniej wersji, a planista dostaje listę tego, co jego łatka zepsuła. Łatka bez zmian — odrzucona.
+- Krytyk ocenia daną wersję planu raz (bez ponownego wywołania LRM dla niezmienionego planu).
+- Zdarzenie `PLAN_PATCHED`: `accepted`, `changed`, `fixed`, `new`, `remaining`.
+- Symulowany planista poprawia łatką do `current_plan`; testy: `test_a_correction_patches_only_what_is_wrong`, `test_a_rewrite_that_trades_one_problem_for_another_is_not_applied`, `test_a_patch_may_surface_a_problem_if_it_fixes_more`.
+
+Otwarte: limit poprawek nadal 2 (`PLANNER_SPEC_RETRIES`); do sprawdzenia na żywo, czy qwen trzyma format łatki.

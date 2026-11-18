@@ -1,3 +1,0 @@
-method,rounds,final_accuracy,latency_ms,straggler_resilience_rate
-baseline,25,0.8245,14.21,0.6512
-proposed,25,0.9138,15.14,0.8947

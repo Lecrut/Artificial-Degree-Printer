@@ -6,12 +6,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from adk.hypergraph import Hypergraph, Violation, diff, load, observe, save
+import re
+
+from adk.hypergraph import Hypergraph, Vertex, Violation, diff, load, observe, save
 from adk.hypergraph.build import spec_from_stub
+from adk.hypergraph.observe import absorbable
 from adk.hypergraph.oracles import check_behaviour, is_stub, run_fingerprint, validate_test_on_stubs
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.common import _PYTEST_E_LINE, MaterializationError
-from adk.tools.building.import_sync import module_import_path
+from adk.hypergraph.model import module_import_path
 
 
 class SpecGateMixin:
@@ -32,7 +35,7 @@ class SpecGateMixin:
         h = self._project_h()
         if h is None or not self.workspace_dir.exists():
             return []
-        return [v for v in diff(h, observe(self.workspace_dir, h)) if paths is None or v.culprit in paths]
+        return [v for v in diff(h, observe(self.workspace_dir)) if paths is None or v.culprit in paths]
 
     def _without_stub_failures(self, errors: list[Any]) -> list[Any]:
         """With H, a test that fails only with NotImplementedError ran into a module that is not implemented yet:
@@ -71,29 +74,78 @@ class SpecGateMixin:
         if h is None or vertex not in h.vertices:
             return
         history = h.vertices[vertex].history
-        history.append({"task_id": task_id, "issues": [str(i)[:500] for i in issues[:3]]})
+        # Workspace paths relative: the absolute sandbox prefix took a third of every remembered issue.
+        prefixes = sorted({str(self.workspace_dir) + sep for sep in ("\\", "/")} | {str(self.workspace_dir.resolve()) + "\\"}, key=len, reverse=True)
+
+        def _short(issue: Any) -> str:
+            text = str(issue)
+            for prefix in prefixes:
+                text = text.replace(prefix, "")
+            return text[:500]
+
+        history.append({"task_id": task_id, "issues": [_short(i) for i in issues[:3]]})
         del history[:-4]
         save(h, self.hypergraph_path)
 
-    def _spec_payload(self, payload: dict[str, Any], task: dict[str, Any]) -> None:
-        """A code or test task sees σ of its module and of the modules it uses (a test: of the module it tests),
-        its own earlier verdicts, and nothing meant for the writer (U7: writer directives ended in Python code)."""
+    def _absorb(self, h: Hypergraph, paths: set[str]) -> None:
+        """Record in H what an accepted write added: helper files (owned by the module importing them), tests of
+        planned modules (T members), imports of planned modules the plan did not foresee (C members and ≺).
+        H stays the truth about the workspace instead of a list of refusals."""
+        added = absorbable(h, observe(self.workspace_dir), paths)
+        for rel, owner in added["helpers"]:
+            h.vertices[owner].files.append(rel)
+        for rel, module in added["tests"]:
+            h.vertices[rel] = Vertex(rel, "test", "tester", "written")
+            h.edges[f"I:{module}"].members[rel] = "T"
+            h.edges[f"I:{module}"].observed.append(rel)
+        for rel, producer in added["uses"]:
+            edge = h.edges[f"I:{producer}"]
+            edge.members[rel] = "C"
+            edge.observed.append(rel)
+            h.order = sorted(set(h.order) | {(edge.id, f"I:{rel}")})
+            run = h.edges.get("R:run")
+            # A module the experiment runs now runs this one too: it joins R (its change makes the results stale).
+            if run is not None and run.members.get(rel) in ("P", "C") and producer not in run.members:
+                run.members[producer] = "C"
+                run.observed.append(producer)
+                h.order = sorted(set(h.order) | {(edge.id, "R:run")})
+        if any(added.values()):
+            save(h, self.hypergraph_path)
+            self.logger.log_event("H_EXTENDED", **{k: [list(p) for p in v] for k, v in added.items() if v})
+
+    def _record_citations(self) -> None:
+        """The pointers of each chapter are observed C members of its N bag: a chapter that cites `game.py` is
+        re-checked when `game.py` changes. Recomputed on every write of the thesis; planned members never removed."""
+        from adk.tools.building.doc_editor import _extract_canonical_chapter_num
+
         h = self._project_h()
-        vertex = self._task_vertex(task)
-        if h is None or vertex is None or h.vertices[vertex].kind not in ("code", "entry", "test"):
+        thesis = self.workspace_dir / "thesis.md"
+        if h is None or not thesis.is_file():
             return
-        own = [e.id.removeprefix("I:") for e in h.edges.values() if e.type == "I" and vertex in e.members]
-        relevant = set(own) | {p for rel in own for p in h.edges[f"I:{rel}"].spec.get("uses", {})}
-        payload["specification"] = {
-            rel: {k: h.edges[f"I:{rel}"].spec[k] for k in ("import", "symbols", "behaviour")}
-            for rel in sorted(relevant)
-            if f"I:{rel}" in h.edges
-        }
-        payload["exports"] = {rel: api for rel, api in (payload.get("exports") or {}).items() if rel in relevant}
-        if h.vertices[vertex].history:
-            payload["previous_attempts"] = list(h.vertices[vertex].history)
-        for noise in ("grounded_hypergraph_state", "hypergraph_nodes", "active_edges", "canonical_baselines"):
-            payload.pop(noise, None)
+        text = thesis.read_text(encoding="utf-8", errors="replace")
+        heads = list(re.finditer(r"^##\s+([^\n]+)$", text, flags=re.MULTILINE))
+        cited: dict[str, set[str]] = {}
+        for i, head in enumerate(heads):
+            number = _extract_canonical_chapter_num(head.group(1))
+            if number is None or f"N:thesis.md#ch{number}" not in h.edges:
+                continue
+            body = text[head.end() : heads[i + 1].start() if i + 1 < len(heads) else len(text)]
+            for match in re.finditer(r"\\ref_(?:ast|csv|fig)\{([^}:]+)", body):
+                vertex = h.owner_of(match.group(1).strip()) or h.output_producer(match.group(1).strip())
+                if vertex is not None:
+                    cited.setdefault(f"N:thesis.md#ch{number}", set()).add(vertex)
+        changed = False
+        for edge in (e for e in h.edges.values() if e.type == "N"):
+            now = cited.get(edge.id, set()) - {m for m in edge.members if m not in edge.observed}
+            if set(edge.observed) != now:
+                for gone in set(edge.observed) - now:
+                    edge.members.pop(gone, None)
+                for new in now - set(edge.observed):
+                    edge.members[new] = "C"
+                edge.observed = sorted(now)
+                changed = True
+        if changed:
+            save(h, self.hypergraph_path)
 
     def _record_data_produced(self) -> None:
         """The experiment just wrote its results: remember which code produced them (Φ_R freshness)."""
@@ -168,8 +220,13 @@ class SpecGateMixin:
         change = llm_output.get("contract_change")
         reason = str(change.get("reason") if isinstance(change, dict) else change or "").strip()
         refusals: list[str] = []
-        if violations and reason:
-            api_rels = sorted({v.culprit for v in violations if v.rule.startswith("API_") and v.culprit})
+        if reason:
+            # An explicit change of the interface: σ of every planned module the answer touched becomes what the file
+            # declares (additions too, so other modules may import them); names others use cannot go.
+            api_rels = sorted(
+                {v.culprit for v in violations if v.rule.startswith("API_") and v.culprit}
+                | {rel for rel in touched if f"I:{rel}" in h.edges}
+            )
             refusals = self._change_spec(h, api_rels, reason)
             violations = self._spec_violations(touched)
         if not violations:
@@ -177,6 +234,7 @@ class SpecGateMixin:
             for rel in sorted(r for r in touched if Path(r).name.startswith("test_")):
                 violations += validate_test_on_stubs(self.workspace_dir, rel, h)
         if not violations and not refusals:
+            self._absorb(h, touched)
             return
         # The write gate restores every touched file on MaterializationError (the answer applies whole or not at all).
         self.logger.log_event("SPEC_WRITE_REJECTED", violations=[str(v) for v in violations], refusals=refusals)

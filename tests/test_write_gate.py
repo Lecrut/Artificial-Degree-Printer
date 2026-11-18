@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 from typing import Any
 
@@ -27,8 +26,6 @@ def _orch(tmp_path: Path) -> NeuroSymbolicOrchestrator:
     orch.failure_ledger_path = orch.state_dir / "failure_ledger.json"
     orch.hitl_flag_path = orch.state_dir / "hitl_flag.json"
     orch.evolution_history_path = orch.state_dir / "evolution_history.json"
-    orch.matrix_path = orch.state_dir / "hypergraph_matrix.json"
-    shutil.copy2(Path("adk") / "state" / "hypergraph_matrix.json", orch.matrix_path)
     return orch
 
 

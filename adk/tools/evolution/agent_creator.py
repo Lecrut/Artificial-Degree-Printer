@@ -74,7 +74,7 @@ def create_specialized_agent(
         f"---\n\n"
         f"## 1. OPERATING & SYMBOLIC GROUNDING RULES\n"
         f"1. **Atomic Scope**: Execute strictly the atomic task assigned to specialization `{specialization}` on `target_file`.\n"
-        f"2. **Hypergraph & AST Integrity**: Maintain 100% compatibility with exported symbols in `exports` and `state/hypergraph_matrix.json`.\n"
+        f"2. **Hypergraph & AST Integrity**: Maintain 100% compatibility with the interfaces in `specification` (the project hypergraph `state/hypergraph.json`).\n"
         f"3. **Zero Hallucinations**: When authoring prose or tables, never write raw numbers from memory — use `\\ref_ast{{file:symbol}}` and `\\ref_csv{{file:row:column}}` (or `\\ref_csv{{file:column}}`).\n\n"
         f"---\n\n"
         f"## 2. REQUIRED JSON OUTPUT SCHEMA\n"
