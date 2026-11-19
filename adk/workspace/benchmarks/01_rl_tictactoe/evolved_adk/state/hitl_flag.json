@@ -8,12 +8,11 @@
   "question": null,
   "context": {
     "interfaces": [
-      "config.py",
-      "env.py",
-      "experiment.py",
-      "opponent.py",
-      "qagent.py"
+      "ttt_agent.py",
+      "ttt_config.py",
+      "ttt_env.py",
+      "ttt_experiment.py"
     ],
-    "entrypoint": "experiment.py:run"
+    "entrypoint": "ttt_experiment.py:run_experiment"
   }
 }

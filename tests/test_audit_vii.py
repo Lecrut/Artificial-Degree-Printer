@@ -223,19 +223,16 @@ def test_a_correction_patches_only_what_is_wrong(tmp_path: Path):
     assert len(patched) == 1 and patched[0]["accepted"] is True and patched[0]["changed"] == ["src/data_generator.py"] and patched[0]["new"] == []
 
 
-def test_a_rewrite_that_trades_one_problem_for_another_is_not_applied(tmp_path: Path):
-    """The 2026-11-18 run: each correction was a different plan with different mistakes. A patch that fixes one
-    problem and causes another leaves the plan as it was, and the planner is told what its patch broke."""
+def test_a_rewrite_keeps_only_the_parts_that_do_not_break_the_plan(tmp_path: Path):
+    """The 2026-11-18 run: each correction was a different plan with different mistakes. Of a patch that fixes one
+    module and breaks another, the fix is kept and the breaking change is rejected and reported."""
     broken = {**_PLAN, "interfaces": {**_GOOD, "src/data_generator.py": _BAD_DOCTEST}}
     rewrite = {"interfaces": {**_GOOD, "src/experiment.py": _GOOD["src/experiment.py"].replace("run_experiment()", "run_experiment(cfg)")}}
     orch, calls = _critic_orch(tmp_path, [{"status": "PASS", "issues": []}], [rewrite, {}])
     (_plan, interfaces, violations), patched = _patched(orch, lambda: orch._validated_plan(broken, {"user_prompt": "p"}, tmp_path / "planner.md"))
-    assert interfaces["src/data_generator.py"] == _BAD_DOCTEST and interfaces["src/experiment.py"] == _GOOD["src/experiment.py"]
-    assert any("DOCTEST_INVALID_ON_STUBS" in v for v in violations)
-    second = calls["planner"][1]
-    assert "NOT applied" in second["error_feedback"] and "ENTRYPOINT_HAS_ARGUMENTS" in second["error_feedback"]
-    assert second["current_plan"]["interfaces"]["src/data_generator.py"] == _BAD_DOCTEST
-    assert [e["accepted"] for e in patched] == [False, False]
+    assert interfaces == _GOOD and violations == [] and len(calls["planner"]) == 1
+    assert patched[0]["accepted"] is True and patched[0]["changed"] == ["src/data_generator.py"]
+    assert any("ENTRYPOINT_HAS_ARGUMENTS" in r for r in patched[0]["rejected"])
 
 
 def test_a_patch_may_surface_a_problem_if_it_fixes_more(tmp_path: Path):

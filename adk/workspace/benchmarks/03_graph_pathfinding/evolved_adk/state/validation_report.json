@@ -1,1 +1,9 @@
-{}
+{
+  "status": "PASS",
+  "failed_task_id": null,
+  "failed_node": null,
+  "failed_file": null,
+  "failed_agent": null,
+  "supervisors": {},
+  "summary": ""
+}

@@ -1,0 +1,18 @@
+export const liveLabels = {
+  title: 'Na żywo',
+  subtitle: 'bieżący albo ostatni przebieg z piaskownicy benchmarków',
+  now: 'Teraz',
+  harness: 'harness pracuje (bez wywołania modelu)',
+  idle: 'nic się nie dzieje — przebieg zakończony',
+  lastVerdict: 'ostatni werdykt',
+  passed: 'weryfikacja przeszła',
+  board: 'Kolejka zadań',
+  boardHint: (n: number) => `${n} zadań z task_queue.json`,
+  columns: { TODO: 'do zrobienia', WAITING: 'czeka', IN_PROGRESS: 'w toku', DONE: 'gotowe', FAILED: 'padło' } as Record<string, string>,
+  repairing: (n: number) => `naprawa ${n}`,
+  repairs: (n: number) => (n === 1 ? '1 naprawa' : n < 5 ? `${n} naprawy` : `${n} napraw`),
+  connected: 'połączono',
+  disconnected: 'rozłączono',
+  emptyTitle: 'Brak przebiegu do podglądu',
+  emptyText: 'Piaskownica benchmarków jest pusta. Uruchom benchmark, a jego postęp pojawi się tutaj na żywo.',
+}

@@ -164,6 +164,8 @@ class WriteGateMixin:
             basename already exists in exactly one place goes there instead of becoming a duplicate
             (`test_experiment.py` next to `tests/test_experiment.py`)."""
             rel = rel.replace("\\", "/").strip()
+            # a path through the sandbox (copied from a tool message) means the file in the workspace
+            rel = rel.rsplit("/workspace/", 1)[-1]
             while rel.startswith(("./", "workspace/")):
                 rel = rel.removeprefix("./").removeprefix("workspace/")
             name = Path(rel).name

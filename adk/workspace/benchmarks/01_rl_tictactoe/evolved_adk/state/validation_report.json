@@ -1,9 +1,9 @@
 {
   "status": "FAIL",
-  "failed_task_id": "Q4_CRITIC",
-  "failed_node": "thesis.md#ch5",
+  "failed_task_id": "R1_8",
+  "failed_node": "thesis.md#ch2",
   "failed_file": "thesis.md",
-  "failed_agent": "seed_writer",
+  "failed_agent": "background_researcher",
   "supervisors": {
     "code_auditor": {
       "verdict": "PASS",
@@ -14,15 +14,12 @@
     "symbolic_auditor": {
       "status": "FAIL",
       "issues": [
-        "CSV file '<file>' does not exist",
-        "Column 'Q-Learning+win_rate' not found in 'results.csv'",
-        "Column 'Q-Learning+avg_reward' not found in 'results.csv'",
-        "Citation key 'se yedsalehi2023approximate' not found in workspace .bib files.",
-        "Citation key 'qagent.py:QLearningAgent' not found in workspace .bib files.",
-        "Citation key 'env.py:TicTacToeEnv' not found in workspace .bib files.",
-        "Citation key 'opponent.py:RandomOpponent' not found in workspace .bib files.",
-        "Citation key 'experiment.py:run' not found in workspace .bib files.",
-        "Column 'Q-Learning+avg_reward' not found in 'results.csv'"
+        "CSV file 'ttt_results' does not exist",
+        "CSV file 'ttt_results' does not exist",
+        "Citation key 'watkins1992qlearning' not found in workspace .bib files.",
+        "Citation key 'puterman1994markov' not found in workspace .bib files.",
+        "Citation key 'watkins1987learning' not found in workspace .bib files.",
+        "Citation key 'puterman1994markov' not found in workspace .bib files."
       ],
       "skipped": "deterministic_only"
     },
@@ -33,71 +30,5 @@
       "issues": []
     }
   },
-  "summary": "Zakończono z brakami: 16 nierozwiązanych ustaleń.",
-  "gaps": [
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "CSV file '<file>' does not exist"
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Column 'Q-Learning+win_rate' not found in 'results.csv'"
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Column 'Q-Learning+avg_reward' not found in 'results.csv'"
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Citation key 'se yedsalehi2023approximate' not found in workspace .bib files."
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Citation key 'qagent.py:QLearningAgent' not found in workspace .bib files."
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Citation key 'env.py:TicTacToeEnv' not found in workspace .bib files."
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Citation key 'opponent.py:RandomOpponent' not found in workspace .bib files."
-    },
-    {
-      "kind": "ustalenie weryfikacji",
-      "detail": "Citation key 'experiment.py:run' not found in workspace .bib files."
-    },
-    {
-      "kind": "zadanie",
-      "detail": "Q4_FIX1 (FAILED): Fix the file experiment.py. Errors: Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\experiment.py:27:5: F821 Undefined name `random`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\experiment.py:148:9: F821 Undefined name `random`\nFound 2 errors."
-    },
-    {
-      "kind": "błąd harnessu",
-      "detail": "Q4_FIX1: Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie). Pliki: ['NameError', 'Pytest failure', 'Ruff lint failure', 'Traceback (most recent call last)']"
-    },
-    {
-      "kind": "zadanie",
-      "detail": "Q4_FIX_experiment_2 (FAILED): Fix the file experiment.py according to the verification finding: Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\experiment.py:27:5: F821 Undefined name `random`\\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\experiment.py:148:9: F821 Undefined name `random`\\nFound 2 errors."
-    },
-    {
-      "kind": "zadanie",
-      "detail": "Q4_FIX_experiment_6 (FAILED): Fix the file experiment.py according to the verification finding: Unresolved citation key: experiment.py:run (not a BibTeX entry)."
-    },
-    {
-      "kind": "błąd harnessu",
-      "detail": "Q4_FIX_experiment_6: Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie). Pliki: ['Pytest failure']"
-    },
-    {
-      "kind": "zadanie",
-      "detail": "Q4_FIX_experiment_7 (FAILED): Fix the file experiment.py according to the verification finding: Critical Code Integrity Failure: The codebase contains unresolved syntax errors (SyntaxError in qagent.py:53) and undefined name references (F821 for 'random' in experiment.py), rendering the software non-functional. No empirical results could be generated or verified."
-    },
-    {
-      "kind": "zadanie",
-      "detail": "Q4_CRITIC (FAILED): Fix thesis.md so that every finding of the critic and of the pointer audit is removed (only pointers to targets in 'may_cite' stay). Address every identifier; if a finding cannot be removed, describe it plainly as a limitation of the work.\n[K1] SyntaxError in adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/qagent.py:53: invalid syntax (missing colon after 'elif' clause)\n[K2] Lint warning in adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/experiment.py:134: F811 [*] Redefinition of unused `get_results_dir` from line 5\n[K3] Lint warning in adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/qagent.py:92-93: F841 Local variables `row`, `col` are assigned to but never used\n[K4] Citation key 'se yedsalehi2023approximate' not found in workspace .bib files.\n[K5] Citation key 'qagent.py:QLearningAgent' not found in workspace .bib files.\n[K6] Citation key 'env.py:TicTacToeEnv' not found in workspace .bib files.\n[K7] Citation key 'opponent.py:RandomOpponent' not found in workspace .bib files.\n[K8] Citation key 'experiment.py:run' not found in workspace .bib files.\n[K9] Unresolved citation key: se yedsalehi2023approximate (found in bibliography as 'seyedsalehi2023approximate').\n[K10] Logical Contradiction in Results Analysis: Chapter 5 explicitly states that statistical metrics (std_dev, variance) cannot be calculated due to lack of data, yet Chapter 6 falsely claims a 'statistically significant advantage'. This is a direct contradiction and constitutes fabricating statistical validity from non-existent or single-sample data.\n[K11] Methodological Flaw: The thesis fails to adhere to the declared metric registration for standard deviation across repeated trials. With only one effective run (due to code failure) or no data, claims of 'high stability' or 'statistical significance' are invalid.\n[K12] Literature Review Incoherence: Chapter 2 and 3 rely on broken citations and speculative placeholders rather than a rigorous funnel of foundational texts as required for a degree thesis. The analysis is superficial and disconnected from the code implementation."
-    },
-    {
-      "kind": "pdf",
-      "detail": "PDF compilation failed.\nestring.sty))\n\nPackage hyperref Warning: Rerun to get /PageLabels entry.\n\n(umsa.fd) (umsb.fd) [1] [2] [1] [2] [3] [4] [5] [6]\nRozdział 1.\n\nLaTeX Warning: Reference `se yedsalehi2023approximate' on page 1 undefined on i\nnput line 39.\n\n\nLaTeX Warning: Reference `file:qagent.py' on page 1 undefined on input line 41.\n\n\n\nLaTeX Warning: Reference `file:env.py' on page 1 undefined on input line 41.\n\n\nLaTeX Warning: Reference `file:opponent.py' on page 1 undefined on input line 4\n1.\n\n\nLaTeX Warning: Reference `gao2019finitesample' on page 1 undefined on input lin\ne 41.\n\n\nOverfull \\hbox (14.77307pt too wide) in paragraph at lines 41--42\n[]\\TU/lmr/m/n/10.95 W pracy wdrażono trzy moduły oprogramowania: klasę \\TU/lmtt\n/m/n/10.95 QLearningAgent \\TU/lmr/m/n/10.95 w pliku [\\TU/lmtt/m/n/10.95 qagent.\npy\\TU/lmr/m/n/10.95 ]\n\nLaTeX Warning: Reference `file:row' on page 1 undefined on input line 43.\n\n[1] [2]\nRozdział 2.\n\nOverfull \\hbox (70.51138pt too wide) in paragraph at lines 46--47\n\\TU/lmr/m/n/10.95 [ref_astadk:workspace:benchmarks:_evolved_adk_state_01_rl_tic\ntactoe_workspace_CITATIONS.bib:se\n\nOverfull \\hbox (347.08646pt too wide) in paragraph at lines 48--49\n\\TU/lmr/m/n/10.95 przy uwzględnieniu symetrii rotacji i refleksji [ref_astadk:w\norkspace:benchmarks:_evolved_adk_state_01_rl_tictactoe_workspace_opponent.py:Ra\nndomOpponent].\n\nOverfull \\hbox (274.97702pt too wide) in paragraph at lines 48--49\n\\TU/lmr/m/n/10.95 czeniową. Przeciwnik losujący [ref_astadk:workspace:benchmark\ns:_evolved_adk_state_01_rl_tictactoe_workspace_opponent.py:RandomOpponent]\n\nOverfull \\hbox (261.16179pt too wide) in paragraph at lines 48--49\n\\TU/lmr/m/n/10.95 stą nagrodą zgodnie ze wzorem [ref_astadk:workspace:benchmark\ns:_evolved_adk_state_01_rl_tictactoe_workspace_qagent.py:QLearningAgent]. \n[3]\nOverfull \\hbox (382.4265pt too wide) in paragraph at lines 52--53\n[]\\TU/lmr/m/n/10.95 W planie eksperymentu wykorzystano zostanie środowisko [ref\n_astadk:workspace:benchmarks:_evolved_adk_state_01_rl_tictactoe_workspace_env.p\ny:TicTacToeEnv],\n\nOverfull \\hbox (382.94402pt too wide) in paragraph at lines 52--53\n\\TU/lmr/m/n/10.95 kończenia partii w przypadku remisu lub wygranej. Agent [ref_\nastadk:workspace:benchmarks:_evolved_adk_state_01_rl_tictactoe_workspace_qagent\n.py:QLearningAgent]\n\nOverfull \\hbox (215.44559pt too wide) in paragraph at lines 52--53\n\\TU/lmr/m/n/10.95 poniżej 0.10 w ciągu serii prób [ref_astadk:workspace:benchma\nrks:_evolved_adk_state_01_rl_tictactoe_workspace_experiment.py:run].\n\nOverfull \\hbox (175.15518pt too wide) in paragraph at lines 54--55\n[]\\TU/lmr/m/n/10.95 Użycie bibliografii [ref_astadk:workspace:benchmarks:_evolv\ned_adk_state_01_rl_tictactoe_workspace_CITATIONS.bib:se\n\nOverfull \\hbox (443.46466pt too wide) in paragraph at lines 54--55\n\\TU/lmr/m/n/10.95 RL w zagadnieniu strategicznym. Inne komponenty systemu, taki\ne jak [ref_astadk:workspace:benchmarks:_evolved_adk_state_01_rl_tictactoe_works\npace_qagent.py:QLearningAgent],\n\nOverfull \\hbox (89.15921pt too wide) in paragraph at lines 54--55\n\\TU/lmr/m/n/10.95 [ref_astadk:workspace:benchmarks:_evolved_adk_state_01_rl_tic\ntactoe_workspace_env.py:TicTacToeEnv],\n\nOverfull \\hbox (132.08322pt too wide) in paragraph at lines 54--55\n\\TU/lmr/m/n/10.95 [ref_astadk:workspace:benchmarks:_evolved_adk_state_01_rl_tic\ntactoe_workspace_opponent.py:RandomOpponent]\n\nOverfull \\hbox (230.69891pt too wide) in paragraph at lines 54--55\n\\TU/lmr/m/n/10.95 oraz punkt wejścia eksperymentu [ref_astadk:workspace:benchma\nrks:_evolved_adk_state_01_rl_tictactoe_workspace_experiment.py:run],\n[4]\nRozdział 3.\n! Undefined control sequence.\nl.59 ...qlearning] jest inicjalizowany metodą \\^^L\n                                                  [<file>:init]\nOutput written on thesis.xdv (12 pages, 87428 bytes).\nTranscript written on thesis.log.\n===============================================================================\nerror: the XeTeX engine had an unrecoverable error\ncaused by: halted on potentially-recoverable error as specified"
-    }
-  ]
+  "summary": "Layer 3 verification failed."
 }

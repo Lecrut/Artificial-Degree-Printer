@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-TaskStatus = Literal["TODO", "IN_PROGRESS", "DONE", "FAILED"]
+TaskStatus = Literal["TODO", "WAITING", "IN_PROGRESS", "DONE", "FAILED"]
 GateVerdict = Literal["PASS", "FAIL"]
 ModelTier = Literal["SML", "LRM"]
 
@@ -81,4 +81,29 @@ def write_json_state(path_or_rel: str | Path, payload: Any) -> Path:
     resolved.parent.mkdir(parents=True, exist_ok=True)
     resolved.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return resolved
+
+
+# The files of one run in a `state/` folder, in their empty form. A run starts from these (a benchmark sandbox, a
+# scenario of main.py); the repository's adk/state keeps them empty and holds only the agent registry as data.
+RUNTIME_STATE_EMPTY: dict[str, Any] = {
+    "task_queue.json": [],
+    "validation_report.json": {
+        "status": "PASS",
+        "failed_task_id": None,
+        "failed_node": None,
+        "failed_file": None,
+        "failed_agent": None,
+        "supervisors": {},
+        "summary": "",
+    },
+    "failure_ledger.json": {"failures": []},
+    "evolution_history.json": {"events": []},
+    "hitl_flag.json": {"active": False, "current_gate": None, "approved_gates": [], "question": None, "context": {}},
+}
+
+
+def reset_runtime_state(state_dir: str | Path) -> None:
+    """Write every run file of `state_dir` in its empty form."""
+    for name, empty in RUNTIME_STATE_EMPTY.items():
+        write_json_state(Path(state_dir) / name, empty)
 

@@ -1,4 +1,7 @@
 {
   "active": false,
-  "approved_gates": []
+  "current_gate": null,
+  "approved_gates": [],
+  "question": null,
+  "context": {}
 }

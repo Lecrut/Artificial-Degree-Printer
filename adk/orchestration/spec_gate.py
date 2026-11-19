@@ -85,7 +85,13 @@ class SpecGateMixin:
 
         history.append({"task_id": task_id, "issues": [_short(i) for i in issues[:3]]})
         del history[:-4]
+        h.vertices[vertex].failures += 1
         save(h, self.hypergraph_path)
+
+    def _vertex_failures(self, rel: str) -> int:
+        h = self._project_h()
+        owner = h.owner_of(rel) if h is not None else None
+        return h.vertices[owner].failures if owner is not None else 0
 
     def _absorb(self, h: Hypergraph, paths: set[str]) -> None:
         """Record in H what an accepted write added: helper files (owned by the module importing them), tests of

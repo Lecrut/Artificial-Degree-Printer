@@ -4,21 +4,6 @@
   "failed_node": null,
   "failed_file": null,
   "failed_agent": null,
-  "supervisors": {
-    "code_auditor": {
-      "result": "The provided input consists of several Python files defining logic for pathfinding benchmarks (Dijkstra vs. A*) and reinforcement learning evaluation (Q-learning on Tic-Tac-Toe), along with a plotting routine. No explicit question was asked; therefore, the output is the code context itself.",
-      "status": "PASS",
-      "issues": []
-    },
-    "symbolic_auditor": {
-      "status": "PASS",
-      "issues": []
-    },
-    "redteam_critic_guard": {
-      "test_tictactoe_qlearning": "passed",
-      "status": "PASS",
-      "issues": []
-    }
-  },
-  "summary": "All Layer 3 gates passed."
+  "supervisors": {},
+  "summary": ""
 }

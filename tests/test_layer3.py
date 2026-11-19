@@ -220,3 +220,26 @@ def test_tidy_csv_pointer_selects_row_by_method_and_metric(tmp_path: Path):
     res = compile_symbolic_references(doc, tmp_path, write_compiled=False)
     assert res["status"] == "PASS", res["errors"]
     assert "0.58" in res["compiled_text"] and "0.33" in res["compiled_text"]
+
+
+def test_a_test_file_without_tests_is_named_in_the_finding(tmp_path: Path):
+    """2026-11-18: a test file cut off after its imports gave "no tests ran", which named no file, and the coder of
+    the module was sent to fix it 11 times. The finding names the test file, so its author gets it."""
+    ws = tmp_path / "ws"
+    (ws / "tests").mkdir(parents=True)
+    (ws / "experiment.py").write_text("def run() -> int:\n    return 1\n", encoding="utf-8")
+    (ws / "tests" / "test_experiment.py").write_text("from experiment import run\n", encoding="utf-8")
+    report = run_isolated_tests(ws, use_docker=False, verification_dir=tmp_path / "none")
+    assert report["status"] == "FAIL"
+    assert any("tests/test_experiment.py define no test function" in e for e in report["errors"])
+
+
+def test_ruff_findings_name_workspace_relative_paths(tmp_path: Path):
+    """Ruff ran from the repository and printed the sandbox path; agents copied it into their answers."""
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "config.py").write_text("X = undefined_name\n", encoding="utf-8")
+    report = run_isolated_tests(ws, use_docker=False, verification_dir=tmp_path / "none")
+    ruff = [e for e in report["errors"] if e.startswith("Ruff lint failure")]
+    assert ruff and "config.py:1" in ruff[0] and str(tmp_path) not in ruff[0] and "ws" not in ruff[0].split("config.py")[0]
+

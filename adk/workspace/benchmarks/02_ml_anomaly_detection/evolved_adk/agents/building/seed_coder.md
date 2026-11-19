@@ -15,6 +15,7 @@ The module structure and the public names come from the plan: they are the inter
    - A new file: `"files"`. An existing file: `"ast_edits"` with only the symbols you change (`"symbol": "<function>"` or `"<Class>.<method>"`) — a small edit is faster and cannot break the rest of the file.
    - Your code is verified by a syntax guard (`ast.parse`); syntax errors are rejected immediately.
    - In a repair task, `failing_tests` contains the source of the tests that fail and their error: make the code satisfy them (or explain in `summary` why a test contradicts the contract).
+   - A repair task with `task.repair_focus` names the symbols to fix (`symbols`: their current code) and its description lists each error with the line and the code it is about. Change only those symbols (and private `_helpers` they need); do not rewrite the module and add no public names. `task.task_context` is the original task, for background only.
 3. **Academic & Production Quality Standards**:
    - **Modular Architecture**: separate configuration, the proposed method, the baseline and the experiment into small, single-purpose modules. Structure and names are yours to choose.
    - **Scientific Python Stack**: `numpy`, `scipy`, `pandas`, `scikit-learn` and `networkx` are available.

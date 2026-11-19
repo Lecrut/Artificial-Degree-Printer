@@ -1,0 +1,18 @@
+<!-- Shown before the app (and Vuetify) loads, so the first frame is the navy theme, not a white flash.
+     The one place with its own CSS: nothing from the theme exists yet. Colors = vuetify.config.ts (background, primary). -->
+<div id="adk-splash">
+  <svg viewBox="0 0 24 24" width="56" height="56" aria-hidden="true">
+    <path fill="#14c784" d="M12 2 20.66 7v10L12 22l-8.66-5V7L12 2Zm0 2.31L5.34 8.15v7.7L12 19.69l6.66-3.84v-7.7L12 4.31Z" />
+  </svg>
+  <span>ADK Viewer</span>
+</div>
+<style>
+  html, body { margin: 0; background: #050b1c; }
+  #adk-splash {
+    position: fixed; inset: 0; display: flex; flex-direction: column; gap: 16px; align-items: center; justify-content: center;
+    color: rgba(255, 255, 255, .62); font: 500 14px/1 Roboto, system-ui, sans-serif; letter-spacing: .08em;
+  }
+  #adk-splash svg { animation: adk-pulse 1.2s ease-in-out infinite; filter: drop-shadow(0 0 12px rgba(20, 199, 132, .45)); }
+  @keyframes adk-pulse { 50% { transform: scale(.86); opacity: .6; } }
+  @media (prefers-reduced-motion: reduce) { #adk-splash svg { animation: none; } }
+</style>

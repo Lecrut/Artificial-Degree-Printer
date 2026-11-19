@@ -1,0 +1,18 @@
+export const launchLabels = {
+  title: 'Uruchom benchmark',
+  panel: 'Uruchom i konsola',
+  open: 'Uruchom / konsola',
+  hint: 'proces main.py na tym komputerze; jeden naraz',
+  task: 'zadanie',
+  provider: 'dostawca modelu',
+  template: 'szablon pracy',
+  autoTemplate: 'automatycznie',
+  tasks: { 1: '01 · Q-learning, kółko i krzyżyk', 2: '02 · detekcja anomalii', 3: '03 · wyszukiwanie ścieżek', 4: '04 · uczenie federacyjne', all: 'cały pakiet (01–04)' } as Record<string, string>,
+  providers: { mock: 'mock · symulowani agenci', ollama: 'ollama · modele lokalne', google: 'google · Gemini' } as Record<string, string>,
+  start: 'Start',
+  stop: 'Zatrzymaj',
+  console: 'Konsola',
+  running: 'działa',
+  exit: (code: number) => `zakończony · kod ${code}`,
+  noOutput: 'Brak wyjścia. Wybierz zadanie i naciśnij Start.',
+}

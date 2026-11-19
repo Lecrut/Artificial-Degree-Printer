@@ -12,7 +12,6 @@ Until 2026-11-18 only network calls reached events.jsonl and nothing was written
 
 from __future__ import annotations
 
-import json
 import os
 import time
 from dataclasses import dataclass, field
@@ -129,7 +128,7 @@ def finish_call(
         "agent": call.agent, "provider": provider, "model": model_name, "tier": call.model_tier,
         "elapsed_ms": round(elapsed_ms, 2), "prompt_tokens": p_tok, "completion_tokens": c_tok, "total_tokens": t_tok,
     })
-    decision = summarize_agent_decision(call.agent, call.user_payload, parsed_output)
+    decision = _safe_summary(parsed_output)
     _LLM_TELEMETRY["interactions"].append({
         "step_index": call.step,
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -200,138 +199,35 @@ def _print_decision(call: AgentCall, provider: str, model_name: str, elapsed_ms:
     print("    \\-- [Koniec bloku]", flush=True)
 
 
-def summarize_agent_decision(agent_name: str, payload: dict[str, Any], output: dict[str, Any]) -> str:
-    """Generate a concise, human-readable Polish summary of the decision made by the agent/LLM."""
+def _issue_text(issue: Any) -> str:
+    if not isinstance(issue, dict):
+        return str(issue)
+    mark = "BLOKUJĄCE " if issue.get("blocking") is True else ""
+    return f"{mark}{issue.get('where') or ''}: {issue.get('problem') or issue}".strip(": ")
+
+
+def _safe_summary(output: Any) -> str:
+    """Recording an answer never stops a run: an answer of an unexpected shape gets a plain summary."""
+    try:
+        return summarize_agent_decision(output)
+    except Exception as exc:  # noqa: BLE001 - the summary is for people; the answer itself is judged elsewhere
+        return f"Odpowiedź ({type(output).__name__}); podsumowanie niedostępne: {type(exc).__name__}"
+
+
+def summarize_agent_decision(output: Any) -> str:
+    """One line for the console and the logs: the verdict or decision, the findings, the size of the answer.
+    The whole answer is in agent_trace.jsonl; until 2026-11-18 this guessed the format of every agent (130 lines)."""
     if not isinstance(output, dict):
         return f"Wynik: {str(output)[:100]}"
-
-    name = agent_name.lower()
-
-    # 1. Planning agents
-    if "planner" in name:
-        if "remediation" in name:
-            tasks = output.get("surgical_tasks") or output.get("tasks") or []
-            diag = output.get("root_cause_diagnosis") or output.get("remediation_strategy") or output.get("summary") or ""
-            if not diag:
-                diag = output.get("reason") or (output.get("context", {}).get("suggested_rule", "") if isinstance(output.get("context"), dict) else "")
-            if not diag and "action" in output:
-                diag = f"Akcja naprawcza: {output.get('action')}"
-            target_node = payload.get("failed_task", {}).get("target_node") or payload.get("error_report", {}).get("failed_node", "v1")
-            task_ids = ", ".join(t.get("task_id", "") for t in tasks if isinstance(t, dict)) if tasks else f"{target_node}_FIX"
-            count_tasks = len(tasks) if tasks else 1
-            return f"Plan naprawczy: {count_tasks} zadań [{task_ids}]. Diagnoza: {str(diag)[:100]}"
-        tasks = output.get("tasks", [])
-        blueprint = output.get("academic_blueprint") or {}
-        title = blueprint.get("thesis_title") or payload.get("user_prompt", "")[:50]
-        missing = output.get("missing_agent_specialization")
-        task_ids = ", ".join(t.get("task_id", "") for t in tasks) if tasks else "brak"
-        spec_str = f" | Wymagana nowa specjalizacja: '{missing}'" if missing else ""
-        return f"Plan: {len(tasks)} zadan [{task_ids}], cel: '{title}'{spec_str}"
-
-    # 2. Critic & audit guards
-    if "critic" in name or "guard" in name or "auditor" in name:
-        status = output.get("status", "PASS" if output.get("approved", True) else "FAIL")
-        issues = output.get("issues", [])
-        if status == "PASS" and not issues:
-            return "Werdykt: PASS (Weryfikacja poprawna, brak zastrzezen)"
-        def _issue(i: Any) -> str:
-            if not isinstance(i, dict):
-                return str(i)
-            mark = "BLOKUJĄCE " if i.get("blocking") is True else ""
-            return f"{mark}{i.get('where') or ''}: {i.get('problem') or i}".strip(": ")
-
-        issues_summary = "; ".join(_issue(i) for i in issues[:2])
+    parts = [f"{key}={output[key]}" for key in ("status", "decision", "action") if output.get(key)]
+    issues = output.get("issues")
+    if isinstance(issues, list) and issues:
         more = f" (+{len(issues) - 2})" if len(issues) > 2 else ""
-        return f"Werdykt: {status} (Zastrzezenia: {issues_summary or 'wykryto bledy weryfikacji'}{more})"
-
-    # 3. Evolution agents
-    if "evolution" in name or "architect" in name:
-        # Rozpakuj response jeśli model opakował wynik w klucz 'response'
-        if "response" in output and isinstance(output["response"], str):
-            try:
-                nested = json.loads(output["response"])
-                if isinstance(nested, dict):
-                    output = {**nested, **output}
-            except Exception:
-                pass
-
-        # Sprawdź przypadek konsolidacji/kompakcji reguł (Rule Synthesis / Compaction)
-        if "synthesized_invariant" in output or "consolidated_rules" in output:
-            cnt = output.get("rules_consolidated_count", len(output.get("consolidated_rules", [])))
-            inv = str(output.get("synthesized_invariant") or "")
-            tgt = str(output.get("agent_id") or output.get("agent") or "agenta")
-            return f"Ewolucja: KONSOLIDACJA REGUŁ ({cnt} reguł dla {tgt}: '{inv[:70]}')"
-
-        action = output.get("action") or output.get("decision")
-        if action in ("inject_rule", "apply_rule"):
-            action = "MUTATE_AGENT"
-
-        if not action or action == "UNKNOWN":
-            if "injected_rule" in output or "rule" in output:
-                action = "MUTATE_AGENT"
-            elif "suggested_actions" in output or output.get("status") in ("FAIL", "RETRY"):
-                action = "REPAIR_ANALYSIS"
-            elif "specialization" in output:
-                action = "CREATE_AGENT"
-            elif "sub_specializations" in output:
-                action = "SPLIT_AGENT"
-            elif "tool_name" in output or "validator_name" in output:
-                action = "CREATE_TOOL"
-            else:
-                action = output.get("status") or "ADAPTACJA_SYSTEMU"
-
-        if action == "CREATE_AGENT":
-            return f"Ewolucja: CREATE_AGENT (nowy agent: '{output.get('specialization')}')"
-        if action == "SPLIT_AGENT":
-            subs = ", ".join(str(s) for s in output.get("sub_specializations", []))
-            return f"Ewolucja: SPLIT_AGENT ({output.get('agent_id')} -> [{subs}])"
-        if action == "CREATE_TOOL":
-            v_name = output.get("validator_name") or output.get("tool_name") or "custom_validator.py"
-            return f"Ewolucja: CREATE_TOOL (synteza walidatora: '{v_name}')"
-        if action == "MUTATE_AGENT":
-            rule = output.get("injected_rule") or output.get("rule", "")
-            tgt = output.get("agent") or output.get("agent_id") or "seed_coder"
-            return f"Ewolucja: MUTATE_AGENT ({tgt}: '{rule[:80]}')"
-        if action == "REPAIR_ANALYSIS":
-            reason = output.get("reason") or output.get("summary") or "analiza naruszeń kontraktu"
-            return f"Ewolucja: ANALIZA NAPRAWCZA ({reason[:80]})"
-        if action == "HITL":
-            gate = output.get("hitl_gate", "GATE")
-            q = output.get("question", "")
-            return f"Ewolucja: HITL ({gate}: '{q[:80]}')"
-        return f"Ewolucja: {action}"
-
-    if "consolidator" in name:
-        summary = output.get("summary") or output.get("consolidated_invariant", "")
-        return f"Konsolidacja regul: {summary[:100]}"
-
-    # 4. Builder / Coder agents
-    if "coder" in name or "specialist" in name:
-        summary = output.get("summary", "")
-        ast_edits = output.get("ast_edits", [])
-        if ast_edits:
-            symbols = ", ".join(str(e.get("symbol", "")) for e in ast_edits)
-            return f"Kod AST: zmodyfikowano [{symbols}] ({summary[:70]})"
-        return f"Kod: {summary if summary else 'Wygenerowano kod zrodlowy'}"
-
-    # 5. Tester agents
-    if "tester" in name:
-        summary = output.get("summary", "")
-        test_file = output.get("test_file", "test_core.py")
-        csv_file = output.get("benchmark_file", "results.csv")
-        return f"Testy/CSV: {test_file}, {csv_file} ({summary[:70]})"
-
-    # 6. Writer & Researcher agents
-    if "writer" in name or "researcher" in name:
-        summary = output.get("summary", "")
-        sections = output.get("sections", [])
-        if sections:
-            titles = ", ".join(str(s.get("section_title", ""))[:25] for s in sections[:2])
-            return f"Praca naukowa: {len(sections)} rozdzialow [{titles}...] ({summary[:70]})"
-        return f"Praca naukowa: {summary if summary else 'Opracowano tresc rozdzialu'}"
-
-    summary = output.get("summary") or output.get("action") or output.get("status")
-    if summary:
-        return f"Dzialanie: {str(summary)[:100]}"
-    keys = list(output.keys())[:4]
-    return f"Odpowiedz z polami: {', '.join(keys)}"
+        parts.append("uwagi: " + "; ".join(_issue_text(i)[:120] for i in issues[:2]) + more)
+    for key, label in (("tasks", "zadania"), ("files", "pliki"), ("ast_edits", "edycje"), ("interfaces", "interfejsy")):
+        value = output.get(key)
+        if isinstance(value, (list, dict)) and value:
+            parts.append(f"{label}: {len(value)}")
+    if output.get("summary"):
+        parts.append(str(output["summary"])[:100])
+    return "; ".join(parts) or "Odpowiedź z polami: " + ", ".join(list(output)[:5])

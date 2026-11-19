@@ -1,306 +1,162 @@
 {
   "failures": [
     {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"generic\", \"occurrences\": 2, \"tasks\": [\"T3\", \"T6\"], \"examples\": [\"Ruff lint failure: adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\config.py:34:32: F821 Undefined name `self`\\nFound 1 error.\", \"NOT_IMPLEMENTED [qagent.py]: a function still only raises NotImplementedError\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"qagent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"BEHAVIOUR_MISMATCH [qagent.py]: the implementation does not give the results the interface specifies:\\n     ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n                     compileflags, True), test.globs)\\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n      File \\\"<doctest example2[2]>\\\", line 1, in <module>\\n        agent.update(s1, 4, 0.1, s2)\\n        ~~~~~~~~~~~~^^^^^^^^^^^^^^^^\\n      File \\\"D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\qagent.py\\\", line 85, in update\\n        current_max = max(q_values[action]) if q_values else 0\\n                      ~~~^^^^^^^^^^^^^^^^^^\\n    TypeError: 'float' object is not iterable\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 9, \"cycle_index\": 9, \"task_id\": \"T6\", \"target_node\": \"qagent.py\", \"suggested_rule\": \"Task T6 on node qagent.py (qagent.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When implementing logic that manipulates complex data structures (such as lists or nested dictionaries) passed as arguments, ensure the variable types are preserved and initialized correctly throughout the function scope to prevent type errors like 'float' object not being iterable, because incorrect default values or initializations break assumed data contracts."
+      "agent": "seed_writer",
+      "context": "{\"pattern\": {\"category\": \"document\", \"occurrences\": 2, \"tasks\": [\"T1\", \"T8\"], \"examples\": [\"Malformed symbolic tag missing ':' separator: \\\\ref_csv{...}. A pointer without a target (a bare file) is invalid: choose a full target from 'available_ast_symbols' / 'available_csv_columns', and write a file named in the prose as \\\\texttt{...}.\", \"CSV file 'ttt_results' does not exist\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"thesis.md\", \"failed_agent\": \"seed_writer\", \"issues\": [\"CSV file 'ttt_results' does not exist\", \"Citation key 'sowerby2024baseline' not found in workspace .bib files.\"]}, \"failed_agent\": \"seed_writer\", \"agent_failure_count\": 6, \"cycle_index\": 16, \"task_id\": \"T8\", \"target_node\": \"thesis.md#ch3\", \"suggested_rule\": \"Task T8 on node thesis.md#ch3 (thesis.md) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When generating prose that references external data structures (like CSVs) or bibliographic entries, verify that the symbol exists in the provided 'available_csv_columns', 'available_ast_symbols', or '.bib' inventory before creating a reference command; if no direct mapping is found, describe the content using \\texttt{...} for file names instead of using symbolic tags, because symbolic tags require valid targets to remain parsable."
     },
     {
-      "agent": "seed_writer",
-      "context": "{\"pattern\": {\"category\": \"document\", \"occurrences\": 3, \"tasks\": [\"Q1_CRITIC\", \"Q3_CRITIC\", \"Q4_CRITIC\"], \"examples\": [\"Malformed symbolic tag missing ':' separator: \\\\ref_csv{config.py+TRAIN_SEED+EVAL_SEED}. A pointer without a target (a bare file) is invalid: choose a full target from 'available_ast_symbols' / 'available_csv_columns', and write a file named in the prose as \\\\texttt{...}.\", \"Malformed symbolic tag missing ':' separator: \\\\ref_ast{scipy}. A pointer without a target (a bare file) is invalid: choose a full target from 'available_ast_symbols' / 'available_csv_columns', and write a file named in the prose as \\\\texttt{...}.\", \"CSV file '<file>' does not exist\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"thesis.md\", \"failed_agent\": \"seed_writer\", \"issues\": [\"CSV file '<file>' does not exist\", \"Column 'Q-Learning+win_rate' not found in 'results.csv'\", \"Column 'Q-Learning+avg_reward' not found in 'results.csv'\"]}, \"failed_agent\": \"seed_writer\", \"agent_failure_count\": 5, \"cycle_index\": 66, \"task_id\": \"Q4_CRITIC\", \"target_node\": \"thesis.md#ch5\", \"suggested_rule\": \"Task Q4_CRITIC on node thesis.md#ch5 (thesis.md) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When referencing external data structures (CSV files/headers or Python AST symbols), you must first consult the 'available_csv_columns' and 'available_ast_symbols' lists provided in the context to select only valid targets; if a file is not listed as existing, it does not exist, so do not invent filenames or columns because hallucinated references cause validation failures."
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"pytest:assert\", \"occurrences\": 2, \"tasks\": [\"R1_2\", \"T7\"], \"examples\": [\"Pytest failure: ...F.F                                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\", \"Pytest failure: ...F..                                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"ttt_agent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: ...F..                                                                                                                                                                                                                                                                                               [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_____________________________________________________________________________________________________________________________________ test_get_q_values_with_entries ______________________________________________________________________________________________________________________________________\\ntests\\\\test_ttt_agent.py:48: in test_get_q_values_with_entries\\n    assert abs(q_vals[action_idx]) > 0.5\\nE   assert 0.1 > 0.5\\nE    +  where 0.1 = abs(0.1)\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_ttt_agent.py::test_get_q_values_with_entries - assert 0.1 > 0.5\\n1 failed, 5 passed in 0.10s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 10, \"cycle_index\": 19, \"task_id\": \"R1_2\", \"target_node\": \"ttt_agent.py\", \"suggested_rule\": \"Task R1_2 on node ttt_agent.py (ttt_agent.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When implementing numerical logic that involves floating-point comparisons, always use approximate equality checks (e.g., `pytest.approx`) instead of direct inequality assertions against raw values, because floating-point precision errors can cause deterministic assertion failures."
     }
   ],
   "category_log": [
     {
       "cycle": 1,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T3"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T1"
     },
     {
       "cycle": 2,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T3"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T1"
     },
     {
       "cycle": 3,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T3"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T1"
     },
     {
       "cycle": 4,
-      "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "T5"
+      "agent": "background_researcher",
+      "category": "document",
+      "task_id": "T2"
     },
     {
       "cycle": 5,
-      "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "T5"
+      "agent": "background_researcher",
+      "category": "document",
+      "task_id": "T2"
     },
     {
       "cycle": 6,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T5"
+      "agent": "background_researcher",
+      "category": "document",
+      "task_id": "T2"
     },
     {
       "cycle": 7,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T6"
+      "category": "harness",
+      "task_id": "T3"
     },
     {
       "cycle": 8,
       "agent": "seed_coder",
       "category": "generic",
-      "task_id": "T6"
+      "task_id": "T4"
     },
     {
       "cycle": 9,
       "agent": "seed_coder",
       "category": "generic",
-      "task_id": "T6"
+      "task_id": "T4"
     },
     {
       "cycle": 10,
       "agent": "seed_coder",
       "category": "generic",
-      "task_id": "T7"
+      "task_id": "T4"
     },
     {
       "cycle": 11,
       "agent": "seed_coder",
-      "category": "harness",
+      "category": "pytest:assert",
       "task_id": "T7"
     },
     {
       "cycle": 12,
-      "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "T8"
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "T7"
     },
     {
       "cycle": 13,
       "agent": "seed_coder",
-      "category": "pytest:TypeError",
-      "task_id": "T8"
+      "category": "pytest:assert",
+      "task_id": "T7"
     },
     {
       "cycle": 14,
-      "agent": "seed_coder",
-      "category": "pytest:KeyError",
+      "agent": "seed_writer",
+      "category": "document",
       "task_id": "T8"
     },
     {
       "cycle": 15,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T11"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T8"
     },
     {
       "cycle": 16,
-      "agent": "seed_coder",
-      "category": "SyntaxError",
-      "task_id": "T11"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T8"
     },
     {
       "cycle": 17,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T11"
+      "category": "pytest:assert",
+      "task_id": "R1_2"
     },
     {
-      "cycle": 23,
+      "cycle": 18,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q1_RESULTS"
+      "category": "pytest:assert",
+      "task_id": "R1_2"
     },
     {
-      "cycle": 24,
+      "cycle": 19,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q1_RESULTS"
+      "category": "pytest:assert",
+      "task_id": "R1_2"
     },
     {
-      "cycle": 25,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q1_RESULTS"
-    },
-    {
-      "cycle": 26,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q1_FIX_experiment_2"
-    },
-    {
-      "cycle": 27,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q1_FIX_experiment_2"
-    },
-    {
-      "cycle": 28,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q1_FIX_experiment_2"
-    },
-    {
-      "cycle": 29,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q1_FIX_experiment_3"
-    },
-    {
-      "cycle": 30,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q1_FIX_experiment_3"
-    },
-    {
-      "cycle": 31,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q1_FIX_experiment_3"
-    },
-    {
-      "cycle": 37,
-      "agent": "seed_writer",
+      "cycle": 20,
+      "agent": "background_researcher",
       "category": "document",
-      "task_id": "Q1_CRITIC"
+      "task_id": "R1_8"
     },
     {
-      "cycle": 43,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q3_FIX1"
-    },
-    {
-      "cycle": 44,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q3_FIX2"
-    },
-    {
-      "cycle": 45,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q3_FIX2"
-    },
-    {
-      "cycle": 46,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q3_FIX2"
-    },
-    {
-      "cycle": 47,
-      "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "Q3_FIX_test_env_4"
-    },
-    {
-      "cycle": 48,
-      "agent": "seed_writer",
+      "cycle": 21,
+      "agent": "background_researcher",
       "category": "document",
-      "task_id": "Q3_CRITIC"
+      "task_id": "R1_8"
     },
     {
-      "cycle": 54,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q4_FIX1"
-    },
-    {
-      "cycle": 55,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q4_FIX1"
-    },
-    {
-      "cycle": 56,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q4_FIX1"
-    },
-    {
-      "cycle": 57,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q4_FIX_experiment_2"
-    },
-    {
-      "cycle": 58,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q4_FIX_experiment_2"
-    },
-    {
-      "cycle": 59,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q4_FIX_experiment_2"
-    },
-    {
-      "cycle": 60,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q4_FIX_experiment_6"
-    },
-    {
-      "cycle": 61,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q4_FIX_experiment_6"
-    },
-    {
-      "cycle": 62,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "Q4_FIX_experiment_6"
-    },
-    {
-      "cycle": 63,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "Q4_FIX_qagent_8"
-    },
-    {
-      "cycle": 64,
-      "agent": "seed_writer",
+      "cycle": 22,
+      "agent": "background_researcher",
       "category": "document",
-      "task_id": "Q4_CRITIC"
-    },
-    {
-      "cycle": 65,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q4_CRITIC"
-    },
-    {
-      "cycle": 66,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "Q4_CRITIC"
+      "task_id": "R1_8"
     }
   ],
   "rules": [
     {
-      "agent": "seed_coder",
-      "rule": "When implementing logic that manipulates complex data structures (such as lists or nested dictionaries) passed as arguments, ensure the variable types are preserved and initialized correctly throughout the function scope to prevent type errors like 'float' object not being iterable, because incorrect default values or initializations break assumed data contracts.",
-      "category": "generic",
-      "cycle": 9
+      "agent": "seed_writer",
+      "rule": "When generating prose that references external data structures (like CSVs) or bibliographic entries, verify that the symbol exists in the provided 'available_csv_columns', 'available_ast_symbols', or '.bib' inventory before creating a reference command; if no direct mapping is found, describe the content using \\texttt{...} for file names instead of using symbolic tags, because symbolic tags require valid targets to remain parsable.",
+      "category": "document",
+      "cycle": 16
     },
     {
-      "agent": "seed_writer",
-      "rule": "When referencing external data structures (CSV files/headers or Python AST symbols), you must first consult the 'available_csv_columns' and 'available_ast_symbols' lists provided in the context to select only valid targets; if a file is not listed as existing, it does not exist, so do not invent filenames or columns because hallucinated references cause validation failures.",
-      "category": "document",
-      "cycle": 66
+      "agent": "seed_coder",
+      "rule": "When implementing numerical logic that involves floating-point comparisons, always use approximate equality checks (e.g., `pytest.approx`) instead of direct inequality assertions against raw values, because floating-point precision errors can cause deterministic assertion failures.",
+      "category": "pytest:assert",
+      "cycle": 19
     }
   ]
 }

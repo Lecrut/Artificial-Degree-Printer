@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from adk.core.models import ModelTier
 
-# The small model does the work. The large one steps in for one attempt after the small model failed a task
-# this many times; a failure never promotes the node for the rest of the run (Audit IV §IV.8).
+# The small model does the work. The large one takes over a vertex after the small model failed it this many
+# times (failed verifications and rejected answers, counted on the vertex in H over all its tasks; §XI B4).
 ESCALATE_TO_LRM_AFTER = 2
 
 

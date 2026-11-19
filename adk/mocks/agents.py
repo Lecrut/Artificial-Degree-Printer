@@ -12,7 +12,6 @@ from typing import Any
 from adk.mocks.scenarios import ENTRYPOINT, MockScenario
 from adk.tools.verification.contract_check import stub_source
 
-_ALIAS_PATHS = {"v1": "config.py", "v2": "core.py", "v3": "tests/test_core.py", "v4": "thesis.md", "v5": "tests/test_core.py"}
 _CHAPTER = re.compile(r"(?:chapter|rozdzia[lł])\s*(\d+)", re.I)
 _UNRUNNABLE_MODULE = (
     '"""Metric helpers."""\n\n\n'
@@ -82,6 +81,8 @@ class SimulatedAgents:
     # --- planning ---------------------------------------------------------------------------------------------
 
     def _planner(self, payload: dict[str, Any]) -> dict[str, Any]:
+        if isinstance(payload.get("repair_dossier"), dict):
+            return self._replan(payload["repair_dossier"])
         if isinstance(payload.get("current_plan"), dict):
             return self._plan_patch(payload["current_plan"], str(payload.get("error_feedback", "")))
         sc = self.scenario
@@ -116,6 +117,19 @@ class SimulatedAgents:
             "missing_agent_specialization": sc.missing_specialization,
         }
 
+    def _replan(self, dossier: dict[str, Any]) -> dict[str, Any]:
+        """New tasks for the failed vertices, one each."""
+        tasks = []
+        for entry in dossier.get("failed") or []:
+            vertex, kind = str(entry.get("vertex")), str(entry.get("kind"))
+            if kind == "chapter":
+                number = vertex.rpartition("#ch")[2]
+                tasks.append({"target_node": "thesis.md", "description": f"Chapter {number}: rewrite it", "assigned_agent": "seed_writer"})
+            else:
+                agent = "seed_tester" if kind == "test" else "seed_coder"
+                tasks.append({"target_node": vertex, "description": f"Rewrite {vertex}: the earlier attempts failed", "assigned_agent": agent})
+        return {"tasks": tasks}
+
     def _plan_patch(self, plan: dict[str, Any], feedback: str) -> dict[str, Any]:
         """A correction of the plan it was shown: only the parts the feedback is about."""
         patch: dict[str, Any] = {}
@@ -132,7 +146,7 @@ class SimulatedAgents:
         sc = self.scenario
         coder = sc.missing_specialization or "seed_coder"
         if sc.custom_tasks:
-            return [{**t, "target_node": _ALIAS_PATHS.get(t["target_node"], t["target_node"])} for t in sc.custom_tasks]
+            return [dict(t) for t in sc.custom_tasks]
         prompt = str(payload.get("user_prompt", ""))[:80]
         tasks: list[dict[str, Any]] = []
         if include_docs and sc.name != "default":

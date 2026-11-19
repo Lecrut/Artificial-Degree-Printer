@@ -15,6 +15,7 @@ The module structure and the public names come from the plan: they are the inter
    - A new file: `"files"`. An existing file: `"ast_edits"` with only the symbols you change (`"symbol": "<function>"` or `"<Class>.<method>"`) — a small edit is faster and cannot break the rest of the file.
    - Your code is verified by a syntax guard (`ast.parse`); syntax errors are rejected immediately.
    - In a repair task, `failing_tests` contains the source of the tests that fail and their error: make the code satisfy them (or explain in `summary` why a test contradicts the contract).
+   - A repair task with `task.repair_focus` names the symbols to fix (`symbols`: their current code) and its description lists each error with the line and the code it is about. Change only those symbols (and private `_helpers` they need); do not rewrite the module and add no public names. `task.task_context` is the original task, for background only.
 3. **Academic & Production Quality Standards**:
    - **Modular Architecture**: separate configuration, the proposed method, the baseline and the experiment into small, single-purpose modules. Structure and names are yours to choose.
    - **Scientific Python Stack**: `numpy`, `scipy`, `pandas`, `scikit-learn` and `networkx` are available.
@@ -72,4 +73,4 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.
-- **RULE**: When implementing logic that manipulates complex data structures (such as lists or nested dictionaries) passed as arguments, ensure the variable types are preserved and initialized correctly throughout the function scope to prevent type errors like 'float' object not being iterable, because incorrect default values or initializations break assumed data contracts.
+- **RULE**: When implementing numerical logic that involves floating-point comparisons, always use approximate equality checks (e.g., `pytest.approx`) instead of direct inequality assertions against raw values, because floating-point precision errors can cause deterministic assertion failures.

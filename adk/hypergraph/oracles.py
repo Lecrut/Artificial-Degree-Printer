@@ -20,18 +20,41 @@ _ALLOWED_ON_STUBS = ("NotImplementedError",)
 
 
 _BEHAVIOUR_PROBE = r"""
-import doctest, importlib, json, sys
+import doctest, importlib, json, os, sys, traceback
 root, dotted, examples = sys.argv[1], sys.argv[2], json.loads(sys.argv[3])
 sys.path.insert(0, root)
 mod = importlib.import_module(dotted)
+
+
+class Runner(doctest.DocTestRunner):
+    # One record per failed example, with where it failed: the text report of doctest is mostly its own frames.
+    def report_failure(self, out, test, example, got):
+        self.fails.append({"example": example.source.strip(), "expected": example.want.strip(), "got": got.strip(),
+                           "earlier_failed": bool(self.fails)})
+
+    def report_unexpected_exception(self, out, test, example, exc_info):
+        frames = [f for f in traceback.extract_tb(exc_info[2]) if not f.filename.endswith("doctest.py")]
+        last = frames[-1] if frames else None
+        in_example = last is not None and last.filename.startswith("<doctest")
+        where = None
+        if last is not None and not in_example:
+            try:
+                rel = os.path.relpath(last.filename, root).replace(os.sep, "/")
+            except ValueError:
+                rel = last.filename
+            where = {"file": rel, "line": last.lineno, "function": last.name, "code": (last.line or "").strip()}
+        self.fails.append({"example": example.source.strip(), "exception": f"{exc_info[0].__name__}: {exc_info[1]}"[:300],
+                           "exception_type": exc_info[0].__name__, "in_example": in_example, "where": where,
+                           "earlier_failed": bool(self.fails)})
+
+
 failures = []
-parser, runner = doctest.DocTestParser(), doctest.DocTestRunner(optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
+parser = doctest.DocTestParser()
 for i, text in enumerate(examples):
-    test = parser.get_doctest(text, dict(vars(mod)), f"example{i}", None, 0)
-    out = []
-    result = runner.run(test, out=out.append, clear_globs=True)
-    if result.failed:
-        failures.append("".join(out)[-600:])
+    runner = Runner(optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
+    runner.fails = []
+    runner.run(parser.get_doctest(text, dict(vars(mod)), f"example{i}", None, 0), out=lambda _s: None, clear_globs=True)
+    failures += runner.fails
 print(json.dumps(failures))
 """
 
@@ -68,7 +91,56 @@ def check_behaviour(workspace: str | Path, rel: str, spec: dict, timeout: int = 
         failures = [proc.stderr[-600:] or proc.stdout[-600:]]
     if not failures:
         return []
-    return [Violation("BEHAVIOUR_MISMATCH", "the implementation does not give the results the interface specifies:\n" + "\n".join(failures[:3]), rel, rel)]
+    symbols = list((spec.get("symbols") or {}).keys())
+    broken = [f for f in failures if isinstance(f, dict) and _example_is_broken(f)]
+    found: list[Violation] = []
+    if broken:
+        # The example itself is wrong (a name it never defined): no implementation can satisfy it, so the plan
+        # has to change, not the code (2026-11-18: `assert action in valid` in qagent, three coder repairs).
+        found.append(Violation(
+            "SPEC_EXAMPLE_INVALID",
+            "the interface's example cannot pass with any implementation:\n" + "\n".join(_example_text(f, symbols) for f in broken[:3]),
+            rel, rel,
+        ))
+    rest = [f for f in failures if f not in broken]
+    if rest:
+        found.append(Violation(
+            "BEHAVIOUR_MISMATCH",
+            "the implementation does not give the results the interface specifies:\n" + "\n".join(_example_text(f, symbols) for f in rest[:4]),
+            rel, rel,
+        ))
+    return found
+
+
+def _example_is_broken(failure: dict) -> bool:
+    """The example's own code raised a NameError or SyntaxError, and no earlier example of it failed (an earlier
+    failure can leave a name undefined)."""
+    return bool(failure.get("in_example")) and not failure.get("earlier_failed") and failure.get("exception_type") in ("NameError", "SyntaxError")
+
+
+def _example_symbol(example: str, symbols: list[str]) -> str:
+    """The planned symbol an example exercises: the last one whose name it calls."""
+    called = [m for m in symbols if f"{m.rpartition('.')[2]}(" in example]
+    return called[-1] if called else ""
+
+
+def _example_text(failure: dict | str, symbols: list[str]) -> str:
+    """One failed example as the agent needs it: the symbol, the example, and expected/got or the exception with
+    the line of the implementation where it was raised. No frames of doctest itself."""
+    if not isinstance(failure, dict):
+        return str(failure)[-600:]
+    example = failure.get("example", "")
+    symbol = _example_symbol(example, symbols)
+    head = f"- {symbol + ': ' if symbol else ''}example `{example[:200]}`"
+    if "exception" not in failure:
+        return f"{head} expected `{failure.get('expected', '')[:200]}`, got `{failure.get('got', '')[:200]}`"
+    where = failure.get("where") or {}
+    place = (
+        f" in {where.get('file')} > {where.get('function')}, line {where.get('line')}: `{where.get('code', '')[:160]}`"
+        if where else " in the example's own code"
+    )
+    note = " (after an earlier example of the same docstring failed)" if failure.get("earlier_failed") else ""
+    return f"{head} raised {failure['exception']}{place}{note}"
 
 
 def validate_test_on_stubs(workspace: str | Path, test_rel: str, h: Hypergraph, timeout: int = 120) -> list[Violation]:

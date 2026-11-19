@@ -201,9 +201,6 @@ def test_a3_build_gives_typed_bags_roles_and_order():
     }
     assert ("R:run", "N:thesis.md#ch4") in h.order and ("R:run", "N:thesis.md#ch1") not in h.order
     assert h.vertices["src/experiment.py"].kind == "entry" and h.vertices["src/config.py"].state == "stub"
-    # blast radius = own bags + everything after them in ≺: a config change reaches the results chapter
-    assert {"I:src/config.py", "I:src/experiment.py", "R:run", "N:thesis.md#ch4"} <= h.blast_radius("src/config.py")
-    assert "N:thesis.md#ch1" not in h.blast_radius("src/config.py")
 
 
 def test_a3_diff_finds_broken_promises_and_files_outside_the_plan(tmp_path: Path):

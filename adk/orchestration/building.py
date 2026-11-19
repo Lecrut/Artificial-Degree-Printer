@@ -144,6 +144,10 @@ class BuildingMixin:
             self._record_evolution_event(
                 {"type": "BUILDER_ANSWER_REJECTED", "task_id": task.get("task_id"), "agent": agent_id, "error": str(exc)[:2000]}
             )
+            # The vertex remembers the rejection like a failed verification: the next attempt, the model choice
+            # and the re-plan's dossier all see it (§XI B4, A).
+            h = self._project_h()
+            self._remember_verdict(h.owner_of(node_path) if h is not None else None, task.get("task_id"), [f"ANSWER_REJECTED: {exc}"])
             retry_payload = {
                 **builder_payload,
                 "rejected_answer": {

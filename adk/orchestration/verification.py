@@ -269,6 +269,11 @@ class VerificationMixin:
                 "issues": [],
             }
 
+        # §XI B0: an error is what the harness proved (pytest, doctest, ruff, σ, pointers, declared metrics); the
+        # opinions of the model auditors are warnings, reported and never repaired. On 2026-11-18 the red team
+        # failed all 24 defenses by rewording pytest, and every reworded copy went to the repair as work.
+        opinion_warnings: list[str] = []
+
         def _is_supervisor_pass(sup: dict[str, Any]) -> bool:
             if is_final_gate and sup.get("gate_3_approved") is False:
                 return False
@@ -281,13 +286,12 @@ class VerificationMixin:
         )
         if deterministic_code_fail:
             code_audit["status"] = "FAIL"
-            # Real pytest/ruff errors always come first; the LLM's issues only supplement them.
+            # The errors are pytest's, ruff's and the contracts'; the model auditor's issues become warnings.
             real_errors = list(dict.fromkeys(str(err) for err in (test_res.get("errors") or [])))
-            llm_issues = [str(i) for i in (code_audit.get("issues") or []) if str(i) not in real_errors]
-            code_audit["issues"] = real_errors + llm_issues or [
-                texts.contract_mismatch(current_task.get("task_id"), target_node)
-            ]
+            opinion_warnings += [str(i) for i in (code_audit.get("issues") or []) if str(i) not in real_errors]
+            code_audit["issues"] = real_errors or [texts.contract_mismatch(current_task.get("task_id"), target_node)]
         elif code_audit.get("status") != "PASS":
+            opinion_warnings += [str(i) for i in (code_audit.get("issues") or [])]
             code_audit["status"] = "PASS"
             code_audit["issues"] = []
 
@@ -295,25 +299,22 @@ class VerificationMixin:
             deterministic_doc_fail = bool(ref_errors)
             if deterministic_doc_fail:
                 symbolic_audit["status"] = "FAIL"
-                # The compiler's findings always come first; the model's issues only supplement them.
-                model_issues = [str(i) for i in (symbolic_audit.get("issues") or []) if str(i) not in ref_errors]
-                symbolic_audit["issues"] = list(ref_errors) + model_issues or [
-                    texts.pointer_mismatch(current_task.get("task_id"), target_node)
-                ]
-                if is_final_gate:
-                    redteam_audit["status"] = "FAIL"
-                    if not redteam_audit.get("issues"):
-                        redteam_audit["issues"] = list(symbolic_audit["issues"])
-            else:
-                if effective_include_docs and not symbolic_audit.get("issues"):
-                    symbolic_audit["status"] = "PASS"
-                    symbolic_audit["issues"] = []
-                if is_final_gate:
-                    # Preserve real adversarial critique from redteam_critic_guard (Gate 3)
-                    if redteam_audit.get("issues") or redteam_audit.get("gate_3_approved") is False:
-                        redteam_audit["status"] = "FAIL"
-                    elif not deterministic_code_fail and not redteam_audit.get("issues"):
-                        redteam_audit["status"] = "PASS"
+                # The errors are the pointer compiler's; the model auditor's issues become warnings.
+                opinion_warnings += [str(i) for i in (symbolic_audit.get("issues") or []) if str(i) not in ref_errors]
+                symbolic_audit["issues"] = list(ref_errors) or [texts.pointer_mismatch(current_task.get("task_id"), target_node)]
+            elif effective_include_docs:
+                opinion_warnings += [str(i) for i in (symbolic_audit.get("issues") or [])]
+                symbolic_audit["status"] = "PASS"
+                symbolic_audit["issues"] = []
+
+        metric_errors = list(metric_findings) if is_final_gate else []
+        if is_final_gate:
+            # The red team's own findings are warnings; the defense is blocked by code, pointers (above) and by
+            # metrics declared in the plan that the results do not contain (counted by the harness).
+            opinion_warnings += [str(i) for i in (redteam_audit.get("issues") or [])]
+            redteam_audit["issues"] = metric_errors
+            redteam_audit["status"] = "FAIL" if metric_errors else "PASS"
+            redteam_audit["gate_3_approved"] = not metric_errors
 
         overall_pass = (
             _is_supervisor_pass(code_audit)
@@ -344,7 +345,10 @@ class VerificationMixin:
                     for issue in [*code_audit.get("issues", []), *contract_violations]
                     for p in self._workspace_paths_in(str(issue))
                 ]
-                failed_file = next((p for p in named if scope_paths is None or p in scope_paths), None) or node_path
+                failed_file = next((p for p in named if scope_paths is None or p in scope_paths), None)
+                if failed_file is None and metric_errors and _is_supervisor_pass(code_audit) and _is_supervisor_pass(symbolic_audit):
+                    failed_file = declared_entry.partition(":")[0] or None  # results lack a metric: the experiment's
+                failed_file = failed_file or node_path
             owner = h.owner_of(str(failed_file)) if h is not None else None
             author = h.vertices[owner].last_writer if owner is not None else None
             failed_agent = (author or {}).get("agent") or current_task.get("assigned_agent")
@@ -366,9 +370,11 @@ class VerificationMixin:
         ).to_dict()
         if contract_violations and not overall_pass:
             report["contract_violations"] = contract_violations
-        # Non-blocking findings (closure of declared parameters, lint left after `ruff --fix`): reported, not repaired.
-        if contract_warnings:
-            report["warnings"] = list(dict.fromkeys(contract_warnings))[:12]
+        # Non-blocking findings (closure of declared parameters, mechanical lint, opinions of the model auditors):
+        # reported, never repaired.
+        warnings = list(dict.fromkeys([*contract_warnings, *opinion_warnings]))
+        if warnings:
+            report["warnings"] = warnings[:20]
 
         write_json_state(self.validation_report_path, report)
         issues = _collect_report_issues(report)  # the findings live in the supervisors' sections, not at the top
@@ -380,6 +386,7 @@ class VerificationMixin:
         self.logger.log_event(
             "VERDICT", task_id=current_task.get("task_id"), node=target_node, status=report.get("status"),
             failed_file=failed_file, failed_agent=failed_agent, first_issue=str(issues[0])[:400] if issues else None,
+            errors=len(issues) if not overall_pass else 0, warnings=len(warnings),
         )
         return report
 

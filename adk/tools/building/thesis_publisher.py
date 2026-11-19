@@ -659,7 +659,6 @@ def publish_workspace_thesis_bundle(
         # The file of the declared entrypoint: root modules are moved to code/, modules in packages stay.
         "runner_script": _entry_file(w_dir, str(organized.get("code_dir", w_dir / "code")), entrypoint),
         "pdf_path": organized.get("pdf_path", str(pdf_path)),
-        "root_pdf": organized.get("root_pdf", str(pdf_path)),
         "tex_path": organized.get("tex_path", str(tex_path)),
         "compiled_tex_path": str(w_dir / "thesis" / "thesis.compiled.tex"),
         "compiled_md_path": str(w_dir / "thesis" / "thesis.compiled.md"),
@@ -722,9 +721,7 @@ def organize_benchmark_output_bundle(task_dir: Path | str, spec: BenchmarkTaskSp
                 dest.unlink()
             shutil.copy2(str(cls_p), str(dest))
 
-    # Maintain copy of thesis.pdf in root directory for quick review
-    if (thesis_dir / "thesis.pdf").exists():
-        shutil.copy2(str(thesis_dir / "thesis.pdf"), str(root / "thesis.pdf"))
+    # One PDF of the thesis: thesis/thesis.pdf. A copy in the task folder went out of step with it (2026-11-18).
 
     # 3. Results & Empirical Data
     if (root / "results.csv").exists():
@@ -776,7 +773,6 @@ def organize_benchmark_output_bundle(task_dir: Path | str, spec: BenchmarkTaskSp
         "results_dir": str(results_dir),
         "logs_dir": str(logs_dir),
         "pdf_path": str(thesis_dir / "thesis.pdf"),
-        "root_pdf": str(root / "thesis.pdf"),
         "html_path": str(thesis_dir / "thesis.html"),
         "tex_path": str(thesis_dir / "thesis.tex"),
         "llm_interactions_md": str(logs_dir / "llm_interactions.md"),

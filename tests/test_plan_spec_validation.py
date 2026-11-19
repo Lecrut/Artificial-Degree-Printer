@@ -107,7 +107,7 @@ def test_progress_budget_allows_more_than_two_patches_and_separates_code_vs_crit
     critic_step = 0
     planner_step = 0
 
-    def agents(md, payload, **_kw):
+    def agents(md, _payload, **_kw):
         nonlocal critic_step, planner_step
         if Path(md).name == "plan_critic_guard.md":
             critic_step += 1
@@ -153,7 +153,7 @@ def test_partial_patch_keeps_valid_module_and_rejects_broken_module(tmp_path: Pa
     plan["interfaces"]["src/mod_a.py"] = _MOD_A.replace("int", "Optional[int]")  # missing Optional import
     planner_step = 0
 
-    def agents(md, payload, **_kw):
+    def agents(md, _payload, **_kw):
         nonlocal planner_step
         if Path(md).name == "plan_critic_guard.md":
             return {"status": "ok", "output": {"status": "PASS", "issues": []}}
@@ -187,7 +187,7 @@ def test_growing_critic_blockers_stops_after_no_progress_limit(tmp_path: Path):
     critic_step = 0
     planner_step = 0
 
-    def agents(md, payload, **_kw):
+    def agents(md, _payload, **_kw):
         nonlocal critic_step, planner_step
         if Path(md).name == "plan_critic_guard.md":
             critic_step += 1
@@ -214,7 +214,7 @@ def test_task_dict_patch_updates_only_targeted_task_preserving_count(tmp_path: P
     plan = _base_plan()
     plan["tasks"][0]["description"] = "Call undeclared_symbol() in helper_a"
 
-    def agents(md, payload, **_kw):
+    def agents(md, _payload, **_kw):
         if Path(md).name == "plan_critic_guard.md":
             return {"status": "ok", "output": {"status": "PASS", "issues": []}}
         return {"status": "ok", "output": {"tasks": {"T1": {"description": "Implement helper_a"}}}}

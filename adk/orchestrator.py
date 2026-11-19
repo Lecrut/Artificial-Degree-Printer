@@ -31,6 +31,7 @@ from adk.orchestration.plan_change import PlanChangeMixin
 from adk.orchestration.write_gate import WriteGateMixin
 from adk.orchestration.verification import VerificationMixin
 from adk.orchestration.factual_audit import FactualAuditMixin
+from adk.orchestration.fragment_replan import FragmentReplanMixin
 from adk.orchestration.evolution import EvolutionMixin
 from adk.orchestration.planning import PlanningMixin
 from adk.orchestration.plan_healing import PlanHealingMixin
@@ -62,6 +63,7 @@ class NeuroSymbolicOrchestrator(
     RepairMixin,
     EvolutionMixin,
     RecoveryMixin,
+    FragmentReplanMixin,
     RoutingMixin,
     GatesMixin,
     PlanSpecMixin,
@@ -165,6 +167,13 @@ class NeuroSymbolicOrchestrator(
                 if stop is not None:
                     return stop
 
+            # What failed is re-planned with what was learned (§XI A); its dependents waited meanwhile.
+            replanned = self._replan_failed(state)
+            if replanned is not None:
+                if "stop" in replanned:
+                    return replanned["stop"]
+                continue
+
             # A failed task leaves the workspace in an unknown state: audit it before defending the thesis.
             # WAITING (only with H): planned work whose dependencies never turned ready in this generation.
             if any(isinstance(t, dict) and t.get("status") in ("FAILED", "WAITING") for t in state.tasks):
@@ -190,6 +199,8 @@ class NeuroSymbolicOrchestrator(
                         return stop
                     continue
             else:
+                if self._failed_vertices():
+                    continue  # a code vertex failed the defense: it is re-planned, not handed to the writer
                 stop = self._next_generation(state, final_report)
                 if stop is not None:
                     return stop
@@ -245,7 +256,7 @@ class NeuroSymbolicOrchestrator(
 
         node_id, node_file = self._resolve_target_node(str(task.get("target_node") or THESIS_FILE), task=task, fallback=THESIS_FILE)
         task["target_node"] = node_id
-        tier = select_model_tier()
+        tier = select_model_tier(failures=self._vertex_failures(node_file))  # a re-planned vertex keeps its count
         t_id = str(task.get("task_id", f"T{idx + 1}"))
         t_agent = str(task.get("assigned_agent", "seed_coder"))
         print(
@@ -290,6 +301,14 @@ class NeuroSymbolicOrchestrator(
         # X1: the entrypoint blocked behind a failed skeleton).
         task["status"] = "FAILED"
         self._on_task_result(task, passed=False)
+        blamed = self._mark_failed(report, task)  # what depends on it waits; it comes back in the re-plan (§XI A)
+        if blamed is not None and blamed != self._task_vertex(task) and self._waits_on_failed(task):
+            # Failed for another vertex's fault: the task runs again once that vertex is repaired.
+            task["status"] = "WAITING"
+            write_json_state(self.task_queue_path, state.tasks)
+            self.logger.log_event("TASK_DEFERRED", task_id=t_id, node=node_file, blamed=blamed)
+            print(f"  [ZADANIE {t_id} ODŁOŻONE] czeka na naprawę {blamed}.", flush=True)
+            return None
         write_json_state(self.task_queue_path, state.tasks)
         self.logger.log_event(
             "TASK_FAILED", task_id=t_id, node=node_file, repair_attempts=task.get("repair_attempts", 0),
@@ -309,6 +328,10 @@ class NeuroSymbolicOrchestrator(
             flush=True,
         )
         final_report = self._run_verification_step(defense_task, include_docs=self.include_docs, is_final_gate=True)
+        if final_report.get("status") != "PASS" and self._code_vertex_of(final_report) is not None:
+            # 2026-11-18: the defense failed on qagent.py and the writer of chapter 6 was sent to repair it 21 times.
+            self._mark_failed(final_report, defense_task)
+            return final_report
         retries = 0
         while final_report.get("status") != "PASS" and retries < state.max_retries:
             retries += 1

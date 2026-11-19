@@ -28,6 +28,18 @@ PER_TEST_TIMEOUT_S = 20
 PYTEST_TIMEOUT_S = 120
 
 
+_TEST_DEF = re.compile(r"^\s*(?:async\s+)?def\s+test|^\s*class\s+Test", re.MULTILINE)
+
+
+def _files_without_tests(test_files: list[Path], w_dir: Path) -> list[str]:
+    """Workspace-relative paths of the test files that define no test."""
+    return [
+        p.resolve().relative_to(w_dir.resolve()).as_posix()
+        for p in test_files
+        if not _TEST_DEF.search(p.read_text(encoding="utf-8", errors="replace"))
+    ]
+
+
 def _run_tool(cmd: list[str], timeout: int, label: str, errors: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str] | None:
     """subprocess.run that turns a timeout into a finding in `errors` (returns None) instead of raising."""
     try:
@@ -222,7 +234,15 @@ def run_isolated_tests(
         if proc is not None:
             output = (proc.stdout + proc.stderr).strip()
             stdout_logs.append(output)
-            if not pytest_passed:
+            empty = _files_without_tests(test_files, w_dir) if proc.returncode == 5 else []
+            if empty:
+                # Exit code 5 = nothing collected. The message names the test file, so the failure goes to its
+                # author; before, "no tests ran" named no file and the module's coder was sent to fix it
+                # (2026-11-18: 11 repairs of experiment.py for a test file the model had cut off after its imports).
+                errors.append(
+                    f"Pytest failure: no tests ran: {', '.join(empty)} define no test function (`def test_...`)"
+                )
+            elif not pytest_passed:
                 errors.append(f"Pytest failure: {_condense_hang(output, w_dir)}")
 
     ruff_passed = True
@@ -234,15 +254,19 @@ def run_isolated_tests(
     lint_warnings: list[str] = []
     if ruff_bin:
         # Judged files: the scope (or the whole workspace); mechanical fixes run on everything, they are free.
-        judged = [str(p) for p in py_files] if scope is not None else [str(w_dir)]
+        # Paths relative to the workspace: ruff run from the repository printed the sandbox path
+        # (adk/workspace/benchmarks/_evolved_adk_state/.../config.py), agents copied it into their answers and the
+        # write was refused as a file outside the plan (2026-11-18).
+        judged = [p.resolve().relative_to(w_dir.resolve()).as_posix() for p in py_files] if scope is not None else ["."]
 
         def _ruff(*args: str, targets: list[str] | None = None) -> subprocess.CompletedProcess[str] | None:
             # --isolated: the repository's own ruff.toml must not change how generated code is judged.
             return _run_tool(
-                [ruff_bin, "check", "--isolated", "--output-format", "concise", *args, *(targets or [str(w_dir)])],
+                [ruff_bin, "check", "--isolated", "--output-format", "concise", *args, *(targets or ["."])],
                 20,
                 "Ruff",
                 lint_warnings,
+                cwd=str(w_dir.resolve()),
             )
 
         # Verification only reports; it never edits (decision D3, 2026-11-15). `ruff --fix` used to rewrite

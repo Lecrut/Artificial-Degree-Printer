@@ -1,3 +1,0 @@
-method,metric,value,std_dev,n_runs
-Q-Learning,win_rate,0.6606,0.0038,10
-Q-Learning,avg_reward,0.0419,0.0005,10

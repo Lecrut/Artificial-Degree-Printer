@@ -31,12 +31,6 @@ def repair_task_exception(task_id: Any, node_id: str, node_file: str, exc: Any) 
     return f"Repair task {task_id} on node {node_id} ({node_file}) raised an exception: {exc}"
 
 
-REMOVED = "removed"  # contract_check marks a removed symbol as `file: removed name(...)`
-
-
-PLACEHOLDER_EXTENSION_REASON = "placeholder signature from the skeleton filled in"
-
-
 def unparsable_code(errors: list[str]) -> str:
     return (
         "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer "
@@ -160,8 +154,13 @@ def remediation_directive(task_id: str, node_id: str, node_file: str) -> str:
     )
 
 
-def fast_repair_description(task_description: str, findings: list[str]) -> str:
-    return f"{task_description}\nFIX (verification findings):\n- " + "\n- ".join(findings)
+def focused_repair_description(target: str, symbols: list[str], findings: list[str]) -> str:
+    """A repair names what to change: the symbols the findings point at, each error with its line of code."""
+    what = f"Fix {', '.join(f'`{s}`' for s in symbols)} in {target}" if symbols else f"Fix {target}"
+    return (
+        f"{what}. Change only what these errors are about and keep everything else as it is:\n- "
+        + "\n- ".join(findings)
+    )
 
 
 def previous_attempt_failed(summary: str, node_id: str, node_file: str) -> str:
@@ -212,9 +211,6 @@ def missing_chapters(labels: list[str]) -> str:
 
 def chapter_covers(number: int) -> str:
     return f"chapter {number}"
-
-
-RESEARCH_TASK = "Literature review of the domain and the bibliography in references.bib"
 
 
 def node_task(node_id: str) -> str:
@@ -353,3 +349,21 @@ def pointer_mismatch(task_id: Any, node_id: str) -> str:
 PDF_FAILED = "PDF compilation failed"
 NO_THESIS_FOR_PDF = "There is no thesis.md, nothing to compile to PDF."
 NO_TECTONIC_LOG = "no logs/tectonic.log"
+
+
+def replan_failed_instruction(failed: list[str]) -> str:
+    """The re-plan of a failed part of the project (§XI A): new tasks, written knowing what went wrong."""
+    return (
+        f"These parts of the project failed after all their repairs: {', '.join(failed)}. `repair_dossier` lists, for "
+        "each of them, the planned interface, its current content, every attempt with its errors and every rejected "
+        "answer, and what waits for it; `verified_do_not_touch` works and stays as it is. Find why the attempts "
+        "failed (a wrong interface or example in the plan, a task too large for one answer, a dependency) and return "
+        "new work for the failed parts only: `tasks` (new tasks: `target_node`, `description`, `assigned_agent`; a "
+        "description says exactly what to write and what the previous attempts got wrong), `interfaces` with the full "
+        "new source of a failed module whose interface itself is wrong (names other modules use must stay), and "
+        "`gaps` (`[{\"vertex\", \"reason\"}]`) for a part that cannot be done. Return nothing else."
+    )
+
+
+def replan_exhausted(failed: list[str]) -> str:
+    return f"PRZEPLANOWANIE BEZ POSTEPU. NIEUDANE: {', '.join(failed)}. KONCZE PRACE Z JAWNA LISTA BRAKOW."

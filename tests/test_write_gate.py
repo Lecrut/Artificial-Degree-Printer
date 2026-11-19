@@ -163,3 +163,12 @@ def test_interrupted_run_leaves_a_status(tmp_path: Path, monkeypatch: pytest.Mon
     assert res["status"] == "INTERRUPTED"
     assert res["tasks"][0]["orchestrator_status"] == "INTERRUPTED"
     assert json.loads((tmp_path / "out" / "benchmark_summary.json").read_text(encoding="utf-8"))["status"] == "INTERRUPTED"
+
+
+def test_a_sandbox_path_copied_from_a_tool_message_means_the_workspace_file():
+    from adk.orchestration.routing import _canonical_path
+
+    assert _canonical_path("adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/experiment.py") == "experiment.py"
+    assert _canonical_path("D:\\x\\workspace\\tests\\test_env.py") == "tests/test_env.py"
+    assert _canonical_path("./workspace/core.py") == "core.py"
+

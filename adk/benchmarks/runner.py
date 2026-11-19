@@ -19,7 +19,7 @@ from adk.benchmarks.tasks import BENCHMARK_TASKS, BenchmarkTaskSpec, get_benchma
 from adk.core.connection import LLMConnectionManager  # noqa: E402
 from adk.core.llm_trace import get_llm_telemetry, reset_llm_telemetry  # noqa: E402
 from adk.core.logger import set_process_log_dir  # noqa: E402
-from adk.core.models import read_json_state, write_json_state  # noqa: E402
+from adk.core.models import read_json_state, reset_runtime_state, write_json_state  # noqa: E402
 from adk.orchestrator import NeuroSymbolicOrchestrator  # noqa: E402
 from adk.tools.building.template_manager import (  # noqa: E402
     parse_template_flag,
@@ -30,13 +30,6 @@ from adk.tools.building.thesis_publisher import publish_workspace_thesis_bundle 
 matplotlib.use("Agg")
 
 
-_RUNTIME_STATE = {
-    "failure_ledger.json": {"failures": []},
-    "evolution_history.json": {"events": []},
-    "task_queue.json": [],
-    "validation_report.json": {},
-    "hitl_flag.json": {"active": False, "approved_gates": []},
-}
 
 
 def _declared_entrypoint(blueprint_path: Path) -> str | None:
@@ -54,8 +47,7 @@ def _prepare_evolved_adk_sandbox(base_adk_root: Path, sandbox_root: Path, reset:
     if not (sandbox_root / "state").exists():
         shutil.copytree(base_adk_root / "state", sandbox_root / "state")
         # Run logs start empty: the repository copies of these files carry entries from earlier runs and tests.
-        for name, empty in _RUNTIME_STATE.items():
-            write_json_state(sandbox_root / "state" / name, empty)
+        reset_runtime_state(sandbox_root / "state")
     if not (sandbox_root / "agents").exists():
         shutil.copytree(base_adk_root / "agents", sandbox_root / "agents")
     

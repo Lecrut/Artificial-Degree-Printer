@@ -3697,3 +3697,47 @@ Symulowany planista to maskował, bo „pamiętał” swój plan.
 - Symulowany planista poprawia łatką do `current_plan`; testy: `test_a_correction_patches_only_what_is_wrong`, `test_a_rewrite_that_trades_one_problem_for_another_is_not_applied`, `test_a_patch_may_surface_a_problem_if_it_fixes_more`.
 
 Otwarte: limit poprawek nadal 2 (`PLANNER_SPEC_RETRIES`); do sprawdzenia na żywo, czy qwen trzyma format łatki.
+
+
+---
+# §XI — 2026-11-18: naprawy po benchmarku na żywo (01, qwen3.5:4b / qwen3.6:35b) — plan
+
+Stan: **plan, do wdrożenia.** Uwaga użytkownika: „dopóki szły po kolei zadania było znośnie, były dobrze rozplanowane, działały; problemy zaczynają się przy jakichkolwiek naprawach”.
+
+## §XI.1. Diagnoza (przebieg 01, 18:11–19:39, 316 wywołań LLM, `COMPLETED_WITH_GAPS`)
+
+- Pierwsze podejście: 8/14 zadań przechodzi od razu. Naprawy: 33 szybkie, **6 przechodzi**; `experiment.py` ani razu w 11 zadaniach (~30 prób).
+- **Rozdziały naprawiane za kod:** T14 (rozdział 6) — 21 werdyktów, w większości FAIL z winnym `qagent.py` (`BEHAVIOUR_MISMATCH`); 21 wywołań `remediation_planner` na zadanie pisarza, który nie mógł nic zmienić.
+- **Przebudowa kolejki nie jest planem** (`recovery._tasks_from_audit`): audyt faktów → jedno zadanie „FIX <plik>” na plik z błędu + przeniesione zadania; bez modelu, bez diagnozy, bez listy „działa, nie ruszać”, bez historii prób i powodów odrzuceń. **Kolejność ignoruje H**: w generacjach 3 i 4 `experiment.py` naprawiany przed `env.py`/`qagent.py`/`config.py`, których używa. 4 generacje, potem stop.
+- **Ewolucja praktycznie martwa:** 13 razy na bramce, architekt 2 razy (`MUTATE seed_coder` — reguła o typach struktur, nie o faktycznym problemie; `MUTATE seed_writer`). 6× `REPORT_HARNESS_BUG` = „ten sam błąd po zmianie promptu → wina harnessu” i zadanie porzucone; zgłoszenia nikt nie czyta. Odrzucone odpowiedzi (`BUILDER_ANSWER_REJECTED`, `SPEC_WRITE_REJECTED` — 66 w przebiegu) w ogóle nie trafiają do wykrywania wzorca. Jedna reguła zamyka kategorię `(agent, kategoria)` na cały przebieg, a kategorie są zgrubne (`harness`, `generic`, `pytest:assert`).
+
+## §XI.2. Dlaczego naprawy atomowych zadań nie wychodziły (analiza po rozmowie)
+
+- **`config.py` (T3, jedna funkcja):** opis „moduł konfiguracji” → model 4b dopisał nieplanowaną klasę `ResultsConfig` z `self` poza klasą (linia 28). Komunikat „`config.py:28:32 F821`” bez kodu i symbolu: trzy naprawy trafiły w inne miejsca (`ResultsConfig`, sygnatura `get_results_dir`).
+- **`qagent.py` (T6):** plan po uwadze krytyka („deterministyczny doctest”) dał doctest z `mock.patch`, którego nie da się spełnić (`NameError` w samym przykładzie). `plan_change_guard` włącza się po dwóch takich samych błędach σ z rzędu, a budżet to 3 próby — w całym przebiegu ani razu (zero `SPEC_KEPT`/`SPEC_AMENDED`).
+- **139/142 wywołań kodera na SML:** model wybierany z numeru próby (`attempt - 1`), LRM od 2, szybkich napraw 2 — eskalacja nie mogła się włączyć; licznik ginął przy każdym nowym identyfikatorze zadania.
+- **Testy i eksperyment szły mimo zepsutego modułu:** gotowość liczyła „ma implementację” (`impl`), także po porażce.
+- **Audytorzy LLM bez stopni:** `redteam_critic_guard` 24×FAIL/0×PASS (powtarzał prozą pytest/ruff), `code_auditor` doklejał prozę do prawdziwych błędów, `symbolic_auditor` zgłaszał brak rozdziałów 4–6 przy pisaniu rozdziału 1. Naprawiający dostawał to wszystko jako pracę.
+
+## §XI.3. Plan (zatwierdzony 2026-11-18)
+
+**B0. Stopnie uwag** (`orchestration/findings.py`): każda uwaga = stopień, źródło, plik, symbol, linia, treść. **BŁĄD** = deterministycznie sprawdzone (pytest, doctest z planu, ruff „nie da się uruchomić”, stub, złamana obietnica σ, zły wskaźnik, niezmierzona zadeklarowana metryka) i w zakresie zadania; **OSTRZEŻENIE** = lint mechaniczny, rozszerzenia, opinie audytorów LLM bez sprawdzalnego wskazania (redteam: tylko ostrzeżenia poza niezgodnością metryk), rady krytyka; poza zakresem — do właściciela albo wcale. Deduplikacja (plik + symbol + reguła). Raport: `errors` (do naprawy) i `warnings` (do raportu końcowego).
+**B1. Błąd wskazany w kodzie:** z pliku i linii symbol (ast) i linia kodu; ruff → „`config.py › get_results_dir`, linia 28: `…`”; pytest → ostatnia ramka w workspace + ostatnia linia wyjątku; doctest → przykład, oczekiwano/wyszło albo wyjątek z miejscem; bez ramek `doctest.py` i `site-packages`, ścieżki względne.
+**B2. Zakres naprawy = zepsute symbole:** zadanie „Popraw `<symbol>` w `<plik>`” + BŁĘDY; pierwotny opis jako tło (`task_context`); payload `repair_focus` (kod zepsutych symboli + σ tego, czego używają); prompt kodera: zmieniasz tylko wymienione symbole (i prywatne helpery).
+**B3. Wadliwy kontrakt od razu do zmiany planu:** doctest z planu, którego wyjątek powstaje w kodzie przykładu (ostatnia ramka `<doctest …>`), → `plan_change_guard` od pierwszego wystąpienia; „ten sam błąd σ dwa razy” liczony po wierzchołku.
+**B4. Eskalacja po wierzchołku:** `Vertex.failures` w H (porażka weryfikacji i odrzucona odpowiedź), przez zadania i generacje; SML do pierwszej porażki, LRM od drugiej porażki wierzchołka.
+**A. Porażka zamraża zależne, potem przeplanowanie fragmentu:** stan `failed`; gotowość: moduł czeka na producentów nie-`failed`, test czeka na `verified` testowanego modułu, eksperyment na swoje moduły, rozdział na zielone dane; niezależne zadania idą dalej; gdy nic nie jest gotowe, a są `failed` — akta (`orchestration/repair_dossier.py`) + planista (LRM, łatki z §X.7) → nowe zadania dla wierzchołków `failed` (opcjonalnie zmiana interfejsu, walidowana jak plan), kolejność z ≺; stop po dwóch przeplanowaniach bez wzrostu `verified`. Mechaniczna kolejka zostaje tylko dla bramki końcowej (rozdziały, PDF, wskaźniki).
+**Potem:** przebieg na żywo 01 (porównanie z §XI.1), następnie **C** (ewolucja: rejestr z odrzuceniami i kategoriami z B0, reguła bez efektu wraca do architekta, `REPORT_HARNESS_BUG` do akt).
+
+## §XI.4. Wdrożono (2026-11-18, bez uruchamiania testów — na prośbę użytkownika)
+
+- **B0** (`verification.py`): uwagi `code_auditor`, `symbolic_auditor`, `redteam_critic_guard` to ostrzeżenia (`report.warnings`); bramka końcowa blokuje kod, wskaźniki i zadeklarowane metryki, których brak w wynikach (te idą do pliku punktu wejścia). `VERDICT` ma `errors` i `warnings`.
+- **B1** (`hypergraph/oracles.py`, `orchestration/findings.py`): doctesty z planu raportowane per przykład (symbol, oczekiwano/wyszło albo wyjątek z plikiem, funkcją, linią i kodem); ruff i pytest zamieniane na „plik > symbol, linia: `kod` -- błąd”.
+- **B2** (`repair.py`, `agent_texts.focused_repair_description`, `seed_coder.md`): szybka naprawa = „Fix `<symbole>` in `<plik>`” + uwagi; `task.repair_focus` (kod tych symboli), `task.task_context` (pierwotny opis).
+- **B3** (`oracles.SPEC_EXAMPLE_INVALID`, `plan_change.py`): przykład z planu, który sam rzuca `NameError`/`SyntaxError` (bez wcześniejszej porażki w tym docstringu) → `plan_change_guard` od pierwszego wystąpienia.
+- **B4** (`Vertex.failures`, `spec_gate._remember_verdict`, `building.py`, `repair.py`, `orchestrator._execute_task`): porażki i odrzucone odpowiedzi liczone na wierzchołku; model z `select_model_tier(failures wierzchołka)` — LRM od 2. porażki, także w nowych zadaniach.
+- **A** (`hypergraph/schedule.readiness`, `orchestration/fragment_replan.py`, `orchestrator.run`/`_defend`): stan `failed`; moduł czeka na producentów nie-`failed`, test na `verified` modułu, rozdział na nie-`failed` członków; zadanie padłe z winy innego wierzchołka → `WAITING` (`TASK_DEFERRED`); po kolejce `_replan_failed` (zdarzenie `REPLANNED`), porażka kodu na bramce końcowej → przeplanowanie zamiast napraw pisarza; koniec po 2 przeplanowaniach bez nowego `verified` albo po 6 (`REPLAN_EXHAUSTED`).
+- Symulowany planista odpowiada na `repair_dossier` (jedno zadanie na nieudany wierzchołek).
+
+Niezweryfikowane: pełny `pytest` i przebieg na mocku/żywo nie były uruchamiane. Spodziewane do dostosowania testy: gotowość testów (czekają na `verified` modułu), oczekiwania co do redteam/Gate 3 i treści `BEHAVIOUR_MISMATCH`, cykle napraw w testach benchmarków (`architecture_cycles`).
+

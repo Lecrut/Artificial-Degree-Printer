@@ -267,14 +267,6 @@ TICTACTOE_DOC_FULL_CONTENT = (
     "and a draw rate of \\ref_csv{results.csv:draw_rate}, as illustrated in \\ref_fig{figures/comparison_chart.pdf}."
 )
 
-TICTACTOE_TIKZ = r"""\begin{tikzpicture}[auto, >=stealth, node distance=1.05cm]
-  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=4.5cm, minimum height=0.65cm, align=center] (env) {Plansza $3\times 3$ ($s_t$)};
-  \node[draw, rectangle, rounded corners, fill=green!15, below of=env, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (qtab) {Tablica $Q(s_t, a_t)$};
-  \node[draw, rectangle, rounded corners, fill=orange!15, below of=qtab, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (pol) {Polityka $\epsilon$-greedy};
-  \draw[->, thick] (env) -- node[right] {stan $s_t$} (qtab);
-  \draw[->, thick] (qtab) -- node[right] {$\arg\max_a Q$} (pol);
-  \draw[->, thick] (pol.west) -- ++(-0.5,0) |- node[near start, left] {nagroda $r_t$} (env.west);
-\end{tikzpicture}"""
 
 
 # ============================================================================
@@ -545,13 +537,6 @@ ANOMALY_DOC_CONTENT = (
     "and false alarm rate \\ref_csv{results.csv:proposed:false_alarm_rate}, as shown in \\ref_fig{figures/comparison_chart.pdf}."
 )
 
-ANOMALY_TIKZ = r"""\begin{tikzpicture}[auto, >=stealth, node distance=1.05cm]
-  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=4.5cm, minimum height=0.65cm, align=center] (sig) {Telemetria 3D (HR, HRV, SpO$_2$)};
-  \node[draw, rectangle, rounded corners, fill=purple!15, below of=sig, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (mad) {Normalizacja Median/MAD};
-  \node[draw, rectangle, rounded corners, fill=green!15, below of=mad, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (ens) {Komitet Projekcji ($T=25$)};
-  \draw[->, thick] (sig) -- node[right] {sygnał} (mad);
-  \draw[->, thick] (mad) -- node[right] {cechy} (ens);
-\end{tikzpicture}"""
 
 
 # ============================================================================
@@ -716,11 +701,6 @@ def test_astar_vs_dijkstra_pathfinding():
     assert csv_path.exists()
 '''
 
-PATHFINDING_INITIAL_CSV = (
-    "method,trials,avg_expanded_nodes,path_optimality,speedup_factor,success_rate\n"
-    "baseline,40.0,782.4,1.0,1.0,1.0\n"
-    "proposed,40.0,148.6,0.996,5.27,1.0\n"
-)
 
 PATHFINDING_PLOT_SCRIPT = '''from __future__ import annotations
 
@@ -811,13 +791,6 @@ PATHFINDING_DOC_CONTENT = (
     "\\ref_csv{results.csv:proposed:path_optimality}, as depicted in \\ref_fig{figures/comparison_chart.pdf}."
 )
 
-PATHFINDING_TIKZ = r"""\begin{tikzpicture}[auto, >=stealth, node distance=1.05cm]
-  \node[draw, rectangle, rounded corners, fill=blue!10, minimum width=4.5cm, minimum height=0.65cm, align=center] (grid) {Siatka $32\times 32$ ($\rho=0.22$)};
-  \node[draw, rectangle, rounded corners, fill=orange!15, below of=grid, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (oct) {Ważona Heurystyka Octile};
-  \node[draw, rectangle, rounded corners, fill=green!15, below of=oct, node distance=1.05cm, minimum width=4.5cm, minimum height=0.65cm, align=center] (pq) {Kolejka Priorytetowa $f(n)$};
-  \draw[->, thick] (grid) -- node[right] {graf} (oct);
-  \draw[->, thick] (oct) -- node[right] {waga $w$} (pq);
-\end{tikzpicture}"""
 
 
 TICTACTOE_THESIS_CHAPTERS: list[tuple[str, str]] = [
@@ -976,7 +949,6 @@ FEDERATED_CORE_CODE = 'import csv\nimport math\nimport random\nfrom pathlib impo
 
 FEDERATED_TEST_CODE = 'from pathlib import Path\nimport config\nimport core\n\n\ndef test_federated_partitions_structure():\n    partitions = core.generate_federated_partitions(n_samples=200, n_clients=config.NUM_CLIENTS, alpha=config.DIRICHLET_ALPHA, seed=42)\n    assert len(partitions) == config.NUM_CLIENTS\n    total_samples = sum(len(cX) for cX, cy in partitions)\n    assert total_samples >= 200\n    for cX, cy in partitions:\n        assert len(cX) == len(cy)\n        assert len(cX) > 0\n\n\ndef test_client_local_training_step():\n    init_w = [0.0, 0.0, 0.0, 0.0]\n    init_b = 0.0\n    cX = [[1.0, 1.0, 1.0, 1.0], [1.5, 0.8, 1.2, 0.9]]\n    cy = [1, 1]\n    w, b, n = core.client_local_train(init_w, init_b, cX, cy, epochs=config.LOCAL_EPOCHS, lr=config.LEARNING_RATE, mu=config.MU_PROXIMAL)\n    assert n == 2\n    assert any(weight > 0.0 for weight in w)\n    assert b > 0.0\n\n\ndef test_train_and_evaluate_generates_valid_csv(tmp_path: Path):\n    out_csv = tmp_path / "results.csv"\n    res = core.train_and_evaluate(csv_out_path=out_csv, seed=42)\n    assert out_csv.exists()\n    assert res["proposed_final_accuracy"] > res["baseline_final_accuracy"]\n    assert res["proposed_straggler_resilience"] >= 0.85\n'
 
-FEDERATED_INITIAL_CSV = 'method,rounds,convergence_rounds,final_accuracy,communication_overhead_kb,straggler_resilience_rate,divergence_rate\nbaseline,25.0,19.0,0.73,480.0,0.60,0.19\nproposed,25.0,11.0,0.92,340.0,0.95,0.02\n'
 
 FEDERATED_PLOT_SCRIPT = 'from __future__ import annotations\n\nimport csv\nfrom pathlib import Path\n\nimport matplotlib\nimport matplotlib.pyplot as plt\n\nmatplotlib.use("Agg")\n\n\ndef generate_plots(workspace_dir: str | Path | None = None) -> list[str]:\n    base = Path(workspace_dir) if workspace_dir else Path(__file__).resolve().parent\n    csv_path = base / "results.csv"\n    fig_dir = base / "figures"\n    fig_dir.mkdir(parents=True, exist_ok=True)\n\n    rows = []\n    if csv_path.exists():\n        with csv_path.open("r", encoding="utf-8", newline="") as f:\n            rows = list(csv.DictReader(f))\n\n    if not rows:\n        rows = [\n            {"method": "baseline", "rounds": "25.0", "convergence_rounds": "19.0", "final_accuracy": "0.73", "communication_overhead_kb": "480.0", "straggler_resilience_rate": "0.60", "divergence_rate": "0.19"},\n            {"method": "proposed", "rounds": "25.0", "convergence_rounds": "11.0", "final_accuracy": "0.92", "communication_overhead_kb": "340.0", "straggler_resilience_rate": "0.95", "divergence_rate": "0.02"},\n        ]\n\n    methods = [r["method"].capitalize() for r in rows]\n    acc = [float(r["final_accuracy"]) * 100 for r in rows]\n    resilience = [float(r["straggler_resilience_rate"]) * 100 for r in rows]\n    comm = [float(r["communication_overhead_kb"]) for r in rows]\n\n    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6.0, 2.8), dpi=180)\n\n    # Panel 1: Accuracy and Resilience\n    x = range(len(methods))\n    w = 0.32\n    b1 = ax1.bar([i - w / 2 for i in x], acc, width=w, label="Accuracy (%)", color="#1e3a8a")\n    b2 = ax1.bar([i + w / 2 for i in x], resilience, width=w, label="Resilience (%)", color="#10b981")\n    ax1.set_xticks(list(x))\n    ax1.set_xticklabels(methods, fontsize=8.5, fontweight="bold")\n    ax1.set_ylabel("Score (%)", fontsize=8.5)\n    ax1.set_ylim(0, 115)\n    ax1.set_title("Accuracy & Resilience", fontsize=9, fontweight="bold")\n    ax1.grid(axis="y", linestyle="--", alpha=0.4)\n    ax1.legend(fontsize=7.5, loc="upper left")\n\n    for bars in (b1, b2):\n        for b in bars:\n            h = b.get_height()\n            ax1.annotate(f"{h:.1f}%", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=7.5)\n\n    # Panel 2: Communication Overhead\n    b3 = ax2.bar(methods, comm, width=0.45, color=["#f59e0b", "#6366f1"])\n    ax2.set_ylabel("Data Transferred (KB)", fontsize=8.5)\n    ax2.set_ylim(0, max(comm) * 1.25)\n    ax2.set_title("Bandwidth Overhead", fontsize=9, fontweight="bold")\n    ax2.grid(axis="y", linestyle="--", alpha=0.4)\n    for b in b3:\n        h = b.get_height()\n        ax2.annotate(f"{h:.0f} KB", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=7.5)\n\n    fig.tight_layout()\n    png_out = fig_dir / "comparison_chart.png"\n    pdf_out = fig_dir / "comparison_chart.pdf"\n    fig.savefig(png_out, dpi=180, bbox_inches=\"tight\")\n    fig.savefig(pdf_out, bbox_inches=\"tight\")\n    plt.close(fig)\n    return [str(png_out), str(pdf_out)]\n\n\nif __name__ == "__main__":\n    generate_plots()\n'
 
@@ -984,7 +956,6 @@ FEDERATED_BIBTEX = get_domain_bibtex("04_federated_learning", stage="discoverer"
 
 FEDERATED_SOTA_CONTENT = 'Podstawy zbieżności uczenia sfederowanego sformułowali McMahan i in. \\cite{mcmahan2017communication} w algorytmie FedAvg oraz Li i in. \\cite{li2020federated} w proksymalnym FedProx. Najnowszy stan wiedzy (2023--2026) dowodzi, że silna heterogeniczność danych (Dirichlet skew) prowadzi do dryfu wag lokalnych (client drift), co udokumentowali Wang i in. \\cite{wang2023tackling} (NeurIPS 2023) oraz Karimireddy i in. \\cite{karimireddy2024scaffold} (JMLR 2024). W monografii Kairouza i in. \\cite{kairouz2024advances} wykazano potrzebę elastycznej regularyzacji w obliczu opóźnionych węzłów (stragglers), a Zhao i in. \\cite{zhao2023noniid} (ICLR 2023) określili empiryczne granice stabilności. Istniejącą luką badawczą pozostaje weryfikowalny symbolicznie algorytm adaptacyjny o zerowym narzucie C-rozszerzeń, co stanowi główny wkład niniejszej pracy.'
 
-FEDERATED_DOC_CONTENT = 'W ramach weryfikacji eksperymentalnej zbadano zbieżność sfederowanego uczenia na grupie \\ref_ast{config.py:NUM_CLIENTS} klientów z niejednorodnością danych Dirichlet \\ref_ast{config.py:DIRICHLET_ALPHA} oraz epokami lokalnymi \\ref_ast{config.py:LOCAL_EPOCHS}. Zastosowanie kary proksymalnej \\ref_ast{config.py:MU_PROXIMAL} w trakcie \\ref_ast{config.py:ROUNDS} rund komunikacyjnych pozwoliło podnieść dokładność z \\ref_csv{results.csv:baseline:final_accuracy} do \\ref_csv{results.csv:proposed:final_accuracy}, uzyskując odporność na stragglery rzędu \\ref_csv{results.csv:proposed:straggler_resilience_rate} zgodnie z ryciną \\ref_fig{figures/comparison_chart.pdf}.'
 
 FEDERATED_TIKZ = (
     "\\begin{tikzpicture}[auto, >=stealth, node distance=1.1cm]\n"
@@ -1000,15 +971,15 @@ FEDERATED_TIKZ = (
 FEDERATED_THESIS_CHAPTERS = [('Rozdział 1: Wstęp i Cel Pracy: Uczenie Sfederowane w Środowiskach Brzegowych', 'Celem pracy jest projekt i analiza rozproszonego systemu uczenia sfederowanego w warunkach silnej niejednorodności rozkładów danych (Dirichlet non-IID) oraz asynchronicznych opóźnień klientów. Postawiono tezę badawczą, że adaptacyjna modyfikacja algorytmu FedProx pozwala zachować zbieżność modelu globalnego i wyeliminować zjawisko dryfu klientów bez zwiększania pasma komunikacyjnego.'), ('Rozdział 2: Analiza Stanu Wiedzy (SOTA 2023--2026): Optymalizacja Sfederowana', 'Podstawy zbieżności uczenia sfederowanego sformułowali McMahan i in. \\cite{mcmahan2017communication} w algorytmie FedAvg oraz Li i in. \\cite{li2020federated} w proksymalnym FedProx. Najnowszy stan wiedzy (2023--2026) dowodzi, że silna heterogeniczność danych (Dirichlet skew) prowadzi do dryfu wag lokalnych (client drift), co udokumentowali Wang i in. \\cite{wang2023tackling} (NeurIPS 2023) oraz Karimireddy i in. \\cite{karimireddy2024scaffold} (JMLR 2024). W monografii Kairouza i in. \\cite{kairouz2024advances} wykazano potrzebę elastycznej regularyzacji w obliczu opóźnionych węzłów (stragglers), a Zhao i in. \\cite{zhao2023noniid} (ICLR 2023) określili empiryczne granice stabilności. Istniejącą luką badawczą pozostaje weryfikowalny symbolicznie algorytm adaptacyjny o zerowym narzucie C-rozszerzeń, co stanowi główny wkład niniejszej pracy.'), ('Rozdział 3: Projekt Architektury Rozproszonej i Topologia Klient-Serwer', 'Architektura systemu składa się z centralnego serwera agregującego oraz klastra \\ref_ast{config.py:NUM_CLIENTS} węzłów brzegowych. Komunikacja odbywa się w rundach synchronicznych z tolerancją na wyłączenia węzłów.\n\n' + FEDERATED_TIKZ + '\n'), ('Rozdział 4: Realizacja i Implementacja: Adaptacyjny Algorytm Proksymalny', 'W module implementacyjnym wprowadzono lokalny krok stochastycznego spadku wzdłuż gradientu z regularyzacją proksymalną \\ref_ast{config.py:MU_PROXIMAL}. Każdy klient wykonuje \\ref_ast{config.py:LOCAL_EPOCHS} epok lokalnych ze stopą uczenia \\ref_ast{config.py:LEARNING_RATE} przed odesłaniem gradientu do serwera.'), ('Rozdział 5: Badania Eksperymentalne: Wyniki i Analiza Zbieżności', 'Przeprowadzono \\ref_ast{config.py:ROUNDS} rund agregacji w warunkach asymetrii danych \\ref_ast{config.py:DIRICHLET_ALPHA}. Rozwiązanie bazowe FedAvg osiągnęło dokładność \\ref_csv{results.csv:baseline:final_accuracy}, natomiast proponowany algorytm Adaptive FedProx uzyskał \\ref_csv{results.csv:proposed:final_accuracy} przy odporności na stragglery rzędu \\ref_csv{results.csv:proposed:straggler_resilience_rate}. Zbiorcze podsumowanie przedstawiono na rycinie \\ref_fig{figures/comparison_chart.pdf}.'), ('Rozdział 6: Podsumowanie i Wnioski: Potwierdzenie Tezy Inżynierskiej', 'Uzyskane rezultaty empiryczne w pełni potwierdzają sformułowaną tezę badawczą. Wprowadzenie proksymalnego członu stabilizującego pozwala zniwelować negatywne skutki niejednorodności danych i zapewnia stabilną zbieżność.')]
 
 FEDERATED_CUSTOM_TASKS = [
-    {'task_id': 'T1', 'description': '[04_federated_learning] Synthesize competitive SOTA literature discovery (2023-2026) and verified BibTeX citations in references.bib', 'target_node': 'v4', 'assigned_agent': 'discoverer_researcher', 'status': 'TODO'},
-    {'task_id': 'T2', 'description': '[04_federated_learning] Define cluster topology and distributed hyperparameters in config.py', 'target_node': 'v1', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
-    {'task_id': 'T3', 'description': '[04_federated_learning] Implement synthetic Dirichlet non-IID partition generator in core.py', 'target_node': 'v2', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
-    {'task_id': 'T4', 'description': '[04_federated_learning] Implement local client SGD training with proximal loss regularizer in core.py', 'target_node': 'v2', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
-    {'task_id': 'T5', 'description': '[04_federated_learning] Implement federated server aggregation comparing FedAvg and Adaptive FedProx in core.py', 'target_node': 'v2', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
-    {'task_id': 'T6', 'description': '[04_federated_learning] Implement pytest unit tests verifying partition completeness, proximal loss, and weight normalization in test_core.py', 'target_node': 'v5', 'assigned_agent': 'seed_tester', 'status': 'TODO'},
-    {'task_id': 'T7', 'description': '[04_federated_learning] Execute multi-round empirical evaluation across 25 communication rounds and write results.csv', 'target_node': 'v3', 'assigned_agent': 'seed_tester', 'status': 'TODO'},
-    {'task_id': 'T8', 'description': '[04_federated_learning] Implement vector visualization in plot_results.py producing convergence and resilience charts in PDF and PNG', 'target_node': 'v3', 'assigned_agent': 'seed_tester', 'status': 'TODO'},
-    {'task_id': 'T9', 'description': '[04_federated_learning] Author Chapters 1-3 of thesis (Introduction, SOTA Taxonomy, and TikZ distributed architecture diagram) in thesis.md', 'target_node': 'v4', 'assigned_agent': 'seed_writer', 'status': 'TODO'},
-    {'task_id': 'T10', 'description': '[04_federated_learning] Author Chapters 4-6 of thesis with symbolic pointers \\ref_ast, \\ref_csv, and \\ref_fig in thesis.md', 'target_node': 'v4', 'assigned_agent': 'seed_writer', 'status': 'TODO'},
+    {'task_id': 'T1', 'description': '[04_federated_learning] Synthesize competitive SOTA literature discovery (2023-2026) and verified BibTeX citations in references.bib', 'target_node': 'thesis.md', 'assigned_agent': 'discoverer_researcher', 'status': 'TODO'},
+    {'task_id': 'T2', 'description': '[04_federated_learning] Define cluster topology and distributed hyperparameters in config.py', 'target_node': 'config.py', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
+    {'task_id': 'T3', 'description': '[04_federated_learning] Implement synthetic Dirichlet non-IID partition generator in core.py', 'target_node': 'core.py', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
+    {'task_id': 'T4', 'description': '[04_federated_learning] Implement local client SGD training with proximal loss regularizer in core.py', 'target_node': 'core.py', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
+    {'task_id': 'T5', 'description': '[04_federated_learning] Implement federated server aggregation comparing FedAvg and Adaptive FedProx in core.py', 'target_node': 'core.py', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
+    {'task_id': 'T6', 'description': '[04_federated_learning] Implement pytest unit tests verifying partition completeness, proximal loss, and weight normalization in test_core.py', 'target_node': 'tests/test_core.py', 'assigned_agent': 'seed_tester', 'status': 'TODO'},
+    {'task_id': 'T7', 'description': '[04_federated_learning] Execute multi-round empirical evaluation across 25 communication rounds and write results.csv', 'target_node': 'tests/test_core.py', 'assigned_agent': 'seed_tester', 'status': 'TODO'},
+    {'task_id': 'T8', 'description': '[04_federated_learning] Implement vector visualization in plot_results.py producing convergence and resilience charts in PDF and PNG', 'target_node': 'tests/test_core.py', 'assigned_agent': 'seed_tester', 'status': 'TODO'},
+    {'task_id': 'T9', 'description': '[04_federated_learning] Author Chapters 1-3 of thesis (Introduction, SOTA Taxonomy, and TikZ distributed architecture diagram) in thesis.md', 'target_node': 'thesis.md', 'assigned_agent': 'seed_writer', 'status': 'TODO'},
+    {'task_id': 'T10', 'description': '[04_federated_learning] Author Chapters 4-6 of thesis with symbolic pointers \\ref_ast, \\ref_csv, and \\ref_fig in thesis.md', 'target_node': 'thesis.md', 'assigned_agent': 'seed_writer', 'status': 'TODO'},
 ]
 

@@ -1,94 +1,132 @@
 [
   {
-    "task_id": "Q4_FIX1",
-    "description": "Fix the file experiment.py. Errors: Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\experiment.py:27:5: F821 Undefined name `random`\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\experiment.py:148:9: F821 Undefined name `random`\nFound 2 errors.",
-    "target_node": "experiment.py",
-    "assigned_agent": "seed_coder",
-    "status": "FAILED",
-    "repair_attempts": 3,
-    "harness_bug": {
-      "files_in_error": [
-        "NameError",
-        "Pytest failure",
-        "Ruff lint failure",
-        "Traceback (most recent call last)"
-      ],
-      "signature": "Pytest failure: no tests ran in #.#s\nRuff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\#_rl_tictactoe\\workspace\\experiment.py:#:#: F# Undefined name <id>\nFound # error.\nTraceback (most recent call last):\n  File <id>, line #, in <module>\n    fn()\n    ~~^^\n  File <id>, line #, in run\n    rng = Random(seed)\n          ^^^^^^\nNameError: name <id> is not defined. Did you m",
-      "task_id": "Q4_FIX1",
-      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-      "source": "harness"
-    }
-  },
-  {
-    "task_id": "Q4_FIX_experiment_2",
-    "description": "Fix the file experiment.py according to the verification finding: Ruff lint failure: adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\experiment.py:27:5: F821 Undefined name `random`\\nadk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\experiment.py:148:9: F821 Undefined name `random`\\nFound 2 errors.",
-    "target_node": "experiment.py",
-    "assigned_agent": "seed_coder",
+    "task_id": "T1",
+    "description": "[Increment 1: Assumptions] Chapter 1: Wstęp, Cel i Teza Pracy — Introduction, aim of the work, thesis statement and success criteria in thesis.md",
+    "target_node": "thesis.md#ch1",
+    "assigned_agent": "seed_writer",
     "status": "FAILED",
     "repair_attempts": 3
   },
   {
-    "task_id": "Q4_FIX_qagent_3",
-    "description": "Fix the file qagent.py according to the verification finding: Unresolved citation key: qagent.py:QLearningAgent (not a BibTeX entry; Python class references require symbolic resolution or explicit definition, not bibliographic data).",
-    "target_node": "qagent.py",
-    "assigned_agent": "seed_coder",
-    "status": "DONE",
-    "repair_attempts": 0
-  },
-  {
-    "task_id": "Q4_FIX_env_4",
-    "description": "Fix the file env.py according to the verification finding: Unresolved citation key: env.py:TicTacToeEnv (not a BibTeX entry).",
-    "target_node": "env.py",
-    "assigned_agent": "seed_coder",
-    "status": "DONE",
-    "repair_attempts": 0
-  },
-  {
-    "task_id": "Q4_FIX_opponent_5",
-    "description": "Fix the file opponent.py according to the verification finding: Unresolved citation key: opponent.py:RandomOpponent (not a BibTeX entry).",
-    "target_node": "opponent.py",
-    "assigned_agent": "seed_coder",
-    "status": "DONE",
-    "repair_attempts": 0
-  },
-  {
-    "task_id": "Q4_FIX_experiment_6",
-    "description": "Fix the file experiment.py according to the verification finding: Unresolved citation key: experiment.py:run (not a BibTeX entry).",
-    "target_node": "experiment.py",
-    "assigned_agent": "seed_coder",
+    "task_id": "T2",
+    "description": "[Increment 1: Assumptions] Chapter 2: Stan Badań i Przegląd Literatury — Theoretical foundations of MDPs, Q-Learning algorithm and related work in thesis.md",
+    "target_node": "thesis.md#ch2",
+    "assigned_agent": "background_researcher",
     "status": "FAILED",
-    "repair_attempts": 3,
-    "harness_bug": {
-      "files_in_error": [
-        "Pytest failure"
-      ],
-      "signature": "Pytest failure: no tests ran in #.#s",
-      "task_id": "Q4_FIX_experiment_6",
-      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-      "source": "harness"
-    }
+    "repair_attempts": 3
   },
   {
-    "task_id": "Q4_FIX_experiment_7",
-    "description": "Fix the file experiment.py according to the verification finding: Critical Code Integrity Failure: The codebase contains unresolved syntax errors (SyntaxError in qagent.py:53) and undefined name references (F821 for 'random' in experiment.py), rendering the software non-functional. No empirical results could be generated or verified.",
-    "target_node": "experiment.py",
-    "assigned_agent": "seed_coder",
-    "status": "FAILED"
-  },
-  {
-    "task_id": "Q4_FIX_qagent_8",
-    "description": "Fix the file qagent.py according to the verification finding: Symbolic Integrity Failure: Multiple unresolved citation keys exist, including typographical errors ('se yedsalehi2023approximate') and invalid bibliographic references to Python code objects (e.g., 'qagent.py:QLearningAgent'), violating academic formatting standards.",
-    "target_node": "qagent.py",
+    "task_id": "T3",
+    "description": "[Increment 1: Assumptions] Configuration module with experiment parameters (learning rate, epsilon, epochs, seeds) in ttt_config.py",
+    "target_node": "ttt_config.py",
     "assigned_agent": "seed_coder",
     "status": "DONE",
     "repair_attempts": 1
   },
   {
-    "task_id": "Q4_CRITIC",
-    "description": "Fix thesis.md so that every finding of the critic and of the pointer audit is removed (only pointers to targets in 'may_cite' stay). Address every identifier; if a finding cannot be removed, describe it plainly as a limitation of the work.\n[K1] SyntaxError in adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/qagent.py:53: invalid syntax (missing colon after 'elif' clause)\n[K2] Lint warning in adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/experiment.py:134: F811 [*] Redefinition of unused `get_results_dir` from line 5\n[K3] Lint warning in adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/qagent.py:92-93: F841 Local variables `row`, `col` are assigned to but never used\n[K4] Citation key 'se yedsalehi2023approximate' not found in workspace .bib files.\n[K5] Citation key 'qagent.py:QLearningAgent' not found in workspace .bib files.\n[K6] Citation key 'env.py:TicTacToeEnv' not found in workspace .bib files.\n[K7] Citation key 'opponent.py:RandomOpponent' not found in workspace .bib files.\n[K8] Citation key 'experiment.py:run' not found in workspace .bib files.\n[K9] Unresolved citation key: se yedsalehi2023approximate (found in bibliography as 'seyedsalehi2023approximate').\n[K10] Logical Contradiction in Results Analysis: Chapter 5 explicitly states that statistical metrics (std_dev, variance) cannot be calculated due to lack of data, yet Chapter 6 falsely claims a 'statistically significant advantage'. This is a direct contradiction and constitutes fabricating statistical validity from non-existent or single-sample data.\n[K11] Methodological Flaw: The thesis fails to adhere to the declared metric registration for standard deviation across repeated trials. With only one effective run (due to code failure) or no data, claims of 'high stability' or 'statistical significance' are invalid.\n[K12] Literature Review Incoherence: Chapter 2 and 3 rely on broken citations and speculative placeholders rather than a rigorous funnel of foundational texts as required for a degree thesis. The analysis is superficial and disconnected from the code implementation.",
-    "target_node": "thesis.md#ch5",
+    "task_id": "T4",
+    "description": "[Increment 1: Assumptions] Game logic module implementing Tic-Tac-Toe board state, move validation and win checking in ttt_env.py. Includes `get_random_move` helper for baseline opponent simulation.",
+    "target_node": "ttt_env.py",
+    "assigned_agent": "seed_coder",
+    "status": "FAILED",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "T5",
+    "description": "[Increment 2: Method] Unit tests for ttt_env.Board (reset, move, is_terminal, check_win) and get_random_move in tests/test_ttt_env.py",
+    "target_node": "tests/test_ttt_env.py",
+    "assigned_agent": "seed_tester",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T6",
+    "description": "[Increment 2: Method] Agent module implementing Tabular Q-Learning with epsilon-greedy policy in ttt_agent.py. Uses `Board.step(action)` where action is by current player.",
+    "target_node": "ttt_agent.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T7",
+    "description": "[Increment 2: Method] Unit tests for ttt_agent.Agent (reset, step, get_q_values, choose_action) in tests/test_ttt_agent.py",
+    "target_node": "tests/test_ttt_agent.py",
+    "assigned_agent": "seed_tester",
+    "status": "WAITING",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "T8",
+    "description": "[Increment 2: Method] Chapter 3: Metodyka — Methodology describing the Q-Learning agent design, environment interaction and epsilon-greedy strategy in thesis.md",
+    "target_node": "thesis.md#ch3",
     "assigned_agent": "seed_writer",
     "status": "FAILED",
     "repair_attempts": 3
+  },
+  {
+    "task_id": "T9",
+    "description": "[Increment 3: Experiment] Experiment entrypoint running training of Q-Learning against random opponent, computing win/draw/loss rates over TEST_EPISODES, and saving results to CSV in ttt_experiment.py",
+    "target_node": "ttt_experiment.py",
+    "assigned_agent": "seed_coder",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "T10",
+    "description": "[Increment 3: Experiment] Chapter 4: Eksperyment — Experimental setup, parameters, and justification of evaluation metrics in thesis.md",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "T11",
+    "description": "[Increment 3: Experiment] Chapter 5: Wyniki — Results analysis comparing Q-Learning performance against random baseline in thesis.md",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "T12",
+    "description": "[Increment 3: Experiment] Chapter 6: Podsumowanie — Conclusions and future work in thesis.md",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "R1_1",
+    "description": "[Repair] Fix ttt_env.py: implement Board class matching interface (reset returns self, step calculates player correctly, get_winner checks all lines). Previous attempts failed because reset did not return self explicitly in some versions or logic for current player was flawed. Ensure doctests pass: `b.reset()` result is assigned to `_`, `b.is_terminal()` is False initially.",
+    "target_node": "ttt_env.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "R1_2",
+    "description": "[Repair] Fix ttt_agent.py: implement Agent class matching interface (Q-learning update rule, epsilon-greedy choice). Previous attempts failed due to `ANSWER_REJECTED` shape mismatch and logic errors in `decay_epsilon`. Ensure `get_q_values` returns list of floats, `choose_action` respects legal moves, `update` applies RL formula correctly. Do not use numpy to avoid import/shape issues if standard library is preferred; stick to pure Python lists/dicts as per interface hints.",
+    "target_node": "ttt_agent.py",
+    "assigned_agent": "seed_coder",
+    "status": "FAILED",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "R1_7",
+    "description": "[Increment 1: Assumptions] Chapter 1: Wstęp, Cel i Teza Pracy — Introduction, problem definition (MDP), thesis statement and success criteria in thesis.md. Focus on Tic-Tac-Toe as a deterministic, fully observable MDP.",
+    "target_node": "thesis.md#ch1",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "R1_8",
+    "description": "[Increment 1: Assumptions] Chapter 2: Stan Badań i Przegląd Literatury — Theoretical foundations of MDPs, Q-Learning algorithm (Bellman equation), and related work on Tic-Tac-Toe solvers in thesis.md.",
+    "target_node": "thesis.md#ch2",
+    "assigned_agent": "background_researcher",
+    "status": "FAILED",
+    "repair_attempts": 2
+  },
+  {
+    "task_id": "R1_9",
+    "description": "[Increment 2: Method] Chapter 3: Metodyka — Methodology describing the Q-Learning agent design, environment interaction and epsilon-greedy strategy in thesis.md. Reference `ttt_agent.py` and `ttt_env.py` interfaces.",
+    "target_node": "thesis.md#ch3",
+    "assigned_agent": "seed_writer",
+    "status": "TODO"
   }
 ]

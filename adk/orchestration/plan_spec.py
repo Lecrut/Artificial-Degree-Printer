@@ -91,7 +91,7 @@ def _apply_patch(
                     tasks_changed = True
         if tasks_changed:
             changed.append("tasks")
-    elif isinstance(raw_tasks, list) and raw_tasks and raw_tasks != tasks:
+    elif isinstance(raw_tasks, list) and raw_tasks and all(isinstance(t, dict) for t in raw_tasks) and raw_tasks != tasks:
         tasks = raw_tasks
         changed.append("tasks")
     candidate = {**plan_out, "tasks": tasks, "interfaces": merged, "entrypoint": entry, "academic_blueprint": blueprint}

@@ -36,6 +36,90 @@ def _parse(source: str, path: Path) -> ast.Module:
         return ast.parse(source, filename=str(path))
 
 
+def _indent(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+
+def _align_body_to_docstring(code: str) -> str | None:
+    """The method a small model returns in a repair: `def` at column 0, the docstring indented by 4 and the code
+    after it by 8 (the indentation it had inside the class). Python rejects it (`unexpected indent`); on 2026-11-18
+    37 of 53 repair answers were lost this way. When the code after the docstring is uniformly deeper than the
+    docstring, it is moved to the docstring's indentation; anything else stays a syntax error for the agent."""
+    lines = code.splitlines()
+    header = next((i for i, line in enumerate(lines) if line.lstrip().startswith(("def ", "async def ", "class "))), None)
+    if header is None:
+        return None
+    end = next((i for i in range(header, len(lines)) if lines[i].rstrip().endswith(":")), None)
+    first = next((i for i in range((end or 0) + 1, len(lines)) if lines[i].strip()), None)
+    if end is None or first is None:
+        return None
+    opening = lines[first].strip()
+    quote = opening[:3] if opening.startswith(('"""', "'''")) else opening[1:4] if opening[:1] in "rRuU" else ""
+    if quote not in ('"""', "'''"):
+        return None
+    close = first if opening.count(quote) >= 2 else next((i for i in range(first + 1, len(lines)) if quote in lines[i]), None)
+    rest = [i for i in range((close if close is not None else len(lines)) + 1, len(lines)) if lines[i].strip()]
+    if close is None or not rest:
+        return None
+    shift = min(_indent(lines[i]) for i in rest) - _indent(lines[first])
+    if shift <= 0:
+        return None
+    aligned = lines[: close + 1] + [line[shift:] if line.strip() else line for line in lines[close + 1:]]
+    return "\n".join(aligned) + ("\n" if code.endswith("\n") else "")
+
+
+def _dedent_by_header(code: str) -> str:
+    """Dedent by the indentation of the first line. `textwrap.dedent` gives up when doctest lines inside the
+    docstring start at column 0, which left `def` indented (`unexpected indent` on line 1); lines with less
+    indentation than the header can only be inside a string, so they stay as they are."""
+    lines = code.splitlines()
+    first = next((line for line in lines if line.strip()), "")
+    cut = _indent(first)
+    if cut == 0:
+        return code
+    out = [line[cut:] if line[:cut].strip() == "" and len(line) >= cut else line for line in lines]
+    return "\n".join(out) + ("\n" if code.endswith("\n") else "")
+
+
+def _unescaped(code: str) -> str:
+    """Code sent escaped twice (`\\n`, `\\"` as two characters each), as if it were still inside a JSON string."""
+    for old, new in (("\\r\\n", "\n"), ("\\n", "\n"), ("\\t", "\t"), ('\\"', '"'), ("\\'", "'")):
+        code = code.replace(old, new)
+    return code
+
+
+def _normalized_snippet(code: str, path: Path) -> str | None:
+    """The answer with its layout repaired, when one of the known layout mistakes is the only problem: escaped
+    twice, `def` left indented, the code after the docstring deeper than the docstring. Only a version that
+    parses is returned; the meaning of the code is never changed."""
+    for candidate in (code, _unescaped(code)):
+        candidate = _dedent_by_header(candidate)
+        for version in (candidate, _align_body_to_docstring(candidate)):
+            if version is None:
+                continue
+            try:
+                _parse(version, path)
+                return version
+            except SyntaxError:
+                continue
+    return None
+
+
+def _syntax_feedback(exc: SyntaxError, code: str) -> str:
+    """The syntax error with the line it is on and its indentation, so the agent can see what to change."""
+    lines = code.splitlines()
+    n = exc.lineno or 0
+    if not 1 <= n <= len(lines):
+        return f"SyntaxError in new_code: {exc}"
+    line = lines[n - 1]
+    before = next((lines[i] for i in range(n - 2, -1, -1) if lines[i].strip()), "")
+    return (
+        f"SyntaxError in new_code: {exc.msg} at line {n} of your code: `{line.strip()[:80]}` is indented by "
+        f"{_indent(line)} spaces, the line before by {_indent(before)}. Every statement of one block (the body of a "
+        "`def` with its docstring) must start at the same indentation."
+    )
+
+
 def _error(guard: str, path: Path, target_name: str, error: str) -> dict[str, Any]:
     return {"status": "error", "guard": guard, "file": str(path), "target_name": target_name, "error": error}
 
@@ -131,7 +215,11 @@ def edit_ast_node(
     try:
         snippet_tree = _parse(new_code, path)
     except SyntaxError as exc:
-        return _error("SYNTAX_GUARD_REJECTED", path, target_name, f"SyntaxError in new_code: {exc}")
+        normalized = _normalized_snippet(new_code, path)
+        if normalized is None:
+            return _error("SYNTAX_GUARD_REJECTED", path, target_name, _syntax_feedback(exc, new_code))
+        new_code = normalized
+        snippet_tree = _parse(new_code, path)
     if not snippet_tree.body:
         return _error("SYNTAX_GUARD_REJECTED", path, target_name, "Provided new_code contains no AST statements.")
 

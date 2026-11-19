@@ -18,7 +18,6 @@ from typing import Any
 EDGE_TYPES = ("I", "R", "N", "S")
 ROLES = ("P", "C", "T", "O", "X")  # producer, consumer/source, test, output, citing chapter
 VERTEX_KINDS = ("code", "entry", "test", "data", "figure", "chapter", "bib", "research")
-INITIAL_STATE = {"code": "stub", "entry": "stub"}  # every other kind starts at "spec"
 
 
 def module_import_path(rel_path: str) -> str:
@@ -52,6 +51,7 @@ class Vertex:
     history: list[dict[str, Any]] = field(default_factory=list)
     last_writer: dict[str, Any] | None = None  # {agent, task_id} of the last accepted write
     files: list[str] = field(default_factory=list)  # helper files the module owns (imported only through it)
+    failures: int = 0  # failed verifications and rejected answers on this vertex in the run (model escalation)
 
 
 @dataclass
@@ -92,11 +92,6 @@ class Hypergraph:
                     found.add(after)
                     frontier.append(after)
         return found
-
-    def blast_radius(self, vertex: str) -> set[str]:
-        """Edges to re-check after `vertex` changed: its own bags and everything after them in ≺."""
-        own = set(self.edges_of(vertex))
-        return own.union(*(self.later(e) for e in own)) if own else set()
 
     def producer(self, edge: str) -> str | None:
         return next((v for v, role in self.edges[edge].members.items() if role == "P"), None)

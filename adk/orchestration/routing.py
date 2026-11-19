@@ -27,6 +27,8 @@ def _names_file(text: str, name: str) -> bool:
 def _canonical_path(raw: str) -> str:
     """Workspace-relative path as meant: no `./` or `workspace/` prefix, forward slashes, no `#chapter` part."""
     rel = str(raw).replace("\\", "/").strip().partition("#")[0]
+    # a path through the sandbox (copied from a tool message) means the file in the workspace
+    rel = rel.rsplit("/workspace/", 1)[-1]
     while rel.startswith(("./", "workspace/")):
         rel = rel.removeprefix("./").removeprefix("workspace/")
     return rel

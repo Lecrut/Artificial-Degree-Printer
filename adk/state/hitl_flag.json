@@ -1,14 +1,7 @@
 {
   "active": false,
-  "current_gate": "GATE_3_DEFENSE_APPROVAL",
-  "approved_gates": [
-    "GATE_1_OUTLINE_APPROVAL",
-    "GATE_2_METHODOLOGY_APPROVAL",
-    "GATE_3_DEFENSE_APPROVAL"
-  ],
+  "current_gate": null,
+  "approved_gates": [],
   "question": null,
-  "context": {
-    "validation_status": "PASS",
-    "replan_count": 3
-  }
+  "context": {}
 }

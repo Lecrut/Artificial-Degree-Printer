@@ -1,0 +1,18 @@
+export const agentsLabels = {
+  title: 'Wywołania agentów',
+  count: (n: number) => `${n} wywołań`,
+  allAgents: 'wszyscy agenci',
+  search: 'zadanie, decyzja, model',
+  time: 'czas',
+  agent: 'agent',
+  model: 'model',
+  task: 'zadanie',
+  seconds: 's',
+  decision: 'werdykt i decyzja',
+  answer: 'Odpowiedź',
+  payload: 'Payload',
+  raw: 'Surowa odpowiedź',
+  prompt: 'Prompt systemowy',
+  issues: (n: number) => `${n} uwag`,
+  full: 'Pełny podgląd',
+}

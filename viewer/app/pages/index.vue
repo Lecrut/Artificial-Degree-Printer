@@ -1,42 +1,58 @@
 <script setup lang="ts">
-const { data, error, refresh } = await useFetch<{ roots: string[]; runs: Record<string, any>[] }>('/api/runs')
+import { mdiHistory } from '@mdi/js'
+import { labels } from '~/utils/labels'
+
+const { commits, current } = useHistory()
+const { byCommit, info } = useChangelog()
+const dashboard = useHistoryDashboard(() => commits.data.value)
+const { preset, custom, tasks, statuses, filtered, kpis, trendTask, trendMetric, points, allTasks, allStatuses } = dashboard
 </script>
 
 <template>
-  <div>
-    <div class="row" style="margin-bottom: 12px">
-      <h1 class="grow">Przebiegi</h1>
-      <button @click="refresh()">Odśwież</button>
-    </div>
-    <p v-if="error" class="muted">Błąd: {{ error.message }}</p>
-    <p v-else-if="!data?.runs.length" class="muted">
-      Brak przebiegów w: <code v-for="r in data?.roots" :key="r">{{ r }} </code>. Ustaw <code>VIEWER_RUN_ROOTS</code>.
-    </p>
-    <div class="grid">
-      <NuxtLink v-for="run in data?.runs" :key="run.root + run.id" :to="`/run/${run.root}/${run.id}`" class="panel card">
-        <div class="row">
-          <b class="grow">{{ run.id }}</b>
-          <span class="badge" :style="{ background: statusColor(run.status) }">{{ run.status }}</span>
-        </div>
-        <div class="muted title">{{ run.title || run.thesis_statement || '—' }}</div>
-        <div class="row stats">
-          <div class="stat"><b>{{ run.tasks_done }}/{{ run.tasks }}</b><span>zadania</span></div>
-          <div class="stat"><b>{{ run.llm_calls }}</b><span>wywołania LLM</span></div>
-          <div class="stat"><b>{{ run.failed_verdicts }}</b><span>porażki weryf.</span></div>
-          <div class="stat"><b>{{ run.rejected_writes }}</b><span>odrzucone zapisy</span></div>
-          <div class="stat"><b>{{ run.plan_attempts }}</b><span>wersje planu</span></div>
-        </div>
-        <div class="muted small">{{ run.started?.slice(0, 16).replace('T', ' ') }} · {{ fmtDuration(run.started, run.ended) }} · {{ data?.roots[run.root] }}</div>
-      </NuxtLink>
-    </div>
+  <div class="d-flex flex-column ga-6">
+    <CommonPageHeader :icon="mdiHistory" :title="labels.history.title" :subtitle="labels.history.subtitle" />
+    <CommonPageSkeleton v-if="commits.pending.value" :tiles="5" />
+    <CommonLoadError v-else-if="commits.error.value" @retry="commits.refresh()" />
+    <template v-else>
+      <HistoryKpiTiles :kpis="kpis" />
+      <HistoryFilters
+        v-model:preset="preset"
+        v-model:custom="custom"
+        v-model:tasks="tasks"
+        v-model:statuses="statuses"
+        :all-tasks="allTasks"
+        :all-statuses="allStatuses"
+      />
+      <v-row>
+        <v-col cols="12" xl="8">
+          <HistoryTrendCard v-model:task="trendTask" v-model:metric="trendMetric" :points="points" :tasks="allTasks" />
+        </v-col>
+        <v-col cols="12" xl="4">
+          <HistoryRunList
+            v-if="current.data.value.length"
+            :title="labels.history.current"
+            :subtitle="labels.history.currentHint"
+            source="results"
+            at="current"
+            :tasks="current.data.value"
+          />
+        </v-col>
+      </v-row>
+      <div class="d-flex align-center ga-3">
+        <div class="text-h6">{{ labels.history.commits }}</div>
+        <v-chip color="primary">{{ filtered.length }}</v-chip>
+      </div>
+      <v-alert v-if="!filtered.length" type="info" variant="tonal" :text="labels.history.empty" />
+      <v-row>
+        <v-fade-transition group>
+          <v-col v-for="commit in filtered" :key="commit.sha" cols="12" md="6" xl="4">
+            <!-- Cards render as they scroll into view: twenty at once froze the page for a third of a second. -->
+            <v-lazy min-height="320" :options="{ rootMargin: '400px' }" transition="fade-transition">
+              <HistoryCommitCard :commit="commit" :info="info(commit.sha)" :audit="byCommit.get(commit.sha) ?? []" />
+            </v-lazy>
+          </v-col>
+        </v-fade-transition>
+      </v-row>
+    </template>
   </div>
 </template>
-
-<style scoped>
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
-.card { color: var(--text); display: flex; flex-direction: column; gap: 8px; }
-.card:hover { border-color: var(--accent); text-decoration: none; }
-.title { font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.stats { gap: 16px; }
-.small { font-size: 12px; word-break: break-all; }
-</style>

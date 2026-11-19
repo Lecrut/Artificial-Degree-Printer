@@ -7,6 +7,7 @@ from typing import Any
 from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
 from adk.tools.planning import select_model_tier
+from adk.orchestration.findings import focus_symbols, repair_findings, symbol_sources
 from adk.orchestration.common import (
     _agent_for_path,
     _issue_signature,
@@ -87,15 +88,25 @@ class RepairMixin:
                 # the specification may be what is wrong (2026-11-17: an impossible doctest, 51 failures). The
                 # planner decides before the next attempt: amend the interface, or keep it and the coder goes on.
                 self._amend_spec_if_wrong(failed_file, issues_list, t_id)
+                # The repair names the symbols to change and each error with its line of code (§XI B1-B2): on
+                # 2026-11-18 three repairs of config.py changed other symbols than the one with the error.
+                findings = repair_findings(issues_list, self.workspace_dir)
+                focus = focus_symbols(findings, fast_target)
                 fast_task = {
                     **task,
                     "repair_of": t_id,
                     "task_id": f"{t_id}_FIX{attempt}",
                     "target_node": fast_target,
                     "assigned_agent": failed_agent,
-                    "description": texts.fast_repair_description(t_desc, _fit_items(issues_list)),
+                    "description": texts.focused_repair_description(fast_target, focus, _fit_items([str(f) for f in findings])),
+                    "task_context": t_desc,
                 }
-                fast_tier = select_model_tier(failures=attempt - 1)
+                fast_task.pop("repair_focus", None)
+                if focus:
+                    fast_task["repair_focus"] = {"file": fast_target, "symbols": symbol_sources(self.workspace_dir, fast_target, focus)}
+                # The model follows the vertex, not the attempt number: before, the large model could never take
+                # over a fast repair (2026-11-18: 139 of 142 coder calls on the small model).
+                fast_tier = select_model_tier(failures=self._vertex_failures(fast_target))
                 print(
                     f"  [WARSTWA 2: SZYBKA NAPRAWA {attempt}/{FAST_REPAIR_ATTEMPTS}] {fast_target} przez '{failed_agent}' "
                     f"(Tier: {fast_tier}), bez W4/W1...",
@@ -329,7 +340,7 @@ class RepairMixin:
                 stask["description"] = texts.section_context(context, str(stask.get("description", "")))
             if cycle_trace is not None:
                 cycle_trace["w1_remediation_task_id"] = str(stask["task_id"])
-            st_tier = select_model_tier(failures=int(failed_task.get("repair_attempts", 0)))
+            st_tier = select_model_tier(failures=self._vertex_failures(st_file))
             print(
                 f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE] Zadanie chirurgiczne {stask['task_id']} "
                 f"[{st_file}] przez agenta '{stask['assigned_agent']}' (Tier: {st_tier})...",

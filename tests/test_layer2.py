@@ -106,3 +106,41 @@ def test_doc_editor_keeps_dangling_refs_for_the_symbolic_audit(tmp_path: Path):
     assert any("baseline" in err for err in compiled["errors"])
 
 
+
+
+_HOST = "class Agent:\n    def update(self, x: int) -> int:\n        return 0\n"
+
+
+def _edit(tmp_path: Path, code: str) -> tuple[dict, str]:
+    target = tmp_path / "agent.py"
+    target.write_text(_HOST, encoding="utf-8")
+    res = edit_ast_node(target, "Agent.update", code)
+    return res, target.read_text(encoding="utf-8")
+
+
+def test_a_method_whose_body_is_deeper_than_its_docstring_is_aligned(tmp_path: Path):
+    """2026-11-18: 37 of 53 repair answers had the body indented as inside the class, the docstring not."""
+    code = 'def update(self, x: int) -> int:\n    """Doubles x."""\n        y = x * 2\n        return y\n'
+    res, text = _edit(tmp_path, code)
+    assert res["status"] == "ok" and "return y" in text
+    ns: dict = {}
+    exec(text, ns)
+    assert ns["Agent"]().update(3) == 6
+
+
+def test_an_indented_def_with_doctest_lines_at_column_zero_is_dedented(tmp_path: Path):
+    code = '    def update(self, x: int) -> int:\n        """Doubles x.\n\n>>> Agent().update(1)\n2\n    """\n        return x * 2\n'
+    res, text = _edit(tmp_path, code)
+    assert res["status"] == "ok" and ">>> Agent().update(1)" in text
+
+
+def test_code_escaped_twice_is_unescaped(tmp_path: Path):
+    code = 'def update(self, x: int) -> int:\\n    \\"\\"\\"Doubles x.\\"\\"\\"\\n    return x * 2\\n'
+    assert "\n" not in code
+    res, text = _edit(tmp_path, code)
+    assert res["status"] == "ok" and "return x * 2" in text
+
+
+def test_a_real_syntax_error_names_the_line_and_its_indentation(tmp_path: Path):
+    res, text = _edit(tmp_path, "def update(self, x: int) -> int:\n    y = (x\n    return y\n")
+    assert res["status"] == "error" and "at line" in res["error"] and text == _HOST
