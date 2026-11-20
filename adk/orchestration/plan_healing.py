@@ -17,6 +17,7 @@ from adk.orchestration.common import (
     _looks_like_workspace_path,
 )
 from adk.orchestration.routing import DERIVED_SUFFIXES, _canonical_path, _names_file
+from adk.hypergraph.build import RESULTS_WORDS
 
 
 # Planner `agent_specialization` -> agent slot of _normalize_and_heal_task_plan.
@@ -30,17 +31,6 @@ _SPECIALIZATION_AGENT = {
     "background_literature": "bg",
     "literature_review": "sota",
     "sota_discovery": "disc",
-}
-
-
-# Words that mark a task description as working on a canonical chapter.
-_CHAPTER_WORDS = {
-    1: ("wstęp", "wstep", "cel", "teza", "intro", "problem"),
-    2: ("sota", "stan wiedzy", "literatur", "przegląd", "przeglad", "related", "background"),
-    3: ("architektur", "formalizm", "matematyczn", "system", "design", "model", "tikz"),
-    4: ("implementacj", "algorytm", "struktury", "implementation", "ast"),
-    5: ("wyniki", "ewaluacj", "eksperyment", "badani", "evaluation", "metodologia", "empirical", "results"),
-    6: ("podsumowan", "wnioski", "conclusi", "kierunki", "summary"),
 }
 
 
@@ -78,6 +68,15 @@ def _flatten_subtasks(raw_tasks: list[Any] | None) -> list[dict[str, Any]]:
     return flat
 
 
+def _chapter_focus(planned_chapters: list[Any] | None) -> dict[int, str]:
+    """Chapter number -> planned focus (the same numbering as `_custom_chapter_titles`)."""
+    return {
+        int(ch.get("index") or ch.get("chapter_index") or ch.get("id") or idx): str(ch.get("focus") or "")
+        for idx, ch in enumerate(planned_chapters or [], 1)
+        if isinstance(ch, dict)
+    }
+
+
 def _custom_chapter_titles(planned_chapters: list[Any] | None) -> dict[int, str]:
     """Chapter number -> title from the blueprint's planned chapters (dicts or plain titles)."""
     titles: dict[int, str] = {}
@@ -93,22 +92,27 @@ def _custom_chapter_titles(planned_chapters: list[Any] | None) -> dict[int, str]
 
 
 def _covered_chapters(descriptions: list[str], custom_titles: dict[int, str]) -> set[int]:
-    """Chapters (planned, or the canonical 1-6) the given lower-cased thesis task descriptions already work on."""
+    """Planned chapters the given lower-cased thesis task descriptions already work on (by number or title)."""
     covered: set[int] = set()
-    numbers = sorted(set(range(1, 7)) | set(custom_titles))
     for desc in descriptions:
-        for number in numbers:
+        for number in sorted(custom_titles):
             numbered = re.search(
                 rf"\b(?:podrozdzia[łl]u?|rozdzia[łl]u?|chapter|sekcj[ai]|section|ch|r0?)\s*{number}(?:\.\d+|\b)", desc
             ) or re.search(rf"\b{number}\.\d+\b", desc)
-            titled = number in custom_titles and custom_titles[number].lower()[:18] in desc
-            if numbered or titled or any(w in desc for w in _CHAPTER_WORDS.get(number, ())):
+            titled = custom_titles[number].lower()[:18] in desc
+            if numbered or titled:
                 covered.add(number)
     return covered
 
 
 class PlanHealingMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
+
+    def _planned_chapter_titles(self) -> dict[int, str]:
+        """Chapter number -> title of the plan's `planned_chapters` (the only chapters the harness knows)."""
+        blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+        chapters = blueprint.get("planned_chapters") if isinstance(blueprint, dict) else None
+        return _custom_chapter_titles(chapters if isinstance(chapters, list) else None)
 
     def _normalize_and_heal_task_plan(
         self,
@@ -195,24 +199,19 @@ class PlanHealingMixin:
         agents: dict[str, str],
         thesis_f: str,
     ) -> None:
-        """Add a writer task for every planned chapter (the canonical 1-6 without an outline) no thesis task covers,
-        in the slice it belongs to."""
+        """Add a writer task for every planned chapter no thesis task covers (only chapters the plan declares, §XIII
+        F6): a chapter on results after everything else, any other chapter before the implementation."""
         custom_titles = _custom_chapter_titles(planned_chapters)
         thesis_descriptions = [str(t.get("description", "")).lower() for t in cleaned if t and str(t.get("target_node", "")).startswith(thesis_f)]
         covered = _covered_chapters(thesis_descriptions, custom_titles)
-        for number in (n for n in (sorted(custom_titles) or range(1, 7)) if n not in covered):
-            title = custom_titles.get(number)
-            description = templates.titled_chapter_task(number, title) if title else templates.MISSING_CHAPTER_TASK[number]
-            agent = agents["bg"] if number == 2 and t_type in ("inzynierska", "licencjacka") else agents["writer"]
-            task = _task(f"T_CH{number}", description, thesis_f, agent)
-            _modules, entry = self._planned_files()
-            if number in (1, 2):
-                # slice 1: before the implementation (the first code task)
-                at = next((i for i, t in enumerate(cleaned) if t and str(t.get("target_node", "")).endswith(".py")), len(cleaned))
-            elif number in (3, 4):
-                # slice 2: before the evaluation (the task on the entrypoint, which writes the results)
-                at = next((i for i, t in enumerate(cleaned) if t and t.get("target_node") == entry), len(cleaned))
-            else:
-                cleaned.append(task)  # slice 3: at the end
+        focus = _chapter_focus(planned_chapters)
+        for number in (n for n in sorted(custom_titles) if n not in covered):
+            title = custom_titles[number]
+            literature = any(w in title.lower() for w in ("literatur", "przegląd", "stan wiedzy", "related", "background"))
+            agent = agents["bg"] if literature and t_type in ("inzynierska", "licencjacka") else agents["writer"]
+            task = _task(f"T_CH{number}", templates.titled_chapter_task(number, title), thesis_f, agent)
+            if RESULTS_WORDS.search(f"{title} {focus.get(number, '')}"):
+                cleaned.append(task)  # needs the results: after everything else
                 continue
-            cleaned.insert(at, task)
+            at = next((i for i, t in enumerate(cleaned) if t and str(t.get("target_node", "")).endswith(".py")), len(cleaned))
+            cleaned.insert(at, task)  # before the implementation

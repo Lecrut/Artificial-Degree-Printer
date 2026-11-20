@@ -167,6 +167,8 @@ def test_thesis_publisher_generates_pdf_tex_html_and_runner(tmp_path: Path):
         spec=spec,
         workspace_dir=ws,
         evolution_summary={"events_triggered": ["CREATE_AGENT", "SPLIT_AGENT"], "active_agents_count": 6, "elapsed_seconds": 0.42},
+        entrypoint="core.py:train_and_evaluate",
+        plots="plot_results.py:generate_plots",
     )
     assert pub["symbolic_status"] == "PASS"
     assert pub["tex_symbolic_status"] == "PASS"

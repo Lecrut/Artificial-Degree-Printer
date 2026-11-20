@@ -163,6 +163,14 @@ def focused_repair_description(target: str, symbols: list[str], findings: list[s
     )
 
 
+def test_contradicts_verified_module(module: str) -> str:
+    return (
+        f"{module} already gives every result its specification examples require, so the failing assertion is "
+        "suspect: check the expected value against the specification and the arithmetic of the code (e.g. one "
+        "update with the declared parameters) and fix the test; change nothing in the module."
+    )
+
+
 def previous_attempt_failed(summary: str, node_id: str, node_file: str) -> str:
     return f"Previous attempt failed: {summary}. Do this: fix node {node_id} ({node_file}) and remove the errors."
 
@@ -193,14 +201,6 @@ def metric_not_declared(metric: str) -> str:
 
 
 # --- thesis chapters --------------------------------------------------------------------------------------------------
-CHAPTER_LABELS = {
-    1: "Chapter 1 (Introduction and thesis statement)",
-    2: "Chapter 2 (State of the art)",
-    3: "Chapter 3 (Architecture and formalism)",
-    4: "Chapter 4 (Implementation)",
-    5: "Chapter 5 (Experiments)",
-    6: "Chapter 6 (Conclusions)",
-}
 MISSING_CHAPTERS = "Incomplete thesis: missing chapters in thesis.md"
 MISSING_CHAPTERS_PATTERN = re.compile(r"missing chapters.*?\[(.*?)\]", re.IGNORECASE)
 
@@ -254,8 +254,12 @@ def planner_patch_feedback(
         "Correct `current_plan`, do not write a new plan. Return a patch with only what you change: `interfaces` with "
         "the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, "
         "`entrypoint` if it changes, `academic_blueprint` with only the fields that change, and `tasks` as a dict "
-        "mapping only the changed `task_id` to its updated fields (do NOT add, remove, or rewrite unrelated tasks). "
+        "mapping only the changed `task_id` to its updated fields (do not touch unrelated tasks; to add or remove a task, return the whole list instead). "
         "Everything you do not return stays as it is.\n"
+        "A blocker may list `Change together`: the other places of the plan its fix touches. Apply the fix and every "
+        "listed change in this same patch, so the plan stays consistent. Code you add or change follows the same rules "
+        "as the rest of the plan: deterministic doctests whose expected output follows from the signatures, and only "
+        "names the interfaces declare.\n"
         "BLOCKERS (must fix — the plan cannot proceed until resolved):\n- "
         + "\n- ".join(sorted(blockers, key=_place))
     )
@@ -275,8 +279,10 @@ def planner_patch_feedback(
 PATCH_CHANGED_NOTHING = "it changed nothing in `current_plan` (return only the parts you change, in the patch fields)"
 
 
-def critic_finding(where: str, problem: str, fix: str) -> str:
-    return f"PLAN_CRITIC{f' [{where}]' if where else ''}: {problem}" + (f" Fix: {fix}" if fix else "")
+def critic_finding(where: str, problem: str, fix: str, affects: list[str] | None = None) -> str:
+    """One critic issue for the planner; `affects` = the other places its fix must change together (§XII P1)."""
+    text = f"PLAN_CRITIC{f' [{where}]' if where else ''}: {problem}" + (f" Fix: {fix}" if fix else "")
+    return text + (f" Change together: {'; '.join(affects)}." if affects else "")
 
 
 PLAN_WITHOUT_INTERFACES = (
@@ -284,6 +290,15 @@ PLAN_WITHOUT_INTERFACES = (
     "constants) as Python source before any task can run."
 )
 PLAN_WITHOUT_TASKS = "The plan has no tasks."
+PLAN_WITHOUT_CHAPTERS = (
+    "The plan declares no `planned_chapters` in `academic_blueprint`: the thesis has the chapters you plan, with "
+    "`index`, `title` and `focus` for each; the harness does not invent a table of contents."
+)
+PLAN_WITHOUT_PLOTS = (
+    "The plan declares no `plots` in `academic_blueprint`: every experiment produces figures. Declare "
+    "`<path>.py:<function>` of one of your modules; the harness calls it without arguments after the experiment, "
+    "it reads `results.csv` and writes the figures into `figures/`."
+)
 
 
 def modules_without_interface(modules: list[str]) -> str:

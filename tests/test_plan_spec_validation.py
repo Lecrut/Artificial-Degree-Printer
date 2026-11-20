@@ -45,7 +45,7 @@ def _base_plan() -> dict:
             "src/experiment.py": _EXP,
         },
         "entrypoint": _ENTRY,
-        "academic_blueprint": {"thesis_statement": "A+B=3", "entrypoint": _ENTRY},
+        "academic_blueprint": {"thesis_statement": "A+B=3", "entrypoint": _ENTRY, "plots": _ENTRY, "planned_chapters": [{"index": 1, "title": "Wstęp"}]},
     }
 
 
@@ -227,3 +227,58 @@ def test_task_dict_patch_updates_only_targeted_task_preserving_count(tmp_path: P
     assert out_plan["tasks"][1:] == plan["tasks"][1:]
 
 
+
+
+def test_critic_fix_reaches_planner_with_affected_places_warnings_and_history(tmp_path: Path):
+    """§XII P1–P3: a blocker carries the places its fix changes together, the planner also gets the warnings, and
+    the next whole-plan review sees the earlier round (blockers + what the planner changed)."""
+    orch = _make_orch(tmp_path)
+    critic_payloads: list[dict] = []
+    planner_payloads: list[dict] = []
+
+    def agents(md, payload, **_kw):
+        if Path(md).name == "plan_critic_guard.md":
+            critic_payloads.append(payload)
+            if len(critic_payloads) > 1:
+                return {"status": "ok", "output": {"status": "PASS", "issues": []}}
+            return {"status": "ok", "output": {"status": "FAIL", "issues": [
+                {"blocking": True, "where": "src/mod_a.py", "problem": "helper_a returns 1, thesis needs 3",
+                 "fix": "return 3 from helper_a",
+                 "affects": [{"where": "src/experiment.py:run_experiment", "change": "expect 5 in the doctest"},
+                             "academic_blueprint.thesis_statement: A+B=5"]},
+                {"blocking": False, "where": "src/mod_b.py", "problem": "name is vague", "fix": "rename"},
+            ]}}
+        planner_payloads.append(payload)
+        return {"status": "ok", "output": {"academic_blueprint": {"thesis_statement": "A+B=5"}}}
+
+    orch._call_agent = agents
+    _, _, blockers = orch._validated_plan(_base_plan(), {"user_prompt": "p"}, tmp_path / "planner.md")
+    assert blockers == []
+    feedback = planner_payloads[0]["error_feedback"]
+    assert ("Change together: [src/experiment.py:run_experiment] expect 5 in the doctest; "
+            "academic_blueprint.thesis_statement: A+B=5.") in feedback
+    assert "WARNINGS" in feedback and "name is vague" in feedback
+    assert critic_payloads[0]["review_history"] == []
+    (round1,) = critic_payloads[1]["review_history"]
+    assert round1["planner_changed"] == ["academic_blueprint.thesis_statement"]
+    assert any("helper_a returns 1" in b for b in round1["blockers"])
+
+
+def test_a_plan_without_declared_figures_goes_back_to_the_planner(tmp_path: Path):
+    """§XIII.8: code may live in any module, but the products are fixed — results.csv and figures (`plots`)."""
+    orch = _make_orch(tmp_path)
+    plan = _base_plan()
+    plan["academic_blueprint"].pop("plots")
+    planner_payloads: list[dict] = []
+
+    def agents(md, payload, **_kw):
+        if Path(md).name == "plan_critic_guard.md":
+            return {"status": "ok", "output": {"status": "PASS", "issues": []}}
+        planner_payloads.append(payload)
+        return {"status": "ok", "output": {"academic_blueprint": {"plots": _ENTRY}}}
+
+    orch._call_agent = agents
+    out_plan, _, blockers = orch._validated_plan(plan, {"user_prompt": "p"}, tmp_path / "planner.md")
+    assert blockers == []
+    assert "declares no `plots`" in planner_payloads[0]["error_feedback"]
+    assert out_plan["academic_blueprint"]["plots"] == _ENTRY

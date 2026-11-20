@@ -67,9 +67,15 @@ def test_entrypoint_that_never_imports_a_planned_module_is_rejected():
     assert len(found) == 1 and "src/agent.py" in found[0].detail and found[0].culprit == "src/experiment.py"
 
 
-def test_plot_module_is_not_required_to_be_imported_by_the_experiment():
-    plots = '"""Plots."""\n\n\ndef generate_plots(output_dir: str) -> None:\n    """Write the figures."""\n'
-    assert "ENTRYPOINT_DOES_NOT_USE" not in _rules(code_violations({**_GOOD, "plot_results.py": plots}, _ENTRY)[1])
+def test_declared_plots_module_is_not_required_to_be_imported_by_the_experiment():
+    """§XIII F2: the figures module is whatever the plan declares in `plots`, not a fixed name or symbol."""
+    plots = '"""Plots."""\n\n\ndef draw() -> None:\n    """Write the figures."""\n'
+    interfaces = {**_GOOD, "viz/figs.py": plots}
+    assert "ENTRYPOINT_DOES_NOT_USE" not in _rules(code_violations(interfaces, _ENTRY, "viz/figs.py:draw")[1])
+    assert "ENTRYPOINT_DOES_NOT_USE" in _rules(code_violations(interfaces, _ENTRY)[1])
+    assert "PLOTS_NOT_DECLARED" in _rules(code_violations(interfaces, _ENTRY, "viz/figs.py:plot")[1])
+    with_args = plots.replace("def draw()", "def draw(out: str)")
+    assert "PLOTS_HAS_ARGUMENTS" in _rules(code_violations({**_GOOD, "viz/figs.py": with_args}, _ENTRY, "viz/figs.py:draw")[1])
 
 
 def test_stub_keeps_attributes_declared_by_self_assignment(tmp_path: Path):
@@ -115,8 +121,8 @@ def test_the_thesis_is_complete_with_the_planned_chapters():
     from adk.orchestration.factual_audit import thesis_missing_chapters
 
     thesis = "\n".join(f"## Rozdział {n}: T\n\ntext" for n in range(1, 6))
-    assert thesis_missing_chapters(thesis, [1, 2, 3, 4, 5]) == []
-    assert thesis_missing_chapters(thesis) == [6]  # the canonical six only without a planned outline
+    assert thesis_missing_chapters(thesis, {n: "" for n in range(1, 6)}) == []
+    assert thesis_missing_chapters(thesis, {n: "" for n in range(1, 7)}) == [6]  # only the plan's chapters (§XIII F6)
 
 
 def test_expected_chapters_follow_the_blueprint(tmp_path: Path):
@@ -125,9 +131,9 @@ def test_expected_chapters_follow_the_blueprint(tmp_path: Path):
     from tests.test_root_causes_1115 import _orch
 
     orch = _orch(tmp_path)
-    assert orch._expected_chapters() == [1, 2, 3, 4, 5, 6]
+    assert orch._expected_chapters() == {}  # no canonical six without a plan (§XIII F6)
     orch.blueprint_path.write_text(json.dumps({"planned_chapters": [{"index": i, "title": "t"} for i in range(1, 6)]}), encoding="utf-8")
-    assert orch._expected_chapters() == [1, 2, 3, 4, 5]
+    assert orch._expected_chapters() == {i: "t" for i in range(1, 6)}
 
 
 # --- the plan critic ----------------------------------------------------------------------------------------------
@@ -150,7 +156,7 @@ def _critic_orch(tmp_path: Path, verdicts: list[dict], plans: list[dict]):
     return orch, calls
 
 
-_PLAN = {"tasks": [{"task_id": "T1", "target_node": "src/experiment.py", "description": "x"}], "interfaces": _GOOD, "entrypoint": _ENTRY}
+_PLAN = {"tasks": [{"task_id": "T1", "target_node": "src/experiment.py", "description": "x"}], "interfaces": _GOOD, "entrypoint": _ENTRY, "plots": _ENTRY, "planned_chapters": [{"index": 1, "title": "Wstęp"}]}
 _BLOCK = {"status": "FAIL", "issues": [{"blocking": True, "where": "src/experiment.py", "problem": "never runs the baseline", "fix": "call it"}]}
 _ADVICE = {"status": "PASS", "issues": [{"blocking": False, "where": "T1", "problem": "vague", "fix": "be precise"}]}
 

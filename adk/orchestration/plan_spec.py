@@ -23,15 +23,32 @@ def _entrypoint(plan_out: dict[str, Any]) -> str:
     return str(blueprint.get("entrypoint") or plan_out.get("entrypoint") or "").strip()
 
 
-def _static_blockers(plan_out: dict[str, Any], interfaces: dict[str, str]) -> tuple[list[str], list[str]]:
-    """(blocker_code, blocker_instruction): code/stub errors and task-vs-interface mismatches, each once."""
+def _plots(plan_out: dict[str, Any]) -> str:
+    blueprint = plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {}
+    return str(blueprint.get("plots") or plan_out.get("plots") or "").strip()
+
+
+def _has_chapters(plan_out: dict[str, Any]) -> bool:
+    blueprint = plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {}
+    return bool(blueprint.get("planned_chapters") or plan_out.get("planned_chapters"))
+
+
+def _static_blockers(
+    plan_out: dict[str, Any], interfaces: dict[str, str], need_chapters: bool = False
+) -> tuple[list[str], list[str]]:
+    """(blocker_code, blocker_instruction): code/stub errors and task-vs-interface mismatches, each once.
+    `need_chapters`: the run writes a thesis, so the plan must declare its chapters (no fallback, §XIII F4)."""
     blocker_code = (
-        [str(v) for v in code_violations(interfaces, _entrypoint(plan_out))[1]]
+        [str(v) for v in code_violations(interfaces, _entrypoint(plan_out), _plots(plan_out))[1]]
         if interfaces
         else [texts.PLAN_WITHOUT_INTERFACES]
     )
     if not plan_out.get("tasks"):
         blocker_code.append(texts.PLAN_WITHOUT_TASKS)
+    if interfaces and not _plots(plan_out):
+        blocker_code.append(texts.PLAN_WITHOUT_PLOTS)  # products are fixed: results.csv and figures (§XIII.8)
+    if need_chapters and not _has_chapters(plan_out):
+        blocker_code.append(texts.PLAN_WITHOUT_CHAPTERS)
     blocker_instruction = _interface_gaps(plan_out.get("tasks") or [], interfaces)
     return list(dict.fromkeys(blocker_code)), list(dict.fromkeys(blocker_instruction))
 
@@ -119,19 +136,34 @@ def _is_proven_blocker(issue: dict[str, Any], plan_out: dict[str, Any], interfac
     return any(t in where_l for t in targets)
 
 
+def _affects(issue: dict[str, Any]) -> list[str]:
+    """The critic's `affects` (other places its fix changes) as `[where] change` lines; items may be dicts or text."""
+    raw = issue.get("affects")
+    lines: list[str] = []
+    for item in raw if isinstance(raw, list) else []:
+        if isinstance(item, dict):
+            where, change = str(item.get("where") or "").strip(), str(item.get("change") or "").strip()
+            if change:
+                lines.append(f"[{where}] {change}" if where else change)
+        elif str(item).strip():
+            lines.append(str(item).strip())
+    return lines
+
+
 def _apply_patch_with_partial_fallback(
     plan_out: dict[str, Any],
     interfaces: dict[str, str],
     patch: dict[str, Any],
     before_static: list[str],
     has_critic_blockers: bool,
+    need_chapters: bool = False,
 ) -> tuple[dict[str, Any], dict[str, str], list[str], list[str], bool, list[str], list[str], list[str], list[str]]:
     """Apply `patch` as a whole if it improves or preserves static checks; otherwise keep only the per-module
     changes that do not regress, returning `(plan, interfaces, blocker_code, blocker_instruction, accepted, changed, fixed, new, rejected)`."""
     before = set(before_static)
     candidate, changed = _apply_patch(plan_out, interfaces, patch)
     c_ifaces = _plan_interfaces(candidate)
-    c_code, c_instr = _static_blockers(candidate, c_ifaces)
+    c_code, c_instr = _static_blockers(candidate, c_ifaces, need_chapters)
     after = set(c_code + c_instr)
     fixed, new = sorted(before - after), sorted(after - before)
     credit = len(fixed) + (1 if has_critic_blockers else 0)
@@ -143,7 +175,7 @@ def _apply_patch_with_partial_fallback(
     # Partial acceptance: keep non-regressing parts (e.g. valid module edits) and reject only what broke.
     cur_plan, cur_ifaces = plan_out, interfaces
     cur_static = set(before_static)
-    cur_code, cur_instr = _static_blockers(cur_plan, cur_ifaces)
+    cur_code, cur_instr = _static_blockers(cur_plan, cur_ifaces, need_chapters)
     partial_changed: list[str] = []
     rejected_notes: list[str] = []
 
@@ -152,7 +184,7 @@ def _apply_patch_with_partial_fallback(
         t_plan, t_changed = _apply_patch(cur_plan, cur_ifaces, non_iface_patch)
         if t_changed:
             t_ifaces = _plan_interfaces(t_plan)
-            t_code, t_instr = _static_blockers(t_plan, t_ifaces)
+            t_code, t_instr = _static_blockers(t_plan, t_ifaces, need_chapters)
             t_after = set(t_code + t_instr)
             t_new = sorted(t_after - cur_static)
             t_credit = len(cur_static - t_after) + (1 if has_critic_blockers else 0)
@@ -169,7 +201,7 @@ def _apply_patch_with_partial_fallback(
         if not t_changed:
             continue
         t_ifaces = _plan_interfaces(t_plan)
-        t_code, t_instr = _static_blockers(t_plan, t_ifaces)
+        t_code, t_instr = _static_blockers(t_plan, t_ifaces, need_chapters)
         t_after = set(t_code + t_instr)
         t_new = sorted(t_after - cur_static)
         t_credit = len(cur_static - t_after) + (1 if has_critic_blockers else 0)
@@ -203,7 +235,7 @@ class PlanSpecMixin:
         - `warnings`: non-blocking critic suggestions (and unproven critic blockers).
         Only `blockers` stop the run; when `blockers` is empty, the plan passes immediately."""
         interfaces = _plan_interfaces(plan_out)
-        blocker_code, blocker_instruction = _static_blockers(plan_out, interfaces)
+        blocker_code, blocker_instruction = _static_blockers(plan_out, interfaces, bool(self.include_docs))
         review: tuple[list[str], list[str]] | None = None
         rejected_patch: list[str] = []
         code_budget = CODE_PATCH_BUDGET
@@ -211,10 +243,12 @@ class PlanSpecMixin:
         no_progress = 0
         prev_blockers_count: int | None = None
         prev_in_static = False
+        # Earlier rounds (blockers + what the planner changed) as context for the whole-plan review (§XII P3).
+        history: list[dict[str, Any]] = []
 
         for attempt in range(MAX_PLANNER_PATCHES + 1):
             if review is None:
-                review = ([], []) if blocker_code else self._plan_review(plan_out, interfaces, plan_payload)
+                review = ([], []) if blocker_code else self._plan_review(plan_out, interfaces, plan_payload, history)
             blocker_critic, warnings = review
             static_blockers = blocker_code + blocker_instruction
             blockers = static_blockers + blocker_critic
@@ -247,7 +281,7 @@ class PlanSpecMixin:
             retry = self._call_agent(
                 planner_md,
                 {**plan_payload, "current_plan": _plan_view(plan_out, interfaces),
-                 "error_feedback": texts.planner_patch_feedback(blockers, rejected_patch)},
+                 "error_feedback": texts.planner_patch_feedback(blockers, rejected_patch, warnings)},
                 model_tier="LRM", provider=self.provider,
             )
             if in_static_phase:
@@ -260,6 +294,7 @@ class PlanSpecMixin:
                 candidate, c_ifaces, c_code, c_instr, accepted, changed, fixed, new, rejected_notes,
             ) = _apply_patch_with_partial_fallback(
                 plan_out, interfaces, patch if isinstance(patch, dict) else {}, static_blockers, bool(blocker_critic),
+                bool(self.include_docs),
             )
             before = set(static_blockers)
             after = set(c_code + c_instr) if accepted else before
@@ -267,6 +302,7 @@ class PlanSpecMixin:
                 "PLAN_PATCHED", attempt=attempt, accepted=accepted, changed=changed, fixed=fixed, new=new,
                 remaining=sorted(before & after), rejected=rejected_notes,
             )
+            history.append({"round": attempt + 1, "blockers": blockers, "planner_changed": changed if accepted else []})
             if accepted:
                 plan_out, interfaces, blocker_code, blocker_instruction, review, rejected_patch = (
                     candidate, c_ifaces, c_code, c_instr, None, rejected_notes,
@@ -276,10 +312,12 @@ class PlanSpecMixin:
         return plan_out, interfaces, []
 
     def _plan_review(
-        self, plan_out: dict[str, Any], interfaces: dict[str, str], plan_payload: dict[str, Any]
+        self, plan_out: dict[str, Any], interfaces: dict[str, str], plan_payload: dict[str, Any],
+        history: list[dict[str, Any]] | None = None,
     ) -> tuple[list[str], list[str]]:
         """(blocker_critic, warnings) of the plan critic on the whole plan: interfaces, doctests, tasks and blueprint.
-        Critic blockers without a valid target in the plan and concrete problem/fix are downgraded to warnings."""
+        Critic blockers without a valid target in the plan and concrete problem/fix are downgraded to warnings.
+        `history` (earlier rounds) is context only: the review always covers the whole plan."""
         blueprint = plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {}
         review = self._call_agent(
             self.agents_dir / "planning" / "plan_critic_guard.md",
@@ -290,6 +328,7 @@ class PlanSpecMixin:
                 "entrypoint": _entrypoint(plan_out),
                 "academic_blueprint": {k: v for k, v in blueprint.items() if k not in ("literature_recon", "interfaces")},
                 "agent_registry": sorted((read_json_state(self.registry_path).get("agents") or {}).keys()),
+                "review_history": history or [],
             },
             model_tier="LRM", provider=self.provider,
         )
@@ -301,8 +340,15 @@ class PlanSpecMixin:
         warnings: list[str] = []
         for issue in output.get("issues") or []:
             if isinstance(issue, dict):
-                text = texts.critic_finding(str(issue.get("where") or ""), str(issue.get("problem") or ""), str(issue.get("fix") or ""))
-                is_blocker = issue.get("blocking") is True and _is_proven_blocker(issue, plan_out, interfaces)
+                text = texts.critic_finding(
+                    str(issue.get("where") or ""), str(issue.get("problem") or ""), str(issue.get("fix") or ""),
+                    _affects(issue),
+                )
+                # §XIV Q1: what an example will return is checked by the harness on the code, never a blocker.
+                is_blocker = (
+                    issue.get("blocking") is True and str(issue.get("category") or "").lower() != "doctest"
+                    and _is_proven_blocker(issue, plan_out, interfaces)
+                )
                 (blocker_critic if is_blocker else warnings).append(text)
             elif str(issue).strip():
                 warnings.append(texts.critic_finding("", str(issue), ""))
@@ -325,7 +371,7 @@ class PlanSpecMixin:
         chapters = blueprint.get("planned_chapters") if isinstance(blueprint.get("planned_chapters"), list) else []
         h, problems = build_from_plan(
             interfaces, str(blueprint.get("entrypoint") or ""), tasks, chapters if self.include_docs else [],
-            list(blueprint.get("metrics") or []),
+            list(blueprint.get("metrics") or []), str(blueprint.get("plots") or ""),
         )
         # The bibliography is written by planning (verified arXiv records), not by a task: without this it stayed
         # `spec` for the whole run although every chapter cites it.

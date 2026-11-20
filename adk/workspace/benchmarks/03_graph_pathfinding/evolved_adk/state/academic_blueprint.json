@@ -4,18 +4,11 @@
   "template_certain": true,
   "thesis_title": "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)] The workspace already contains a graph pathfinding project with a baseline Dijkstra search; read it before changing anything and keep the baseline working. Research question: does a weighted A* pathfinding search with an admissible octile heuristic expand fewer nodes than the baseline on 8-connected obstacle grids, and at what cost in path optimality? Design the experiment yourself: choose the parameters, training or search budget, number of repetitions and seeds, the metrics you will report and the success criterion, and declare the metrics and the experiment entrypoint in the plan before running anything. Implement the solution as small, single-purpose modules with unit tests, produce every result by running the declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or to a results file.",
   "literature_recon": {
-    "task_key": "03_graph_pathfinding",
-    "domain": "Graph Algorithms & Heuristic Search Optimization",
-    "algorithm_focus": "Ważony Algorytm A* z Metryką Oktilową (Weighted Octile A*)",
     "thesis_type": "paper",
     "research_routing": [
       "discoverer_researcher"
     ],
     "analyzed_papers_count": 14,
-    "canonical_baselines": [],
-    "standard_metrics": [],
-    "standard_datasets_or_environments": [],
-    "common_structural_patterns": [],
     "sampled_methodologies": [
       "Rui Zhao and Chao Chen and Longfei Xu and Chenguang Ji and Hengbin Cui and Kaikui Liu and Xiaolong Li (2026) [zhao2026customizable]: Classic graph algorithms for pathfinding use heuristic cost functions to define edge weight, thus providing no optimality guarantee of route quality.",
       "Omid Nejati Manzari and Guillaume Lajoie and Hassan Rivaz (2026) [manzari2026recursive]: We propose R-Qwen, a recursive reasoning framework built upon a pretrained Qwen backbone.",

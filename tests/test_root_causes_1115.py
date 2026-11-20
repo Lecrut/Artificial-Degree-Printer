@@ -169,8 +169,9 @@ def test_writer_sees_the_whole_target_chapter_or_the_chapters_with_the_named_poi
     assert "LAST 600" in _document_context(doc, "Fix the style of thesis.md")
 
 
-def test_the_experiment_runs_plot_results_from_src(tmp_path: Path) -> None:
-    """src/plot_results.py was never run: the runner looked only at the root and code/."""
+def test_the_experiment_runs_the_declared_plots_from_src(tmp_path: Path) -> None:
+    """src/plot_results.py was never run: the runner looked only at the root and code/. Since §XIII F2 the runner
+    calls the plan's declared `plots` function (without arguments), wherever it is."""
     from adk.tools.building.experiment_runner import execute_workspace_experiment
 
     (tmp_path / "src").mkdir()
@@ -185,6 +186,9 @@ def test_the_experiment_runs_plot_results_from_src(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     result = execute_workspace_experiment(tmp_path, entrypoint="src/experiment.py:run")
+    assert result["ok"], result["error"]
+    assert not (tmp_path / "plotted.txt").exists()  # not declared: no module is run by its name
+    result = execute_workspace_experiment(tmp_path, entrypoint="src/experiment.py:run", plots="src/plot_results.py:generate_plots")
     assert result["ok"], result["error"]
     assert (tmp_path / "plotted.txt").exists()
 

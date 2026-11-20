@@ -32,10 +32,11 @@ matplotlib.use("Agg")
 
 
 
-def _declared_entrypoint(blueprint_path: Path) -> str | None:
-    """The plan's `path.py:function`, or None when the run stopped before a plan was written."""
+def _declared_entrypoint(blueprint_path: Path, key: str = "entrypoint") -> str | None:
+    """The plan's `path.py:function` under `key` (`entrypoint`, `plots`), or None when the run stopped before a plan
+    was written or the plan declares none."""
     blueprint = read_json_state(blueprint_path) if blueprint_path.exists() else {}
-    return str(blueprint.get("entrypoint") or "") or None if isinstance(blueprint, dict) else None
+    return str(blueprint.get(key) or "") or None if isinstance(blueprint, dict) else None
 
 
 def _prepare_evolved_adk_sandbox(base_adk_root: Path, sandbox_root: Path, reset: bool = False) -> Path:
@@ -370,6 +371,7 @@ def run_benchmark_suite(
                     template_name=effective_template,
                     thesis_type=effective_thesis_type,
                     entrypoint=_declared_entrypoint(evolved_adk_dir / "state" / "academic_blueprint.json"),
+                    plots=_declared_entrypoint(evolved_adk_dir / "state" / "academic_blueprint.json", "plots"),
                 )
             except Exception as exc:  # noqa: BLE001 - one task's publishing must not end the whole suite
                 # 2026-11-15: a malformed thesis pointer crashed publishing and took the whole suite with it,

@@ -12,10 +12,7 @@ from adk.tools.building.template_manager import (
     prompt_user_for_template,
     resolve_template_name,
 )
-from adk.tools.planning import (
-    scout_domain_conventions,
-    synthesize_table_of_contents,
-)
+from adk.tools.planning import scout_domain_conventions
 from adk.orchestration.common import (
     _looks_like_workspace_path,
 )
@@ -54,17 +51,8 @@ class PlanningMixin:
             user_prompt, thesis_type=detected_thesis_type
         )
         initial_recon.pop("verified_bibtex", None)  # written once, from the planned recon below
-        suggested_sections = [
-            str(p).split(":")[0].strip() if ":" in str(p) else str(p).strip()
-            for p in initial_recon.get("common_structural_patterns", [])
-        ]
+        # Only what was detected about the request; domain, metrics, baselines and chapters are the plan's (§XIII F3).
         domain_summary = {
-            "domain": initial_recon.get("domain"),
-            "topic_canonical": initial_recon.get("topic_canonical"),
-            "canonical_baselines": initial_recon.get("canonical_baselines", []),
-            "standard_metrics": initial_recon.get("standard_metrics", []),
-            "open_research_gaps": initial_recon.get("open_research_gaps", []),
-            "suggested_sections": suggested_sections,
             "detected_thesis_type": detected_thesis_type,
             "detected_template_name": detected_template,
             "template_is_certain": template_is_certain,
@@ -75,7 +63,7 @@ class PlanningMixin:
             "thesis_type": detected_thesis_type,
             "template_name": detected_template,
             "template_certain": template_is_certain,
-            "thesis_title": initial_recon.get("topic_canonical", user_prompt),
+            "thesis_title": user_prompt,
             "literature_recon": initial_recon,
         }
         write_json_state(self.blueprint_path, base_blueprint)
@@ -192,13 +180,16 @@ class PlanningMixin:
         blueprint_raw["thesis_type"] = planned_thesis_type
         blueprint_raw["template_name"] = planned_template
         blueprint_raw["template_certain"] = bool(template_is_certain or plan_out.get("template_name"))
-        # The plan declares how the experiment is run (P14); a value that is not `path.py[:function]` is dropped so
-        # the runner falls back to naming conventions instead of failing on a hallucinated path.
+        # The plan declares how the experiment is run (P14); a value that is not `path.py[:function]` is dropped
+        # (plan validation already required a planned entrypoint; nothing is guessed by file name, §XIII F5).
         declared_entry = str(blueprint_raw.get("entrypoint") or plan_out.get("entrypoint") or "").strip()
         if declared_entry and _looks_like_workspace_path(declared_entry.partition(":")[0]):
             blueprint_raw["entrypoint"] = declared_entry
         else:
             blueprint_raw.pop("entrypoint", None)
+        declared_plots = str(blueprint_raw.get("plots") or plan_out.get("plots") or "").strip()
+        if declared_plots:
+            blueprint_raw["plots"] = declared_plots
 
         # Dynamiczne rozdziały zaplanowane przez task_planner
         toc_candidate = blueprint_raw.get("table_of_contents") or plan_out.get("table_of_contents")
@@ -209,19 +200,13 @@ class PlanningMixin:
         else:
             toc_chapters_candidate = None
 
+        # No fallback table of contents: a plan without chapters does not pass validation (§XIII F4).
         planned_chapters = (
             blueprint_raw.get("planned_chapters")
             or plan_out.get("planned_chapters")
             or toc_chapters_candidate
+            or []
         )
-        if not planned_chapters:
-            toc_fallback = synthesize_table_of_contents(
-                user_prompt,
-                thesis_type=planned_thesis_type,
-                recon_report=recon_report,
-                title_pl=str(blueprint_raw.get("thesis_title") or ""),
-            )
-            planned_chapters = toc_fallback.get("chapters", [])
 
         toc_structure = {"chapters": planned_chapters} if isinstance(planned_chapters, list) else planned_chapters
         blueprint_raw["table_of_contents"] = toc_structure
@@ -233,19 +218,16 @@ class PlanningMixin:
         toc_chapters = toc_structure.get("chapters", []) if isinstance(toc_structure, dict) else toc_structure
         self.logger.log_step(
             "PLANNING_RECON_TOC",
-            f"Rekonesans literatury ({recon_report.get('domain')}) i synteza Spisu Tresci ({len(toc_chapters)} rozdzialow, typ={planned_thesis_type})",
+            f"Rekonesans literatury ({len(recon_report.get('available_citation_keys') or [])} pozycji) i spis tresci planu ({len(toc_chapters)} rozdzialow, typ={planned_thesis_type})",
             {
                 "thesis_type": planned_thesis_type,
-                "task_key": recon_report.get("task_key"),
-                "canonical_baselines": recon_report.get("canonical_baselines", []),
-                "standard_metrics": recon_report.get("standard_metrics", []),
+                "citations": len(recon_report.get("available_citation_keys") or []),
                 "chapters_count": len(toc_chapters),
             },
         )
         print(
-            f"  [WARSTWA 1: REKONESANS LITERATURY I SPIS TRESCI] Dziedzina: '{recon_report.get('domain')}' | "
-            f"Typ: {planned_thesis_type} | Rozdzialy w TOC: {len(toc_chapters)} | "
-            f"Metryki: {', '.join(recon_report.get('standard_metrics', [])[:4])}",
+            f"  [WARSTWA 1: REKONESANS LITERATURY I SPIS TRESCI] Typ: {planned_thesis_type} | "
+            f"Rozdzialy w planie: {len(toc_chapters)} | Metryki planu: {', '.join(blueprint_raw.get('metrics') or [])}",
             flush=True,
         )
 

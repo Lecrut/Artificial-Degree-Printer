@@ -19,7 +19,7 @@ Names written as `<...>` below are placeholders, never values to copy. `done_whe
    - To change an existing test file, prefer `"ast_edits"` with `"symbol": "<TestClass>.<test_method>"` or `"<test_function>"` over rewriting the whole file.
 2. **Tests & Determinism**:
    - Test modules live in `tests/` and are named `test_*.py` (pytest discovery). They import the modules under test at the top level.
-   - Determinism comes from the seed declared in the configuration module; tests read settings from there instead of passing literal numbers.
+   - Determinism comes from the seed constant declared in the interfaces; tests read settings from those constants instead of passing literal numbers.
    - Tests check behaviour (signatures, edge cases, invariants of the algorithm), never pasted result values.
 
 ---

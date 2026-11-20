@@ -355,7 +355,7 @@ class NeuroSymbolicOrchestrator(
                 node_id=def_node,
                 directive=texts.defense_directive(shown),
                 fallback_description=texts.defense_fallback(shown),
-                extra_tasks=_missing_chapter_tasks("; ".join(issues)),
+                extra_tasks=_missing_chapter_tasks("; ".join(issues), self._planned_chapter_titles()),
                 append_to_queue=state.multi_cycle_waves,
             )
             print(f"  [WARSTWA 3: RE-AUDYT GATE 3] Ponowna weryfikacja obrony po naprawie #{retries}...", flush=True)

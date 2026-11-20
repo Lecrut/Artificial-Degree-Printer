@@ -113,7 +113,7 @@ def test_lightweight_planning_payload_and_blueprint_persistence(tmp_path: Path) 
 
     planner_payload = captured_payloads[0]
     assert "domain_context" in planner_payload
-    assert "suggested_sections" in planner_payload["domain_context"]
+    assert "suggested_sections" not in planner_payload["domain_context"]  # nothing prescribed (§XIII F3)
     assert orch.blueprint_path.exists()
     saved_blueprint = json.loads(orch.blueprint_path.read_text(encoding="utf-8"))
     assert "table_of_contents" in saved_blueprint
@@ -256,10 +256,16 @@ def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_cha
     healed_16 = orch._normalize_and_heal_task_plan(sixteen_tasks, multi_cycle_waves=True, thesis_type="inzynierska")
     assert len(healed_16) == 16
 
-    # 3. A 7-task plan missing Chapters 5 and 6 -> only the 2 missing chapters are added (7 + 2 = 9 tasks, NOT 12)!
+    # 3. A 7-task plan missing the planned Chapters 5 and 6 -> only those 2 are added (7 + 2 = 9 tasks, NOT 12)!
     seven_tasks_missing_5_6 = nine_tasks[:7]
-    healed_7_to_9 = orch._normalize_and_heal_task_plan(seven_tasks_missing_5_6, multi_cycle_waves=True, thesis_type="inzynierska")
+    planned = [{"index": n, "title": t} for n, t in enumerate(
+        ["Wstęp", "Przegląd literatury", "Architektura", "Implementacja", "Badania i wyniki", "Wnioski"], 1)]
+    healed_7_to_9 = orch._normalize_and_heal_task_plan(
+        seven_tasks_missing_5_6, multi_cycle_waves=True, thesis_type="inzynierska", planned_chapters=planned)
     assert len(healed_7_to_9) == 9
+
+    # 4. Without planned chapters nothing is invented: no canonical six (§XIII F6).
+    assert len(orch._normalize_and_heal_task_plan(nine_tasks[:7], multi_cycle_waves=True, thesis_type="inzynierska")) == 7
 
 
 

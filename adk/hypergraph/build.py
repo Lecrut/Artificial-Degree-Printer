@@ -11,7 +11,7 @@ from typing import Any
 from adk.hypergraph.model import Edge, Hypergraph, Vertex, Violation, check_invariants, module_import_path
 
 _RESEARCH_AGENTS = {"background_researcher", "discoverer_researcher", "sota_researcher"}
-_RESULTS_WORDS = re.compile(r"wynik|eksperyment|ewaluac|dyskusj|wniosk|result|experiment|evaluat|discussion|conclusion", re.I)
+RESULTS_WORDS = re.compile(r"wynik|eksperyment|ewaluac|dyskusj|wniosk|result|experiment|evaluat|discussion|conclusion", re.I)
 RESULTS_FILE = "results.csv"
 BIB_FILE = "references.bib"
 
@@ -131,6 +131,7 @@ def build_from_plan(
     tasks: list[dict[str, Any]],
     chapters: list[dict[str, Any]],
     metrics: list[str],
+    plots: str | None = None,
 ) -> tuple[Hypergraph, list[Violation]]:
     """The full H (§VII.12.6). Call after `code_violations` passed; what still breaks an invariant is returned."""
     modules = {module_import_path(rel): rel for rel in interfaces}
@@ -182,10 +183,13 @@ def build_from_plan(
     if entry_file in specs:
         vertices[RESULTS_FILE] = Vertex(RESULTS_FILE, "data", None, "spec")
         members = {entry_file: "P", RESULTS_FILE: "O"}
-        for rel, spec in specs.items():
-            if "generate_plots" in spec["symbols"]:
-                members[rel] = "C"
-        edges["R:run"] = Edge("R:run", "R", members, {"entry": entrypoint, "metrics": list(metrics or [])})
+        plots_file = (plots or "").partition(":")[0]
+        if plots_file in specs:
+            members[plots_file] = "C"
+        edges["R:run"] = Edge(
+            "R:run", "R", members,
+            {"entry": entrypoint, "metrics": list(metrics or []), "plots": plots if plots_file in specs else ""},
+        )
         closure, frontier = set(), [entry_file]
         while frontier:
             current = frontier.pop()
@@ -206,7 +210,7 @@ def build_from_plan(
         title = str(ch.get("title", "")) if isinstance(ch, dict) else str(ch)
         focus = str(ch.get("focus", "")) if isinstance(ch, dict) else ""
         uses_results = bool(ch.get("uses_results")) if isinstance(ch, dict) and "uses_results" in ch else bool(
-            _RESULTS_WORDS.search(f"{title} {focus}")
+            RESULTS_WORDS.search(f"{title} {focus}")
         )
         cid = f"thesis.md#ch{index}"
         vertices[cid] = Vertex(cid, "chapter", "writer", "spec", f"{title} — {focus}".strip(" —"))

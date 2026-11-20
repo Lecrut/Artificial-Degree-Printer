@@ -137,6 +137,27 @@ def declared_names(source: str) -> set[str]:
     return names
 
 
+def split_existing_symbols(code: str, path: Path) -> list[tuple[str, str]] | None:
+    """A top-level edit whose code holds several top-level symbols that ALL already exist in the file, as one edit
+    per symbol (imports go with the first), or None (§XII R3: `__all__` sent together with the module's constants
+    was rejected and cost a repair attempt). New names still go through the normal checks, never in passing."""
+    try:
+        tree = ast.parse(code)
+        existing = declared_names(path.read_text(encoding="utf-8")) if path.is_file() else set()
+    except (SyntaxError, UnicodeDecodeError):
+        return None
+    imports = [s for s in tree.body if isinstance(s, (ast.Import, ast.ImportFrom))]
+    named = [s for s in tree.body if s not in imports and not _is_docstring(s)]
+    names = [_extract_stmt_name(s) for s in named]
+    if len(named) < 2 or any(n is None or n not in existing for n in names):
+        return None
+    if any(getattr(s, "decorator_list", None) for s in named):
+        return None  # a source segment starts at `def`/`class` and would drop the decorators
+    header = "".join(f"{ast.get_source_segment(code, s)}\n" for s in imports)
+    pieces = [(str(n), str(ast.get_source_segment(code, s))) for n, s in zip(names, named)]
+    return [(pieces[0][0], header + pieces[0][1])] + pieces[1:]
+
+
 def _may_append(path: Path, name: str, planned: set[str] | None) -> bool:
     """A symbol the file does not have is added when the plan declares it for this module, or where adding is
     ordinary work: a private helper, a test file, the `__main__` block. Without a planned interface for the file

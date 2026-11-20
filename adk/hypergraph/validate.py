@@ -193,7 +193,7 @@ def _discarded_returns(interfaces: dict[str, str]) -> list[Violation]:
     return found
 
 
-def _unused_by_entrypoint(specs: dict[str, dict[str, Any]], entry_file: str) -> list[str]:
+def _unused_by_entrypoint(specs: dict[str, dict[str, Any]], entry_file: str, plots_file: str = "") -> list[str]:
     """Planned code modules the experiment never imports (top level, transitively). 2026-11-17: the entrypoint in
     config.py imported nothing, the coder rewrote the game inside it, and the planned method never ran (83x)."""
     reached, frontier = {entry_file}, [entry_file]
@@ -202,16 +202,33 @@ def _unused_by_entrypoint(specs: dict[str, dict[str, Any]], entry_file: str) -> 
             if producer not in reached:
                 reached.add(producer)
                 frontier.append(producer)
-    # `generate_plots` is called by the harness after the experiment, not by the entrypoint.
-    return sorted(
-        rel for rel, spec in specs.items()
-        if rel not in reached and "generate_plots" not in spec["symbols"] and Path(rel).name != "__init__.py"
-    )
+    # The declared `plots` function is called by the harness after the experiment, not by the entrypoint.
+    return sorted(rel for rel in specs if rel not in reached and rel != plots_file and Path(rel).name != "__init__.py")
 
 
-def code_violations(interfaces: dict[str, str], entrypoint: str | None) -> tuple[dict[str, dict[str, Any]], list[Violation]]:
+def _declared_call(specs: dict[str, dict[str, Any]], declared: str, role: str) -> list[Violation]:
+    """A `path.py:function` the harness calls without arguments (the entrypoint, the declared `plots`)."""
+    file, _, func_name = declared.partition(":")
+    if file not in specs:
+        return [Violation(f"{role}_NOT_PLANNED", f"{file} has no interface in the plan", file)]
+    func = specs[file]["symbols"].get(func_name or "")
+    if not func or func["kind"] != "func":
+        return [Violation(f"{role}_NOT_DECLARED", f"{file} declares no function `{func_name}`", file, file)]
+    if func["required"]:
+        return [Violation(
+            f"{role}_HAS_ARGUMENTS",
+            f"{func_name}({', '.join(func['required'])}): the harness calls it without arguments; "
+            "read configuration inside the function",
+            file, file,
+        )]
+    return []
+
+
+def code_violations(
+    interfaces: dict[str, str], entrypoint: str | None, plots: str | None = None
+) -> tuple[dict[str, dict[str, Any]], list[Violation]]:
     """σ of every planned module and every reason the code part of the plan cannot work as written
-    (invariants 2–5, 7–9 of §VII.12.10)."""
+    (invariants 2–5, 7–9 of §VII.12.10). `plots` is the optional declared figures function (§XIII F2)."""
     found: list[Violation] = []
     modules = {module_import_path(rel): rel for rel in interfaces}
     stems: dict[str, list[str]] = {}
@@ -238,20 +255,13 @@ def code_violations(interfaces: dict[str, str], entrypoint: str | None) -> tuple
     entry_file, _, entry_func = (entrypoint or "").partition(":")
     if specs and not entry_file:
         found.append(Violation("NO_ENTRYPOINT", "the plan declares no experiment entrypoint (path.py:function)"))
-    elif entry_file and entry_file not in specs:
-        found.append(Violation("ENTRYPOINT_NOT_PLANNED", f"{entry_file} has no interface in the plan", entry_file))
     elif entry_file:
-        func = specs[entry_file]["symbols"].get(entry_func or "")
-        if not func or func["kind"] != "func":
-            found.append(Violation("ENTRYPOINT_NOT_DECLARED", f"{entry_file} declares no function `{entry_func}`", entry_file, entry_file))
-        elif func["required"]:
-            found.append(Violation(
-                "ENTRYPOINT_HAS_ARGUMENTS",
-                f"{entry_func}({', '.join(func['required'])}): the harness calls the entrypoint without arguments; "
-                "read configuration inside the function",
-                entry_file, entry_file,
-            ))
-        if unused := _unused_by_entrypoint(specs, entry_file):
+        found += _declared_call(specs, f"{entry_file}:{entry_func}", "ENTRYPOINT")
+    plots_file = (plots or "").partition(":")[0]
+    if plots_file:
+        found += _declared_call(specs, str(plots), "PLOTS")
+    if entry_file in specs:
+        if unused := _unused_by_entrypoint(specs, entry_file, plots_file):
             found.append(Violation(
                 "ENTRYPOINT_DOES_NOT_USE",
                 f"{entry_file} never imports {', '.join(unused)} (directly or through other modules, at module top "

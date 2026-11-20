@@ -20,19 +20,9 @@ from adk.orchestration.common import (
 )
 
 
-_CHAPTER_HEADING_WORDS = {
-    1: ("wstęp", "wstep", "cel", "teza", "intro", "problem"),
-    2: ("sota", "stan wiedzy", "literatur", "przegląd", "przeglad", "related", "background"),
-    3: ("architektur", "formalizm", "matematyczn", "system", "design", "model"),
-    4: ("implementacj", "algorytm", "struktury", "implementation"),
-    5: ("wyniki", "ewaluacj", "eksperyment", "badani", "evaluation", "metodologia", "empirical", "results"),
-    6: ("podsumowan", "wnioski", "conclusi", "kierunki", "summary"),
-}
-
-
-def thesis_missing_chapters(thesis_text: str, expected: list[int] | range = range(1, 7)) -> list[int]:
-    """Expected chapters with no `## ` heading in the thesis: a heading counts by its number
-    (`Rozdział 3`, `Chapter 3`) or, without one, by the first chapter whose words it contains."""
+def thesis_missing_chapters(thesis_text: str, expected: dict[int, str]) -> list[int]:
+    """Planned chapters (number -> title) with no `## ` heading in the thesis: a heading counts by its number
+    (`Rozdział 3`, `Chapter 3`) or, without one, by the planned title it contains."""
     found: set[int] = set()
     for match in re.finditer(r"^##\s+([^\n]+)", thesis_text, flags=re.MULTILINE):
         heading = match.group(1).lower()
@@ -40,7 +30,7 @@ def thesis_missing_chapters(thesis_text: str, expected: list[int] | range = rang
         if number:
             found.add(int(number.group(1)))
             continue
-        hit = next((n for n, words in _CHAPTER_HEADING_WORDS.items() if any(w in heading for w in words)), None)
+        hit = next((n for n, title in expected.items() if title and title.lower()[:18] in heading), None)
         if hit is not None:
             found.add(hit)
     return [n for n in expected if n not in found]
@@ -49,16 +39,10 @@ def thesis_missing_chapters(thesis_text: str, expected: list[int] | range = rang
 class FactualAuditMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
 
-    def _expected_chapters(self) -> list[int]:
-        """The chapters this thesis must have: the plan's (`planned_chapters`, the N bags of H). The canonical six
-        remain only for a run without a planned outline (2026-11-17: 5 planned chapters, the final gate demanded a
-        sixth, and `Q1_CH6` wrote a chapter outside the plan)."""
-        planned = (read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}).get("planned_chapters")
-        indices = sorted({
-            int(ch["index"]) for ch in planned or []
-            if isinstance(ch, dict) and str(ch.get("index", "")).isdigit()
-        })
-        return indices or list(range(1, 7))
+    def _expected_chapters(self) -> dict[int, str]:
+        """The chapters this thesis must have (number -> title): only the plan's `planned_chapters` — no canonical
+        six (2026-11-17: 5 planned chapters, the final gate demanded a sixth; §XIII F6)."""
+        return self._planned_chapter_titles()
 
     def _get_pending_future_files(self, current_task: dict[str, Any]) -> set[str]:
         """Return filenames scheduled to be created by subsequent TODO tasks in the queue."""
@@ -88,7 +72,8 @@ class FactualAuditMixin:
                     pending.add(path_str)
                 # Code the experiment still has to run: its results and figures are pending too (from R in H).
                 if run is not None and run.members.get(path_str) in ("P", "C"):
-                    pending.update({m for m, role in run.members.items() if role == "O"} | {"figures", "plot_results.py"})
+                    plots_file = str(run.spec.get("plots") or "").partition(":")[0]
+                    pending.update({m for m, role in run.members.items() if role == "O"} | {"figures"} | ({plots_file} - {""}))
         return pending
 
     def _audit_factual_state(self, report: dict[str, Any]) -> dict[str, Any]:

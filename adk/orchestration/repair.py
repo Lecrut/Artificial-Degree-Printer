@@ -8,6 +8,7 @@ from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
 from adk.tools.planning import select_model_tier
 from adk.orchestration.findings import focus_symbols, repair_findings, symbol_sources
+from adk.orchestration.failure_attribution import _is_test, _suspect_test
 from adk.orchestration.common import (
     _agent_for_path,
     _issue_signature,
@@ -92,13 +93,17 @@ class RepairMixin:
                 # 2026-11-18 three repairs of config.py changed other symbols than the one with the error.
                 findings = repair_findings(issues_list, self.workspace_dir)
                 focus = focus_symbols(findings, fast_target)
+                notes = [str(f) for f in findings]
+                module = h.tested_module(fast_target) if h is not None and _is_test(fast_target) else None
+                if module and _suspect_test(h, module, fast_target):
+                    notes.insert(0, texts.test_contradicts_verified_module(module))  # §XIV Q2
                 fast_task = {
                     **task,
                     "repair_of": t_id,
                     "task_id": f"{t_id}_FIX{attempt}",
                     "target_node": fast_target,
                     "assigned_agent": failed_agent,
-                    "description": texts.focused_repair_description(fast_target, focus, _fit_items([str(f) for f in findings])),
+                    "description": texts.focused_repair_description(fast_target, focus, _fit_items(notes)),
                     "task_context": t_desc,
                 }
                 fast_task.pop("repair_focus", None)
@@ -113,6 +118,7 @@ class RepairMixin:
                     flush=True,
                 )
                 builder_error: str | None = None
+                signature_before = _issue_signature({"issues": issues_list})
                 try:
                     self._execute_builder_step(fast_task, model_tier=fast_tier)
                     self._refresh_experiment_after_code(node_id)
@@ -127,6 +133,13 @@ class RepairMixin:
                     report["failed_agent"] = report.get("failed_agent") or failed_agent
                     report.setdefault("issues", []).append(builder_error)
                     report.setdefault("errors", []).append(builder_error)
+                if report["status"] != "PASS" and signature_before and (
+                    _issue_signature({"issues": _collect_report_issues(report)}) == signature_before
+                ):
+                    # §XIV Q3: the same error after the author's repair (01: T1 and T2 three times each) — this
+                    # author will not fix it here; go straight to the full cycle (repair planner) instead.
+                    self.logger.log_event("REPAIR_SAME_ERROR", task_id=t_id, target=fast_target, attempt=attempt)
+                    task["repair_attempts"] = max(int(task["repair_attempts"]), FAST_REPAIR_ATTEMPTS)
                 cycle_trace["w4_action"] = "FAST_FIX"
                 cycle_trace["w1_remediation_task_id"] = fast_task["task_id"]
                 cycle_trace["w3_post_remediation_status"] = report["status"]

@@ -97,7 +97,9 @@ class SchedulerMixin:
         if h is None or not thesis.is_file():
             return
         chapters = sorted(int(v.rpartition("#ch")[2]) for v in h.vertices if v.startswith(f"{THESIS_FILE}#ch"))
-        missing = set(thesis_missing_chapters(thesis.read_text(encoding="utf-8", errors="replace"), chapters))
+        titles = self._planned_chapter_titles()
+        expected = {n: titles.get(n, "") for n in chapters}
+        missing = set(thesis_missing_chapters(thesis.read_text(encoding="utf-8", errors="replace"), expected))
         for number in (n for n in chapters if n not in missing):
             self._set_vertex_state(f"{THESIS_FILE}#ch{number}", "verified" if passed else "drafted", task_id=task.get("task_id"))
 

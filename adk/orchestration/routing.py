@@ -227,12 +227,8 @@ class RoutingMixin:
         if h is not None and h.output_producer(rel):
             return str(h.output_producer(rel))
         if Path(rel).suffix.lower() in DERIVED_SUFFIXES and (h is None or h.owner_of(rel) is None):
-            # A figure comes from the plotting module the experiment calls (`generate_plots`), other data from the
-            # experiment itself.
-            plotter = next(
-                (e.id.removeprefix("I:") for e in (h.edges.values() if h else []) if e.type == "I" and "generate_plots" in e.spec.get("symbols", {})),
-                None,
-            )
+            # A figure comes from the plan's declared figures module (`plots`), other data from the experiment itself.
+            plotter = h.plots() if h else None
             if plotter and Path(rel).suffix.lower() in (".png", ".pdf", ".svg", ".jpg", ".jpeg"):
                 return plotter
             return self._entry_file() or rel

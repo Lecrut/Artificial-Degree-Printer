@@ -7,7 +7,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
 import time
 from pathlib import Path
@@ -551,47 +550,18 @@ def publish_workspace_thesis_bundle(
     template_name: str | None = None,
     thesis_type: str | None = None,
     entrypoint: str | None = None,
+    plots: str | None = None,
 ) -> dict[str, Any]:
     """Execute generated code & plot script, compile symbolic references in .md and .tex, and render thesis.pdf + thesis.html.
 
-    `entrypoint` is the plan's declaration (`path.py:function`); the experiment runs through it, as during the run."""
+    `entrypoint` is the plan's declaration (`path.py:function`); the experiment runs through it, as during the run,
+    followed by the plan's declared figures function `plots` (§XIII F2)."""
     w_dir = Path(workspace_dir).resolve()
     w_dir.mkdir(parents=True, exist_ok=True)
 
-    # Run the declared entrypoint so results.csv is whatever it just wrote.
-    exec_env = os.environ.copy()
-    exec_env["PYTHONPATH"] = str(w_dir) + os.pathsep + str(w_dir / "code") + os.pathsep + exec_env.get("PYTHONPATH", "")
-    experiment = execute_workspace_experiment(w_dir, entrypoint=entrypoint)
-
-    # Ensure real vector and raster plots are generated (never broken placeholder)
-    fig_dir = w_dir / "figures"
-    fig_dir.mkdir(parents=True, exist_ok=True)
-    chart_pdf = fig_dir / "comparison_chart.pdf"
-
-    def _is_real_pdf(p: Path) -> bool:
-        if not p.exists() or p.stat().st_size < 500:
-            return False
-        try:
-            return p.read_bytes()[:5] == b"%PDF-"
-        except Exception:
-            return False
-
-    if not _is_real_pdf(chart_pdf):
-        try:
-            plot_py = w_dir / "plot_results.py"
-            if not plot_py.exists() and (w_dir / "code" / "plot_results.py").exists():
-                plot_py = w_dir / "code" / "plot_results.py"
-            if plot_py.exists():
-                subprocess.run([sys.executable, str(plot_py)], cwd=str(w_dir), env=exec_env, check=False, capture_output=True, timeout=30)
-                if not _is_real_pdf(chart_pdf):
-                    mod_scope = {"__name__": "__main__", "__file__": str(plot_py)}
-                    exec(plot_py.read_text(encoding="utf-8"), mod_scope)
-                    if "generate_plots" in mod_scope and callable(mod_scope["generate_plots"]):
-                        mod_scope["generate_plots"](str(w_dir))
-                    elif "main" in mod_scope and callable(mod_scope["main"]):
-                        mod_scope["main"]()
-        except Exception:
-            pass
+    # Run the declared entrypoint (and figures) so results.csv and the figures are whatever they just wrote.
+    experiment = execute_workspace_experiment(w_dir, entrypoint=entrypoint, plots=plots)
+    (w_dir / "figures").mkdir(parents=True, exist_ok=True)
 
     # A live run keeps the CSV that train_and_evaluate just wrote. Touching mtime
     # without a successful run made a hand-written table look fresh.

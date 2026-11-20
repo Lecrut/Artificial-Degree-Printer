@@ -158,7 +158,7 @@ def test_experiment_overwrites_pasted_results_csv(tmp_path: Path):
     )
     (tmp_path / "results.csv").write_text("method,win_rate\nbaseline,0.1\n", encoding="utf-8")
 
-    result = execute_workspace_experiment(tmp_path)
+    result = execute_workspace_experiment(tmp_path, entrypoint="core.py:train_and_evaluate")
     written = (tmp_path / "results.csv").read_text(encoding="utf-8")
     assert result["ok"] is True
     assert "proposed,0.5" in written
@@ -193,7 +193,7 @@ def test_entrypoint_with_required_arguments_is_reported_not_fed(tmp_path: Path):
     from adk.tools.building.experiment_runner import execute_workspace_experiment
 
     (tmp_path / "core.py").write_text("def train_and_evaluate(csv_out_path, seed):\n    return 1\n", encoding="utf-8")
-    result = execute_workspace_experiment(tmp_path)
+    result = execute_workspace_experiment(tmp_path, entrypoint="core.py:train_and_evaluate")
     assert result["ok"] is False
     assert "csv_out_path" in result["error"]
 

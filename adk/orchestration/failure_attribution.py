@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Any
 
 _TB_FRAME = re.compile(r"^(\S+?\.py):\d+: in ", re.MULTILINE)
 _TB_EXC = re.compile(r"^E\s+([A-Za-z_][\w.]*)", re.MULTILINE)
@@ -38,3 +39,13 @@ def _pytest_culprits(issue: str) -> list[tuple[str, bool]]:
         exc = (_TB_EXC.findall(section) or [""])[-1].split(".")[-1].rstrip(":")
         found.append((frames[0], exc not in _TEST_MISUSE))
     return found
+
+
+def _suspect_test(h: Any, module: str, test_file: str) -> bool:
+    """A failed assertion seen only in the test frame blames the unverified one of the pair (§XIV Q2): the module
+    already satisfies every example of its specification (`verified`) and the test is new → the test. 2026-11-19:
+    a fresh test asserted `0.1 > 0.5` after one Q-update with lr=0.1; six repairs of the correct module followed."""
+    mod = h.vertices.get(module)
+    test_vertex = h.owner_of(test_file)
+    test = h.vertices.get(test_vertex) if test_vertex else None
+    return mod is not None and mod.state == "verified" and (test is None or test.state != "verified")

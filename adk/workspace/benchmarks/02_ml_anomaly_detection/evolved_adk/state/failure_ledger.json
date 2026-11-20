@@ -1,3 +1,115 @@
 {
-  "failures": []
+  "failures": [
+    {
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"generic\", \"occurrences\": 3, \"tasks\": [\"R2_1\", \"T11\", \"T6\"], \"examples\": [\"BEHAVIOUR_MISMATCH [src/baselines.py]: the implementation does not give the results the interface specifies:\\n- UnivariateZScoreBaseline.predict: example `det.predict(np.array([[10, 10], [1, 1]]))` expected `array([ True, False])`, got `array([[ True,  True],\\n       [ True,  True]])`\", \"BEHAVIOUR_MISMATCH [src/baselines.py]: the implementation does not give the results the interface specifies:\\n- example `print(result)` expected `[ True False]`, got `[ True  True]`\", \"Ruff lint failure: src\\\\experiment_runner.py:35:20: F821 Undefined name `config`\\nsrc\\\\experiment_runner.py:40:21: F821 Undefined name `config`\\nsrc\\\\experiment_runner.py:42:40: F821 Undefined name `config`\\nsrc\\\\experiment_runner.py:42:60: F821 Undefined name `config`\\nsrc\\\\experiment_runner.py:42:81: F821 Undefined name `config`\\nsrc\\\\experiment_runner.py:42:99: F821 Undefined name `config`\\nsrc\\\\experiment_\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/experiment_runner.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Ruff lint failure: src\\\\experiment_runner.py:35:20: F821 Undefined name `RANDOM_STATE`\\nsrc\\\\experiment_runner.py:46:48: F821 Undefined name `ZSCORE_THRESHOLD`\\nsrc\\\\experiment_runner.py:49:46: F821 Undefined name `ROBUST_THRESHOLD`\\nFound 3 errors.\", \"Traceback (most recent call last):\\n  File \\\"<string>\\\", line 44, in <module>\\n    fn()\\n    ~~^^\\n  File \\\"D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\src\\\\experiment_runner.py\\\", line 35, in run_experiment\\n    np.random.seed(RANDOM_STATE)\\n                   ^^^^^^^^^^^^\\nNameError: name 'RANDOM_STATE' is not defined\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 7, \"cycle_index\": 9, \"task_id\": \"T11\", \"target_node\": \"src/experiment_runner.py\", \"suggested_rule\": \"Task T11 on node src/experiment_runner.py (src/experiment_runner.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When importing names from another module used for configuration or constants, explicitly reference them via their module path (e.g., `module.CONSTANT`) rather than relying on implicit global scope availability, because imported modules do not automatically inject their contents into the current namespace."
+    }
+  ],
+  "category_log": [
+    {
+      "cycle": 1,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T6"
+    },
+    {
+      "cycle": 2,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T6"
+    },
+    {
+      "cycle": 3,
+      "agent": "seed_coder",
+      "category": "pytest:IndexError",
+      "task_id": "T8"
+    },
+    {
+      "cycle": 4,
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "T8"
+    },
+    {
+      "cycle": 5,
+      "agent": "seed_tester",
+      "category": "harness",
+      "task_id": "T8"
+    },
+    {
+      "cycle": 6,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "R2_1"
+    },
+    {
+      "cycle": 7,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T11"
+    },
+    {
+      "cycle": 8,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T11"
+    },
+    {
+      "cycle": 9,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T11"
+    },
+    {
+      "cycle": 10,
+      "agent": "seed_tester",
+      "category": "harness",
+      "task_id": "R2_3"
+    },
+    {
+      "cycle": 11,
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "R2_3"
+    },
+    {
+      "cycle": 12,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "R3_1"
+    },
+    {
+      "cycle": 13,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "R3_1"
+    },
+    {
+      "cycle": 14,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "R3_1"
+    },
+    {
+      "cycle": 15,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "R4_1"
+    },
+    {
+      "cycle": 16,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "R4_1"
+    }
+  ],
+  "rules": [
+    {
+      "agent": "seed_coder",
+      "rule": "When importing names from another module used for configuration or constants, explicitly reference them via their module path (e.g., `module.CONSTANT`) rather than relying on implicit global scope availability, because imported modules do not automatically inject their contents into the current namespace.",
+      "category": "generic",
+      "cycle": 9
+    }
+  ]
 }

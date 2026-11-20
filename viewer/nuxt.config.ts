@@ -9,6 +9,8 @@ export default defineNuxtConfig({
   },
   devServer: { host: '127.0.0.1', port: 3000 },
   typescript: { strict: true },
+  // NUXT_PUBLIC_DEPLOYED=true at `nuxt generate` builds the deployed viewer (§13): history from the snapshot, no live view.
+  runtimeConfig: { public: { deployed: false } },
   app: {
     head: { title: 'ADK Viewer', htmlAttrs: { lang: 'pl' } },
   },

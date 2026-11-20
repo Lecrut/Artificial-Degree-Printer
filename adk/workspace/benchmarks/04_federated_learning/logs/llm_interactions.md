@@ -2,8 +2,8 @@
 
 - **Domena:** Distributed Systems & Federated Machine Learning
 - **Dostawca LLM:** `OLLAMA` (Modele: LRM=`qwen3.6:35b`, SML=`qwen3.5:4b`)
-- **Liczba zapytań LLM:** 1 (w tym zapytań sieciowych API: 1)
-- **Łączny czas inferencji:** 69.94 s (69942.3 ms)
+- **Liczba zapytań LLM:** 5 (w tym zapytań sieciowych API: 5)
+- **Łączny czas inferencji:** 431.66 s (431662.8 ms)
 
 Dokument zawiera pełny zapis wszystkich zapytań skierowanych do modeli LLM w trakcie realizacji zadania benchmarkowego,
 w tym dokładne prompty systemowe, przekazane dane (JSON payload), podjęte decyzje i surowe odpowiedzi modeli.
@@ -14,7 +14,11 @@ w tym dokładne prompty systemowe, przekazane dane (JSON payload), podjęte decy
 
 | Krok | Agent | Warstwa Architektury | Model (Tier) | Czas | Podjęta Decyzja / Działanie |
 |:---:|:---|:---|:---|:---:|:---|
-| 1 | `task_planner` | Warstwa 1 (Planowanie / Gate HITL) | qwen3.6:35b (LRM) | 69942 ms | Plan: 15 zadan [T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15], cel: 'Robustness Analysis of FedProx vs FedAvg Under Non-IID Data and Straggler Conditions' |
+| 1 | `task_planner` | Warstwa 1 (Planowanie / Gate HITL) | qwen3.6:35b (LRM) | 63459 ms | zadania: 12; interfejsy: 6 |
+| 2 | `task_planner` | Warstwa 1 (Planowanie / Gate HITL) | qwen3.6:35b (LRM) | 74807 ms | zadania: 17; interfejsy: 5 |
+| 3 | `task_planner` | Warstwa 1 (Planowanie / Gate HITL) | qwen3.6:35b (LRM) | 86501 ms | zadania: 17; interfejsy: 7 |
+| 4 | `task_planner` | Warstwa 1 (Planowanie / Gate HITL) | qwen3.6:35b (LRM) | 93716 ms | zadania: 16; interfejsy: 7 |
+| 5 | `task_planner` | Warstwa 1 (Planowanie / Gate HITL) | qwen3.6:35b (LRM) | 113180 ms | zadania: 17; interfejsy: 11 |
 
 ---
 
@@ -24,11 +28,11 @@ w tym dokładne prompty systemowe, przekazane dane (JSON payload), podjęte decy
 
 - **Warstwa:** Warstwa 1 (Planowanie / Gate HITL)
 - **Dostawca / Model:** `ollama` / `qwen3.6:35b` (LRM)
-- **Czas wykonania:** 69942.3 ms
-- **Kluczowa decyzja:** **Plan: 15 zadan [T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15], cel: 'Robustness Analysis of FedProx vs FedAvg Under Non-IID Data and Straggler Conditions'**
+- **Czas wykonania:** 63459.1 ms
+- **Kluczowa decyzja:** **zadania: 12; interfejsy: 6**
 
 <details>
-<summary><b>📥 Prompt wysłany do LLM (System Prompt + JSON Payload) — 16098 znaków [Kliknij, aby rozwinąć]</b></summary>
+<summary><b>📥 Prompt wysłany do LLM (System Prompt + JSON Payload) — 17723 znaków [Kliknij, aby rozwinąć]</b></summary>
 
 #### Instrukcja Systemowa Agenta:
 ```markdown
@@ -52,9 +56,9 @@ Do NOT use a rigid waterfall model (all code first, then all tests, then the the
 - **Granular Subsection Decomposition**: academic prose is better when one task writes one subsection (~300–450 words). Split a chapter into subsection tasks when it has distinct facets; scale the number of subsections to the topic, not to a fixed count.
 - **Complete Coverage**: the queue must cover configuration, implementation, tests, the experiment that produces results, and every planned chapter of `academic_blueprint.planned_chapters`.
 - **Vertical Feature Slices (Przyrosty Funkcjonalne)** — code, tests and text progress together:
-  - **Increment 1 — assumptions, literature, interfaces**: literature review (`background_researcher` / `discoverer_researcher`), chapters 1–2 (`seed_writer`). There is no skeleton task: before any task runs, the harness imports every module of your `interfaces` (section 4) as a stub (every function body becomes `raise NotImplementedError`) and returns the plan to you if a stub does not import or the interfaces do not fit together. The stubs are the shared interface the remaining tasks build on.
-  - **Increment 2 — method, baseline, architecture**: filling in the skeleton's modules — the proposed method and the baseline (`seed_coder`), their unit tests written against the skeleton's signatures (`seed_tester`), chapters 3–4 (`seed_writer`).
-  - **Increment 3 — experiment, results, conclusions**: the experiment module with its entrypoint and `plot_results.py` (`seed_coder`), chapters 5–6 (`seed_writer`).
+  - **Increment 1 — assumptions, literature, interfaces**: literature review (`background_researcher` / `discoverer_researcher`), the chapters that set out the problem and the literature (`seed_writer`). There is no skeleton task: before any task runs, the harness imports every module of your `interfaces` (section 4) as a stub (every function body becomes `raise NotImplementedError`) and returns the plan to you if a stub does not import or the interfaces do not fit together. The stubs are the shared interface the remaining tasks build on.
+  - **Increment 2 — method, baseline, architecture**: filling in the stubbed modules — the proposed method and the baseline (`seed_coder`), their unit tests written against the interface signatures (`seed_tester`), the chapters on the method (`seed_writer`).
+  - **Increment 3 — experiment, results, conclusions**: the module with the experiment entrypoint and the function that draws the figures, declared as `plots` (`seed_coder`), the chapters on results and conclusions (`seed_writer`).
   - Results files (`*.csv`) and figures are produced by running the entrypoint; they are never a task's `target_node`. A task that should produce them targets the module that writes them. `seed_tester` writes only test files.
 
 ---
@@ -69,10 +73,11 @@ Do NOT use a rigid waterfall model (all code first, then all tests, then the the
 ## 3. HITL CHECKPOINTS, FILES & BLAST RADIUS
 - **Gate 1 (`GATE_1_OUTLINE_APPROVAL`)**: thesis statement, objectives and task outline are confirmed before coding.
 - **One file per task (`target_node`)**: a workspace-relative file path you choose (e.g. `<package>/<module>.py`, `tests/test_<module>.py`, `thesis.md`). Your `interfaces`, tasks and chapters become the project hypergraph: every later task gets its own interface and the interfaces of the modules it uses, nothing else. Prefer several small modules over one large file.
-  - Harness contracts, not suggestions: the thesis document is `thesis.md`; test modules are `tests/test_<module>.py`; if the experiment produces figures, the harness runs `plot_results.py:generate_plots(output_dir)` after the experiment.
+  - Harness contracts, not suggestions: the thesis document is `thesis.md`; test modules are `tests/test_<module>.py`; the experiment entrypoint writes `results.csv` in the workspace root (not in a subdirectory, no other name): tidy rows `method,metric,value` (optional `std_dev,n_runs`) for the metrics you declare — every number in the thesis points at this file.
 - **Experiment entrypoint & metrics — declared in the plan**: in `academic_blueprint` declare
-  - `entrypoint`: `<path>.py:<function>`, called WITHOUT arguments (every setting lives in the configuration module);
-  - `metrics`: the metric names the experiment will report, chosen for this research question;
+  - `entrypoint`: `<path>.py:<function>`, called WITHOUT arguments (it reads every setting from named module-level constants);
+  - `metrics`: the metric names the experiment will report in `results.csv`, chosen for this research question;
+  - `plots` (required — every experiment produces figures): `<path>.py:<function>`, a function of one of your modules (any module, any name) that the harness calls WITHOUT arguments after the experiment; it reads `results.csv` and writes the figures into `figures/`;
   - the success criterion in `thesis_statement` / `baseline_comparison`.
   Declare them before any experiment runs; the thesis must report against exactly this declaration.
 - **Blast Radius**: a change to code requires re-running its tests and the experiment, and updating the chapters that cite that code or its results.
@@ -88,9 +93,9 @@ Return strictly a valid JSON object where **`tasks`** is the first, top-level ar
 **Schema Guidelines**:
 - Adapt the number of tasks and chapters to the actual research scope.
 - Each task: `task_id`, `description`, `target_node`, `assigned_agent` (the orchestrator sets `status`). Write task descriptions in English; thesis titles and chapter titles stay in Polish, because they appear in the thesis.
-- **`interfaces` (required)**: for every code module (not tests) a task targets, its public interface as Python source: imports, configuration constants with their values, classes and functions with full signatures (every parameter typed, `__init__` with all its parameters, return type) and a one-sentence docstring saying what is returned. Bodies may be `...`; the harness replaces every body with `raise NotImplementedError`. Design the interfaces together, so that they fit: the entrypoint calls only what the other modules define, every agent class has one interface, each concept has one name and one encoding (e.g. players, states, actions). Every module imports what its annotations use (`from typing import List` or `list[...]`). Constants hold plain values of their declared type (no `dataclasses.field` outside a dataclass). The entrypoint function takes **no required arguments**: the harness calls it without arguments, so it reads configuration from the configuration module. Public attributes that tests may read are declared as class annotations (`mean_: float`); anything not declared is private. For every public function and method that returns something, give 1–2 doctest examples in its docstring (`>>> f(...)` followed by the expected output): they specify the behaviour that the implementation and the tests must agree on. The harness runs every example on the stubs before any code exists: everything before the first call into a stub must already be valid, deterministic Python (no assignment into a tuple, no unseeded randomness); a call whose value you do not show is written `_ = obj.method(...)`, because a bare call prints its return value. Examples of different methods must agree (what `reset()` returns is what `step()` receives).
-- **The experiment runs the plan**: put the configuration constants in their own module and the entrypoint in an experiment module. The entrypoint module imports, **at its top level**, the modules it runs (the proposed method, the baseline, the environment or data), directly or through other planned modules; the harness rejects a plan in which a planned module is never imported by the experiment (except `plot_results.py`, which the harness calls itself). The experiment never reimplements a planned module.
-- **Plan critic**: after the harness checks, a critic reviews the whole plan (does the experiment answer the thesis, do the doctests specify correct behaviour, do tasks cover every module and chapter). Its blocking findings come back to you as `error_feedback`, together with your plan as `current_plan`; a plan still blocked after two corrections stops the run.
+- **`interfaces` (required)**: for every code module (not tests) a task targets, its public interface as Python source: imports, configuration constants with their values, classes and functions with full signatures (every parameter typed, `__init__` with all its parameters, return type) and a one-sentence docstring saying what is returned. Bodies may be `...`; the harness replaces every body with `raise NotImplementedError`. Design the interfaces together, so that they fit: the entrypoint calls only what the other modules define, every agent class has one interface, each concept has one name and one encoding (e.g. players, states, actions). Every module imports what its annotations use (`from typing import List` or `list[...]`). Constants hold plain values of their declared type (no `dataclasses.field` outside a dataclass). The entrypoint function takes **no required arguments**: the harness calls it without arguments, so it reads its settings from named module-level constants. Public attributes that tests may read are declared as class annotations (`mean_: float`); anything not declared is private. For every public function and method that returns something, give 1–2 doctest examples in its docstring (`>>> f(...)` followed by the expected output): they specify the behaviour that the implementation and the tests must agree on. The harness runs every example on the stubs before any code exists: everything before the first call into a stub must already be valid, deterministic Python (no assignment into a tuple, no unseeded randomness); a call whose value you do not show is written `_ = obj.method(...)`, because a bare call prints its return value. Examples of different methods must agree (what `reset()` returns is what `step()` receives).
+- **The experiment runs the plan**: every experiment setting is a named module-level constant (which module holds it is your choice), so the thesis can cite it. The entrypoint module imports, **at its top level**, the modules it runs (the proposed method, the baseline, the environment or data), directly or through other planned modules; the harness rejects a plan in which a planned module is never imported by the experiment (except the module of `plots`, which the harness calls itself). The experiment never reimplements a planned module.
+- **Plan critic**: after the harness checks, a critic reviews the whole plan (does the experiment answer the thesis, do the doctests specify correct behaviour, do tasks cover every module and chapter). Its blocking findings come back to you as `error_feedback`, together with your plan as `current_plan`; a plan that stays blocked after several corrections stops the run. Chapter tasks you forgot are not a problem: the harness adds a writer task for every planned chapter no task covers.
 - **Chapter tasks name their chapter**: a `seed_writer` task says "Chapter N" with the index from `planned_chapters`.
 - **Descriptions use the interface names**: a code or test task names the classes, methods and functions exactly as `interfaces` defines them. The harness checks this and returns the plan if a description names something `interfaces` does not define.
 - `planned_chapters`: `index`, `title`, `focus` for every chapter.
@@ -150,6 +155,7 @@ class <Class>:
     "baseline_comparison": "<metoda odniesienia i sposób porównania>",
     "entrypoint": "<experiment_module>.py:<function>",
     "metrics": ["<metryka_1>", "<metryka_2>"],
+    "plots": "<figures_module>.py:<function>",
     "planned_chapters": [
       {
         "index": 1,
@@ -169,7 +175,8 @@ class <Class>:
 ---
 
 ## 5. REFLEXIVE PROMPT EVOLUTION & AGENT SPECIALIZATION
-- **Correcting a plan (`current_plan` + `error_feedback`)**: you are correcting YOUR plan, not writing a new one. Read each problem, find its cause in `current_plan` at the place named in brackets, and change only that. Return a patch, not the plan: `interfaces` with the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, `entrypoint` if it changes, `academic_blueprint` with only the fields that change, `tasks` (the whole list) only if the tasks change. Everything you do not return stays as it is: do not rename modules, classes or functions that no problem is about. If the feedback says your previous patch was not applied, `current_plan` is still the plan before it: fix the problems without causing the ones listed.
+- **Correcting a plan (`current_plan` + `error_feedback`)**: you are correcting YOUR plan, not writing a new one. Read each problem, find its cause in `current_plan` at the place named in brackets, and change that place together with every place its `Change together` list names — nothing else. Return a patch, not the plan: `interfaces` with the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, `entrypoint` if it changes, `academic_blueprint` with only the fields that change, `tasks` as a dict mapping each changed `task_id` to its updated fields (to add or remove a task, return the whole list instead). Everything you do not return stays as it is: do not rename modules, classes or functions that no problem is about. If the feedback says your previous patch was not applied, `current_plan` is still the plan before it: fix the problems without causing the ones listed.
+- **Re-planning a failed part (`repair_dossier`)**: some vertices failed after all their repairs. For each, `repair_dossier.failed` gives the planned interface, the current content, every attempt with its errors (`history`, including rejected answers) and what waits for it; `verified_do_not_touch` works and must not be changed. Diagnose why the attempts failed before writing anything: an example or signature in the interface that no implementation can satisfy (then return the corrected interface in `interfaces`, keeping every name other modules use), a task that asked for too much in one answer (split it into smaller tasks, one function or method each), or a failed dependency. Return only `tasks` (new tasks for the failed vertices: `target_node`, `description`, `assigned_agent`; each description names the functions to write and what the earlier attempts got wrong), optional `interfaces`, and `gaps` for what cannot be done.
 - **Reflection feedback without `current_plan`**: if the payload contains `reflection_feedback` or `error_feedback` but no `current_plan`, address it first (e.g. put the `"tasks"` array as the first key, with tasks for every increment) and return the whole plan.
 - **Missing Domain Specialization**: never assign an unqualified agent; set `"missing_agent_specialization": "<specialization_name>"` so Layer 4 creates the specialist.
 
@@ -223,12 +230,6 @@ Do not output conversational text or markdown wrappers outside the JSON.
   "include_docs": true,
   "missing_agent_specialization": null,
   "domain_context": {
-    "domain": "Distributed Systems & Federated Machine Learning",
-    "topic_canonical": null,
-    "canonical_baselines": [],
-    "standard_metrics": [],
-    "open_research_gaps": [],
-    "suggested_sections": [],
     "detected_thesis_type": "paper",
     "detected_template_name": "paper_ieee",
     "template_is_certain": true
@@ -252,142 +253,2216 @@ Do not output conversational text or markdown wrappers outside the JSON.
   "tasks": [
     {
       "task_id": "T1",
-      "description": "[Increment 1: Literature] Discover recent related work (2023-2026) on FedProx vs FedAvg under non-IID and straggler conditions. Write the 'Related Work' section in paper.tex.",
-      "target_node": "paper.tex",
+      "description": "[Increment 1: Assumptions] Chapter 2: Related Work (SOTA 2023-2026). Research federated optimization on non-IID data and stragglers. Write the 'Related Work' section of paper.md.",
+      "target_node": "paper.md",
       "assigned_agent": "sota_researcher"
     },
     {
       "task_id": "T2",
-      "description": "[Increment 1: Assumptions] Configure experiment parameters (Dirichlet alpha, dropout rate, client count) in config.py.",
+      "description": "[Increment 1: Assumptions] Configuration module defining experiment hyperparameters (num_clients, dirichlet_alpha, dropout_rate, etc.) in config.py.",
       "target_node": "config.py",
       "assigned_agent": "seed_coder"
     },
     {
       "task_id": "T3",
-      "description": "[Increment 1: Assumptions] Implement the non-IID data partitioning logic (Dirichlet distribution) in datamodule.py.",
-      "target_node": "datamodule.py",
+      "description": "[Increment 1: Assumptions] Interface for Non-IID Client Data Partitioning. Implement Dirichlet partitioning logic in data_partitioner.py.",
+      "target_node": "data_partitioner.py",
       "assigned_agent": "seed_coder"
     },
     {
       "task_id": "T4",
-      "description": "[Increment 2: Method] Implement the proposed FedProx-style optimizer class in optimizers/fedprox.py.",
-      "target_node": "optimizers/fedprox.py",
+      "description": "[Increment 2: Method] Interface for FedAvg Client Update and Aggregation. Implement fed_avg_client_update and fed_avg_aggregate in fed_agg.py.",
+      "target_node": "fed_agg.py",
       "assigned_agent": "seed_coder"
     },
     {
       "task_id": "T5",
-      "description": "[Increment 2: Baseline] Implement the baseline FedAvg optimizer class in optimizers/fedavg.py.",
-      "target_node": "optimizers/fedavg.py",
+      "description": "[Increment 2: Method] Interface for FedProx Client Update and Aggregation. Implement fed_prox_client_update and fed_prox_aggregate in fed_prox.py.",
+      "target_node": "fed_prox.py",
       "assigned_agent": "seed_coder"
     },
     {
       "task_id": "T6",
-      "description": "[Increment 2: Method] Implement the Federated Training Loop (including straggler handling) in train_loop.py.",
-      "target_node": "train_loop.py",
-      "assigned_agent": "seed_coder"
+      "description": "[Increment 2: Method] Unit tests for data_partitioner.py. Verify Dirichlet partitioning creates valid client-specific datasets.",
+      "target_node": "tests/test_data_partitioner.py",
+      "assigned_agent": "seed_tester"
     },
     {
       "task_id": "T7",
-      "description": "[Increment 2: Baseline] Implement the baseline FedAvg logic wrapper in optimizers/fedavg_wrapper.py to align interfaces.",
-      "target_node": "optimizers/fedavg_wrapper.py",
-      "assigned_agent": "seed_coder"
+      "description": "[Increment 2: Method] Unit tests for fed_agg.py. Verify aggregation logic returns correct weighted averages.",
+      "target_node": "tests/test_fed_agg.py",
+      "assigned_agent": "seed_tester"
     },
     {
       "task_id": "T8",
-      "description": "[Increment 2: Tests] Unit tests for DataPartitioner in tests/test_datamodule.py.",
-      "target_node": "tests/test_datamodule.py",
+      "description": "[Increment 2: Method] Unit tests for fed_prox.py. Verify proximal term is applied correctly during client update.",
+      "target_node": "tests/test_fed_prox.py",
       "assigned_agent": "seed_tester"
     },
     {
       "task_id": "T9",
-      "description": "[Increment 2: Tests] Unit tests for FedProx optimizer steps in tests/test_fedprox.py.",
-      "target_node": "tests/test_fedprox.py",
-      "assigned_agent": "seed_tester"
+      "description": "[Increment 3: Experiment] Experiment entrypoint. Run FedAvg and FedProx on partitioned data with dropout, record metrics to results.csv.",
+      "target_node": "experiment.py",
+      "assigned_agent": "seed_coder"
     },
     {
       "task_id": "T10",
-      "description": "[Increment 2: Tests] Unit tests for FedAvg optimizer steps in tests/test_fedavg.py.",
-      "target_node": "tests/test_fedavg.py",
-      "assigned_agent": "seed_tester"
+      "description": "[Increment 3: Experiment] Plots module. Read results.csv and generate convergence plots for figures/.",
+      "target_node": "plots.py",
+      "assigned_agent": "seed_coder"
     },
     {
       "task_id": "T11",
-      "description": "[Increment 3: Experiment] Implement the main entrypoint to run experiments and save results in experiment/run_experiment.py.",
-      "target_node": "experiment/run_experiment.py",
-      "assigned_agent": "seed_coder"
+      "description": "[Increment 3: Results] Chapter 3: Experimental Setup. Describe dataset, hyperparameters (from config.py), and environment.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
     },
     {
       "task_id": "T12",
-      "description": "[Increment 3: Results] Implement plot_results.py to generate convergence plots and comparison bar charts.",
-      "target_node": "experiment/plot_results.py",
-      "assigned_agent": "seed_coder"
-    },
-    {
-      "task_id": "T13",
-      "description": "[Increment 3: Writing] Write Section III (Methodology) describing FedProx formulation and non-IID setup in paper.tex.",
-      "target_node": "paper.tex",
-      "assigned_agent": "seed_writer"
-    },
-    {
-      "task_id": "T14",
-      "description": "[Increment 3: Writing] Write Section IV (Experiments & Results) including analysis of robustness against stragglers in paper.tex.",
-      "target_node": "paper.tex",
-      "assigned_agent": "seed_writer"
-    },
-    {
-      "task_id": "T15",
-      "description": "[Increment 3: Writing] Write Section V (Conclusion) summarizing findings and future work in paper.tex.",
-      "target_node": "paper.tex",
+      "description": "[Increment 3: Results] Chapter 4: Analysis of Convergence. Report metrics from results.csv, interpret plots, discuss robustness against stragglers.",
+      "target_node": "paper.md",
       "assigned_agent": "seed_writer"
     }
   ],
   "interfaces": {
-    "config.py": "\"\"\"Configuration constants for the federated optimization experiment.\"\"\"\n\nN_CLIENTS: int = 100\nTOTAL_ROUNDS: int = 200\nLOCAL_EPOCHS: int = 5\nBATCH_SIZE: int = 32\nLEARNING_RATE: float = 0.01\nDROPOUT_PROBABILITY: float = 0.2\nDIRICHLET_ALPHA: float = 0.1\nMU_PARAM: float = 0.01\nSEED: int = 42\n",
-    "datamodule.py": "\"\"\"Module for generating non-IID data partitions using Dirichlet distribution.\"\"\"\nimport torch\nfrom typing import List, Dict\n\nclass DataPartitioner:\n    \"\"\"Partitions dataset among clients according to Dirichlet distribution.\"\"\"\n\n    def __init__(self, n_clients: int, alpha: float) -> None:\n        \"\"\"Initialize partitioner.\n        \n        Args:\n            n_clients: Number of clients.\n            alpha: Dirichlet concentration parameter (lower = more skewed).\n        \"\"\"\n        pass\n\n    def split(self, dataset_labels: torch.Tensor) -> Dict[int, List[int]]:\n        \"\"\"Split labels into client-specific index lists.\n        \n        Args:\n            dataset_labels: Tensor of shape (N,) with class labels.\n            \n        Returns:\n            Dictionary mapping client_id to list of data indices.\n        \"\"\"\n        pass\n",
-    "optimizers/fedprox.py": "\"\"\"Implementation of the FedProx optimizer algorithm.\"\"\"\nimport torch\nfrom typing import Dict\n\nclass FedProxOptimizer:\n    \"\"\"FedProx optimizer that minimizes local loss with proximal term.\"\"\"\n\n    def __init__(self, lr: float, mu: float) -> None:\n        \"\"\"Initialize FedProx.\n        \n        Args:\n            lr: Learning rate.\n            mu: Proximal coefficient (mu).\n        \"\"\"\n        pass\n\n    def step(self, local_model_params: Dict[str, torch.Tensor], global_model_params: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:\n        \"\"\"Perform one optimization step with proximal regularization.\n        \n        Args:\n            local_model_params: Current local model state dict.\n            global_model_params: Current global model state dict.\n            \n        Returns:\n            Updated local model state dict after gradient descent.\n        \"\"\"\n        pass\n",
-    "optimizers/fedavg.py": "\"\"\"Implementation of the standard FedAvg optimizer algorithm.\"\"\"\nimport torch\nfrom typing import Dict\n\nclass FedAvgOptimizer:\n    \"\"\"FedAvg optimizer performing standard local SGD.\"\"\"\n\n    def __init__(self, lr: float) -> None:\n        \"\"\"Initialize FedAvg.\n        \n        Args:\n            lr: Learning rate.\n        \"\"\"\n        pass\n\n    def step(self, local_model_params: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:\n        \"\"\"Perform one standard optimization step.\n        \n        Args:\n            local_model_params: Current local model state dict.\n            \n        Returns:\n            Updated local model state dict after gradient descent.\n        \"\"\"\n        pass\n",
-    "optimizers/fedavg_wrapper.py": "\"\"\"Wrapper to align FedAvg with FedProx interface for comparison.\"\"\"\nimport torch\nfrom typing import Dict, Tuple\n\ndef init_fedavg(lr: float) -> 'FedAvgOptimizer':\n    \"\"\"Initialize FedAvg optimizer.\n    \n    Args:\n        lr: Learning rate.\n        \n    Returns:\n        Initialized FedAvgOptimizer instance.\n    \"\"\"\n    pass\n",
-    "train_loop.py": "\"\"\"Core federated training loop with straggler handling.\"\"\"\nimport torch\nfrom typing import Dict, List, Any\nfrom optimizers.fedprox import FedProxOptimizer\nfrom optimizers.fedavg import FedAvgOptimizer\n\ndef run_federated_training(\n    n_clients: int,\n    total_rounds: int,\n    local_epochs: int,\n    batch_size: int,\n    lr: float,\n    dropout_prob: float,\n    data_partitioner: 'DataPartitioner',\n    optimizer_class: Any\n) -> Dict[str, List[float]]:\n    \"\"\"Execute the full federated training loop.\n    \n    Args:\n        n_clients: Total number of clients.\n        total_rounds: Number of communication rounds.\n        local_epochs: Local training epochs per round.\n        batch_size: Batch size for local SGD.\n        lr: Learning rate.\n        dropout_prob: Probability of a client dropping out (straggler).\n        data_partitioner: Pre-configured DataPartitioner instance.\n        optimizer_class: Class constructor for the optimizer (FedProx or FedAvg).\n        \n    Returns:\n        Dictionary containing 'train_loss' and 'test_acc' histories.\n    \"\"\"\n    pass\n",
-    "experiment/run_experiment.py": "\"\"\"Entrypoint to execute the experiment and save results.\"\"\"\nimport torch\nimport pandas as pd\nfrom config import *\nfrom datamodule import DataPartitioner\nfrom train_loop import run_federated_training\nfrom optimizers.fedprox import FedProxOptimizer\nfrom optimizers.fedavg_wrapper import init_fedavg\n\ndef execute_experiment() -> pd.DataFrame:\n    \"\"\"Run experiments for both FedProx and FedAvg and return aggregated results.\n    \n    Returns:\n        DataFrame with columns: 'method', 'round', 'metric_name', 'value'.\n    \"\"\"\n    pass\n",
-    "experiment/plot_results.py": "\"\"\"Script to generate visualizations from experiment results.\"\"\"\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\ndef generate_plots(df: pd.DataFrame, output_dir: str) -> None:\n    \"\"\"Generate convergence plots and comparison charts.\n    \n    Args:\n        df: DataFrame containing experimental results.\n        output_dir: Directory to save generated figures.\n    \"\"\"\n    pass\n"
+    "config.py": "\"\"\"Configuration constants for the Federated Optimization experiment.\"\"\"\nimport torch\n\ndevice = torch.device('cpu')\nnum_clients = 50\ndirichlet_alpha = 0.1\ndropout_rate = 0.2\nnum_comm_rounds = 100\nlocal_epochs = 5\nlearning_rate = 0.01\nprox_mu = 0.01\nbatch_size = 32\ninput_dim = 784\noutput_dim = 10",
+    "data_partitioner.py": "\"\"\"Module for partitioning a central dataset across clients using Dirichlet distribution.\"\"\"\nfrom typing import List, Tuple\nimport torch\n\ndef dirichlet_partition(dataset: torch.utils.data.Dataset, num_clients: int, alpha: float) -> List[torch.utils.data.Subset]:\n    \"\"\"Partition a dataset into num_clients subsets using Dirichlet(alpha).\n\n    Returns:\n        List of torch.utils.data.Subset objects, one per client.\n    \n    Example:\n        >>> import torch\n        >>> ds = torch.utils.data.TensorDataset(torch.zeros(100, 784))\n        >>> parts = dirichlet_partition(ds, num_clients=5, alpha=0.5)\n        >>> len(parts) == 5\n        True\n    \"\"\"\n    pass",
+    "fed_agg.py": "\"\"\"Module for FedAvg client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\n\ndef fed_avg_client_update(model: torch.nn.Module, data_loader: torch.utils.data.DataLoader, lr: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD for FedAvg.\n\n    Args:\n        model: The neural network model.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global).\n    \n    Example:\n        >>> import torch\n        >>> model = torch.nn.Linear(10, 2)\n        >>> # Assume data_loader is valid\n        >>> deltas = fed_avg_client_update(model, None, 0.1)\n        >>> isinstance(deltas, dict)\n        True\n    \"\"\"\n    pass\n\ndef fed_avg_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule.\n\n    Args:\n        global_model: Current global model.\n        client_deltas: List of delta dictionaries from active clients.\n        client_weights: List of sample counts for each active client.\n\n    Returns:\n        Updated global model.\n    \"\"\"\n    pass",
+    "fed_prox.py": "\"\"\"Module for FedProx client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\n\ndef fed_prox_client_update(model: torch.nn.Module, global_model_weights: Dict[str, torch.Tensor], data_loader: torch.utils.data.DataLoader, lr: float, mu: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD with proximal term for FedProx.\n\n    Args:\n        model: The neural network model (updated in-place).\n        global_model_weights: Weights of the global model at start of round.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n        mu: Proximal regularization parameter.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global).\n    \"\"\"\n    pass\n\ndef fed_prox_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule (FedProx aggregation is same as FedAvg).\"\"\"\n    pass",
+    "experiment.py": "\"\"\"Experiment entrypoint. Runs simulation and saves results.\"\"\"\nimport pandas as pd\nfrom config import num_clients, dirichlet_alpha, dropout_rate, num_comm_rounds, learning_rate, prox_mu\nfrom data_partitioner import dirichlet_partition\nfrom fed_agg import fed_avg_client_update, fed_avg_aggregate\nfrom fed_prox import fed_prox_client_update, fed_prox_aggregate\n\ndef run_experiment() -> None:\n    \"\"\"Run FedAvg and FedProx simulations, write results.csv.\"\"\"\n    pass",
+    "plots.py": "\"\"\"Module for generating experiment figures.\"\"\"\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport os\n\ndef generate_plots() -> None:\n    \"\"\"Read results.csv and save convergence plots to figures/ directory.\n    \n    Creates: convergence.png (line plots of test accuracy per round for both methods).\n    \"\"\"\n    pass"
   },
   "thesis_type": "paper",
   "template_name": "paper_ieee",
   "academic_blueprint": {
-    "thesis_title": "Robustness Analysis of FedProx vs FedAvg Under Non-IID Data and Straggler Conditions",
-    "thesis_statement": "FedProx converges more robustly than FedAvg in non-IID settings with significant client dropout, maintaining higher final accuracy and lower variance.",
-    "baseline_comparison": "Standard FedAvg (Konečný et al., 2016) vs. Proposed FedProx (Li et al., 2020). Comparison based on final test accuracy and convergence stability (variance across seeds).",
-    "entrypoint": "experiment/run_experiment.py:execute_experiment",
+    "thesis_title": "Robustness of Proximal Federated Optimizers Under Non-IID Data and Straggler Dropout",
+    "thesis_statement": "FedProx converges more robustly than FedAvg on non-IID partitions (Dirichlet alpha=0.1) when 20% of clients drop out each round, measured by final test accuracy stability across seeds.",
+    "baseline_comparison": "FedAvg (standard federated averaging) serves as the baseline against FedProx (mu=0.01). Comparison is based on mean test accuracy and variance over 5 seeds.",
+    "entrypoint": "experiment.py:run_experiment",
     "metrics": [
-      "final_test_accuracy",
-      "convergence_variance",
-      "communication_rounds_to_target"
+      "final_test_accuracy_mean",
+      "final_test_accuracy_std",
+      "rounds_to_90_pct_accuracy"
     ],
+    "plots": "plots.py:generate_plots",
     "planned_chapters": [
       {
         "index": 1,
         "title": "I. Introduction",
-        "focus": "Problem statement: non-IID data and stragglers in FL; thesis statement and contributions."
+        "focus": "Motivation for Federated Learning, problem of non-IID data and stragglers, thesis statement."
       },
       {
         "index": 2,
         "title": "II. Related Work",
-        "focus": "Review of FedAvg limitations and recent proximal methods (2023-2026)."
+        "focus": "Review of FedAvg, FedProx, and recent approaches (2023-2026) to non-IID and straggler robustness."
       },
       {
         "index": 3,
         "title": "III. Methodology",
-        "focus": "Formulation of FedProx; non-IID Dirichlet partitioning; straggler dropout model."
+        "focus": "Formal description of FedAvg and FedProx algorithms, Dirichlet data partitioning, and dropout simulation."
       },
       {
         "index": 4,
-        "title": "IV. Experiments and Results",
-        "focus": "Experimental setup; accuracy convergence plots; statistical significance analysis."
+        "title": "IV. Experimental Setup",
+        "focus": "Dataset (e.g., CIFAR-10 or MNIST), hyperparameters, hardware environment, and reproducibility details."
       },
       {
         "index": 5,
-        "title": "V. Conclusion",
-        "focus": "Summary of findings; implications for robust FL deployment."
+        "title": "V. Results and Analysis",
+        "focus": "Convergence curves, final accuracy comparison, statistical significance of robustness improvement."
+      },
+      {
+        "index": 6,
+        "title": "VI. Conclusion",
+        "focus": "Summary of findings, limitations, and future work."
+      }
+    ]
+  }
+}
+```
+
+</details>
+
+---
+
+### Krok 2: Agent `task_planner`
+
+- **Warstwa:** Warstwa 1 (Planowanie / Gate HITL)
+- **Dostawca / Model:** `ollama` / `qwen3.6:35b` (LRM)
+- **Czas wykonania:** 74806.7 ms
+- **Kluczowa decyzja:** **zadania: 17; interfejsy: 5**
+
+<details>
+<summary><b>📥 Prompt wysłany do LLM (System Prompt + JSON Payload) — 29256 znaków [Kliknij, aby rozwinąć]</b></summary>
+
+#### Instrukcja Systemowa Agenta:
+```markdown
+# ROLE: Task Planner — Academic & Engineering Planner (Layer 1 — `planning` Domain)
+
+You are the master **Task Planner** (`task_planner`) in the **Artificial-Degree-Printer (Neuro-Symbolic Harness)**.
+Your mission is to decompose academic degree thesis requirements (Inżynierska, Magisterska, Scientific Paper) and human prompts into an atomic, deterministic sequence of tasks executed by specialized Layer 2 (`building`) agents, along with the unified academic thesis blueprint (`academic_blueprint`).
+
+You design the project yourself: its modules and file names, its parameters, its metrics and its experiment. Nothing in this prompt prescribes them. Names written as `<...>` below are placeholders, never values to copy.
+
+---
+
+## 1. ELASTIC TASK GRANULARITY & VERTICAL FEATURE SLICES
+Do NOT use a rigid waterfall model (all code first, then all tests, then the thesis), and do NOT force a fixed number of tasks.
+- **Elastic Task Count ($N$ tasks)**: Plan as many atomic tasks as the problem genuinely requires. Simple parts can be handled concisely; complex algorithms, several baselines or dense chapters can be decomposed into finer tasks (`T1..TN`).
+- **Topological Ordering (code before its tests)**: a test task runs `pytest` as soon as it completes, so a module must be written before the task that tests it. A test that imports a module which does not exist yet fails immediately with `ModuleNotFoundError`.
+- **Hierarchical Task Decomposition**:
+  - Split a large module (environment, model, baseline, training loop, evaluation) into several small, single-purpose modules or sequential steps (`T2.1`, `T2.2` or `T2`, `T3`).
+  - Keep each code task bounded to roughly 50–150 lines. A single task that has to generate a whole application causes truncation, escaping errors and lost context.
+  - Every task has exactly one `target_node` and a clearly bounded responsibility.
+- **Granular Subsection Decomposition**: academic prose is better when one task writes one subsection (~300–450 words). Split a chapter into subsection tasks when it has distinct facets; scale the number of subsections to the topic, not to a fixed count.
+- **Complete Coverage**: the queue must cover configuration, implementation, tests, the experiment that produces results, and every planned chapter of `academic_blueprint.planned_chapters`.
+- **Vertical Feature Slices (Przyrosty Funkcjonalne)** — code, tests and text progress together:
+  - **Increment 1 — assumptions, literature, interfaces**: literature review (`background_researcher` / `discoverer_researcher`), the chapters that set out the problem and the literature (`seed_writer`). There is no skeleton task: before any task runs, the harness imports every module of your `interfaces` (section 4) as a stub (every function body becomes `raise NotImplementedError`) and returns the plan to you if a stub does not import or the interfaces do not fit together. The stubs are the shared interface the remaining tasks build on.
+  - **Increment 2 — method, baseline, architecture**: filling in the stubbed modules — the proposed method and the baseline (`seed_coder`), their unit tests written against the interface signatures (`seed_tester`), the chapters on the method (`seed_writer`).
+  - **Increment 3 — experiment, results, conclusions**: the module with the experiment entrypoint and the function that draws the figures, declared as `plots` (`seed_coder`), the chapters on results and conclusions (`seed_writer`).
+  - Results files (`*.csv`) and figures are produced by running the entrypoint; they are never a task's `target_node`. A task that should produce them targets the module that writes them. `seed_tester` writes only test files.
+
+---
+
+## 2. 3-TIER RESEARCH ROUTING BY `thesis_type`
+- **I stopień (`inzynierska` / `licencjacka`)**: **`background_researcher`** — foundational theoretical funnel.
+- **II stopień (`magisterska`)**: **`background_researcher`** followed by **`discoverer_researcher`** — foundations, then recent work.
+- **III stopień (`paper` / scientific article)**: **`discoverer_researcher`** — recent related work only.
+
+---
+
+## 3. HITL CHECKPOINTS, FILES & BLAST RADIUS
+- **Gate 1 (`GATE_1_OUTLINE_APPROVAL`)**: thesis statement, objectives and task outline are confirmed before coding.
+- **One file per task (`target_node`)**: a workspace-relative file path you choose (e.g. `<package>/<module>.py`, `tests/test_<module>.py`, `thesis.md`). Your `interfaces`, tasks and chapters become the project hypergraph: every later task gets its own interface and the interfaces of the modules it uses, nothing else. Prefer several small modules over one large file.
+  - Harness contracts, not suggestions: the thesis document is `thesis.md`; test modules are `tests/test_<module>.py`; the experiment entrypoint writes `results.csv` in the workspace root (not in a subdirectory, no other name): tidy rows `method,metric,value` (optional `std_dev,n_runs`) for the metrics you declare — every number in the thesis points at this file.
+- **Experiment entrypoint & metrics — declared in the plan**: in `academic_blueprint` declare
+  - `entrypoint`: `<path>.py:<function>`, called WITHOUT arguments (it reads every setting from named module-level constants);
+  - `metrics`: the metric names the experiment will report in `results.csv`, chosen for this research question;
+  - `plots` (required — every experiment produces figures): `<path>.py:<function>`, a function of one of your modules (any module, any name) that the harness calls WITHOUT arguments after the experiment; it reads `results.csv` and writes the figures into `figures/`;
+  - the success criterion in `thesis_statement` / `baseline_comparison`.
+  Declare them before any experiment runs; the thesis must report against exactly this declaration.
+- **Blast Radius**: a change to code requires re-running its tests and the experiment, and updating the chapters that cite that code or its results.
+- **Agent Assignment & Dynamic Specialization**:
+  - Assign to active agents in `state/agent_registry.json` (`seed_coder`, `seed_tester`, `seed_writer`, `background_researcher`, `discoverer_researcher`, `sota_researcher`).
+  - If the project needs expertise no registered agent has, declare `"missing_agent_specialization": "<specialization_name>"` at the top level of the JSON. Layer 4 (`evolution_architect`) creates the specialist before the queue runs, and tasks can then be assigned to `dyn_<specialization_name>`.
+
+---
+
+## 4. REQUIRED JSON OUTPUT SCHEMA
+Return strictly a valid JSON object where **`tasks`** is the first, top-level array (`T1..TN`, as many tasks as the project needs, covering all increments and all planned chapters).
+
+**Schema Guidelines**:
+- Adapt the number of tasks and chapters to the actual research scope.
+- Each task: `task_id`, `description`, `target_node`, `assigned_agent` (the orchestrator sets `status`). Write task descriptions in English; thesis titles and chapter titles stay in Polish, because they appear in the thesis.
+- **`interfaces` (required)**: for every code module (not tests) a task targets, its public interface as Python source: imports, configuration constants with their values, classes and functions with full signatures (every parameter typed, `__init__` with all its parameters, return type) and a one-sentence docstring saying what is returned. Bodies may be `...`; the harness replaces every body with `raise NotImplementedError`. Design the interfaces together, so that they fit: the entrypoint calls only what the other modules define, every agent class has one interface, each concept has one name and one encoding (e.g. players, states, actions). Every module imports what its annotations use (`from typing import List` or `list[...]`). Constants hold plain values of their declared type (no `dataclasses.field` outside a dataclass). The entrypoint function takes **no required arguments**: the harness calls it without arguments, so it reads its settings from named module-level constants. Public attributes that tests may read are declared as class annotations (`mean_: float`); anything not declared is private. For every public function and method that returns something, give 1–2 doctest examples in its docstring (`>>> f(...)` followed by the expected output): they specify the behaviour that the implementation and the tests must agree on. The harness runs every example on the stubs before any code exists: everything before the first call into a stub must already be valid, deterministic Python (no assignment into a tuple, no unseeded randomness); a call whose value you do not show is written `_ = obj.method(...)`, because a bare call prints its return value. Examples of different methods must agree (what `reset()` returns is what `step()` receives).
+- **The experiment runs the plan**: every experiment setting is a named module-level constant (which module holds it is your choice), so the thesis can cite it. The entrypoint module imports, **at its top level**, the modules it runs (the proposed method, the baseline, the environment or data), directly or through other planned modules; the harness rejects a plan in which a planned module is never imported by the experiment (except the module of `plots`, which the harness calls itself). The experiment never reimplements a planned module.
+- **Plan critic**: after the harness checks, a critic reviews the whole plan (does the experiment answer the thesis, do the doctests specify correct behaviour, do tasks cover every module and chapter). Its blocking findings come back to you as `error_feedback`, together with your plan as `current_plan`; a plan that stays blocked after several corrections stops the run. Chapter tasks you forgot are not a problem: the harness adds a writer task for every planned chapter no task covers.
+- **Chapter tasks name their chapter**: a `seed_writer` task says "Chapter N" with the index from `planned_chapters`.
+- **Descriptions use the interface names**: a code or test task names the classes, methods and functions exactly as `interfaces` defines them. The harness checks this and returns the plan if a description names something `interfaces` does not define.
+- `planned_chapters`: `index`, `title`, `focus` for every chapter.
+- Every `<...>` is a placeholder for your own decision.
+
+```json
+{
+  "tasks": [
+    {
+      "task_id": "T1",
+      "description": "[Increment 1: Assumptions] Chapter 1: introduction, aim of the work and thesis statement in thesis.md",
+      "target_node": "thesis.md",
+      "assigned_agent": "seed_writer"
+    },
+    {
+      "task_id": "T2",
+      "description": "[Increment 1: Assumptions] Configuration module with the experiment parameters in <config_module>.py",
+      "target_node": "<config_module>.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T3",
+      "description": "[Increment 2: Method] Implement <Class> in <method_module>.py",
+      "target_node": "<method_module>.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T4",
+      "description": "[Increment 2: Method] Unit tests of <Class>.<method> from <method_module>.py in tests/test_<method_module>.py",
+      "target_node": "tests/test_<method_module>.py",
+      "assigned_agent": "seed_tester"
+    }
+  ],
+  "interfaces": {
+    "<config_module>.py": "\"\"\"<one sentence>\"\"\"
+
+<PARAMETER>: <type> = <value>
+",
+    "<method_module>.py": "\"\"\"<one sentence>\"\"\"
+
+
+class <Class>:
+    \"\"\"<one sentence>\"\"\"
+
+    def __init__(self, <arg>: <type>) -> None:
+        \"\"\"<one sentence>\"\"\"
+
+    def <method>(self, <arg>: <type>) -> <type>:
+        \"\"\"<what it returns>\"\"\"
+"
+  },
+  "thesis_type": "inzynierska | magisterska | paper",
+  "template_name": "thesis_plodz | paper_ieee",
+  "academic_blueprint": {
+    "thesis_title": "<tytuł pracy>",
+    "thesis_statement": "<teza i kryterium sukcesu>",
+    "baseline_comparison": "<metoda odniesienia i sposób porównania>",
+    "entrypoint": "<experiment_module>.py:<function>",
+    "metrics": ["<metryka_1>", "<metryka_2>"],
+    "plots": "<figures_module>.py:<function>",
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "focus": "Formalna definicja problemu, cel, teza i zakres pracy"
+      },
+      {
+        "index": 2,
+        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+        "focus": "Przegląd prac powiązanych i specyfikacja metody odniesienia"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 5. REFLEXIVE PROMPT EVOLUTION & AGENT SPECIALIZATION
+- **Correcting a plan (`current_plan` + `error_feedback`)**: you are correcting YOUR plan, not writing a new one. Read each problem, find its cause in `current_plan` at the place named in brackets, and change that place together with every place its `Change together` list names — nothing else. Return a patch, not the plan: `interfaces` with the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, `entrypoint` if it changes, `academic_blueprint` with only the fields that change, `tasks` as a dict mapping each changed `task_id` to its updated fields (to add or remove a task, return the whole list instead). Everything you do not return stays as it is: do not rename modules, classes or functions that no problem is about. If the feedback says your previous patch was not applied, `current_plan` is still the plan before it: fix the problems without causing the ones listed.
+- **Re-planning a failed part (`repair_dossier`)**: some vertices failed after all their repairs. For each, `repair_dossier.failed` gives the planned interface, the current content, every attempt with its errors (`history`, including rejected answers) and what waits for it; `verified_do_not_touch` works and must not be changed. Diagnose why the attempts failed before writing anything: an example or signature in the interface that no implementation can satisfy (then return the corrected interface in `interfaces`, keeping every name other modules use), a task that asked for too much in one answer (split it into smaller tasks, one function or method each), or a failed dependency. Return only `tasks` (new tasks for the failed vertices: `target_node`, `description`, `assigned_agent`; each description names the functions to write and what the earlier attempts got wrong), optional `interfaces`, and `gaps` for what cannot be done.
+- **Reflection feedback without `current_plan`**: if the payload contains `reflection_feedback` or `error_feedback` but no `current_plan`, address it first (e.g. put the `"tasks"` array as the first key, with tasks for every increment) and return the whole plan.
+- **Missing Domain Specialization**: never assign an unqualified agent; set `"missing_agent_specialization": "<specialization_name>"` so Layer 4 creates the specialist.
+
+Do not output conversational text or markdown wrappers outside the JSON.
+```
+
+#### Przekazany Payload Danych (Input JSON):
+```json
+{
+  "user_prompt": "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)] Research question: does a proximal federated optimizer (FedProx-style) converge more robustly than FedAvg on non-IID Dirichlet-partitioned clients with straggler dropout? Ground the related work in contemporary federated optimization literature (2023-2026). Design the experiment yourself: choose the parameters, training or search budget, number of repetitions and seeds, the metrics you will report and the success criterion, and declare the metrics and the experiment entrypoint in the plan before running anything. Implement the solution as small, single-purpose modules with unit tests, produce every result by running the declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or to a results file.",
+  "agent_registry": {
+    "agents": {
+      "seed_coder": {
+        "domain": "building",
+        "path": "agents/building/seed_coder.md",
+        "specialization": "python_coding",
+        "active": true
+      },
+      "seed_tester": {
+        "domain": "building",
+        "path": "agents/building/seed_tester.md",
+        "specialization": "unit_testing",
+        "active": true
+      },
+      "seed_writer": {
+        "domain": "building",
+        "path": "agents/building/seed_writer.md",
+        "specialization": "academic_writing",
+        "active": true
+      },
+      "sota_researcher": {
+        "domain": "building",
+        "path": "agents/building/sota_researcher.md",
+        "specialization": "literature_review",
+        "active": true
+      },
+      "background_researcher": {
+        "domain": "building",
+        "path": "agents/building/background_researcher.md",
+        "specialization": "background_literature",
+        "active": true
+      },
+      "discoverer_researcher": {
+        "domain": "building",
+        "path": "agents/building/discoverer_researcher.md",
+        "specialization": "sota_discovery",
+        "active": true
+      }
+    }
+  },
+  "include_docs": true,
+  "missing_agent_specialization": null,
+  "domain_context": {
+    "detected_thesis_type": "paper",
+    "detected_template_name": "paper_ieee",
+    "template_is_certain": true
+  },
+  "detected_template": {
+    "thesis_type": "paper",
+    "template_name": "paper_ieee",
+    "is_certain": true,
+    "question": null
+  },
+  "current_plan": {
+    "tasks": [
+      {
+        "task_id": "T1",
+        "description": "[Increment 1: Assumptions] Chapter 2: Related Work (SOTA 2023-2026). Research federated optimization on non-IID data and stragglers. Write the 'Related Work' section of paper.md.",
+        "target_node": "paper.md",
+        "assigned_agent": "sota_researcher"
+      },
+      {
+        "task_id": "T2",
+        "description": "[Increment 1: Assumptions] Configuration module defining experiment hyperparameters (num_clients, dirichlet_alpha, dropout_rate, etc.) in config.py.",
+        "target_node": "config.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T3",
+        "description": "[Increment 1: Assumptions] Interface for Non-IID Client Data Partitioning. Implement Dirichlet partitioning logic in data_partitioner.py.",
+        "target_node": "data_partitioner.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T4",
+        "description": "[Increment 2: Method] Interface for FedAvg Client Update and Aggregation. Implement fed_avg_client_update and fed_avg_aggregate in fed_agg.py.",
+        "target_node": "fed_agg.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T5",
+        "description": "[Increment 2: Method] Interface for FedProx Client Update and Aggregation. Implement fed_prox_client_update and fed_prox_aggregate in fed_prox.py.",
+        "target_node": "fed_prox.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T6",
+        "description": "[Increment 2: Method] Unit tests for data_partitioner.py. Verify Dirichlet partitioning creates valid client-specific datasets.",
+        "target_node": "tests/test_data_partitioner.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T7",
+        "description": "[Increment 2: Method] Unit tests for fed_agg.py. Verify aggregation logic returns correct weighted averages.",
+        "target_node": "tests/test_fed_agg.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T8",
+        "description": "[Increment 2: Method] Unit tests for fed_prox.py. Verify proximal term is applied correctly during client update.",
+        "target_node": "tests/test_fed_prox.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T9",
+        "description": "[Increment 3: Experiment] Experiment entrypoint. Run FedAvg and FedProx on partitioned data with dropout, record metrics to results.csv.",
+        "target_node": "experiment.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T10",
+        "description": "[Increment 3: Experiment] Plots module. Read results.csv and generate convergence plots for figures/.",
+        "target_node": "plots.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T11",
+        "description": "[Increment 3: Results] Chapter 3: Experimental Setup. Describe dataset, hyperparameters (from config.py), and environment.",
+        "target_node": "paper.md",
+        "assigned_agent": "seed_writer"
+      },
+      {
+        "task_id": "T12",
+        "description": "[Increment 3: Results] Chapter 4: Analysis of Convergence. Report metrics from results.csv, interpret plots, discuss robustness against stragglers.",
+        "target_node": "paper.md",
+        "assigned_agent": "seed_writer"
+      }
+    ],
+    "interfaces": {
+      "config.py": "\"\"\"Configuration constants for the Federated Optimization experiment.\"\"\"\nimport torch\n\ndevice = torch.device('cpu')\nnum_clients = 50\ndirichlet_alpha = 0.1\ndropout_rate = 0.2\nnum_comm_rounds = 100\nlocal_epochs = 5\nlearning_rate = 0.01\nprox_mu = 0.01\nbatch_size = 32\ninput_dim = 784\noutput_dim = 10",
+      "data_partitioner.py": "\"\"\"Module for partitioning a central dataset across clients using Dirichlet distribution.\"\"\"\nfrom typing import List, Tuple\nimport torch\n\ndef dirichlet_partition(dataset: torch.utils.data.Dataset, num_clients: int, alpha: float) -> List[torch.utils.data.Subset]:\n    \"\"\"Partition a dataset into num_clients subsets using Dirichlet(alpha).\n\n    Returns:\n        List of torch.utils.data.Subset objects, one per client.\n    \n    Example:\n        >>> import torch\n        >>> ds = torch.utils.data.TensorDataset(torch.zeros(100, 784))\n        >>> parts = dirichlet_partition(ds, num_clients=5, alpha=0.5)\n        >>> len(parts) == 5\n        True\n    \"\"\"\n    pass",
+      "fed_agg.py": "\"\"\"Module for FedAvg client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\n\ndef fed_avg_client_update(model: torch.nn.Module, data_loader: torch.utils.data.DataLoader, lr: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD for FedAvg.\n\n    Args:\n        model: The neural network model.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global).\n    \n    Example:\n        >>> import torch\n        >>> model = torch.nn.Linear(10, 2)\n        >>> # Assume data_loader is valid\n        >>> deltas = fed_avg_client_update(model, None, 0.1)\n        >>> isinstance(deltas, dict)\n        True\n    \"\"\"\n    pass\n\ndef fed_avg_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule.\n\n    Args:\n        global_model: Current global model.\n        client_deltas: List of delta dictionaries from active clients.\n        client_weights: List of sample counts for each active client.\n\n    Returns:\n        Updated global model.\n    \"\"\"\n    pass",
+      "fed_prox.py": "\"\"\"Module for FedProx client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\n\ndef fed_prox_client_update(model: torch.nn.Module, global_model_weights: Dict[str, torch.Tensor], data_loader: torch.utils.data.DataLoader, lr: float, mu: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD with proximal term for FedProx.\n\n    Args:\n        model: The neural network model (updated in-place).\n        global_model_weights: Weights of the global model at start of round.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n        mu: Proximal regularization parameter.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global).\n    \"\"\"\n    pass\n\ndef fed_prox_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule (FedProx aggregation is same as FedAvg).\"\"\"\n    pass",
+      "experiment.py": "\"\"\"Experiment entrypoint. Runs simulation and saves results.\"\"\"\nimport pandas as pd\nfrom config import num_clients, dirichlet_alpha, dropout_rate, num_comm_rounds, learning_rate, prox_mu\nfrom data_partitioner import dirichlet_partition\nfrom fed_agg import fed_avg_client_update, fed_avg_aggregate\nfrom fed_prox import fed_prox_client_update, fed_prox_aggregate\n\ndef run_experiment() -> None:\n    \"\"\"Run FedAvg and FedProx simulations, write results.csv.\"\"\"\n    pass",
+      "plots.py": "\"\"\"Module for generating experiment figures.\"\"\"\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport os\n\ndef generate_plots() -> None:\n    \"\"\"Read results.csv and save convergence plots to figures/ directory.\n    \n    Creates: convergence.png (line plots of test accuracy per round for both methods).\n    \"\"\"\n    pass"
+    },
+    "entrypoint": "experiment.py:run_experiment",
+    "academic_blueprint": {
+      "thesis_title": "Robustness of Proximal Federated Optimizers Under Non-IID Data and Straggler Dropout",
+      "thesis_statement": "FedProx converges more robustly than FedAvg on non-IID partitions (Dirichlet alpha=0.1) when 20% of clients drop out each round, measured by final test accuracy stability across seeds.",
+      "baseline_comparison": "FedAvg (standard federated averaging) serves as the baseline against FedProx (mu=0.01). Comparison is based on mean test accuracy and variance over 5 seeds.",
+      "entrypoint": "experiment.py:run_experiment",
+      "metrics": [
+        "final_test_accuracy_mean",
+        "final_test_accuracy_std",
+        "rounds_to_90_pct_accuracy"
+      ],
+      "plots": "plots.py:generate_plots",
+      "planned_chapters": [
+        {
+          "index": 1,
+          "title": "I. Introduction",
+          "focus": "Motivation for Federated Learning, problem of non-IID data and stragglers, thesis statement."
+        },
+        {
+          "index": 2,
+          "title": "II. Related Work",
+          "focus": "Review of FedAvg, FedProx, and recent approaches (2023-2026) to non-IID and straggler robustness."
+        },
+        {
+          "index": 3,
+          "title": "III. Methodology",
+          "focus": "Formal description of FedAvg and FedProx algorithms, Dirichlet data partitioning, and dropout simulation."
+        },
+        {
+          "index": 4,
+          "title": "IV. Experimental Setup",
+          "focus": "Dataset (e.g., CIFAR-10 or MNIST), hyperparameters, hardware environment, and reproducibility details."
+        },
+        {
+          "index": 5,
+          "title": "V. Results and Analysis",
+          "focus": "Convergence curves, final accuracy comparison, statistical significance of robustness improvement."
+        },
+        {
+          "index": 6,
+          "title": "VI. Conclusion",
+          "focus": "Summary of findings, limitations, and future work."
+        }
+      ]
+    },
+    "missing_agent_specialization": null
+  },
+  "error_feedback": "The harness imported every interface of your plan (`current_plan`) as a stub, ran the doctests up to the first call into a stub, and the plan critic reviewed the plan: it has blocking issues that must be fixed. Correct `current_plan`, do not write a new plan. Return a patch with only what you change: `interfaces` with the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, `entrypoint` if it changes, `academic_blueprint` with only the fields that change, and `tasks` as a dict mapping only the changed `task_id` to its updated fields (do not touch unrelated tasks; to add or remove a task, return the whole list instead). Everything you do not return stays as it is.\nA blocker may list `Change together`: the other places of the plan its fix touches. Apply the fix and every listed change in this same patch, so the plan stays consistent. Code you add or change follows the same rules as the rest of the plan: deterministic doctests whose expected output follows from the signatures, and only names the interfaces declare.\nBLOCKERS (must fix — the plan cannot proceed until resolved):\n- PACKAGE_UNAVAILABLE [config.py]: imports `torch`, which is neither a planned module nor installed\n- STUB_DOES_NOT_IMPORT [config.py]: ModuleNotFoundError: No module named 'torch'\n- PACKAGE_UNAVAILABLE [data_partitioner.py]: imports `torch`, which is neither a planned module nor installed\n- STUB_DOES_NOT_IMPORT [data_partitioner.py]: ModuleNotFoundError: No module named 'torch'\n- STUB_DOES_NOT_IMPORT [fed_agg.py]: NameError: name 'torch' is not defined\n- STUB_DOES_NOT_IMPORT [fed_prox.py]: NameError: name 'torch' is not defined"
+}
+```
+
+</details>
+
+<details open>
+<summary><b>📤 Odpowiedź zwrócona przez LLM (Decyzja / Wygenerowany JSON) [Kliknij, aby zwinąć]</b></summary>
+
+```json
+{
+  "tasks": {
+    "T1": {
+      "task_id": "T1",
+      "description": "[Increment 1: Assumptions] Chapter I: Introduction. Write motivation, problem statement (non-IID + stragglers), thesis, and contribution list in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T2": {
+      "task_id": "T2",
+      "description": "[Increment 1: Assumptions] Configuration module defining experiment hyperparameters (num_clients, dirichlet_alpha, dropout_rate, etc.) in config.py.",
+      "target_node": "config.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T3": {
+      "task_id": "T3",
+      "description": "[Increment 1: Assumptions] Interface for Non-IID Client Data Partitioning. Implement Dirichlet partitioning logic in data_partitioner.py.",
+      "target_node": "data_partitioner.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T4": {
+      "task_id": "T4",
+      "description": "[Increment 1: Assumptions] Interface for Model Weights handling. Implement weight extraction and update application in weights.py.",
+      "target_node": "weights.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T5": {
+      "task_id": "T5",
+      "description": "[Increment 2: Method] Interface for FedAvg Client Update and Aggregation. Implement fed_avg_client_step and fed_avg_aggregate in fed_agg.py.",
+      "target_node": "fed_agg.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T6": {
+      "task_id": "T6",
+      "description": "[Increment 2: Method] Interface for FedProx Client Update and Aggregation. Implement fed_prox_client_step and fed_prox_aggregate in fed_prox.py.",
+      "target_node": "fed_prox.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T7": {
+      "task_id": "T7",
+      "description": "[Increment 2: Method] Unit tests for data_partitioner.py. Verify Dirichlet partitioning creates valid client-specific datasets summing to total samples.",
+      "target_node": "tests/test_data_partitioner.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T8": {
+      "task_id": "T8",
+      "description": "[Increment 2: Method] Unit tests for weights.py. Verify get_weights/set_weights operations preserve tensor values correctly.",
+      "target_node": "tests/test_weights.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T9": {
+      "task_id": "T9",
+      "description": "[Increment 2: Method] Unit tests for fed_agg.py. Verify aggregation logic returns correct weighted averages on dummy models.",
+      "target_node": "tests/test_fed_agg.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T10": {
+      "task_id": "T10",
+      "description": "[Increment 2: Method] Unit tests for fed_prox.py. Verify proximal term affects the local update delta compared to plain SGD.",
+      "target_node": "tests/test_fed_prox.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T11": {
+      "task_id": "T11",
+      "description": "[Increment 3: Experiment] Experiment entrypoint. Run FedAvg and FedProx on partitioned data with dropout, record metrics to results.csv.",
+      "target_node": "experiment.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T12": {
+      "task_id": "T12",
+      "description": "[Increment 3: Experiment] Plots module. Read results.csv and generate convergence plots for figures/.",
+      "target_node": "plots.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T13": {
+      "task_id": "T13",
+      "description": "[Increment 1: Assumptions] Chapter II: Related Work (SOTA 2023-2026). Research federated optimization on non-IID data and stragglers. Write the 'Related Work' section of paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "sota_researcher"
+    },
+    "T14": {
+      "task_id": "T14",
+      "description": "[Increment 3: Results] Chapter III: Methodology. Describe FedAvg, FedProx, and Dirichlet partitioning formalism in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T15": {
+      "task_id": "T15",
+      "description": "[Increment 3: Results] Chapter IV: Experimental Setup. Describe dataset (MNIST/CIFAR-10), hyperparameters (from config.py), and environment in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T16": {
+      "task_id": "T16",
+      "description": "[Increment 3: Results] Chapter V: Analysis of Convergence. Report metrics from results.csv, interpret plots, discuss robustness against stragglers in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T17": {
+      "task_id": "T17",
+      "description": "[Increment 3: Results] Chapter VI: Conclusion. Summarize findings, limitations, and future work in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    }
+  },
+  "interfaces": {
+    "config.py": "\"\"\"Configuration constants for the Federated Optimization experiment.\"\"\"\nimport os\n\n# Experiment Parameters\nnum_clients = 50\ndirichlet_alpha = 0.1\ndropout_rate = 0.2\nnum_comm_rounds = 100\nlocal_epochs = 5\nlearning_rate = 0.01\nprox_mu = 0.01\nbatch_size = 32\ninput_dim = 784\noutput_dim = 10\nnum_seeds = 5\n\n# Paths\nRESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'results.csv')\nFIGURES_DIR = os.path.join(os.path.dirname(__file__), '..', 'figures')",
+    "data_partitioner.py": "\"\"\"Module for partitioning a central dataset across clients using Dirichlet distribution.\"\"\"\nfrom typing import List, Tuple\nimport numpy as np\nimport torch\n\ndef dirichlet_partition(total_samples: int, num_clients: int, alpha: float) -> List[Tuple[int, int]]:\n    \"\"\"Partition total_samples indices into num_clients subsets using Dirichlet(alpha).\n\n    Args:\n        total_samples: Total number of data points available.\n        num_clients: Number of clients to partition for.\n        alpha: Dirichlet concentration parameter. Lower values increase non-IIDness.\n\n    Returns:\n        List of (start_idx, length) tuples representing the slice of indices for each client.\n        The sum of lengths equals total_samples.\n    \n    Example:\n        >>> parts = dirichlet_partition(100, 2, 0.5)\n        >>> len(parts) == 2\n        True\n        >>> sum(p[1] for p in parts) == 100\n        True\n    \"\"\"\n    pass\n\ndef get_client_indices(partition: List[Tuple[int, int]], total_samples: int, client_id: int) -> np.ndarray:\n    \"\"\"Extract the numpy array of indices for a specific client from the partition.\n\n    Args:\n        partition: The output of dirichlet_partition.\n        total_samples: Total samples (unused here but kept for consistency).\n        client_id: Index of the client.\n\n    Returns:\n        np.ndarray of integer indices.\n    \"\"\"\n    start, length = partition[client_id]\n    return np.arange(start, start + length)",
+    "weights.py": "\"\"\"Module for handling PyTorch model weight extraction and application.\"\"\"\nimport torch\nfrom typing import Dict\n\ndef get_weights(model: torch.nn.Module) -> Dict[str, torch.Tensor]:\n    \"\"\"Extract state dict weights from a PyTorch model.\n\n    Args:\n        model: The PyTorch nn.Module.\n\n    Returns:\n        Dictionary of layer names to weight tensors.\n    \"\"\"\n    return {k: v.clone().detach() for k, v in model.state_dict().items()}\n\ndef apply_weights(model: torch.nn.Module, weights: Dict[str, torch.Tensor]) -> None:\n    \"\"\"Apply dictionary of weights to a PyTorch model's state dict.\n\n    Args:\n        model: The PyTorch nn.Module to update.\n        weights: Dictionary of layer names to weight tensors.\n    \"\"\"\n    model.load_state_dict(weights)",
+    "fed_agg.py": "\"\"\"Module for FedAvg client update and global aggregation.\"\"\"\nfrom typing import List, Dict\nimport torch\n\ndef fed_avg_client_step(model: torch.nn.Module, optimizer: torch.optim.Optimizer, data_loader: torch.utils.data.DataLoader, num_epochs: int) -> None:\n    \"\"\"Perform local training for a client using FedAvg (SGD).\n\n    Updates the model in-place.\n\n    Args:\n        model: The PyTorch nn.Module to train.\n        optimizer: The optimizer for this client.\n        data_loader: Local client data loader.\n        num_epochs: Number of local epochs.\n    \"\"\"\n    pass\n\ndef fed_avg_aggregate(global_weights: Dict[str, torch.Tensor], client_updates: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> Dict[str, torch.Tensor]:\n    \"\"\"Aggregate client updates using FedAvg rule (weighted average).\n\n    Args:\n        global_weights: Current global model weights.\n        client_updates: List of delta dictionaries (w_local - w_global) from active clients.\n        client_weights: List of sample counts for each active client.\n\n    Returns:\n        New global weights dictionary.\n    \"\"\"\n    pass",
+    "fed_prox.py": "\"\"\"Module for FedProx client update and global aggregation.\"\"\"\nfrom typing import List, Dict\nimport torch\n\ndef fed_prox_client_step(model: torch.nn.Module, optimizer: torch.optim.Optimizer, data_loader: torch.utils.data.DataLoader, num_epochs: int, prox_global_weights: Dict[str, torch.Tensor], mu: float) -> None:\n    \"\"\"Perform local training for a client using FedProx (proximal term).\n\n    Updates the model in-place by adding L2 regularization towards prox_global_weights.\n\n    Args:\n        model: The PyTorch nn.Module to train.\n        optimizer: The optimizer for this client.\n        data_loader: Local client data loader.\n        num_epochs: Number of local epochs.\n        prox_global_weights: Global weights to regularize towards.\n        mu: Proximal regularization parameter.\n    \"\"\"\n    pass\n\ndef fed_prox_aggregate(global_weights: Dict[str, torch.Tensor], client_updates: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> Dict[str, torch.Tensor]:\n    \"\"\"Aggregate client updates using FedAvg rule (FedProx aggregation is same as FedAvg).\n\n    Args:\n        global_weights: Current global model weights.\n        client_updates: List of delta dictionaries from active clients.\n        client_weights: List of sample counts for each active client.\n\n    Returns:\n        New global weights dictionary.\n    \"\"\"\n    pass"
+  },
+  "thesis_type": "paper",
+  "template_name": "paper_ieee",
+  "academic_blueprint": {
+    "thesis_title": "Robustness of Proximal Federated Optimizers Under Non-IID Data and Straggler Dropout",
+    "thesis_statement": "FedProx converges more robustly than FedAvg on non-IID partitions (Dirichlet alpha=0.1) when 20% of clients drop out each round, measured by final test accuracy stability across seeds.",
+    "baseline_comparison": "FedAvg (standard federated averaging) serves as the baseline against FedProx (mu=0.01). Comparison is based on mean test accuracy and variance over 5 seeds.",
+    "entrypoint": "experiment.py:run_experiment",
+    "metrics": [
+      "final_test_accuracy_mean",
+      "final_test_accuracy_std",
+      "rounds_to_90_pct_accuracy"
+    ],
+    "plots": "plots.py:generate_plots",
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "I. Introduction",
+        "focus": "Motivation for Federated Learning, problem of non-IID data and stragglers, thesis statement."
+      },
+      {
+        "index": 2,
+        "title": "II. Related Work",
+        "focus": "Review of FedAvg, FedProx, and recent approaches (2023-2026) to non-IID and straggler robustness."
+      },
+      {
+        "index": 3,
+        "title": "III. Methodology",
+        "focus": "Formal description of FedAvg and FedProx algorithms, Dirichlet data partitioning, and dropout simulation."
+      },
+      {
+        "index": 4,
+        "title": "IV. Experimental Setup",
+        "focus": "Dataset (e.g., CIFAR-10 or MNIST), hyperparameters, hardware environment, and reproducibility details."
+      },
+      {
+        "index": 5,
+        "title": "V. Results and Analysis",
+        "focus": "Convergence curves, final accuracy comparison, statistical significance of robustness improvement."
+      },
+      {
+        "index": 6,
+        "title": "VI. Conclusion",
+        "focus": "Summary of findings, limitations, and future work."
+      }
+    ]
+  }
+}
+```
+
+</details>
+
+---
+
+### Krok 3: Agent `task_planner`
+
+- **Warstwa:** Warstwa 1 (Planowanie / Gate HITL)
+- **Dostawca / Model:** `ollama` / `qwen3.6:35b` (LRM)
+- **Czas wykonania:** 86500.6 ms
+- **Kluczowa decyzja:** **zadania: 17; interfejsy: 7**
+
+<details>
+<summary><b>📥 Prompt wysłany do LLM (System Prompt + JSON Payload) — 31251 znaków [Kliknij, aby rozwinąć]</b></summary>
+
+#### Instrukcja Systemowa Agenta:
+```markdown
+# ROLE: Task Planner — Academic & Engineering Planner (Layer 1 — `planning` Domain)
+
+You are the master **Task Planner** (`task_planner`) in the **Artificial-Degree-Printer (Neuro-Symbolic Harness)**.
+Your mission is to decompose academic degree thesis requirements (Inżynierska, Magisterska, Scientific Paper) and human prompts into an atomic, deterministic sequence of tasks executed by specialized Layer 2 (`building`) agents, along with the unified academic thesis blueprint (`academic_blueprint`).
+
+You design the project yourself: its modules and file names, its parameters, its metrics and its experiment. Nothing in this prompt prescribes them. Names written as `<...>` below are placeholders, never values to copy.
+
+---
+
+## 1. ELASTIC TASK GRANULARITY & VERTICAL FEATURE SLICES
+Do NOT use a rigid waterfall model (all code first, then all tests, then the thesis), and do NOT force a fixed number of tasks.
+- **Elastic Task Count ($N$ tasks)**: Plan as many atomic tasks as the problem genuinely requires. Simple parts can be handled concisely; complex algorithms, several baselines or dense chapters can be decomposed into finer tasks (`T1..TN`).
+- **Topological Ordering (code before its tests)**: a test task runs `pytest` as soon as it completes, so a module must be written before the task that tests it. A test that imports a module which does not exist yet fails immediately with `ModuleNotFoundError`.
+- **Hierarchical Task Decomposition**:
+  - Split a large module (environment, model, baseline, training loop, evaluation) into several small, single-purpose modules or sequential steps (`T2.1`, `T2.2` or `T2`, `T3`).
+  - Keep each code task bounded to roughly 50–150 lines. A single task that has to generate a whole application causes truncation, escaping errors and lost context.
+  - Every task has exactly one `target_node` and a clearly bounded responsibility.
+- **Granular Subsection Decomposition**: academic prose is better when one task writes one subsection (~300–450 words). Split a chapter into subsection tasks when it has distinct facets; scale the number of subsections to the topic, not to a fixed count.
+- **Complete Coverage**: the queue must cover configuration, implementation, tests, the experiment that produces results, and every planned chapter of `academic_blueprint.planned_chapters`.
+- **Vertical Feature Slices (Przyrosty Funkcjonalne)** — code, tests and text progress together:
+  - **Increment 1 — assumptions, literature, interfaces**: literature review (`background_researcher` / `discoverer_researcher`), the chapters that set out the problem and the literature (`seed_writer`). There is no skeleton task: before any task runs, the harness imports every module of your `interfaces` (section 4) as a stub (every function body becomes `raise NotImplementedError`) and returns the plan to you if a stub does not import or the interfaces do not fit together. The stubs are the shared interface the remaining tasks build on.
+  - **Increment 2 — method, baseline, architecture**: filling in the stubbed modules — the proposed method and the baseline (`seed_coder`), their unit tests written against the interface signatures (`seed_tester`), the chapters on the method (`seed_writer`).
+  - **Increment 3 — experiment, results, conclusions**: the module with the experiment entrypoint and the function that draws the figures, declared as `plots` (`seed_coder`), the chapters on results and conclusions (`seed_writer`).
+  - Results files (`*.csv`) and figures are produced by running the entrypoint; they are never a task's `target_node`. A task that should produce them targets the module that writes them. `seed_tester` writes only test files.
+
+---
+
+## 2. 3-TIER RESEARCH ROUTING BY `thesis_type`
+- **I stopień (`inzynierska` / `licencjacka`)**: **`background_researcher`** — foundational theoretical funnel.
+- **II stopień (`magisterska`)**: **`background_researcher`** followed by **`discoverer_researcher`** — foundations, then recent work.
+- **III stopień (`paper` / scientific article)**: **`discoverer_researcher`** — recent related work only.
+
+---
+
+## 3. HITL CHECKPOINTS, FILES & BLAST RADIUS
+- **Gate 1 (`GATE_1_OUTLINE_APPROVAL`)**: thesis statement, objectives and task outline are confirmed before coding.
+- **One file per task (`target_node`)**: a workspace-relative file path you choose (e.g. `<package>/<module>.py`, `tests/test_<module>.py`, `thesis.md`). Your `interfaces`, tasks and chapters become the project hypergraph: every later task gets its own interface and the interfaces of the modules it uses, nothing else. Prefer several small modules over one large file.
+  - Harness contracts, not suggestions: the thesis document is `thesis.md`; test modules are `tests/test_<module>.py`; the experiment entrypoint writes `results.csv` in the workspace root (not in a subdirectory, no other name): tidy rows `method,metric,value` (optional `std_dev,n_runs`) for the metrics you declare — every number in the thesis points at this file.
+- **Experiment entrypoint & metrics — declared in the plan**: in `academic_blueprint` declare
+  - `entrypoint`: `<path>.py:<function>`, called WITHOUT arguments (it reads every setting from named module-level constants);
+  - `metrics`: the metric names the experiment will report in `results.csv`, chosen for this research question;
+  - `plots` (required — every experiment produces figures): `<path>.py:<function>`, a function of one of your modules (any module, any name) that the harness calls WITHOUT arguments after the experiment; it reads `results.csv` and writes the figures into `figures/`;
+  - the success criterion in `thesis_statement` / `baseline_comparison`.
+  Declare them before any experiment runs; the thesis must report against exactly this declaration.
+- **Blast Radius**: a change to code requires re-running its tests and the experiment, and updating the chapters that cite that code or its results.
+- **Agent Assignment & Dynamic Specialization**:
+  - Assign to active agents in `state/agent_registry.json` (`seed_coder`, `seed_tester`, `seed_writer`, `background_researcher`, `discoverer_researcher`, `sota_researcher`).
+  - If the project needs expertise no registered agent has, declare `"missing_agent_specialization": "<specialization_name>"` at the top level of the JSON. Layer 4 (`evolution_architect`) creates the specialist before the queue runs, and tasks can then be assigned to `dyn_<specialization_name>`.
+
+---
+
+## 4. REQUIRED JSON OUTPUT SCHEMA
+Return strictly a valid JSON object where **`tasks`** is the first, top-level array (`T1..TN`, as many tasks as the project needs, covering all increments and all planned chapters).
+
+**Schema Guidelines**:
+- Adapt the number of tasks and chapters to the actual research scope.
+- Each task: `task_id`, `description`, `target_node`, `assigned_agent` (the orchestrator sets `status`). Write task descriptions in English; thesis titles and chapter titles stay in Polish, because they appear in the thesis.
+- **`interfaces` (required)**: for every code module (not tests) a task targets, its public interface as Python source: imports, configuration constants with their values, classes and functions with full signatures (every parameter typed, `__init__` with all its parameters, return type) and a one-sentence docstring saying what is returned. Bodies may be `...`; the harness replaces every body with `raise NotImplementedError`. Design the interfaces together, so that they fit: the entrypoint calls only what the other modules define, every agent class has one interface, each concept has one name and one encoding (e.g. players, states, actions). Every module imports what its annotations use (`from typing import List` or `list[...]`). Constants hold plain values of their declared type (no `dataclasses.field` outside a dataclass). The entrypoint function takes **no required arguments**: the harness calls it without arguments, so it reads its settings from named module-level constants. Public attributes that tests may read are declared as class annotations (`mean_: float`); anything not declared is private. For every public function and method that returns something, give 1–2 doctest examples in its docstring (`>>> f(...)` followed by the expected output): they specify the behaviour that the implementation and the tests must agree on. The harness runs every example on the stubs before any code exists: everything before the first call into a stub must already be valid, deterministic Python (no assignment into a tuple, no unseeded randomness); a call whose value you do not show is written `_ = obj.method(...)`, because a bare call prints its return value. Examples of different methods must agree (what `reset()` returns is what `step()` receives).
+- **The experiment runs the plan**: every experiment setting is a named module-level constant (which module holds it is your choice), so the thesis can cite it. The entrypoint module imports, **at its top level**, the modules it runs (the proposed method, the baseline, the environment or data), directly or through other planned modules; the harness rejects a plan in which a planned module is never imported by the experiment (except the module of `plots`, which the harness calls itself). The experiment never reimplements a planned module.
+- **Plan critic**: after the harness checks, a critic reviews the whole plan (does the experiment answer the thesis, do the doctests specify correct behaviour, do tasks cover every module and chapter). Its blocking findings come back to you as `error_feedback`, together with your plan as `current_plan`; a plan that stays blocked after several corrections stops the run. Chapter tasks you forgot are not a problem: the harness adds a writer task for every planned chapter no task covers.
+- **Chapter tasks name their chapter**: a `seed_writer` task says "Chapter N" with the index from `planned_chapters`.
+- **Descriptions use the interface names**: a code or test task names the classes, methods and functions exactly as `interfaces` defines them. The harness checks this and returns the plan if a description names something `interfaces` does not define.
+- `planned_chapters`: `index`, `title`, `focus` for every chapter.
+- Every `<...>` is a placeholder for your own decision.
+
+```json
+{
+  "tasks": [
+    {
+      "task_id": "T1",
+      "description": "[Increment 1: Assumptions] Chapter 1: introduction, aim of the work and thesis statement in thesis.md",
+      "target_node": "thesis.md",
+      "assigned_agent": "seed_writer"
+    },
+    {
+      "task_id": "T2",
+      "description": "[Increment 1: Assumptions] Configuration module with the experiment parameters in <config_module>.py",
+      "target_node": "<config_module>.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T3",
+      "description": "[Increment 2: Method] Implement <Class> in <method_module>.py",
+      "target_node": "<method_module>.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T4",
+      "description": "[Increment 2: Method] Unit tests of <Class>.<method> from <method_module>.py in tests/test_<method_module>.py",
+      "target_node": "tests/test_<method_module>.py",
+      "assigned_agent": "seed_tester"
+    }
+  ],
+  "interfaces": {
+    "<config_module>.py": "\"\"\"<one sentence>\"\"\"
+
+<PARAMETER>: <type> = <value>
+",
+    "<method_module>.py": "\"\"\"<one sentence>\"\"\"
+
+
+class <Class>:
+    \"\"\"<one sentence>\"\"\"
+
+    def __init__(self, <arg>: <type>) -> None:
+        \"\"\"<one sentence>\"\"\"
+
+    def <method>(self, <arg>: <type>) -> <type>:
+        \"\"\"<what it returns>\"\"\"
+"
+  },
+  "thesis_type": "inzynierska | magisterska | paper",
+  "template_name": "thesis_plodz | paper_ieee",
+  "academic_blueprint": {
+    "thesis_title": "<tytuł pracy>",
+    "thesis_statement": "<teza i kryterium sukcesu>",
+    "baseline_comparison": "<metoda odniesienia i sposób porównania>",
+    "entrypoint": "<experiment_module>.py:<function>",
+    "metrics": ["<metryka_1>", "<metryka_2>"],
+    "plots": "<figures_module>.py:<function>",
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "focus": "Formalna definicja problemu, cel, teza i zakres pracy"
+      },
+      {
+        "index": 2,
+        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+        "focus": "Przegląd prac powiązanych i specyfikacja metody odniesienia"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 5. REFLEXIVE PROMPT EVOLUTION & AGENT SPECIALIZATION
+- **Correcting a plan (`current_plan` + `error_feedback`)**: you are correcting YOUR plan, not writing a new one. Read each problem, find its cause in `current_plan` at the place named in brackets, and change that place together with every place its `Change together` list names — nothing else. Return a patch, not the plan: `interfaces` with the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, `entrypoint` if it changes, `academic_blueprint` with only the fields that change, `tasks` as a dict mapping each changed `task_id` to its updated fields (to add or remove a task, return the whole list instead). Everything you do not return stays as it is: do not rename modules, classes or functions that no problem is about. If the feedback says your previous patch was not applied, `current_plan` is still the plan before it: fix the problems without causing the ones listed.
+- **Re-planning a failed part (`repair_dossier`)**: some vertices failed after all their repairs. For each, `repair_dossier.failed` gives the planned interface, the current content, every attempt with its errors (`history`, including rejected answers) and what waits for it; `verified_do_not_touch` works and must not be changed. Diagnose why the attempts failed before writing anything: an example or signature in the interface that no implementation can satisfy (then return the corrected interface in `interfaces`, keeping every name other modules use), a task that asked for too much in one answer (split it into smaller tasks, one function or method each), or a failed dependency. Return only `tasks` (new tasks for the failed vertices: `target_node`, `description`, `assigned_agent`; each description names the functions to write and what the earlier attempts got wrong), optional `interfaces`, and `gaps` for what cannot be done.
+- **Reflection feedback without `current_plan`**: if the payload contains `reflection_feedback` or `error_feedback` but no `current_plan`, address it first (e.g. put the `"tasks"` array as the first key, with tasks for every increment) and return the whole plan.
+- **Missing Domain Specialization**: never assign an unqualified agent; set `"missing_agent_specialization": "<specialization_name>"` so Layer 4 creates the specialist.
+
+Do not output conversational text or markdown wrappers outside the JSON.
+```
+
+#### Przekazany Payload Danych (Input JSON):
+```json
+{
+  "user_prompt": "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)] Research question: does a proximal federated optimizer (FedProx-style) converge more robustly than FedAvg on non-IID Dirichlet-partitioned clients with straggler dropout? Ground the related work in contemporary federated optimization literature (2023-2026). Design the experiment yourself: choose the parameters, training or search budget, number of repetitions and seeds, the metrics you will report and the success criterion, and declare the metrics and the experiment entrypoint in the plan before running anything. Implement the solution as small, single-purpose modules with unit tests, produce every result by running the declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or to a results file.",
+  "agent_registry": {
+    "agents": {
+      "seed_coder": {
+        "domain": "building",
+        "path": "agents/building/seed_coder.md",
+        "specialization": "python_coding",
+        "active": true
+      },
+      "seed_tester": {
+        "domain": "building",
+        "path": "agents/building/seed_tester.md",
+        "specialization": "unit_testing",
+        "active": true
+      },
+      "seed_writer": {
+        "domain": "building",
+        "path": "agents/building/seed_writer.md",
+        "specialization": "academic_writing",
+        "active": true
+      },
+      "sota_researcher": {
+        "domain": "building",
+        "path": "agents/building/sota_researcher.md",
+        "specialization": "literature_review",
+        "active": true
+      },
+      "background_researcher": {
+        "domain": "building",
+        "path": "agents/building/background_researcher.md",
+        "specialization": "background_literature",
+        "active": true
+      },
+      "discoverer_researcher": {
+        "domain": "building",
+        "path": "agents/building/discoverer_researcher.md",
+        "specialization": "sota_discovery",
+        "active": true
+      }
+    }
+  },
+  "include_docs": true,
+  "missing_agent_specialization": null,
+  "domain_context": {
+    "detected_thesis_type": "paper",
+    "detected_template_name": "paper_ieee",
+    "template_is_certain": true
+  },
+  "detected_template": {
+    "thesis_type": "paper",
+    "template_name": "paper_ieee",
+    "is_certain": true,
+    "question": null
+  },
+  "current_plan": {
+    "tasks": [
+      {
+        "task_id": "T1",
+        "description": "[Increment 1: Assumptions] Chapter 2: Related Work (SOTA 2023-2026). Research federated optimization on non-IID data and stragglers. Write the 'Related Work' section of paper.md.",
+        "target_node": "paper.md",
+        "assigned_agent": "sota_researcher"
+      },
+      {
+        "task_id": "T2",
+        "description": "[Increment 1: Assumptions] Configuration module defining experiment hyperparameters (num_clients, dirichlet_alpha, dropout_rate, etc.) in config.py.",
+        "target_node": "config.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T3",
+        "description": "[Increment 1: Assumptions] Interface for Non-IID Client Data Partitioning. Implement Dirichlet partitioning logic in data_partitioner.py.",
+        "target_node": "data_partitioner.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T4",
+        "description": "[Increment 2: Method] Interface for FedAvg Client Update and Aggregation. Implement fed_avg_client_update and fed_avg_aggregate in fed_agg.py.",
+        "target_node": "fed_agg.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T5",
+        "description": "[Increment 2: Method] Interface for FedProx Client Update and Aggregation. Implement fed_prox_client_update and fed_prox_aggregate in fed_prox.py.",
+        "target_node": "fed_prox.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T6",
+        "description": "[Increment 2: Method] Unit tests for data_partitioner.py. Verify Dirichlet partitioning creates valid client-specific datasets.",
+        "target_node": "tests/test_data_partitioner.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T7",
+        "description": "[Increment 2: Method] Unit tests for fed_agg.py. Verify aggregation logic returns correct weighted averages.",
+        "target_node": "tests/test_fed_agg.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T8",
+        "description": "[Increment 2: Method] Unit tests for fed_prox.py. Verify proximal term is applied correctly during client update.",
+        "target_node": "tests/test_fed_prox.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T9",
+        "description": "[Increment 3: Experiment] Experiment entrypoint. Run FedAvg and FedProx on partitioned data with dropout, record metrics to results.csv.",
+        "target_node": "experiment.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T10",
+        "description": "[Increment 3: Experiment] Plots module. Read results.csv and generate convergence plots for figures/.",
+        "target_node": "plots.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T11",
+        "description": "[Increment 3: Results] Chapter 3: Experimental Setup. Describe dataset, hyperparameters (from config.py), and environment.",
+        "target_node": "paper.md",
+        "assigned_agent": "seed_writer"
+      },
+      {
+        "task_id": "T12",
+        "description": "[Increment 3: Results] Chapter 4: Analysis of Convergence. Report metrics from results.csv, interpret plots, discuss robustness against stragglers.",
+        "target_node": "paper.md",
+        "assigned_agent": "seed_writer"
+      }
+    ],
+    "interfaces": {
+      "config.py": "\"\"\"Configuration constants for the Federated Optimization experiment.\"\"\"\nimport os\n\n# Experiment Parameters\nnum_clients = 50\ndirichlet_alpha = 0.1\ndropout_rate = 0.2\nnum_comm_rounds = 100\nlocal_epochs = 5\nlearning_rate = 0.01\nprox_mu = 0.01\nbatch_size = 32\ninput_dim = 784\noutput_dim = 10\nnum_seeds = 5\n\n# Paths\nRESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'results.csv')\nFIGURES_DIR = os.path.join(os.path.dirname(__file__), '..', 'figures')",
+      "data_partitioner.py": "\"\"\"Module for partitioning a central dataset across clients using Dirichlet distribution.\"\"\"\nfrom typing import List, Tuple\nimport numpy as np\nimport torch\n\ndef dirichlet_partition(total_samples: int, num_clients: int, alpha: float) -> List[Tuple[int, int]]:\n    \"\"\"Partition total_samples indices into num_clients subsets using Dirichlet(alpha).\n\n    Args:\n        total_samples: Total number of data points available.\n        num_clients: Number of clients to partition for.\n        alpha: Dirichlet concentration parameter. Lower values increase non-IIDness.\n\n    Returns:\n        List of (start_idx, length) tuples representing the slice of indices for each client.\n        The sum of lengths equals total_samples.\n    \n    Example:\n        >>> parts = dirichlet_partition(100, 2, 0.5)\n        >>> len(parts) == 2\n        True\n        >>> sum(p[1] for p in parts) == 100\n        True\n    \"\"\"\n    pass\n\ndef get_client_indices(partition: List[Tuple[int, int]], total_samples: int, client_id: int) -> np.ndarray:\n    \"\"\"Extract the numpy array of indices for a specific client from the partition.\n\n    Args:\n        partition: The output of dirichlet_partition.\n        total_samples: Total samples (unused here but kept for consistency).\n        client_id: Index of the client.\n\n    Returns:\n        np.ndarray of integer indices.\n    \"\"\"\n    start, length = partition[client_id]\n    return np.arange(start, start + length)",
+      "fed_agg.py": "\"\"\"Module for FedAvg client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\n\ndef fed_avg_client_update(model: torch.nn.Module, data_loader: torch.utils.data.DataLoader, lr: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD for FedAvg.\n\n    Args:\n        model: The neural network model.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global).\n    \n    Example:\n        >>> import torch\n        >>> model = torch.nn.Linear(10, 2)\n        >>> # Assume data_loader is valid\n        >>> deltas = fed_avg_client_update(model, None, 0.1)\n        >>> isinstance(deltas, dict)\n        True\n    \"\"\"\n    pass\n\ndef fed_avg_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule.\n\n    Args:\n        global_model: Current global model.\n        client_deltas: List of delta dictionaries from active clients.\n        client_weights: List of sample counts for each active client.\n\n    Returns:\n        Updated global model.\n    \"\"\"\n    pass",
+      "fed_prox.py": "\"\"\"Module for FedProx client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\n\ndef fed_prox_client_update(model: torch.nn.Module, global_model_weights: Dict[str, torch.Tensor], data_loader: torch.utils.data.DataLoader, lr: float, mu: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD with proximal term for FedProx.\n\n    Args:\n        model: The neural network model (updated in-place).\n        global_model_weights: Weights of the global model at start of round.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n        mu: Proximal regularization parameter.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global).\n    \"\"\"\n    pass\n\ndef fed_prox_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule (FedProx aggregation is same as FedAvg).\"\"\"\n    pass",
+      "experiment.py": "\"\"\"Experiment entrypoint. Runs simulation and saves results.\"\"\"\nimport pandas as pd\nfrom config import num_clients, dirichlet_alpha, dropout_rate, num_comm_rounds, learning_rate, prox_mu\nfrom data_partitioner import dirichlet_partition\nfrom fed_agg import fed_avg_client_update, fed_avg_aggregate\nfrom fed_prox import fed_prox_client_update, fed_prox_aggregate\n\ndef run_experiment() -> None:\n    \"\"\"Run FedAvg and FedProx simulations, write results.csv.\"\"\"\n    pass",
+      "plots.py": "\"\"\"Module for generating experiment figures.\"\"\"\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport os\n\ndef generate_plots() -> None:\n    \"\"\"Read results.csv and save convergence plots to figures/ directory.\n    \n    Creates: convergence.png (line plots of test accuracy per round for both methods).\n    \"\"\"\n    pass"
+    },
+    "entrypoint": "experiment.py:run_experiment",
+    "academic_blueprint": {
+      "thesis_title": "Robustness of Proximal Federated Optimizers Under Non-IID Data and Straggler Dropout",
+      "thesis_statement": "FedProx converges more robustly than FedAvg on non-IID partitions (Dirichlet alpha=0.1) when 20% of clients drop out each round, measured by final test accuracy stability across seeds.",
+      "baseline_comparison": "FedAvg (standard federated averaging) serves as the baseline against FedProx (mu=0.01). Comparison is based on mean test accuracy and variance over 5 seeds.",
+      "entrypoint": "experiment.py:run_experiment",
+      "metrics": [
+        "final_test_accuracy_mean",
+        "final_test_accuracy_std",
+        "rounds_to_90_pct_accuracy"
+      ],
+      "plots": "plots.py:generate_plots",
+      "planned_chapters": [
+        {
+          "index": 1,
+          "title": "I. Introduction",
+          "focus": "Motivation for Federated Learning, problem of non-IID data and stragglers, thesis statement."
+        },
+        {
+          "index": 2,
+          "title": "II. Related Work",
+          "focus": "Review of FedAvg, FedProx, and recent approaches (2023-2026) to non-IID and straggler robustness."
+        },
+        {
+          "index": 3,
+          "title": "III. Methodology",
+          "focus": "Formal description of FedAvg and FedProx algorithms, Dirichlet data partitioning, and dropout simulation."
+        },
+        {
+          "index": 4,
+          "title": "IV. Experimental Setup",
+          "focus": "Dataset (e.g., CIFAR-10 or MNIST), hyperparameters, hardware environment, and reproducibility details."
+        },
+        {
+          "index": 5,
+          "title": "V. Results and Analysis",
+          "focus": "Convergence curves, final accuracy comparison, statistical significance of robustness improvement."
+        },
+        {
+          "index": 6,
+          "title": "VI. Conclusion",
+          "focus": "Summary of findings, limitations, and future work."
+        }
+      ]
+    },
+    "missing_agent_specialization": null
+  },
+  "error_feedback": "The harness imported every interface of your plan (`current_plan`) as a stub, ran the doctests up to the first call into a stub, and the plan critic reviewed the plan: it has blocking issues that must be fixed. Correct `current_plan`, do not write a new plan. Return a patch with only what you change: `interfaces` with the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, `entrypoint` if it changes, `academic_blueprint` with only the fields that change, and `tasks` as a dict mapping only the changed `task_id` to its updated fields (do not touch unrelated tasks; to add or remove a task, return the whole list instead). Everything you do not return stays as it is.\nA blocker may list `Change together`: the other places of the plan its fix touches. Apply the fix and every listed change in this same patch, so the plan stays consistent. Code you add or change follows the same rules as the rest of the plan: deterministic doctests whose expected output follows from the signatures, and only names the interfaces declare.\nBLOCKERS (must fix — the plan cannot proceed until resolved):\n- PACKAGE_UNAVAILABLE [data_partitioner.py]: imports `torch`, which is neither a planned module nor installed\n- STUB_DOES_NOT_IMPORT [data_partitioner.py]: ModuleNotFoundError: No module named 'torch'\n- STUB_DOES_NOT_IMPORT [fed_agg.py]: NameError: name 'torch' is not defined\n- STUB_DOES_NOT_IMPORT [fed_prox.py]: NameError: name 'torch' is not defined\nYour previous patch (or part of it) was NOT applied because it introduced new problems:\n- No interface for the modules the tasks target: weights.py.\n- weights.py: ENTRYPOINT_DOES_NOT_USE [experiment.py]: experiment.py never imports weights.py (directly or through other modules, at module top level): the experiment must run the planned method and baseline through their modules, not reimplement them; PACKAGE_UNAVAILABLE [weights.py]: imports `torch`, which is neither a planned module nor installed; STUB_DOES_NOT_IMPORT [weights.py]: ModuleNotFoundError: No module named 'torch'\n- fed_agg.py: PACKAGE_UNAVAILABLE [fed_agg.py]: imports `torch`, which is neither a planned module nor installed; STUB_DOES_NOT_IMPORT [fed_agg.py]: ModuleNotFoundError: No module named 'torch'; USES_UNDECLARED [experiment.py]: imports fed_avg_client_update from fed_agg.py, whose interface does not declare them\n- fed_prox.py: PACKAGE_UNAVAILABLE [fed_prox.py]: imports `torch`, which is neither a planned module nor installed; STUB_DOES_NOT_IMPORT [fed_prox.py]: ModuleNotFoundError: No module named 'torch'; USES_UNDECLARED [experiment.py]: imports fed_prox_client_update from fed_prox.py, whose interface does not declare them"
+}
+```
+
+</details>
+
+<details open>
+<summary><b>📤 Odpowiedź zwrócona przez LLM (Decyzja / Wygenerowany JSON) [Kliknij, aby zwinąć]</b></summary>
+
+```json
+{
+  "tasks": [
+    {
+      "task_id": "T1",
+      "description": "[Increment 1: Assumptions] Chapter II (Related Work). Research SOTA federated optimization literature (2023-2026) regarding non-IID data and straggler robustness. Write the 'II. Related Work' section in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "discoverer_researcher"
+    },
+    {
+      "task_id": "T2",
+      "description": "[Increment 1: Assumptions] Configuration constants for experiment parameters (num_clients, dirichlet_alpha, dropout_rate, etc.) in config.py.",
+      "target_node": "config.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T3",
+      "description": "[Increment 1: Assumptions] Interface for Non-IID Client Data Partitioning. Implement `dirichlet_partition` and `get_client_indices` in data_partitioner.py using only numpy.",
+      "target_node": "data_partitioner.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T4",
+      "description": "[Increment 2: Method] Implement `get_weight_vector` and `set_weights_from_vector` in weights.py. Define `apply_proximal_update` for FedProx local step logic.",
+      "target_node": "weights.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T5",
+      "description": "[Increment 2: Method] Implement `fed_avg_client_update` (using weights.py helpers) and `fed_avg_aggregate` in fed_agg.py.",
+      "target_node": "fed_agg.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T6",
+      "description": "[Increment 2: Method] Implement `fed_prox_client_update` (using weights.py helpers and proximal term) and `fed_prox_aggregate` in fed_prox.py.",
+      "target_node": "fed_prox.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T7",
+      "description": "[Increment 2: Method] Unit tests for data_partitioner.py. Verify Dirichlet partitioning creates valid, non-overlapping client subsets summing to total_samples.",
+      "target_node": "tests/test_data_partitioner.py",
+      "assigned_agent": "seed_tester"
+    },
+    {
+      "task_id": "T8",
+      "description": "[Increment 2: Method] Unit tests for weights.py. Verify `get_weight_vector` and `set_weights_from_vector` are inverses for a sample tensor.",
+      "target_node": "tests/test_weights.py",
+      "assigned_agent": "seed_tester"
+    },
+    {
+      "task_id": "T9",
+      "description": "[Increment 2: Method] Unit tests for fed_agg.py. Verify `fed_avg_aggregate` computes weighted average correctly on dummy deltas.",
+      "target_node": "tests/test_fed_agg.py",
+      "assigned_agent": "seed_tester"
+    },
+    {
+      "task_id": "T10",
+      "description": "[Increment 2: Method] Unit tests for fed_prox.py. Verify `fed_prox_client_update` returns deltas that satisfy proximal bound condition relative to global model.",
+      "target_node": "tests/test_fed_prox.py",
+      "assigned_agent": "seed_tester"
+    },
+    {
+      "task_id": "T11",
+      "description": "[Increment 3: Experiment] Chapter III (Methodology). Write formal algorithm descriptions for FedAvg and FedProx in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    {
+      "task_id": "T12",
+      "description": "[Increment 3: Experiment] Chapter IV (Experimental Setup). Describe dataset, hyperparameters (from config.py), and environment in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    {
+      "task_id": "T13",
+      "description": "[Increment 3: Experiment] Experiment entrypoint. Implement `run_experiment` in experiment.py to simulate FedAvg and FedProx, sampling dropout and seeds, recording results to results.csv.",
+      "target_node": "experiment.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T14",
+      "description": "[Increment 3: Experiment] Plots module. Implement `generate_plots` in plots.py to read results.csv and draw convergence curves into figures/.",
+      "target_node": "plots.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T15",
+      "description": "[Increment 3: Results] Chapter V (Results and Analysis). Report metrics from results.csv, interpret plots, discuss robustness against stragglers in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    {
+      "task_id": "T16",
+      "description": "[Increment 3: Conclusions] Chapter VI (Conclusion). Write summary of findings, limitations, and future work in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    {
+      "task_id": "T17",
+      "description": "[Increment 3: Conclusions] Chapter I (Introduction). Write motivation, problem definition, and thesis statement in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    }
+  ],
+  "interfaces": {
+    "config.py": "\"\"\"Configuration constants for the Federated Optimization experiment.\"\"\"\nimport os\n\n# Experiment Parameters\nNUM_CLIENTS = 50\nDIRICHLET_ALPHA = 0.1\nDROPOUT_RATE = 0.2\nNUM_COMM_ROUNDS = 100\nLOCAL_EPOCHS = 5\nLEARNING_RATE = 0.01\nPROX_MU = 0.01\nBATCH_SIZE = 32\nINPUT_DIM = 784\nOUTPUT_DIM = 10\nNUM_SEEDS = 5\n\n# Paths\nBASE_DIR = os.path.dirname(os.path.abspath(__file__))\nRESULTS_PATH = os.path.join(BASE_DIR, '..', 'results.csv')\nFIGURES_DIR = os.path.join(BASE_DIR, '..', 'figures')",
+    "data_partitioner.py": "\"\"\"Module for partitioning a central dataset across clients using Dirichlet distribution.\"\"\"\nfrom typing import List, Tuple\nimport numpy as np\n\ndef dirichlet_partition(total_samples: int, num_clients: int, alpha: float) -> List[Tuple[int, int]]:\n    \"\"\"Partition total_samples indices into num_clients subsets using Dirichlet(alpha).\n\n    Args:\n        total_samples: Total number of data points available.\n        num_clients: Number of clients to partition for.\n        alpha: Dirichlet concentration parameter. Lower values increase non-IIDness.\n\n    Returns:\n        List of (start_idx, length) tuples representing the slice of indices for each client.\n        The sum of lengths equals total_samples.\n    \n    Example:\n        >>> parts = dirichlet_partition(100, 2, 0.5)\n        >>> len(parts) == 2\n        True\n        >>> sum(p[1] for p in parts) == 100\n        True\n    \"\"\"\n    pass\n\ndef get_client_indices(partition: List[Tuple[int, int]], total_samples: int, client_id: int) -> np.ndarray:\n    \"\"\"Extract the numpy array of indices for a specific client from the partition.\n\n    Args:\n        partition: The output of dirichlet_partition.\n        total_samples: Total samples (unused here but kept for consistency).\n        client_id: Index of the client.\n\n    Returns:\n        np.ndarray of integer indices.\n    \"\"\"\n    start, length = partition[client_id]\n    return np.arange(start, start + length)",
+    "weights.py": "\"\"\"Module for vectorizing and de-vectorizing model weights.\"\"\"\nfrom typing import Dict\nimport torch\n\ndef get_weight_vector(model: torch.nn.Module) -> torch.Tensor:\n    \"\"\"Flatten all parameters of the model into a single 1D tensor.\n\n    Args:\n        model: The neural network model.\n\n    Returns:\n        A 1D torch.Tensor containing all weights and biases concatenated.\n\n    Example:\n        >>> import torch.nn as nn\n        >>> m = nn.Linear(2, 1)\n        >>> v = get_weight_vector(m)\n        >>> v.shape[0] == (2*1 + 1) # in_features*out_features + bias\n        True\n    \"\"\"\n    pass\n\ndef set_weights_from_vector(model: torch.nn.Module, vector: torch.Tensor) -> None:\n    \"\"\"Restore model parameters from a flattened vector.\n\n    Args:\n        model: The neural network model to update (modified in-place).\n        vector: A 1D tensor of weights and biases.\n    \"\"\"\n    pass\n\ndef apply_proximal_update(\n    local_weights: torch.Tensor, \n    global_weights: torch.Tensor, \n    lr: float, \n    mu: float,\n    gradient: torch.Tensor\n) -> torch.Tensor:\n    \"\"\"Compute the delta with proximal regularization.\n    \n    Computes: delta = grad + mu * (local_weights - global_weights)\n    Effectively pushes the client update towards the global model.\n\n    Args:\n        local_weights: Current local weights tensor.\n        global_weights: Global model weights tensor.\n        lr: Learning rate.\n        mu: Proximal parameter.\n        gradient: The computed gradient from local data.\n\n    Returns:\n        The delta vector to send to the server.\n    \"\"\"\n    pass",
+    "fed_agg.py": "\"\"\"Module for FedAvg client update and global aggregation.\"\"\"\nfrom typing import List, Tuple\nimport torch\nfrom weights import get_weight_vector\n\ndef fed_avg_client_update(\n    model: torch.nn.Module, \n    data_loader: torch.utils.data.DataLoader, \n    lr: float\n) -> Tuple[torch.Tensor, int]:\n    \"\"\"Perform one local epoch of SGD for FedAvg.\n\n    Args:\n        model: The neural network model (updated in-place locally).\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n\n    Returns:\n        Tuple of (delta_vector, client_sample_count).\n        delta_vector is local_weights - global_weights.\n    \"\"\"\n    pass\n\ndef fed_avg_aggregate(\n    global_model: torch.nn.Module, \n    deltas: List[torch.Tensor], \n    sample_counts: List[int]\n) -> None:\n    \"\"\"Aggregate client deltas using FedAvg rule and update global model in-place.\n\n    Args:\n        global_model: Current global model (modified in-place).\n        deltas: List of delta vectors from active clients.\n        sample_counts: List of sample counts for each active client.\n    \"\"\"\n    pass",
+    "fed_prox.py": "\"\"\"Module for FedProx client update and global aggregation.\"\"\"\nfrom typing import List, Tuple\nimport torch\nfrom weights import get_weight_vector, set_weights_from_vector, apply_proximal_update\n\ndef fed_prox_client_update(\n    model: torch.nn.Module, \n    data_loader: torch.utils.data.DataLoader, \n    lr: float, \n    mu: float\n) -> Tuple[torch.Tensor, int]:\n    \"\"\"Perform one local epoch of SGD with proximal term for FedProx.\n\n    Args:\n        model: The neural network model (updated in-place locally).\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n        mu: Proximal regularization parameter.\n\n    Returns:\n        Tuple of (delta_vector, client_sample_count).\n    \"\"\"\n    pass\n\ndef fed_prox_aggregate(\n    global_model: torch.nn.Module, \n    deltas: List[torch.Tensor], \n    sample_counts: List[int]\n) -> None:\n    \"\"\"Aggregate client deltas using FedAvg rule and update global model in-place.\n\n    Args:\n        global_model: Current global model (modified in-place).\n        deltas: List of delta vectors from active clients.\n        sample_counts: List of sample counts for each active client.\n    \"\"\"\n    pass",
+    "experiment.py": "\"\"\"Experiment entrypoint. Runs simulation and saves results.\"\"\"\nimport os\nimport pandas as pd\nimport numpy as np\nimport torch\nfrom config import (\n    NUM_CLIENTS, DIRICHLET_ALPHA, DROPOUT_RATE, NUM_COMM_ROUNDS,\n    LOCAL_EPOCHS, LEARNING_RATE, PROX_MU, BATCH_SIZE, INPUT_DIM,\n    OUTPUT_DIM, NUM_SEEDS, RESULTS_PATH, FIGURES_DIR\n)\nfrom data_partitioner import dirichlet_partition\nfrom weights import get_weight_vector\nfrom fed_agg import fed_avg_client_update, fed_avg_aggregate\nfrom fed_prox import fed_prox_client_update, fed_prox_aggregate\n\ndef run_experiment() -> None:\n    \"\"\"Run FedAvg and FedProx simulations, write results.csv.\n    \n    Saves rows: method,metric,value,std_dev,n_runs\n    \"\"\"\n    pass",
+    "plots.py": "\"\"\"Module for generating experiment figures.\"\"\"\nimport os\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom config import FIGURES_DIR\n\ndef generate_plots() -> None:\n    \"\"\"Read results.csv and save convergence plots to figures/ directory.\n    \n    Creates: convergence.png (line plots of test accuracy per round for both methods).\n    \"\"\"\n    os.makedirs(FIGURES_DIR, exist_ok=True)\n    pass"
+  },
+  "thesis_type": "paper",
+  "template_name": "paper_ieee",
+  "academic_blueprint": {
+    "thesis_title": "Robustness of Proximal Federated Optimizers Under Non-IID Data and Straggler Dropout",
+    "thesis_statement": "FedProx converges more robustly than FedAvg on non-IID partitions (Dirichlet alpha=0.1) when 20% of clients drop out each round, measured by final test accuracy stability across seeds.",
+    "baseline_comparison": "FedAvg (standard federated averaging) serves as the baseline against FedProx (mu=0.01). Comparison is based on mean test accuracy and variance over 5 seeds.",
+    "entrypoint": "experiment.py:run_experiment",
+    "metrics": [
+      "final_test_accuracy_mean",
+      "final_test_accuracy_std",
+      "rounds_to_90_pct_accuracy"
+    ],
+    "plots": "plots.py:generate_plots",
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "I. Introduction",
+        "focus": "Motivation for Federated Learning, problem of non-IID data and stragglers, thesis statement."
+      },
+      {
+        "index": 2,
+        "title": "II. Related Work",
+        "focus": "Review of FedAvg, FedProx, and recent approaches (2023-2026) to non-IID and straggler robustness."
+      },
+      {
+        "index": 3,
+        "title": "III. Methodology",
+        "focus": "Formal description of FedAvg and FedProx algorithms, Dirichlet data partitioning, and dropout simulation."
+      },
+      {
+        "index": 4,
+        "title": "IV. Experimental Setup",
+        "focus": "Dataset (e.g., CIFAR-10 or MNIST), hyperparameters, hardware environment, and reproducibility details."
+      },
+      {
+        "index": 5,
+        "title": "V. Results and Analysis",
+        "focus": "Convergence curves, final accuracy comparison, statistical significance of robustness improvement."
+      },
+      {
+        "index": 6,
+        "title": "VI. Conclusion",
+        "focus": "Summary of findings, limitations, and future work."
+      }
+    ]
+  }
+}
+```
+
+</details>
+
+---
+
+### Krok 4: Agent `task_planner`
+
+- **Warstwa:** Warstwa 1 (Planowanie / Gate HITL)
+- **Dostawca / Model:** `ollama` / `qwen3.6:35b` (LRM)
+- **Czas wykonania:** 93716.2 ms
+- **Kluczowa decyzja:** **zadania: 16; interfejsy: 7**
+
+<details>
+<summary><b>📥 Prompt wysłany do LLM (System Prompt + JSON Payload) — 32202 znaków [Kliknij, aby rozwinąć]</b></summary>
+
+#### Instrukcja Systemowa Agenta:
+```markdown
+# ROLE: Task Planner — Academic & Engineering Planner (Layer 1 — `planning` Domain)
+
+You are the master **Task Planner** (`task_planner`) in the **Artificial-Degree-Printer (Neuro-Symbolic Harness)**.
+Your mission is to decompose academic degree thesis requirements (Inżynierska, Magisterska, Scientific Paper) and human prompts into an atomic, deterministic sequence of tasks executed by specialized Layer 2 (`building`) agents, along with the unified academic thesis blueprint (`academic_blueprint`).
+
+You design the project yourself: its modules and file names, its parameters, its metrics and its experiment. Nothing in this prompt prescribes them. Names written as `<...>` below are placeholders, never values to copy.
+
+---
+
+## 1. ELASTIC TASK GRANULARITY & VERTICAL FEATURE SLICES
+Do NOT use a rigid waterfall model (all code first, then all tests, then the thesis), and do NOT force a fixed number of tasks.
+- **Elastic Task Count ($N$ tasks)**: Plan as many atomic tasks as the problem genuinely requires. Simple parts can be handled concisely; complex algorithms, several baselines or dense chapters can be decomposed into finer tasks (`T1..TN`).
+- **Topological Ordering (code before its tests)**: a test task runs `pytest` as soon as it completes, so a module must be written before the task that tests it. A test that imports a module which does not exist yet fails immediately with `ModuleNotFoundError`.
+- **Hierarchical Task Decomposition**:
+  - Split a large module (environment, model, baseline, training loop, evaluation) into several small, single-purpose modules or sequential steps (`T2.1`, `T2.2` or `T2`, `T3`).
+  - Keep each code task bounded to roughly 50–150 lines. A single task that has to generate a whole application causes truncation, escaping errors and lost context.
+  - Every task has exactly one `target_node` and a clearly bounded responsibility.
+- **Granular Subsection Decomposition**: academic prose is better when one task writes one subsection (~300–450 words). Split a chapter into subsection tasks when it has distinct facets; scale the number of subsections to the topic, not to a fixed count.
+- **Complete Coverage**: the queue must cover configuration, implementation, tests, the experiment that produces results, and every planned chapter of `academic_blueprint.planned_chapters`.
+- **Vertical Feature Slices (Przyrosty Funkcjonalne)** — code, tests and text progress together:
+  - **Increment 1 — assumptions, literature, interfaces**: literature review (`background_researcher` / `discoverer_researcher`), the chapters that set out the problem and the literature (`seed_writer`). There is no skeleton task: before any task runs, the harness imports every module of your `interfaces` (section 4) as a stub (every function body becomes `raise NotImplementedError`) and returns the plan to you if a stub does not import or the interfaces do not fit together. The stubs are the shared interface the remaining tasks build on.
+  - **Increment 2 — method, baseline, architecture**: filling in the stubbed modules — the proposed method and the baseline (`seed_coder`), their unit tests written against the interface signatures (`seed_tester`), the chapters on the method (`seed_writer`).
+  - **Increment 3 — experiment, results, conclusions**: the module with the experiment entrypoint and the function that draws the figures, declared as `plots` (`seed_coder`), the chapters on results and conclusions (`seed_writer`).
+  - Results files (`*.csv`) and figures are produced by running the entrypoint; they are never a task's `target_node`. A task that should produce them targets the module that writes them. `seed_tester` writes only test files.
+
+---
+
+## 2. 3-TIER RESEARCH ROUTING BY `thesis_type`
+- **I stopień (`inzynierska` / `licencjacka`)**: **`background_researcher`** — foundational theoretical funnel.
+- **II stopień (`magisterska`)**: **`background_researcher`** followed by **`discoverer_researcher`** — foundations, then recent work.
+- **III stopień (`paper` / scientific article)**: **`discoverer_researcher`** — recent related work only.
+
+---
+
+## 3. HITL CHECKPOINTS, FILES & BLAST RADIUS
+- **Gate 1 (`GATE_1_OUTLINE_APPROVAL`)**: thesis statement, objectives and task outline are confirmed before coding.
+- **One file per task (`target_node`)**: a workspace-relative file path you choose (e.g. `<package>/<module>.py`, `tests/test_<module>.py`, `thesis.md`). Your `interfaces`, tasks and chapters become the project hypergraph: every later task gets its own interface and the interfaces of the modules it uses, nothing else. Prefer several small modules over one large file.
+  - Harness contracts, not suggestions: the thesis document is `thesis.md`; test modules are `tests/test_<module>.py`; the experiment entrypoint writes `results.csv` in the workspace root (not in a subdirectory, no other name): tidy rows `method,metric,value` (optional `std_dev,n_runs`) for the metrics you declare — every number in the thesis points at this file.
+- **Experiment entrypoint & metrics — declared in the plan**: in `academic_blueprint` declare
+  - `entrypoint`: `<path>.py:<function>`, called WITHOUT arguments (it reads every setting from named module-level constants);
+  - `metrics`: the metric names the experiment will report in `results.csv`, chosen for this research question;
+  - `plots` (required — every experiment produces figures): `<path>.py:<function>`, a function of one of your modules (any module, any name) that the harness calls WITHOUT arguments after the experiment; it reads `results.csv` and writes the figures into `figures/`;
+  - the success criterion in `thesis_statement` / `baseline_comparison`.
+  Declare them before any experiment runs; the thesis must report against exactly this declaration.
+- **Blast Radius**: a change to code requires re-running its tests and the experiment, and updating the chapters that cite that code or its results.
+- **Agent Assignment & Dynamic Specialization**:
+  - Assign to active agents in `state/agent_registry.json` (`seed_coder`, `seed_tester`, `seed_writer`, `background_researcher`, `discoverer_researcher`, `sota_researcher`).
+  - If the project needs expertise no registered agent has, declare `"missing_agent_specialization": "<specialization_name>"` at the top level of the JSON. Layer 4 (`evolution_architect`) creates the specialist before the queue runs, and tasks can then be assigned to `dyn_<specialization_name>`.
+
+---
+
+## 4. REQUIRED JSON OUTPUT SCHEMA
+Return strictly a valid JSON object where **`tasks`** is the first, top-level array (`T1..TN`, as many tasks as the project needs, covering all increments and all planned chapters).
+
+**Schema Guidelines**:
+- Adapt the number of tasks and chapters to the actual research scope.
+- Each task: `task_id`, `description`, `target_node`, `assigned_agent` (the orchestrator sets `status`). Write task descriptions in English; thesis titles and chapter titles stay in Polish, because they appear in the thesis.
+- **`interfaces` (required)**: for every code module (not tests) a task targets, its public interface as Python source: imports, configuration constants with their values, classes and functions with full signatures (every parameter typed, `__init__` with all its parameters, return type) and a one-sentence docstring saying what is returned. Bodies may be `...`; the harness replaces every body with `raise NotImplementedError`. Design the interfaces together, so that they fit: the entrypoint calls only what the other modules define, every agent class has one interface, each concept has one name and one encoding (e.g. players, states, actions). Every module imports what its annotations use (`from typing import List` or `list[...]`). Constants hold plain values of their declared type (no `dataclasses.field` outside a dataclass). The entrypoint function takes **no required arguments**: the harness calls it without arguments, so it reads its settings from named module-level constants. Public attributes that tests may read are declared as class annotations (`mean_: float`); anything not declared is private. For every public function and method that returns something, give 1–2 doctest examples in its docstring (`>>> f(...)` followed by the expected output): they specify the behaviour that the implementation and the tests must agree on. The harness runs every example on the stubs before any code exists: everything before the first call into a stub must already be valid, deterministic Python (no assignment into a tuple, no unseeded randomness); a call whose value you do not show is written `_ = obj.method(...)`, because a bare call prints its return value. Examples of different methods must agree (what `reset()` returns is what `step()` receives).
+- **The experiment runs the plan**: every experiment setting is a named module-level constant (which module holds it is your choice), so the thesis can cite it. The entrypoint module imports, **at its top level**, the modules it runs (the proposed method, the baseline, the environment or data), directly or through other planned modules; the harness rejects a plan in which a planned module is never imported by the experiment (except the module of `plots`, which the harness calls itself). The experiment never reimplements a planned module.
+- **Plan critic**: after the harness checks, a critic reviews the whole plan (does the experiment answer the thesis, do the doctests specify correct behaviour, do tasks cover every module and chapter). Its blocking findings come back to you as `error_feedback`, together with your plan as `current_plan`; a plan that stays blocked after several corrections stops the run. Chapter tasks you forgot are not a problem: the harness adds a writer task for every planned chapter no task covers.
+- **Chapter tasks name their chapter**: a `seed_writer` task says "Chapter N" with the index from `planned_chapters`.
+- **Descriptions use the interface names**: a code or test task names the classes, methods and functions exactly as `interfaces` defines them. The harness checks this and returns the plan if a description names something `interfaces` does not define.
+- `planned_chapters`: `index`, `title`, `focus` for every chapter.
+- Every `<...>` is a placeholder for your own decision.
+
+```json
+{
+  "tasks": [
+    {
+      "task_id": "T1",
+      "description": "[Increment 1: Assumptions] Chapter 1: introduction, aim of the work and thesis statement in thesis.md",
+      "target_node": "thesis.md",
+      "assigned_agent": "seed_writer"
+    },
+    {
+      "task_id": "T2",
+      "description": "[Increment 1: Assumptions] Configuration module with the experiment parameters in <config_module>.py",
+      "target_node": "<config_module>.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T3",
+      "description": "[Increment 2: Method] Implement <Class> in <method_module>.py",
+      "target_node": "<method_module>.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T4",
+      "description": "[Increment 2: Method] Unit tests of <Class>.<method> from <method_module>.py in tests/test_<method_module>.py",
+      "target_node": "tests/test_<method_module>.py",
+      "assigned_agent": "seed_tester"
+    }
+  ],
+  "interfaces": {
+    "<config_module>.py": "\"\"\"<one sentence>\"\"\"
+
+<PARAMETER>: <type> = <value>
+",
+    "<method_module>.py": "\"\"\"<one sentence>\"\"\"
+
+
+class <Class>:
+    \"\"\"<one sentence>\"\"\"
+
+    def __init__(self, <arg>: <type>) -> None:
+        \"\"\"<one sentence>\"\"\"
+
+    def <method>(self, <arg>: <type>) -> <type>:
+        \"\"\"<what it returns>\"\"\"
+"
+  },
+  "thesis_type": "inzynierska | magisterska | paper",
+  "template_name": "thesis_plodz | paper_ieee",
+  "academic_blueprint": {
+    "thesis_title": "<tytuł pracy>",
+    "thesis_statement": "<teza i kryterium sukcesu>",
+    "baseline_comparison": "<metoda odniesienia i sposób porównania>",
+    "entrypoint": "<experiment_module>.py:<function>",
+    "metrics": ["<metryka_1>", "<metryka_2>"],
+    "plots": "<figures_module>.py:<function>",
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "focus": "Formalna definicja problemu, cel, teza i zakres pracy"
+      },
+      {
+        "index": 2,
+        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+        "focus": "Przegląd prac powiązanych i specyfikacja metody odniesienia"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 5. REFLEXIVE PROMPT EVOLUTION & AGENT SPECIALIZATION
+- **Correcting a plan (`current_plan` + `error_feedback`)**: you are correcting YOUR plan, not writing a new one. Read each problem, find its cause in `current_plan` at the place named in brackets, and change that place together with every place its `Change together` list names — nothing else. Return a patch, not the plan: `interfaces` with the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, `entrypoint` if it changes, `academic_blueprint` with only the fields that change, `tasks` as a dict mapping each changed `task_id` to its updated fields (to add or remove a task, return the whole list instead). Everything you do not return stays as it is: do not rename modules, classes or functions that no problem is about. If the feedback says your previous patch was not applied, `current_plan` is still the plan before it: fix the problems without causing the ones listed.
+- **Re-planning a failed part (`repair_dossier`)**: some vertices failed after all their repairs. For each, `repair_dossier.failed` gives the planned interface, the current content, every attempt with its errors (`history`, including rejected answers) and what waits for it; `verified_do_not_touch` works and must not be changed. Diagnose why the attempts failed before writing anything: an example or signature in the interface that no implementation can satisfy (then return the corrected interface in `interfaces`, keeping every name other modules use), a task that asked for too much in one answer (split it into smaller tasks, one function or method each), or a failed dependency. Return only `tasks` (new tasks for the failed vertices: `target_node`, `description`, `assigned_agent`; each description names the functions to write and what the earlier attempts got wrong), optional `interfaces`, and `gaps` for what cannot be done.
+- **Reflection feedback without `current_plan`**: if the payload contains `reflection_feedback` or `error_feedback` but no `current_plan`, address it first (e.g. put the `"tasks"` array as the first key, with tasks for every increment) and return the whole plan.
+- **Missing Domain Specialization**: never assign an unqualified agent; set `"missing_agent_specialization": "<specialization_name>"` so Layer 4 creates the specialist.
+
+Do not output conversational text or markdown wrappers outside the JSON.
+```
+
+#### Przekazany Payload Danych (Input JSON):
+```json
+{
+  "user_prompt": "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)] Research question: does a proximal federated optimizer (FedProx-style) converge more robustly than FedAvg on non-IID Dirichlet-partitioned clients with straggler dropout? Ground the related work in contemporary federated optimization literature (2023-2026). Design the experiment yourself: choose the parameters, training or search budget, number of repetitions and seeds, the metrics you will report and the success criterion, and declare the metrics and the experiment entrypoint in the plan before running anything. Implement the solution as small, single-purpose modules with unit tests, produce every result by running the declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or to a results file.",
+  "agent_registry": {
+    "agents": {
+      "seed_coder": {
+        "domain": "building",
+        "path": "agents/building/seed_coder.md",
+        "specialization": "python_coding",
+        "active": true
+      },
+      "seed_tester": {
+        "domain": "building",
+        "path": "agents/building/seed_tester.md",
+        "specialization": "unit_testing",
+        "active": true
+      },
+      "seed_writer": {
+        "domain": "building",
+        "path": "agents/building/seed_writer.md",
+        "specialization": "academic_writing",
+        "active": true
+      },
+      "sota_researcher": {
+        "domain": "building",
+        "path": "agents/building/sota_researcher.md",
+        "specialization": "literature_review",
+        "active": true
+      },
+      "background_researcher": {
+        "domain": "building",
+        "path": "agents/building/background_researcher.md",
+        "specialization": "background_literature",
+        "active": true
+      },
+      "discoverer_researcher": {
+        "domain": "building",
+        "path": "agents/building/discoverer_researcher.md",
+        "specialization": "sota_discovery",
+        "active": true
+      }
+    }
+  },
+  "include_docs": true,
+  "missing_agent_specialization": null,
+  "domain_context": {
+    "detected_thesis_type": "paper",
+    "detected_template_name": "paper_ieee",
+    "template_is_certain": true
+  },
+  "detected_template": {
+    "thesis_type": "paper",
+    "template_name": "paper_ieee",
+    "is_certain": true,
+    "question": null
+  },
+  "current_plan": {
+    "tasks": [
+      {
+        "task_id": "T1",
+        "description": "[Increment 1: Assumptions] Chapter 2: Related Work (SOTA 2023-2026). Research federated optimization on non-IID data and stragglers. Write the 'Related Work' section of paper.md.",
+        "target_node": "paper.md",
+        "assigned_agent": "sota_researcher"
+      },
+      {
+        "task_id": "T2",
+        "description": "[Increment 1: Assumptions] Configuration module defining experiment hyperparameters (num_clients, dirichlet_alpha, dropout_rate, etc.) in config.py.",
+        "target_node": "config.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T3",
+        "description": "[Increment 1: Assumptions] Interface for Non-IID Client Data Partitioning. Implement Dirichlet partitioning logic in data_partitioner.py.",
+        "target_node": "data_partitioner.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T4",
+        "description": "[Increment 2: Method] Interface for FedAvg Client Update and Aggregation. Implement fed_avg_client_update and fed_avg_aggregate in fed_agg.py.",
+        "target_node": "fed_agg.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T5",
+        "description": "[Increment 2: Method] Interface for FedProx Client Update and Aggregation. Implement fed_prox_client_update and fed_prox_aggregate in fed_prox.py.",
+        "target_node": "fed_prox.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T6",
+        "description": "[Increment 2: Method] Unit tests for data_partitioner.py. Verify Dirichlet partitioning creates valid client-specific datasets.",
+        "target_node": "tests/test_data_partitioner.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T7",
+        "description": "[Increment 2: Method] Unit tests for fed_agg.py. Verify aggregation logic returns correct weighted averages.",
+        "target_node": "tests/test_fed_agg.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T8",
+        "description": "[Increment 2: Method] Unit tests for fed_prox.py. Verify proximal term is applied correctly during client update.",
+        "target_node": "tests/test_fed_prox.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T9",
+        "description": "[Increment 3: Experiment] Experiment entrypoint. Run FedAvg and FedProx on partitioned data with dropout, record metrics to results.csv.",
+        "target_node": "experiment.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T10",
+        "description": "[Increment 3: Experiment] Plots module. Read results.csv and generate convergence plots for figures/.",
+        "target_node": "plots.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T11",
+        "description": "[Increment 3: Results] Chapter 3: Experimental Setup. Describe dataset, hyperparameters (from config.py), and environment.",
+        "target_node": "paper.md",
+        "assigned_agent": "seed_writer"
+      },
+      {
+        "task_id": "T12",
+        "description": "[Increment 3: Results] Chapter 4: Analysis of Convergence. Report metrics from results.csv, interpret plots, discuss robustness against stragglers.",
+        "target_node": "paper.md",
+        "assigned_agent": "seed_writer"
+      }
+    ],
+    "interfaces": {
+      "config.py": "\"\"\"Configuration constants for the Federated Optimization experiment.\"\"\"\nimport os\n\n# Experiment Parameters\nnum_clients = 50\ndirichlet_alpha = 0.1\ndropout_rate = 0.2\nnum_comm_rounds = 100\nlocal_epochs = 5\nlearning_rate = 0.01\nprox_mu = 0.01\nbatch_size = 32\ninput_dim = 784\noutput_dim = 10\nnum_seeds = 5\n\n# Paths\nRESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'results.csv')\nFIGURES_DIR = os.path.join(os.path.dirname(__file__), '..', 'figures')",
+      "data_partitioner.py": "\"\"\"Module for partitioning a central dataset across clients using Dirichlet distribution.\"\"\"\nfrom typing import List, Tuple\nimport numpy as np\n\ndef dirichlet_partition(total_samples: int, num_clients: int, alpha: float) -> List[Tuple[int, int]]:\n    \"\"\"Partition total_samples indices into num_clients subsets using Dirichlet(alpha).\n\n    Args:\n        total_samples: Total number of data points available.\n        num_clients: Number of clients to partition for.\n        alpha: Dirichlet concentration parameter. Lower values increase non-IIDness.\n\n    Returns:\n        List of (start_idx, length) tuples representing the slice of indices for each client.\n        The sum of lengths equals total_samples.\n    \n    Example:\n        >>> parts = dirichlet_partition(100, 2, 0.5)\n        >>> len(parts) == 2\n        True\n        >>> sum(p[1] for p in parts) == 100\n        True\n    \"\"\"\n    pass\n\ndef get_client_indices(partition: List[Tuple[int, int]], total_samples: int, client_id: int) -> np.ndarray:\n    \"\"\"Extract the numpy array of indices for a specific client from the partition.\n\n    Args:\n        partition: The output of dirichlet_partition.\n        total_samples: Total samples (unused here but kept for consistency).\n        client_id: Index of the client.\n\n    Returns:\n        np.ndarray of integer indices.\n    \"\"\"\n    start, length = partition[client_id]\n    return np.arange(start, start + length)",
+      "fed_agg.py": "\"\"\"Module for FedAvg client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\n\ndef fed_avg_client_update(model: torch.nn.Module, data_loader: torch.utils.data.DataLoader, lr: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD for FedAvg.\n\n    Args:\n        model: The neural network model.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global).\n    \n    Example:\n        >>> import torch\n        >>> model = torch.nn.Linear(10, 2)\n        >>> # Assume data_loader is valid\n        >>> deltas = fed_avg_client_update(model, None, 0.1)\n        >>> isinstance(deltas, dict)\n        True\n    \"\"\"\n    pass\n\ndef fed_avg_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule.\n\n    Args:\n        global_model: Current global model.\n        client_deltas: List of delta dictionaries from active clients.\n        client_weights: List of sample counts for each active client.\n\n    Returns:\n        Updated global model.\n    \"\"\"\n    pass",
+      "fed_prox.py": "\"\"\"Module for FedProx client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\n\ndef fed_prox_client_update(model: torch.nn.Module, global_model_weights: Dict[str, torch.Tensor], data_loader: torch.utils.data.DataLoader, lr: float, mu: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD with proximal term for FedProx.\n\n    Args:\n        model: The neural network model (updated in-place).\n        global_model_weights: Weights of the global model at start of round.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n        mu: Proximal regularization parameter.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global).\n    \"\"\"\n    pass\n\ndef fed_prox_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule (FedProx aggregation is same as FedAvg).\"\"\"\n    pass",
+      "experiment.py": "\"\"\"Experiment entrypoint. Runs simulation and saves results.\"\"\"\nimport pandas as pd\nfrom config import num_clients, dirichlet_alpha, dropout_rate, num_comm_rounds, learning_rate, prox_mu\nfrom data_partitioner import dirichlet_partition\nfrom fed_agg import fed_avg_client_update, fed_avg_aggregate\nfrom fed_prox import fed_prox_client_update, fed_prox_aggregate\n\ndef run_experiment() -> None:\n    \"\"\"Run FedAvg and FedProx simulations, write results.csv.\"\"\"\n    pass",
+      "plots.py": "\"\"\"Module for generating experiment figures.\"\"\"\nimport os\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom config import FIGURES_DIR\n\ndef generate_plots() -> None:\n    \"\"\"Read results.csv and save convergence plots to figures/ directory.\n    \n    Creates: convergence.png (line plots of test accuracy per round for both methods).\n    \"\"\"\n    os.makedirs(FIGURES_DIR, exist_ok=True)\n    pass"
+    },
+    "entrypoint": "experiment.py:run_experiment",
+    "academic_blueprint": {
+      "thesis_title": "Robustness of Proximal Federated Optimizers Under Non-IID Data and Straggler Dropout",
+      "thesis_statement": "FedProx converges more robustly than FedAvg on non-IID partitions (Dirichlet alpha=0.1) when 20% of clients drop out each round, measured by final test accuracy stability across seeds.",
+      "baseline_comparison": "FedAvg (standard federated averaging) serves as the baseline against FedProx (mu=0.01). Comparison is based on mean test accuracy and variance over 5 seeds.",
+      "entrypoint": "experiment.py:run_experiment",
+      "metrics": [
+        "final_test_accuracy_mean",
+        "final_test_accuracy_std",
+        "rounds_to_90_pct_accuracy"
+      ],
+      "plots": "plots.py:generate_plots",
+      "planned_chapters": [
+        {
+          "index": 1,
+          "title": "I. Introduction",
+          "focus": "Motivation for Federated Learning, problem of non-IID data and stragglers, thesis statement."
+        },
+        {
+          "index": 2,
+          "title": "II. Related Work",
+          "focus": "Review of FedAvg, FedProx, and recent approaches (2023-2026) to non-IID and straggler robustness."
+        },
+        {
+          "index": 3,
+          "title": "III. Methodology",
+          "focus": "Formal description of FedAvg and FedProx algorithms, Dirichlet data partitioning, and dropout simulation."
+        },
+        {
+          "index": 4,
+          "title": "IV. Experimental Setup",
+          "focus": "Dataset (e.g., CIFAR-10 or MNIST), hyperparameters, hardware environment, and reproducibility details."
+        },
+        {
+          "index": 5,
+          "title": "V. Results and Analysis",
+          "focus": "Convergence curves, final accuracy comparison, statistical significance of robustness improvement."
+        },
+        {
+          "index": 6,
+          "title": "VI. Conclusion",
+          "focus": "Summary of findings, limitations, and future work."
+        }
+      ]
+    },
+    "missing_agent_specialization": null
+  },
+  "error_feedback": "The harness imported every interface of your plan (`current_plan`) as a stub, ran the doctests up to the first call into a stub, and the plan critic reviewed the plan: it has blocking issues that must be fixed. Correct `current_plan`, do not write a new plan. Return a patch with only what you change: `interfaces` with the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, `entrypoint` if it changes, `academic_blueprint` with only the fields that change, and `tasks` as a dict mapping only the changed `task_id` to its updated fields (do not touch unrelated tasks; to add or remove a task, return the whole list instead). Everything you do not return stays as it is.\nA blocker may list `Change together`: the other places of the plan its fix touches. Apply the fix and every listed change in this same patch, so the plan stays consistent. Code you add or change follows the same rules as the rest of the plan: deterministic doctests whose expected output follows from the signatures, and only names the interfaces declare.\nBLOCKERS (must fix — the plan cannot proceed until resolved):\n- STUB_DOES_NOT_IMPORT [fed_agg.py]: NameError: name 'torch' is not defined\n- STUB_DOES_NOT_IMPORT [fed_prox.py]: NameError: name 'torch' is not defined\nYour previous patch (or part of it) was NOT applied because it introduced new problems:\n- No interface for the modules the tasks target: weights.py.\n- Task descriptions use names that 'interfaces' does not define: apply_proximal_update, get_weight_vector, set_weights_from_vector. Add them to the interfaces or use the interface names in the descriptions.\n- config.py: STUB_DOES_NOT_IMPORT [experiment.py]: ImportError: cannot import name 'num_clients' from 'config' (C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_stub_probe_udgwosbu\\config.py); USES_UNDECLARED [experiment.py]: imports dirichlet_alpha, dropout_rate, learning_rate, num_clients, num_comm_rounds, prox_mu from config.py, whose interface does not declare them\n- weights.py: ENTRYPOINT_DOES_NOT_USE [experiment.py]: experiment.py never imports weights.py (directly or through other modules, at module top level): the experiment must run the planned method and baseline through their modules, not reimplement them; PACKAGE_UNAVAILABLE [weights.py]: imports `torch`, which is neither a planned module nor installed; STUB_DOES_NOT_IMPORT [weights.py]: ModuleNotFoundError: No module named 'torch'\n- fed_agg.py: PACKAGE_UNAVAILABLE [fed_agg.py]: imports `torch`, which is neither a planned module nor installed; PACKAGE_UNAVAILABLE [fed_agg.py]: imports `weights`, which is neither a planned module nor installed; STUB_DOES_NOT_IMPORT [fed_agg.py]: ModuleNotFoundError: No module named 'torch'\n- fed_prox.py: PACKAGE_UNAVAILABLE [fed_prox.py]: imports `torch`, which is neither a planned module nor installed; PACKAGE_UNAVAILABLE [fed_prox.py]: imports `weights`, which is neither a planned module nor installed; STUB_DOES_NOT_IMPORT [fed_prox.py]: ModuleNotFoundError: No module named 'torch'\n- experiment.py: PACKAGE_UNAVAILABLE [experiment.py]: imports `torch`, which is neither a planned module nor installed; PACKAGE_UNAVAILABLE [experiment.py]: imports `weights`, which is neither a planned module nor installed; STUB_DOES_NOT_IMPORT [experiment.py]: ModuleNotFoundError: No module named 'torch'; USES_UNDECLARED [experiment.py]: imports BATCH_SIZE, DIRICHLET_ALPHA, DROPOUT_RATE, INPUT_DIM, LEARNING_RATE, LOCAL_EPOCHS, NUM_CLIENTS, NUM_COMM_ROUNDS, NUM_SEEDS, OUTPUT_DIM, PROX_MU from config.py, whose interface does not declare them"
+}
+```
+
+</details>
+
+<details open>
+<summary><b>📤 Odpowiedź zwrócona przez LLM (Decyzja / Wygenerowany JSON) [Kliknij, aby zwinąć]</b></summary>
+
+```json
+{
+  "tasks": {
+    "T1": {
+      "task_id": "T1",
+      "description": "[Increment 1: Assumptions] Chapter II: Related Work (SOTA 2023-2026). Research federated optimization on non-IID data and stragglers. Write the 'Related Work' section of paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "sota_researcher"
+    },
+    "T2": {
+      "task_id": "T2",
+      "description": "[Increment 1: Assumptions] Configuration module defining experiment hyperparameters (num_clients, dirichlet_alpha, dropout_rate, etc.) in config.py.",
+      "target_node": "config.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T3": {
+      "task_id": "T3",
+      "description": "[Increment 1: Assumptions] Interface for Non-IID Client Data Partitioning. Implement Dirichlet partitioning logic in data_partitioner.py.",
+      "target_node": "data_partitioner.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T4": {
+      "task_id": "T4",
+      "description": "[Increment 1: Assumptions] Interface for Model Weights. Implement weight vectorization/derevectorization utilities in model_weights.py.",
+      "target_node": "model_weights.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T5": {
+      "task_id": "T5",
+      "description": "[Increment 2: Method] Interface for FedAvg Client Update and Aggregation. Implement fed_avg_local_step and fed_avg_aggregate in fed_agg.py.",
+      "target_node": "fed_agg.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T6": {
+      "task_id": "T6",
+      "description": "[Increment 2: Method] Interface for FedProx Client Update and Aggregation. Implement fed_prox_local_step and fed_prox_aggregate in fed_prox.py.",
+      "target_node": "fed_prox.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T7": {
+      "task_id": "T7",
+      "description": "[Increment 2: Method] Unit tests for data_partitioner.py. Verify Dirichlet partitioning creates valid client-specific datasets.",
+      "target_node": "tests/test_data_partitioner.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T8": {
+      "task_id": "T8",
+      "description": "[Increment 2: Method] Unit tests for model_weights.py. Verify weight vectorization/derevectorization identity and consistency.",
+      "target_node": "tests/test_model_weights.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T9": {
+      "task_id": "T9",
+      "description": "[Increment 2: Method] Unit tests for fed_agg.py. Verify aggregation logic returns correct weighted averages.",
+      "target_node": "tests/test_fed_agg.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T10": {
+      "task_id": "T10",
+      "description": "[Increment 2: Method] Unit tests for fed_prox.py. Verify proximal term is applied correctly during client update.",
+      "target_node": "tests/test_fed_prox.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T11": {
+      "task_id": "T11",
+      "description": "[Increment 3: Experiment] Experiment entrypoint. Run FedAvg and FedProx on partitioned data with dropout, record metrics to results.csv.",
+      "target_node": "experiment.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T12": {
+      "task_id": "T12",
+      "description": "[Increment 3: Experiment] Plots module. Read results.csv and generate convergence plots for figures/.",
+      "target_node": "plots.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T13": {
+      "task_id": "T13",
+      "description": "[Increment 3: Results] Chapter III: Methodology. Describe the algorithms, data partitioning, and dropout simulation.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T14": {
+      "task_id": "T14",
+      "description": "[Increment 3: Results] Chapter IV: Experimental Setup. Describe dataset, hyperparameters (from config.py), and environment.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T15": {
+      "task_id": "T15",
+      "description": "[Increment 3: Results] Chapter V: Results and Analysis. Report metrics from results.csv, interpret plots, discuss robustness against stragglers.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T16": {
+      "task_id": "T16",
+      "description": "[Increment 3: Conclusions] Chapter VI: Conclusion. Summary of findings, limitations, and future work.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    }
+  },
+  "interfaces": {
+    "config.py": "\"\"\"Configuration constants for the Federated Optimization experiment.\"\"\"\nimport os\n\n# Experiment Parameters\nNUM_CLIENTS: int = 50\nDIRICHLET_ALPHA: float = 0.1\nDROPOUT_RATE: float = 0.2\nNUM_COMM_ROUNDS: int = 100\nLOCAL_EPOCHS: int = 5\nLEARNING_RATE: float = 0.01\nPROX_MU: float = 0.01\nBATCH_SIZE: int = 32\nINPUT_DIM: int = 784\nOUTPUT_DIM: int = 10\nNUM_SEEDS: int = 5\n\n# Paths\nRESULTS_PATH: str = os.path.join(os.path.dirname(__file__), '..', 'results.csv')\nFIGURES_DIR: str = os.path.join(os.path.dirname(__file__), '..', 'figures')",
+    "data_partitioner.py": "\"\"\"Module for partitioning a central dataset across clients using Dirichlet distribution.\"\"\"\nfrom typing import List, Tuple\nimport numpy as np\n\ndef dirichlet_partition(total_samples: int, num_clients: int, alpha: float) -> List[Tuple[int, int]]:\n    \"\"\"Partition total_samples indices into num_clients subsets using Dirichlet(alpha).\n\n    Args:\n        total_samples: Total number of data points available.\n        num_clients: Number of clients to partition for.\n        alpha: Dirichlet concentration parameter. Lower values increase non-IIDness.\n\n    Returns:\n        List of (start_idx, length) tuples representing the slice of indices for each client.\n        The sum of lengths equals total_samples.\n    \n    Example:\n        >>> parts = dirichlet_partition(100, 2, 0.5)\n        >>> len(parts) == 2\n        True\n        >>> sum(p[1] for p in parts) == 100\n        True\n    \"\"\"\n    pass\n\ndef get_client_indices(partition: List[Tuple[int, int]], client_id: int) -> np.ndarray:\n    \"\"\"Extract the numpy array of indices for a specific client from the partition.\n\n    Args:\n        partition: The output of dirichlet_partition.\n        client_id: Index of the client.\n\n    Returns:\n        np.ndarray of integer indices.\n    \n    Example:\n        >>> parts = [(0, 50), (50, 50)]\n        >>> get_client_indices(parts, 0).tolist()\n        [0, 1, 2, ..., 49]\n    \"\"\"\n    start, length = partition[client_id]\n    return np.arange(start, start + length)",
+    "model_weights.py": "\"\"\"Module for flattening and unflattening PyTorch model weights.\"\"\"\nimport torch\nfrom typing import Dict, List, Tuple\n\ndef get_weight_vector(model: torch.nn.Module) -> torch.Tensor:\n    \"\"\"Flatten all model parameters into a single 1D tensor.\n\n    Args:\n        model: PyTorch neural network module.\n\n    Returns:\n        Concatenated 1D tensor of all weights and biases.\n\n    Example:\n        >>> import torch.nn as nn\n        >>> m = nn.Linear(2, 2)\n        >>> v = get_weight_vector(m)\n        >>> isinstance(v, torch.Tensor)\n        True\n    \"\"\"\n    pass\n\ndef set_weights_from_vector(model: torch.nn.Module, vector: torch.Tensor) -> None:\n    \"\"\"Restore model parameters from a flattened 1D tensor.\n\n    Args:\n        model: PyTorch neural network module (modified in-place).\n        vector: Flattened weight tensor.\n    \n    Example:\n        >>> import torch.nn as nn\n        >>> m = nn.Linear(2, 2)\n        >>> v = get_weight_vector(m)\n        >>> set_weights_from_vector(m, v) # Should restore original state\n    \"\"\"\n    pass\n\ndef compute_proximal_penalty(current_vector: torch.Tensor, global_vector: torch.Tensor, mu: float) -> float:\n    \"\"\"Compute the proximal penalty term ||w - w_global||^2.\n\n    Args:\n        current_vector: Current client weight vector.\n        global_vector: Global model weight vector.\n        mu: Proximal regularization parameter (unused here but kept for signature consistency).\n\n    Returns:\n        Scalar float representing the squared L2 distance.\n    \n    Example:\n        >>> import torch\n        >>> v1 = torch.tensor([1.0, 2.0])\n        >>> v2 = torch.tensor([4.0, 5.0])\n        >>> compute_proximal_penalty(v1, v2, 0.0)\n        27.0\n    \"\"\"",
+    "fed_agg.py": "\"\"\"Module for FedAvg client update and global aggregation.\"\"\"\nfrom typing import Dict, List, Tuple\nimport torch\n\ndef fed_avg_local_step(\n    model: torch.nn.Module, \n    data_loader: torch.utils.data.DataLoader, \n    lr: float,\n    num_epochs: int = 1\n) -> torch.Tensor:\n    \"\"\"Perform local SGD training for one or more epochs on the client.\n\n    Args:\n        model: The neural network model (updated in-place).\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n        num_epochs: Number of local passes over the data.\n\n    Returns:\n        Flattened weight difference vector (delta_w = w_local - w_global_init).\n\n    Example:\n        >>> import torch\n        >>> # Mocking data_loader behavior is complex in doctest, so we rely on structure\n        >>> # Actual testing will use mock DataLoaders or dummy tensors if possible.\n        pass\n\ndef fed_avg_aggregate(\n    global_weights: torch.Tensor, \n    client_deltas: List[Tuple[torch.Tensor, int]]\n) -> torch.Tensor:\n    \"\"\"Aggregate client deltas using FedAvg rule.\n\n    Args:\n        global_weights: Current global model weight vector.\n        client_deltas: List of (delta_vector, sample_count) tuples from active clients.\n\n    Returns:\n        Updated global model weight vector.\n\n    Example:\n        >>> import torch\n        >>> g = torch.tensor([10.0])\n        >>> d1 = (torch.tensor([2.0]), 10)\n        >>> d2 = (torch.tensor([4.0]), 10)\n        >>> fed_avg_aggregate(g, [d1, d2]).item()\n        16.0\n    \"\"\"",
+    "fed_prox.py": "\"\"\"Module for FedProx client update and global aggregation.\"\"\"\nfrom typing import Dict, List, Tuple\nimport torch\n\ndef fed_prox_local_step(\n    model: torch.nn.Module,\n    global_weights_vector: torch.Tensor,\n    data_loader: torch.utils.data.DataLoader,\n    lr: float,\n    mu: float,\n    num_epochs: int = 1\n) -> torch.Tensor:\n    \"\"\"Perform local SGD training with proximal term for FedProx.\n\n    Args:\n        model: The neural network model (updated in-place).\n        global_weights_vector: Weight vector of the global model at start of round.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n        mu: Proximal regularization parameter.\n        num_epochs: Number of local passes over the data.\n\n    Returns:\n        Flattened weight difference vector (delta_w = w_local - w_global_init).\n    \n    Example:\n        >>> import torch\n        pass\n\ndef fed_prox_aggregate(\n    global_weights: torch.Tensor,\n    client_deltas: List[Tuple[torch.Tensor, int]]\n) -> torch.Tensor:\n    \"\"\"Aggregate client deltas using FedAvg rule (FedProx aggregation is same as FedAvg).\n\n    Args:\n        global_weights: Current global model weight vector.\n        client_deltas: List of (delta_vector, sample_count) tuples from active clients.\n\n    Returns:\n        Updated global model weight vector.\n\n    Example:\n        >>> import torch\n        >>> g = torch.tensor([10.0])\n        >>> d1 = (torch.tensor([2.0]), 10)\n        >>> fed_prox_aggregate(g, [d1]).item()\n        12.0\n    \"\"\"",
+    "experiment.py": "\"\"\"Experiment entrypoint. Runs simulation and saves results.\"\"\"\nimport os\nimport sys\nimport numpy as np\nimport pandas as pd\nimport torch\nfrom config import (\n    NUM_CLIENTS, DIRICHLET_ALPHA, DROPOUT_RATE, NUM_COMM_ROUNDS,\n    LEARNING_RATE, PROX_MU, BATCH_SIZE, INPUT_DIM, OUTPUT_DIM, NUM_SEEDS,\n    RESULTS_PATH, FIGURES_DIR\n)\nfrom data_partitioner import dirichlet_partition, get_client_indices\nfrom model_weights import get_weight_vector, set_weights_from_vector\nfrom fed_agg import fed_avg_local_step, fed_avg_aggregate\nfrom fed_prox import fed_prox_local_step, fed_prox_aggregate\nimport torch.nn as nn\nimport torch.optim as optim\nimport torch.utils.data as data\n\ndef create_dummy_dataset(num_samples: int, input_dim: int, output_dim: int) -> data.TensorDataset:\n    \"\"\"Create a simple synthetic classification dataset.\"\"\"\n    X = torch.randn(num_samples, input_dim)\n    y = torch.randint(0, output_dim, (num_samples,))\n    return data.TensorDataset(X, y)\n\ndef run_experiment() -> None:\n    \"\"\"Run FedAvg and FedProx simulations, write results.csv.\"\"\"\n    pass",
+    "plots.py": "\"\"\"Module for generating experiment figures.\"\"\"\nimport os\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom config import FIGURES_DIR\n\ndef generate_plots() -> None:\n    \"\"\"Read results.csv and save convergence plots to figures/ directory.\n    \n    Creates: convergence.png (line plots of test accuracy per round for both methods).\n    \"\"\"\n    os.makedirs(FIGURES_DIR, exist_ok=True)\n    # Logic to read results.csv and plot\n    pass"
+  },
+  "thesis_type": "paper",
+  "template_name": "paper_ieee",
+  "academic_blueprint": {
+    "thesis_title": "Robustness of Proximal Federated Optimizers Under Non-IID Data and Straggler Dropout",
+    "thesis_statement": "FedProx converges more robustly than FedAvg on non-IID partitions (Dirichlet alpha=0.1) when 20% of clients drop out each round, measured by final test accuracy stability across seeds.",
+    "baseline_comparison": "FedAvg (standard federated averaging) serves as the baseline against FedProx (mu=0.01). Comparison is based on mean test accuracy and variance over 5 seeds.",
+    "entrypoint": "experiment.py:run_experiment",
+    "metrics": [
+      "final_test_accuracy_mean",
+      "final_test_accuracy_std",
+      "rounds_to_90_pct_accuracy"
+    ],
+    "plots": "plots.py:generate_plots",
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "I. Introduction",
+        "focus": "Motivation for Federated Learning, problem of non-IID data and stragglers, thesis statement."
+      },
+      {
+        "index": 2,
+        "title": "II. Related Work",
+        "focus": "Review of FedAvg, FedProx, and recent approaches (2023-2026) to non-IID and straggler robustness."
+      },
+      {
+        "index": 3,
+        "title": "III. Methodology",
+        "focus": "Formal description of FedAvg and FedProx algorithms, Dirichlet data partitioning, and dropout simulation."
+      },
+      {
+        "index": 4,
+        "title": "IV. Experimental Setup",
+        "focus": "Dataset (e.g., CIFAR-10 or MNIST), hyperparameters, hardware environment, and reproducibility details."
+      },
+      {
+        "index": 5,
+        "title": "V. Results and Analysis",
+        "focus": "Convergence curves, final accuracy comparison, statistical significance of robustness improvement."
+      },
+      {
+        "index": 6,
+        "title": "VI. Conclusion",
+        "focus": "Summary of findings, limitations, and future work."
+      }
+    ]
+  }
+}
+```
+
+</details>
+
+---
+
+### Krok 5: Agent `task_planner`
+
+- **Warstwa:** Warstwa 1 (Planowanie / Gate HITL)
+- **Dostawca / Model:** `ollama` / `qwen3.6:35b` (LRM)
+- **Czas wykonania:** 113180.2 ms
+- **Kluczowa decyzja:** **zadania: 17; interfejsy: 11**
+
+<details>
+<summary><b>📥 Prompt wysłany do LLM (System Prompt + JSON Payload) — 31736 znaków [Kliknij, aby rozwinąć]</b></summary>
+
+#### Instrukcja Systemowa Agenta:
+```markdown
+# ROLE: Task Planner — Academic & Engineering Planner (Layer 1 — `planning` Domain)
+
+You are the master **Task Planner** (`task_planner`) in the **Artificial-Degree-Printer (Neuro-Symbolic Harness)**.
+Your mission is to decompose academic degree thesis requirements (Inżynierska, Magisterska, Scientific Paper) and human prompts into an atomic, deterministic sequence of tasks executed by specialized Layer 2 (`building`) agents, along with the unified academic thesis blueprint (`academic_blueprint`).
+
+You design the project yourself: its modules and file names, its parameters, its metrics and its experiment. Nothing in this prompt prescribes them. Names written as `<...>` below are placeholders, never values to copy.
+
+---
+
+## 1. ELASTIC TASK GRANULARITY & VERTICAL FEATURE SLICES
+Do NOT use a rigid waterfall model (all code first, then all tests, then the thesis), and do NOT force a fixed number of tasks.
+- **Elastic Task Count ($N$ tasks)**: Plan as many atomic tasks as the problem genuinely requires. Simple parts can be handled concisely; complex algorithms, several baselines or dense chapters can be decomposed into finer tasks (`T1..TN`).
+- **Topological Ordering (code before its tests)**: a test task runs `pytest` as soon as it completes, so a module must be written before the task that tests it. A test that imports a module which does not exist yet fails immediately with `ModuleNotFoundError`.
+- **Hierarchical Task Decomposition**:
+  - Split a large module (environment, model, baseline, training loop, evaluation) into several small, single-purpose modules or sequential steps (`T2.1`, `T2.2` or `T2`, `T3`).
+  - Keep each code task bounded to roughly 50–150 lines. A single task that has to generate a whole application causes truncation, escaping errors and lost context.
+  - Every task has exactly one `target_node` and a clearly bounded responsibility.
+- **Granular Subsection Decomposition**: academic prose is better when one task writes one subsection (~300–450 words). Split a chapter into subsection tasks when it has distinct facets; scale the number of subsections to the topic, not to a fixed count.
+- **Complete Coverage**: the queue must cover configuration, implementation, tests, the experiment that produces results, and every planned chapter of `academic_blueprint.planned_chapters`.
+- **Vertical Feature Slices (Przyrosty Funkcjonalne)** — code, tests and text progress together:
+  - **Increment 1 — assumptions, literature, interfaces**: literature review (`background_researcher` / `discoverer_researcher`), the chapters that set out the problem and the literature (`seed_writer`). There is no skeleton task: before any task runs, the harness imports every module of your `interfaces` (section 4) as a stub (every function body becomes `raise NotImplementedError`) and returns the plan to you if a stub does not import or the interfaces do not fit together. The stubs are the shared interface the remaining tasks build on.
+  - **Increment 2 — method, baseline, architecture**: filling in the stubbed modules — the proposed method and the baseline (`seed_coder`), their unit tests written against the interface signatures (`seed_tester`), the chapters on the method (`seed_writer`).
+  - **Increment 3 — experiment, results, conclusions**: the module with the experiment entrypoint and the function that draws the figures, declared as `plots` (`seed_coder`), the chapters on results and conclusions (`seed_writer`).
+  - Results files (`*.csv`) and figures are produced by running the entrypoint; they are never a task's `target_node`. A task that should produce them targets the module that writes them. `seed_tester` writes only test files.
+
+---
+
+## 2. 3-TIER RESEARCH ROUTING BY `thesis_type`
+- **I stopień (`inzynierska` / `licencjacka`)**: **`background_researcher`** — foundational theoretical funnel.
+- **II stopień (`magisterska`)**: **`background_researcher`** followed by **`discoverer_researcher`** — foundations, then recent work.
+- **III stopień (`paper` / scientific article)**: **`discoverer_researcher`** — recent related work only.
+
+---
+
+## 3. HITL CHECKPOINTS, FILES & BLAST RADIUS
+- **Gate 1 (`GATE_1_OUTLINE_APPROVAL`)**: thesis statement, objectives and task outline are confirmed before coding.
+- **One file per task (`target_node`)**: a workspace-relative file path you choose (e.g. `<package>/<module>.py`, `tests/test_<module>.py`, `thesis.md`). Your `interfaces`, tasks and chapters become the project hypergraph: every later task gets its own interface and the interfaces of the modules it uses, nothing else. Prefer several small modules over one large file.
+  - Harness contracts, not suggestions: the thesis document is `thesis.md`; test modules are `tests/test_<module>.py`; the experiment entrypoint writes `results.csv` in the workspace root (not in a subdirectory, no other name): tidy rows `method,metric,value` (optional `std_dev,n_runs`) for the metrics you declare — every number in the thesis points at this file.
+- **Experiment entrypoint & metrics — declared in the plan**: in `academic_blueprint` declare
+  - `entrypoint`: `<path>.py:<function>`, called WITHOUT arguments (it reads every setting from named module-level constants);
+  - `metrics`: the metric names the experiment will report in `results.csv`, chosen for this research question;
+  - `plots` (required — every experiment produces figures): `<path>.py:<function>`, a function of one of your modules (any module, any name) that the harness calls WITHOUT arguments after the experiment; it reads `results.csv` and writes the figures into `figures/`;
+  - the success criterion in `thesis_statement` / `baseline_comparison`.
+  Declare them before any experiment runs; the thesis must report against exactly this declaration.
+- **Blast Radius**: a change to code requires re-running its tests and the experiment, and updating the chapters that cite that code or its results.
+- **Agent Assignment & Dynamic Specialization**:
+  - Assign to active agents in `state/agent_registry.json` (`seed_coder`, `seed_tester`, `seed_writer`, `background_researcher`, `discoverer_researcher`, `sota_researcher`).
+  - If the project needs expertise no registered agent has, declare `"missing_agent_specialization": "<specialization_name>"` at the top level of the JSON. Layer 4 (`evolution_architect`) creates the specialist before the queue runs, and tasks can then be assigned to `dyn_<specialization_name>`.
+
+---
+
+## 4. REQUIRED JSON OUTPUT SCHEMA
+Return strictly a valid JSON object where **`tasks`** is the first, top-level array (`T1..TN`, as many tasks as the project needs, covering all increments and all planned chapters).
+
+**Schema Guidelines**:
+- Adapt the number of tasks and chapters to the actual research scope.
+- Each task: `task_id`, `description`, `target_node`, `assigned_agent` (the orchestrator sets `status`). Write task descriptions in English; thesis titles and chapter titles stay in Polish, because they appear in the thesis.
+- **`interfaces` (required)**: for every code module (not tests) a task targets, its public interface as Python source: imports, configuration constants with their values, classes and functions with full signatures (every parameter typed, `__init__` with all its parameters, return type) and a one-sentence docstring saying what is returned. Bodies may be `...`; the harness replaces every body with `raise NotImplementedError`. Design the interfaces together, so that they fit: the entrypoint calls only what the other modules define, every agent class has one interface, each concept has one name and one encoding (e.g. players, states, actions). Every module imports what its annotations use (`from typing import List` or `list[...]`). Constants hold plain values of their declared type (no `dataclasses.field` outside a dataclass). The entrypoint function takes **no required arguments**: the harness calls it without arguments, so it reads its settings from named module-level constants. Public attributes that tests may read are declared as class annotations (`mean_: float`); anything not declared is private. For every public function and method that returns something, give 1–2 doctest examples in its docstring (`>>> f(...)` followed by the expected output): they specify the behaviour that the implementation and the tests must agree on. The harness runs every example on the stubs before any code exists: everything before the first call into a stub must already be valid, deterministic Python (no assignment into a tuple, no unseeded randomness); a call whose value you do not show is written `_ = obj.method(...)`, because a bare call prints its return value. Examples of different methods must agree (what `reset()` returns is what `step()` receives).
+- **The experiment runs the plan**: every experiment setting is a named module-level constant (which module holds it is your choice), so the thesis can cite it. The entrypoint module imports, **at its top level**, the modules it runs (the proposed method, the baseline, the environment or data), directly or through other planned modules; the harness rejects a plan in which a planned module is never imported by the experiment (except the module of `plots`, which the harness calls itself). The experiment never reimplements a planned module.
+- **Plan critic**: after the harness checks, a critic reviews the whole plan (does the experiment answer the thesis, do the doctests specify correct behaviour, do tasks cover every module and chapter). Its blocking findings come back to you as `error_feedback`, together with your plan as `current_plan`; a plan that stays blocked after several corrections stops the run. Chapter tasks you forgot are not a problem: the harness adds a writer task for every planned chapter no task covers.
+- **Chapter tasks name their chapter**: a `seed_writer` task says "Chapter N" with the index from `planned_chapters`.
+- **Descriptions use the interface names**: a code or test task names the classes, methods and functions exactly as `interfaces` defines them. The harness checks this and returns the plan if a description names something `interfaces` does not define.
+- `planned_chapters`: `index`, `title`, `focus` for every chapter.
+- Every `<...>` is a placeholder for your own decision.
+
+```json
+{
+  "tasks": [
+    {
+      "task_id": "T1",
+      "description": "[Increment 1: Assumptions] Chapter 1: introduction, aim of the work and thesis statement in thesis.md",
+      "target_node": "thesis.md",
+      "assigned_agent": "seed_writer"
+    },
+    {
+      "task_id": "T2",
+      "description": "[Increment 1: Assumptions] Configuration module with the experiment parameters in <config_module>.py",
+      "target_node": "<config_module>.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T3",
+      "description": "[Increment 2: Method] Implement <Class> in <method_module>.py",
+      "target_node": "<method_module>.py",
+      "assigned_agent": "seed_coder"
+    },
+    {
+      "task_id": "T4",
+      "description": "[Increment 2: Method] Unit tests of <Class>.<method> from <method_module>.py in tests/test_<method_module>.py",
+      "target_node": "tests/test_<method_module>.py",
+      "assigned_agent": "seed_tester"
+    }
+  ],
+  "interfaces": {
+    "<config_module>.py": "\"\"\"<one sentence>\"\"\"
+
+<PARAMETER>: <type> = <value>
+",
+    "<method_module>.py": "\"\"\"<one sentence>\"\"\"
+
+
+class <Class>:
+    \"\"\"<one sentence>\"\"\"
+
+    def __init__(self, <arg>: <type>) -> None:
+        \"\"\"<one sentence>\"\"\"
+
+    def <method>(self, <arg>: <type>) -> <type>:
+        \"\"\"<what it returns>\"\"\"
+"
+  },
+  "thesis_type": "inzynierska | magisterska | paper",
+  "template_name": "thesis_plodz | paper_ieee",
+  "academic_blueprint": {
+    "thesis_title": "<tytuł pracy>",
+    "thesis_statement": "<teza i kryterium sukcesu>",
+    "baseline_comparison": "<metoda odniesienia i sposób porównania>",
+    "entrypoint": "<experiment_module>.py:<function>",
+    "metrics": ["<metryka_1>", "<metryka_2>"],
+    "plots": "<figures_module>.py:<function>",
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "focus": "Formalna definicja problemu, cel, teza i zakres pracy"
+      },
+      {
+        "index": 2,
+        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+        "focus": "Przegląd prac powiązanych i specyfikacja metody odniesienia"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 5. REFLEXIVE PROMPT EVOLUTION & AGENT SPECIALIZATION
+- **Correcting a plan (`current_plan` + `error_feedback`)**: you are correcting YOUR plan, not writing a new one. Read each problem, find its cause in `current_plan` at the place named in brackets, and change that place together with every place its `Change together` list names — nothing else. Return a patch, not the plan: `interfaces` with the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, `entrypoint` if it changes, `academic_blueprint` with only the fields that change, `tasks` as a dict mapping each changed `task_id` to its updated fields (to add or remove a task, return the whole list instead). Everything you do not return stays as it is: do not rename modules, classes or functions that no problem is about. If the feedback says your previous patch was not applied, `current_plan` is still the plan before it: fix the problems without causing the ones listed.
+- **Re-planning a failed part (`repair_dossier`)**: some vertices failed after all their repairs. For each, `repair_dossier.failed` gives the planned interface, the current content, every attempt with its errors (`history`, including rejected answers) and what waits for it; `verified_do_not_touch` works and must not be changed. Diagnose why the attempts failed before writing anything: an example or signature in the interface that no implementation can satisfy (then return the corrected interface in `interfaces`, keeping every name other modules use), a task that asked for too much in one answer (split it into smaller tasks, one function or method each), or a failed dependency. Return only `tasks` (new tasks for the failed vertices: `target_node`, `description`, `assigned_agent`; each description names the functions to write and what the earlier attempts got wrong), optional `interfaces`, and `gaps` for what cannot be done.
+- **Reflection feedback without `current_plan`**: if the payload contains `reflection_feedback` or `error_feedback` but no `current_plan`, address it first (e.g. put the `"tasks"` array as the first key, with tasks for every increment) and return the whole plan.
+- **Missing Domain Specialization**: never assign an unqualified agent; set `"missing_agent_specialization": "<specialization_name>"` so Layer 4 creates the specialist.
+
+Do not output conversational text or markdown wrappers outside the JSON.
+```
+
+#### Przekazany Payload Danych (Input JSON):
+```json
+{
+  "user_prompt": "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)] Research question: does a proximal federated optimizer (FedProx-style) converge more robustly than FedAvg on non-IID Dirichlet-partitioned clients with straggler dropout? Ground the related work in contemporary federated optimization literature (2023-2026). Design the experiment yourself: choose the parameters, training or search budget, number of repetitions and seeds, the metrics you will report and the success criterion, and declare the metrics and the experiment entrypoint in the plan before running anything. Implement the solution as small, single-purpose modules with unit tests, produce every result by running the declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or to a results file.",
+  "agent_registry": {
+    "agents": {
+      "seed_coder": {
+        "domain": "building",
+        "path": "agents/building/seed_coder.md",
+        "specialization": "python_coding",
+        "active": true
+      },
+      "seed_tester": {
+        "domain": "building",
+        "path": "agents/building/seed_tester.md",
+        "specialization": "unit_testing",
+        "active": true
+      },
+      "seed_writer": {
+        "domain": "building",
+        "path": "agents/building/seed_writer.md",
+        "specialization": "academic_writing",
+        "active": true
+      },
+      "sota_researcher": {
+        "domain": "building",
+        "path": "agents/building/sota_researcher.md",
+        "specialization": "literature_review",
+        "active": true
+      },
+      "background_researcher": {
+        "domain": "building",
+        "path": "agents/building/background_researcher.md",
+        "specialization": "background_literature",
+        "active": true
+      },
+      "discoverer_researcher": {
+        "domain": "building",
+        "path": "agents/building/discoverer_researcher.md",
+        "specialization": "sota_discovery",
+        "active": true
+      }
+    }
+  },
+  "include_docs": true,
+  "missing_agent_specialization": null,
+  "domain_context": {
+    "detected_thesis_type": "paper",
+    "detected_template_name": "paper_ieee",
+    "template_is_certain": true
+  },
+  "detected_template": {
+    "thesis_type": "paper",
+    "template_name": "paper_ieee",
+    "is_certain": true,
+    "question": null
+  },
+  "current_plan": {
+    "tasks": [
+      {
+        "task_id": "T1",
+        "description": "[Increment 1: Assumptions] Chapter 2: Related Work (SOTA 2023-2026). Research federated optimization on non-IID data and stragglers. Write the 'Related Work' section of paper.md.",
+        "target_node": "paper.md",
+        "assigned_agent": "sota_researcher"
+      },
+      {
+        "task_id": "T2",
+        "description": "[Increment 1: Assumptions] Configuration module defining experiment hyperparameters (num_clients, dirichlet_alpha, dropout_rate, etc.) in config.py.",
+        "target_node": "config.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T3",
+        "description": "[Increment 1: Assumptions] Interface for Non-IID Client Data Partitioning. Implement Dirichlet partitioning logic in data_partitioner.py.",
+        "target_node": "data_partitioner.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T4",
+        "description": "[Increment 2: Method] Interface for FedAvg Client Update and Aggregation. Implement fed_avg_client_update and fed_avg_aggregate in fed_agg.py.",
+        "target_node": "fed_agg.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T5",
+        "description": "[Increment 2: Method] Interface for FedProx Client Update and Aggregation. Implement fed_prox_client_update and fed_prox_aggregate in fed_prox.py.",
+        "target_node": "fed_prox.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T6",
+        "description": "[Increment 2: Method] Unit tests for data_partitioner.py. Verify Dirichlet partitioning creates valid client-specific datasets.",
+        "target_node": "tests/test_data_partitioner.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T7",
+        "description": "[Increment 2: Method] Unit tests for fed_agg.py. Verify aggregation logic returns correct weighted averages.",
+        "target_node": "tests/test_fed_agg.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T8",
+        "description": "[Increment 2: Method] Unit tests for fed_prox.py. Verify proximal term is applied correctly during client update.",
+        "target_node": "tests/test_fed_prox.py",
+        "assigned_agent": "seed_tester"
+      },
+      {
+        "task_id": "T9",
+        "description": "[Increment 3: Experiment] Experiment entrypoint. Run FedAvg and FedProx on partitioned data with dropout, record metrics to results.csv.",
+        "target_node": "experiment.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T10",
+        "description": "[Increment 3: Experiment] Plots module. Read results.csv and generate convergence plots for figures/.",
+        "target_node": "plots.py",
+        "assigned_agent": "seed_coder"
+      },
+      {
+        "task_id": "T11",
+        "description": "[Increment 3: Results] Chapter 3: Experimental Setup. Describe dataset, hyperparameters (from config.py), and environment.",
+        "target_node": "paper.md",
+        "assigned_agent": "seed_writer"
+      },
+      {
+        "task_id": "T12",
+        "description": "[Increment 3: Results] Chapter 4: Analysis of Convergence. Report metrics from results.csv, interpret plots, discuss robustness against stragglers.",
+        "target_node": "paper.md",
+        "assigned_agent": "seed_writer"
+      }
+    ],
+    "interfaces": {
+      "config.py": "\"\"\"Configuration constants for the Federated Optimization experiment.\"\"\"\nimport os\n\n# Experiment Parameters\nnum_clients = 50\ndirichlet_alpha = 0.1\ndropout_rate = 0.2\nnum_comm_rounds = 100\nlocal_epochs = 5\nlearning_rate = 0.01\nprox_mu = 0.01\nbatch_size = 32\ninput_dim = 784\noutput_dim = 10\nnum_seeds = 5\n\n# Paths\nRESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'results.csv')\nFIGURES_DIR = os.path.join(os.path.dirname(__file__), '..', 'figures')",
+      "data_partitioner.py": "\"\"\"Module for partitioning a central dataset across clients using Dirichlet distribution.\"\"\"\nfrom typing import List, Tuple\nimport numpy as np\n\ndef dirichlet_partition(total_samples: int, num_clients: int, alpha: float) -> List[Tuple[int, int]]:\n    \"\"\"Partition total_samples indices into num_clients subsets using Dirichlet(alpha).\n\n    Args:\n        total_samples: Total number of data points available.\n        num_clients: Number of clients to partition for.\n        alpha: Dirichlet concentration parameter. Lower values increase non-IIDness.\n\n    Returns:\n        List of (start_idx, length) tuples representing the slice of indices for each client.\n        The sum of lengths equals total_samples.\n    \n    Example:\n        >>> parts = dirichlet_partition(100, 2, 0.5)\n        >>> len(parts) == 2\n        True\n        >>> sum(p[1] for p in parts) == 100\n        True\n    \"\"\"\n    pass\n\ndef get_client_indices(partition: List[Tuple[int, int]], client_id: int) -> np.ndarray:\n    \"\"\"Extract the numpy array of indices for a specific client from the partition.\n\n    Args:\n        partition: The output of dirichlet_partition.\n        client_id: Index of the client.\n\n    Returns:\n        np.ndarray of integer indices.\n    \n    Example:\n        >>> parts = [(0, 50), (50, 50)]\n        >>> get_client_indices(parts, 0).tolist()\n        [0, 1, 2, ..., 49]\n    \"\"\"\n    start, length = partition[client_id]\n    return np.arange(start, start + length)",
+      "fed_agg.py": "\"\"\"Module for FedAvg client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\n\ndef fed_avg_client_update(model: torch.nn.Module, data_loader: torch.utils.data.DataLoader, lr: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD for FedAvg.\n\n    Args:\n        model: The neural network model.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global).\n    \n    Example:\n        >>> import torch\n        >>> model = torch.nn.Linear(10, 2)\n        >>> # Assume data_loader is valid\n        >>> deltas = fed_avg_client_update(model, None, 0.1)\n        >>> isinstance(deltas, dict)\n        True\n    \"\"\"\n    pass\n\ndef fed_avg_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule.\n\n    Args:\n        global_model: Current global model.\n        client_deltas: List of delta dictionaries from active clients.\n        client_weights: List of sample counts for each active client.\n\n    Returns:\n        Updated global model.\n    \"\"\"\n    pass",
+      "fed_prox.py": "\"\"\"Module for FedProx client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\n\ndef fed_prox_client_update(model: torch.nn.Module, global_model_weights: Dict[str, torch.Tensor], data_loader: torch.utils.data.DataLoader, lr: float, mu: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD with proximal term for FedProx.\n\n    Args:\n        model: The neural network model (updated in-place).\n        global_model_weights: Weights of the global model at start of round.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n        mu: Proximal regularization parameter.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global).\n    \"\"\"\n    pass\n\ndef fed_prox_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule (FedProx aggregation is same as FedAvg).\"\"\"\n    pass",
+      "experiment.py": "\"\"\"Experiment entrypoint. Runs simulation and saves results.\"\"\"\nimport pandas as pd\nfrom config import num_clients, dirichlet_alpha, dropout_rate, num_comm_rounds, learning_rate, prox_mu\nfrom data_partitioner import dirichlet_partition\nfrom fed_agg import fed_avg_client_update, fed_avg_aggregate\nfrom fed_prox import fed_prox_client_update, fed_prox_aggregate\n\ndef run_experiment() -> None:\n    \"\"\"Run FedAvg and FedProx simulations, write results.csv.\"\"\"\n    pass",
+      "plots.py": "\"\"\"Module for generating experiment figures.\"\"\"\nimport os\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom config import FIGURES_DIR\n\ndef generate_plots() -> None:\n    \"\"\"Read results.csv and save convergence plots to figures/ directory.\n    \n    Creates: convergence.png (line plots of test accuracy per round for both methods).\n    \"\"\"\n    os.makedirs(FIGURES_DIR, exist_ok=True)\n    # Logic to read results.csv and plot\n    pass"
+    },
+    "entrypoint": "experiment.py:run_experiment",
+    "academic_blueprint": {
+      "thesis_title": "Robustness of Proximal Federated Optimizers Under Non-IID Data and Straggler Dropout",
+      "thesis_statement": "FedProx converges more robustly than FedAvg on non-IID partitions (Dirichlet alpha=0.1) when 20% of clients drop out each round, measured by final test accuracy stability across seeds.",
+      "baseline_comparison": "FedAvg (standard federated averaging) serves as the baseline against FedProx (mu=0.01). Comparison is based on mean test accuracy and variance over 5 seeds.",
+      "entrypoint": "experiment.py:run_experiment",
+      "metrics": [
+        "final_test_accuracy_mean",
+        "final_test_accuracy_std",
+        "rounds_to_90_pct_accuracy"
+      ],
+      "plots": "plots.py:generate_plots",
+      "planned_chapters": [
+        {
+          "index": 1,
+          "title": "I. Introduction",
+          "focus": "Motivation for Federated Learning, problem of non-IID data and stragglers, thesis statement."
+        },
+        {
+          "index": 2,
+          "title": "II. Related Work",
+          "focus": "Review of FedAvg, FedProx, and recent approaches (2023-2026) to non-IID and straggler robustness."
+        },
+        {
+          "index": 3,
+          "title": "III. Methodology",
+          "focus": "Formal description of FedAvg and FedProx algorithms, Dirichlet data partitioning, and dropout simulation."
+        },
+        {
+          "index": 4,
+          "title": "IV. Experimental Setup",
+          "focus": "Dataset (e.g., CIFAR-10 or MNIST), hyperparameters, hardware environment, and reproducibility details."
+        },
+        {
+          "index": 5,
+          "title": "V. Results and Analysis",
+          "focus": "Convergence curves, final accuracy comparison, statistical significance of robustness improvement."
+        },
+        {
+          "index": 6,
+          "title": "VI. Conclusion",
+          "focus": "Summary of findings, limitations, and future work."
+        }
+      ]
+    },
+    "missing_agent_specialization": null
+  },
+  "error_feedback": "The harness imported every interface of your plan (`current_plan`) as a stub, ran the doctests up to the first call into a stub, and the plan critic reviewed the plan: it has blocking issues that must be fixed. Correct `current_plan`, do not write a new plan. Return a patch with only what you change: `interfaces` with the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, `entrypoint` if it changes, `academic_blueprint` with only the fields that change, and `tasks` as a dict mapping only the changed `task_id` to its updated fields (do not touch unrelated tasks; to add or remove a task, return the whole list instead). Everything you do not return stays as it is.\nA blocker may list `Change together`: the other places of the plan its fix touches. Apply the fix and every listed change in this same patch, so the plan stays consistent. Code you add or change follows the same rules as the rest of the plan: deterministic doctests whose expected output follows from the signatures, and only names the interfaces declare.\nBLOCKERS (must fix — the plan cannot proceed until resolved):\n- STUB_DOES_NOT_IMPORT [fed_agg.py]: NameError: name 'torch' is not defined\n- STUB_DOES_NOT_IMPORT [fed_prox.py]: NameError: name 'torch' is not defined\nYour previous patch (or part of it) was NOT applied because it introduced new problems:\n- No interface for the modules the tasks target: model_weights.py.\n- config.py: STUB_DOES_NOT_IMPORT [experiment.py]: ImportError: cannot import name 'num_clients' from 'config' (C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_stub_probe_1bfy0br_\\config.py); USES_UNDECLARED [experiment.py]: imports dirichlet_alpha, dropout_rate, learning_rate, num_clients, num_comm_rounds, prox_mu from config.py, whose interface does not declare them\n- model_weights.py: ENTRYPOINT_DOES_NOT_USE [experiment.py]: experiment.py never imports model_weights.py (directly or through other modules, at module top level): the experiment must run the planned method and baseline through their modules, not reimplement them; PACKAGE_UNAVAILABLE [model_weights.py]: imports `torch`, which is neither a planned module nor installed; STUB_DOES_NOT_IMPORT [model_weights.py]: ModuleNotFoundError: No module named 'torch'\n- experiment.py: PACKAGE_UNAVAILABLE [experiment.py]: imports `model_weights`, which is neither a planned module nor installed; PACKAGE_UNAVAILABLE [experiment.py]: imports `torch`, which is neither a planned module nor installed; STUB_DOES_NOT_IMPORT [experiment.py]: ModuleNotFoundError: No module named 'torch'; USES_UNDECLARED [experiment.py]: imports BATCH_SIZE, DIRICHLET_ALPHA, DROPOUT_RATE, INPUT_DIM, LEARNING_RATE, NUM_CLIENTS, NUM_COMM_ROUNDS, NUM_SEEDS, OUTPUT_DIM, PROX_MU from config.py, whose interface does not declare them; USES_UNDECLARED [experiment.py]: imports fed_avg_local_step from fed_agg.py, whose interface does not declare them; USES_UNDECLARED [experiment.py]: imports fed_prox_local_step from fed_prox.py, whose interface does not declare them"
+}
+```
+
+</details>
+
+<details open>
+<summary><b>📤 Odpowiedź zwrócona przez LLM (Decyzja / Wygenerowany JSON) [Kliknij, aby zwinąć]</b></summary>
+
+```json
+{
+  "tasks": {
+    "T1": {
+      "task_id": "T1",
+      "description": "[Increment 1: Assumptions] Chapter I: Introduction. Write motivation, problem definition (non-IID + stragglers), thesis statement, and contributions in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T2": {
+      "task_id": "T2",
+      "description": "[Increment 1: Assumptions] Configuration module with experiment hyperparameters and paths in config.py.",
+      "target_node": "config.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T3": {
+      "task_id": "T3",
+      "description": "[Increment 1: Assumptions] Interface for Non-IID Client Data Partitioning. Implement Dirichlet partitioning logic in data_partitioner.py.",
+      "target_node": "data_partitioner.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T4": {
+      "task_id": "T4",
+      "description": "[Increment 2: Method] Interface for model weight manipulation (serialization/deserialization) in model_utils.py.",
+      "target_node": "model_utils.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T5": {
+      "task_id": "T5",
+      "description": "[Increment 2: Method] Interface for FedAvg Client Update and Aggregation. Implement fed_avg_client_step and fed_avg_aggregate in fed_agg.py.",
+      "target_node": "fed_agg.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T6": {
+      "task_id": "T6",
+      "description": "[Increment 2: Method] Interface for FedProx Client Update and Aggregation. Implement fed_prox_client_step and fed_prox_aggregate in fed_prox.py.",
+      "target_node": "fed_prox.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T7": {
+      "task_id": "T7",
+      "description": "[Increment 2: Method] Unit tests for data_partitioner.py. Verify Dirichlet partitioning creates valid client-specific datasets.",
+      "target_node": "tests/test_data_partitioner.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T8": {
+      "task_id": "T8",
+      "description": "[Increment 2: Method] Unit tests for model_utils.py. Verify weight conversion consistency.",
+      "target_node": "tests/test_model_utils.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T9": {
+      "task_id": "T9",
+      "description": "[Increment 2: Method] Unit tests for fed_agg.py. Verify aggregation logic returns correct weighted averages.",
+      "target_node": "tests/test_fed_agg.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T10": {
+      "task_id": "T10",
+      "description": "[Increment 2: Method] Unit tests for fed_prox.py. Verify proximal term is applied correctly during client update.",
+      "target_node": "tests/test_fed_prox.py",
+      "assigned_agent": "seed_tester"
+    },
+    "T11": {
+      "task_id": "T11",
+      "description": "[Increment 1: Assumptions] Chapter II: Related Work. Review FedAvg, FedProx, and recent works (2023-2026) on non-IID/stragglers in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "sota_researcher"
+    },
+    "T12": {
+      "task_id": "T12",
+      "description": "[Increment 3: Experiment] Experiment entrypoint. Run FedAvg and FedProx on partitioned data with dropout, record metrics to results.csv in experiment.py.",
+      "target_node": "experiment.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T13": {
+      "task_id": "T13",
+      "description": "[Increment 3: Experiment] Plots module. Read results.csv and generate convergence plots for figures/ in plots.py.",
+      "target_node": "plots.py",
+      "assigned_agent": "seed_coder"
+    },
+    "T14": {
+      "task_id": "T14",
+      "description": "[Increment 3: Results] Chapter III: Methodology. Formal description of algorithms, data partitioning, and dropout in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T15": {
+      "task_id": "T15",
+      "description": "[Increment 3: Results] Chapter IV: Experimental Setup. Describe dataset, hyperparameters (from config.py), and environment in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T16": {
+      "task_id": "T16",
+      "description": "[Increment 3: Results] Chapter V: Results and Analysis. Report metrics from results.csv, interpret plots, discuss robustness in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    },
+    "T17": {
+      "task_id": "T17",
+      "description": "[Increment 3: Conclusion] Chapter VI: Conclusion. Summary, limitations, future work in paper.md.",
+      "target_node": "paper.md",
+      "assigned_agent": "seed_writer"
+    }
+  },
+  "interfaces": {
+    "config.py": "\"\"\"Configuration constants for the Federated Optimization experiment.\"\"\"\nimport os\n\n# Experiment Parameters\nNUM_CLIENTS = 50\nDIRICHLET_ALPHA = 0.1\nDROPOUT_RATE = 0.2\nNUM_COMM_ROUNDS = 100\nLOCAL_EPOCHS = 5\nLEARNING_RATE = 0.01\nPROX_MU = 0.01\nBATCH_SIZE = 32\nINPUT_DIM = 784\nOUTPUT_DIM = 10\nNUM_SEEDS = 5\n\n# Paths\nBASE_DIR = os.path.dirname(os.path.abspath(__file__))\nRESULTS_PATH = os.path.join(BASE_DIR, 'results.csv')\nFIGURES_DIR = os.path.join(BASE_DIR, 'figures')\n",
+    "data_partitioner.py": "\"\"\"Module for partitioning a central dataset across clients using Dirichlet distribution.\"\"\"\nfrom typing import List, Tuple\nimport numpy as np\n\ndef dirichlet_partition(total_samples: int, num_clients: int, alpha: float) -> List[Tuple[int, int]]:\n    \"\"\"Partition total_samples indices into num_clients subsets using Dirichlet(alpha).\n\n    Args:\n        total_samples: Total number of data points available.\n        num_clients: Number of clients to partition for.\n        alpha: Dirichlet concentration parameter. Lower values increase non-IIDness.\n\n    Returns:\n        List of (start_idx, length) tuples representing the slice of indices for each client.\n        The sum of lengths equals total_samples.\n    \n    Example:\n        >>> parts = dirichlet_partition(100, 2, 0.5)\n        >>> len(parts) == 2\n        True\n        >>> sum(p[1] for p in parts) == 100\n        True\n    \"\"\"\n    pass\n\ndef get_client_indices(partition: List[Tuple[int, int]], client_id: int) -> np.ndarray:\n    \"\"\"Extract the numpy array of indices for a specific client from the partition.\n\n    Args:\n        partition: The output of dirichlet_partition.\n        client_id: Index of the client.\n\n    Returns:\n        np.ndarray of integer indices.\n    \n    Example:\n        >>> parts = [(0, 50), (50, 50)]\n        >>> get_client_indices(parts, 0).tolist()[:5]\n        [0, 1, 2, 3, 4]\n    \"\"\"\n    start, length = partition[client_id]\n    return np.arange(start, start + length)\n",
+    "model_utils.py": "\"\"\"Module for handling model weight serialization and deserialization.\"\"\"\nfrom typing import Dict, Any\nimport torch\n\ndef get_model_weights(model: torch.nn.Module) -> Dict[str, Any]:\n    \"\"\"Extract state dict from a PyTorch model.\n\n    Args:\n        model: The PyTorch neural network.\n\n    Returns:\n        Dictionary of layer names to tensors.\n    \n    Example:\n        >>> import torch.nn as nn\n        >>> m = nn.Linear(10, 2)\n        >>> w = get_model_weights(m)\n        >>> 'weight' in w\n        True\n    \"\"\"\n    pass\n\ndef set_model_weights(model: torch.nn.Module, weights: Dict[str, Any]) -> None:\n    \"\"\"Load state dict into a PyTorch model.\n\n    Args:\n        model: The PyTorch neural network.\n        weights: Dictionary of layer names to tensors.\n    \n    Example:\n        >>> import torch.nn as nn\n        >>> m = nn.Linear(10, 2)\n        >>> w = get_model_weights(m)\n        >>> set_model_weights(m, w) # Should not raise\n    \"\"\"\n    pass\n\ndef add_weights_diff(global_weights: Dict[str, Any], delta_w: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:\n    \"\"\"Add delta to global weights element-wise.\n\n    Args:\n        global_weights: Current global model weights.\n        delta_w: Weight differences (deltas).\n\n    Returns:\n        New dictionary with updated weights.\n    \n    Example:\n        >>> g = {'w': torch.tensor([1.0])}\n        >>> d = {'w': torch.tensor([0.5])}\n        >>> res = add_weights_diff(g, d)\n        >>> res['w'].item()\n        1.5\n    \"\"\"\n    pass\n\ndef compute_delta(model: torch.nn.Module, global_weights: Dict[str, Any]) -> Dict[str, torch.Tensor]:\n    \"\"\"Compute delta = local_weights - global_weights.\n\n    Args:\n        model: Current local model state.\n        global_weights: Reference global weights.\n\n    Returns:\n        Dictionary of weight differences.\n    \n    Example:\n        >>> import torch.nn as nn\n        >>> m = nn.Linear(10, 2)\n        >>> with torch.no_grad():\n        ...     m.weight.fill_(1.0)\n        >>> gw = {'weight': torch.tensor([0.0])}\n        >>> delta = compute_delta(m, gw)\n        >>> delta['weight'].item()\n        1.0\n    \"\"\"\n    pass\n",
+    "fed_agg.py": "\"\"\"Module for FedAvg client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\nimport torch\nfrom model_utils import get_model_weights, set_model_weights, add_weights_diff, compute_delta\n\ndef fed_avg_client_step(model: torch.nn.Module, data_loader: torch.utils.data.DataLoader, lr: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform local training on client and return delta w.r.t. initial model state.\n\n    Args:\n        model: The neural network model (will be modified in place).\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global_initial).\n    \n    Example:\n        >>> import torch.nn as nn\n        >>> import torch.optim\n        >>> m = nn.Linear(10, 2)\n        >>> # Mocking data loader to simulate one step update\n        >>> class DummyLoader:\n        ...     def __iter__(self): return iter([])\n        >>> # This is a stub example; real test will use mock DataLoader\n        >>> # deltas = fed_avg_client_step(m, DummyLoader(), 0.1)\n    \"\"\"\n    pass\n\ndef fed_avg_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule.\n\n    Args:\n        global_model: Current global model (used as reference for state_dict copy).\n        client_deltas: List of delta dictionaries from active clients.\n        client_weights: List of sample counts for each active client.\n\n    Returns:\n        Updated global model object with aggregated weights.\n    \n    Example:\n        >>> import torch.nn as nn\n        >>> m = nn.Linear(10, 2)\n        >>> deltas = [{'weight': torch.tensor([0.5])}]\n        >>> wts = [10]\n        >>> agg_m = fed_avg_aggregate(m, deltas, wts)\n        >>> # Should return a new model or modified one\n    \"\"\"\n    pass\n",
+    "fed_prox.py": "\"\"\"Module for FedProx client update and global aggregation.\"\"\"\nfrom typing import List, Dict, Any\nimport torch\nfrom model_utils import get_model_weights, set_model_weights, add_weights_diff, compute_delta\n\ndef fed_prox_client_step(model: torch.nn.Module, global_weights: Dict[str, torch.Tensor], data_loader: torch.utils.data.DataLoader, lr: float, mu: float) -> Dict[str, torch.Tensor]:\n    \"\"\"Perform one local epoch of SGD with proximal term for FedProx.\n\n    Args:\n        model: The neural network model (will be modified in place).\n        global_weights: Weights of the global model at start of round.\n        data_loader: Local client dataset loader.\n        lr: Learning rate.\n        mu: Proximal regularization parameter.\n\n    Returns:\n        Dictionary of weight differences (delta_w = w_local - w_global_start).\n    \n    Example:\n        >>> # See stub example in fed_agg\n    \"\"\"\n    pass\n\ndef fed_prox_aggregate(global_model: torch.nn.Module, client_deltas: List[Dict[str, torch.Tensor]], client_weights: List[int]) -> torch.nn.Module:\n    \"\"\"Aggregate client deltas using FedAvg rule (FedProx aggregation is same as FedAvg).\"\"\"\n    pass\n",
+    "experiment.py": "\"\"\"Experiment entrypoint. Runs simulation and saves results.\"\"\"\nimport os\nimport random\nimport pandas as pd\nimport numpy as np\nimport torch\nimport torch.nn as nn\nfrom config import (\n    NUM_CLIENTS, DIRICHLET_ALPHA, DROPOUT_RATE, NUM_COMM_ROUNDS,\n    LOCAL_EPOCHS, LEARNING_RATE, PROX_MU, BATCH_SIZE, INPUT_DIM,\n    OUTPUT_DIM, NUM_SEEDS, RESULTS_PATH\n)\nfrom data_partitioner import dirichlet_partition, get_client_indices\nfrom fed_agg import fed_avg_client_step, fed_avg_aggregate\nfrom fed_prox import fed_prox_client_step, fed_prox_aggregate\n\ndef run_experiment() -> None:\n    \"\"\"Run FedAvg and FedProx simulations, write results.csv.\n    \n    Metrics reported:\n    - final_test_accuracy_mean: Mean test accuracy at last round across seeds.\n    - final_test_accuracy_std: Std dev of test accuracy at last round across seeds.\n    - rounds_to_90_pct_accuracy: Rounds needed to reach 90% of max possible accuracy (mocked).\n    \"\"\"\n    pass\n",
+    "plots.py": "\"\"\"Module for generating experiment figures.\"\"\"\nimport os\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom config import FIGURES_DIR\n\ndef generate_plots() -> None:\n    \"\"\"Read results.csv and save convergence plots to figures/ directory.\n    \n    Creates: convergence.png (line plots of test accuracy per round for both methods).\n    \"\"\"\n    os.makedirs(FIGURES_DIR, exist_ok=True)\n    # Logic to read results.csv and plot\n    pass\n",
+    "tests/test_data_partitioner.py": "\"\"\"Tests for data_partitioner module.\"\"\"\nimport sys\nimport os\nsys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../')\nfrom data_partitioner import dirichlet_partition, get_client_indices\nimport numpy as np\nimport unittest\n\nclass TestDirichletPartition(unittest.TestCase):\n    def test_partition_length_sum(self):\n        parts = dirichlet_partition(100, 5, 0.5)\n        self.assertEqual(sum(p[1] for p in parts), 100)\n    \ndef test_get_client_indices(self):\n    parts = [(0, 10), (10, 10)]\n    idxs = get_client_indices(parts, 0)\n    self.assertTrue(np.array_equal(idxs, np.arange(10)))\n\nif __name__ == '__main__':\n    unittest.main()\n",
+    "tests/test_model_utils.py": "\"\"\"Tests for model_utils module.\"\"\"\nimport sys\nimport os\nsys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../')\nfrom model_utils import get_model_weights, set_model_weights, compute_delta\nimport torch\nimport torch.nn as nn\nimport unittest\n\nclass TestModelUtils(unittest.TestCase):\n    def test_get_set_consistency(self):\n        m = nn.Linear(10, 2)\n        w = get_model_weights(m)\n        set_model_weights(m, w)\n        # No error raised means success\n\n    def test_compute_delta_zero(self):\n        m = nn.Linear(10, 2)\n        with torch.no_grad():\n            m.weight.fill_(0.0)\n            m.bias.fill_(0.0)\n        gw = get_model_weights(m)\n        delta = compute_delta(m, gw)\n        self.assertTrue(torch.allclose(delta['weight'], torch.zeros_like(delta['weight'])))\n\nif __name__ == '__main__':\n    unittest.main()\n",
+    "tests/test_fed_agg.py": "\"\"\"Tests for fed_agg module.\"\"\"\nimport sys\nimport os\nsys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../')\nfrom fed_agg import fed_avg_aggregate\nimport torch\nimport torch.nn as nn\nimport unittest\n\nclass TestFedAvg(unittest.TestCase):\n    def test_aggregate_identity(self):\n        m = nn.Linear(10, 2)\n        deltas = [{'weight': torch.zeros_like(m.weight)}]\n        wts = [10]\n        agg_m = fed_avg_aggregate(m, deltas, wts)\n        # Weights should be unchanged\n        self.assertTrue(torch.allclose(get_model_weights(m)['weight'], get_model_weights(agg_m)['weight']))\n\nif __name__ == '__main__':\n    unittest.main()\n",
+    "tests/test_fed_prox.py": "\"\"\"Tests for fed_prox module.\"\"\"\nimport sys\nimport os\nsys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + '/../')\nfrom fed_prox import fed_prox_aggregate\nimport torch\nimport torch.nn as nn\nimport unittest\n\nclass TestFedProx(unittest.TestCase):\n    def test_aggregate_identity(self):\n        m = nn.Linear(10, 2)\n        deltas = [{'weight': torch.zeros_like(m.weight)}]\n        wts = [10]\n        agg_m = fed_prox_aggregate(m, deltas, wts)\n        # Weights should be unchanged\n        self.assertTrue(torch.allclose(get_model_weights(m)['weight'], get_model_weights(agg_m)['weight']))\n\nif __name__ == '__main__':\n    unittest.main()\n"
+  },
+  "thesis_type": "paper",
+  "template_name": "paper_ieee",
+  "academic_blueprint": {
+    "thesis_title": "Robustness of Proximal Federated Optimizers Under Non-IID Data and Straggler Dropout",
+    "thesis_statement": "FedProx converges more robustly than FedAvg on non-IID partitions (Dirichlet alpha=0.1) when 20% of clients drop out each round, measured by final test accuracy stability across seeds.",
+    "baseline_comparison": "FedAvg (standard federated averaging) serves as the baseline against FedProx (mu=0.01). Comparison is based on mean test accuracy and variance over 5 seeds.",
+    "entrypoint": "experiment.py:run_experiment",
+    "metrics": [
+      "final_test_accuracy_mean",
+      "final_test_accuracy_std",
+      "rounds_to_90_pct_accuracy"
+    ],
+    "plots": "plots.py:generate_plots",
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "I. Introduction",
+        "focus": "Motivation for Federated Learning, problem of non-IID data and stragglers, thesis statement."
+      },
+      {
+        "index": 2,
+        "title": "II. Related Work",
+        "focus": "Review of FedAvg, FedProx, and recent approaches (2023-2026) to non-IID and straggler robustness."
+      },
+      {
+        "index": 3,
+        "title": "III. Methodology",
+        "focus": "Formal description of FedAvg and FedProx algorithms, Dirichlet data partitioning, and dropout simulation."
+      },
+      {
+        "index": 4,
+        "title": "IV. Experimental Setup",
+        "focus": "Dataset (e.g., CIFAR-10 or MNIST), hyperparameters, hardware environment, and reproducibility details."
+      },
+      {
+        "index": 5,
+        "title": "V. Results and Analysis",
+        "focus": "Convergence curves, final accuracy comparison, statistical significance of robustness improvement."
+      },
+      {
+        "index": 6,
+        "title": "VI. Conclusion",
+        "focus": "Summary of findings, limitations, and future work."
       }
     ]
   }

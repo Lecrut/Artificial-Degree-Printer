@@ -251,7 +251,8 @@ class BuildingMixin:
 
         blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
         entrypoint = str(blueprint.get("entrypoint") or "").strip() if isinstance(blueprint, dict) else ""
-        result = execute_workspace_experiment(self.workspace_dir, entrypoint=entrypoint or None)
+        plots = str(blueprint.get("plots") or "").strip() if isinstance(blueprint, dict) else ""
+        result = execute_workspace_experiment(self.workspace_dir, entrypoint=entrypoint or None, plots=plots or None)
         if result.get("skipped") or result.get("ok"):
             self._last_experiment_error = ""
             if result.get("ok"):

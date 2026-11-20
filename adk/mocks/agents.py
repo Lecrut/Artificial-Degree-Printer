@@ -104,6 +104,7 @@ class SimulatedAgents:
                 "thesis_statement": sc.thesis_statement,
                 "baseline_comparison": "The proposed method against the baseline on the declared metrics.",
                 "entrypoint": ENTRYPOINT,
+                **({"plots": "plot_results.py:generate_plots"} if sc.plot_script else {}),
                 "metrics": list(sc.metrics),
                 "planned_chapters": chapters if sc.name != "default" else [
                     {"index": 1, "title": "Wstęp i formalizacja problemu"},
@@ -162,7 +163,7 @@ class SimulatedAgents:
             {"task_id": "T3", "description": "Unit tests of core.py", "target_node": "tests/test_core.py", "assigned_agent": "seed_tester"},
         ]
         if sc.plot_script:
-            tasks.append({"task_id": "T4", "description": "Implement generate_plots() in plot_results.py", "target_node": "plot_results.py", "assigned_agent": coder})
+            tasks.append({"task_id": "T_PLOT", "description": "Implement generate_plots() in plot_results.py", "target_node": "plot_results.py", "assigned_agent": coder})
         if include_docs:
             if sc.name == "default":
                 tasks.append({"task_id": "T4", "description": f"Document symbolic results for: {prompt}", "target_node": "thesis.md", "assigned_agent": "seed_writer"})

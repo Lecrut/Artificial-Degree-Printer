@@ -274,8 +274,22 @@ def _declared_vs_measured_metrics(declared: list[str], workspace_dir: Path) -> l
     return findings
 
 
-def _missing_chapter_tasks(issues_text: str) -> list[dict[str, Any]]:
-    """Writer tasks for chapters the defense audit reported as missing."""
+def _normalized_files(llm_output: dict[str, Any]) -> dict[str, Any]:
+    """Unambiguous variants of the `files` shape as a list of `{filename, content}` (§XII R3: they were rejected and
+    cost a repair attempt): one file answered flat, `files` as `{path: content}`, `files` as one `{filename, content}`."""
+    files = llm_output.get("files")
+    flat_name = llm_output.get("filename") or llm_output.get("path")
+    if not files and flat_name and isinstance(llm_output.get("content"), str):
+        files = [{"filename": flat_name, "content": llm_output["content"]}]
+    elif isinstance(files, dict):
+        files = [files] if ("filename" in files or "path" in files) else [
+            {"filename": k, "content": v} for k, v in files.items() if isinstance(v, str)
+        ]
+    return {**llm_output, "files": files} if files is not llm_output.get("files") else llm_output
+
+
+def _missing_chapter_tasks(issues_text: str, chapter_titles: dict[int, str]) -> list[dict[str, Any]]:
+    """Writer tasks for planned chapters (number -> title from the plan) the defense audit reported as missing."""
     match = texts.MISSING_CHAPTERS_PATTERN.search(issues_text)
     if not match:
         return []
@@ -285,11 +299,11 @@ def _missing_chapter_tasks(issues_text: str) -> list[dict[str, Any]]:
             "task_id": f"GATE_3_CH{number}_FIX",
             "target_node": THESIS_FILE,
             "assigned_agent": "seed_writer",
-            "description": description,
+            "description": templates.titled_chapter_task(number, title),
             "status": "TODO",
             "covers": texts.chapter_covers(number),
         }
-        for number, description in templates.CHAPTER_REPAIR.items()
+        for number, title in sorted(chapter_titles.items())
         if texts.chapter_covers(number) in listed
     ]
 

@@ -1,0 +1,47 @@
+{
+  "files": [
+    ".ruff_cache/.gitignore",
+    ".ruff_cache/0.17.2/12158840753745392508",
+    ".ruff_cache/0.17.2/18264368662214927456",
+    ".ruff_cache/0.17.2/8441642774161006422",
+    ".ruff_cache/0.17.2/9847965766122267174",
+    ".ruff_cache/CACHEDIR.TAG",
+    "logs/agent_trace.jsonl",
+    "logs/events.jsonl",
+    "logs/experiment.log",
+    "logs/harness_process.log",
+    "references.bib",
+    "results.csv",
+    "src/baselines.py",
+    "src/config.py",
+    "src/ensemble_detector.py",
+    "src/experiment_runner.py",
+    "src/plots.py",
+    "src/synthetic_data.py",
+    "tests/test_baselines.py",
+    "tests/test_ensemble_detector.py",
+    "tests/test_synthetic_data.py",
+    "thesis.md"
+  ],
+  "pytest_status": "PASS",
+  "pytest_errors": [],
+  "chapters_present": [
+    1,
+    2
+  ],
+  "chapters_missing": [
+    3,
+    4,
+    5
+  ],
+  "symbolic_errors": [],
+  "csv_columns": [
+    "method",
+    "metric",
+    "value",
+    "seed"
+  ],
+  "trigger_issues": [
+    "Traceback (most recent call last):\n  File \"<string>\", line 59, in <module>\n    getattr(plots_module, plots_func)()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\src\\plots.py\", line 20, in plot_results\n    p = axes[0].boxplot([f1_by_method[f1_by_method.method == m]['value'].values for m in f1_by_method.method.unique()], labels=list(f1_by_method.method.unique()), patch_artist=True)\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\.venv\\Lib\\site-packages\\matplotlib\\_api\\deprecation.py\", line 477, in wrapper\n    return func(*args, **kwargs)\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\.venv\\Lib\\site-packages\\matplotlib\\__init__.py\", line 1531, in inner\n    return func(\n        ax,\n        *map(cbook.sanitize_sequence, args),\n        **{k: cbook.sanitize_sequence(v) for k, v in kwargs.items()})\nTypeError: Axes.boxplot() got an unexpected keyword argument 'labels'. Did you mean 'label'?"
+  ]
+}

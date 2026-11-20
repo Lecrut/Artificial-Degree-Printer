@@ -231,7 +231,7 @@ def test_a3_planning_returns_violations_to_the_planner_then_builds_h_and_stubs(t
     orch = _orch(tmp_path)
     broken = {"tasks": [{"task_id": "T1", "target_node": "src/experiment.py", "description": "x"}],
               "interfaces": {**_GOOD, "src/experiment.py": _EXPERIMENT_IFACE.replace("run_experiment()", "run_experiment(config)")},
-              "entrypoint": _ENTRY}
+              "entrypoint": _ENTRY, "plots": _ENTRY, "planned_chapters": [{"index": 1, "title": "Wstęp"}]}
     fixed = {"interfaces": {"src/experiment.py": _EXPERIMENT_IFACE}}  # a patch: only the module it corrects
     sent: list[dict] = []
     reviewed: list[dict] = []
@@ -263,7 +263,7 @@ def test_a3_a_plan_still_broken_after_two_corrections_stops_the_run(tmp_path: Pa
     orch = _orch(tmp_path)
     broken = {"tasks": [{"task_id": "T1", "target_node": "src/experiment.py", "description": "x"}],
               "interfaces": {**_GOOD, "src/data_generator.py": _GENERATOR.replace("-> list[float]", "-> List[float]")},
-              "entrypoint": _ENTRY}
+              "entrypoint": _ENTRY, "plots": _ENTRY, "planned_chapters": [{"index": 1, "title": "Wstęp"}]}
     calls = []
     orch._call_agent = lambda *_a, **_k: calls.append(1) or {"status": "ok", "output": broken}
     _, _, violations = orch._validated_plan(broken, {}, tmp_path / "planner.md")
@@ -524,7 +524,7 @@ def test_a9_with_a_known_culprit_the_remediation_planner_is_skipped(tmp_path: Pa
     state = _RunState(user_prompt="p", max_retries=3, multi_cycle_waves=True, tasks=[task])
     report, stop = orch._repair_task(state, task, dict(failing), "src/config.py", "src/config.py")
     assert stop is None and report["status"] == "FAIL"
-    assert calls == ["T2_FIX1", "T2_FIX2"]  # two local attempts by the author, no planner
+    assert calls == ["T2_FIX1"]  # the author's attempt left the identical error (§XIV Q3); no planner either
 
 
 # --- End to end: the spec-driven path with a scripted model ----------------------------------------------------
@@ -559,6 +559,7 @@ def _e2e(tmp_path: Path, implement_entry: bool = True) -> tuple[dict, list[str],
                 ],
                 "interfaces": _E2E_IFACES,
                 "entrypoint": "src/experiment.py:run_experiment",
+                "plots": "src/experiment.py:run_experiment",
             }
         if agent == "plan_critic_guard":
             return {"status": "PASS", "approved": True, "issues": []}

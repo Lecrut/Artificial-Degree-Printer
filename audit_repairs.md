@@ -21,6 +21,9 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-18 | **Audyt VII — pierwszy przebieg na żywo po D4 (01, 02 z 2026-11-17) → §VIII** | 01: `COMPLETED_WITH_GAPS` po 4 przebudowach — plan przeszedł walidację, ale był niewykonalny: doctesty planera niespełnialne (51/89 werdyktów FAIL, Y1), punkt wejścia `config.py` nie używa modułów planu (83× `DATA_FAILED`, Y2), krytyk planu nie widzi `interfaces`, a jego odrzucenie jest zamieniane na PASS (Y3); 02: `CRASHED` — `stub_source` usuwa `self.x = …` z `__init__`, bramka σ odrzuca stuby harnessu | **B1–B3, B5, B6 wdrożone 2026-11-18 (§IX.9, 215/215)**, bez przebiegu na żywo; otwarte B4, B7, B8 |
 | 2026-11-18 | **Audyt VIII — nieużywane i przestarzałe elementy → §IX** | martwych funkcji prawie brak; dług to kod poprzednich iteracji wykonywany obok D4: stara `hypergraph_matrix.json` nadal nadaje id, cel, kontekst i zakres weryfikacji (15 modułów); rozdziały mapowane regexem i reguła „6 rozdziałów” sprzeczna z planem; przełączniki demo mocków na żywo (wymuszony `AGENT_CREATED` w 02, atrapa wykresu); trzy kopie przebiegu (piaskownica → `benchmarks/<slug>` → lustro w korzeniu, publikacja uruchamia eksperyment drugi raz); mocki 26% kodu, importowane przez publikator | **C2, C3 wdrożone; C1, C4, C5, C6 częściowo (§IX.9)**; lustro `benchmarks/` usunięte; otwarte: rdzeń C1 (id `n*`, zakres, `last_writer` ze starej macierzy), reszta C4, C7, C8 |
 | 2026-11-18 | **Jeden hipergraf + kontrolowana zmiana planu → §X** | stara macierz i jej narzędzia usunięte; H jedynym zapisem struktury (cel, zakres, winny, kontekst agenta liczone z H); zasada „obietnic nie wolno złamać, rozszerzać wolno” z rejestrowaniem rozszerzeń w H; R obejmuje wszystkie moduły eksperymentu; cytowania jako członkowie N; ocena interfejsu przez planera po powtórzonym błędzie σ (B4) | **wdrożone (211/211)**, bez przebiegu na żywo; otwarte: odcisk dla każdego worka, rodzaj `config`, C4, B7, B8, C7, C8 |
+| 2026-11-19 | **Audyt IX — benchmarki 19.11: plan odrzucany, naprawy bez skutku → §XII** | 02 i 03 `PLAN_REJECTED` (krytyk co rundę znajduje nowe blokady — skutki własnych lokalnych poprawek), 01: 0 skutecznych napraw (zły test obwinia kod, sprzeczny komunikat dla pisarza, odrzucenia formatu), crash na `TimeoutExpired` w ewolucji | P1–P3 (komunikacja krytyk ↔ planista) zatwierdzone; R1–R4 (naprawy, crash) — diagnoza, do decyzji |
+| 2026-11-19 | **Audyt X — wymuszona architektura i sprzeczne instrukcje → §XIII** | harness narzuca `results.csv`, `plot_results.py`, moduł config, 6 rozdziałów; zaszyte profile benchmarków w `research_recon`; 9 sprzeczności prompt↔prompt i prompt↔kod (krytyk blokuje to, co harness dopisuje sam; „change only that” vs „Change together”; dwa formaty łatki `tasks`) | P1 (prompty) — w realizacji; P2–P4 do decyzji |
+| 2026-11-19 | **Szanse planu i napraw — krytyczna ocena → §XIV** | krytyk dalej blokuje zgadywaniem wyników doctestów (sprawdzanych potem przez harness); naprawy kręcą się na złym teście (R1) i powtarzają identyczny błąd | Q1 (kategoria `doctest` = ostrzeżenie), Q2 (winny = niezweryfikowany z pary test/moduł), Q3 (stop przy identycznym błędzie) — w realizacji |
 
 ---
 
@@ -3741,3 +3744,175 @@ Stan: **plan, do wdrożenia.** Uwaga użytkownika: „dopóki szły po kolei zad
 
 Niezweryfikowane: pełny `pytest` i przebieg na mocku/żywo nie były uruchamiane. Spodziewane do dostosowania testy: gotowość testów (czekają na `verified` modułu), oczekiwania co do redteam/Gate 3 i treści `BEHAVIOUR_MISMATCH`, cykle napraw w testach benchmarków (`architecture_cycles`).
 
+
+---
+# §XII — 2026-11-19: Audyt IX — benchmarki 19.11 (qwen3.5:4b / qwen3.6:35b)
+
+Uwaga użytkownika: „zbyt agresywnie odrzucamy, wszystko zbyt agresywnie odrzucamy — plan nie przeszedł mnóstwo razy, a pojedyncze zadania ani razu skutecznej naprawy”.
+
+## §XII.1. Przebieg
+
+| zadanie | wynik | LLM |
+|---|---|---|
+| 01 rl_tictactoe | plan przeszedł; 4 DONE, 5 FAILED, 1 przeplanowanie; **CRASHED** (`TimeoutExpired` w ewolucji) | 56 wywołań, 37 min (LRM 78%) |
+| 02 ml_anomaly_detection | **PLAN_REJECTED** po 6 łatkach | 11 wywołań, 12 min (LRM 100%) |
+| 03 graph_pathfinding | **PLAN_REJECTED** po 5 łatkach | 12 wywołań, 10 min (LRM 100%) |
+| 04 federated_learning | nie uruchomione (logi z 18.11) | — |
+
+## §XII.2. Plan: krytyk nie zbiega się (02, 03)
+
+- Blokady statyczne (kod planu) naprawione w 1–2 łatkach. Potem w każdej rundzie krytyka `PLAN_PATCHED fixed=[] new=[]`, a kolejny przegląd zwraca **~3 nowe** blokady → licznik blokad stoi → `NO_PROGRESS_LIMIT` → `PLAN_REJECTED`.
+- **Przyczyna — komunikacja, nie zakres przeglądu.** Uwaga krytyka ma `fix`, ale lokalny: jedno miejsce, bez tego, co musi zmienić się razem z nim. Planista łata to miejsce; następny (całościowy) przegląd znajduje skutki tej łatki:
+  - 03: „usuń `END_POS`, licz koniec dynamicznie” → „`START_POS` sprzeczny z T3” → „po usunięciu `END_POS` brak mechanizmu wyboru celu” → „`GridMap.create` bez jawnego źródła losowości” — cztery rundy jednej zmiany.
+  - 02: „doctest `inject_anomalies`: dodaj seed do sygnatury, albo `np.random.seed`… *Better:* usuń doctest” — **schody wariantów** zamiast decyzji; planista dodał `seed=42`, następna runda zgłasza błąd w tym nowym kodzie. To samo z AUC (dodane do `metrics` → nowa blokada w doctestcie `compute_metrics`) i z `plot_results` (łatka wprowadziła doctest z nieistniejącą zmienną `p`).
+- Planista **nie dostaje ostrzeżeń**: `planner_patch_feedback(blockers, rejected_patch, warnings)` wywoływane bez `warnings` (`plan_spec._validated_plan`); część uwag pobocznych wraca w następnej rundzie jako blokady.
+- Krytyk **nie zna historii planu** — nie wie, co i dlaczego zmieniono, więc skutek własnej wcześniejszej rady ocenia jak nowy błąd.
+- Poboczne: `_is_proven_blocker` sprawdza tylko, czy `where` zawiera nazwę z planu (spełnia to prawie każda uwaga); krytyk łamie własne „HARNESS RULES” (stałe w `config.py`, nowe zadania, `paper.tex` vs `thesis.md`). Nie ruszane w tym kroku.
+
+**Odrzucone:** „po pierwszej rundzie krytyk sprawdza tylko swoje wcześniejsze blokady” — użytkownik: ocena planu ma być **zawsze całościowa**.
+
+## §XII.3. Naprawy zadań: odrzucamy to, czego nie da się naprawić (01)
+
+- **R1. Zły test → wina kodu.** `ttt_agent.py` `verified` wobec σ; świeży test testera `assert abs(q_vals[a]) > 0.5` po jednej aktualizacji z lr=0.1 (wynik 0.1 — sprawdzone pytestem: `assert 0.1 > 0.5`). `_pytest_culprits` każdą asercję przypisuje kodowi → 3 naprawy SML, `failed`, przeplanowanie (LRM) i 3 kolejne naprawy — bez szans. Koder w odpowiedzi sam pisał, że trzeba poprawić asercję testu. (14.11: „zawsze tester”, dziś: „zawsze kod” — obie reguły sztywne.)
+- **R2. Sprzeczny komunikat dla pisarza.** Rozdziały 1–3: 12× „CSV file 'ttt_results' does not exist”. Komunikat każe wybrać cel z `available_csv_columns`, a ta lista jest pusta (`[]` we wszystkich 17 wywołaniach — eksperyment jeszcze nie działał). Model wymyśla nazwę CSV.
+- **R3. Odrzucenia formatu zjadają próby:** `files` jako słownik (pole „dozwolone”, zły kształt), edycja `__all__` zawierająca nazwy innych symboli; doctest planu `b.reset()` bez oczekiwanego wyniku, gdy `reset` zwraca `self` (`SPEC_AMENDED` go nie usunął, dopiero przeplanowanie).
+- **R4. Crash:** `sandbox_verifier._run_sample` (`subprocess.run(..., timeout=15)`) — `TimeoutExpired` kandydata na narzędzie z ewolucji nie jest łapany i kończy cały przebieg (nawrót klasy błędu z Audytu III).
+
+## §XII.4. Plan (zatwierdzony 2026-11-19: P1–P3)
+
+**P1. Format uwagi krytyka** (`plan_critic_guard.md`): `fix` = **jedna decyzja — najlepsza i najbardziej prawdopodobna**, bez wariantów i schodów („albo…”, „better…”, „if…, otherwise…”); nowe pole `affects`: każde inne miejsce planu (moduł/symbol, doctest, zadanie, pole blueprintu), które musi zmienić się razem z poprawką, i co ma się w nim znaleźć — poprawka ma być spójna w całym planie. Przegląd zostaje całościowy.
+**P2. Feedback dla planisty** (`agent_texts.planner_patch_feedback`, `critic_finding`): blokada razem z `affects` i poleceniem „zmień wszystkie wymienione miejsca w tej samej łatce”; nowy kod w łatce podlega tym samym regułom co plan (deterministyczne doctesty, nazwy z interfejsów); ostrzeżenia przekazywane (naprawa przeoczenia w `_validated_plan`).
+**P3. Historia jako kontekst krytyka:** poprzednie rundy (uwagi + co planista zmienił) w ładunku krytyka — tylko po to, by rozumiał podjęte decyzje i nie odwracał ich bez powodu; zakres oceny bez zmian (cały plan).
+**R1–R4:** diagnoza powyżej, do decyzji użytkownika.
+
+## §XII.5. Wdrożono P1–P3 (2026-11-19)
+
+- **P1** (`plan_critic_guard.md`): sekcja „HOW TO WRITE THE FIX” — jedna decyzja (najlepsza, najbardziej prawdopodobna; bez „albo / if…otherwise / better”), prześledzenie zależności zmienianego elementu, pole `affects: [{where, change}]`; kod w poprawce podlega regułom planu.
+- **P2** (`agent_texts.critic_finding`, `planner_patch_feedback`; `plan_spec._affects`): blokada niesie „Change together: [miejsce] zmiana; …”, planista ma zmienić wszystkie miejsca w tej samej łatce; ostrzeżenia trafiają do planisty (wcześniej gubione w `_validated_plan`).
+- **P3** (`plan_spec._validated_plan`, `_plan_review`): `review_history` w ładunku krytyka — po każdej łatce `{round, blockers, planner_changed}`; prompt: historia to kontekst, przegląd zawsze całego planu, bez odwracania wcześniejszych poprawek bez powodu.
+- Test: `test_plan_spec_validation.py::test_critic_fix_reaches_planner_with_affected_places_warnings_and_history`. Pełny pytest 249/250 (jedyna porażka `test_no_empty_files_in_repository` — puste pliki w `viewer/node_modules`, niezwiązane), ruff czysty.
+- Niezmierzone na żywo: kolejny krok — przebieg 02 i 03, porównanie liczby rund krytyka i `fixed`/`new` w `PLAN_PATCHED` z §XII.2.
+
+---
+# §XIII — 2026-11-19: Audyt X — wymuszona architektura i sprzeczne instrukcje
+
+Zasada (użytkownik, 2026-11-19, wiążąca): **system sam wybiera architekturę**; harness nie wymusza gotowych plików ani struktury (typu `core.py`, `config.py`, `plot_results.py`, 6 rozdziałów). Prompty i kod nie mogą sobie przeczyć. Punkt wyjścia: §XII — krytyk blokował brak zadania rozdziału, które harness i tak dopisuje sam.
+
+## §XIII.1. Wymuszona architektura w kodzie
+
+| # | miejsce | co wymusza | skutek / dowód |
+|---|---|---|---|
+| F1 | `hypergraph/build.py:15` `RESULTS_FILE = "results.csv"` (+ `factual_audit`, `thesis_publisher`, `template_manager`, `runner`, `EXPERIMENT_NO_RESULTS`) | plik wyników w korzeniu o stałej nazwie; **nikt nie mówi o tym planiście** (prompt: „file names are yours”) | 01 (19.11): planista wybrał `results/experiment_results.csv` → rozdziały 4–6 `WAITING` „results.csv: the experiment has not produced current results” do końca; przeplanowanie odrzuciło `results/experiment_results.csv` jako „not in the plan” |
+| F2 | `thesis_publisher.py:581`, `write_gate.py:79,97,317`, `experiment_runner` (import `plot_results`), prompty | moduł wykresów nazwany `plot_results.py` z `generate_plots(output_dir)` | nazwa pliku narzucona; `ENTRYPOINT_DOES_NOT_USE` ma dla niego wyjątek |
+| F3 | `tools/planning/research_recon.py::_detect_domain_profile` | **zaszyte profile benchmarków** (01–04 po słowach z promptu): dziedzina, `algorithm_focus`, metody bazowe, metryki, rozdziały z `core.py`/`config.py`/`test_core.py` | listy metodologii już zerowane w `scout_domain_conventions` (martwe dane, ~150 linii), ale `domain` i `algorithm_focus` nadal trafiają do planisty (`domain_context`) i do ToC — harness „zna” odpowiedzi benchmarków |
+| F4 | `research_recon.synthesize_table_of_contents` (zapas, gdy plan nie ma `planned_chapters`) | stałe 6 rozdziałów z `config.py`, `core.py`, `test_core.py`, `target_node: "v4"` (rola starej macierzy, usuniętej w §X) | martwa ścieżka zapasowa ze starą architekturą |
+| F5 | `experiment_runner._CONVENTION_ENTRY_FILES` (`core.py`, `main.py`, `train.py`, …) | zgadywanie punktu wejścia po nazwie, gdy plan go nie deklaruje | plan bez punktu wejścia i tak nie przechodzi (`NO_ENTRYPOINT` w `validate.py:240`); ścieżka zgadywania to relikt |
+| F6 | `plan_healing._insert_missing_chapters` (`range(1, 7)`, `MISSING_CHAPTER_TASK`, plastry 1–2 / 3–4 / 5+) | kanoniczne 6 rozdziałów, gdy brak tytułów; pozycja rozdziału wg numeru | uzupełnianie brakującego zadania rozdziału jest OK (to nie architektura), ale numeracja 1–6 jako domyślna to wymuszona struktura |
+
+## §XIII.2. Sprzeczne instrukcje (prompt ↔ prompt, prompt ↔ kod)
+
+| # | sprzeczność |
+|---|---|
+| S1 | `plan_critic_guard.md`: brak zadania rozdziału = blokada; **harness sam dopisuje** brakujące zadania rozdziałów (`_insert_missing_chapters`, po walidacji). Do tego w tym samym prompcie „No task proliferation: do not ask to add T15”. 02 i 03: 3 rundy krytyka na tym. |
+| S2 | `task_planner.md`: „You design the project yourself: its modules and file names… Nothing in this prompt prescribes them” ↔ ten sam prompt: „put the configuration constants in their own module and the entrypoint in an experiment module”, „`plot_results.py`”, „chapters 1–2 / 3–4 / 5–6”, przykład z `<config_module>.py`. `seed_coder.md`: „separate configuration, the proposed method, the baseline and the experiment”. |
+| S3 | `plan_critic_guard.md` HARNESS RULES: „Seeds or hyperparameters belong in `config.py`” — krytyk w 03 zablokował stałe w `experiment.py` („The harness requires…”). Intencją reguły był tylko zakaz argumentów punktu wejścia. Pkt 1 „WHAT TO CHECK”: „A config module that also holds the whole experiment logic” zakłada istnienie modułu config. |
+| S4 | `task_planner.md` §5: „find its cause … at the place named in brackets, and **change only that**” ↔ feedback §XII: „Change together: apply the fix and every listed change”. |
+| S5 | `task_planner.md` §5: „`tasks` (the whole list) only if the tasks change” ↔ `agent_texts.planner_patch_feedback`: „`tasks` as a dict mapping only the changed `task_id`… do NOT add, remove”. |
+| S6 | `task_planner.md`: „a plan still blocked after **two corrections** stops the run” — nieaktualne (budżety 4/4, maks. 6 łatek, stop po 2 łatkach bez postępu). |
+| S7 | Wynik eksperymentu: planista nic nie wie o pliku ani formacie wyników; `seed_coder.md` każe pisać „tidy CSV `method,metric,value`” do nienazwanego „results file”; harness czeka na `results.csv` w korzeniu (F1). Interfejs `run_experiment` pisze planista (docstring „Saves … CSV in OUTPUT_DIR”), koder ma go przestrzegać → trzy źródła, trzy różne odpowiedzi. |
+| S8 | `seed_coder.md`: „If a test looks wrong to you, say so in `summary` instead of rewriting it” — harness nie czyta `summary` przy ustalaniu winnego (§XII R1: koder napisał, że test jest zły; naprawy dalej szły do kodu). |
+| S9 | `seed_coder.md`: „Skeleton first” / „Form A … and the skeleton” — nie ma już zadania szkieletu (stuby pisze harness, §VII.13). |
+
+## §XIII.3. Co zostaje jako kontrakt harnessu (nie architektura)
+
+`thesis.md` (jeden dokument), testy `tests/test_<moduł>.py`, punkt wejścia bez argumentów **deklarowany w planie**, ustawienia jako nazwane stałe na poziomie modułu (żeby praca mogła je wskazać `\ref_ast`) — **ale w module, który wybierze planista**.
+
+## §XIII.4. Propozycja
+
+- **P1 (prompty, bez decyzji projektowych):** S1 (krytyk: brakujące zadanie rozdziału nie jest blokadą — harness je dopisuje), S3 (reguła tylko o argumentach punktu wejścia), S4 (planista: zmień miejsce z uwagi **i** wszystkie z „Change together”), S5 (jeden format łatki `tasks` — słownik, jak w feedbacku i w `_apply_patch`), S6 (bez liczby poprawek), S9 (bez „skeleton”), S2 w części „config module” → „named module-level constants in a module you choose”, numeracja rozdziałów w przyrostach → „chapters that need …”.
+- **P2 (kod, decyzja):** F1+S7 — plik wyników deklarowany w planie (`academic_blueprint.results_file`, obok `entrypoint` i `metrics`), H i bramki biorą go z planu; format tidy CSV mówiony planiście i koderowi tak samo. F2 — analogicznie deklarowane wykresy (`plots: path.py:function`) albo wykresy robi sam punkt wejścia.
+- **P3 (usunięcie):** F3 (profile benchmarków — zostaje tylko wyszukiwanie literatury), F4 (ToC zapasowy → brak `planned_chapters` = blokada planu), F5 (zgadywanie punktu wejścia), F6 (domyślne 1–6).
+- **P4:** S8 łączy się z §XII R1 (winny przy asercji).
+
+## §XIII.5. Wdrożono P1 (2026-11-19)
+
+- `plan_critic_guard.md`: reguła punktu wejścia tylko o argumentach (ustawienia = nazwane stałe; który moduł — wybór planisty, krytyk nie żąda nazw plików); „Chapter tasks” w HARNESS RULES (harness dopisuje brakujące zadania rozdziałów — nigdy nie zgłaszać); z blokad usunięty brak zadania rozdziału i „config module” z pkt 1 (S1, S3).
+- `task_planner.md`: przyrosty bez numerów rozdziałów i bez nazwy `plot_results.py` (odsyłacz do kontraktów); ustawienia jako nazwane stałe w module wybranym przez planistę (2 miejsca); bez „two corrections”; poprawka = miejsce z uwagi + „Change together”; `tasks` w łatce jako słownik, dodanie/usunięcie zadania = cała lista (S2, S4–S6).
+- `agent_texts.planner_patch_feedback`: ta sama zasada `tasks` co w prompcie i w `_apply_patch` (S5).
+- `seed_coder.md`: bez „Skeleton first” i „the skeleton” w Form A; architektura z planu, nie „separate configuration…”; ustawienia = stałe z interfejsów (S2, S9). `seed_tester.md`, `prompt_consolidator.md`: „declared seed constant” zamiast „configuration module”.
+- Test `tests/test_prompt_consistency.py` (żaden prompt nie wymusza `core.py`/`config.py`/„the configuration module”/„Skeleton first”; krytyk nie blokuje zadań rozdziałów; zasady łatki zgodne w prompcie i feedbacku). Pełny pytest: 252/253 (znana porażka `node_modules`), ruff czysty.
+- `plot_results.py` zostaje w „Harness contracts” planisty, w HARNESS RULES krytyka i w `seed_coder.md`, bo kod nadal go wymaga — do decyzji P2.
+
+## §XIII.6. Decyzje (2026-11-19)
+
+- **F1 / S7 — `results.csv` zostaje wymagane** (użytkownik: „tam trzymamy wskaźniki, więc to musi być hardcode”). To kontrakt harnessu jak `thesis.md`, więc **mówimy o nim wprost** planiście, koderowi i krytykowi: punkt wejścia zapisuje `results.csv` w korzeniu workspace, wiersze tidy `method,metric,value` (opcjonalnie `std_dev,n_runs`), metryki z `metrics`. Plan ma tylko te dane wyjściowe; podkatalog i inna nazwa = błąd planu.
+- **F2 — wykresy deklarowane w planie:** opcjonalne `academic_blueprint.plots = "<path>.py:<function>"`, wywoływane przez harness po eksperymencie **bez argumentów** (jak punkt wejścia). Walidacja jak punktu wejścia (`PLOTS_NOT_PLANNED`, `PLOTS_NOT_DECLARED`, `PLOTS_HAS_ARGUMENTS`); wyjątek w `ENTRYPOINT_DOES_NOT_USE`, członek C worka R, cel naprawy rysunków, oczekujące w audycie faktów, runner i publikacja — z deklaracji, nie z nazwy `plot_results.py` / symbolu `generate_plots`.
+- **F3–F6** — wyjaśnione użytkownikowi, czekają na decyzję.
+
+## §XIII.7. Wdrożono F1/F2 (2026-11-19)
+
+- **F2 — `plots` z planu:** `validate.code_violations(…, plots)` (wspólny `_declared_call` dla punktu wejścia i wykresów: `*_NOT_PLANNED`, `*_NOT_DECLARED`, `*_HAS_ARGUMENTS`; wyjątek w `ENTRYPOINT_DOES_NOT_USE` po deklaracji, nie po symbolu `generate_plots`); `build_from_plan(…, plots)` → członek C worka R i `R:run.spec["plots"]`; `Hypergraph.plots()`; `routing._repair_target` (rysunek → moduł `plots`), `factual_audit` (oczekujące), `context` (`experiment.plots` dla kodera); `experiment_runner` (`ADK_PLOTS`, wywołanie bez argumentów po udanym eksperymencie, zamiast `find_spec("plot_results")`); `thesis_publisher` i `benchmarks/runner` przekazują deklarację (usunięty zapas uruchamiający `plot_results.py` po nazwie); `write_gate`: brak nazwy pliku w `test_code`/`plot_script` = cel zadania (usunięte domyślne `test_core.py`, `plot_results.py`); symulowany planista deklaruje `plots`.
+- **F1 — `results.csv` jako jawny kontrakt** w `task_planner.md` (kontrakty + `metrics`), `plan_critic_guard.md` (HARNESS RULES: zapis gdzie indziej = blokada, sama nazwa nigdy) i `seed_coder.md` (Results Format). Kod bez zmian (`RESULTS_FILE`).
+- Testy: `test_audit_vii::test_declared_plots_module_is_not_required_to_be_imported_by_the_experiment`, `test_root_causes_1115::test_the_experiment_runs_the_declared_plots_from_src`, `test_prompt_consistency::test_results_file_is_a_stated_contract_and_figures_are_declared`; dostosowane: `test_audit_v_fixes`, `test_environment_and_benchmarks`, fikstura `tests/_plans.with_plan(plots=)`. Pełny pytest 253/254 (znana porażka `node_modules`), ruff czysty.
+
+## §XIII.8. Zasada: kod w dowolnych plikach, produkty stałe (2026-11-19)
+
+Użytkownik: „kod może się wykonywać w dowolnych plikach, ale rzeczy stałe muszą być — plik `results.csv` i generowanie wykresów — żeby nie narzucać dodatkowych problemów”.
+
+- Planista wybiera moduły, nazwy i podział kodu. Harness wymaga tylko dwóch produktów: `results.csv` w korzeniu workspace (punkt wejścia) i wykresów w `figures/` z funkcji zadeklarowanej w `academic_blueprint.plots` (dowolny moduł, dowolna nazwa, wywołanie bez argumentów).
+- `plots` jest **wymagane**: plan bez niego → blokada statyczna `PLAN_WITHOUT_PLOTS` (`plan_spec._static_blockers`, tekst w `agent_texts`), jak brak punktu wejścia. `plots` czytane jak `entrypoint` (blueprint albo poziom główny planu; `planning` przenosi je do blueprintu).
+- Prompty: `task_planner.md` (`plots` required), `seed_coder.md` (bez „if the plan declares figures”).
+- Mocki: scenariusz `default` ma skrypt wykresów; zadanie wykresów symulowanego planisty = `T_PLOT` (wcześniej kolidowało z `T4`). Fixtury testów deklarują `plots` (`tests/_plans.SPEC`, `_base_plan`, `_PLAN`, plany w `test_audit_vi`); liczby zadań w `test_layer1`, `test_layer4_and_orchestrator` +1.
+- Test: `test_plan_spec_validation::test_a_plan_without_declared_figures_goes_back_to_the_planner`. Pełny pytest 254/255 (znana porażka `node_modules`), ruff czysty.
+- F3–F6 (profile benchmarków, zapasowy ToC, zgadywanie punktu wejścia, domyślne rozdziały 1–6) — nadal do decyzji; wszystkie są sprzeczne z tą zasadą.
+
+## §XIII.9. Decyzja (2026-11-19): usunąć F3–F6
+
+Użytkownik zatwierdził usunięcie: profili benchmarków (`research_recon._detect_domain_profile`, zostaje wyszukiwanie literatury), zapasowego spisu treści (`synthesize_table_of_contents`; brak `planned_chapters` = błąd planu), zgadywania punktu wejścia po nazwie (`experiment_runner._CONVENTION_ENTRY_FILES` i odpowiednik w skrypcie) i domyślnych rozdziałów 1–6 (`plan_healing._insert_missing_chapters` uzupełnia tylko rozdziały zadeklarowane w planie).
+
+## §XIII.10. Wdrożono F3–F6 (2026-11-19)
+
+- **F3:** `research_recon.py` 493 → 66 linii: tylko wyszukiwanie literatury (`scout_domain_conventions`: routing badań wg stopnia, cytaty, BibTeX). Usunięte `_detect_domain_profile` (zaszyte profile 01–04), `_EMPTY_PROFILE`, `_METHODOLOGY_KEYS` i klucze `task_key`, `domain`, `algorithm_focus`, `canonical_baselines`, `standard_metrics`, `standard_datasets_or_environments`, `common_structural_patterns`. `planning.domain_context` = tylko rozpoznany typ pracy i szablon; tytuł bazowy = prompt.
+- **F4:** usunięte `synthesize_table_of_contents` (6 rozdziałów z `config.py`/`core.py`/`test_core.py`, `target_node: "v4"`). Plan piszący pracę (`include_docs`) bez `planned_chapters` → blokada statyczna `PLAN_WITHOUT_CHAPTERS` (`plan_spec._static_blockers(…, need_chapters)`, przekazywane też do częściowego przyjmowania łatek).
+- **F5:** `experiment_runner`: usunięte `_CONVENTION_ENTRY_FILES` i zgadywanie modułów/funkcji w skrypcie; bez zadeklarowanego punktu wejścia nic się nie uruchamia.
+- **F6:** rozdziały tylko z planu: `plan_healing._insert_missing_chapters` (bez `range(1, 7)`, bez `MISSING_CHAPTER_TASK`, bez słów kanonicznych `_CHAPTER_WORDS`; pozycja: rozdział o wynikach — `hypergraph.build.RESULTS_WORDS` — na koniec, inny przed implementacją; badacz dla rozdziału literatury po tytule), `factual_audit` (`_expected_chapters` → `{numer: tytuł}` z planu, bez domyślnych sześciu; `thesis_missing_chapters` dopasowuje nagłówek bez numeru po tytule planu zamiast `_CHAPTER_HEADING_WORDS`), naprawy bramki 3 (`common._missing_chapter_tasks(…, chapter_titles)` z tytułami planu zamiast `CHAPTER_REPAIR`), etykiety brakujących rozdziałów z planu (usunięte `agent_texts.CHAPTER_LABELS`). Nowy helper `PlanHealingMixin._planned_chapter_titles`.
+- Testy dostosowane (plany deklarują rozdziały; runner i publikacja dostają punkt wejścia; testy rekonesansu sprawdzają brak kluczy projektu; leczenie planu bez rozdziałów nic nie dopisuje). Pełny pytest 254/255 (znana porażka `node_modules`), ruff czysty.
+
+## §XII.6. Decyzje (2026-11-19)
+
+- **R2 — robimy:** komunikat dla pisarza o wskaźnikach nie może kazać wybierać z pustej listy; gdy wyników jeszcze nie ma, mówi wprost: bez `\ref_csv`, metryki słowami.
+- **R3 — robimy:** odpowiedź w złym kształcie, którą da się jednoznacznie znormalizować (np. `files` jako słownik ścieżka → treść, `__all__` w edycji symbolu), jest przyjmowana zamiast zużywać próbę naprawy.
+- **R4 — robimy:** dłuższy limit czasu sprawdzania kandydata na narzędzie i `TimeoutExpired` = kandydat odrzucony, nigdy crash przebiegu.
+- R1 — bez decyzji.
+
+## §XII.7. Wdrożono R2–R4 (2026-11-19)
+
+- **R2** (`tools/verification/ref_compiler.py`): brak pliku dla `\ref_csv` → gdy nie ma jeszcze `results.csv`: jeden komunikat „No results exist yet… Remove every `\ref_csv{...}`, describe the planned metrics in words; cite settings with `\ref_ast`”; gdy wyniki są, a nazwa pliku zła: „write `\ref_csv{results.csv:<kolumna>}`”. Wskaźnik bez dwukropka wskazuje właściwą listę (`available_csv_columns` albo `available_ast_symbols`), nie obie. Błędy deduplikowane (wcześniej jeden komunikat na każdy wskaźnik).
+- **R3:** `common._normalized_files` (przeniesione z `write_gate` razem z płaskim `{filename, content}`): `files` jako `{ścieżka: treść}` albo pojedynczy `{filename, content}` → lista. `ast_editor.split_existing_symbols`: edycja symbolu najwyższego poziomu, której kod zawiera kilka symboli **już istniejących** w pliku, idzie jako osobne edycje (importy z pierwszą; bez rozbijania przy dekoratorach); nowa nazwa przy okazji nadal odrzucana (X3).
+- **R4** (`tools/evolution/sandbox_verifier.py`): `SAMPLE_TIMEOUT_S` 15 → 60 s; `TimeoutExpired` = kandydat `REJECTED` („did not finish on a sample within …”), nigdy wyjątek przebiegu.
+- Testy: `tests/test_audit_xii.py` (6). Pełny pytest 259/261 — dwie porażki higieny to pliki w `viewer/node_modules` (puste / same białe znaki), niezwiązane; ruff czysty; `write_gate.py` 397 linii.
+- Otwarte: **R1** (winny przy asercji, gdy moduł `verified` wobec σ, a pada świeży test).
+
+---
+# §XIV — 2026-11-19: czy plan i naprawy przestaną się kręcić — krytyczna ocena i triaż przed naprawą
+
+## §XIV.1. Ocena (przed przebiegiem na żywo)
+
+- **Plan:** zniknęły klasy fałszywych blokad z 02/03 (rozdziały, `config.py`, nazwy plików); `affects` + jedna decyzja skracają lawiny, ale to prośba w prompcie. Zostaje: krytyk blokuje **zgadywaniem wyniku doctestu** (≈ połowa blokad 02/03: „float jest kruchy”, „might block paths”, „not blocking per se”), choć harness wykonuje przykłady deterministycznie (`BEHAVIOUR_MISMATCH`, `SPEC_EXAMPLE_INVALID` → kontrolowana zmiana planu); postęp mierzony liczbą blokad.
+- **Naprawy:** (1) R1 — zły test obwinia zweryfikowany moduł: 2 szybkie naprawy, `failed`, przeplanowanie, kolejne naprawy LRM, ciągle `0.1 > 0.5`; (2) brak stopu przy identycznym błędzie (01: T1 i T2 po 3× ten sam błąd); (3) `summary` autora („test jest zły”) nieczytane.
+- Pomysł użytkownika: trzeźwa ocena „czy to w ogóle da się tu naprawić”. Przyjęte jako **triaż przed naprawą**: najpierw reguły deterministyczne; LLM (`remediation_planner` z werdyktem FIX_HERE / FIX_ELSEWHERE / SPEC_WRONG / NOT_FIXABLE) dopiero, gdy przebieg pokaże przypadki, których reguły nie rozstrzygają. Brakujący producent/plik jest blokowany wcześniej przez gotowość wierzchołków; złego testu i złego przykładu nie da się zablokować z góry.
+
+## §XIV.2. Plan (zatwierdzony 2026-11-19)
+
+- **Q1:** uwaga krytyka ma `category` (`experiment` / `interfaces` / `doctest` / `tasks` / `scope`); `doctest` (przewidywanie wyniku przykładu) zawsze ostrzeżenie — harness sprawdza przykłady na kodzie. Prompt: blokada tylko dla pewnej awarii, nie „might/could/fragile”.
+- **Q2 (R1):** asercja widoczna tylko w ramce testu → winny jest **niezweryfikowany** z pary: moduł `verified` + test niezweryfikowany → test (naprawa u autora testu, z informacją, że moduł spełnia przykłady specyfikacji); w przeciwnym razie moduł (jak dotąd).
+- **Q3:** szybka naprawa, po której sygnatura błędu (`_issue_signature`) jest identyczna jak przed nią → koniec szybkich napraw u tego autora, od razu pełny cykl (planer naprawczy); zdarzenie `REPAIR_SAME_ERROR`.
+
+
+## §XIV.3. Wdrożono Q1–Q3 (2026-11-19)
+
+- **Q1** (`plan_critic_guard.md`, `plan_spec._plan_review`): uwaga ma `category`; `doctest` nigdy nie blokuje (harness odrzuca ją deterministycznie, niezależnie od `blocking`); blokada tylko dla pewnej awarii (pkt 1 i 3 „WHAT TO CHECK”), „might/could/fragile” = ostrzeżenie.
+- **Q2** (`failure_attribution._suspect_test`, `verification.py`, `repair.py`, `agent_texts.test_contradicts_verified_module`): asercja tylko w ramce testu → winny jest niezweryfikowany z pary; moduł `verified` + test niezweryfikowany → naprawa u autora testu z informacją, że moduł spełnia przykłady specyfikacji („fix the test; change nothing in the module”). Moduł zmieniony po weryfikacji albo oba zweryfikowane → moduł (jak dotąd). Ponieważ test czeka na `verified` swojego modułu, w zadaniu testu podejrzany jest zawsze najpierw test.
+- **Q3** (`repair.py`): odcisk błędu (`_issue_signature` — plik:reguła, niezależny od linii i nazw) po szybkiej naprawie identyczny jak przed nią → `REPAIR_SAME_ERROR`, koniec szybkich napraw; przy znanym winnym to od razu `failed` i przeplanowanie fragmentu (LRM, akta napraw), przy nieznanym — cykl planera naprawczego.
+- Testy: `tests/test_audit_xiv.py` (3); zmienione oczekiwania: `test_audit_vi::test_a9…` (jedna próba zamiast dwóch identycznych), `test_layer4_and_orchestrator::test_evolution_waits_for_a_pattern_across_tasks`. Pełny pytest 262/264 (dwie porażki higieny: pliki w `viewer/node_modules`), ruff czysty; `verification.py` 394, `repair.py` 374 linie.
+- Do pomiaru na żywo: liczba rund krytyka i `fixed`/`new` w `PLAN_PATCHED`; liczba szybkich napraw na zadanie, `REPAIR_SAME_ERROR`, naprawy kierowane do testera. Triaż LLM (`remediation_planner`: FIX_HERE / FIX_ELSEWHERE / SPEC_WRONG / NOT_FIXABLE) — dopiero gdy przebieg pokaże przypadki, których reguły nie rozstrzygają.

@@ -22,7 +22,8 @@ export function useThesis(at: MaybeRefOrGetter<RunRef>, files: MaybeRefOrGetter<
   )
   const html = computed(() => renderThesis((compiled.value ? data.value?.resolved : data.value?.source) ?? ''))
   const results = computed(() => parseCsv(data.value?.csv ?? ''))
-  const figures = computed(() => toValue(files).figures.map(path => ({ path, url: fileApi(toValue(at), path) })))
-  const pdf = computed(() => (toValue(files).pdf ? fileApi(toValue(at), toValue(files).pdf!) : null))
+  const urls = useFileUrls(at, () => [...toValue(files).figures, toValue(files).pdf].filter((p): p is string => !!p))
+  const figures = computed(() => toValue(files).figures.map(path => ({ path, url: urls.value[path] ?? '' })))
+  const pdf = computed(() => (toValue(files).pdf ? urls.value[toValue(files).pdf!] ?? null : null))
   return { compiled, html, results, figures, pdf, pending, error, refresh, hasCompiled: computed(() => !!toValue(files).thesisCompiled) }
 }

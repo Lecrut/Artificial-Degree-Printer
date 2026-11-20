@@ -18,8 +18,9 @@ from adk.tools.building import (
     edit_ast_node,
     edit_document_section,
 )
-from adk.tools.building.ast_editor import declared_names, whole_module_loss
+from adk.tools.building.ast_editor import declared_names, split_existing_symbols, whole_module_loss
 from adk.orchestration.common import (
+    _normalized_files,
     _agent_for_path,
     _filter_bibtex,
     _merge_bibtex_entries,
@@ -76,7 +77,7 @@ class WriteGateMixin:
                 else:
                     dest.write_text(before, encoding="utf-8")
             raise
-        plot_name = str(llm_output.get("plot_file") or "plot_results.py").replace("\\", "/")
+        plot_name = str(llm_output.get("plot_file") or node_path).replace("\\", "/")
         self._record_written(node_path, originals, writer, plot_name)
 
     def _planned_names(self, rel: str) -> set[str] | None:
@@ -94,7 +95,7 @@ class WriteGateMixin:
         node_path: str,
         originals: dict[Path, str | None],
         writer: dict[str, Any] | None,
-        plot_name: str = "plot_results.py",
+        plot_name: str = "",
     ) -> None:
         """Remember who wrote which files (`last_writer` on their vertex in H) and queue them for the next
         verification's scope. Two kinds of write are logged, not blocked (R6):
@@ -184,10 +185,7 @@ class WriteGateMixin:
             name = Path(rel).name
             return rel.endswith(".py") and (name.startswith("test_") or name.endswith("_test.py"))
 
-        # One file answered flat (`{filename, content}`) is the `files` shape with one element.
-        flat_name = llm_output.get("filename") or llm_output.get("path")
-        if not llm_output.get("files") and flat_name and isinstance(llm_output.get("content"), str):
-            llm_output = {**llm_output, "files": [{"filename": flat_name, "content": llm_output["content"]}]}
+        llm_output = _normalized_files(llm_output)
 
         def _remember(dest: Path) -> None:
             dest = dest.resolve()
@@ -287,17 +285,20 @@ class WriteGateMixin:
                         materialized_any = True
                     continue
                 _remember(edit_path)
-                result = edit_ast_node(edit_path, symbol, code_str, planned=self._planned_names(file_rel))
-                if result.get("status") == "ok":
-                    materialized_any = True
-                elif str(result.get("error", "")).startswith("Existing file has SyntaxError"):
-                    # A symbol edit has no tree to land in. The only way out is the whole file, so say so.
-                    rel = edit_path.relative_to(ws_root).as_posix()
-                    edit_errors.append(
-                        texts.edit_on_unparsable_file(rel, result["error"].removeprefix("Existing file has SyntaxError: "), item["symbol"])
-                    )
-                else:
-                    edit_errors.append(f"{edit_path.name}:{item['symbol']}: {result.get('error')}")
+                pieces = split_existing_symbols(code_str, edit_path) if "." not in symbol else None
+                for piece_symbol, piece_code in pieces or [(symbol, code_str)]:
+                    result = edit_ast_node(edit_path, piece_symbol, piece_code, planned=self._planned_names(file_rel))
+                    if result.get("status") == "ok":
+                        materialized_any = True
+                    elif str(result.get("error", "")).startswith("Existing file has SyntaxError"):
+                        # A symbol edit has no tree to land in. The only way out is the whole file, so say so.
+                        rel = edit_path.relative_to(ws_root).as_posix()
+                        edit_errors.append(
+                            texts.edit_on_unparsable_file(rel, result["error"].removeprefix("Existing file has SyntaxError: "), item["symbol"])
+                        )
+                        break
+                    else:
+                        edit_errors.append(f"{edit_path.name}:{piece_symbol}: {result.get('error')}")
         _raise_if_unparsable()
         if edit_errors:
             raise MaterializationError(texts.symbol_edits_rejected(edit_errors))
@@ -309,12 +310,12 @@ class WriteGateMixin:
 
         # test suite, results and plotting script (seed_tester). A side artifact lands only when it IS the
         # task's target (same path or name) or does not exist yet: on 2026-11-14 the tester attached
-        # `plot_script` to every test repair and the stale script overwrote `plot_results.py` each time.
+        # `plot_script` to every test repair and the stale script overwrote the plotting module each time.
         skipped_side: list[str] = []
         for body_key, file_key, default_rel in (
-            ("test_code", "test_file", "test_core.py"),
+            ("test_code", "test_file", node_path),  # without a file name: the task's own target (§XIII)
             ("csv_content", "benchmark_file", "results.csv"),
-            ("plot_script", "plot_file", "plot_results.py"),
+            ("plot_script", "plot_file", node_path),
         ):
             body = _normalize_raw_code(llm_output.get(body_key))
             side_rel = _canonical(str(llm_output.get(file_key) or default_rel))

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from adk.orchestration.failure_attribution import _is_test, _pytest_culprits
+from adk.orchestration.failure_attribution import _is_test, _pytest_culprits, _suspect_test
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.factual_audit import thesis_missing_chapters
 from adk.core.models import ValidationReport, read_json_state, write_json_state
@@ -196,11 +196,10 @@ class VerificationMixin:
                     md_thesis = self.workspace_dir / "thesis.md"
                     t_type_check = str(getattr(self, "planned_thesis_type", "inzynierska") or "inzynierska").strip().lower()
                     if md_thesis.exists() and t_type_check not in ("paper", "article", "scientific_paper"):
-                        missing_ch = thesis_missing_chapters(
-                            md_thesis.read_text(encoding="utf-8", errors="ignore"), self._expected_chapters()
-                        )
+                        expected_ch = self._expected_chapters()
+                        missing_ch = thesis_missing_chapters(md_thesis.read_text(encoding="utf-8", errors="ignore"), expected_ch)
                         if missing_ch:
-                            ref_errors.append(texts.missing_chapters([texts.CHAPTER_LABELS.get(i, f"Chapter {i}") for i in missing_ch]))
+                            ref_errors.append(texts.missing_chapters([f"Chapter {i} ({expected_ch[i]})" for i in missing_ch]))
                 if not is_final_gate:
                     pending_files = self._get_pending_future_files(current_task)
                     ref_errors = [
@@ -330,10 +329,12 @@ class VerificationMixin:
             for issue in [] if failed_file else code_audit.get("issues", []):
                 for culprit, is_code in _pytest_culprits(str(issue)):
                     if is_code and _is_test(culprit):
-                        # Wrong result seen only in the test frame: the module under test (the producer of the I
-                        # bag the test belongs to in H).
+                        # Wrong result seen only in the test frame: the unverified one of the pair. A module verified
+                        # against σ and a fresh test → the test (§XIV Q2: 01 blamed ttt_agent.py for `0.1 > 0.5`);
+                        # otherwise the module under test (the producer of the I bag the test belongs to in H).
                         module = h.tested_module(culprit) if h is not None else None
-                        culprit = module or (node_path if not _is_test(node_path) else culprit)
+                        if not (module and _suspect_test(h, module, culprit)):
+                            culprit = module or (node_path if not _is_test(node_path) else culprit)
                     failed_file = culprit
                     break
                 if failed_file:

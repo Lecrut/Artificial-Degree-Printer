@@ -6,6 +6,9 @@
     "dev": "bunx --bun nuxt dev",
     "build": "bunx --bun nuxt build",
     "preview": "bunx --bun nuxt preview",
+    "snapshot": "bun scripts/snapshot.ts",
+    "generate:deployed": "NUXT_PUBLIC_DEPLOYED=true bunx --bun nuxt generate && bun -e \"require('node:fs').cpSync('.snapshot', '.output/public/snapshot', { recursive: true })\"",
+    "deploy": "bun run snapshot && bun run generate:deployed && bun scripts/deploy.ts",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -32,6 +35,7 @@
     "@types/markdown-it": "14.2.0",
     "@types/node": "^22.20.5",
     "eslint": "10.14.0",
+    "firebase-tools": "15.35.0",
     "storybook": "10.6.5",
     "typescript": "5.9.3",
     "vue-tsc": "3.3.14"

@@ -191,19 +191,19 @@ def test_three_main_scenarios_and_logging(tmp_path: Path):
     assert r1["status"] == "COMPLETED"
     assert r1["mode"]["enable_layer4"] is False
     assert r1["mode"]["include_docs"] is False
-    assert len(r1["tasks"]) == 3  # config, core and its tests
+    assert len(r1["tasks"]) == 4  # config, core, its tests and the figures (§XIII.8)
 
     r2 = run_scenario("2", provider="mock", adk_root=adk_dir)
     assert r2["status"] == "COMPLETED"
     assert r2["mode"]["enable_layer4"] is True
     assert r2["mode"]["include_docs"] is False
-    assert len(r2["tasks"]) == 3
+    assert len(r2["tasks"]) == 4
 
     r3 = run_scenario("3", provider="mock", adk_root=adk_dir)
     assert r3["status"] == "COMPLETED"
     assert r3["mode"]["enable_layer4"] is True
     assert r3["mode"]["include_docs"] is True
-    assert len(r3["tasks"]) == 4  # + the thesis
+    assert len(r3["tasks"]) == 5  # + the thesis
     assert Path(r3["log_files"]["process_log"]).exists()
     assert Path(r3["log_files"]["agent_trace_jsonl"]).exists()
 
@@ -389,8 +389,8 @@ def test_real_pytest_errors_come_first_in_code_audit(tmp_path: Path, monkeypatch
 
 
 def test_evolution_waits_for_a_pattern_across_tasks(tmp_path: Path):
-    """One task failing three times is an incident: two fast fixes by the file's author, one planner cycle, no
-    evolution. The same category of failure in a second task is a pattern: the architect runs once, with the
+    """One task failing three times is an incident: a fast fix by the file's author (the identical error after it
+    ends the fast fixes, §XIV Q3), one planner cycle, no evolution. The same category of failure in a second task is a pattern: the architect runs once, with the
     examples of both tasks, and the task gets no more than its one planner cycle (Audit IV §IV.7 pkt 6, §IV.6.3 A)."""
     adk_dir = _clone_adk_env(tmp_path)
     orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, enable_layer4=True, include_docs=False, provider="mock")
@@ -428,10 +428,10 @@ def test_evolution_waits_for_a_pattern_across_tasks(tmp_path: Path):
     res = orch.run("Zbuduj moduł walidacji parametrów")
 
     actions = [c["w4_action"] for c in res.get("architecture_cycles", [])]
-    assert actions[:5] == ["FAST_FIX", "FAST_FIX", "SKIPPED_NO_PATTERN", "FAST_FIX", "FAST_FIX"]
-    # The sixth cycle is the architect's own decision (the mock splits an agent with many failures); the third
+    assert actions[:3] == ["FAST_FIX", "SKIPPED_NO_PATTERN", "FAST_FIX"]
+    # The fourth cycle is the architect's own decision (the mock splits an agent with many failures); the third
     # task repeats the same category and gets no second rule.
-    assert not actions[5].startswith("SKIPPED")
+    assert not actions[3].startswith("SKIPPED")
     assert len(evolutions) == 1
     pattern = evolutions[0]["pattern"]
     assert pattern["category"] == "pytest:AssertionError" and pattern["occurrences"] == 2

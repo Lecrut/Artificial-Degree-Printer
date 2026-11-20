@@ -46,6 +46,21 @@ def _lookup_ast_value(py_file: Path, symbol_name: str) -> tuple[bool, Any]:
     return False, f"Symbol '{symbol_name}' not found in '{py_file.name}'"
 
 
+RESULTS_CSV = "results.csv"  # the harness contract: the entrypoint writes it in the workspace root (§XIII.6)
+_NO_RESULTS_YET = (
+    "No results exist yet (the experiment has not run, so there is no results.csv): no \\ref_csv{...} pointer can "
+    "resolve. Remove every \\ref_csv{...} from your text and describe the planned metrics in words; cite settings "
+    "with \\ref_ast{...} from 'available_ast_symbols'."
+)
+
+
+def _wrong_results_file(key: str, column: str) -> str:
+    return (
+        f"{key}: no such file. The results are in results.csv: write \\ref_csv{{results.csv:{column}}} with a column "
+        "from 'available_csv_columns'."
+    )
+
+
 def _lookup_csv_value(csv_file: Path, column_spec: str) -> tuple[bool, Any]:
     """Extract a CSV value by 'column' (latest row) or 'row_selector:column' (specific method/metric row or index)."""
     if not csv_file.is_file():
@@ -179,6 +194,7 @@ def compile_symbolic_references(
 
     py_files = iter_workspace_python_files(w_dir)
     latest_py_mtime = max((p.stat().st_mtime for p in py_files), default=0.0)
+    results_exist = (w_dir / RESULTS_CSV).is_file()
     known_targets: list[str] = []
 
     def _known_ast_targets() -> list[str]:
@@ -242,6 +258,10 @@ def compile_symbolic_references(
         csv_path = w_dir / rel_file
         if not csv_path.is_file() and (w_dir / "results" / rel_file).is_file():
             csv_path = w_dir / "results" / rel_file
+        if not csv_path.is_file():
+            # §XII R2: say what the writer can actually do, instead of "choose from" a list that may be empty.
+            errors.append(_NO_RESULTS_YET if not results_exist else _wrong_results_file(key, col))
+            return key
         try:
             ok, val = _lookup_csv_value(csv_path, col)
         except (OSError, UnicodeDecodeError, ValueError, csv.Error) as exc:
@@ -281,11 +301,15 @@ def compile_symbolic_references(
 
     # Check for malformed \ref_ast{...} or \ref_csv{...} missing a ':' separator
     for bad_tag in re.findall(r"\\ref_(?:ast|csv)\{[^:}]+\}", text):
+        if bad_tag.startswith("\\ref_csv") and not results_exist:
+            errors.append(_NO_RESULTS_YET)
+            continue
+        source = "'available_csv_columns'" if bad_tag.startswith("\\ref_csv") else "'available_ast_symbols'"
         errors.append(
             f"Malformed symbolic tag missing ':' separator: {bad_tag}. A pointer without a target (a bare file) is "
-            "invalid: choose a full target from 'available_ast_symbols' / 'available_csv_columns', and write a file "
-            "named in the prose as \\texttt{...}."
+            f"invalid: choose a full target from {source}, and write a file named in the prose as \\texttt{{...}}."
         )
+    errors[:] = list(dict.fromkeys(errors))  # one message per distinct problem
 
     # Check balanced TikZ environments if present
     tikz_begins = len(re.findall(r"\\begin\{tikzpicture\}", compiled_text))

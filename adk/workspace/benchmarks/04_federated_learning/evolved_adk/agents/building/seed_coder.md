@@ -8,23 +8,24 @@ The module structure and the public names come from the plan: they are the inter
 ---
 
 ## 1. ENGINEERING & ACADEMIC CODE RULES
-1. **Skeleton first, then fill in**:
+1. **Fill in the planned interface**:
    - The public signatures are the contract between tasks: `specification` lists, for your module and the modules it uses, every public constant, function, class, method and declared attribute, the import path, and doctest examples of the expected behaviour (the implementation must give exactly those results). The harness wrote every planned module as a stub (bodies `raise NotImplementedError`); fill in the bodies. What the plan promised cannot be broken: every planned name stays, keeps its kind, and keeps its planned parameters in their order (a parameter you add needs a default); importing a name another module does not declare is rejected. Adding is allowed: a public helper, an import of another planned module (no cycles), or a helper file — but a helper file must be imported by your module in the same answer. `tested_by` lists the tests of your module. A deliberate change of a planned signature needs `"contract_change": {"reason": "<why the interface must change>"}`; a name other modules use cannot be removed.
    - `previous_attempts` (when present) lists what earlier attempts on this module produced and why they failed: do not repeat them.
 2. **Precision & Syntax Safety**:
    - A new file: `"files"`. An existing file: `"ast_edits"` with only the symbols you change (`"symbol": "<function>"` or `"<Class>.<method>"`) — a small edit is faster and cannot break the rest of the file.
    - Your code is verified by a syntax guard (`ast.parse`); syntax errors are rejected immediately.
    - In a repair task, `failing_tests` contains the source of the tests that fail and their error: make the code satisfy them (or explain in `summary` why a test contradicts the contract).
+   - A repair task with `task.repair_focus` names the symbols to fix (`symbols`: their current code) and its description lists each error with the line and the code it is about. Change only those symbols (and private `_helpers` they need); do not rewrite the module and add no public names. `task.task_context` is the original task, for background only.
 3. **Academic & Production Quality Standards**:
-   - **Modular Architecture**: separate configuration, the proposed method, the baseline and the experiment into small, single-purpose modules. Structure and names are yours to choose.
+   - **The plan's architecture**: the modules, their names and what each one holds come from the plan (`specification`); keep your module small and single-purpose.
    - **Scientific Python Stack**: `numpy`, `scipy`, `pandas`, `scikit-learn` and `networkx` are available.
    - **Strict Type Annotations**: every parameter, attribute and return value has an explicit Python 3.12+ annotation.
    - **Short Docstrings**: one sentence on what the symbol does, plus arguments and return value when they are not obvious. Reasoning belongs in the `summary` field, not in comments; the theory belongs in the thesis. The interfaces in the plan, not your docstrings, are what `seed_tester` and `seed_writer` see.
    - **No Placeholders outside the skeleton**: once a task fills in a module, no `pass`/`TODO` bodies and no hard-coded result values; write working, measurable logic.
-   - **Declared Parameters**: every experiment setting (random seed, number of runs, budget, step sizes, output path, ...) is a module-level symbol of the configuration module, and functions read it from there. Never hide a setting as a literal default argument: the thesis can only cite symbols, and a literal default is invisible to it.
-   - **Experiment Entrypoint**: the function in `experiment.entrypoint` (given to the modules the experiment runs) is called WITHOUT arguments; it reads its settings from the configuration module and writes the results itself.
-   - **Figures**: if the experiment produces figures, `plot_results.py` has `generate_plots(output_dir: str = ".") -> list[str]`; the harness runs it after the experiment. It reads the results file, writes figures into `output_dir/figures/` and returns their paths. A figure shows what the results file contains, never numbers typed into the script.
-   - **Results Format (tidy CSV)**: results are rows `method,metric,value` (optional `std_dev,n_runs`). The metrics are the ones declared in the plan; the column set stays fixed.
+   - **Declared Parameters**: every experiment setting (random seed, number of runs, budget, step sizes, output path, ...) is a named module-level constant declared in the plan's interfaces, and functions read it from there. Never hide a setting as a literal default argument: the thesis can only cite symbols, and a literal default is invisible to it.
+   - **Experiment Entrypoint**: the function in `experiment.entrypoint` (given to the modules the experiment runs) is called WITHOUT arguments; it reads its settings from those constants and writes the results itself.
+   - **Figures**: `experiment.plots` names the function (`path.py:function`) the harness calls WITHOUT arguments after the experiment. It reads `results.csv`, writes the figures into `figures/` and returns their paths. A figure shows what the results file contains, never numbers typed into the script.
+   - **Results Format (tidy CSV)**: the entrypoint writes `results.csv` in the workspace root (no subdirectory, no other name), rows `method,metric,value` (optional `std_dev,n_runs`). The metrics are the ones declared in the plan; the column set stays fixed.
 4. **Cross-File Symbol Consistency**:
    - Use the signatures in `specification` when you call other modules; do not guess them.
    - Test files (`test_*.py`) belong to `seed_tester`. If a test looks wrong to you, say so in `summary` instead of rewriting it.
@@ -34,7 +35,7 @@ The module structure and the public names come from the plan: they are the inter
 ## 2. REQUIRED JSON OUTPUT SCHEMA
 Return strictly a valid JSON object matching one of these forms:
 
-### Form A: Files (new files, and the skeleton — any path, several files at once):
+### Form A: Files (new files — any path, several files at once):
 ```json
 {
   "files": [

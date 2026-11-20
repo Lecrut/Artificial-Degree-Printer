@@ -1,18 +1,7 @@
 {
   "active": false,
-  "current_gate": "GATE_2_METHODOLOGY_APPROVAL",
-  "approved_gates": [
-    "GATE_1_OUTLINE_APPROVAL",
-    "GATE_2_METHODOLOGY_APPROVAL"
-  ],
+  "current_gate": null,
+  "approved_gates": [],
   "question": null,
-  "context": {
-    "interfaces": [
-      "ttt_agent.py",
-      "ttt_config.py",
-      "ttt_env.py",
-      "ttt_experiment.py"
-    ],
-    "entrypoint": "ttt_experiment.py:run_experiment"
-  }
+  "context": {}
 }

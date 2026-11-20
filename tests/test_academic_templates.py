@@ -116,6 +116,8 @@ def test_publish_bundle_with_both_templates(tmp_path: Path):
         spec=spec,
         workspace_dir=ws_plodz,
         template_name="thesis_plodz",
+        entrypoint="core.py:train_and_evaluate",
+        plots="plot_results.py:generate_plots",
     )
     assert pub_plodz["symbolic_status"] == "PASS"
     assert pub_plodz["tex_symbolic_status"] == "PASS"
@@ -138,6 +140,8 @@ def test_publish_bundle_with_both_templates(tmp_path: Path):
         workspace_dir=ws_paper,
         template_name="paper_ieee",
         thesis_type="paper",
+        entrypoint="core.py:train_and_evaluate",
+        plots="plot_results.py:generate_plots",
     )
     assert pub_paper["symbolic_status"] == "PASS"
     assert pub_paper["tex_symbolic_status"] == "PASS"

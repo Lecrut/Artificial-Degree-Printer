@@ -14,7 +14,7 @@ Ten dokument jest źródłem prawdy dla kodu w `viewer/`; zmiana zasad = zmiana 
 
 Widok jednego przebiegu jest wspólny dla Historii i Na żywo: **Oś czasu** (plan i jego wykonanie), **Hipergraf**, **Agenci**, **Praca**.
 
-Poza zakresem: edycja czegokolwiek w `adk/`, czytanie `.env`, praca na innym komputerze niż lokalny.
+Poza zakresem: edycja czegokolwiek w `adk/`, czytanie `.env`. Praca na innym komputerze niż lokalny — tylko historia, przez wersję wdrożoną (§13).
 
 ## 2. Stack
 
@@ -221,3 +221,18 @@ Nazwy komponentów nadaje Nuxt: katalog + plik, ze zdublowanym przedrostkiem zwi
 
 - Zakładka **Uruchom** startuje procesy na komputerze użytkownika (tylko localhost) — do potwierdzenia przed etapem 6.
 - **Zakres historii**: wszystkie commity z `adk/workspace/benchmarks` (od 05.11); starsze bez `events.jsonl` pokazują tylko to, co mają.
+
+## 13. Wersja wdrożona (Firebase Hosting, plan Spark)
+
+Ten sam viewer, zbudowany z `NUXT_PUBLIC_DEPLOYED=true`: tylko historia z gita, statyczne pliki, bez serwera i bez logowania (to tylko podgląd).
+
+| Lokalnie | Wdrożony |
+|---|---|
+| Nitro czyta git, dysk i piaskownicę | brak serwera: SPA z `nuxt generate` + paczki snapshotu w `/snapshot/*.json` |
+| Historia, Porównanie, Postęp, Na żywo, Uruchom | bez Na żywo i Uruchom (`localOnly` w `nav.ts`, `LOCAL_ONLY` w middleware `local-only.global.ts`); „wyniki na dysku” puste |
+
+**Dane = snapshot API.** `scripts/snapshot.ts` przechodzi po lokalnym API (`bun run dev` musi działać) i zapisuje w `.snapshot/` paczki JSON: `index` (`/api/history` + `/api/changelog`) i jedną na przebieg commita (`<sha>_<task>`: bundle, wywołania, szczegóły każdego wywołania, pliki jako base64). Typy w `shared/types/snapshot.ts`. Commit się nie zmienia, więc spakowany przebieg nie jest czytany drugi raz. `generate:deployed` kopiuje `.snapshot/` do `.output/public/snapshot/`; Hosting kompresuje w transferze, a `firebase deploy` wysyła tylko zmienione pliki. Całość ~47 MB / 70 paczek (2026-11-19), w limitach Spark.
+
+**Klient bez zmian.** `app/plugins/deployed.client.ts` (lokalnie nic nie robi) podmienia `globalThis.fetch` dla `/api/*` (`app/utils/snapshot/fetchShim.ts` + `packs.ts`): ofetch woła `globalThis.fetch` przy każdym zapytaniu, więc `useFetch`/`$fetch` we wszystkich composables dostają odpowiedzi z paczek (`snapshotRoute` w `shared/utils/snapshot.ts`, testy obok). Jedyny wyjątek: rysunki i PDF w `<img>`/`href` idą przez `useFileUrls` (adresy `blob:`).
+
+**Deploy robi tylko właściciel repo, ręcznie.** `viewer/.env` (poza repo, szablon `.env.example`) trzyma `FIREBASE_PROJECT_ID`. `bun run dev` w jednym terminalu, w drugim `bun run deploy` (snapshot → generate → `scripts/deploy.ts`: `firebase deploy --project <FIREBASE_PROJECT_ID> --only hosting`). Podgląd przed wysłaniem: `bunx firebase emulators:start --only hosting --project demo-viewer` (port 5000).

@@ -126,6 +126,13 @@ class Hypergraph:
             return self.producer("R:run")
         return next((v.id for v in self.vertices.values() if v.kind == "entry"), None)
 
+    def plots(self) -> str | None:
+        """The module of the plan's declared figures function (`academic_blueprint.plots`), if any."""
+        run = self.edges.get("R:run")
+        if run is None:
+            return None
+        return str(run.spec.get("plots") or "").partition(":")[0] or None
+
     def would_cycle(self, earlier: str, later: str) -> bool:
         """Whether adding `earlier ≺ later` to the order closes a cycle."""
         return earlier == later or earlier in self.later(later)

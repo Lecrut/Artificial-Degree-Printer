@@ -36,10 +36,10 @@ Execute this 4-step meta-prompting algorithm before emitting your JSON response:
   1. `"Avoid AST signature mismatches detected in task T1."` *(names one incident — generalized, not copied)*
   2. `"Never use implicit wildcard imports."`
   3. `"Always annotate return types."`
-  4. `"Seed every random generator from the seed declared in the configuration module."`
+  4. `"Seed every random generator from the declared seed constant."`
 - **Resulting `invariants` (the whole new list, here with no earlier invariants)**:
   > `"When you import, name every symbol explicitly and type every public signature to match the exported contract, because the modules around you are written against those signatures."`
-  > `"When randomness is involved, seed it from the symbol declared in the configuration module, because the thesis must point at the setting that produced the result."`
+  > `"When randomness is involved, seed it from the declared seed constant, because the thesis must point at the setting that produced the result."`
 
 ---
 

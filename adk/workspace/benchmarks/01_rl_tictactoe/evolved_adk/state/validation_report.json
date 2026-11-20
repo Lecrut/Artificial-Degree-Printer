@@ -1,34 +1,9 @@
 {
-  "status": "FAIL",
-  "failed_task_id": "R1_8",
-  "failed_node": "thesis.md#ch2",
-  "failed_file": "thesis.md",
-  "failed_agent": "background_researcher",
-  "supervisors": {
-    "code_auditor": {
-      "verdict": "PASS",
-      "issues": [],
-      "status": "PASS",
-      "skipped": "is_doc_scope"
-    },
-    "symbolic_auditor": {
-      "status": "FAIL",
-      "issues": [
-        "CSV file 'ttt_results' does not exist",
-        "CSV file 'ttt_results' does not exist",
-        "Citation key 'watkins1992qlearning' not found in workspace .bib files.",
-        "Citation key 'puterman1994markov' not found in workspace .bib files.",
-        "Citation key 'watkins1987learning' not found in workspace .bib files.",
-        "Citation key 'puterman1994markov' not found in workspace .bib files."
-      ],
-      "skipped": "deterministic_only"
-    },
-    "redteam_critic_guard": {
-      "status": "SKIPPED_INTERMEDIATE_TASK",
-      "verdict": "PASS",
-      "gate_3_approved": false,
-      "issues": []
-    }
-  },
-  "summary": "Layer 3 verification failed."
+  "status": "PASS",
+  "failed_task_id": null,
+  "failed_node": null,
+  "failed_file": null,
+  "failed_agent": null,
+  "supervisors": {},
+  "summary": ""
 }

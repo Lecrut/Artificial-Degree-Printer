@@ -38,20 +38,8 @@ try:
             notes.append(f"The declared entrypoint '{declared}' does not name a function.")
             code = 1
     else:
-        notes.append("The plan declares no entrypoint; looking for one by naming convention.")
-        candidate_funcs = ["train_and_evaluate", "run_experiment", "run_benchmark", "evaluate", "train", "main", "run"]
-        for mod_name in ["core", "main", "train", "run_experiment", "pipeline", "model"]:
-            try:
-                m = __import__(mod_name)
-            except Exception:
-                notes.append(traceback.format_exc())
-                continue
-            fn = next((getattr(m, f) for f in candidate_funcs if callable(getattr(m, f, None))), None)
-            if fn is not None:
-                break
-        if fn is None:
-            notes.append("No experiment entrypoint found.")
-            code = 1
+        notes.append("The plan declares no entrypoint.")
+        code = 1
 
     if callable(fn):
         required = [
@@ -71,16 +59,19 @@ except Exception:
     code = 1
     notes.append(traceback.format_exc())
 
-# plot_results.py wherever the import resolves (workspace, code/, src/, the entry file's directory), not only at
-# the root: on 2026-11-15 src/plot_results.py was never run and no figure came from the code.
-if importlib.util.find_spec("plot_results") is not None:
+# The plan's declared figures function (academic_blueprint.plots), called without arguments after the experiment.
+plots = os.environ.get("ADK_PLOTS", "")
+if plots and code == 0:
     try:
-        import plot_results
-        if hasattr(plot_results, "generate_plots"):
-            plot_results.generate_plots(".")
-        elif hasattr(plot_results, "generate_comparison_plot"):
-            plot_results.generate_comparison_plot()
+        plots_file, _, plots_func = plots.rpartition(":")
+        plots_path = Path(plots_file)
+        sys.path.insert(0, str(plots_path.parent))
+        plots_spec = importlib.util.spec_from_file_location(plots_path.stem, plots_path)
+        plots_module = importlib.util.module_from_spec(plots_spec)
+        plots_spec.loader.exec_module(plots_module)
+        getattr(plots_module, plots_func)()
     except Exception:
+        code = 1
         notes.append(traceback.format_exc())
 
 log_body = "\\n".join(notes) if notes else "EXPERIMENT_SUCCESS\\n"
@@ -88,46 +79,35 @@ log_body = "\\n".join(notes) if notes else "EXPERIMENT_SUCCESS\\n"
 raise SystemExit(code)
 """
 
-_CONVENTION_ENTRY_FILES = (
-    "core.py",
-    "code/core.py",
-    "main.py",
-    "train.py",
-    "run_experiment.py",
-    "pipeline.py",
-    "src/core.py",
-    "src/train.py",
-    "src/main.py",
-    "src/pipeline.py",
-    "code/train.py",
-    "code/main.py",
-)
-
-
 def execute_workspace_experiment(
     workspace_dir: str | Path,
     timeout: int = 180,
     entrypoint: str | None = None,
+    plots: str | None = None,
 ) -> dict[str, Any]:
     """Run the experiment. `entrypoint` is the plan's declaration `path/to/file.py:function` (function defaults to
-    `main`); without it the entry file is found by naming convention."""
+    `main`); without it there is nothing to run (no guessing by file name, §XIII F5). `plots` (`path.py:function`, optional) is the
+    plan's figures function, called without arguments after a successful experiment (§XIII F2)."""
     workspace = Path(workspace_dir).resolve()
     env = os.environ.copy()
-    if entrypoint:
-        file_part, _, func_name = entrypoint.partition(":")
-        entry_file = (workspace / file_part).resolve()
-        if not entry_file.is_file() or workspace not in entry_file.parents:
-            return {
-                "ok": False,
-                "skipped": False,
-                "error": f"The declared entrypoint '{entrypoint}' does not exist in the workspace.",
-            }
-        env["ADK_ENTRYPOINT"] = f"{entry_file}:{func_name or 'main'}"
-    else:
-        entry_file = next((workspace / rel for rel in _CONVENTION_ENTRY_FILES if (workspace / rel).exists()), None)
-        if not entry_file:
-            return {"ok": True, "skipped": True, "error": ""}
-        env.pop("ADK_ENTRYPOINT", None)
+    env.pop("ADK_PLOTS", None)
+    if plots:
+        plots_file, _, plots_func = plots.partition(":")
+        plots_path = (workspace / plots_file).resolve()
+        if not plots_path.is_file() or workspace not in plots_path.parents or not plots_func:
+            return {"ok": False, "skipped": False, "error": f"The declared plots '{plots}' do not exist in the workspace."}
+        env["ADK_PLOTS"] = f"{plots_path}:{plots_func}"
+    if not entrypoint:
+        return {"ok": True, "skipped": True, "error": ""}
+    file_part, _, func_name = entrypoint.partition(":")
+    entry_file = (workspace / file_part).resolve()
+    if not entry_file.is_file() or workspace not in entry_file.parents:
+        return {
+            "ok": False,
+            "skipped": False,
+            "error": f"The declared entrypoint '{entrypoint}' does not exist in the workspace.",
+        }
+    env["ADK_ENTRYPOINT"] = f"{entry_file}:{func_name or 'main'}"
 
     env["PYTHONPATH"] = os.pathsep.join(
         [str(workspace), str(workspace / "code"), str(workspace / "src"), str(entry_file.parent), env.get("PYTHONPATH", "")]

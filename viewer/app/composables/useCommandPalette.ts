@@ -2,7 +2,7 @@ import { mdiFlask, mdiHarddisk } from '@mdi/js'
 import type { CommitSummary, TaskSummary } from '#shared/types/run'
 import { runStatusColor } from '#shared/utils/states'
 import { labels } from '~/utils/labels'
-import { NAV_PAGES } from '~/utils/nav'
+import type { NavPage } from '~/utils/nav'
 import { runPage } from '~/utils/runUrls'
 
 export interface PaletteItem {
@@ -17,9 +17,9 @@ export interface PaletteItem {
 const LIMIT = 40
 
 /** Every page, then every run: the results on disk first, then each commit's tasks, newest first. */
-function paletteItems(commits: CommitSummary[], current: TaskSummary[]): PaletteItem[] {
+function paletteItems(pages: NavPage[], commits: CommitSummary[], current: TaskSummary[]): PaletteItem[] {
   return [
-    ...NAV_PAGES.map(p => ({ group: labels.nav.pages, title: p.title, subtitle: p.to, icon: p.icon, color: 'primary', to: p.to })),
+    ...pages.map(p => ({ group: labels.nav.pages, title: p.title, subtitle: p.to, icon: p.icon, color: 'primary', to: p.to })),
     ...current.map(t => ({
       group: labels.nav.runs, title: t.task, subtitle: `${labels.nav.current} · ${t.status}`, icon: mdiHarddisk, color: runStatusColor(t.status),
       to: runPage({ source: 'results', ref: 'current', task: t.task }),
@@ -37,8 +37,9 @@ export function useCommandPalette() {
   const query = ref('')
   const active = ref(0)
   const { commits, current } = useHistory()
+  const pages = useNavPages()
 
-  const items = computed(() => paletteItems(commits.data.value, current.data.value))
+  const items = computed(() => paletteItems(pages.value, commits.data.value, current.data.value))
 
   const results = computed(() => {
     const words = query.value.toLowerCase().split(/\s+/).filter(Boolean)

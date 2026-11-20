@@ -67,6 +67,7 @@ class ContextMixin:
                     "entrypoint": run.spec.get("entry"),
                     "metrics": run.spec.get("metrics", []),
                     "results": sorted(m for m, role in run.members.items() if role == "O"),
+                    "plots": run.spec.get("plots") or None,
                 }
         elif v.kind == "chapter":
             context.update(self._document_context_slice(h))

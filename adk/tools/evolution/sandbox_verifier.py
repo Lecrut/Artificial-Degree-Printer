@@ -9,6 +9,8 @@ from typing import Any
 
 from adk.core.models import read_json_state, resolve_adk_path, write_json_state
 
+SAMPLE_TIMEOUT_S = 60  # per sample; was 15 s (a validator importing pandas/bibtex parsers needs more on a cold start)
+
 
 def evaluate_and_promote_validator(
     validator_name: str,
@@ -51,10 +53,21 @@ def evaluate_and_promote_validator(
                 ]
             else:
                 cmd = [sys.executable, str(script_path), str(sample_file)]
-            return subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+            return subprocess.run(cmd, capture_output=True, text=True, timeout=SAMPLE_TIMEOUT_S)
 
-        bad_proc = _run_sample(bad_file)
-        good_proc = _run_sample(good_file)
+        try:
+            bad_proc = _run_sample(bad_file)
+            good_proc = _run_sample(good_file)
+        except subprocess.TimeoutExpired as exc:
+            # §XII R4: 2026-11-19 a candidate validator hung on its sample and the uncaught timeout ended the whole
+            # benchmark run. A tool that hangs here would hang verification too: it is rejected, never a crash.
+            return {
+                "status": "REJECTED",
+                "validator_name": safe_name,
+                "bad_sample_rejected": False,
+                "good_sample_accepted": False,
+                "reason": f"Validator did not finish on a sample within {exc.timeout:.0f}s.",
+            }
 
         bad_rejected = bad_proc.returncode != 0
         good_accepted = good_proc.returncode == 0

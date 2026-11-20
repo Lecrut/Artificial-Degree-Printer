@@ -75,4 +75,3 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
-- **RULE**: When generating prose that references external data structures (like CSVs) or bibliographic entries, verify that the symbol exists in the provided 'available_csv_columns', 'available_ast_symbols', or '.bib' inventory before creating a reference command; if no direct mapping is found, describe the content using \texttt{...} for file names instead of using symbolic tags, because symbolic tags require valid targets to remain parsable.

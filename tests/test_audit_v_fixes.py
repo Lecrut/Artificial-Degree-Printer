@@ -107,11 +107,11 @@ def test_unresolved_pointer_hint_names_the_closest_real_target(tmp_path: Path) -
 def test_fast_repair_of_a_derived_artifact_goes_to_its_producer(tmp_path: Path) -> None:
     """Results go to the experiment, figures to the plotting module, the compiled thesis to thesis.md (from H)."""
     orch = _orch(tmp_path)
-    plots = '"""Plots."""\n\n\ndef generate_plots(output_dir: str) -> list:\n    """Paths."""\n'
+    plots = '"""Plots."""\n\n\ndef draw_figures() -> list:\n    """Paths."""\n'
     run = '"""Run."""\n\n\ndef main() -> None:\n    """Run."""\n'
-    with_plan(orch, {"plot_results.py": plots, "run.py": run}, "run.py:main")
+    with_plan(orch, {"figures_of_runs.py": plots, "run.py": run}, "run.py:main", plots="figures_of_runs.py:draw_figures")
 
-    assert orch._repair_target("figures/comparison.pdf") == "plot_results.py"
+    assert orch._repair_target("figures/comparison.pdf") == "figures_of_runs.py"
     assert orch._repair_target("results.csv") == "run.py"
     assert orch._repair_target("thesis.compiled.md") == "thesis.md"
 

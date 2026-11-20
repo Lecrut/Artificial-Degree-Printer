@@ -4,39 +4,33 @@
   "template_certain": true,
   "thesis_title": "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)] Research question: does a proximal federated optimizer (FedProx-style) converge more robustly than FedAvg on non-IID Dirichlet-partitioned clients with straggler dropout? Ground the related work in contemporary federated optimization literature (2023-2026). Design the experiment yourself: choose the parameters, training or search budget, number of repetitions and seeds, the metrics you will report and the success criterion, and declare the metrics and the experiment entrypoint in the plan before running anything. Implement the solution as small, single-purpose modules with unit tests, produce every result by running the declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or to a results file.",
   "literature_recon": {
-    "task_key": "04_federated_learning",
-    "domain": "Distributed Systems & Federated Machine Learning",
-    "algorithm_focus": "Adaptacyjna Optymalizacja Proksymalna (Adaptive FedProx) w Warunkach Non-IID i Stragglerów",
     "thesis_type": "paper",
     "research_routing": [
       "discoverer_researcher"
     ],
     "analyzed_papers_count": 20,
-    "canonical_baselines": [],
-    "standard_metrics": [],
-    "standard_datasets_or_environments": [],
-    "common_structural_patterns": [],
     "sampled_methodologies": [
+      "Molly Wang (2026) [wang2026faster]: Local computation can improve the conditioning of federated updates but may also introduce bias, causing their fixed point to differ from the global minimizer.",
       "Yanjie Dong (2026) [dong2026projected]: Penalty-based methods bound the influence of each worker through the bounded gradient of a penalty function; however, the bound is lost once the uploads are compressed, since a Byzantine worker can ac",
       "Mohammad Mashreghi and Mohammad Hossein Badiei and Md. Jalil Piran (2026) [mashreghi2026consensuscon]: In this article, we propose DW-FedADMM, a federated optimization framework that combines primal-dual coordination with performance-dependent client-side weighting.",
       "Sirong Dai and Jianting Pan and Ming Yan (2026) [dai2026relativeerro]: We propose Relative-Error Composite FedDyn (REC-FedDyn), an inexact method that supports partial participation, with one server-side proximal evaluation per communication round.",
       "Li-Hsiang Shen and Chi-Te Kuo (2026) [shen2026movableeleme]: In this work, we propose a movable-element (ME) multi-functional reconfigurable intelligent surface (MF-RIS) architecture, termed MM-RIS, which integrates element mobility with adaptive signal reflect",
       "Ting Xu and Henry Leung (2026) [xu2026feduniverse]: To bridge this critical gap, we present Fed-Universe, a generalizable Semantic-Geometric-Topological-Human (S-G-T-H) architecture that transforms passive averaging into an active negotiation for decen",
       "Liu Cao and Peide Li and Yuan Yang and Zhaoyu Liu and Lyutianyang Zhang and Jinke Ren and Shuguang Cui (2026) [cao2026llmguided]: This paper proposes a closed-loop dual-stage End-to-End (E2E) latency optimization framework that integrates Compressed Personalized Federated Learning with a unified Large-Language-Model-guided Multi",
-      "Yanjiao Zhu and Xianchao Xiu and Yongyang Xiong and Wanquan Liu (2026) [zhu2026alternating]: In this paper, we develop an alternating minimization algorithm for federated sparse orthogonal nonnegative matrix factorization (ONMF) with emphases on controlling client drift.",
-      "Rezwan Islam Salvi and MD Rafin Jawad Hafiz and Abeer Mahmood Kalam and Md Moniruzzaman (2026) [salvi2026adaptive]: Network Intrusion Detection Systems (NIDS) based on deep learning often fail to detect attack classes that are absent from training data, limiting their robustness against zero-day threats."
+      "Yanjiao Zhu and Xianchao Xiu and Yongyang Xiong and Wanquan Liu (2026) [zhu2026alternating]: In this paper, we develop an alternating minimization algorithm for federated sparse orthogonal nonnegative matrix factorization (ONMF) with emphases on controlling client drift."
     ],
     "key_limitations_to_overcome": [
+      "Molly Wang (2026) [wang2026faster]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
       "Yanjie Dong (2026) [dong2026projected]: Penalty-based methods bound the influence of each worker through the bounded gradient of a penalty function; however, the bound is lost once the uploads are com",
       "Mohammad Mashreghi and Mohammad Hossein Badiei and Md. Jalil Piran (2026) [mashreghi2026consensuscon]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
       "Sirong Dai and Jianting Pan and Ming Yan (2026) [dai2026relativeerro]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
       "Li-Hsiang Shen and Chi-Te Kuo (2026) [shen2026movableeleme]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
       "Ting Xu and Henry Leung (2026) [xu2026feduniverse]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
       "Liu Cao and Peide Li and Yuan Yang and Zhaoyu Liu and Lyutianyang Zhang and Jinke Ren and Shuguang Cui (2026) [cao2026llmguided]: However, closed-loop V2I DTs face two dual-stage communication bottlenecks arising from model parameter exchange for V2I DT reconstruction and multi-service V2I",
-      "Yanjiao Zhu and Xianchao Xiu and Yongyang Xiong and Wanquan Liu (2026) [zhu2026alternating]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
-      "Rezwan Islam Salvi and MD Rafin Jawad Hafiz and Abeer Mahmood Kalam and Md Moniruzzaman (2026) [salvi2026adaptive]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees"
+      "Yanjiao Zhu and Xianchao Xiu and Yongyang Xiong and Wanquan Liu (2026) [zhu2026alternating]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees"
     ],
     "available_citation_keys": [
+      "wang2026faster",
       "dong2026projected",
       "mashreghi2026consensuscon",
       "dai2026relativeerro",
@@ -55,8 +49,7 @@
       "mehboob2026powerscale",
       "nanayakkara2026drift",
       "alrefai2026federated",
-      "haider2026federated",
-      "peivand2026byzantineres"
+      "haider2026federated"
     ],
     "citation_source": "arxiv"
   }

@@ -97,7 +97,7 @@ class PlanChangeMixin:
         blueprint. Returns the reasons it was refused."""
         h = self._project_h()
         candidate = {**interfaces, module: source}
-        violations = [str(v) for v in code_violations(candidate, str(blueprint.get("entrypoint") or ""))[1]]
+        violations = [str(v) for v in code_violations(candidate, str(blueprint.get("entrypoint") or ""), str(blueprint.get("plots") or ""))[1]]
         modules = {module_import_path(e.id.removeprefix("I:")): e.id.removeprefix("I:") for e in h.edges.values() if e.type == "I"}
         try:
             new = spec_from_stub(module, source, modules)

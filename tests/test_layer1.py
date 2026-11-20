@@ -7,7 +7,6 @@ from adk.core.llm import _extract_json_from_text, call_agent
 from adk.tools.planning import (
     scout_domain_conventions,
     select_model_tier,
-    synthesize_table_of_contents,
 )
 
 
@@ -78,29 +77,21 @@ def test_robust_json_extraction_with_think_tags_and_prose():
     assert parsed["approved"] is True
 
 
-def test_scout_domain_conventions_and_synthesize_toc():
+def test_scout_domain_conventions_routes_research_and_prescribes_nothing():
     """Reconnaissance routes the research by degree and takes its literature from the installed paper source (here
-    the simulated catalog); it never prescribes metrics or baselines. The TOC is built from it."""
+    the simulated catalog); it never prescribes the project (§XIII F3) and builds no table of contents (F4)."""
     recon_rl = scout_domain_conventions("01_rl_tictactoe", thesis_type="inzynierska")
     assert recon_rl["research_routing"] == ["background_researcher"]
     assert recon_rl["citation_source"] == "catalog"
     assert len(recon_rl["available_citation_keys"]) >= 10
-    assert recon_rl["standard_metrics"] == [] and recon_rl["canonical_baselines"] == []
+    assert not any(key in recon_rl for key in ("task_key", "domain", "algorithm_focus", "standard_metrics", "canonical_baselines", "common_structural_patterns"))
     assert "@" in recon_rl["verified_bibtex"]
-
-    toc_rl = synthesize_table_of_contents("01_rl_tictactoe", thesis_type="inzynierska", recon_report=recon_rl)
-    assert len(toc_rl["chapters"]) == 6
-    assert toc_rl["chapters"][1]["assigned_agent"] == "background_researcher"
 
     recon_anom = scout_domain_conventions("02_ml_anomaly_detection", thesis_type="magisterska")
     assert recon_anom["research_routing"] == ["background_researcher", "discoverer_researcher"]
-    toc_anom = synthesize_table_of_contents("02_ml_anomaly_detection", thesis_type="magisterska", recon_report=recon_anom)
-    assert toc_anom["chapters"][1]["assigned_agent"] == "background_researcher + discoverer_researcher"
 
     recon_fl = scout_domain_conventions("04_federated_learning", thesis_type="paper")
     assert recon_fl["research_routing"] == ["discoverer_researcher"]
-    toc_fl = synthesize_table_of_contents("04_federated_learning", thesis_type="paper", recon_report=recon_fl)
-    assert toc_fl["chapters"][1]["assigned_agent"] == "discoverer_researcher"
 
 
 def test_research_first_task_ordering_in_planner():
@@ -176,7 +167,7 @@ def test_vertical_feature_slices_in_single_task_planner():
     target_nodes = {t["target_node"] for t in tasks}
     assert {"config.py", "core.py"} <= target_nodes
     # Every plan carries the specification its tasks build on (Audit VI).
-    assert set(planner_res["output"]["interfaces"]) == {"config.py", "core.py"}
+    assert set(planner_res["output"]["interfaces"]) == {"config.py", "core.py", "plot_results.py"}  # figures: §XIII.8
 
     # Academic blueprint must be part of single task_planner output (not a separate thesis_architect)
     blueprint = planner_res["output"]["academic_blueprint"]
@@ -192,8 +183,7 @@ def test_unknown_topic_gets_no_borrowed_methodology(monkeypatch):
     set_paper_source(None)
     _fake_arxiv(monkeypatch, None)
     recon = scout_domain_conventions("Kompresja modeli językowych metodą destylacji wiedzy")
-    assert recon["task_key"] == ""
-    assert recon["standard_metrics"] == []
+    assert not any(key in recon for key in ("task_key", "domain", "algorithm_focus", "standard_metrics", "canonical_baselines", "common_structural_patterns"))
     assert recon["available_citation_keys"] == []
 
 
@@ -247,9 +237,7 @@ def test_live_recon_leaves_metrics_and_structure_to_the_plan(monkeypatch):
     set_paper_source(None)  # the harness's own source: arXiv
     calls = _fake_arxiv(monkeypatch, _ARXIV_ATOM)
     recon = scout_domain_conventions("tabular Q-Learning for Tic-Tac-Toe")
-    assert recon["standard_metrics"] == []
-    assert recon["canonical_baselines"] == []
-    assert recon["common_structural_patterns"] == []
+    assert not any(key in recon for key in ("task_key", "domain", "algorithm_focus", "standard_metrics", "canonical_baselines", "common_structural_patterns"))
     # Literature comes from arXiv only, with the arXiv identifier in every BibTeX entry.
     assert calls and all("export.arxiv.org" in url for url in calls)
     assert recon["citation_source"] == "arxiv"

@@ -64,6 +64,7 @@ SCENARIOS: dict[str, MockScenario] = {
         config_ast_nodes=fx.TICTACTOE_CONFIG_AST_NODES,
         core_code=fx.TICTACTOE_CORE_CODE,
         test_code=fx.TICTACTOE_TEST_CODE,
+        plot_script=fx.TICTACTOE_PLOT_SCRIPT,  # every plan declares its figures (§XIII.8)
         thesis_statement="Deterministic neuro-symbolic verification eliminates metric hallucinations.",
         thesis_chapters=[(fx.TICTACTOE_DOC_SECTION_TITLE, fx.TICTACTOE_DOC_SECTION_CONTENT)],
     ),

@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { mdiMagnify } from '@mdi/js'
 import { labels } from '~/utils/labels'
-import { NAV_PAGES } from '~/utils/nav'
 
 // Icons in a slim rail; hovering slides it open with the page names over the content.
 const palette = useState('palette-open', () => false)
+const pages = useNavPages()
 </script>
 
 <template>
   <v-navigation-drawer permanent rail expand-on-hover rail-width="72" width="240" border="e" color="surface">
     <v-list nav density="comfortable" class="py-4">
       <v-list-item
-        v-for="page in NAV_PAGES"
+        v-for="page in pages"
         :key="page.to"
         :to="page.to"
         :exact="page.exact"
