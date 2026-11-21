@@ -15,9 +15,8 @@ from adk.core.models import read_json_state, write_json_state
 from adk.hypergraph import Hypergraph, save
 from adk.hypergraph.schedule import FAILED, readiness
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.common import _RunState, _agent_for_path
+from adk.orchestration.common import _RunState, _agent_for_path, available_package_imports
 from adk.orchestration.plan_interfaces import _plan_interfaces
-from adk.orchestration.plan_spec import _plan_view
 
 REPLANS_WITHOUT_PROGRESS = 2  # re-plans in a row after which no new vertex was verified: the run ends with gaps
 MAX_REPLANS = 6
@@ -107,16 +106,18 @@ class FragmentReplanMixin:
         dossier = self._repair_dossier(h, failed)
         print(f"\n  [PRZEPLANOWANIE {len(progress)}] Nieudane wierzchołki: {', '.join(failed)}", flush=True)
         self.logger.log_step("REPLAN", f"Przeplanowanie nieudanych wierzchołków ({len(failed)})", {"failed": failed})
-        answer = self._call_agent(
+        answer = self._call_planning_agent(
             self.agents_dir / "planning" / "task_planner.md",
             {
                 "user_prompt": self.current_user_prompt,
-                "current_plan": _plan_view({"tasks": state.tasks, "academic_blueprint": blueprint}, interfaces),
+                "current_plan": {
+                    "tasks": state.tasks, "interfaces": interfaces,
+                    "academic_blueprint": {k: v for k, v in blueprint.items() if k not in ("literature_recon", "interfaces")},
+                },
                 "repair_dossier": dossier,
+                "available_packages": sorted(available_package_imports().values()),
                 "error_feedback": texts.replan_failed_instruction(failed),
             },
-            model_tier="LRM",
-            provider=self.provider,
         )
         out = answer.get("output") if answer.get("status") == "ok" else None
         out = out if isinstance(out, dict) else {}

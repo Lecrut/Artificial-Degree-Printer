@@ -1,86 +1,11 @@
 {
   "version": 2,
   "vertices": {
-    "src/data_generator.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "failed",
-      "description": "[Increment 2: Method] Implement the random subspace data generation module with anomaly injection in src/data_generator.py. This module creates synthetic multi-channel physiological signals, injects anomalies at specified locations, and provides ground truth masks for evaluation.",
-      "attempts": 2,
-      "history": [
-        {
-          "task_id": "REPLAN",
-          "issues": [
-            "Interface of src/data_generator.py changed by the re-plan."
-          ]
-        },
-        {
-          "task_id": "R2_1",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\n- example `mask[0, 2:5].all()` expected `True`, got `np.False_`",
-            "Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        },
-        {
-          "task_id": "R2_1",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\n- example `mask.shape` expected `(2, 5)`, got `(10,)`\n- example `mask[0, 2:5].all()` raised IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed in the example's own code (after an earlier example of the same docstring failed)",
-            "Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        },
-        {
-          "task_id": "R2_1",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\n- example `mask.shape` expected `(2, 5)`, got `(10,)`\n- example `mask[0, 2:5].all()` raised IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed in the example's own code (after an earlier example of the same docstring failed)",
-            "Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "R2_1_FIX2"
-      },
-      "files": [],
-      "failures": 6
-    },
-    "src/ensemble_detector.py": {
+    "data_generation.py": {
       "kind": "code",
       "owner": "coder",
       "state": "verified",
-      "description": "[Increment 2: Method] Implement the ensemble anomaly detection module in src/ensemble_detector.py. This implements Random Subspace Ensembles using Isolation Forest components, allowing for dynamic feature subspaces per estimator and an aggregation mechanism for final anomaly scores.",
-      "attempts": 1,
-      "history": [
-        {
-          "task_id": "T4",
-          "issues": [
-            "ANSWER_REJECTED: The answer for 'src/ensemble_detector.py' was not saved: the fields ['error', 'issues', 'raw_response'] match no allowed shape. Allowed: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section"
-          ]
-        },
-        {
-          "task_id": "T4",
-          "issues": [
-            "NOT_IMPLEMENTED [src/ensemble_detector.py]: a function still only raises NotImplementedError"
-          ]
-        },
-        {
-          "task_id": "REPLAN",
-          "issues": [
-            "Interface of src/ensemble_detector.py changed by the re-plan."
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T4_FIX1"
-      },
-      "files": [],
-      "failures": 2
-    },
-    "src/baseline_zscore.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "verified",
-      "description": "[Increment 2: Method] Implement the static baseline module in src/baseline_zscore.py. This implements a univariate Z-score based detector with configurable window size and threshold, serving as the comparative baseline.",
+      "description": "Implement data_generation.py: Generates synthetic multi-channel physiological telemetry signals with injected anomalies for ground-truth evaluation.. Implement every name its interface declares: generate_dataset.",
       "attempts": 1,
       "history": [],
       "last_writer": {
@@ -90,176 +15,257 @@
       "files": [],
       "failures": 0
     },
-    "src/experiment.py": {
-      "kind": "entry",
+    "baselines.py": {
+      "kind": "code",
       "owner": "coder",
-      "state": "impl",
-      "description": "[Increment 3: Experiment] Implement the experiment entrypoint module in src/experiment.py. It must load configuration from module-level constants, import data_generator, ensemble_detector, and baseline_zscore at the top level to use them, generate synthetic data via data_generator, run ensemble_detector and baseline_zscore with multiple seeds/repetitions, compute metrics (Precision, Recall, F1 using sklearn.metrics.precision_recall_fscore_support, AUC-ROC using sklearn.metrics.roc_curve and sklearn.metrics.auc) saving results to `results.csv` (format: method,metric,value,std_dev,n_runs), and finally call plotting.plots(). Explicitly map baseline Z-scores to AUC-ROC and binary predictions to F1.",
-      "attempts": 2,
+      "state": "verified",
+      "description": "Implement baselines.py: Implements the static single-variate Z-score anomaly detection baseline with methods for both binary prediction and continuous scoring.. Implement every name its interface declares: ZScoreDetector, ZScoreDetector.__init__, ZScoreDetector.predict, ZScoreDetector.predict_scores.",
+      "attempts": 4,
       "history": [
         {
-          "task_id": "T10",
+          "task_id": "REPLAN",
           "issues": [
-            "Ruff lint failure: src\\experiment.py:144:5: F821 Undefined name `plt`\nsrc\\experiment.py:145:5: F821 Undefined name `plots`\nsrc\\experiment.py:145:11: F821 Undefined name `plots`\nFound 3 errors."
+            "Interface of baselines.py changed by the re-plan."
           ]
         },
         {
-          "task_id": "T10",
+          "task_id": "R2_1",
           "issues": [
-            "Ruff lint failure: src\\experiment.py:144:5: F821 Undefined name `src`\nFound 1 error."
+            "BEHAVIOUR_MISMATCH [baselines.py]: the implementation does not give the results the interface specifies:\n- example `scores.tolist()` expected `[1.0, 0.0, 1.0]`, got `[1.224744871391589, 0.0, 1.224744871391589]`\n- example `y.tolist()` expected `[0, 0, 0, 1]`, got `[0, 0, 0, 0]`"
+          ]
+        },
+        {
+          "task_id": "R2_1",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [baselines.py]: the implementation does not give the results the interface specifies:\n- example `y.tolist()` expected `[0, 0, 0, 1]`, got `[0, 0, 0, 0]`"
+          ]
+        },
+        {
+          "task_id": "R2_1",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [baselines.py]: the implementation does not give the results the interface specifies:\n- example `scores.tolist()` expected `[1.0, 0.0, 1.0]`, got `[1.224744871391589, 0.0, 1.224744871391589]`\n- example `y.tolist()` expected `[0, 0, 0, 1]`, got `[0, 0, 0, 0]`"
           ]
         },
         {
           "task_id": "REPLAN",
           "issues": [
-            "Interface of src/experiment.py changed by the re-plan."
+            "Interface of baselines.py changed by the re-plan."
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "T10_FIX1"
+        "task_id": "R3_1"
       },
       "files": [],
-      "failures": 2
+      "failures": 8
     },
-    "src/plotting.py": {
+    "rs_ensemble.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "failed",
+      "description": "Implement rs_ensemble.py: Implements the proposed Random Subspace Ensemble detector with methods for fitting and continuous scoring.. Implement every name its interface declares: RSADetector, RSADetector.__init__, RSADetector.fit, RSADetector.predict, RSADetector.predict_scores.",
+      "attempts": 6,
+      "history": [
+        {
+          "task_id": "R4_1",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000001AFAC09F750>`\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000001AFADA69220>`"
+          ]
+        },
+        {
+          "task_id": "R4_1",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x0000024BFF9EF750>`\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x0000024BFFF19220>`"
+          ]
+        },
+        {
+          "task_id": "R5_1",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000002677ED7F750>`\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000002677F0E9350>`"
+          ]
+        },
+        {
+          "task_id": "R5_1",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000001C6FED4F750>`\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000001C6FF0B9350>`"
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "R5_1_FIX1"
+      },
+      "files": [],
+      "failures": 14
+    },
+    "evaluation.py": {
       "kind": "code",
       "owner": "coder",
       "state": "verified",
-      "description": "[Increment 3: Experiment] Implement the visualization module in src/plotting.py. Contains `plots()` function that reads `results.csv` and generates figures (e.g., F1 distribution across seeds, confusion matrix averages) saved to `figures/`.",
-      "attempts": 1,
-      "history": [
-        {
-          "task_id": "T11",
-          "issues": [
-            "Ruff lint failure: src\\plotting.py:29:17: F821 Undefined name `np`\nsrc\\plotting.py:42:9: F821 Undefined name `np`\nFound 2 errors."
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T11_FIX1"
-      },
-      "files": [],
-      "failures": 1
-    },
-    "tests/test_data_generator.py": {
-      "kind": "test",
-      "owner": "tester",
-      "state": "failed",
-      "description": "[Increment 2: Method] Unit tests for data_generator module in tests/test_data_generator.py. Verify signal dimensions, normal range validity, and correct injection of anomalies (check ground truth mask overlaps).",
+      "description": "Implement evaluation.py: Computes classification metrics including ROC-AUC and aggregates statistical summaries for repeated experiments.. Implement every name its interface declares: compute_metrics, aggregate_results.",
       "attempts": 2,
       "history": [
         {
+          "task_id": "REPLAN",
+          "issues": [
+            "Interface of evaluation.py changed by the re-plan."
+          ]
+        },
+        {
           "task_id": "R1_2",
           "issues": [
-            "Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =============================="
+            "BEHAVIOUR_MISMATCH [evaluation.py]: the implementation does not give the results the interface specifies:\n- example `(round(metrics['precision'], 2), round(metrics['recall'], 2), round(metrics['f1'], 2), round(metrics['roc_auc'], 2))` expected `(0.5, 1.0, 0.67, 0.75)`, got `(0.5, 0.5, 0.5, 0.5)`"
           ]
         },
         {
           "task_id": "PLAN",
           "issues": [
-            "Interface of src/data_generator.py kept by the planner: The interface is coherent and correctly specifies the return type as np.ndarray for get_ground_truth_mask. The repeated finding regarding .shape is invalid because .shape is a standard attribute of numpy ndarrays, not a custom declared member requiring interface inclusion. The implementation correctly returns a numpy array with the expected shape and functionality. Previous failures were due to test logic or implementation bugs, not interface defects. No change to the interface is needed."
-          ]
-        },
-        {
-          "task_id": "R1_2_FIX2",
-          "issues": [
-            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_data_generator.py]: reads get_ground_trut"
+            "Interface of evaluation.py kept by the planner: The doctest example in `compute_metrics` is inconsistent with the provided default parameters and data. With `y_true=[0,0,1,1]`, `y_scores=[0.1,0.9,0.8,0.2]`, and default `threshold=0.5`, the predicted labels are `[0, 1, 1, 0]`. This results in precision=0.5 (1 TP out of 2 positives), recall=0.5 (1 TP out of 2 actuals), f1=0.5, and roc_auc=0.75. The interface claims the result is `(0.5, 1.0, 0.67, 0.75)`, which implies a recall of 1.0 (all true positives detected). This requires either different labels/scores or a lower threshold (e.g., 0.2 would yield `y_pred=[0,1,1,1]` giving recall=1.0 and f1=0.8). Since the input data was not changed but the expected output is clearly for a case where all positives are detected, the most minimal correction to make the example valid without changing the test data structure significantly is to adjust the `y_scores` such that the default threshold yields the expected metrics, OR adjust the expected values in the docstring. However, looking at the previous attempts, they tried to fix the implementation to match a bad interface or vice versa. Let's look closer. `y_scores=[0.1, 0.9, 0.8, 0.2]`. If threshold is 0.5: `[0, 1, 1, 0]`. TP=1, FP=0, FN=1. Precision=1/1=1? No, FP=0 in the second position? `y_scores[1]=0.9 >= 0.5` -> 1. `y_true[1]=0`. So FP=1. TP=1 (`y_scores[2]=0.8`, `y_true[2]=1`). FN=1 (`y_scores[3]=0.2`, `y_true[3]=1`). TN=1. Precision = TP/(TP+FP) = 1/2 = 0.5. Recall = TP/(TP+FN) = 1/2 = 0.5. F1 = 2*0.5*0.5 / (0.5+0.5) = 0.5. ROC-AUC is calculated on raw scores: `(0.9+0.8)/2 = 0.85`? No, AUC for `[0,0,1,1]` and `[0.1,0.9,0.8,0.2]`. Rank of positives (indices 2,3) vs negatives (0,1). Score pos: 0.8, 0.2. Score neg: 0.1, 0.9. Pairs (neg, pos): (0.1,0.8)->win, (0.1,0.2)->win, (0.9,0.8)->loss, (0.9,0.2)->loss. Wins=2, Ties=0. Total=4. AUC=0.5. Wait. The example says `roc_auc` 0.75. Let's re-calculate AUC manually. Scores: `[0.1, 0.9, 0.8, 0.2]`. Labels: `[0, 0, 1, 1]`. Negative scores: `0.1` (idx 0), `0.9` (idx 1). Positive scores: `0.8` (idx 2), `0.2` (idx 3). Comparing every positive to every negative: `(0.8, 0.1)` -> Pos > Neg (+1). `(0.8, 0.9)` -> Pos < Neg (+0). `(0.2, 0.1)` -> Pos > Neg (+1). `(0.2, 0.9)` -> Pos < Neg (+0). Total wins=2, total pairs=4. AUC = 0.5. The interface claims `0.75`. So the interface example is completely wrong mathematically for standard definitions. To fix it with minimal change, we must correct the *expected output* in the doctest to match the actual behavior of the function with the provided inputs, OR change the inputs to match the expected output. Changing inputs is safer for "
           ]
         },
         {
           "task_id": "R1_2",
           "issues": [
-            "Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =============================="
+            "BEHAVIOUR_MISMATCH [evaluation.py]: the implementation does not give the results the interface specifies:\n- example `(round(metrics['precision'], 2), round(metrics['recall'], 2), round(metrics['f1'], 2), round(metrics['roc_auc'], 2))` raised TypeError: 'NoneType' object is not subscriptable in the example's own code"
+          ]
+        },
+        {
+          "task_id": "PLAN",
+          "issues": [
+            "Interface of evaluation.py amended by the planner: The interface's doctest example for `compute_metrics` contains mathematically incorrect expected outputs. With the provided inputs `y_true=[0,0,1,1]`, `y_scores=[0.1,0.9,0.8,0.2]` and default threshold 0.5, `y_pred` becomes `[0,1,1,0]`. This yields Precision=0.5 (TP=1, FP=1), Recall=0.5 (FN=1), F1=0.5, and ROC-AUC=0.5 (standard calculation). The interface claims `(0.5, 1.0, 0.67, 0.75)`, which is impossible for these inputs with standard scikit-learn metrics. Additionally, the previous finding of `TypeError` in the doctest suggests potential parsing or execution issues with the specific string representation or missing imports in the example context, but the primary error is the factual impossibility of the expected values. The interface must be amended to reflect correct calculations for the given inputs."
           ]
         }
       ],
       "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "T6_FIX1"
-      },
-      "files": [],
-      "failures": 8
-    },
-    "tests/test_ensemble_detector.py": {
-      "kind": "test",
-      "owner": "tester",
-      "state": "verified",
-      "description": "[Increment 2: Method] Unit tests for ensemble_detector module in tests/test_ensemble_detector.py. Verify prediction dimensions, score ranges [0,1], and consistency across calls.",
-      "attempts": 2,
-      "history": [
-        {
-          "task_id": "T7",
-          "issues": [
-            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_ensemble_detector.py]: reads RandomSubspa"
-          ]
-        },
-        {
-          "task_id": "T7",
-          "issues": [
-            "Pytest failure: FF.                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        },
-        {
-          "task_id": "T7",
-          "issues": [
-            "Pytest failure: .F.                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        },
-        {
-          "task_id": "T7",
-          "issues": [
-            "Pytest failure: .F.                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "R1_6"
+        "agent": "seed_coder",
+        "task_id": "R1_2_FIX2"
       },
       "files": [],
       "failures": 4
     },
-    "tests/test_baseline_zscore.py": {
+    "experiment.py": {
+      "kind": "entry",
+      "owner": "coder",
+      "state": "stub",
+      "description": "Implement experiment.py: Runs the full experimental loop: generates data, trains detectors, evaluates continuous scores, and writes results.csv.. Implement every name its interface declares: run_experiment.",
+      "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "figures.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement figures.py: Reads results.csv and generates comparison plots into the figures/ directory.. Implement every name its interface declares: plot_results.",
+      "attempts": 1,
+      "history": [
+        {
+          "task_id": "T13",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [figures.py]: the implementation does not give the results the interface specifies:\n- plot_results: example `_ = plot_results()` raised RuntimeError: results.csv not found. Creating dummy data for verification. in figures.py > plot_results, line 22: `raise RuntimeError(f'{csv_path} not found. Creating dummy data for verification.')`"
+          ]
+        },
+        {
+          "task_id": "T13",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [figures.py]: the implementation does not give the results the interface specifies:\n- plot_results: example `_ = plot_results()` raised IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed in figures.py > plot_results, line 38: `ax = axes[row, col]`"
+          ]
+        },
+        {
+          "task_id": "PLAN",
+          "issues": [
+            "Interface of figures.py kept by the planner: The interface is correct and coherent. The repeated failures (IndexError on `axes[row, col]` and RuntimeError about missing CSV) are caused by the implementation's internal logic: 1) The implementation uses a complex subplot grid (`plt.subplots(rows, cols)`) which may result in different array shapes than expected if not handled perfectly, leading to the IndexError when accessing `axes[row, col]`. 2) The implementation contains hardcoded fallback logic that raises an error or creates dummy data instead of relying on the external file structure defined by the interface's docstring intent ('Reads results.csv'). The interface simply promises to read a CSV and plot; the implementation must do exactly that without internal mock-data overrides or complex grid indexing errors."
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T13_FIX2"
+      },
+      "files": [],
+      "failures": 2
+    },
+    "tests/test_data_generation.py": {
       "kind": "test",
       "owner": "tester",
       "state": "verified",
-      "description": "[Increment 2: Method] Unit tests for baseline_zscore module in tests/test_baseline_zscore.py. Verify threshold application and output dimensions.",
-      "attempts": 2,
+      "description": "Unit tests of generate_dataset from data_generation.py in tests/test_data_generation.py, through the declared interface only.",
+      "attempts": 1,
       "history": [
         {
-          "task_id": "T8",
+          "task_id": "T6",
           "issues": [
-            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_baseline_zscore.py]: reads ZScoreBaseline"
-          ]
-        },
-        {
-          "task_id": "T8",
-          "issues": [
-            "Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        },
-        {
-          "task_id": "T8",
-          "issues": [
-            "Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        },
-        {
-          "task_id": "R1_4",
-          "issues": [
-            "Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\n================================================================================================================================================ FAILURES =============================="
+            "ANSWER_REJECTED: Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_data_generation.py:15: invalid syntax\n    14: def test_generate_dataset_labels_binary():\n    15:     \"\"\"Test that generate_dataset returns binary labels (0 or 1).\n    16: "
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "R1_4_FIX1"
+        "task_id": "T6"
       },
       "files": [],
-      "failures": 4
+      "failures": 1
+    },
+    "tests/test_baselines.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "Unit tests of ZScoreDetector from baselines.py in tests/test_baselines.py, through the declared interface only.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "T8"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "tests/test_rs_ensemble.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "spec",
+      "description": "Unit tests of RSADetector from rs_ensemble.py in tests/test_rs_ensemble.py, through the declared interface only.",
+      "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "tests/test_evaluation.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "Unit tests of compute_metrics, aggregate_results from evaluation.py in tests/test_evaluation.py, through the declared interface only.",
+      "attempts": 1,
+      "history": [
+        {
+          "task_id": "T12",
+          "issues": [
+            "ANSWER_REJECTED: Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_evaluation.py:63: unmatched '}'\n    62:     assert abs(m1_acc_row['value'] - expected_m1_acc) < 1e-4, f\"Expected mean 0.925, got {m1_acc_row['value']}\"\n    63: }"
+          ]
+        },
+        {
+          "task_id": "T12",
+          "issues": [
+            "Pytest failure: .FF                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "T12",
+          "issues": [
+            "Pytest failure: ..F                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "T12_FIX2"
+      },
+      "files": [],
+      "failures": 3
     },
     "results.csv": {
       "kind": "data",
@@ -275,7 +281,7 @@
     "references.bib": {
       "kind": "bib",
       "owner": "writer",
-      "state": "spec",
+      "state": "verified",
       "description": "",
       "attempts": 0,
       "history": [],
@@ -287,7 +293,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Rozdział 1: Wstęp — Motywacja problemu, cel pracy, teza i struktura dokumentu.",
+      "description": "Wprowadzenie — Motywacja problemu detekcji anomalii w telemetrii fizjologicznej, specyfika danych (szum, artefakty) oraz cel pracy.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -298,7 +304,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Rozdział 2: Teoretyczne podstawy detekcji anomalii — Przegląd metod opartych na odległościach, podprzestrzeniach oraz specyfika danych fizjologicznych.",
+      "description": "Przegląd metod detekcji anomalii — Omówienie statycznych metod jednowymiarowych (np. Z-score) oraz zaawansowanych podejść ensemblingowych i opartych na podprzestrzeniach.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -309,7 +315,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Rozdział 3: Proponowana metoda i rozwiązanie bazowe — Opis matematyczny komitetu losowych podprzestrzeni oraz implementacja detektora Z-score.",
+      "description": "Propozycja algorytmu komitetowego — Szczegółowy opis teoretyczny i implementacyjny detektora losowych podprzestrzeni (Random Subspace Ensemble) dostosowanego do danych wielokanałowych.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -320,7 +326,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "spec",
-      "description": "Rozdział 4: Wyniki eksperymentów i ich analiza — Wizualizacja wyników na syntetycznych danych, porównanie metryk, analiza rozrzutu między ziareniami.",
+      "description": "Eksperymenty i wyniki — Opis generacji danych syntetycznych, ustalone parametry, przedstawienie wyników metrycznych z uwzględnieniem rozrzutu między powtórzeniami oraz analiza porównawcza z bazą.",
       "attempts": 0,
       "history": [],
       "last_writer": null,
@@ -331,19 +337,8 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "spec",
-      "description": "Rozdział 5: Wnioski — Podsumowanie osiągnięć, weryfikacja tezy oraz propozycje prac przyszłych.",
+      "description": "Wnioski — Podsumowanie sukcesu lub porażki tezy oraz kierunki przyszłych prac nad odpornością na szum w detekcji medycznej.",
       "attempts": 0,
-      "history": [],
-      "last_writer": null,
-      "files": [],
-      "failures": 0
-    },
-    "thesis.md#ch6": {
-      "kind": "chapter",
-      "owner": "writer",
-      "state": "verified",
-      "description": "Rozdział 6: Przegląd literatury (SOTA) — Analiza najnowszych prac z zakresu ensemble learning w detekcji anomalii.",
-      "attempts": 1,
       "history": [],
       "last_writer": null,
       "files": [],
@@ -351,188 +346,256 @@
     }
   },
   "edges": {
-    "I:src/data_generator.py": {
+    "I:data_generation.py": {
       "type": "I",
       "members": {
-        "src/data_generator.py": "P",
-        "src/experiment.py": "C",
-        "tests/test_data_generator.py": "T"
+        "data_generation.py": "P",
+        "experiment.py": "C",
+        "tests/test_data_generation.py": "T"
       },
       "spec": {
-        "import": "src.data_generator",
+        "import": "data_generation",
         "symbols": {
-          "generate_signal": {
+          "NUM_CHANNELS": {
+            "kind": "const",
+            "type": "int"
+          },
+          "ANOMALY_PROBABILITY": {
+            "kind": "const",
+            "type": "float"
+          },
+          "N_SAMPLES": {
+            "kind": "const",
+            "type": "int"
+          },
+          "generate_dataset": {
             "kind": "func",
             "params": [
-              "n_channels",
-              "signal_length",
-              "n_anomalies",
               "seed"
             ],
             "required": [
-              "n_channels",
-              "signal_length",
-              "n_anomalies"
-            ]
-          },
-          "get_ground_truth_mask": {
-            "kind": "func",
-            "params": [
-              "anomalies",
-              "signal_length",
-              "n_channels"
-            ],
-            "required": [
-              "anomalies",
-              "signal_length",
-              "n_channels"
-            ]
-          }
-        },
-        "uses": {},
-        "packages": [
-          "numpy"
-        ],
-        "behaviour": [
-          "Generate synthetic signal and anomaly ground truth.\n\nReturns:\n    X (np.ndarray): Shape (n_channels, signal_length). Normal values in [-1, 1].\n    anomalies (list[dict]): List of dicts with keys 'channel', 'start', 'end' defining injected anomalies.\n\nExample:\n    >>> X, anom = generate_signal(2, 10, 1, seed=0)\n    >>> X.shape\n    (2, 10)\n    >>> len(anom) == 1\n    True",
-          "Convert anomaly definitions to a boolean mask.\n\nArgs:\n    anomalies: List of dicts with 'channel', 'start', 'end'.\n    signal_length: Length of the time dimension.\n    n_channels: Number of channels.\n    \nReturns:\n    mask (np.ndarray): Shape (n_channels, signal_length). True where anomaly exists.\n    \nExample:\n    >>> mask = get_ground_truth_mask([{'channel': 0, 'start': 2, 'end': 4}], 5, 2)\n    >>> mask.shape\n    (2, 5)\n    >>> mask[0, 2:5].all()\n    True"
-        ]
-      },
-      "fingerprint": null,
-      "observed": []
-    },
-    "I:src/ensemble_detector.py": {
-      "type": "I",
-      "members": {
-        "src/ensemble_detector.py": "P",
-        "src/experiment.py": "C",
-        "tests/test_ensemble_detector.py": "T"
-      },
-      "spec": {
-        "import": "src.ensemble_detector",
-        "symbols": {
-          "RandomSubspaceEnsemble": {
-            "kind": "class"
-          },
-          "RandomSubspaceEnsemble.__init__": {
-            "kind": "method",
-            "params": [
-              "self",
-              "n_estimators",
-              "subspace_size",
-              "contamination",
               "seed"
-            ],
-            "required": []
-          },
-          "RandomSubspaceEnsemble.fit": {
-            "kind": "method",
-            "params": [
-              "self",
-              "X"
-            ],
-            "required": [
-              "X"
             ]
-          },
-          "RandomSubspaceEnsemble.predict_scores": {
-            "kind": "method",
-            "params": [
-              "self",
-              "X"
-            ],
-            "required": [
-              "X"
-            ]
-          },
-          "RandomSubspaceEnsemble.get_subspace_indices": {
-            "kind": "method",
-            "params": [
-              "self"
-            ],
-            "required": []
           }
         },
         "uses": {},
         "packages": [
           "numpy",
-          "sklearn"
+          "typing"
         ],
-        "behaviour": []
+        "behaviour": [
+          "Generate synthetic physiological data with anomalies and return the signal along with its ground-truth binary labels.\n\nThe function constructs a multi-channel time series where each channel\nfollows a smooth stochastic process to mimic physiological signals like ECG or EEG.\nAnomalies are injected randomly according to ANOMALY_PROBABILITY, modifying the\nsignal amplitude significantly to represent artifacts or pathological events.\n\nParameters\n----------\nseed : int\n    Random seed for reproducibility.\n\nReturns\n-------\nTuple[np.ndarray, np.ndarray]\n    A tuple containing:\n    - `data`: A numpy array of shape (N_SAMPLES, NUM_CHANNELS) representing\n      the telemetry signal with anomalies injected.\n    - `labels`: A numpy array of shape (N_SAMPLES,) with binary values (0 for normal,\n      1 for anomaly).\n\nExamples\n--------\n>>> data, labels = generate_dataset(seed=42)\n>>> data.shape\n(2000, 8)\n>>> labels.shape\n(2000,)\n>>> set(labels.tolist()).issubset({0, 1})\nTrue"
+        ]
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:src/baseline_zscore.py": {
+    "I:baselines.py": {
       "type": "I",
       "members": {
-        "src/baseline_zscore.py": "P",
-        "src/experiment.py": "C",
-        "tests/test_baseline_zscore.py": "T"
+        "baselines.py": "P",
+        "experiment.py": "C",
+        "tests/test_baselines.py": "T"
       },
       "spec": {
-        "import": "src.baseline_zscore",
+        "import": "baselines",
         "symbols": {
-          "ZScoreBaseline": {
+          "ZScoreDetector": {
             "kind": "class"
           },
-          "ZScoreBaseline.__init__": {
+          "ZScoreDetector.__init__": {
             "kind": "method",
             "params": [
               "self",
-              "window_size",
               "threshold"
             ],
             "required": []
           },
-          "ZScoreBaseline.compute_scores": {
+          "ZScoreDetector.predict_scores": {
             "kind": "method",
             "params": [
               "self",
-              "X"
+              "data"
             ],
             "required": [
-              "X"
+              "data"
+            ]
+          },
+          "ZScoreDetector.predict": {
+            "kind": "method",
+            "params": [
+              "self",
+              "data"
+            ],
+            "required": [
+              "data"
+            ]
+          },
+          "ZScoreDetector.threshold": {
+            "kind": "attr"
+          }
+        },
+        "uses": {},
+        "packages": [
+          "numpy",
+          "typing"
+        ],
+        "behaviour": [
+          "Initialize with a Z-score threshold for anomaly detection.\n\nParameters\n----------\nthreshold : float\n    The threshold above which a sample is considered anomalous.\n\nExamples\n--------\n>>> det = ZScoreDetector(threshold=1.5)\n>>> det.threshold\n1.5",
+          "Return the maximum absolute Z-score across channels for each row.\n\nComputes mean and standard deviation for each channel over ALL samples\nin `data` (population std, ddof=0). The Z-score for a value is `(x - mean) / std`.\nReturns the maximum absolute Z-score for each sample (row).\n\nParameters\n----------\ndata : np.ndarray\n    Array of shape (n_samples, n_channels).\n\nReturns\n-------\nnp.ndarray\n    Array of shape (n_samples,) with anomaly scores.\n\nExamples\n--------\n>>> import numpy as np\n>>> det = ZScoreDetector(threshold=3.0)\n>>> # Data: [[0], [2]]. Mean=1, Std=1. Z-scores: [|0-1|/1, |2-1|/1] = [1., 1.]\n>>> d = np.array([[0], [2]])\n>>> scores = det.predict_scores(d)\n>>> scores.tolist()\n[1.0, 1.0]",
+          "Return binary anomaly labels for each row based on Z-scores.\n\nRows are flagged as anomalous (1) if any channel's absolute\nZ-score exceeds the threshold.\n\nParameters\n----------\ndata : np.ndarray\n    Array of shape (n_samples, n_channels).\n\nReturns\n-------\nnp.ndarray\n    Integer array of shape (n_samples,) with 1 for anomalous rows.\n\nExamples\n--------\n>>> import numpy as np\n>>> det = ZScoreDetector(threshold=2.0)\n>>> # Data: [[0], [0], [0], [10]]. Mean=2.5, Std=4.33. Z(10)=1.73 < 2.0 -> [0,0,0,0]\n>>> d = np.array([[0], [0], [0], [10]])\n>>> y = det.predict(d)\n>>> y.tolist()\n[0, 0, 0, 0]"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:rs_ensemble.py": {
+      "type": "I",
+      "members": {
+        "rs_ensemble.py": "P",
+        "experiment.py": "C",
+        "tests/test_rs_ensemble.py": "T"
+      },
+      "spec": {
+        "import": "rs_ensemble",
+        "symbols": {
+          "RSADetector": {
+            "kind": "class"
+          },
+          "RSADetector.__init__": {
+            "kind": "method",
+            "params": [
+              "self",
+              "n_estimators",
+              "random_state"
+            ],
+            "required": []
+          },
+          "RSADetector.fit": {
+            "kind": "method",
+            "params": [
+              "self",
+              "data"
+            ],
+            "required": [
+              "data"
+            ]
+          },
+          "RSADetector.predict": {
+            "kind": "method",
+            "params": [
+              "self",
+              "data"
+            ],
+            "required": [
+              "data"
+            ]
+          },
+          "RSADetector.predict_scores": {
+            "kind": "method",
+            "params": [
+              "self",
+              "data"
+            ],
+            "required": [
+              "data"
+            ]
+          },
+          "RSADetector.n_estimators": {
+            "kind": "attr"
+          },
+          "RSADetector.random_state": {
+            "kind": "attr"
+          },
+          "RSADetector.estimators_": {
+            "kind": "attr"
+          },
+          "RSADetector.mean_subspaces_": {
+            "kind": "attr"
+          },
+          "RSADetector.std_subspaces_": {
+            "kind": "attr"
+          },
+          "RSADetector.train_score_mean_": {
+            "kind": "attr"
+          },
+          "RSADetector.train_score_std_": {
+            "kind": "attr"
+          }
+        },
+        "uses": {},
+        "packages": [
+          "numpy",
+          "typing"
+        ],
+        "behaviour": [
+          "Initialize the detector with hyperparameters.\n\nParameters\n----------\nn_estimators : int\n    Number of random subspaces to use.\nrandom_state : Optional[int]\n    Seed for reproducibility.\n\nExamples\n--------\n>>> det = RSADetector(n_estimators=2, random_state=42)\n>>> det.n_estimators\n2\n>>> det.random_state\n42",
+          "Fit the ensemble on training data.\n\nLearns mean and standard deviation for each random subspace,\nand stores statistics of anomaly scores computed on this training data\nto allow automatic thresholding in `predict`.\n\nParameters\n----------\ndata : np.ndarray\n    Training data of shape (n_samples, n_features).\n\nReturns\n-------\nRSADetector\n    self\n\nExamples\n--------\n>>> import numpy as np\n>>> X = np.array([[0.1, 0.2], [0.3, 0.4], [5.0, 5.0]])\n>>> det = RSADetector(n_estimators=1, random_state=42)\n>>> result = det.fit(X)\n>>> result is det\nTrue",
+          "Predict anomalies (1) or normal (0) for the given data.\n\nUses a threshold derived from training scores (mean + 3 * std)\nto determine binary prediction. Requires `fit` to have been called.\n\nParameters\n----------\ndata : np.ndarray\n    Data of shape (n_samples, n_features).\n\nReturns\n-------\nnp.ndarray\n    Integer array of shape (n_samples,).\n\nExamples\n--------\n>>> import numpy as np\n>>> X = np.array([[0.1, 0.2], [0.3, 0.4]])\n>>> det = RSADetector(n_estimators=1, random_state=42)\n>>> det.fit(X)\n<RSADetector object>\n>>> y_pred = det.predict(X)\n>>> y_pred.shape\n(2,)",
+          "Compute continuous anomaly score for each sample.\n\nReturns an array of shape (n_samples,) with float values.\n\nParameters\n----------\ndata : np.ndarray\n    Data of shape (n_samples, n_features).\n\nReturns\n-------\nnp.ndarray\n    Array of shape (n_samples,).\n\nExamples\n--------\n>>> import numpy as np\n>>> X = np.array([[0.1, 0.2], [0.3, 0.4]])\n>>> det = RSADetector(n_estimators=1, random_state=42)\n>>> det.fit(X)\n<RSADetector object>\n>>> scores = det.predict_scores(X)\n>>> scores.shape\n(2,)"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:evaluation.py": {
+      "type": "I",
+      "members": {
+        "evaluation.py": "P",
+        "experiment.py": "C",
+        "tests/test_evaluation.py": "T"
+      },
+      "spec": {
+        "import": "evaluation",
+        "symbols": {
+          "N_RUNS": {
+            "kind": "const",
+            "type": "int"
+          },
+          "compute_metrics": {
+            "kind": "func",
+            "params": [
+              "y_true",
+              "y_scores",
+              "threshold"
+            ],
+            "required": [
+              "y_true",
+              "y_scores"
+            ]
+          },
+          "aggregate_results": {
+            "kind": "func",
+            "params": [
+              "runs_data"
+            ],
+            "required": [
+              "runs_data"
             ]
           }
         },
         "uses": {},
         "packages": [
-          "numpy"
+          "numpy",
+          "sklearn",
+          "typing"
         ],
-        "behaviour": []
+        "behaviour": [
+          "Computes precision, recall, f1 from thresholded scores and roc_auc from raw scores.\n\nThe threshold is used to convert continuous anomaly scores into binary predictions \nfor precision, recall, and f1-score calculation.\n\nParameters\n----------\ny_true : np.ndarray\n    Ground truth labels.\ny_scores : np.ndarray\n    Continuous anomaly scores.\nthreshold : float\n    Threshold for binarization.\n\nReturns\n-------\nDict[str, float]\n    Dictionary with keys 'precision', 'recall', 'f1', 'roc_auc'.\n\nExamples\n--------\n>>> import numpy as np\n>>> y_true = np.array([0, 0, 1, 1])\n>>> y_scores = np.array([0.1, 0.9, 0.8, 0.2])\n>>> metrics = compute_metrics(y_true, y_scores)\n>>> (round(metrics['precision'], 2), round(metrics['recall'], 2), round(metrics['f1'], 2), round(metrics['roc_auc'], 2))\n(0.5, 0.5, 0.5, 0.5)",
+          "Aggregates results from multiple experimental runs into summary rows for CSV output.\n\nCalculates mean and standard deviation for each metric across the provided runs.\nThe result is a list of dictionaries, one per unique method and metric combination,\ncontaining 'method', 'metric', 'value' (mean) and 'std_dev' (standard deviation).\n\nParameters\n----------\nruns_data : List[Dict[str, Dict[str, float]]]\n    List of results from individual runs.\n\nReturns\n-------\nList[Dict[str, str | float]]\n    Aggregated summary rows.\n\nExamples\n--------\n>>> runs = [{'m1': {'acc': 0.9}, 'm2': {'acc': 0.8}}, {'m1': {'acc': 0.95}, 'm2': {'acc': 0.85}}]\n>>> res = aggregate_results(runs)\n>>> {r['method']: r['value'] for r in res if r['metric']=='acc'}\n{'m1': 0.925, 'm2': 0.825}"
+        ]
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:src/experiment.py": {
+    "I:experiment.py": {
       "type": "I",
       "members": {
-        "src/experiment.py": "P"
+        "experiment.py": "P"
       },
       "spec": {
-        "import": "src.experiment",
+        "import": "experiment",
         "symbols": {
-          "N_CHANNELS": {
-            "kind": "const",
-            "type": "int"
-          },
-          "SIGNAL_LENGTH": {
-            "kind": "const",
-            "type": "int"
-          },
-          "N_ANOMALIES": {
-            "kind": "const",
-            "type": "int"
-          },
-          "REPEATS": {
-            "kind": "const",
-            "type": "int"
-          },
-          "SEEDS": {
-            "kind": "const",
-            "type": "list[int]"
-          },
           "run_experiment": {
             "kind": "func",
             "params": [],
@@ -540,31 +603,40 @@
           }
         },
         "uses": {
-          "src/data_generator.py": [],
-          "src/ensemble_detector.py": [],
-          "src/baseline_zscore.py": [],
-          "src/plotting.py": []
+          "evaluation.py": [
+            "N_RUNS",
+            "aggregate_results",
+            "compute_metrics"
+          ],
+          "baselines.py": [
+            "ZScoreDetector"
+          ],
+          "rs_ensemble.py": [
+            "RSADetector"
+          ],
+          "data_generation.py": [
+            "generate_dataset"
+          ]
         },
         "packages": [
           "numpy",
           "pandas",
-          "sklearn"
+          "typing"
         ],
         "behaviour": []
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:src/plotting.py": {
+    "I:figures.py": {
       "type": "I",
       "members": {
-        "src/plotting.py": "P",
-        "src/experiment.py": "C"
+        "figures.py": "P"
       },
       "spec": {
-        "import": "src.plotting",
+        "import": "figures",
         "symbols": {
-          "plots": {
+          "plot_results": {
             "kind": "func",
             "params": [],
             "required": []
@@ -573,9 +645,15 @@
         "uses": {},
         "packages": [
           "matplotlib",
-          "pandas"
+          "numpy",
+          "os",
+          "pandas",
+          "seaborn",
+          "typing"
         ],
-        "behaviour": []
+        "behaviour": [
+          "Reads results.csv and generates comparison plots for the thesis.\n\n>>> _ = plot_results()"
+        ]
       },
       "fingerprint": null,
       "observed": []
@@ -583,22 +661,23 @@
     "R:run": {
       "type": "R",
       "members": {
-        "src/experiment.py": "P",
+        "experiment.py": "P",
         "results.csv": "O",
-        "src/plotting.py": "C",
-        "src/baseline_zscore.py": "C",
-        "src/data_generator.py": "C",
-        "src/ensemble_detector.py": "C"
+        "figures.py": "C",
+        "baselines.py": "C",
+        "data_generation.py": "C",
+        "evaluation.py": "C",
+        "rs_ensemble.py": "C"
       },
       "spec": {
-        "entry": "src/experiment.py:run_experiment",
+        "entry": "experiment.py:run_experiment",
         "metrics": [
-          "F1",
-          "Precision",
-          "Recall",
-          "AUC-ROC"
+          "precision",
+          "recall",
+          "f1",
+          "roc_auc"
         ],
-        "plots": "src/plotting.py:plots"
+        "plots": "figures.py:plot_results"
       },
       "fingerprint": null,
       "observed": []
@@ -610,8 +689,8 @@
         "references.bib": "C"
       },
       "spec": {
-        "title": "Rozdział 1: Wstęp",
-        "focus": "Motywacja problemu, cel pracy, teza i struktura dokumentu.",
+        "title": "Wprowadzenie",
+        "focus": "Motywacja problemu detekcji anomalii w telemetrii fizjologicznej, specyfika danych (szum, artefakty) oraz cel pracy.",
         "uses_results": false
       },
       "fingerprint": null,
@@ -621,39 +700,44 @@
       "type": "N",
       "members": {
         "thesis.md#ch2": "X",
-        "references.bib": "C"
+        "references.bib": "C",
+        "baselines.py": "C",
+        "rs_ensemble.py": "C",
+        "experiment.py": "C",
+        "data_generation.py": "C",
+        "evaluation.py": "C"
       },
       "spec": {
-        "title": "Rozdział 2: Teoretyczne podstawy detekcji anomalii",
-        "focus": "Przegląd metod opartych na odległościach, podprzestrzeniach oraz specyfika danych fizjologicznych.",
+        "title": "Przegląd metod detekcji anomalii",
+        "focus": "Omówienie statycznych metod jednowymiarowych (np. Z-score) oraz zaawansowanych podejść ensemblingowych i opartych na podprzestrzeniach.",
         "uses_results": false
       },
       "fingerprint": null,
-      "observed": []
+      "observed": [
+        "baselines.py",
+        "data_generation.py",
+        "evaluation.py",
+        "experiment.py",
+        "rs_ensemble.py"
+      ]
     },
     "N:thesis.md#ch3": {
       "type": "N",
       "members": {
         "thesis.md#ch3": "X",
         "references.bib": "C",
-        "src/plotting.py": "C",
-        "src/baseline_zscore.py": "C",
-        "src/ensemble_detector.py": "C",
-        "src/data_generator.py": "C",
-        "src/experiment.py": "C"
+        "rs_ensemble.py": "C",
+        "baselines.py": "C"
       },
       "spec": {
-        "title": "Rozdział 3: Proponowana metoda i rozwiązanie bazowe",
-        "focus": "Opis matematyczny komitetu losowych podprzestrzeni oraz implementacja detektora Z-score.",
+        "title": "Propozycja algorytmu komitetowego",
+        "focus": "Szczegółowy opis teoretyczny i implementacyjny detektora losowych podprzestrzeni (Random Subspace Ensemble) dostosowanego do danych wielokanałowych.",
         "uses_results": false
       },
       "fingerprint": null,
       "observed": [
-        "src/baseline_zscore.py",
-        "src/data_generator.py",
-        "src/ensemble_detector.py",
-        "src/experiment.py",
-        "src/plotting.py"
+        "baselines.py",
+        "rs_ensemble.py"
       ]
     },
     "N:thesis.md#ch4": {
@@ -664,8 +748,8 @@
         "results.csv": "C"
       },
       "spec": {
-        "title": "Rozdział 4: Wyniki eksperymentów i ich analiza",
-        "focus": "Wizualizacja wyników na syntetycznych danych, porównanie metryk, analiza rozrzutu między ziareniami.",
+        "title": "Eksperymenty i wyniki",
+        "focus": "Opis generacji danych syntetycznych, ustalone parametry, przedstawienie wyników metrycznych z uwzględnieniem rozrzutu między powtórzeniami oraz analiza porównawcza z bazą.",
         "uses_results": true
       },
       "fingerprint": null,
@@ -679,23 +763,9 @@
         "results.csv": "C"
       },
       "spec": {
-        "title": "Rozdział 5: Wnioski",
-        "focus": "Podsumowanie osiągnięć, weryfikacja tezy oraz propozycje prac przyszłych.",
+        "title": "Wnioski",
+        "focus": "Podsumowanie sukcesu lub porażki tezy oraz kierunki przyszłych prac nad odpornością na szum w detekcji medycznej.",
         "uses_results": true
-      },
-      "fingerprint": null,
-      "observed": []
-    },
-    "N:thesis.md#ch6": {
-      "type": "N",
-      "members": {
-        "thesis.md#ch6": "X",
-        "references.bib": "C"
-      },
-      "spec": {
-        "title": "Rozdział 6: Przegląd literatury (SOTA)",
-        "focus": "Analiza najnowszych prac z zakresu ensemble learning w detekcji anomalii.",
-        "uses_results": false
       },
       "fingerprint": null,
       "observed": []
@@ -703,36 +773,40 @@
   },
   "order": [
     [
-      "I:src/baseline_zscore.py",
-      "I:src/experiment.py"
+      "I:baselines.py",
+      "I:experiment.py"
     ],
     [
-      "I:src/baseline_zscore.py",
+      "I:baselines.py",
       "R:run"
     ],
     [
-      "I:src/data_generator.py",
-      "I:src/experiment.py"
+      "I:data_generation.py",
+      "I:experiment.py"
     ],
     [
-      "I:src/data_generator.py",
+      "I:data_generation.py",
       "R:run"
     ],
     [
-      "I:src/ensemble_detector.py",
-      "I:src/experiment.py"
+      "I:evaluation.py",
+      "I:experiment.py"
     ],
     [
-      "I:src/ensemble_detector.py",
+      "I:evaluation.py",
       "R:run"
     ],
     [
-      "I:src/experiment.py",
+      "I:experiment.py",
       "R:run"
     ],
     [
-      "I:src/plotting.py",
-      "I:src/experiment.py"
+      "I:rs_ensemble.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:rs_ensemble.py",
+      "R:run"
     ],
     [
       "R:run",

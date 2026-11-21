@@ -184,10 +184,13 @@ def _discarded_returns(interfaces: dict[str, str]) -> list[Violation]:
                 name = func.attr if isinstance(func, ast.Attribute) else func.id if isinstance(func, ast.Name) else ""
                 declared = returns.get(name, [])
                 if declared and all(r and r != "None" for r in declared):
+                    # Where the example is: the same call may appear in several docstrings (2026-11-20, 01: the planner
+                    # fixed `env.step(4)` in step() while the bare one sat in get_legal_actions()).
+                    where = "the module docstring" if isinstance(node, ast.Module) else f"the docstring of {node.name}"
                     found.append(Violation(
                         "DOCTEST_DISCARDS_RETURN",
-                        f"`{ex.source.strip()}` returns {declared[0]}, so doctest prints it, but the example expects "
-                        "no output: write `_ = ...` or the expected value",
+                        f"`{ex.source.strip()}` in {where} returns {declared[0]}, so doctest prints it, but the example "
+                        "expects no output: write `_ = ...` or the expected value",
                         rel, rel,
                     ))
     return found
@@ -261,14 +264,14 @@ def code_violations(
     if plots_file:
         found += _declared_call(specs, str(plots), "PLOTS")
     if entry_file in specs:
-        if unused := _unused_by_entrypoint(specs, entry_file, plots_file):
-            found.append(Violation(
-                "ENTRYPOINT_DOES_NOT_USE",
-                f"{entry_file} never imports {', '.join(unused)} (directly or through other modules, at module top "
-                "level): the experiment must run the planned method and baseline through their modules, not "
-                "reimplement them",
-                entry_file, entry_file,
-            ))
+        # One finding per module: a patch that imports four of five is progress (2026-11-21, 02: one finding listing
+        # all five changed its text, counted as "1 fixed, 1 new", and the better patch was rejected).
+        found += [Violation(
+            "ENTRYPOINT_DOES_NOT_USE",
+            f"{entry_file} never imports {module} (directly or through other modules, at module top level): the "
+            "experiment must run the planned method and baseline through their modules, not reimplement them",
+            entry_file, entry_file,
+        ) for module in _unused_by_entrypoint(specs, entry_file, plots_file)]
     found += _discarded_returns(interfaces)
     if specs and not any(v.rule in ("INTERFACE_DOES_NOT_PARSE", "DUPLICATE_MODULE") for v in found):
         found += _stub_problems(specs, interfaces)

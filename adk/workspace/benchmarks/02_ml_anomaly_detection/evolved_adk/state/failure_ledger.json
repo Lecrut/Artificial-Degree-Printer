@@ -1,130 +1,125 @@
 {
   "failures": [
     {
-      "agent": "seed_tester",
-      "context": "{\"pattern\": {\"category\": \"pytest:AssertionError\", \"occurrences\": 2, \"tasks\": [\"T6\", \"T8\"], \"examples\": [\"Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\\n====================================================================================\", \"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_baseline_zscore.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n________________________________________________________________________________________________________________________________________ test_compute_scores_shape ________________________________________________________________________________________________________________________________________\\ntests\\\\test_baseline_zscore.py:12: in test_compute_scores_shape\\n    assert len(scores) == expected_shape[0], f'Shape mismatch: expected height {expected_shape[0]}, got {len(scores)}'\\nE   AssertionError: Shape mismatch: expected height 4, got 2\\nE   assert 2 == 4\\nE    +  where 2 = len((array([1., 1.]), array([0, 0])))\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_baseline_zscore.py::test_compute_scores_shape - AssertionError: Shape mismatch: expected height 4, got 2\\n1 failed in 0.11s\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 8, \"cycle_index\": 9, \"task_id\": \"T8\", \"target_node\": \"tests/test_baseline_zscore.py\", \"suggested_rule\": \"Task T8 on node tests/test_baseline_zscore.py (tests/test_baseline_zscore.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When validating code that processes arrays or structured data, always verify the structural type of the returned value (e.g., checking if it is a tuple, list, or numpy array) before asserting on its dimensions or length, because the actual runtime type may differ from the expected primitive collection."
-    },
-    {
       "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"behaviour\", \"occurrences\": 2, \"tasks\": [\"R1_7\", \"R2_1\"], \"examples\": [\"BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\\n- example `mask[0, 2:5].all()` expected `True`, got `np.True_`\", \"BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\\n- example `mask[0, 2:5].all()` expected `True`, got `np.False_`\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/data_generator.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\\n- example `mask.shape` expected `(2, 5)`, got `(10,)`\\n- example `mask[0, 2:5].all()` raised IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed in the example's own code (after an earlier example of the same docstring failed)\", \"Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_______________________________________________________________________________________________________________________________________ test_get_ground_truth_mask ________________________________________________________________________________________________________________________________________\\ntests\\\\test_data_generator.py:15: in test_get_ground_truth_mask\\n    assert len(mask) == (signal_length * n_channels,), f'Expected length {signal_length * n_channels}, got {len(mask)}'\\nE   AssertionError: Expected length 20, got 20\\nE   assert 20 == (20,)\\nE    +  where 20 = len(array([False, False,  True,  True,  True, False, False, False, False,\\\\n       False, False, False, False, False, False, False, False, False,\\\\n       False, False]))\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_data_generator.py::test_get_ground_truth_mask - AssertionError: Expected length 20, got 20\\n1 failed, 1 passed in 0.11s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 10, \"cycle_index\": 22, \"task_id\": \"R2_1\", \"target_node\": \"src/data_generator.py\", \"suggested_rule\": \"Task R2_1 on node src/data_generator.py (src/data_generator.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When implementing array manipulation logic involving indexing or shape validation, ensure that intermediate operations preserve dimensionality consistency by explicitly checking if axes are dropped (e.g., via `.flatten()` or `squeeze`) and restoring them if subsequent logic expects a specific rank, because mismatched dimensions cause index errors and assertion failures during verification."
+      "context": "{\"pattern\": {\"category\": \"behaviour\", \"occurrences\": 2, \"tasks\": [\"T7\", \"T9\"], \"examples\": [\"BEHAVIOUR_MISMATCH [baselines.py]: the implementation does not give the results the interface specifies:\\n- example `y.tolist()` expected `[0, 1]`, got `[1, 1]`\\n- example `round(scores[2], 4)` expected `10.0`, got `np.float64(nan)`\", \"BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\\n- RSADetector.fit: example `result = det.fit(X)` raised TypeError: object of type 'numpy.float64' has no len() in rs_ensemble.py > fit, line 76: `if len(self.train_score_mean_) == 1:`\\n- example `result is det` raised NameError: name 'result' is not defined in the example's own code (after an \"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"rs_ensemble.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\\n- RSADetector.fit: example `result = det.fit(X)` raised IndexError: index 1 is out of bounds for axis 0 with size 1 in rs_ensemble.py > fit, line 67: `if std_val[i] > 1e-08:`\\n- example `result is det` raised NameError: name 'result' is not defined in the example's own code (after an earlier example of the same docstring failed)\\n- RSADetector.fit: example `det.fit(X)` raised IndexError: index 1 is out of bounds for axis 0 with size 1 in rs_ensemble.py > fit, line 67: `if std_val[i] > 1e-08:`\\n- RSADetector.predict: example `y_pred = det.predict(X)` raised AttributeError: 'RSADetector' object has no attribute 'train_score_mean_' in rs_ensemble.py > predict, line 95: `threshold = self.train_score_mean_ + 3 * self.train_score_std_` (after an earlier example of the same docstring failed)\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 5, \"cycle_index\": 5, \"task_id\": \"T9\", \"target_node\": \"rs_ensemble.py\", \"suggested_rule\": \"Task T9 on node rs_ensemble.py (rs_ensemble.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When implementing a class where methods depend on internal state initialized in `__init__`, verify that all instance attributes accessed by other methods are guaranteed to be assigned during initialization or lazy-initialization, because accessing uninitialized attributes leads to runtime errors when method contracts are violated or order of execution varies."
     }
   ],
   "category_log": [
     {
       "cycle": 1,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T4"
+      "category": "behaviour",
+      "task_id": "T7"
     },
     {
       "cycle": 2,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "T6"
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T7"
     },
     {
       "cycle": 3,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "T6"
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T9"
     },
     {
       "cycle": 4,
-      "agent": "seed_tester",
-      "category": "pytest:IndexError",
-      "task_id": "T7"
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T9"
     },
     {
       "cycle": 5,
-      "agent": "seed_tester",
-      "category": "pytest:assert",
-      "task_id": "T7"
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T9"
     },
     {
       "cycle": 6,
-      "agent": "seed_tester",
-      "category": "pytest:assert",
-      "task_id": "T7"
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T11"
     },
     {
       "cycle": 7,
-      "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "T8"
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T11"
     },
     {
       "cycle": 8,
-      "agent": "seed_tester",
-      "category": "pytest:AttributeError",
-      "task_id": "T8"
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T13"
     },
     {
       "cycle": 9,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "T8"
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T13"
     },
     {
       "cycle": 10,
       "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T10"
+      "category": "behaviour",
+      "task_id": "R1_1"
     },
     {
       "cycle": 11,
       "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T10"
+      "category": "behaviour",
+      "task_id": "R1_1"
     },
     {
       "cycle": 12,
       "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T11"
+      "category": "behaviour",
+      "task_id": "R1_1"
     },
     {
       "cycle": 13,
-      "agent": "seed_tester",
-      "category": "harness",
+      "agent": "seed_coder",
+      "category": "behaviour",
       "task_id": "R1_2"
     },
     {
       "cycle": 14,
-      "agent": "seed_tester",
-      "category": "harness",
+      "agent": "seed_coder",
+      "category": "behaviour",
       "task_id": "R1_2"
     },
     {
       "cycle": 15,
       "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "R1_2"
+      "category": "pytest:AssertionError",
+      "task_id": "T12"
     },
     {
       "cycle": 16,
       "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R1_4"
+      "category": "pytest:assert",
+      "task_id": "T12"
     },
     {
       "cycle": 17,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "R1_7"
+      "category": "behaviour",
+      "task_id": "R1_3"
     },
     {
       "cycle": 18,
       "agent": "seed_coder",
       "category": "behaviour",
-      "task_id": "R1_7"
+      "task_id": "R1_3"
     },
     {
       "cycle": 19,
       "agent": "seed_coder",
       "category": "behaviour",
-      "task_id": "R1_7"
+      "task_id": "R1_3"
     },
     {
       "cycle": 20,
@@ -143,20 +138,62 @@
       "agent": "seed_coder",
       "category": "behaviour",
       "task_id": "R2_1"
+    },
+    {
+      "cycle": 23,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R2_2"
+    },
+    {
+      "cycle": 24,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R2_2"
+    },
+    {
+      "cycle": 25,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R3_2"
+    },
+    {
+      "cycle": 26,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R3_2"
+    },
+    {
+      "cycle": 27,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R4_1"
+    },
+    {
+      "cycle": 28,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R4_1"
+    },
+    {
+      "cycle": 29,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R5_1"
+    },
+    {
+      "cycle": 30,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R5_1"
     }
   ],
   "rules": [
     {
-      "agent": "seed_tester",
-      "rule": "When validating code that processes arrays or structured data, always verify the structural type of the returned value (e.g., checking if it is a tuple, list, or numpy array) before asserting on its dimensions or length, because the actual runtime type may differ from the expected primitive collection.",
-      "category": "pytest:AssertionError",
-      "cycle": 9
-    },
-    {
       "agent": "seed_coder",
-      "rule": "When implementing array manipulation logic involving indexing or shape validation, ensure that intermediate operations preserve dimensionality consistency by explicitly checking if axes are dropped (e.g., via `.flatten()` or `squeeze`) and restoring them if subsequent logic expects a specific rank, because mismatched dimensions cause index errors and assertion failures during verification.",
+      "rule": "When implementing a class where methods depend on internal state initialized in `__init__`, verify that all instance attributes accessed by other methods are guaranteed to be assigned during initialization or lazy-initialization, because accessing uninitialized attributes leads to runtime errors when method contracts are violated or order of execution varies.",
       "category": "behaviour",
-      "cycle": 22
+      "cycle": 5
     }
   ]
 }

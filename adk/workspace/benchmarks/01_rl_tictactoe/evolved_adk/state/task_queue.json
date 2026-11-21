@@ -1,86 +1,135 @@
 [
   {
     "task_id": "T1",
-    "description": "[Increment 1: Assumptions] Write Chapter 2 (Literature Review) in thesis.md. Cover Reinforcement Learning basics, Q-Learning algorithm derivation, and Tic-Tac-Toe as a game environment. Cite foundational RL texts and recent survey papers.",
-    "target_node": "thesis.md#ch2",
-    "assigned_agent": "seed_writer",
+    "description": "Literature review of the foundations of the topic and its bibliography (background stage)",
+    "target_node": "thesis.md",
+    "assigned_agent": "background_researcher",
     "status": "DONE",
     "repair_attempts": 0
   },
   {
     "task_id": "T2",
-    "description": "[Increment 1: Assumptions] Write Chapter 1 (Introduction) in thesis.md. Define the problem, thesis statement (Q-learning convergence to Nash equilibrium in zero-sum finite games against random opponents), and project scope.",
-    "target_node": "thesis.md#ch1",
-    "assigned_agent": "seed_writer",
+    "description": "Implement constants.py: Defines global constants for file paths, experiment hyperparameters (lr, gamma, epsilon, episodes), and seeds to ensure reproducibility.. Implement every name its interface declares: its constants.",
+    "target_node": "constants.py",
+    "assigned_agent": "seed_coder",
     "status": "DONE",
-    "repair_attempts": 0
-  },
-  {
-    "task_id": "T_CH3",
-    "description": "Chapter 3 (Rozdział 3: Metodyka Badań i Implementacja) in thesis.md",
-    "target_node": "thesis.md#ch3",
-    "assigned_agent": "seed_writer",
-    "status": "DONE",
-    "repair_attempts": 0
+    "repair_attempts": 1
   },
   {
     "task_id": "T3",
-    "description": "[Increment 2: Method] Implement the TicTacToeEnv class in src/game_env.py with reset, step, get_valid_moves, encode_state, and decode_state methods as defined in interfaces.",
-    "target_node": "src/game_env.py",
+    "description": "Implement environment.py: Implements the Tic-Tac-Toe game logic, state representation (numpy array), move validation, and win/draw detection.. Implement every name its interface declares: TicTacToeEnv, TicTacToeEnv.__init__, TicTacToeEnv.reset, TicTacToeEnv.step, TicTacToeEnv.get_legal_moves.",
+    "target_node": "environment.py",
     "assigned_agent": "seed_coder",
     "status": "FAILED",
     "repair_attempts": 3
   },
   {
     "task_id": "T4",
-    "description": "[Increment 2: Method] Implement the QAgent class in src/q_agent.py with init, get_action, learn_step, and update_epsilon methods as defined in interfaces.",
-    "target_node": "src/q_agent.py",
-    "assigned_agent": "seed_coder",
-    "status": "FAILED",
-    "repair_attempts": 3
+    "description": "Unit tests of TicTacToeEnv from environment.py in tests/test_environment.py, through the declared interface only.",
+    "target_node": "tests/test_environment.py",
+    "assigned_agent": "seed_tester",
+    "status": "DONE",
+    "repair_attempts": 0
   },
   {
     "task_id": "T5",
-    "description": "[Increment 2: Method] Implement the get_random_move function in src/random_opponent.py as defined in interfaces.",
-    "target_node": "src/random_opponent.py",
+    "description": "Implement agents.py: Implements the Q-Learning agent with tabular storage and epsilon-greedy strategy, and a Random Agent class for baseline comparisons.. Implement every name its interface declares: QLearningAgent, QLearningAgent.__init__, QLearningAgent.act, QLearningAgent.update, QLearningAgent.get_q_table, RandomAgent, RandomAgent.act.",
+    "target_node": "agents.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 2
+  },
+  {
+    "task_id": "T6",
+    "description": "Unit tests of QLearningAgent, RandomAgent from agents.py in tests/test_agents.py, through the declared interface only.",
+    "target_node": "tests/test_agents.py",
+    "assigned_agent": "seed_tester",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T7",
+    "description": "Implement figures.py: Reads train_log.csv and results.csv to generate learning curves and win-rate comparison charts in the figures directory.. Implement every name its interface declares: generate_figures.",
+    "target_node": "figures.py",
     "assigned_agent": "seed_coder",
     "status": "DONE",
     "repair_attempts": 0
   },
   {
-    "task_id": "T6",
-    "description": "[Increment 2: Method] Write unit tests for TicTacToeEnv in tests/test_game_env.py. Verify reset state, valid moves, win conditions (via step), draw conditions, and encode/decode consistency.",
-    "target_node": "tests/test_game_env.py",
-    "assigned_agent": "seed_tester",
-    "status": "WAITING"
-  },
-  {
-    "task_id": "T7",
-    "description": "[Increment 2: Method] Write unit tests for QAgent in tests/test_q_agent.py. Verify Q-table initialization shape, epsilon-greedy action selection against valid_moves, and learn_step updates with correct reward values.",
-    "target_node": "tests/test_q_agent.py",
-    "assigned_agent": "seed_tester",
-    "status": "WAITING"
-  },
-  {
     "task_id": "T8",
-    "description": "[Increment 3: Experiment] Implement the run_experiment function in src/experiment_runner.py. It must seed numpy, train Q-agent against random opponent for NUM_EPISODES_Q, evaluate win rates for both agents over NUM_EVALUATION_GAMES episodes, and write results.csv to the workspace root (os.getcwd()) with columns method, metric, value.",
-    "target_node": "src/experiment_runner.py",
-    "assigned_agent": "seed_coder",
-    "status": "WAITING"
-  },
-  {
-    "task_id": "T9",
-    "description": "[Increment 3: Experiment] Implement the plot_results function in src/plot_results.py. It reads results.csv from the workspace root, generates convergence plots and comparison charts, and saves them to the figures/ directory.",
-    "target_node": "src/plot_results.py",
+    "description": "Implement experiment.py: Runs training and evaluation episodes for both Q-Learning and Baseline agents, logging per-episode rewards to train_log.csv and final metrics to results.csv.. Implement every name its interface declares: run_experiment.",
+    "target_node": "experiment.py",
     "assigned_agent": "seed_coder",
     "status": "FAILED",
     "repair_attempts": 3
   },
   {
+    "task_id": "T9",
+    "description": "Chapter 1 (Wprowadzenie do uczenia ze wzmocnieniem) in thesis.md: Definicje Markov Decision Process, pojęcia state, action, reward i funkcji wartości.",
+    "target_node": "thesis.md#ch1",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
     "task_id": "T10",
-    "description": "[Increment 3: Text] Write Chapter 4 (Experimental Results) and Chapter 5 (Conclusions) in thesis.md. Analyze the convergence of Q-learning, compare win rates against random baseline, discuss limitations and future work.",
+    "description": "Chapter 2 (Metoda Q-Learning) in thesis.md: Równanie Bellmana, algorytm aktualizacji wag epsilon-greedy, konwergencja w MDP.",
+    "target_node": "thesis.md#ch2",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T11",
+    "description": "Chapter 3 (Modelowanie gry w kółko i krzyżyk) in thesis.md: Reprezentacja stanu planszy jako tensora NumPy, przestrzeń stanów i akcji, detekcja końca gry.",
+    "target_node": "thesis.md#ch3",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T12",
+    "description": "Chapter 4 (Konfiguracja eksperymentu) in thesis.md: Uzasadnienie hiperparametrów (lr, gamma, epsilon), budżetu treningu, liczby powtórzeń oraz wyboru agenta losowego jako baselina.",
     "target_node": "thesis.md",
     "assigned_agent": "seed_writer",
     "status": "WAITING"
+  },
+  {
+    "task_id": "T13",
+    "description": "Chapter 5 (Wyniki symulacji) in thesis.md: Wykresy uczenia się (krzywe zbieżności), analiza macierzy wygranych vs losowy przeciwnik, kryterium sukcesu.",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "T14",
+    "description": "Chapter 6 (Wnioski i dyskusja) in thesis.md: Ocena osiągniętej strategii, ograniczenia tabelarycznego podejścia w większych grach.",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "R1_1",
+    "description": "Implement environment.py with a corrected interface that fixes the logical contradictions in the previous doctests. The core change is to simplify `get_legal_moves` to return all empty cells regardless of the `player` argument (as the game state determines validity, not player identity), and ensure `step` correctly alternates turns. Specifically: 1) Remove the `player` argument check inside `get_legal_moves` which caused the doctest failure (`len(moves_after) == 8` expected True but got False because turn had switched). 2) Fix `step` to update `_turn` correctly after a move is played. 3) Correct `_is_terminal` logic: X (-1) wins if it has 3 in a row, O (0) wins if it has 3 in a row. Ensure `reset` sets `_turn = -1`. The code must pass the provided doctests which assume standard Tic-Tac-Toe rules.",
+    "target_node": "environment.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 1
+  },
+  {
+    "task_id": "R2_1",
+    "description": "Implement generate_figures() to plot learning curves from train_log.csv and compare results from results.csv into figures/. The previous attempt failed due to pandas index/column resolution errors when reading the CSVs generated by experiment.py. Specifically, experiment.py writes `results.csv` without an index (so columns are 'method', 'metric', 'value'), but the code tried to use column names as index or expected a MultiIndex that didn't exist. Also, train_log.csv is written with default integer index, not dates. Fix 1: Read train_log.csv with default index (integers) and plot episode vs reward directly. Fix 2: Pivot results.csv correctly by grouping by method and metric to compare Q-Learning vs Random_Baseline rates. Use `matplotlib.use('Agg')` and save to FIGURES_DIR.",
+    "target_node": "figures.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 1
+  },
+  {
+    "task_id": "R3_1",
+    "description": "Implement generate_figures() to plot learning curves from train_log.csv and compare results from results.csv into figures/. Previous attempts failed because they did not handle the specific column structures generated by experiment.py correctly or relied on missing imports (np). 1) Read train_log.csv. It has columns 'run', 'episode', 'reward'. Pivot or groupby to get mean reward per episode across runs, then plot episode vs mean reward using matplotlib. 2) Read results.csv. It has columns 'method', 'metric', 'value'. Filter for metrics 'win_rate_vs_random', 'draw_rate_vs_random', 'loss_rate_vs_random'. Plot a grouped bar chart comparing Q-Learning and Random_Baseline for these metrics. Ensure numpy is imported as np before use. Save to FIGURES_DIR.",
+    "target_node": "figures.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
   }
 ]

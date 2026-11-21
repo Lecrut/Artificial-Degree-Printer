@@ -119,7 +119,8 @@ Każda faza z liczbą pozycji i kolorem stanu (zielona: przeszła, czerwona: pad
 
 | Pozycja | Z jakich zdarzeń | Kropka | Rozwinięcie (`v-expansion-panels`) |
 |---|---|---|---|
-| Wersja planu | `PLAN_CHECKED` (+ `PLAN_REVIEWED`, `PLAN_PATCHED`) | `error` z blokadami, `success` bez | naruszenia kodu, uwagi krytyka, co łatka zmieniła / naprawiła / zepsuła |
+| Etap planu (od 2026-11-21, §XVI harnessu) | `PLAN_OUTLINE_CHECKED`/`_ACCEPTED`/`_REVISED` („Szkic planu”, „Rewizja szkicu”), `PLAN_MODULE_CHECKED`/`_ACCEPTED`/`_REOPENED`/`_NEEDS` („Interfejs <moduł>”), `PLAN_FUSED` („Plan złożony”) | `error` po próbie z uwagami, `success` po przyjęciu | próby z problemami kodu i blokadami krytyka, zastrzeżenia przyjęte ponad krytykiem, powody ponownego otwarcia, czego moduł potrzebował od zależności |
+| Wersja planu | `PLAN_CHECKED` (+ `PLAN_REVIEWED`, `PLAN_PATCHED` w przebiegach sprzed etapów) | `error` z blokadami, `success` bez | naruszenia kodu, uwagi krytyka (głównego od §XVI), co łatka zmieniła / naprawiła / zepsuła |
 | Hipergraf zbudowany | `H_BUILT` | `primary` | liczba wierzchołków, worków |
 | Nowy agent | `AGENT_CREATED` | `secondary` | specjalizacja |
 | **Zadanie** | `TASK_START` … `TASK_DONE` / `TASK_FAILED` / `TASK_DEFERRED`, wszystkie `VERDICT` pomiędzy | stan końcowy zadania | **zagnieżdżona mini-oś prób**: każda próba = werdykt (błędy, ostrzeżenia), model, agent; odrzucone odpowiedzi; zmiana planu (`SPEC_AMENDED`/`SPEC_KEPT`) |
@@ -130,7 +131,7 @@ Każda faza z liczbą pozycji i kolorem stanu (zielona: przeszła, czerwona: pad
 | Koniec | `RUN_END`, `RUN_STOPPED` | stan przebiegu | luki |
 
 Zasady:
-- Mapowanie zdarzeń → `TimelineEntry` to czysta funkcja `buildTimeline(events)` w `shared/utils/timeline/` (`builder.ts` stan przejścia, `plan.ts`, `tasks.ts`, `misc.ts` obsługa zdarzeń, `index.ts` złożenie i fazy). Zadanie grupuje swoje naprawy (`T5_FIX1` → `T5`), ale `Q3_FIX1` z przebudowanej kolejki zostaje osobnym zadaniem. Testy: `shared/utils/timeline/timeline.test.ts` (przypadki) i `tests/timeline.real.test.ts` (prawdziwy przebieg 01).
+- Mapowanie zdarzeń → `TimelineEntry` to czysta funkcja `buildTimeline(events)` w `shared/utils/timeline/` (`builder.ts` stan przejścia, `plan.ts`, `planStages.ts` (etapy planowania: wywołania autorów i krytyków etapów liczone do wpisu ich części), `tasks.ts`, `misc.ts` obsługa zdarzeń, `index.ts` złożenie i fazy). Zadanie grupuje swoje naprawy (`T5_FIX1` → `T5`), ale `Q3_FIX1` z przebudowanej kolejki zostaje osobnym zadaniem. Testy: `shared/utils/timeline/timeline.test.ts` (przypadki) i `tests/timeline.real.test.ts` (prawdziwy przebieg 01).
 - `LLM_CALL_*` nie są osobnymi pozycjami — zasilają liczniki i rozwinięcie zadania (który agent, ile razy, ile sekund).
 - Filtry (`v-chip-group`): typy pozycji, „tylko problemy”. Wyszukiwanie po pliku/wierzchołku.
 - Na żywo oś rośnie od dołu; ostatnia pozycja ma stan „trwa” i pokazuje bieżące wywołanie agenta.

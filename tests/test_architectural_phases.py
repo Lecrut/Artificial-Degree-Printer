@@ -76,48 +76,51 @@ def test_final_defense_gate_enforces_all_references_and_redteam(tmp_path: Path) 
     assert val_data["supervisors"]["symbolic_auditor"]["status"] == "FAIL"
 
 
+def _staged_agents(plan: dict[str, Any], captured: list[tuple[str, dict]] | None = None, outline_answers: list[Any] | None = None):
+    """call_agent answering `plan` stage by stage (§XVI); other agents get an empty answer."""
+    from adk.mocks.staged import staged_answer
+
+    def call(agent_md: Any, payload: dict[str, Any], **_kwargs: Any) -> dict[str, Any]:
+        agent = Path(str(agent_md)).stem
+        if captured is not None:
+            captured.append((agent, payload))
+        if agent == "plan_outline" and outline_answers:
+            return {"status": "ok", "output": outline_answers.pop(0)}
+        return {"status": "ok", "output": staged_answer(plan, agent, payload) or {}}
+
+    return call
+
+
 def test_lightweight_planning_payload_and_blueprint_persistence(tmp_path: Path) -> None:
-    """Verify Phase 1: plan_payload is lightweight and contains domain_context with suggested_sections."""
+    """Verify Phase 1: the outline author's payload is lightweight and contains domain_context."""
     orch = _setup_test_orchestrator(tmp_path)
+    captured: list[tuple[str, dict]] = []
+    plan = {
+        **SPEC,
+        "thesis_type": "inzynierska",
+        "academic_blueprint": {
+            "thesis_title": "Badanie RL",
+            "thesis_statement": "Q-learning osiąga zbieżność",
+            "metrics": ["win_rate"],
+            "planned_chapters": [
+                {"index": 1, "title": "Wstęp i Cel Pracy"},
+                {"index": 2, "title": "Przegląd Literatury"},
+                {"index": 3, "title": "Implementacja i Wyniki"},
+                {"index": 4, "title": "Wnioski"},
+            ],
+        },
+    }
 
-    captured_payloads: list[dict[str, Any]] = []
-
-    def mock_call_agent(_agent_md: Any, payload: dict[str, Any], **_kwargs: Any) -> dict[str, Any]:
-        captured_payloads.append(payload)
-        return {
-            "output": {
-                **SPEC,
-                "thesis_type": "inzynierska",
-                "academic_blueprint": {
-                    "thesis_title": "Badanie RL",
-                    "thesis_statement": "Q-learning osiąga zbieżność",
-                    "planned_chapters": [
-                        {"index": 1, "title": "Wstęp i Cel Pracy"},
-                        {"index": 2, "title": "Przegląd Literatury"},
-                        {"index": 3, "title": "Implementacja i Wyniki"},
-                        {"index": 4, "title": "Wnioski"},
-                    ],
-                },
-                "tasks": [
-                    {"task_id": "T1", "description": "Lit", "target_node": "thesis.md", "assigned_agent": "background_researcher", "status": "TODO"},
-                    {"task_id": "T2", "description": "Cfg", "target_node": "config.py", "assigned_agent": "seed_coder", "status": "TODO"},
-                    {"task_id": "T3", "description": "Core", "target_node": "core.py", "assigned_agent": "seed_coder", "status": "TODO"},
-                    {"task_id": "T4", "description": "Test", "target_node": "results.csv", "assigned_agent": "seed_tester", "status": "TODO"},
-                    {"task_id": "T5", "description": "Doc", "target_node": "thesis.md", "assigned_agent": "seed_writer", "status": "TODO"},
-                ],
-            }
-        }
-
-    with patch("adk.orchestrator.call_agent", side_effect=mock_call_agent):
+    with patch("adk.orchestrator.call_agent", side_effect=_staged_agents(plan, captured)):
         orch.run("01_rl_tictactoe", multi_cycle_waves=False)
 
-    planner_payload = captured_payloads[0]
+    planner_payload = next(p for a, p in captured if a == "plan_outline")
     assert "domain_context" in planner_payload
     assert "suggested_sections" not in planner_payload["domain_context"]  # nothing prescribed (§XIII F3)
     assert orch.blueprint_path.exists()
     saved_blueprint = json.loads(orch.blueprint_path.read_text(encoding="utf-8"))
     assert "table_of_contents" in saved_blueprint
-    # Dynamic 4 chapters planned by task_planner were stored in table_of_contents
+    # The 4 chapters of the outline are stored in table_of_contents
     chapters = saved_blueprint["table_of_contents"]["chapters"]
     assert len(chapters) == 4
     assert chapters[0]["title"] == "Wstęp i Cel Pracy"
@@ -125,7 +128,7 @@ def test_lightweight_planning_payload_and_blueprint_persistence(tmp_path: Path) 
 
 
 def test_dynamic_chapter_planning_adapts_to_custom_structure(tmp_path: Path) -> None:
-    """Verify that task_planner can define custom chapters (e.g. 5 chapters for paper) without hardcoding 6 chapters."""
+    """Verify that the outline can define custom chapters (e.g. 5 chapters for paper) without hardcoding 6 chapters."""
     orch = _setup_test_orchestrator(tmp_path)
 
     custom_chapters = [
@@ -135,27 +138,17 @@ def test_dynamic_chapter_planning_adapts_to_custom_structure(tmp_path: Path) -> 
         {"index": 4, "title": "Experiments", "focus": "Comparative benchmarks"},
         {"index": 5, "title": "Conclusion", "focus": "Future research directions"},
     ]
+    plan = {
+        **SPEC,
+        "thesis_type": "paper",
+        "academic_blueprint": {
+            "thesis_title": "Efficient Reinforcement Learning in Discrete State Spaces",
+            "metrics": ["win_rate"],
+            "planned_chapters": custom_chapters,
+        },
+    }
 
-    def mock_call_agent(_agent_md: Any, _payload: dict[str, Any], **_kwargs: Any) -> dict[str, Any]:
-        return {
-            "output": {
-                **SPEC,
-                "thesis_type": "paper",
-                "academic_blueprint": {
-                    "thesis_title": "Efficient Reinforcement Learning in Discrete State Spaces",
-                    "planned_chapters": custom_chapters,
-                },
-                "tasks": [
-                    {"task_id": "T1", "description": "Related work review", "target_node": "thesis.md", "assigned_agent": "discoverer_researcher", "status": "TODO"},
-                    {"task_id": "T2", "description": "Configuration AST", "target_node": "config.py", "assigned_agent": "seed_coder", "status": "TODO"},
-                    {"task_id": "T3", "description": "Core algorithm", "target_node": "core.py", "assigned_agent": "seed_coder", "status": "TODO"},
-                    {"task_id": "T4", "description": "Empirical benchmarks", "target_node": "results.csv", "assigned_agent": "seed_tester", "status": "TODO"},
-                    {"task_id": "T5", "description": "Paper drafting according to planned_chapters", "target_node": "thesis.md", "assigned_agent": "seed_writer", "status": "TODO"},
-                ],
-            }
-        }
-
-    with patch("adk.orchestrator.call_agent", side_effect=mock_call_agent):
+    with patch("adk.orchestrator.call_agent", side_effect=_staged_agents(plan)):
         orch.run("01_rl_tictactoe", multi_cycle_waves=False)
 
     saved_blueprint = json.loads(orch.blueprint_path.read_text(encoding="utf-8"))
@@ -170,63 +163,28 @@ def test_dynamic_chapter_planning_adapts_to_custom_structure(tmp_path: Path) -> 
         "Conclusion",
     ]
 
-def test_reflexive_prompt_evolution_recovers_empty_tasks(tmp_path: Path) -> None:
-    """Verify that when task_planner initially returns empty tasks, the reflexive re-prompting loop recovers valid tasks with feedback."""
+
+def test_an_unreadable_outline_goes_back_to_its_author_and_the_queue_is_derived(tmp_path: Path) -> None:
+    """An answer with no module list (token starvation) is returned to the outline author with the reason; the
+    task queue is derived from the accepted outline, never left empty (§XVI)."""
     orch = _setup_test_orchestrator(tmp_path)
+    captured: list[tuple[str, dict]] = []
+    plan = {**SPEC, "thesis_type": "inzynierska",
+            "academic_blueprint": {"thesis_title": "Badanie RL", "metrics": ["win_rate"], "planned_chapters": [{"index": 1, "title": "Wstęp"}]}}
+    starved = {"thesis_type": "inzynierska", "academic_blueprint": {"thesis_title": "Badanie RL"}}
 
-    call_count = 0
-    captured_payloads: list[dict[str, Any]] = []
-
-    def mock_call_agent(_agent_md: Any, payload: dict[str, Any], **_kwargs: Any) -> dict[str, Any]:
-        nonlocal call_count
-        call_count += 1
-        captured_payloads.append(payload)
-        if call_count == 1:
-            # First attempt: LLM returned empty tasks due to token starvation
-            return {
-                "status": "ok",
-                "output": {
-                    "thesis_type": "inzynierska",
-                    "tasks": [],
-                    "academic_blueprint": {
-                        "thesis_title": "Badanie RL",
-                        "planned_chapters": [{"index": 1, "title": "Wstęp"}],
-                    },
-                },
-            }
-        else:
-            # Second attempt (reflexive prompt evolution): returns recovered tasks
-            return {
-                "status": "ok",
-                "output": {
-                    **SPEC,
-                    "thesis_type": "inzynierska",
-                    "tasks": [
-                        {"task_id": "T1", "description": "Model", "target_node": "config.py", "assigned_agent": "seed_coder", "status": "TODO"},
-                        {"task_id": "T2", "description": "Core", "target_node": "core.py", "assigned_agent": "seed_coder", "status": "TODO"},
-                        {"task_id": "T3", "description": "Tests", "target_node": "results.csv", "assigned_agent": "seed_tester", "status": "TODO"},
-                    ],
-                    "academic_blueprint": {
-                        "thesis_title": "Badanie RL - Evolved",
-                        "planned_chapters": [{"index": 1, "title": "Wstęp"}],
-                    },
-                },
-            }
-
-    with patch("adk.orchestrator.call_agent", side_effect=mock_call_agent):
-        # Stopped at gate 1, right after planning: the queue is the recovered plan.
+    with patch("adk.orchestrator.call_agent", side_effect=_staged_agents(plan, captured, [starved])):
+        # Stopped at gate 1, right after planning: the queue is the derived plan.
         res = orch.run("01_rl_tictactoe", multi_cycle_waves=False, gate_approval_callback=lambda *_a: False)
 
     assert res["status"] == "HITL_PAUSED"
-    assert call_count >= 2
-    # Verify reflection feedback was included in the second call
-    assert "reflection_feedback" in captured_payloads[1]
-    assert "ERROR" in captured_payloads[1]["reflection_feedback"]
-
+    outlines = [p for a, p in captured if a == "plan_outline"]
+    assert len(outlines) == 2 and any("OUTLINE [modules]" in f for f in outlines[1]["feedback"])
     saved_queue = res["tasks"]
-    assert len(saved_queue) >= 3
+    assert [t["target_node"] for t in saved_queue if t["target_node"].endswith(".py")] == [
+        "config.py", "plot_results.py", "core.py", "tests/test_core.py"
+    ]
     assert saved_queue[0]["task_id"] == "T1"
-    assert saved_queue[1]["task_id"] == "T2"
 
 
 def test_elastic_task_count_preserves_custom_8_or_16_tasks_and_heals_missing_chapters(tmp_path: Path) -> None:

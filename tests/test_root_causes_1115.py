@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from adk.orchestration.plan_interfaces import _interface_gaps, _plan_interfaces
+from adk.orchestration.plan_interfaces import _plan_interfaces
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from adk.tools.verification.contract_check import stub_source
 
@@ -66,21 +66,6 @@ def test_plan_interfaces_accept_a_list_and_drop_tests_and_unparsable_code() -> N
         }
     )
     assert list(found) == ["src/env.py"]
-
-
-def test_interface_gaps_name_missing_modules_and_unknown_names_only() -> None:
-    """U1: tasks named TicTacToeEnv.get_state_hash, the contract had no such method."""
-    tasks = [
-        {"description": "Implementacja `TicTacToeEnv.step()` i get_state_hash() w src/env.py", "target_node": "src/env.py"},
-        {"description": "Agent Q-Learning w src/agent.py, np.argmax(q) i `config.py`", "target_node": "src/agent.py"},
-        {"description": "Testy TicTacToeEnv.step() w tests/test_env.py", "target_node": "tests/test_env.py"},
-    ]
-    gaps = _interface_gaps(tasks, {"src/env.py": ENV_INTERFACE})
-    assert any("src/agent.py" in g for g in gaps)
-    names = next(g for g in gaps if "names" in g)
-    assert "get_state_hash" in names
-    assert "argmax" not in names and "step" not in names and "py" not in names.split(": ")[1]
-    assert _interface_gaps([{"description": "Rozdział 1", "target_node": "thesis.md"}], {}) == []
 
 
 def test_a_new_test_file_sees_the_signatures_of_every_code_module(tmp_path: Path) -> None:

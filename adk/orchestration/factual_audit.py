@@ -14,10 +14,8 @@ from adk.tools.verification import (
     compile_symbolic_references,
     run_isolated_tests,
 )
-from adk.orchestration.common import (
-    _collect_report_issues,
-    _fit_items,
-)
+from adk.orchestration.common import _fit_items
+from adk.orchestration.failure_kinds import _collect_report_issues
 
 
 def thesis_missing_chapters(thesis_text: str, expected: dict[int, str]) -> list[int]:

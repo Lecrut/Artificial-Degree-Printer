@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from adk.orchestration.common import MaterializationError, _issue_category
+from adk.orchestration.common import MaterializationError
+from adk.orchestration.failure_kinds import _issue_category
 from adk.orchestrator import NeuroSymbolicOrchestrator
 
 

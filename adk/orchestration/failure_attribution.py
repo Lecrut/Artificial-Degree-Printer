@@ -41,6 +41,21 @@ def _pytest_culprits(issue: str) -> list[tuple[str, bool]]:
     return found
 
 
+_PY_FRAME = re.compile(r'File "([^"]+?\.py)", line \d+')
+
+
+def _traceback_culprit(text: str, workspace: Path) -> str | None:
+    """The deepest workspace file in a Python traceback (a run of the experiment or of the plots function).
+    2026-11-20: `plots.py` raised, the error was charged to the entrypoint and three repairs rewrote a correct file."""
+    root = workspace.resolve()
+    for raw in reversed(_PY_FRAME.findall(text)):
+        try:
+            return Path(raw).resolve().relative_to(root).as_posix()
+        except (ValueError, OSError):
+            continue
+    return None
+
+
 def _suspect_test(h: Any, module: str, test_file: str) -> bool:
     """A failed assertion seen only in the test frame blames the unverified one of the pair (§XIV Q2): the module
     already satisfies every example of its specification (`verified`) and the test is new → the test. 2026-11-19:

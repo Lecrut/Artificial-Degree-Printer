@@ -165,6 +165,9 @@ def test_orchestrator_wave1_and_wave2_loops(tmp_path: Path):
     assert [c["w4_action"] for c in res_w1["architecture_cycles"]] == ["FAST_FIX"]
     assert all(t["status"] == "DONE" for t in res_w1["tasks"])
 
+    # A second project in its own workspace: on the first one's workspace its modules exist and are kept (§XVI).
+    adk_dir = _clone_adk_env(tmp_path / "second")
+    history_path = adk_dir / "state" / "evolution_history.json"
     seen = len(json.loads(history_path.read_text(encoding="utf-8"))["events"])
     install_simulated_agents(flaws={"coder_leaves_stub"})
     orch_w2 = NeuroSymbolicOrchestrator(adk_root=adk_dir, enable_layer4=True, provider="mock")
@@ -193,17 +196,17 @@ def test_three_main_scenarios_and_logging(tmp_path: Path):
     assert r1["mode"]["include_docs"] is False
     assert len(r1["tasks"]) == 4  # config, core, its tests and the figures (§XIII.8)
 
-    r2 = run_scenario("2", provider="mock", adk_root=adk_dir)
+    r2 = run_scenario("2", provider="mock", adk_root=_clone_adk_env(tmp_path / "s2"))  # own workspace (§XVI)
     assert r2["status"] == "COMPLETED"
     assert r2["mode"]["enable_layer4"] is True
     assert r2["mode"]["include_docs"] is False
     assert len(r2["tasks"]) == 4
 
-    r3 = run_scenario("3", provider="mock", adk_root=adk_dir)
+    r3 = run_scenario("3", provider="mock", adk_root=_clone_adk_env(tmp_path / "s3"))
     assert r3["status"] == "COMPLETED"
     assert r3["mode"]["enable_layer4"] is True
     assert r3["mode"]["include_docs"] is True
-    assert len(r3["tasks"]) == 5  # + the thesis
+    assert len(r3["tasks"]) == 10  # + the literature review and one task per planned chapter (5)
     assert Path(r3["log_files"]["process_log"]).exists()
     assert Path(r3["log_files"]["agent_trace_jsonl"]).exists()
 

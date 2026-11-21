@@ -212,10 +212,12 @@ _QUERY_STOPWORDS = {
 
 
 def arxiv_keywords(topic: str, limit: int = 5) -> list[str]:
-    """Search terms from a task prompt: the research question if there is one, without format tags and stopwords."""
+    """Search terms from a task prompt: the English title of a thesis topic card, else the research question if
+    there is one, without format tags and stopwords."""
     text = re.sub(r"\[DOCUMENT FORMAT:[^\]]*\]", " ", str(topic or ""))
+    english_title = re.search(r"Temat pracy w języku angielskim\s*\n\s*(.+)", text)
     question = re.search(r"Research question[^:]*:\s*(.+?)(?:\?|$)", text, re.DOTALL)
-    focus = question.group(1) if question else text
+    focus = english_title.group(1) if english_title else question.group(1) if question else text
     words: list[str] = []
     for word in re.findall(r"[A-Za-z][A-Za-z\-]{3,}", focus):
         low = word.lower().strip("-")

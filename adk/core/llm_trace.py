@@ -224,7 +224,9 @@ def summarize_agent_decision(output: Any) -> str:
     if isinstance(issues, list) and issues:
         more = f" (+{len(issues) - 2})" if len(issues) > 2 else ""
         parts.append("uwagi: " + "; ".join(_issue_text(i)[:120] for i in issues[:2]) + more)
-    for key, label in (("tasks", "zadania"), ("files", "pliki"), ("ast_edits", "edycje"), ("interfaces", "interfejsy")):
+    if isinstance(output.get("source"), str) and output["source"].strip():
+        parts.append(f"interfejs: {len(output['source'].splitlines())} linii")
+    for key, label in (("tasks", "zadania"), ("files", "pliki"), ("ast_edits", "edycje"), ("interfaces", "interfejsy"), ("modules", "moduły")):
         value = output.get(key)
         if isinstance(value, (list, dict)) and value:
             parts.append(f"{label}: {len(value)}")

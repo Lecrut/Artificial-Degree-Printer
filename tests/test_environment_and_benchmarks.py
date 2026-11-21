@@ -13,7 +13,7 @@ from adk.benchmarks import BENCHMARK_TASKS, get_benchmark_task, run_benchmark_su
 from adk.core.connection import LLMConnectionManager
 from adk.mocks import install_simulated_agents
 from adk.mocks.scenarios import SCENARIOS
-from adk.tools.building.thesis_publisher import publish_workspace_thesis_bundle
+from adk.tools.building.output_bundle import publish_workspace_thesis_bundle
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -23,6 +23,8 @@ PACKAGE_IMPORT_MAP = {
     "pillow": ["PIL", "PIL.Image"],
     "pytest": ["pytest"],
     "ruff": [],
+    "scikit-learn": ["sklearn"],
+    "statsmodels": ["statsmodels.api"],
 }
 
 
@@ -133,7 +135,6 @@ def test_benchmark_tasks_specifications_and_syntax():
     assert "config.py" in t3.initial_workspace_files
     assert "Dijkstra" in t3.initial_workspace_files["core.py"]
 
-    assert len(SCENARIOS["04_federated_learning"].custom_tasks) == 10
     for task_id in BENCHMARK_TASKS:
         sc = SCENARIOS[task_id]
         ast.parse(sc.core_code, filename=f"{task_id}_core.py")
@@ -206,12 +207,20 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
     def of(kind: str) -> list[dict]:
         return [e for e in events if e["event"] == kind]
 
-    # planner_unrunnable_plan + critic_blocks_once: the plan is rejected, then blocked once, then accepted.
-    assert len(of("PLAN_CHECKED")) >= 2 and len(of("PLAN_REVIEWED")) >= 2
-    # ... each time by a patch of the plan the planner was shown, which the harness applied.
-    assert [(e["accepted"], e["changed"]) for e in of("PLAN_PATCHED")] == [
-        (True, ["-metrics_helpers.py"]), (True, ["academic_blueprint.thesis_statement"])
-    ]
+    # planner_unrunnable_plan: the first outline's unused module goes back to the outline author (stage 1, §XVI).
+    checked = of("PLAN_OUTLINE_CHECKED")
+    assert "metrics_helpers.py" in checked[0]["modules"] and any("[metrics_helpers.py]" in p for p in checked[0]["problems"])
+    assert "metrics_helpers.py" not in checked[1]["modules"]
+    # critic_blocks_once: the main critic's finding on the outline revises the outline only; no module is redesigned.
+    assert [e["blockers"]["critic"] != [] for e in of("PLAN_CHECKED")] == [True, False]
+    assert of("PLAN_OUTLINE_REVISED")[0]["changed"] == []
+    assert sorted(e["module"] for e in of("PLAN_MODULE_ACCEPTED")) == ["config.py", "core.py", "plot_results.py"]
+    # module_misses_promise: the entrypoint's module is corrected alone, by its own check (stage 2).
+    core = [e for e in of("PLAN_MODULE_CHECKED") if e["module"] == "core.py"]
+    assert [bool(e["problems"]) for e in core][:2] == [True, False] and "train_and_evaluate" in " ".join(core[0]["problems"])
+    # module_critic_blocks_once: the first module's critic blocks, its second attempt is accepted over the objection.
+    first = next(e for e in of("PLAN_MODULE_ACCEPTED") if e["attempts"] == 2 and e["over_critic"])
+    assert first["module"] == "config.py"
     # coder_breaks_signature + tester_uses_undeclared_name: both answers are refused before they reach the disk.
     assert len(of("SPEC_WRITE_REJECTED")) == 2
     # coder_adds_helper: the helper file is an extension recorded in H.
@@ -234,8 +243,8 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
     assert Path(t_res["artifacts"]["pdf_path"]).exists()
 
 
-def test_benchmark_task_4_federated_runs_10_tasks(tmp_path: Path):
-    """Verify task 4 (04_federated_learning) runs all 10 custom tasks in isolated tmp and generates valid thesis bundle."""
+def test_benchmark_task_4_federated_runs_in_isolated_tmp(tmp_path: Path):
+    """Verify task 4 (04_federated_learning) runs its derived queue in isolated tmp and generates valid thesis bundle."""
     out_dir = tmp_path / "bench_out4"
     res = run_benchmark_suite(task_keys=["4"], provider="mock", output_root=out_dir, simulate_agents=install_simulated_agents)
     assert res["status"] == "COMPLETED"

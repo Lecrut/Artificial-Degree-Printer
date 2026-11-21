@@ -242,7 +242,7 @@ class LLMConnectionManager:
         self,
         model_name: str,
         combined_prompt: str,
-        timeout: int = 300,
+        timeout: int = int(os.environ.get("HARNESS_LLM_WALL_CLOCK_LIMIT_S", "600")),
         system_prompt: str | None = None,
         user_prompt: str | None = None,
         model_tier: str | None = None,

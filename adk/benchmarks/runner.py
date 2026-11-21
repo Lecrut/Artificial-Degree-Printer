@@ -25,7 +25,7 @@ from adk.tools.building.template_manager import (  # noqa: E402
     parse_template_flag,
     prompt_user_for_template,
 )
-from adk.tools.building.thesis_publisher import publish_workspace_thesis_bundle  # noqa: E402
+from adk.tools.building.output_bundle import publish_workspace_thesis_bundle  # noqa: E402
 
 matplotlib.use("Agg")
 
@@ -417,8 +417,8 @@ def run_benchmark_suite(
                     "artifact_metrics": {
                         "py_lines": sum(
                             len(p.read_text(encoding="utf-8", errors="ignore").splitlines())
-                            for p in sandbox_ws.glob("*.py")
-                            if "__pycache__" not in p.parts
+                            for p in sandbox_ws.rglob("*.py")
+                            if not {"__pycache__", "logs"} & set(p.relative_to(sandbox_ws).parts)
                         ),
                         "csv_rows": max(
                             0,

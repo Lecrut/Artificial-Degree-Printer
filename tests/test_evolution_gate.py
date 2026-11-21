@@ -4,7 +4,7 @@ budget, and a rule that did not lower its failure category is dropped (§IV.6.3 
 from __future__ import annotations
 
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.common import _issue_category
+from adk.orchestration.failure_kinds import _issue_category
 from adk.tools.evolution.agent_mutator import _effective_rules, _fit_invariants, rule_rejection_reason
 
 GOOD = (

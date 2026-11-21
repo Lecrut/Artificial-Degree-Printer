@@ -13,12 +13,18 @@ export interface Builder {
   plans: number
   pendingReview: RunEvent | null
   graphBuilt: boolean
+  /** Planning in stages: the entry of each part (`outline`, `module:<file>`) and the stage calls not yet assigned. */
+  stages: Map<string, TimelineEntry>
+  stageLlm: TimelineEntry['llm']
 }
 
 export type Handler = (b: Builder, e: RunEvent) => void
 
 export function newBuilder(): Builder {
-  return { entries: [], tasks: new Map(), openTask: null, lastPlan: null, planner: null, check: null, plans: 0, pendingReview: null, graphBuilt: false }
+  return {
+    entries: [], tasks: new Map(), openTask: null, lastPlan: null, planner: null, check: null, plans: 0, pendingReview: null, graphBuilt: false,
+    stages: new Map(), stageLlm: { calls: 0, seconds: 0, agents: [] },
+  }
 }
 
 interface NewEntry {

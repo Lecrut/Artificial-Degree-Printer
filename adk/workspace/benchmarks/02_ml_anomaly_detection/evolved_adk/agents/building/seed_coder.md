@@ -73,4 +73,4 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.
-- **RULE**: When implementing array manipulation logic involving indexing or shape validation, ensure that intermediate operations preserve dimensionality consistency by explicitly checking if axes are dropped (e.g., via `.flatten()` or `squeeze`) and restoring them if subsequent logic expects a specific rank, because mismatched dimensions cause index errors and assertion failures during verification.
+- **RULE**: When implementing a class where methods depend on internal state initialized in `__init__`, verify that all instance attributes accessed by other methods are guaranteed to be assigned during initialization or lazy-initialization, because accessing uninitialized attributes leads to runtime errors when method contracts are violated or order of execution varies.

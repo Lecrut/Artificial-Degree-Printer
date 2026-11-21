@@ -1,6 +1,7 @@
 # ==============================================================================
 # Artificial-Degree-Printer (Neuro-Symbolic ADK) - Dependencies
 # Install via: .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+# torch (CPU build): .\.venv\Scripts\python.exe -m pip install torch --index-url https://download.pytorch.org/whl/cpu
 # ==============================================================================
 
 matplotlib>=3.9.0
@@ -9,3 +10,13 @@ pillow>=10.0.0
 pytest>=8.0.0
 ruff>=0.6.0
 
+# The environment generated projects may use (adk/orchestration/common._CANONICAL_PACKAGES); fixed for a run (D1)
+pandas>=3.0.0
+scipy>=1.14.0
+scikit-learn>=1.5.0
+seaborn>=0.13.0
+networkx>=3.3
+torch>=2.6.0
+gymnasium>=1.0.0
+statsmodels>=0.14.0
+sympy>=1.13.0

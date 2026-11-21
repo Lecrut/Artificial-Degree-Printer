@@ -19,6 +19,7 @@ from adk.tools.building import (
     edit_document_section,
 )
 from adk.tools.building.ast_editor import declared_names, split_existing_symbols, whole_module_loss
+from adk.tools.building.doc_editor import split_section_title
 from adk.orchestration.common import (
     _normalized_files,
     _agent_for_path,
@@ -359,8 +360,8 @@ class WriteGateMixin:
             # literature review (researchers); the discoverer extends the background section instead of replacing it
             lit_section = llm_output.get("literature_review_section")
             if isinstance(lit_section, str) and lit_section.strip():
-                sec_title = str(llm_output.get("section_title") or "Analiza Stanu Wiedzy (SOTA)")
-                body = lit_section
+                sec_title, body = split_section_title(str(llm_output.get("section_title") or "Analiza Stanu Wiedzy (SOTA)"), lit_section)
+                lit_section = body = self._known_citations_only(body)
                 if str(llm_output.get("research_stage") or "").strip().lower() == "discoverer" and doc_target.exists():
                     m_sec = re.search(
                         rf"^##+\s+{re.escape(sec_title)}\s*$(.*?)(?=^##\s+|\Z)",
@@ -383,6 +384,8 @@ class WriteGateMixin:
                     title = sec.get("section_title") or sec.get("title")
                     body = sec.get("section_content") or sec.get("content")
                     if title and isinstance(body, str) and body.strip():
+                        title, body = split_section_title(str(title), body)
+                        body = self._known_citations_only(body)
                         _remember(doc_target)
                         edit_document_section(doc_target, str(title), body)
                         materialized_any = True

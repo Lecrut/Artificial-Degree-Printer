@@ -1,139 +1,28 @@
-"""The plan as specification: validate the code part of the plan before any code exists, then build H and write
-the stubs of σ (Audit VI §VII.12.6, A3). Replaces the single interface retry and the SKELETON task."""
+"""The plan as specification: the critics' verdicts read the same way at every stage, the plan rejected when it
+cannot be built, and H with the stubs of σ built from the accepted plan (Audit VI §VII.12.6, A3). The stages that
+produce the plan are in `plan_stages` (§XVI)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
-from adk.core.models import read_json_state
-from adk.hypergraph import Hypergraph, build_from_plan, code_violations, save
+from adk.hypergraph import Hypergraph, build_from_plan, save
+from adk.hypergraph.oracles import is_stub
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.plan_interfaces import _interface_gaps, _plan_interfaces
+from adk.orchestration.plan_existing import _entrypoint
 from adk.tools.verification.contract_check import stub_source
 
-CODE_PATCH_BUDGET = 4
-CRITIC_PATCH_BUDGET = 4
-MAX_PLANNER_PATCHES = 6
-NO_PROGRESS_LIMIT = 2
 
-
-def _entrypoint(plan_out: dict[str, Any]) -> str:
-    blueprint = plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {}
-    return str(blueprint.get("entrypoint") or plan_out.get("entrypoint") or "").strip()
-
-
-def _plots(plan_out: dict[str, Any]) -> str:
-    blueprint = plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {}
-    return str(blueprint.get("plots") or plan_out.get("plots") or "").strip()
-
-
-def _has_chapters(plan_out: dict[str, Any]) -> bool:
-    blueprint = plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {}
-    return bool(blueprint.get("planned_chapters") or plan_out.get("planned_chapters"))
-
-
-def _static_blockers(
-    plan_out: dict[str, Any], interfaces: dict[str, str], need_chapters: bool = False
-) -> tuple[list[str], list[str]]:
-    """(blocker_code, blocker_instruction): code/stub errors and task-vs-interface mismatches, each once.
-    `need_chapters`: the run writes a thesis, so the plan must declare its chapters (no fallback, §XIII F4)."""
-    blocker_code = (
-        [str(v) for v in code_violations(interfaces, _entrypoint(plan_out), _plots(plan_out))[1]]
-        if interfaces
-        else [texts.PLAN_WITHOUT_INTERFACES]
-    )
-    if not plan_out.get("tasks"):
-        blocker_code.append(texts.PLAN_WITHOUT_TASKS)
-    if interfaces and not _plots(plan_out):
-        blocker_code.append(texts.PLAN_WITHOUT_PLOTS)  # products are fixed: results.csv and figures (§XIII.8)
-    if need_chapters and not _has_chapters(plan_out):
-        blocker_code.append(texts.PLAN_WITHOUT_CHAPTERS)
-    blocker_instruction = _interface_gaps(plan_out.get("tasks") or [], interfaces)
-    return list(dict.fromkeys(blocker_code)), list(dict.fromkeys(blocker_instruction))
-
-
-def _plan_view(plan_out: dict[str, Any], interfaces: dict[str, str]) -> dict[str, Any]:
-    """The plan as the planner corrects it."""
-    blueprint = plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {}
-    return {
-        "tasks": plan_out.get("tasks") or [],
-        "interfaces": interfaces,
-        "entrypoint": _entrypoint(plan_out),
-        "academic_blueprint": {k: v for k, v in blueprint.items() if k not in ("literature_recon", "interfaces")},
-        "missing_agent_specialization": plan_out.get("missing_agent_specialization"),
-    }
-
-
-def _apply_patch(
-    plan_out: dict[str, Any], interfaces: dict[str, str], patch: dict[str, Any]
-) -> tuple[dict[str, Any], list[str]]:
-    """(the plan with the patch applied, what the patch changed). A patch carries only what changes: `interfaces`
-    (full source of each changed or new module), `remove_interfaces`, `entrypoint`, `academic_blueprint` fields,
-    `tasks` (the whole list), `missing_agent_specialization`. Everything else stays as it was."""
-    changed: list[str] = []
-    merged = dict(interfaces)
-    for rel, source in _plan_interfaces(patch).items():
-        if merged.get(rel) != source:
-            merged[rel] = source
-            changed.append(rel)
-    for raw in patch.get("remove_interfaces") or []:
-        rel = str(raw).replace("\\", "/").removeprefix("./")
-        if merged.pop(rel, None) is not None:
-            changed.append(f"-{rel}")
-    blueprint = dict(plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {})
-    blueprint.pop("interfaces", None)
-    patch_blueprint = patch.get("academic_blueprint") if isinstance(patch.get("academic_blueprint"), dict) else {}
-    for key, value in patch_blueprint.items():
-        if key not in ("interfaces", "entrypoint") and blueprint.get(key) != value:
-            blueprint[key] = value
-            changed.append(f"academic_blueprint.{key}")
-    entry = _entrypoint(plan_out)
-    new_entry = str(patch.get("entrypoint") or patch_blueprint.get("entrypoint") or "").strip()
-    if new_entry and new_entry != entry:
-        entry = new_entry
-        changed.append("entrypoint")
-    blueprint["entrypoint"] = entry
-    tasks = list(plan_out.get("tasks") or [])
-    raw_tasks = patch.get("tasks")
-    if isinstance(raw_tasks, dict) and raw_tasks:
-        by_id = {str(t.get("task_id")): i for i, t in enumerate(tasks) if isinstance(t, dict) and t.get("task_id")}
-        tasks_changed = False
-        for tid, updates in raw_tasks.items():
-            if tid in by_id and isinstance(updates, dict):
-                idx = by_id[tid]
-                updated = {**tasks[idx], **updates}
-                if updated != tasks[idx]:
-                    tasks[idx] = updated
-                    tasks_changed = True
-        if tasks_changed:
-            changed.append("tasks")
-    elif isinstance(raw_tasks, list) and raw_tasks and all(isinstance(t, dict) for t in raw_tasks) and raw_tasks != tasks:
-        tasks = raw_tasks
-        changed.append("tasks")
-    candidate = {**plan_out, "tasks": tasks, "interfaces": merged, "entrypoint": entry, "academic_blueprint": blueprint}
-    if patch.get("missing_agent_specialization") and patch["missing_agent_specialization"] != plan_out.get("missing_agent_specialization"):
-        candidate["missing_agent_specialization"] = patch["missing_agent_specialization"]
-        changed.append("missing_agent_specialization")
-    return candidate, changed
-
-
-def _is_proven_blocker(issue: dict[str, Any], plan_out: dict[str, Any], interfaces: dict[str, str]) -> bool:
-    """A critic blocker must name an existing target in the plan (`where`), a concrete failure (`problem`), and a fix."""
-    where = str(issue.get("where") or "").strip()
-    problem = str(issue.get("problem") or "").strip()
-    fix = str(issue.get("fix") or "").strip()
-    if not (where and problem and fix):
+def _is_proven_blocker(issue: dict[str, Any], targets: set[str]) -> bool:
+    """A critic blocker must name an existing target of what it reviews (`where`), a concrete failure (`problem`),
+    and a fix; never about what an example returns, which the harness checks on the code (§XIV Q1)."""
+    where = str(issue.get("where") or "").strip().lower()
+    if not (where and str(issue.get("problem") or "").strip() and str(issue.get("fix") or "").strip()):
         return False
-    where_l = where.lower()
-    targets: set[str] = {"academic_blueprint", "entrypoint", "tasks", "interfaces", "missing_agent_specialization"}
-    for rel in interfaces:
-        targets.add(rel.lower())
-        targets.add(Path(rel).name.lower())
-    for task in plan_out.get("tasks") or []:
-        if isinstance(task, dict) and task.get("task_id"):
-            targets.add(str(task["task_id"]).lower())
-    return any(t in where_l for t in targets)
+    if issue.get("blocking") is not True or str(issue.get("category") or "").lower() == "doctest":
+        return False
+    return any(t.lower() in where for t in targets)
 
 
 def _affects(issue: dict[str, Any]) -> list[str]:
@@ -150,212 +39,62 @@ def _affects(issue: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _apply_patch_with_partial_fallback(
-    plan_out: dict[str, Any],
-    interfaces: dict[str, str],
-    patch: dict[str, Any],
-    before_static: list[str],
-    has_critic_blockers: bool,
-    need_chapters: bool = False,
-) -> tuple[dict[str, Any], dict[str, str], list[str], list[str], bool, list[str], list[str], list[str], list[str]]:
-    """Apply `patch` as a whole if it improves or preserves static checks; otherwise keep only the per-module
-    changes that do not regress, returning `(plan, interfaces, blocker_code, blocker_instruction, accepted, changed, fixed, new, rejected)`."""
-    before = set(before_static)
-    candidate, changed = _apply_patch(plan_out, interfaces, patch)
-    c_ifaces = _plan_interfaces(candidate)
-    c_code, c_instr = _static_blockers(candidate, c_ifaces, need_chapters)
-    after = set(c_code + c_instr)
-    fixed, new = sorted(before - after), sorted(after - before)
-    credit = len(fixed) + (1 if has_critic_blockers else 0)
-    if changed and (not new or len(new) < credit):
-        return candidate, c_ifaces, c_code, c_instr, True, changed, fixed, new, []
-    if not changed:
-        return plan_out, interfaces, [], [], False, [], [], [], [texts.PATCH_CHANGED_NOTHING]
-
-    # Partial acceptance: keep non-regressing parts (e.g. valid module edits) and reject only what broke.
-    cur_plan, cur_ifaces = plan_out, interfaces
-    cur_static = set(before_static)
-    cur_code, cur_instr = _static_blockers(cur_plan, cur_ifaces, need_chapters)
-    partial_changed: list[str] = []
-    rejected_notes: list[str] = []
-
-    non_iface_patch = {k: v for k, v in patch.items() if k != "interfaces"}
-    if non_iface_patch:
-        t_plan, t_changed = _apply_patch(cur_plan, cur_ifaces, non_iface_patch)
-        if t_changed:
-            t_ifaces = _plan_interfaces(t_plan)
-            t_code, t_instr = _static_blockers(t_plan, t_ifaces, need_chapters)
-            t_after = set(t_code + t_instr)
-            t_new = sorted(t_after - cur_static)
-            t_credit = len(cur_static - t_after) + (1 if has_critic_blockers else 0)
-            if not t_new or len(t_new) < t_credit:
-                cur_plan, cur_ifaces, cur_code, cur_instr, cur_static = t_plan, t_ifaces, t_code, t_instr, t_after
-                partial_changed.extend(t_changed)
-            else:
-                rejected_notes.extend(t_new)
-
-    for rel, source in _plan_interfaces(patch).items():
-        if cur_ifaces.get(rel) == source:
-            continue
-        t_plan, t_changed = _apply_patch(cur_plan, cur_ifaces, {"interfaces": {rel: source}})
-        if not t_changed:
-            continue
-        t_ifaces = _plan_interfaces(t_plan)
-        t_code, t_instr = _static_blockers(t_plan, t_ifaces, need_chapters)
-        t_after = set(t_code + t_instr)
-        t_new = sorted(t_after - cur_static)
-        t_credit = len(cur_static - t_after) + (1 if has_critic_blockers else 0)
-        if not t_new or len(t_new) < t_credit:
-            cur_plan, cur_ifaces, cur_code, cur_instr, cur_static = t_plan, t_ifaces, t_code, t_instr, t_after
-            partial_changed.append(rel)
-        else:
-            rejected_notes.append(f"{rel}: {'; '.join(t_new)}")
-
-    if partial_changed:
-        return (
-            cur_plan, cur_ifaces, cur_code, cur_instr, True,
-            partial_changed, sorted(before - cur_static), sorted(cur_static - before), rejected_notes,
-        )
-    return plan_out, interfaces, [], [], False, [], [], new, rejected_notes or new
+def plan_targets(modules: list[str] | set[str]) -> set[str]:
+    """What a finding about the plan may name: a module (path or file name) or a field of the outline."""
+    return {*modules, *(Path(rel).name for rel in modules), "academic_blueprint", "entrypoint", "plots", "modules", "metrics", "planned_chapters"}
 
 
 class PlanSpecMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
 
+    def _call_planning_agent(self, md: Path, payload: dict[str, Any]) -> dict[str, Any]:
+        """One LRM call of planning. A failed call (`status` error: timeout, unreachable model) is a failed round,
+        not the end of the run: `call_agent` returns it as an answer."""
+        return self._call_agent(md, payload, model_tier="LRM", provider=self.provider)
+
     @property
     def hypergraph_path(self) -> Path:
         return self.state_dir / "hypergraph.json"
 
-    def _validated_plan(
-        self, plan_out: dict[str, Any], plan_payload: dict[str, Any], planner_md: Path
-    ) -> tuple[dict[str, Any], dict[str, str], list[str]]:
-        """(plan, its interfaces, blockers). Two severity levels:
-        - `blockers`: `blocker_code` (stub/import/entrypoint errors) + `blocker_instruction` (task vs interface
-          mismatches) + `blocker_critic` (proven critic blockers).
-        - `warnings`: non-blocking critic suggestions (and unproven critic blockers).
-        Only `blockers` stop the run; when `blockers` is empty, the plan passes immediately."""
-        interfaces = _plan_interfaces(plan_out)
-        blocker_code, blocker_instruction = _static_blockers(plan_out, interfaces, bool(self.include_docs))
-        review: tuple[list[str], list[str]] | None = None
-        rejected_patch: list[str] = []
-        code_budget = CODE_PATCH_BUDGET
-        critic_budget = CRITIC_PATCH_BUDGET
-        no_progress = 0
-        prev_blockers_count: int | None = None
-        prev_in_static = False
-        # Earlier rounds (blockers + what the planner changed) as context for the whole-plan review (§XII P3).
-        history: list[dict[str, Any]] = []
-
-        for attempt in range(MAX_PLANNER_PATCHES + 1):
-            if review is None:
-                review = ([], []) if blocker_code else self._plan_review(plan_out, interfaces, plan_payload, history)
-            blocker_critic, warnings = review
-            static_blockers = blocker_code + blocker_instruction
-            blockers = static_blockers + blocker_critic
-            self.logger.log_event(
-                "PLAN_CHECKED", attempt=attempt, modules=sorted(interfaces),
-                blockers={"code": blocker_code, "instruction": blocker_instruction, "critic": blocker_critic},
-                warnings=warnings,
-            )
-            if not blockers:
-                return plan_out, interfaces, []
-
-            if prev_blockers_count is not None:
-                transitioned_to_critic = prev_in_static and not static_blockers
-                made_progress = transitioned_to_critic or len(blockers) < prev_blockers_count
-                no_progress = 0 if made_progress else no_progress + 1
-
-            in_static_phase = bool(static_blockers)
-            phase_budget = code_budget if in_static_phase else critic_budget
-            if attempt >= MAX_PLANNER_PATCHES or phase_budget <= 0 or no_progress >= NO_PROGRESS_LIMIT:
-                return plan_out, interfaces, blockers
-
-            prev_blockers_count = len(blockers)
-            prev_in_static = in_static_phase
-
-            self.logger.log_step(
-                "PLANNER_SPEC_FEEDBACK",
-                f"Plan ma {len(blockers)} blokad i {len(warnings)} ostrzeżeń -> łatka planisty {attempt + 1}/{MAX_PLANNER_PATCHES}",
-                {"blockers": blockers, "warnings": warnings, "previous_patch_rejected": rejected_patch},
-            )
-            retry = self._call_agent(
-                planner_md,
-                {**plan_payload, "current_plan": _plan_view(plan_out, interfaces),
-                 "error_feedback": texts.planner_patch_feedback(blockers, rejected_patch, warnings)},
-                model_tier="LRM", provider=self.provider,
-            )
-            if in_static_phase:
-                code_budget -= 1
-            else:
-                critic_budget -= 1
-
-            patch = retry.get("output") if retry.get("status") == "ok" else None
-            (
-                candidate, c_ifaces, c_code, c_instr, accepted, changed, fixed, new, rejected_notes,
-            ) = _apply_patch_with_partial_fallback(
-                plan_out, interfaces, patch if isinstance(patch, dict) else {}, static_blockers, bool(blocker_critic),
-                bool(self.include_docs),
-            )
-            before = set(static_blockers)
-            after = set(c_code + c_instr) if accepted else before
-            self.logger.log_event(
-                "PLAN_PATCHED", attempt=attempt, accepted=accepted, changed=changed, fixed=fixed, new=new,
-                remaining=sorted(before & after), rejected=rejected_notes,
-            )
-            history.append({"round": attempt + 1, "blockers": blockers, "planner_changed": changed if accepted else []})
-            if accepted:
-                plan_out, interfaces, blocker_code, blocker_instruction, review, rejected_patch = (
-                    candidate, c_ifaces, c_code, c_instr, None, rejected_notes,
+    def _critic_review(self, md_name: str, payload: dict[str, Any], targets: set[str]) -> tuple[list[str], list[str]] | None:
+        """(blockers, warnings) of one critic, or None when it gave no readable verdict (logged; blocks nothing).
+        A blocker without a valid target, a concrete problem and a fix is a warning."""
+        review = self._call_planning_agent(self.agents_dir / "planning" / md_name, payload)
+        output = review.get("output") if review.get("status") == "ok" else None
+        if not isinstance(output, dict) or output.get("status") not in ("PASS", "FAIL"):
+            self.logger.log_event("PLAN_REVIEW_NO_VERDICT", critic=Path(md_name).stem, status=review.get("status"), output=str(output)[:300])
+            return None
+        blockers: list[str] = []
+        warnings: list[str] = []
+        for issue in output.get("issues") or []:
+            if isinstance(issue, dict):
+                text = texts.critic_finding(
+                    str(issue.get("where") or ""), str(issue.get("problem") or ""), str(issue.get("fix") or ""), _affects(issue),
                 )
-            else:
-                rejected_patch = rejected_notes
-        return plan_out, interfaces, []
+                (blockers if _is_proven_blocker(issue, targets) else warnings).append(text)
+            elif str(issue).strip():
+                warnings.append(texts.critic_finding("", str(issue), ""))
+        return blockers, warnings
 
     def _plan_review(
         self, plan_out: dict[str, Any], interfaces: dict[str, str], plan_payload: dict[str, Any],
         history: list[dict[str, Any]] | None = None,
     ) -> tuple[list[str], list[str]]:
-        """(blocker_critic, warnings) of the plan critic on the whole plan: interfaces, doctests, tasks and blueprint.
-        Critic blockers without a valid target in the plan and concrete problem/fix are downgraded to warnings.
-        `history` (earlier rounds) is context only: the review always covers the whole plan."""
+        """(blockers, warnings) of the main critic on the fused plan: outline and every interface together. Its
+        blockers name a module (that module is redesigned) or an outline field (the outline is revised)."""
         blueprint = plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {}
-        review = self._call_agent(
-            self.agents_dir / "planning" / "plan_critic_guard.md",
-            {
-                "user_prompt": plan_payload.get("user_prompt", ""),
-                "tasks": plan_out.get("tasks") or [],
-                "interfaces": interfaces,
-                "entrypoint": _entrypoint(plan_out),
-                "academic_blueprint": {k: v for k, v in blueprint.items() if k not in ("literature_recon", "interfaces")},
-                "agent_registry": sorted((read_json_state(self.registry_path).get("agents") or {}).keys()),
-                "review_history": history or [],
-            },
-            model_tier="LRM", provider=self.provider,
-        )
-        output = review.get("output") if review.get("status") == "ok" else None
-        if not isinstance(output, dict) or output.get("status") not in ("PASS", "FAIL"):
-            self.logger.log_event("PLAN_REVIEW_NO_VERDICT", status=review.get("status"), output=str(output)[:300])
-            return [], []
-        blocker_critic: list[str] = []
-        warnings: list[str] = []
-        for issue in output.get("issues") or []:
-            if isinstance(issue, dict):
-                text = texts.critic_finding(
-                    str(issue.get("where") or ""), str(issue.get("problem") or ""), str(issue.get("fix") or ""),
-                    _affects(issue),
-                )
-                # §XIV Q1: what an example will return is checked by the harness on the code, never a blocker.
-                is_blocker = (
-                    issue.get("blocking") is True and str(issue.get("category") or "").lower() != "doctest"
-                    and _is_proven_blocker(issue, plan_out, interfaces)
-                )
-                (blocker_critic if is_blocker else warnings).append(text)
-            elif str(issue).strip():
-                warnings.append(texts.critic_finding("", str(issue), ""))
-        self.logger.log_event(
-            "PLAN_REVIEWED", status=output["status"], blocker_critic=blocker_critic, warnings=warnings,
-        )
-        return blocker_critic, warnings
+        verdict = self._critic_review("plan_critic_guard.md", {
+            "user_prompt": plan_payload.get("user_prompt", ""),
+            "outline": plan_out.get("outline") or {},
+            "interfaces": interfaces,
+            "entrypoint": _entrypoint(plan_out),
+            "academic_blueprint": {k: v for k, v in blueprint.items() if k not in ("literature_recon", "interfaces")},
+            "review_history": history or [],
+            "existing_files": plan_payload.get("existing_files") or {},
+        }, plan_targets(interfaces))
+        blockers, warnings = verdict or ([], [])
+        self.logger.log_event("PLAN_REVIEWED", status="FAIL" if blockers else "PASS", blocker_critic=blockers, warnings=warnings)
+        return blockers, warnings
 
     def _plan_rejected(self, violations: list[str], tasks: list[dict[str, Any]]) -> dict[str, Any]:
         self.logger.log_step("PLAN_REJECTED", "Plan nadal niewykonalny po poprawkach planisty", {"violations": violations})
@@ -378,11 +117,20 @@ class PlanSpecMixin:
         bib = h.vertices.get("references.bib")
         if bib is not None and (self.workspace_dir / "references.bib").is_file():
             bib.state = "verified"
+        # Code the workspace already had (a brownfield project) is kept, never replaced by its stub (2026-11-20, 03:
+        # declaring the existing baseline would have erased it). Nothing re-verifies it unless a task targets it.
+        targeted = {str(t.get("target_node", "")).replace("\\", "/") for t in tasks if isinstance(t, dict)}
+        existing = {rel for rel in interfaces if rel in h.vertices and (self.workspace_dir / rel).is_file()
+                    and not is_stub((self.workspace_dir / rel).read_text(encoding="utf-8", errors="replace"))}
+        for rel in existing:
+            h.vertices[rel].state = "impl" if rel in targeted else "verified"
         save(h, self.hypergraph_path)
         self.logger.log_event(
             "H_BUILT", vertices=len(h.vertices), edges=len(h.edges), order=len(h.order), problems=[str(p) for p in problems]
         )
-        stubs = [{"filename": rel, "content": stub} for rel, src in interfaces.items() if (stub := stub_source(src))]
+        stubs = [{"filename": r, "content": s} for r, src in interfaces.items() if r not in existing and (s := stub_source(src))]
+        if not stubs:
+            return h
         self.logger.log_step("SKELETON_FROM_PLAN", f"Stuby z σ: {len(stubs)} modułów", {"files": [f["filename"] for f in stubs]})
         self._materialize_workspace_artifact(
             stubs[0]["filename"], {"files": stubs, "summary": texts.SKELETON_SUMMARY}, writer={"agent": "harness", "task_id": "H_STUBS"},

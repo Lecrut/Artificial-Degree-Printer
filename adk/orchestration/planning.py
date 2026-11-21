@@ -3,19 +3,34 @@
 from __future__ import annotations
 
 
+from pathlib import Path
 from typing import Any, Callable
 
-from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
 from adk.tools.building.template_manager import (
     detect_template_from_prompt,
     prompt_user_for_template,
     resolve_template_name,
 )
+from adk.tools.building.experiment_runner import EXPERIMENT_TIMEOUT_S
 from adk.tools.planning import scout_domain_conventions
 from adk.orchestration.common import (
     _looks_like_workspace_path,
+    available_package_imports,
 )
+
+EXISTING_FILE_CHARS = 8000  # per file: a brownfield module is shown whole, a generated monster is cut
+
+
+def _existing_code(workspace: Path, limit: int | None = EXISTING_FILE_CHARS) -> dict[str, str]:
+    """Python files the workspace already has before planning (a brownfield project), by relative path."""
+    found: dict[str, str] = {}
+    for path in sorted(workspace.rglob("*.py")) if workspace.is_dir() else []:
+        rel = path.relative_to(workspace)
+        if {"logs", "__pycache__", "figures"} & set(rel.parts):
+            continue
+        found[rel.as_posix()] = path.read_text(encoding="utf-8", errors="replace")[:limit]
+    return found
 
 
 class PlanningMixin:
@@ -75,62 +90,14 @@ class PlanningMixin:
             "missing_agent_specialization": missing_agent_specialization,
             "domain_context": domain_summary,
             "detected_template": tpl_detection,
+            # What the planner cannot see otherwise (2026-11-20: 04 planned on torch, 03 never saw its baseline).
+            "available_packages": sorted(available_package_imports().values()),
+            "existing_files": _existing_code(self.workspace_dir),
+            "experiment_time_limit_s": EXPERIMENT_TIMEOUT_S,
         }
-        planner_md = self.agents_dir / "planning" / "task_planner.md"
-
-        plan_out = self._call_agent(
-            planner_md,
-            plan_payload,
-            model_tier="LRM",
-            provider=self.provider,
-        )["output"]
-
-        # Stopień 1: Refleksyjna ewolucja promptu planisty w przypadku pustej listy zadań
-        raw_tasks_candidate = plan_out.get("tasks")
-        if not raw_tasks_candidate or not isinstance(raw_tasks_candidate, list) or len(raw_tasks_candidate) == 0:
-            self.logger.log_step(
-                "PLANNER_REFLEXIVE_EVOLUTION",
-                "task_planner zwrócił 0 zadań. Wykonuję refleksyjną ewolucję promptu z informacją zwrotną o błędzie.",
-                {"first_attempt": plan_out},
-            )
-            healing_payload = dict(plan_payload)
-            healing_payload["reflection_feedback"] = texts.PLANNER_NO_TASKS
-            retry_res = self._call_agent(
-                planner_md,
-                healing_payload,
-                model_tier="LRM",
-                provider=self.provider,
-            )
-            if retry_res.get("status") == "ok":
-                cand = retry_res.get("output", {})
-                if cand.get("tasks") and isinstance(cand.get("tasks"), list) and len(cand.get("tasks")) > 0:
-                    plan_out = cand
-
-        # Stopień 2: Ewolucja Warstwy 4 (Prompt Mutation) w przypadku powtórnego braku zadań
-        if (not plan_out.get("tasks") or len(plan_out.get("tasks")) == 0) and self.enable_layer4:
-            self.logger.log_step(
-                "PLANNER_LAYER4_MUTATION",
-                "task_planner nie zdołał wygenerować zadań. Wywołuję Architekta Ewolucji (W4) do mutacji promptu...",
-            )
-            evo_res = self._run_evolution_step({
-                "failed_agent": "task_planner",
-                "suggested_rule": "MUST ALWAYS place 'tasks' array with at least 3 vertical feature slices (code, test, doc) at the top of JSON.",
-            })
-            self._record_evolution_event({"type": "PLANNER_PROMPT_MUTATED", "details": evo_res})
-            mutated_retry = self._call_agent(
-                planner_md,
-                plan_payload,
-                model_tier="LRM",
-                provider=self.provider,
-            )
-            if mutated_retry.get("status") == "ok":
-                cand = mutated_retry.get("output", {})
-                if cand.get("tasks") and isinstance(cand.get("tasks"), list) and len(cand.get("tasks")) > 0:
-                    plan_out = cand
-
-        # The plan's interfaces are the specification σ every later task builds on (Audit VI A3): imported as stubs
-        # before any code exists; two corrections by the planner, then an unexecutable plan stops the run.
-        plan_out, interfaces, spec_violations = self._validated_plan(plan_out, plan_payload, planner_md)
+        # Planning in stages (§XVI): outline, then each module's interface, then the tasks, then the whole plan under
+        # the main critic. A finding reopens only the part it is about; an unexecutable plan stops the run.
+        plan_out, interfaces, spec_violations = self._staged_plan(plan_payload)
         if spec_violations:
             return self._plan_rejected(spec_violations, plan_out.get("tasks") or [])
 
@@ -291,7 +258,7 @@ class PlanningMixin:
                 "replan_count": 0,
             }}
 
-        # The plan critic already judged this plan inside `_validated_plan`, before H and the stubs existed.
+        # The critics already judged this plan stage by stage (`plan_stages`), before H and the stubs existed.
         # Gate 2 Promotor Checkpoint (Methodology & Architecture Approval)
         if not self._check_hitl_gate(
             gate_name="GATE_2_METHODOLOGY_APPROVAL",

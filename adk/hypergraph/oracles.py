@@ -6,6 +6,7 @@ import ast
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -20,10 +21,36 @@ _ALLOWED_ON_STUBS = ("NotImplementedError",)
 
 
 _BEHAVIOUR_PROBE = r"""
-import doctest, importlib, json, os, sys, traceback
+import ast, doctest, importlib, json, math, os, re, sys, traceback
 root, dotted, examples = sys.argv[1], sys.argv[2], json.loads(sys.argv[3])
 sys.path.insert(0, root)
 mod = importlib.import_module(dotted)
+_NP = re.compile(r"np\.(?:float|int|uint|bool)\w*\(([^()]*)\)")
+
+
+def _value(text):
+    try:
+        return ast.literal_eval(_NP.sub(r"\1", text.strip()).replace("np.True_", "True").replace("np.False_", "False"))
+    except Exception:
+        return None
+
+
+def _close(a, b):
+    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+        return len(a) == len(b) and all(map(_close, a, b))
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+        return math.isclose(a, b, rel_tol=1e-3, abs_tol=1e-6)
+    return a == b
+
+
+class Checker(doctest.OutputChecker):
+    # A number is the same number however it is printed: `0` is `0.0`, `5.8284` is `5.828427`, `np.float64(0.5)`
+    # is `0.5` (2026-11-21, 03: `expected 0.0, got 0` was charged to the coder as a behaviour mismatch).
+    def check_output(self, want, got, optionflags):
+        if super().check_output(want, got, optionflags):
+            return True
+        w, g = _value(want), _value(got)
+        return w is not None and g is not None and _close(w, g)
 
 
 class Runner(doctest.DocTestRunner):
@@ -51,7 +78,7 @@ class Runner(doctest.DocTestRunner):
 failures = []
 parser = doctest.DocTestParser()
 for i, text in enumerate(examples):
-    runner = Runner(optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
+    runner = Runner(checker=Checker(), optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
     runner.fails = []
     runner.run(parser.get_doctest(text, dict(vars(mod)), f"example{i}", None, 0), out=lambda _s: None, clear_globs=True)
     failures += runner.fails
@@ -59,18 +86,26 @@ print(json.dumps(failures))
 """
 
 
-def is_stub(source: str) -> bool:
-    """True while some function or method has no implementation: its body (besides the docstring) is empty,
-    `...`, `pass` or only `raise NotImplementedError` (the e2e run: a body of `...` passed as implemented)."""
-    for node in ast.walk(ast.parse(source)):
+def stub_functions(source: str) -> list[str]:
+    """Functions and methods (`Class.method`) without an implementation: their body (besides the docstring) is
+    empty, `...`, `pass` or only `raise NotImplementedError` (the e2e run: a body of `...` passed as implemented)."""
+    tree = ast.parse(source)
+    owner = {id(item): f"{node.name}." for node in ast.walk(tree) if isinstance(node, ast.ClassDef) for item in node.body}
+    found: list[str] = []
+    for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             body = [
                 s for s in node.body
                 if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant)) and not isinstance(s, ast.Pass)
             ]
             if not body or (len(body) == 1 and isinstance(body[0], ast.Raise) and "NotImplementedError" in ast.unparse(body[0])):
-                return True
-    return False
+                found.append(owner.get(id(node), "") + node.name)
+    return found
+
+
+def is_stub(source: str) -> bool:
+    """True while some function or method has no implementation (see `stub_functions`)."""
+    return bool(stub_functions(source))
 
 
 def check_behaviour(workspace: str | Path, rel: str, spec: dict, timeout: int = 120) -> list[Violation]:
@@ -92,7 +127,7 @@ def check_behaviour(workspace: str | Path, rel: str, spec: dict, timeout: int = 
     if not failures:
         return []
     symbols = list((spec.get("symbols") or {}).keys())
-    broken = [f for f in failures if isinstance(f, dict) and _example_is_broken(f)]
+    broken = [f for f in failures if isinstance(f, dict) and _example_is_broken(f, symbols)]
     found: list[Violation] = []
     if broken:
         # The example itself is wrong (a name it never defined): no implementation can satisfy it, so the plan
@@ -112,10 +147,17 @@ def check_behaviour(workspace: str | Path, rel: str, spec: dict, timeout: int = 
     return found
 
 
-def _example_is_broken(failure: dict) -> bool:
-    """The example's own code raised a NameError or SyntaxError, and no earlier example of it failed (an earlier
-    failure can leave a name undefined)."""
-    return bool(failure.get("in_example")) and not failure.get("earlier_failed") and failure.get("exception_type") in ("NameError", "SyntaxError")
+def _example_is_broken(failure: dict, symbols: list[str]) -> bool:
+    """The example's own code raised a NameError or SyntaxError, or called a method the interface does not declare
+    (which the write gate refuses to add: 2026-11-21, 03 `algo.neighbors(3, 3)`), and no earlier example of it
+    failed (an earlier failure can leave a name undefined)."""
+    if not failure.get("in_example") or failure.get("earlier_failed"):
+        return False
+    missing = re.search(r"has no attribute '(\w+)'", str(failure.get("exception", "")))
+    if failure.get("exception_type") == "AttributeError" and missing:
+        name = missing.group(1)
+        return f".{name}(" in str(failure.get("example", "")) and name not in {s.rsplit(".", 1)[-1] for s in symbols}
+    return failure.get("exception_type") in ("NameError", "SyntaxError")
 
 
 def _example_symbol(example: str, symbols: list[str]) -> str:

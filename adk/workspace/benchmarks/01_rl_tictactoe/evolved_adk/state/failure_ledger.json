@@ -4,38 +4,68 @@
     {
       "cycle": 1,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T3"
+      "category": "harness",
+      "task_id": "T2"
     },
     {
       "cycle": 2,
       "agent": "seed_coder",
-      "category": "generic",
+      "category": "F821",
       "task_id": "T3"
     },
     {
       "cycle": 3,
       "agent": "seed_coder",
       "category": "behaviour",
-      "task_id": "T4"
+      "task_id": "T3"
     },
     {
       "cycle": 4,
       "agent": "seed_coder",
       "category": "behaviour",
-      "task_id": "T4"
+      "task_id": "T3"
     },
     {
       "cycle": 5,
       "agent": "seed_coder",
       "category": "F821",
-      "task_id": "T9"
+      "task_id": "T5"
     },
     {
       "cycle": 6,
       "agent": "seed_coder",
-      "category": "run:NameError",
-      "task_id": "T9"
+      "category": "generic",
+      "task_id": "T5"
+    },
+    {
+      "cycle": 7,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R1_1"
+    },
+    {
+      "cycle": 8,
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "T8"
+    },
+    {
+      "cycle": 9,
+      "agent": "seed_coder",
+      "category": "run:ValueError",
+      "task_id": "T8"
+    },
+    {
+      "cycle": 10,
+      "agent": "seed_coder",
+      "category": "run:KeyError",
+      "task_id": "T8"
+    },
+    {
+      "cycle": 11,
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "R2_1"
     }
   ]
 }

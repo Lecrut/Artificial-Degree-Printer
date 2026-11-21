@@ -95,6 +95,13 @@ def _sort_markdown_chapters(text: str) -> str:
     return res
 
 
+def split_section_title(title: str, body: str) -> tuple[str, str]:
+    """A title of several lines (`Rozdział 2: …\\n### 2.2 …`) is the chapter heading plus the first lines of the body.
+    2026-11-20 (02): the discoverer's `### 2.2` inside the title replaced the whole chapter 2 written by T2."""
+    first, *rest = [line for line in str(title).strip().splitlines() if line.strip()] or [""]
+    return first.strip(), "\n".join(rest + [body]) if rest else body
+
+
 def _demote_embedded_h2(body: str) -> str:
     """A section body must not contain ## headings. Those become extra chapters on the next edit."""
     return re.sub(r"^##(?=\s)", "###", body, flags=re.MULTILINE)

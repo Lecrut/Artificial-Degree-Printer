@@ -134,6 +134,27 @@ class RoutingMixin:
             return None
         return set(recon.get("available_citation_keys") or [])
 
+    def _known_citations_only(self, text: str) -> str:
+        r"""`text` without the `\cite` keys the workspace bibliography lacks, as the reference check reads it. A
+        made-up key stayed in the document after its task failed and failed every later section of the same file
+        (2026-11-21, 03: `dijkstra1959`, four sections, 2 -> 21 errors)."""
+        bibs = list(self.workspace_dir.glob("*.bib")) + list((self.workspace_dir / "thesis").glob("*.bib"))
+        if not bibs:
+            return text
+        keys = {m.group(1) for b in bibs for m in re.finditer(r"@\w+\{\s*([^,\s]+)\s*,", b.read_text(encoding="utf-8", errors="ignore"))}
+        dropped: list[str] = []
+
+        def _keep(m: re.Match[str]) -> str:
+            cited = [k.strip() for k in m.group(2).split(",") if k.strip()]
+            dropped.extend(k for k in cited if k not in keys)
+            kept = [k for k in cited if k in keys]
+            return m.group(1) + "\\cite{" + ",".join(kept) + "}" if kept else ""
+
+        text = re.sub(r"([ \t]*~?)\\cite\{([^}]+)\}", _keep, text)
+        if dropped:
+            self._record_evolution_event({"type": "UNKNOWN_CITATIONS_DROPPED", "keys": sorted(set(dropped))})
+        return text
+
     def _entry_file(self) -> str | None:
         """The experiment's entrypoint module: the producer of R in H, or the plan's declaration before H exists."""
         h = self._project_h()

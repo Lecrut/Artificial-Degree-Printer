@@ -8,17 +8,22 @@ from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
 from adk.tools.planning import select_model_tier
 from adk.orchestration.findings import focus_symbols, repair_findings, symbol_sources
+from adk.orchestration.import_hints import importable_names
 from adk.orchestration.failure_attribution import _is_test, _suspect_test
 from adk.orchestration.common import (
     _agent_for_path,
-    _issue_signature,
-    _issue_category,
+    available_package_imports,
     FAST_REPAIR_ATTEMPTS,
-    HARNESS_ENFORCED_CATEGORIES,
-    _collect_report_issues,
     _fit_items,
     _is_document,
     _RunState,
+)
+from adk.orchestration.failure_kinds import (
+    _issue_signature,
+    _issue_category,
+    HARNESS_ENFORCED_CATEGORIES,
+    UNCLASSIFIED_CATEGORY,
+    _collect_report_issues,
 )
 
 
@@ -91,7 +96,7 @@ class RepairMixin:
                 self._amend_spec_if_wrong(failed_file, issues_list, t_id)
                 # The repair names the symbols to change and each error with its line of code (§XI B1-B2): on
                 # 2026-11-18 three repairs of config.py changed other symbols than the one with the error.
-                findings = repair_findings(issues_list, self.workspace_dir)
+                findings = repair_findings(issues_list, self.workspace_dir, lambda rel: importable_names(h, rel, available_package_imports()))
                 focus = focus_symbols(findings, fast_target)
                 notes = [str(f) for f in findings]
                 module = h.tested_module(fast_target) if h is not None and _is_test(fast_target) else None
@@ -168,6 +173,9 @@ class RepairMixin:
             elif category in HARNESS_ENFORCED_CATEGORIES:
                 cycle_trace["w4_action"] = "SKIPPED_HARNESS_ENFORCED"
                 print(f"  [WARSTWA 4: POMINIĘTA] Kategorię '{category}' egzekwuje harness; reguła promptu nic tu nie da.", flush=True)
+            elif category == UNCLASSIFIED_CATEGORY:
+                cycle_trace["w4_action"] = "SKIPPED_UNCLASSIFIED"
+                print("  [WARSTWA 4: POMINIĘTA] Nierozpoznany rodzaj błędu; różne porażki to jeszcze nie wzorzec.", flush=True)
             elif not pattern:
                 cycle_trace["w4_action"] = "SKIPPED_NO_PATTERN"
                 print(f"  [WARSTWA 4: POMINIĘTA] Kategoria '{category}' wystąpiła dotąd w jednym zadaniu; ewolucja czeka na wzorzec.", flush=True)

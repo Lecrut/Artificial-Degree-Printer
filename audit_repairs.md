@@ -24,6 +24,8 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-19 | **Audyt IX — benchmarki 19.11: plan odrzucany, naprawy bez skutku → §XII** | 02 i 03 `PLAN_REJECTED` (krytyk co rundę znajduje nowe blokady — skutki własnych lokalnych poprawek), 01: 0 skutecznych napraw (zły test obwinia kod, sprzeczny komunikat dla pisarza, odrzucenia formatu), crash na `TimeoutExpired` w ewolucji | P1–P3 (komunikacja krytyk ↔ planista) zatwierdzone; R1–R4 (naprawy, crash) — diagnoza, do decyzji |
 | 2026-11-19 | **Audyt X — wymuszona architektura i sprzeczne instrukcje → §XIII** | harness narzuca `results.csv`, `plot_results.py`, moduł config, 6 rozdziałów; zaszyte profile benchmarków w `research_recon`; 9 sprzeczności prompt↔prompt i prompt↔kod (krytyk blokuje to, co harness dopisuje sam; „change only that” vs „Change together”; dwa formaty łatki `tasks`) | P1 (prompty) — w realizacji; P2–P4 do decyzji |
 | 2026-11-19 | **Szanse planu i napraw — krytyczna ocena → §XIV** | krytyk dalej blokuje zgadywaniem wyników doctestów (sprawdzanych potem przez harness); naprawy kręcą się na złym teście (R1) i powtarzają identyczny błąd | Q1 (kategoria `doctest` = ostrzeżenie), Q2 (winny = niezweryfikowany z pary test/moduł), Q3 (stop przy identycznym błędzie) — w realizacji |
+| 2026-11-21 | **Audyt XI — benchmarki 20.11: 3/4 `PLAN_REJECTED`, 02 bez końca → §XV** | planista ślepy (brak `available_packages`, brak kodu workspace w 03); fałszywe blokady (`g(n)` jako nazwa API, „entrypoint musi się nazywać `run_experiment`/`main`”); komunikat doctestu bez symbolu; partial fallback rozdziela zależne zmiany; błąd `plots.py` naprawiany w entrypoincie; ewolucja na kategorii `generic`; AMEND pod literówkę testera; publisher/metryki pomijają `src/`; stuby nadpisują istniejące pliki | prompty = karty tematu od promotora, kod startowy 03 oczyszczony (§XV.4, §XV.6); **U1–U10 wdrożone + torch/gymnasium/statsmodels/sympy (§XV.7)**; sprzeczności kod↔prompt↔zadanie K1–K7 usunięte, kontrakt `results.csv` egzekwowany kodem, mocki na kontrakcie (§XV.8); podziały `thesis_publisher`/`common`/`plan_spec` (§XV.9); 21.11: CRASHED/odrzucenia przez błędy harnessu (§XV.11); 21.11 po południu **3/3 plany przeszły**, budowa: zmyślone cytowania psujące kolejne sekcje, brakujące importy, nienazwane stuby, porównanie liczb w doctestach, fałszywe `TEST_OUTSIDE_SPEC` (§XV.12); otwarte: K8, E5, błędne liczby w doctestach planu |
+| 2026-11-21 | **Planowanie etapami (decyzja użytkownika) → §XVI** | planowanie jednym wywołaniem: 13–31 min LRM na plan, krytyk co rundę przesuwa poprzeczkę, łatka jednego wielkiego planu psuje inne części, planista ręcznie pisze zadania (źródło fałszywych blokad) | szkic → interfejsy moduł po module (każdy etap z własnym krytykiem) → zadania wyprowadzane kodem → fuzja z krytykiem głównym; uwaga otwiera ponownie tylko wskazaną część; budżety i jedna eskalacja; stara pętla łatek usunięta; mocki, testy i viewer na etapach |
 
 ---
 
@@ -3916,3 +3918,252 @@ Użytkownik zatwierdził usunięcie: profili benchmarków (`research_recon._dete
 - **Q3** (`repair.py`): odcisk błędu (`_issue_signature` — plik:reguła, niezależny od linii i nazw) po szybkiej naprawie identyczny jak przed nią → `REPAIR_SAME_ERROR`, koniec szybkich napraw; przy znanym winnym to od razu `failed` i przeplanowanie fragmentu (LRM, akta napraw), przy nieznanym — cykl planera naprawczego.
 - Testy: `tests/test_audit_xiv.py` (3); zmienione oczekiwania: `test_audit_vi::test_a9…` (jedna próba zamiast dwóch identycznych), `test_layer4_and_orchestrator::test_evolution_waits_for_a_pattern_across_tasks`. Pełny pytest 262/264 (dwie porażki higieny: pliki w `viewer/node_modules`), ruff czysty; `verification.py` 394, `repair.py` 374 linie.
 - Do pomiaru na żywo: liczba rund krytyka i `fixed`/`new` w `PLAN_PATCHED`; liczba szybkich napraw na zadanie, `REPAIR_SAME_ERROR`, naprawy kierowane do testera. Triaż LLM (`remediation_planner`: FIX_HERE / FIX_ELSEWHERE / SPEC_WRONG / NOT_FIXABLE) — dopiero gdy przebieg pokaże przypadki, których reguły nie rozstrzygają.
+
+
+---
+# §XV — 2026-11-21: Audyt XI — benchmarki 20.11 (commit `978e05b`): 1 plan z 4, a i on bez końca
+
+**Przebieg:** ollama, SML `qwen3.5:4b`, LRM `qwen3.6:35b`; 57 wywołań, 47 min. Logi: `adk/workspace/benchmarks/<zadanie>/logs/` (`events.jsonl`, `llm_interactions.jsonl`).
+
+| zadanie | wynik | rundy planu | gdzie padło |
+|---|---|---|---|
+| 01 rl_tictactoe | `PLAN_REJECTED` | 4 (3 łatki) | jeden `DOCTEST_DISCARDS_RETURN` |
+| 02 ml_anomaly | `COMPLETED_WITH_GAPS` | 2 | 11 DONE, 5 FAILED; `RUN_STOPPED` „przeplanowanie bez postępu” na `src/experiment_runner.py` |
+| 03 graph_pathfinding | `PLAN_REJECTED` | 5 | `g` w opisie zadania + blokady krytyka |
+| 04 federated | `PLAN_REJECTED` | 5 | `torch` (niezainstalowany) |
+
+## §XV.1. Plan — dlaczego 3/4 odrzucone
+
+- **P1. Planista nie zna środowiska.** `available_packages` trafia tylko do builderów (`building.py:116`); payload planisty (`planning._plan_phase`) go nie ma. 04 zaprojektowało wszystko na `torch` (`torch.nn.Module` w adnotacjach) → `PACKAGE_UNAVAILABLE` / `STUB_DOES_NOT_IMPORT` przez 5 rund.
+- **P2. Planista nie widzi istniejącego kodu (03, brownfield).** Runner wkłada `config.py` i `core.py` (`inputs.PATHFINDING_BASELINE_*`), prompt każe „przeczytać je”, ale payload planisty nie zawiera żadnego pliku workspace'u. Krytyk słusznie żądał „importuj istniejący baseline”, planista nie wiedział, że istnieje. Do tego `_build_project_hypergraph` zapisuje stuby dla **każdego** modułu z `interfaces` przez `_materialize_workspace_artifact` bez sprawdzenia, czy plik istnieje — zadeklarowanie `core.py` nadpisałoby baseline stubem. **Brownfield nie jest dziś obsługiwany; tekst promptu tego nie naprawi.**
+- **P3. Fałszywa blokada `names_outside_interfaces`.** `plan_interfaces._CODE_NAME` łapie `g(` z wzoru `f(n) = g(n) + w*h(n)` w opisie T5 jako wywołanie nieistniejącego API; blokada trwała przez wszystkie rundy 03 (planista nie miał jej jak usunąć).
+- **P4. Krytyk wymyśla wymóg z naszego promptu.** `plan_critic_guard.md:9` pisze „entrypoint (`run_experiment()` / `main()`)”; krytyk zablokował 03: „harness requires … `run_experiment` or `main`”. `_declared_call` przyjmuje dowolną nazwę. Ostatnia blokada krytyka w 03 sama sobie przeczy („…7.07, which is correct”), a przeszła `_is_proven_blocker` (sprawdza tylko obecność `where`/`problem`/`fix`). W 02 runda 1 zablokowana opinią teoretyczną („robust claim theoretically unsound”, per-channel MAD) — ~4 min LRM.
+- **P5. Komunikat doctestu bez miejsca.** `validate.py:188` (`DOCTEST_DISCARDS_RETURN [game_env.py]: env.step(4)`) nie podaje symbolu. Planista poprawił `step()`, a gołe `env.step(4)` siedziało w docstringu `get_legal_actions()`; w ostatniej łatce wpisał „Fix: use `_ = env.step(4)`” do **opisu zadania**. Plan (10 min LRM) odrzucony za jedną linię przykładu.
+- **P6. Partial fallback rozdziela zależne zmiany.** `_apply_patch_with_partial_fallback` sprawdza każdy moduł osobno: nowy moduł (04: `weights.py` → `model_weights.py` → `model_utils.py`) odpada za `ENTRYPOINT_DOES_NOT_USE`, bo zmiana `experiment.py`, która go importuje, odpada osobno (za `torch`) — i odwrotnie; w każdej rundzie.
+
+## §XV.2. Wykonanie 02 — dlaczego się nie skończył
+
+- **E1. Błąd `plots.py` naprawiany w entrypoincie.** `plots.py:20`: `Axes.boxplot(labels=…)` → `TypeError` (zainstalowany matplotlib wymaga `tick_labels`; potwierdzone lokalnie). Błąd eksperymentu dołączany jest tylko do zadania entrypointu (`verification.py:141`), a ścieżka z tracebacku odpada na filtrze `scope_paths` (`verification.py:349`) → winny `experiment_runner.py`. R3_1 i R4_1 naprawiały poprawny plik → `HARNESS_BUG_REPORTED`, `RUN_STOPPED`; rozdziały 3–5 czekały na wyniki do końca.
+- **E2. Ewolucja na śmietniku `generic`.** Kategoria błędu (`common.py:127`) to `generic`, gdy nic nie pasuje: `BEHAVIOUR_MISMATCH` nie jest w `_SPEC_FINDING`, a `_RUFF_FINDING` oczekuje formatu `-->`, podczas gdy raport ma `path:35:20: F821`. Wzorzec „3× ta sama kategoria, ≥2 zadania” złożył się z T6, R2_1 (błędny doctest **planu**, nie koder) i T11 (F821) → `AGENT_MUTATED seed_coder` z regułą „odwołuj się przez `module.CONSTANT`” (przyczyną był brak importu). Reguła została w stanie ewoluowanym. Bramka wzorca nic nie znaczy, dopóki `generic` się liczy.
+- **E3. AMEND pod literówkę.** Tester napisał `SyntheticDataset.no_std` (od `noise_std`); `plan_change_guard` dał AMEND i dodał alias `no_std` do interfejsu „to satisfy the consumers' contract”.
+- **E4. Błędny przykład w planie.** Doctest `UnivariateZScoreBaseline.predict` w planie był matematycznie zły (`[True, False]` zamiast `[True, True]`); `plan_change` naprawił go po ~4 min (mechanizm zadziałał, ale porażki naliczono koderowi — zob. E2).
+- **E5. Puste przeplanowanie.** Runda 1: 77 s LRM, 0 zadań, 6 oznaczonych „dropped”; harness poszedł dalej bez reakcji.
+- **E6. T11 `NameError: config`.** Koder 3× odwołał się do nazw bez importu (`config.`, `config_module.`, gołe stałe). Prawdopodobnie interfejs entrypointu nie importował stałych — niesprawdzone.
+
+## §XV.3. Raportowanie i repo
+
+- **R1.** `runner.py:420` liczy `py_lines` tylko z `*.py` w katalogu głównym → 02: `py_lines = 0`. `thesis_publisher.py:661` kopiuje do `code/` tylko pliki z katalogu głównego → `02/code/` **pusty**; opublikowany wynik nie zawiera kodu z `src/`.
+- **R2.** `tests/test_repository_hygiene.py` przechodzi po `viewer/node_modules` → 2 stałe porażki i pytest ~5 min zamiast ~2.
+
+## §XV.4. Wdrożono: teksty benchmarków (2026-11-21)
+
+Te same zadania, treść dopasowana do obecnego działania (`adk/benchmarks/inputs.py`; kod startowy 03 i `tasks.py` bez zmian):
+- wspólne bloki `_ENVIRONMENT` (jedyne pakiety: numpy, pandas, matplotlib, scipy, scikit-learn, seaborn, networkx, pytest; nic się nie instaluje; bez torch/tensorflow/jax/gym — obejście P1 do czasu poprawki harnessu) i `_METHOD` (entrypoint bez argumentów ze stałymi modułu i importem metody i baseline'u; funkcja `plots` bez argumentów; rozdziały; liczby jako wskaźniki do kodu lub pliku wyników);
+- 01: baseline doprecyzowany („losowo spośród legalnych ruchów”), wszystko implementowane w projekcie;
+- 02: telemetria generowana przez kod projektu, wstrzyknięte anomalie = ground truth, bez zewnętrznych danych;
+- 04: federacja symulowana w jednym procesie w numpy (np. wieloklasowa regresja logistyczna, podział etykiet Dirichletem, serwer/agregacja/straggler jako funkcje);
+- 03: opis baseline'u słowami (generator siatek, Dijkstra 8-sąsiedztwo, koszt 1/√2, zwraca koszt i liczbę rozwinięć); pytanie badawcze bez notacji `f(n) = g(n) + w*h(n)` (słownie — omija P3). **Nazw plików nie podano**: `test_layer1::test_benchmark_prompts_dictate_no_files_values_or_metrics` (§XIII) tego zabrania, a i tak nie pomogłoby (P2 — stuby nadpisałyby `core.py`). 03 pozostaje niewykonalne do poprawki U1.
+- Zachowane: nagłówki `[DOCUMENT FORMAT …]` (`detect_template_from_prompt` rozpoznaje wszystkie 4 z `is_certain=True`); brak `results.csv`, `config.py`, `core.py`, nazw metryk w tekstach.
+- Weryfikacja: pełny pytest 261/262 (+2 odznaczone testy higieny) — jedyna porażka: test §XIII na `results.csv` w tekście; po poprawce testy promptów i benchmarków (`test_layer1`, `test_environment_and_benchmarks`, `test_prompt_consistency`, `test_academic_templates`) 32/32; ruff czysty.
+
+## §XV.6. Wdrożono: karty tematu zamiast instrukcji dla harnessu (2026-11-21, decyzja użytkownika)
+
+Prompt benchmarku = to, co pisze promotor: „Temat pracy w języku polskim / … w języku angielskim / Zakres pracy” (wzór: karta tematu tej pracy dyplomowej), po polsku. Pierwsza linia zostaje: nagłówek `[DOCUMENT FORMAT …]` z typem pracy (użytkownik zawsze wie, jaki typ pisze). Usunięte bloki `_ENVIRONMENT`/`_METHOD` (instrukcje dla harnessu, nie słowa autora tematu); zostały tylko ograniczenia, które napisałby promotor (dane syntetyczne bez zewnętrznych zbiorów; w 04 „bez frameworków uczenia głębokiego”, symulacja w jednym procesie; w 03 rozbudowa istniejącego projektu i porównanie z nim samym). Tytuły = `title_pl`/`title_en` z `tasks.py`.
+- **Regresja wyłapana przed przebiegiem:** `literature_engine.arxiv_keywords` brał słowa z „Research question:” albo całego tekstu (tylko ASCII) → dla polskiej karty zapytania arXiv `temat, pracy, zyku, polskim, …`. Poprawka: jeśli jest linia „Temat pracy w języku angielskim”, słowa kluczowe pochodzą z angielskiego tytułu (np. `robust, anomaly, detection, multi-channel, physiological`); ścieżka „Research question” bez zmian. Test: `test_layer1::test_arxiv_keywords_of_a_topic_card_come_from_the_english_title`.
+- **Kod startowy 03 oczyszczony z resztek wymuszonej architektury** (pytanie użytkownika o `RESULTS_PATH`): usunięte `RESULTS_PATH` (plik wyników to kontrakt harnessu, nie projektu), `HEURISTIC_WEIGHT = 1.15` i `TRIALS = 40` (dyktowały parametry metody, którą student ma zaprojektować — §XIII), `train_and_evaluate(csv_out_path=…)` (stary punkt wejścia monolitu, parametr nieużywany, nic nie zapisywał), parametr `heuristic_weight` w `search_grid` (Dijkstra go ignorował; podpowiadał rozwiązanie), nieużywane `csv`/`Path`. Zostało to, co miałby prawdziwy istniejący projekt: `config.py` (`SEED`, `GRID_SIZE`, `OBSTACLE_DENSITY`) i `core.py` (`generate_obstacle_grid`, `search_grid` = Dijkstra 8-sąsiedztwo). Kod startowy był tylko reeksportowany przez `mocks/code_fixtures.py`; mocki nadal mają własne kopie starej architektury (dług z §X.6).
+- Weryfikacja: kod startowy uruchomiony w osobnym katalogu (siatka deterministyczna, ścieżka znaleziona, ruff czysty); szablony z promptów rozpoznane dla 4 zadań (`is_certain=True`); pełny pytest — §XV.9.
+
+## §XV.5. Propozycje napraw harnessu (do decyzji)
+
+| # | co | gdzie | dotyczy |
+|---|---|---|---|
+| U1 | kontekst planisty: `available_packages` + źródła istniejących plików workspace'u; stuby nie nadpisują istniejących, niestubowych plików | `planning._plan_phase`, `plan_spec._build_project_hypergraph` | P1, P2 |
+| U2 | kategorie: regex ruffa pod oba formaty, `BEHAVIOUR_MISMATCH` jako własna kategoria, `generic` nie liczy się do wzorca ewolucji | `common.py` | E2 |
+| U3 | winny błędu eksperymentu = najgłębsza ramka workspace'u w tracebacku, niezależnie od `scope_paths` | `verification.py` | E1 |
+| U4 | `_interface_gaps` pomija nazwy jednoliterowe (notacja matematyczna) | `plan_interfaces.py` | P3 |
+| U5 | `plan_critic_guard.md:9`: „zadeklarowana funkcja entrypointu (dowolna nazwa)” | prompt | P4 |
+| U6 | `DOCTEST_DISCARDS_RETURN` podaje symbol (`in get_legal_actions()`) | `hypergraph/validate.py` | P5 |
+| U7 | publisher i `py_lines` rekurencyjnie (z `src/`) | `thesis_publisher.py`, `runner.py` | R1 |
+| U8 | `plan_change`: bez AMEND dla nazwy, która jest literówką zadeklarowanego atrybutu | `plan_change.py` | E3 |
+| U9 | partial fallback: nowy moduł sprawdzany razem z modułami, które go importują | `plan_spec.py` | P6 |
+| U10 | higiena: wykluczyć `viewer/node_modules` | `tests/test_repository_hygiene.py` | R2 |
+
+**Pytanie projektowe:** czy niezgodność opis-zadania↔interfejs i doctesty mają blokować plan, czy po wyczerpaniu budżetu stawać się ostrzeżeniem — w 20.11 to one kończyły przebiegi, choć same nie psują wykonania.
+
+## §XV.7. Wdrożono U1–U10 i szersze środowisko (2026-11-21, decyzja użytkownika)
+
+| # | co zrobiono | gdzie |
+|---|---|---|
+| U1 | payload planisty: `available_packages` (linie importu), `existing_files` (źródła `*.py` workspace'u przed planowaniem, ≤8000 znaków/plik), `experiment_time_limit_s`; krytyk też dostaje `existing_files`; prompty planisty i krytyka opisują te pola. Stuby nie nadpisują istniejącego, niestubowego pliku; jego wierzchołek dostaje `verified` (albo `impl`, gdy celuje w niego zadanie) | `planning._existing_code`, `plan_spec._build_project_hypergraph`, `task_planner.md`, `plan_critic_guard.md` |
+| U2 | regex ruffa w formacie zwięzłym (`path:l:c: F821`) w kategorii i odciskach; `run:<Wyjątek>` z tracebacku; `BEHAVIOUR_MISMATCH` = własna kategoria `behaviour` (zostaje kategorią modelu, A10, ale nie miesza się z innymi); `SPEC_EXAMPLE_INVALID` = `spec`; `generic` → `SKIPPED_UNCLASSIFIED`, nigdy wzorzec ewolucji | `failure_kinds.py`, `repair.py` |
+| U3 | winny błędu eksperymentu = najgłębsza ramka workspace'u w tracebacku (`_traceback_culprit`), przed heurystyką ścieżek z `scope_paths` | `failure_attribution.py`, `verification.py` |
+| U4 | `_interface_gaps` pomija nazwy jednoliterowe | `plan_interfaces.py` |
+| U5 | „the function `academic_blueprint.entrypoint` declares, with **any name**” (było „`run_experiment()` / `main()`”) | `plan_critic_guard.md` |
+| U6 | `DOCTEST_DISCARDS_RETURN` podaje docstring (`in the docstring of get_legal_actions`) | `hypergraph/validate.py` |
+| U7 | publikacja kopiuje kod z podkatalogami (`code/src/...`, puste katalogi usuwane, `evolved_adk` pominięte); `py_lines` rekurencyjnie | `output_bundle.py`, `runner.py` |
+| U8 | `TEST_OUTSIDE_SPEC` na nazwie bliskiej zadeklarowanej (difflib ≥ 0,75) → bez planisty: `SPEC_KEPT` + uwaga „did you mean `noise_std`?” w historii wierzchołka | `plan_change._typos`, `agent_texts.test_name_typo` |
+| U9 | partial fallback ocenia razem **nowy** moduł i moduły łatki, które go importują / które on importuje; zmiany modułów już zaplanowanych zostają osobno (poprawka nie ginie z popsutą zmianą sąsiada — test §VIII) | `plan_interfaces._patch_groups`, `plan_patch.py` |
+| U10 | higiena pomija `node_modules`, `.nuxt` | `tests/test_repository_hygiene.py` |
+
+**Pakiety (D1: środowisko stałe w przebiegu, ale szersze):** doinstalowane torch 2.15 (CPU), gymnasium 1.4, statsmodels 0.15, sympy 1.14; dopisane do `common._CANONICAL_PACKAGES` (`import torch`, `import gymnasium as gym`, `import statsmodels.api as sm`, `import sympy`) i do `requirements.txt` (który wcześniej nie wymieniał nawet pandas/scipy/sklearn/seaborn/networkx, choć kod je zakładał). numpy/pandas bez zmian wersji.
+
+## §XV.8. Sprzeczności kod ↔ prompt ↔ zadanie (2026-11-21, prośba użytkownika)
+
+Zasada: kontrakt, który harness zakłada, ma być **egzekwowany kodem i podany w payloadzie**, nie tylko opisany w prompcie; prompt nie może zakładać niczego, czego kod nie robi (ani odwrotnie).
+
+| # | sprzeczność | skutek w 20.11 | poprawka |
+|---|---|---|---|
+| K1 | `seed_coder.md`: „numpy, scipy, pandas, scikit-learn, networkx are available” — sztywna lista obok `available_packages` w payloadzie | rozjazd po dodaniu pakietów | prompt odsyła do `available_packages` |
+| K2 | kod scala importy z `code` edycji symbolu z importami modułu (`ast_editor._merge_imports`), prompt tego nie mówi; repair_focus: „change only those symbols” | T11: 3× `NameError: config` (koder nie wiedział, jak dodać import) | prompt: import potrzebny zmienionemu kodowi idzie na górę `code` edycji |
+| K3 | eksperyment ubijany po 180 s i powtarzany po każdej zmianie kodu; zadanie i planista: „budżet dobierz sam”; żaden prompt ani payload o limicie | ryzyko timeoutów (RL, torch) | `experiment_runner.EXPERIMENT_TIMEOUT_S` = jedno źródło; `experiment_time_limit_s` w payloadzie planisty, `experiment.time_limit_s` w kontekście kodera; prompty |
+| K4 | `plots` pisany zanim są wyniki; plan nie deklaruje etykiet metod | 02: `'Ensemble'` vs `ensemble`, kolumny szerokie | prompt: nazwy metod i metryk z kolumn pliku, nigdy wpisane |
+| K5 | format `results.csv` („method,metric,value (+std_dev,n_runs), stały zestaw kolumn”) tylko w promptach; kod nic nie sprawdzał; wskaźnik `method+metric` bierze pierwszy pasujący wiersz | 02: wiersz na seed + kolumna `seed` → praca cytowałaby seed 42 jako wynik | `building._results_format_problem`: brakujące/obce kolumny i powtórzone `method+metric` = błąd eksperymentu u autora entrypointu (`agent_texts.results_format_broken`); prompty planisty, krytyka, kodera: „one row per method and metric, repetitions aggregated” |
+| K6 | docstring `_declared_vs_measured_metrics`: odchylenia nieblokujące; bramka końcowa blokowała na **każdym** ustaleniu (też „zmierzona, niezadeklarowana”); porównanie dosłowne (`F1` ≠ `f1`) | — (02 nie doszło do bramki) | blokuje tylko zadeklarowana, niezmierzona; bez rozróżniania wielkości liter |
+| K7 | `seed_tester.md`: test na stubach „must fail only with NotImplementedError”; kod dopuszcza też test przechodzący (stała) | tester unikał testów stałych | prompt zgodny z kodem |
+| K8 | `PYTHONPATH` eksperymentu zawiera `workspace/src`, `code/` i katalog entrypointu; pytest i sonda stubów — tylko korzeń; płaski `import config` z `src/` działa w eksperymencie, pada w testach | nie zaobserwowano | **nie zmieniono** (ryzyko dla publikacji pakietu z `code/`); do decyzji: jedna ścieżka importu = `module_import_path` |
+
+**Mocki łamały kontrakt, który egzekwujemy (dług §X.6):** wszystkie fixture'y (`code_fixtures.py`) pisały `results.csv` szeroko (`method,episodes,win_rate,…`) i cytowały `results.csv:baseline:win_rate`. Przeniesione na kontrakt: 3 zapisy → wiersze tidy, 4 skrypty wykresów czytają tidy, `*_INITIAL_CSV` tidy, 44 wskaźniki → `results.csv:<metoda>+<metryka>:value`; test szablonów na tym samym wskaźniku. Bez gałęzi mockowych w harnessie.
+
+## §XV.9. Porządki (2026-11-21, prośba użytkownika)
+
+- **Martwy kod:** `vulture` (min. 60%, bez `mocks`/`workspace`) znalazł tylko haki testowe (`set_llm_handler`, `set_paper_source`) i `Hypergraph.degree`/`incidence` (API hipergrafu z §X) — nic do usunięcia. Problemem nie były martwe funkcje, tylko pliki o kilku odpowiedzialnościach dociśnięte do limitu 400 linii.
+- **Podziały (bez zmiany zachowania):**
+  - `tools/building/thesis_publisher.py` 758 → 532 (renderowanie LaTeX/PDF/HTML) + **`output_bundle.py`** 244 (publikacja zadania benchmarku: ponowny przebieg, kompilacja, układ `code/ thesis/ results/ logs/`).
+  - `orchestration/common.py` 386 → 271 + **`failure_kinds.py`** 127 (odciski, kategorie, `_issue_signature`, `_collect_report_issues`).
+  - `orchestration/plan_spec.py` 400 → 238 (pętla walidacji, krytyk, budowa H) + **`plan_patch.py`** 178 (blokady statyczne, `_plan_view`, łatka i partial fallback).
+  - Importy przepisane przez AST w 11 plikach; `CODEBASE_MAP.md` zaktualizowany.
+- Weryfikacja: pełny pytest **277/277** (pierwszy raz bez porażek higieny), ruff czysty; `tests/test_audit_xv.py` — 12 testów (U1–U9, K3, K5, K6).
+
+**Otwarte:** K8 (jedna ścieżka importu); E5 (puste przeplanowanie bez reakcji); pytanie projektowe z §XV.5 (czy doctesty i niezgodność opis↔interfejs mają blokować plan); przebieg na żywo po §XV.
+
+## §XV.10. Odtworzenie logów 20.11 na nowym kodzie (2026-11-21)
+
+Plany zwrócone przez model 20.11 (`llm_interactions.jsonl`) przepuszczone przez nowe walidatory (deterministyczna część; model nie był wywoływany):
+- **01:** zostaje prawdziwe `DOCTEST_DISCARDS_RETURN`, teraz z miejscem (`in the docstring of get_legal_actions`) — planista ma co poprawić.
+- **03:** po 2. łatce blokady statyczne = 0 (wcześniej `g` do końca); o wyniku decyduje krytyk (blokady o reimplementacji Dijkstry — teraz planista widzi `existing_files`; nazwa entrypointu — usunięta z promptu; ostatnia, sama sobie przecząca — ryzyko zostaje).
+- **04:** blokady za brak torcha znikają (zainstalowany); zostaje `NameError: torch` tam, gdzie planista użył torcha w adnotacjach bez importu (błąd planu, komunikat jasny). **Nowe ryzyko:** doctest z reprezentacją tensora (`Parameter containing: tensor(...)`) → `DOCTEST_INVALID_ON_STUBS`.
+- **02:** wariant fałszywego alarmu z §XV.1 P3: nazwy bibliotek w opisach zadań (`array`, `sqrt`, `csv`).
+
+Nowe ustalenia w logach i poprawki:
+- **E7. Rozdział 2 w 02 nadpisany przez T3.** Discoverer zwrócił `section_title` wielolinijkowy (`Rozdział 2: …\n### 2.2 …`); regex dopisywania w `write_gate` go nie znalazł, `edit_document_section` zastąpił cały rozdział → 2582 znaki przeglądu z T2 utracone, oba zadania PASS. Poprawka: `doc_editor.split_section_title` (dalsze linie tytułu idą do treści) w obu ścieżkach zapisu; odtworzenie 3 zapisów z logu daje 2.1 + 2.2.
+- **P3b.** `_interface_gaps` pomija nazwy biblioteki standardowej, `math`/`random`/`statistics` i publiczne nazwy numpy (`_library_names`).
+- **P7. Planista pisał pełne implementacje w `interfaces`** (5–6 tys. tokenów odpowiedzi; literówka `self.no_std` pochodziła z ciała w planie), choć harness je wyrzuca. Prompt: „Write every body as `...` … a written body is wasted work”.
+- **P8. Kruche doctesty** (repr tablic/tensorów; 02: `array([ True, False])`). Prompt: wyniki jako zwykłe wartości Pythona (`round(float(x), 4)`, `x.shape`, `x.tolist()`, `bool(...)`).
+- Sprawdzone i odrzucone: obcięcie kontekstu (wejście 4–12 tys. tokenów przy `num_ctx` 32768; „39 tys.” w analizatorze to znaki).
+- Bez zmian (jakość modelu, nie harness): T8 — tester potraktował `generate() -> Tuple[X, y]` jak jedną tablicę, naprawy odpadły na wcięciach; błędny doctest planu w `baselines` (naprawiony przez `plan_change`); `matplotlib` 3.11 usunął `boxplot(labels=)` — model zna starsze API.
+- Testy: `test_audit_xv.py` 14; pełny pytest 279/279, ruff czysty.
+
+**Czego nie wiadomo bez przebiegu na żywo:** czy planista poprawi wskazany doctest, czy krytyk przestanie blokować opiniami, czy limit 180 s wystarczy dla torcha, ile rund napraw kosztuje egzekwowany format `results.csv`.
+
+## §XV.11. Benchmarki 21.11 (po §XV.1–10): 01 CRASHED, 02 i 03 PLAN_REJECTED (04 nie uruchomione)
+
+Każde zadanie padło na innym błędzie **harnessu** (model robił postęp):
+
+| zadanie | co się stało | przyczyna | poprawka |
+|---|---|---|---|
+| 01 | plan przeszedł kod, krytyk zgłosił 2 blokady (jedna sama sobie przeczy: „While the type hint matches the return statement…”); łatka planisty > 300 s → `TimeoutError` → **cały przebieg CRASHED** | `call_agent` loguje i rzuca dalej, wbrew komentarzowi limitu zegarowego („logged failure of one call”); timeout HTTP 300 s < limit zegarowy 600 s | `connection.call_ollama`: timeout = `HARNESS_LLM_WALL_CLOCK_LIMIT_S` (600); `PlanSpecMixin._call_planning_agent`: timeout / niedostępny model w pętli planu = runda bez łatki/werdyktu (`LLM_CALL_FAILED`), także pierwsze wywołanie planisty |
+| 01 | `names_outside_interfaces: background_researcher` | nazwa agenta w opisie zadania („Use `background_researcher` …”) | `_interface_gaps` pomija identyfikatory agentów (przyrostki ról) i `assigned_agent` |
+| 02 | 3 łatki na `ENTRYPOINT_DOES_NOT_USE`; w 3. planista dodał 4 z 5 importów, łatka **odrzucona** | jedno ustalenie z listą modułów: krótsza lista = inny tekst → „1 naprawione, 1 nowe” = brak postępu | jedno ustalenie na moduł (`ENTRYPOINT_DOES_NOT_USE`, `modules_without_interface`, `names_outside_interfaces`) |
+| 03 | 3 łatki na `PACKAGE_UNAVAILABLE core` / `STUB_DOES_NOT_IMPORT core` | planista importował istniejący baseline, ale go nie zadeklarował; sonda stubów widzi tylko `interfaces` | `plan_patch._with_existing`: istniejący moduł importowany przez interfejsy (też w doctestach, przechodnio: `core` → `config`) wchodzi do planu z **własnym źródłem**; w `_validated_plan` i każdej ścieżce łatki |
+
+**Decyzja (2026-11-21): krytyk nie odrzuca planu wykonywalnego.** Po wyczerpaniu budżetu, gdy nie ma blokad deterministycznych (kod, zadania↔interfejsy), plan idzie do budowy, a pozostałe blokady krytyka trafiają do zdarzenia `PLAN_ACCEPTED_OVER_CRITIC`. Krytyk nadal dostaje swoje rundy poprawek. Uzasadnienie: blokady deterministyczne dowodzą wykonalności; uwagi merytoryczne rozstrzyga weryfikacja i kontrolowana zmiana planu w trakcie budowy; 01 zostało odrzucone opinią, która sama sobie przeczyła. Zmienione testy: `test_audit_vii::…goes_on_with_the_objection_logged`, `test_plan_spec_validation::test_growing_critic_blockers…` (liczba rund bez zmian).
+
+**Odtworzenie pętli planu na nowym kodzie z odpowiedziami modelu z logów** (`_validated_plan` z podstawionym `_call_agent`, odpowiedzi w tej samej kolejności; brak odpowiedzi = porażka wywołania):
+- 01 (21.11): PASS (plan zaakceptowany ponad krytykiem; wcześniej CRASHED).
+- 03 (21.11): PASS po 1. łatce (`core.py`, `config.py` dołączone automatycznie); krytyk nie był w logu (w przebiegu nie doszło do niego).
+- 04 (odpowiedzi z 20.11): PASS po 2. łatce (torch zainstalowany, grupowanie nowych modułów).
+- 02 (21.11): postęp liczony (5 → 1 brakujący import), ale log kończy się po 4 wywołaniach; w przebiegu zostają 2 łatki budżetu — wynik zależy od modelu.
+
+Testy: `test_audit_xv.py` 18; pełny pytest 283/283; ruff czysty.
+
+## §XV.12. Benchmarki 21.11 po południu (po §XV.11): **3/3 plany przeszły**, wszystkie padły na budowie (04 nie uruchomione)
+
+Pierwszy przebieg, w którym walidacja planu nie była przeszkodą: 01 po 3 łatkach, 02 ponad krytykiem (`PLAN_ACCEPTED_OVER_CRITIC`), 03 po 1 łatce (krytyk: HTTP 500, plan bez werdyktu). Wniosek użytkownika „planista jest za słaby, trzeba go podzielić” **nie wynika z tych logów**: ściana przesunęła się do budowy. Porażki budowy (18 `TASK_FAILED`) według przyczyny:
+
+| klasa | gdzie | przyczyna | poprawka |
+|---|---|---|---|
+| zmyślony klucz cytowania | 03: 4 z 9 porażek (T1, T6, T9, T10) | writer cytuje klasykę spoza `.bib` (`dijkstra1959`, `wah2016heuristics`), choć dostaje `available_citation_keys`; **tekst nieudanego zadania zostaje w pliku**, więc każda kolejna sekcja tego samego `paper_ieee.tex` dziedziczy błędy (2 → 9 → 17 → 21) | `RoutingMixin._known_citations_only`: przy zapisie sekcji (writer i przegląd literatury) klucz, którego nie ma w `.bib`, jest usuwany (`\cite{a,zly}` → `\cite{a}`, sam zły → nic), zdarzenie `UNKNOWN_CITATIONS_DROPPED` |
+| brakujący import | 01 T9 (`matplotlib`), 02 T10 (`plt`, `src`), T11 (`np`), 03 T7 (`pd`, `plot_results`), T5 tester (`np`) | SML zapomina importów; ruff F821 trzy razy z rzędu, **bez podpowiedzi** (decyzja D2 z 14.11 przewidywała podpowiedź, nie została zrobiona) | najpierw automatyczne dopisywanie importu w bramce zapisu — **cofnięte tego samego dnia**, bo łamało decyzję użytkownika D2 (2026-11-14: „Celowanej naprawy F821 nie ma”) i D3. Zamiast tego to, co D2 przewidywała: `orchestration/import_hints.importable_names` (pakiety kanoniczne, `matplotlib`/`mpl`, moduły planu po ścieżce, publiczne nazwy dokładnie jednego innego modułu σ) → `findings.repair_findings(..., hints)` dopisuje do ustalenia F821 „add the import line `…` at the top of the file”; harness niczego nie wstawia |
+| „a function still only raises NotImplementedError” | 01 T3 (3× ten sam błąd), 02 T4, 03 T4 | komunikat nie mówił, **która** funkcja | `oracles.stub_functions` → `NOT_IMPLEMENTED: still without an implementation (only a stub body): Env.reset, helper` |
+| doctest planu a zapis liczby | 03 T2 (`expected 0.0, got 0`) | porównanie tekstowe doctestu | `Checker` w sondzie zachowania: liczby (też w krotkach/listach) z tolerancją `rel 1e-3`, `np.float64(x)`/`np.True_` jak zwykłe wartości |
+| przykład wywołuje metodę, której interfejs nie ma | 03 T4 (`algo.neighbors(3, 3)`; bramka zapisu odrzucała dodanie `neighbors`) | klasyfikowane jako `BEHAVIOUR_MISMATCH` (wina kodera), choć żadna implementacja nie mogła przejść | `AttributeError` na wywołaniu `.nazwa(` spoza σ → `SPEC_EXAMPLE_INVALID` (zmiana planu, nie kodu) |
+| test czyta wynik funkcji | 02 T7, R1_2 (`get_ground_truth_mask.shape`, 4 odrzucenia) | `_test_diff` traktował wynik **funkcji** jak obiekt klasy | `TEST_OUTSIDE_SPEC` tylko dla obiektów klas planu |
+| odpowiedź nie-JSON | 01 T4_FIX1 (rozumowanie wewnątrz kodu, 33 tys. znaków, `length`), 02 T4 (zerwane połączenie) | model dostawał „fields ['error', 'issues', 'raw_response'] match no allowed shape” — pola, których nie pisał | `texts.unknown_answer_shape`: „not valid JSON (cut off…). Return a shorter answer: only the symbols you change” |
+
+Sprawdzone i odrzucone: systemowe obcięcie kontekstu (1 wywołanie z 4096 tokenami, `done_reason` pusty = zerwane połączenie; pozostałe ≤ 17,5 tys. przy `num_ctx` 32768).
+
+Bez zmian (jakość modelu albo planu): błędne wartości w doctestach planu (03 `octile_distance((0,0),(3,4))` = 5.8284 w planie; poprawnie 5.2426; koder dał 5.657) — po tej rundzie trafiają do `plan_change` tylko jako `BEHAVIOUR_MISMATCH`; niespójność kodera (`self.discount_factor` vs `self.gamma`, 01 T4); kształt maski w 02 (`(10,)` zamiast `(2, 5)`); `TEST_OUTSIDE_SPEC` na atrybutach instancji klas (`ZScoreBaseline.threshold`) — kontrakt, nie fałszywy alarm.
+
+**Podział planisty — rekomendacja: nie teraz.** Plany przechodzą; pozostała słabość planu to błędne liczby w doctestach, czego podział na mniejsze wywołania nie usuwa (LRM i tak liczy „w głowie”). Kandydat na później: wartości oczekiwane doctestów liczone przez wykonanie referencji, nie pisane przez model.
+
+Testy: `test_audit_xv.py` 25 (7 nowych); pełny pytest 290/290; ruff czysty.
+
+# §XVI — 2026-11-21: Planowanie etapami (decyzja użytkownika)
+
+**Prośba:** „podziel planowanie na mniejsze modele i do każdego dopisz odpowiedniego krytyka, na koniec zrób fuzję i niech będzie główny krytyk […] czego się obawiam to że główny krytyk końcowy się wypierdoli i co? wracamy, do którego etapu? to musi jakoś stopniowo narastać […] rozwijamy ten sam plan etapami”. Wcześniej użytkownik odrzucił trzy propozycje automatyzacji budowy (obudowa eksperymentu, testy z doctestów, doctesty jako własności) jako zbyt ograniczające.
+
+**Stan przed:** jedno wywołanie `task_planner` pisało wszystko naraz (moduły z pełnymi interfejsami i doctestami, 15–17 zadań z opisami, metryki, rozdziały); `_validated_plan` sprawdzał całość kodem, krytyk oceniał całość, a każda poprawka była łatką na całym planie (częściowe przyjmowanie, grupowanie modułów). Na 21.11: 01 ~25 min planowania w 4 rundach, 02 ~31 min w 6 rundach (przyjęty ponad krytykiem), 04 w trzeciej rundzie po >10 min; krytyk co rundę znajdował nowe zastrzeżenia; część blokad dotyczyła zadań pisanych przez planistę (nazwy w opisach, brak `assigned_agent`, nieznany agent).
+
+## §XVI.1. Etapy
+
+| etap | autor | sprawdzenie kodem | krytyk | wynik |
+|---|---|---|---|---|
+| 1. szkic | `plan_outline.md` | `plan_outline.outline_violations`: ścieżki modułów, duplikaty, zależności istnieją i bez cykli, `entrypoint`/`plots` są w `provides` swojego modułu, eksperyment sięga (przez `depends_on`) każdego modułu poza wykresami, metryki i rozdziały przy pracy pisemnej | `outline_critic_guard.md` (eksperyment odpowiada na tezę, obietnice wystarczają odbiorcom, jedna odpowiedzialność w jednym miejscu, zakres) | moduły (`file`, `purpose`, `depends_on`, `provides`), `entrypoint`, `plots`, `academic_blueprint` |
+| 2. interfejsy | `plan_module.md`, po jednym module, zależności najpierw, entrypoint ostatni | `_module_problems`: `code_violations` na tle zaakceptowanych interfejsów (winowajca = ten moduł), wszystkie obietnice zadeklarowane, nazwy importowane już przez odbiorców zostają, rozszerzenie istniejącego kodu nie gubi jego nazw | `module_critic_guard.md` (realizuje cel, pasuje do zależności, służy odbiorcom; doctesty tylko jako ostrzeżenia) | źródło interfejsu; zaakceptowany = zamrożony |
+| 3. zadania | kod: `plan_tasks.planned_tasks` | — | — | research wg typu pracy → rozdziały bez wyników → moduł + jego testy (moduł z logiką poza funkcjami wołanymi przez harness) w kolejności zależności → rozdziały o wynikach |
+| 4. fuzja | — | `code_violations` na całym planie | `plan_critic_guard.md` (całość; zadania nigdy nie są problemem) | plan w tym samym kształcie co dotąd (`tasks`, `interfaces`, `academic_blueprint`) → `_build_project_hypergraph` |
+
+## §XVI.2. „Krytyk główny się wywali — do którego etapu wracamy?”
+
+Do żadnego w całości. Uwaga musi wskazać miejsce (`where`), a `plan_stages._route` kieruje ją tylko do tej części:
+- **moduł** (`src/x.py[:symbol]`) → ten moduł dostaje swoją poprzednią wersję i uwagę (`PLAN_MODULE_REOPENED`), przechodzi kod i swojego krytyka; moduły zależne są sprawdzane kodem i otwierane ponownie tylko, gdy zmiana je zepsuła;
+- **pole szkicu** (`academic_blueprint.*`, `entrypoint`, `plots`, `modules`) → rewizja szkicu z uwagą; po niej ponownie projektowane są tylko moduły, których wpis się zmienił (`changed_modules`, `PLAN_OUTLINE_REVISED`), usunięte znikają, reszta zostaje zaakceptowana;
+- naruszenie kodu z fuzji z winowajcą → ten moduł; bez winowajcy → szkic.
+
+Zabezpieczenia przed pętlą: `OUTLINE_ROUNDS` = `MODULE_ROUNDS` = 3 odpowiedzi na etap, krytyk szkicu może zablokować 2 razy, krytyk modułu raz, krytyk główny `FINAL_ROUNDS` = 2 rundy odsyłania, potem plan, który przechodzi kod, idzie dalej z zastrzeżeniami w logu (`PLAN_ACCEPTED_OVER_CRITIC`, decyzja §XV.11). Moduł, który nie zbiega mimo poprawek, wysyła raz (`ESCALATIONS` = 1) swoje problemy do szkicu (`module_cannot_settle`); dopiero gdy i to nie pomaga — `PLAN_REJECTED`. Moduł, któremu brakuje czegoś w zaakceptowanej zależności, zwraca `needs`; zależność jest rozszerzana pierwsza, potem moduł jest pytany znowu (`NEEDS_BUDGET` = 2 na plan).
+
+## §XVI.3. Istniejący kod (brownfield)
+
+Moduł z `existing_files`, który w szkicu obiecuje tylko to, co jego źródło już definiuje (σ: stałe, funkcje, klasy, metody), zostaje bez projektu i bez zadania (`kept_as_is`). Obiecujący więcej jest rozszerzany: etap 2 startuje od jego źródła, a utrata którejkolwiek istniejącej nazwy jest problemem (`module_drops_existing`); dostaje zadanie i stan `impl` jak dotąd.
+
+## §XVI.4. Usunięte
+
+`plan_spec._validated_plan` i budżety łatek, `plan_patch._apply_patch`/`_apply_patch_with_partial_fallback`/`_static_blockers`/`_plan_view` (z pliku zostało `_with_existing` i `_entrypoint` → `plan_existing.py`), `plan_interfaces._interface_gaps`/`_patch_groups`/`_library_names`/`_AGENT_ID` (opisy zadań pisze kod), teksty `planner_patch_feedback`, `PATCH_CHANGED_NOTHING`, `PLANNER_NO_TASKS`, `PLAN_WITHOUT_*`, `modules_without_interface`, `names_outside_interfaces`; w `planning.py` refleksyjna ewolucja i mutacja W4 planisty przy pustej liście zadań (zadania nie mogą być puste). `task_planner.md` zostaje tylko do przeplanowania nieudanych części (`repair_dossier`); wycięte z niego opisy pętli łatek i krytyka. Mocki: `custom_tasks` i `FEDERATED_CUSTOM_TASKS` (kolejka jest wyprowadzana). Nowe wymaganie: metryki w szkicu przy pracy pisemnej (wcześniej tylko prompt) — scenariusze mocków dostały metryki, które faktycznie mierzą.
+
+## §XVI.5. Pliki
+
+Nowe: `orchestration/plan_stages.py` (331 linii), `plan_outline.py`, `plan_tasks.py`, `import_hints.py`, `mocks/staged.py`; prompty `plan_outline.md`, `outline_critic_guard.md`, `plan_module.md`, `module_critic_guard.md`; `plan_critic_guard.md` przepisany na krytyka głównego (wejście: szkic + interfejsy, kierowanie po `where`). `plan_spec.py`: wspólny czytnik werdyktów `_critic_review` (blokada tylko z celem, problemem i poprawką; `doctest` nigdy), `plan_targets`. Zdarzenia: `PLAN_OUTLINE_CHECKED/ACCEPTED/REVISED/KEPT`, `PLAN_MODULE_CHECKED/ACCEPTED/REOPENED/NEEDS`, `PLAN_FUSED`; `PLAN_CHECKED` = runda fuzji. Konsola: `[PLAN 1/4: SZKIC]`, `[PLAN 2/4: INTERFEJS <moduł>]`, `[PLAN 3/4: ZADANIA]`, `[PLAN 4/4: KRYTYK GŁÓWNY]`. Viewer: `shared/utils/timeline/planStages.ts` (wpis na część: „Szkic planu”, „Rewizja szkicu”, „Interfejs <moduł>”, „Plan złożony”; wywołania autorów i krytyków liczone do swojej części), `viewer/ARCHITECTURE.md`.
+
+## §XVI.6. Weryfikacja
+
+- Benchmarki 01–04 na symulowanych agentach: wszystkie `COMPLETED`; przebieg wad planu: zbędny moduł w szkicu → poprawka szkicu (kod); blokada krytyka głównego na `academic_blueprint` → rewizja szkicu bez ponownego projektowania żadnego modułu.
+- `tests/test_plan_stages.py` (18): sprawdzenia szkicu, kolejność, poprawka tylko jednego modułu, krytyk modułu, `needs`, eskalacja, timeout = przegrana runda, kierowanie uwag krytyka głównego do modułu / szkicu, rewizja otwierająca tylko zmienione moduły, plan po rundach krytyka, ostrzeżenia zamiast nieudowodnionych blokad, kod przed krytykiem, nieczytelny werdykt, zadania, istniejący kod zachowany / rozszerzany.
+- Przepisane: A3 (`test_audit_vi`), e2e (`staged_answer`), `test_architectural_phases` (pusty szkic wraca do autora zamiast pustej listy zadań), `test_layer1`, `test_academic_templates`, `test_prompt_consistency` (krytycy nie pytają o zadania; każdy etap wymaga miejsca), `test_environment_and_benchmarks`; scenariusze w `test_layer4_and_orchestrator` dostały własne workspace'y (na wspólnym drugi przebieg słusznie zachowywał kod pierwszego).
+- Viewer: `bun test` 24/24 (w tym nowy test etapów; test prawdziwego przebiegu uniezależniony od jego wyniku), `eslint` czysty.
+- Pełny pytest 286/286 (mniej niż 290: usunięte testy pętli łatek i luk opis↔interfejs, dodane testy etapów); ruff czysty.
+
+**Nie wiadomo bez przebiegu na żywo:** czy LRM trzyma się obietnic szkicu w interfejsach, ile rund kosztują krytycy etapów, czy całe planowanie jest krótsze niż 13–31 min.
+
+## §XVI.7. Przegląd wdrożonego planowania (2026-11-21, na prośbę użytkownika: kod, prompty, mocki, dług)
+
+Przegląd kodu etapów, wszystkich siedmiu promptów planowania (porównanie z ładunkami, które kod faktycznie wysyła), mocków i zależności. Znalezione i naprawione:
+
+| # | znalezisko | skutek | poprawka |
+|---|---|---|---|
+| 1 | **dziesięć wywołań modelu bez osłony przed timeoutem** (`_call_agent` w budowie, auditorach, ewolucji, naprawach, `plan_change`, `fragment_replan`); `call_agent` łapał wyjątek, logował i **rzucał dalej**, wbrew własnemu komentarzowi | jedno wolne wywołanie kończyło cały przebieg (01, 21.11 — „CRASHED”); osłona z §XV.11 działała tylko w planowaniu | `core.llm.call_agent`: `TimeoutError`/`OSError` → `{"status": "error", "error", "output": {}}` po `fail_call`; wywołujący (`["output"]` + `.get`) znoszą pusty wynik; `_call_planning_agent` bez własnego `try`; błąd programistyczny dalej leci |
+| 2 | `fragment_replan` wołał `task_planner` bezpośrednio | j.w. dla przeplanowania | idzie przez `_call_planning_agent`; ładunek dostał `available_packages` (reguła „tylko dostępne pakiety” w prompcie nie miała pokrycia w danych) |
+| 3 | **`task_planner.md` miał ~140 linii o pisaniu całego planu**, pętli łatek i krytyku, których po §XVI nie ma — a służył tylko przeplanowaniu | model dostawał sprzeczne polecenia (`current_plan` jako plan do łatania vs `repair_dossier`) | przepisany na zwarty prompt przeplanowania: wejścia, diagnoza z `history`, reguły interfejsu (te same co `plan_module.md`), wyjście `tasks`/`interfaces`/`gaps` |
+| 4 | **rozdziały o metodzie szły przed kodem** (podział tylko po `RESULTS_WORDS`: wyniki po, reszta przed) | pisarz rozdziału 3–4 nie miał jeszcze symboli do cytowania (`may_cite` puste); wcześniej planista stawiał je po kodzie (Increment 2) | `plan_tasks._NEEDS_NO_CODE`: przed kodem tylko wstęp/cel/literatura/stan wiedzy; reszta po kodzie |
+| 5 | moduł, który zgłosił `needs`, po rozszerzeniu zależności **tracił własny szkic** i projektował od zera, nie wiedząc, o co prosił | zbędna runda i utrata pracy | `_settle` pamięta szkic (`drafts`) i oddaje go jako `previous_source` z `needs_granted` |
+| 6 | istniejący moduł wymieniony tylko jako zależność nie był pokazywany autorowi modułu | autor nie widział API, na którym ma budować (03) | `dependencies` zawiera też `existing` |
+| 7 | `plan_outline.md` nie opisywał `include_docs` ani prośby wywołującego o specjalistę; `plan_module.md` nie wymieniał `user_prompt` | model czytał te wejścia „na ślepo” | dopisane; test `test_every_prompt_names_every_input_the_code_sends` pilnuje, żeby każdy klucz ładunku był w prompcie agenta |
+| 8 | `missing_agent_specialization` podane przez wywołującego było ignorowane przy zadaniach wyprowadzonych (specjalista powstawał, nikt go nie używał) | `AGENT_CREATED` bez skutku | `_fused` bierze je ze szkicu albo z ładunku; tylko gdy Layer 4 może go stworzyć (inaczej zadania zostałyby na nieistniejącym agencie) |
+| 9 | odpowiedzi modelu inne niż idealny JSON: `depends_on: "a.py"` (łańcuch → iterowanie po znakach!), `modules` jako słownik, `source` w płocie ``` albo jako jedna linia z `\n` | fałszywe zależności `a`, `.`, `p`, `y`; moduły odrzucane przez parser | `plan_outline._strings`, `outline_of` przyjmuje słownik, `plan_stages._module_source` zdejmuje płot i normalizuje `\n` (jak bramka zapisu) |
+| 10 | konsola: „Odpowiedź z polami: modules, …” dla agentów etapów | brak podglądu decyzji | `summarize_agent_decision`: `moduły: N`, `interfejs: N linii` |
+| 11 | `scripts/analyze_run.py` liczył agentów etapów jako „first build” | fałszywa statystyka pracy | `_PLANNING_AGENTS` rozszerzony |
+| 12 | mocki ćwiczyły etap interfejsów tylko ścieżką „bez wad” | brak pokrycia korekty modułu i krytyka modułu w benchmarku | nowe wady `module_misses_promise` (pierwszy interfejs modułu z entrypointem bez obiecanej funkcji) i `module_critic_blocks_once`; asercje w `test_benchmark_runner_single_task_in_isolated_tmp` |
+| 13 | teksty/komentarze o usuniętych mechanizmach (`_validated_plan`, „plan_patch”, „planner” w opisie krytyka) | mylące | poprawione |
+
+Sprawdzone i bez zmian: pętle mają budżety i kończą się (`_settle` — `needs` ≤ 2, eskalacja ≤ 1, fuzja ≤ 2 rundy); nie ma martwych tekstów w `agent_texts.py` ani nieużywanych funkcji w nowych modułach; zdarzenia czytają viewer i analizator; plik ≤ 400 linii (`plan_stages.py` 352).
+
+**Koszt wywołań (do obserwacji na żywo):** każdy moduł to autor + krytyk (LRM), więc plan z n modułami to ≈ 2n + 5 wywołań LRM zamiast dotychczasowych 2–12 długich. Krótsze, ale nie ma gwarancji, że całość jest szybsza; stałe `MODULE_CRITIC_ROUNDS`, `OUTLINE_CRITIC_ROUNDS` w `plan_stages.py` pozwalają zmniejszyć liczbę rund krytyka, jeśli czas planowania urośnie.

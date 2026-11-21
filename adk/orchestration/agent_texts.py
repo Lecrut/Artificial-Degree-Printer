@@ -10,7 +10,7 @@ from typing import Any
 
 
 # --- builder exceptions and write-gate rejections ------------------------------------------------------------------
-# A failure that is a rejected answer or a builder exception never feeds evolution (common._issue_category): the
+# A failure that is a rejected answer or a builder exception never feeds evolution (failure_kinds._issue_category): the
 # gate already returned the exact reason to the agent. The pattern matches the messages below.
 GATE_REJECTION = re.compile(
     r"raised an exception|write rejected|symbol edits rejected|nothing from this answer was saved|was not saved"
@@ -80,10 +80,9 @@ def tests_belong_to_tester(files: list[str]) -> str:
 
 
 def unknown_answer_shape(node_path: str, carried: list[str], schema: Any) -> str:
-    return (
-        f"The answer for '{node_path}' was not saved: the fields {carried} match no allowed shape. Allowed: {schema}. "
-        "Return files in 'files' as a list of {'filename', 'content'}."
-    )
+    if "raw_response" in carried:  # not JSON at all: cut off, or reasoning inside a code string (2026-11-21, 01/02)
+        return f"The answer for '{node_path}' was not saved: it is not valid JSON (cut off or an unterminated string). Return a shorter answer: only the symbols you change, in 'ast_edits', with no reasoning inside the code."
+    return f"The answer for '{node_path}' was not saved: the fields {carried} match no allowed shape. Allowed: {schema}. Return files in 'files' as a list of {{'filename', 'content'}}."
 
 
 RETRY_INSTRUCTION = (
@@ -91,6 +90,7 @@ RETRY_INSTRUCTION = (
     "return the corrected answer in the same format."
 )
 SKELETON_SUMMARY = "Skeleton generated from the plan's interfaces."
+IMPORT_HINT = " -- add the import line `{}` at the top of the file"  # D2: the one line from the source of truth
 EXPERIMENT_NO_RESULTS = "The experiment did not produce results.csv"
 
 
@@ -171,6 +171,10 @@ def test_contradicts_verified_module(module: str) -> str:
     )
 
 
+def test_name_typo(typos: list[str]) -> str:
+    return f"The test reads names the interface does not have: {'; '.join(typos)}. Use the declared names."
+
+
 def previous_attempt_failed(summary: str, node_id: str, node_file: str) -> str:
     return f"Previous attempt failed: {summary}. Do this: fix node {node_id} ({node_file}) and remove the errors."
 
@@ -190,6 +194,17 @@ def shown_of(shown: int, total: int) -> str:
 
 def clipped(chars: int) -> str:
     return f"\n[clipped {chars} characters; the full text is in logs/]"
+
+
+def results_format_broken(missing: list[str], extra: list[str], repeated: list[str]) -> str:
+    parts = [f"lacks the columns {', '.join(missing)}"] if missing else []
+    parts += [f"has columns outside the contract: {', '.join(extra)}"] if extra else []
+    parts += [f"has several rows for {', '.join(repeated[:5])}"] if repeated else []
+    return (
+        f"results.csv {'; '.join(parts)}. The file has exactly the columns method,metric,value (optional "
+        "std_dev,n_runs) and one row per method and metric: aggregate the repetitions into that row (value = mean, "
+        "std_dev, n_runs) instead of writing a row per run."
+    )
 
 
 def metric_not_measured(metric: str) -> str:
@@ -217,12 +232,6 @@ def node_task(node_id: str) -> str:
     return f"Work on node {node_id}"
 
 
-PLANNER_NO_TASKS = (
-    "ERROR: the previous answer had no task list in the field 'tasks'. Put the 'tasks' array as the first key of the "
-    "JSON, with at least 3 increments (vertical feature slices): code, unit tests and the thesis text."
-)
-
-
 def spec_breach(violations: list[str], refusals: list[str]) -> str:
     lines = violations + refusals
     return (
@@ -238,78 +247,79 @@ def spec_change_refused(module: str, user: str, names: list[str]) -> str:
     return f"{module}: cannot remove {', '.join(names)} — {user} is planned to use them"
 
 
-def _place(problem: str) -> str:
-    match = re.search(r"\[([^\]]+)\]", problem)
-    return match.group(1) if match else ""
-
-
-def planner_patch_feedback(
-    blockers: list[str], rejected_patch: list[str], warnings: list[str] | None = None
-) -> str:
-    """Feedback on the plan in `current_plan`: blockers (must fix) separated from warnings (optional), plus why any
-    previous patch (or module in it) was not applied."""
-    text = (
-        "The harness imported every interface of your plan (`current_plan`) as a stub, ran the doctests up to the "
-        "first call into a stub, and the plan critic reviewed the plan: it has blocking issues that must be fixed. "
-        "Correct `current_plan`, do not write a new plan. Return a patch with only what you change: `interfaces` with "
-        "the full new source of each module you change or add, `remove_interfaces` with the paths of modules to drop, "
-        "`entrypoint` if it changes, `academic_blueprint` with only the fields that change, and `tasks` as a dict "
-        "mapping only the changed `task_id` to its updated fields (do not touch unrelated tasks; to add or remove a task, return the whole list instead). "
-        "Everything you do not return stays as it is.\n"
-        "A blocker may list `Change together`: the other places of the plan its fix touches. Apply the fix and every "
-        "listed change in this same patch, so the plan stays consistent. Code you add or change follows the same rules "
-        "as the rest of the plan: deterministic doctests whose expected output follows from the signatures, and only "
-        "names the interfaces declare.\n"
-        "BLOCKERS (must fix — the plan cannot proceed until resolved):\n- "
-        + "\n- ".join(sorted(blockers, key=_place))
-    )
-    if warnings:
-        text += (
-            "\nWARNINGS (non-blocking suggestions — address only if trivial; do NOT rewrite working modules for these):\n- "
-            + "\n- ".join(sorted(warnings, key=_place))
-        )
-    if rejected_patch:
-        text += (
-            "\nYour previous patch (or part of it) was NOT applied because it introduced new problems:\n- "
-            + "\n- ".join(rejected_patch)
-        )
-    return text
-
-
-PATCH_CHANGED_NOTHING = "it changed nothing in `current_plan` (return only the parts you change, in the patch fields)"
-
-
 def critic_finding(where: str, problem: str, fix: str, affects: list[str] | None = None) -> str:
-    """One critic issue for the planner; `affects` = the other places its fix must change together (§XII P1)."""
+    """One critic issue for the author of the part it is about; `affects` = the other places its fix must change together (§XII P1)."""
     text = f"PLAN_CRITIC{f' [{where}]' if where else ''}: {problem}" + (f" Fix: {fix}" if fix else "")
     return text + (f" Change together: {'; '.join(affects)}." if affects else "")
 
 
-PLAN_WITHOUT_INTERFACES = (
-    "The plan has no 'interfaces': every code module of the project needs its interface (signatures, docstrings, "
-    "constants) as Python source before any task can run."
+# Planning in stages (§XVI): what the author of each stage is told. `[place]` routes a finding to the stage it is about.
+OUTLINE_NO_MODULES = "OUTLINE [modules]: the outline lists no code modules; list every module with `file`, `purpose`, `depends_on`, `provides`."
+OUTLINE_NO_METRICS = "OUTLINE [academic_blueprint.metrics]: declare the metrics the experiment reports in results.csv."
+OUTLINE_NO_CHAPTERS = (
+    "OUTLINE [academic_blueprint.planned_chapters]: the thesis has the chapters you plan, with `index`, `title` and "
+    "`focus` for each; the harness does not invent a table of contents."
 )
-PLAN_WITHOUT_TASKS = "The plan has no tasks."
-PLAN_WITHOUT_CHAPTERS = (
-    "The plan declares no `planned_chapters` in `academic_blueprint`: the thesis has the chapters you plan, with "
-    "`index`, `title` and `focus` for each; the harness does not invent a table of contents."
-)
-PLAN_WITHOUT_PLOTS = (
-    "The plan declares no `plots` in `academic_blueprint`: every experiment produces figures. Declare "
-    "`<path>.py:<function>` of one of your modules; the harness calls it without arguments after the experiment, "
-    "it reads `results.csv` and writes the figures into `figures/`."
-)
+MODULE_NO_SOURCE = "MODULE: the answer had no `source` (the module's interface as Python source)."
 
 
-def modules_without_interface(modules: list[str]) -> str:
-    return f"No interface for the modules the tasks target: {', '.join(modules)}."
+def outline_bad_file(rel: str) -> str:
+    return f"OUTLINE [{rel}]: not a code module path (`<path>.py`, not a test file; the harness plans the tests)."
 
 
-def names_outside_interfaces(names: list[str]) -> str:
+def outline_duplicate(rel: str) -> str:
+    return f"OUTLINE [{rel}]: listed more than once; list each module once."
+
+
+def outline_unknown_dependency(rel: str, dep: str) -> str:
+    return f"OUTLINE [{rel}]: depends on {dep}, which is neither in `modules` nor an existing file."
+
+
+def module_drops_existing(rel: str, names: list[str]) -> str:
+    return f"MODULE [{rel}]: the existing code defines {', '.join(names)}; an extension keeps them with their signatures."
+
+
+def outline_cycle(rels: list[str]) -> str:
+    return f"OUTLINE [{', '.join(rels)}]: these modules depend on each other in a cycle; dependencies must form a hierarchy."
+
+
+def outline_declared_call(field: str, value: str, problem: str) -> str:
+    return f"OUTLINE [{field}]: `{value}` {problem}; it is a function in the `provides` of a planned module, called without arguments."
+
+
+def outline_unreached(rel: str, entry: str) -> str:
     return (
-        f"Task descriptions use names that 'interfaces' does not define: {', '.join(names)}. "
-        "Add them to the interfaces or use the interface names in the descriptions."
+        f"OUTLINE [{rel}]: the experiment ({entry}) never depends on it, directly or through other modules. The experiment "
+        "runs every planned module except the figures module: add it to the `depends_on` of a module the experiment uses, or drop it."
     )
+
+
+def module_misses_provides(rel: str, names: list[str]) -> str:
+    return f"MODULE [{rel}]: the outline promises {', '.join(names)} from this module (`provides`); the interface does not declare them."
+
+
+def module_breaks_consumer(rel: str, consumer: str, names: list[str]) -> str:
+    return f"MODULE [{rel}]: {consumer} already imports {', '.join(names)} from this module; keep them with their signatures."
+
+
+def module_reopened(rel: str, reasons: list[str]) -> list[str]:
+    return [f"The accepted interface of {rel} has to change:", *reasons]
+
+
+def outline_changed(rel: str) -> str:
+    return f"OUTLINE [{rel}]: the outline changed this module (purpose, dependencies or provides); adapt the interface to it."
+
+
+def dependency_needs(consumer: str, need: str) -> str:
+    return f"MODULE: {consumer}, which depends on this module, needs: {need}"
+
+
+def needs_granted(deps: list[str]) -> str:
+    return f"Your request was met: {', '.join(deps)} now declares what you asked for. Finish your interface with it."
+
+
+def module_cannot_settle(rel: str, problems: list[str]) -> str:
+    return f"OUTLINE [{rel}]: this module could not be designed as outlined; its last problems: " + " | ".join(problems[:4])
 
 
 # --- tasks rebuilt from the factual audit (recovery) -----------------------------------------------------------------

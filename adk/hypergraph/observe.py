@@ -126,7 +126,10 @@ def _test_diff(rel: str, seen: dict[str, Any], h: Hypergraph) -> list[Violation]
     outside = sorted({
         f"{cls}.{attr}"
         for producer, cls, attr in seen.get("attrs_used", [])
-        if f"I:{producer}" in h.edges and f"{cls}.{attr}" not in h.edges[f"I:{producer}"].spec.get("symbols", {})
+        # only objects of a planned class: the result of a function (`mask = make_mask(); mask.shape`) is no API of
+        # the plan (2026-11-21, 02: `get_ground_truth_mask.shape` rejected the tester four times)
+        if f"I:{producer}" in h.edges and h.edges[f"I:{producer}"].spec.get("symbols", {}).get(cls, {}).get("kind") == "class"
+        and f"{cls}.{attr}" not in h.edges[f"I:{producer}"].spec.get("symbols", {})
     })
     if not outside:
         return []

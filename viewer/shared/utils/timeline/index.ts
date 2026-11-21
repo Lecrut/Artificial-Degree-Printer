@@ -3,13 +3,14 @@ import type { EntryStatus, PhaseId, PhaseSummary, RunTimeline, TimelineEntry } f
 import { newBuilder, type Handler } from './builder'
 import { miscHandlers } from './misc'
 import { planCall, planHandlers } from './plan'
+import { stageCall, stageHandlers } from './planStages'
 import { taskHandlers } from './tasks'
 
 export { isPlanStep } from './plan'
 
 const PHASES: PhaseId[] = ['planning', 'building', 'repairs', 'replans', 'end']
 
-const HANDLERS: Record<string, Handler> = { ...planHandlers, ...taskHandlers, ...miscHandlers }
+const HANDLERS: Record<string, Handler> = { ...planHandlers, ...stageHandlers, ...taskHandlers, ...miscHandlers }
 
 function phaseStatus(entries: TimelineEntry[]): EntryStatus {
   if (entries.some(e => e.status === 'running')) return 'running'
@@ -29,7 +30,7 @@ function summarizePhases(entries: TimelineEntry[]): PhaseSummary[] {
 export function buildTimeline(events: RunEvent[]): RunTimeline {
   const b = newBuilder()
   for (const event of events) {
-    if (event.event.startsWith('LLM_CALL_') && planCall(b, event)) continue
+    if (event.event.startsWith('LLM_CALL_') && (planCall(b, event) || stageCall(b, event))) continue
     HANDLERS[event.event]?.(b, event)
   }
   return { phases: summarizePhases(b.entries), entries: b.entries }

@@ -9,7 +9,7 @@ from adk.tools.building.template_manager import (
     render_template_latex,
     resolve_template_name,
 )
-from adk.tools.building.thesis_publisher import publish_workspace_thesis_bundle
+from adk.tools.building.output_bundle import publish_workspace_thesis_bundle
 from adk.tools.verification.ref_compiler import compile_symbolic_references
 
 
@@ -207,11 +207,14 @@ def test_two_researchers_and_three_tier_routing():
     assert agents["discoverer_researcher"]["active"] is True
 
     def _research(key: str) -> list[str]:
+        """The researchers of the derived queue (§XVI) for the benchmark's document type."""
+        from adk.orchestration.plan_outline import outline_of
+        from adk.orchestration.plan_tasks import planned_tasks
+
         spec = BENCHMARK_TASKS[key]
-        plan = SimulatedAgents(SCENARIOS[key])(
-            "task_planner", "", {"user_prompt": "x", "error_feedback": "-", "detected_template": {"thesis_type": spec.thesis_type}}, "LRM"
-        )
-        return [t["assigned_agent"] for t in plan["tasks"] if "researcher" in t["assigned_agent"]]
+        outline = outline_of(SimulatedAgents(SCENARIOS[key])("plan_outline", "", {"user_prompt": "x"}, "LRM"))
+        tasks = planned_tasks(outline, SCENARIOS[key].interfaces(), spec.thesis_type, True, set())
+        return [t["assigned_agent"] for t in tasks if "researcher" in t["assigned_agent"]]
 
     assert _research("01_rl_tictactoe") == ["background_researcher"]
     assert _research("02_ml_anomaly_detection") == ["background_researcher", "discoverer_researcher"]
@@ -301,7 +304,7 @@ def test_dynamic_arbitrary_chapter_counts_in_latex_rendering(tmp_path: Path):
     (ws_10 / "references.bib").write_text(fx.TICTACTOE_BIBTEX, encoding="utf-8")
 
     md_10_content = "\n\n".join(
-        f"## Rozdział {i}: Dziedzinowa sekcja numer {i}\nTreść rozdziału {i} ze wskaźnikiem \\ref_ast{{config.py:ALPHA}} i wynikiem \\ref_csv{{results.csv:win_rate}}."
+        f"## Rozdział {i}: Dziedzinowa sekcja numer {i}\nTreść rozdziału {i} ze wskaźnikiem \\ref_ast{{config.py:ALPHA}} i wynikiem \\ref_csv{{results.csv:proposed+win_rate:value}}."
         for i in range(1, 11)
     )
     (ws_10 / "thesis.md").write_text(md_10_content, encoding="utf-8")

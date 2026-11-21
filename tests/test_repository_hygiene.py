@@ -3,7 +3,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-IGNORED_DIRS = {".venv", ".git", "__pycache__", ".pytest_cache", "_evolved_adk_state", "workspace"}
+IGNORED_DIRS = {".venv", ".git", "__pycache__", ".pytest_cache", "_evolved_adk_state", "workspace", "node_modules", ".nuxt"}
 
 
 def _iter_repo_files(root: Path):

@@ -13,7 +13,6 @@ from adk.tools.building import (
     edit_document_section,
 )
 from adk.orchestration.common import (
-    _issue_signature,
     GAPS_SECTION_TITLE,
     _clip_log,
     _plain_text,
@@ -21,6 +20,7 @@ from adk.orchestration.common import (
     _RunState,
     _agent_for_path,
 )
+from adk.orchestration.failure_kinds import _issue_signature
 
 
 _POINTER_FINDING = re.compile(

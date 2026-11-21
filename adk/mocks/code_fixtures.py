@@ -124,12 +124,10 @@ def train_and_evaluate(csv_out_path: str | Path | None = config.RESULTS_PATH, se
         out_p = Path(csv_out_path)
         out_p.parent.mkdir(parents=True, exist_ok=True)
         with out_p.open("w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(
-                f, fieldnames=["method", "episodes", "win_rate", "draw_rate", "loss_rate"]
-            )
-            writer.writeheader()
-            writer.writerow(baseline_row)
-            writer.writerow(metrics)
+            writer = csv.writer(f)
+            writer.writerow(["method", "metric", "value"])
+            for row in (baseline_row, metrics):
+                writer.writerows([row["method"], key, value] for key, value in row.items() if key != "method")
     return metrics
 """
 
@@ -145,9 +143,15 @@ TICTACTOE_TEST_CODE = (
 )
 
 TICTACTOE_INITIAL_CSV = (
-    "method,episodes,win_rate,draw_rate,loss_rate\n"
-    "baseline,500.0,0.52,0.12,0.36\n"
-    "proposed,500.0,0.88,0.08,0.04\n"
+    "method,metric,value\n"
+    "baseline,episodes,500.0\n"
+    "baseline,win_rate,0.52\n"
+    "baseline,draw_rate,0.12\n"
+    "baseline,loss_rate,0.36\n"
+    "proposed,episodes,500.0\n"
+    "proposed,win_rate,0.88\n"
+    "proposed,draw_rate,0.08\n"
+    "proposed,loss_rate,0.04\n"
 )
 
 TICTACTOE_DOC_SECTION_TITLE = "Tic-Tac-Toe Q-Learning Evaluation"
@@ -156,9 +160,9 @@ TICTACTOE_DOC_SECTION_CONTENT = (
     "To verify the research hypothesis, comparative experiments were conducted contrasting the tabular Q-Learning "
     "agent against a random baseline policy. The experiments executed \\ref_ast{config.py:EPISODES} episodes "
     "with learning rate \\ref_ast{config.py:ALPHA} and exploration factor \\ref_ast{config.py:EPSILON}. "
-    "The reference baseline achieved a win rate of \\ref_csv{results.csv:baseline:win_rate}, whereas the proposed "
-    "agent reached a win rate of \\ref_csv{results.csv:proposed:win_rate} (\\ref_csv{results.csv:win_rate}) "
-    "and a draw rate of \\ref_csv{results.csv:draw_rate}."
+    "The reference baseline achieved a win rate of \\ref_csv{results.csv:baseline+win_rate:value}, whereas the proposed "
+    "agent reached a win rate of \\ref_csv{results.csv:proposed+win_rate:value} (\\ref_csv{results.csv:proposed+win_rate:value}) "
+    "and a draw rate of \\ref_csv{results.csv:proposed+draw_rate:value}."
 )
 
 
@@ -185,7 +189,10 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     rows = []
     if csv_path.exists():
         with csv_path.open("r", encoding="utf-8", newline="") as f:
-            rows = list(csv.DictReader(f))
+            wide: dict = {}
+            for r in csv.DictReader(f):
+                wide.setdefault(r["method"], {"method": r["method"]})[r["metric"]] = r["value"]
+            rows = list(wide.values())
 
     if not rows:
         rows = [
@@ -262,9 +269,9 @@ TICTACTOE_DOC_FULL_CONTENT = (
     "The experiments executed \\ref_ast{config.py:EPISODES} episodes "
     "with learning rate \\ref_ast{config.py:ALPHA}, discount factor \\ref_ast{config.py:GAMMA}, "
     "and exploration factor \\ref_ast{config.py:EPSILON}. "
-    "The reference baseline achieved a win rate of \\ref_csv{results.csv:baseline:win_rate}, whereas the proposed "
-    "agent reached a win rate of \\ref_csv{results.csv:proposed:win_rate} (\\ref_csv{results.csv:win_rate}) "
-    "and a draw rate of \\ref_csv{results.csv:draw_rate}, as illustrated in \\ref_fig{figures/comparison_chart.pdf}."
+    "The reference baseline achieved a win rate of \\ref_csv{results.csv:baseline+win_rate:value}, whereas the proposed "
+    "agent reached a win rate of \\ref_csv{results.csv:proposed+win_rate:value} (\\ref_csv{results.csv:proposed+win_rate:value}) "
+    "and a draw rate of \\ref_csv{results.csv:proposed+draw_rate:value}, as illustrated in \\ref_fig{figures/comparison_chart.pdf}."
 )
 
 
@@ -394,13 +401,10 @@ def train_and_evaluate(csv_out_path: str | Path | None = config.RESULTS_PATH, se
         out_p = Path(csv_out_path)
         out_p.parent.mkdir(parents=True, exist_ok=True)
         with out_p.open("w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(
-                f,
-                fieldnames=["method", "samples", "precision", "recall", "f1_score", "false_alarm_rate"],
-            )
-            writer.writeheader()
-            writer.writerow(baseline_row)
-            writer.writerow(proposed_row)
+            writer = csv.writer(f)
+            writer.writerow(["method", "metric", "value"])
+            for row in (baseline_row, proposed_row):
+                writer.writerows([row["method"], key, value] for key, value in row.items() if key != "method")
 
     return proposed_row
 '''
@@ -421,9 +425,17 @@ def test_biosignal_anomaly_detection():
 '''
 
 ANOMALY_INITIAL_CSV = (
-    "method,samples,precision,recall,f1_score,false_alarm_rate\n"
-    "baseline,600.0,0.892,0.688,0.777,0.0072\n"
-    "proposed,600.0,0.979,0.979,0.979,0.0018\n"
+    "method,metric,value\n"
+    "baseline,samples,600.0\n"
+    "baseline,precision,0.892\n"
+    "baseline,recall,0.688\n"
+    "baseline,f1_score,0.777\n"
+    "baseline,false_alarm_rate,0.0072\n"
+    "proposed,samples,600.0\n"
+    "proposed,precision,0.979\n"
+    "proposed,recall,0.979\n"
+    "proposed,f1_score,0.979\n"
+    "proposed,false_alarm_rate,0.0018\n"
 )
 
 ANOMALY_PLOT_SCRIPT = '''from __future__ import annotations
@@ -446,7 +458,10 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     rows = []
     if csv_path.exists():
         with csv_path.open("r", encoding="utf-8", newline="") as f:
-            rows = list(csv.DictReader(f))
+            wide: dict = {}
+            for r in csv.DictReader(f):
+                wide.setdefault(r["method"], {"method": r["method"]})[r["metric"]] = r["value"]
+            rows = list(wide.values())
 
     if not rows:
         rows = [
@@ -531,10 +546,10 @@ ANOMALY_DOC_CONTENT = (
     "with anomaly contamination ratio \\ref_ast{config.py:ANOMALY_RATIO}, the proposed Robust Subspace Ensemble "
     "of \\ref_ast{config.py:ENSEMBLE_TREES} estimators (threshold \\ref_ast{config.py:Z_THRESHOLD}) was compared "
     "against a univariate Z-score baseline \\cite{liu2008isolation,chandola2009anomaly}. "
-    "The baseline method achieved an F1-score of \\ref_csv{results.csv:baseline:f1_score} (recall \\ref_csv{results.csv:baseline:recall}), "
-    "whereas the proposed ensemble attained an F1-score of \\ref_csv{results.csv:proposed:f1_score} "
-    "with precision \\ref_csv{results.csv:proposed:precision}, recall \\ref_csv{results.csv:proposed:recall}, "
-    "and false alarm rate \\ref_csv{results.csv:proposed:false_alarm_rate}, as shown in \\ref_fig{figures/comparison_chart.pdf}."
+    "The baseline method achieved an F1-score of \\ref_csv{results.csv:baseline+f1_score:value} (recall \\ref_csv{results.csv:baseline+recall:value}), "
+    "whereas the proposed ensemble attained an F1-score of \\ref_csv{results.csv:proposed+f1_score:value} "
+    "with precision \\ref_csv{results.csv:proposed+precision:value}, recall \\ref_csv{results.csv:proposed+recall:value}, "
+    "and false alarm rate \\ref_csv{results.csv:proposed+false_alarm_rate:value}, as shown in \\ref_fig{figures/comparison_chart.pdf}."
 )
 
 
@@ -673,13 +688,10 @@ def train_and_evaluate(csv_out_path: str | Path | None = config.RESULTS_PATH, se
         out_p = Path(csv_out_path)
         out_p.parent.mkdir(parents=True, exist_ok=True)
         with out_p.open("w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(
-                f,
-                fieldnames=["method", "trials", "avg_expanded_nodes", "path_optimality", "speedup_factor", "success_rate"],
-            )
-            writer.writeheader()
-            writer.writerow(baseline_row)
-            writer.writerow(proposed_row)
+            writer = csv.writer(f)
+            writer.writerow(["method", "metric", "value"])
+            for row in (baseline_row, proposed_row):
+                writer.writerows([row["method"], key, value] for key, value in row.items() if key != "method")
 
     return proposed_row
 '''
@@ -722,7 +734,10 @@ def generate_plots(workspace_dir: str | Path | None = None) -> list[str]:
     rows = []
     if csv_path.exists():
         with csv_path.open("r", encoding="utf-8", newline="") as f:
-            rows = list(csv.DictReader(f))
+            wide: dict = {}
+            for r in csv.DictReader(f):
+                wide.setdefault(r["method"], {"method": r["method"]})[r["metric"]] = r["value"]
+            rows = list(wide.values())
 
     if not rows:
         rows = [
@@ -785,10 +800,10 @@ PATHFINDING_DOC_CONTENT = (
     "\\ref_ast{config.py:OBSTACLE_DENSITY}, \\ref_ast{config.py:TRIALS} randomized trials were executed "
     "contrasting uninformed Dijkstra search \\cite{dijkstra1959note} against Weighted Octile A* "
     "(\\ref_ast{config.py:HEURISTIC_WEIGHT}) \\cite{hart1968formal}. "
-    "The uninformed Dijkstra baseline expanded an average of \\ref_csv{results.csv:baseline:avg_expanded_nodes} nodes, "
-    "whereas the proposed Weighted Octile A* expanded only \\ref_csv{results.csv:proposed:avg_expanded_nodes} nodes, "
-    "achieving a speedup factor of \\ref_csv{results.csv:proposed:speedup_factor}x and path optimality ratio "
-    "\\ref_csv{results.csv:proposed:path_optimality}, as depicted in \\ref_fig{figures/comparison_chart.pdf}."
+    "The uninformed Dijkstra baseline expanded an average of \\ref_csv{results.csv:baseline+avg_expanded_nodes:value} nodes, "
+    "whereas the proposed Weighted Octile A* expanded only \\ref_csv{results.csv:proposed+avg_expanded_nodes:value} nodes, "
+    "achieving a speedup factor of \\ref_csv{results.csv:proposed+speedup_factor:value}x and path optimality ratio "
+    "\\ref_csv{results.csv:proposed+path_optimality:value}, as depicted in \\ref_fig{figures/comparison_chart.pdf}."
 )
 
 
@@ -802,8 +817,8 @@ TICTACTOE_THESIS_CHAPTERS: list[tuple[str, str]] = [
         "ze wzmocnieniem (Q-Learning) \\cite{watkins1992qlearning} w deterministycznym środowisku gry Kółko i Krzyżyk "
         "(Tic-Tac-Toe). Główna teza badawcza głosi, że zastosowanie iteracyjnej aktualizacji równania Bellmana przez "
         "\\ref_ast{config.py:EPISODES} epizodów przy współczynniku uczenia \\ref_ast{config.py:ALPHA} pozwala uzyskać "
-        "skuteczność wygranych na poziomie \\ref_csv{results.csv:proposed:win_rate}, istotnie przewyższając "
-        "losową politykę bazową osiągającą jedynie \\ref_csv{results.csv:baseline:win_rate}.",
+        "skuteczność wygranych na poziomie \\ref_csv{results.csv:proposed+win_rate:value}, istotnie przewyższając "
+        "losową politykę bazową osiągającą jedynie \\ref_csv{results.csv:baseline+win_rate:value}.",
     ),
     (
         "Rozdział 2: Analiza Stanu Wiedzy i Podstawy Teoretyczne: Od Teorii Gier do Tablicowego Q-Learningu",
@@ -834,9 +849,9 @@ TICTACTOE_THESIS_CHAPTERS: list[tuple[str, str]] = [
     (
         "Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju",
         "Przeprowadzone eksperymenty w pełni potwierdziły postawioną tezę badawczą. Zaproponowany agent Q-Learning "
-        "osiągnął współczynnik zwycięstw \\ref_csv{results.csv:proposed:win_rate} przy odsetku porażek zredukowanym "
-        "do \\ref_csv{results.csv:proposed:loss_rate}, podczas gdy polityka losowa uzyskała jedynie "
-        "\\ref_csv{results.csv:baseline:win_rate} wygranych i \\ref_csv{results.csv:baseline:loss_rate} porażek "
+        "osiągnął współczynnik zwycięstw \\ref_csv{results.csv:proposed+win_rate:value} przy odsetku porażek zredukowanym "
+        "do \\ref_csv{results.csv:proposed+loss_rate:value}, podczas gdy polityka losowa uzyskała jedynie "
+        "\\ref_csv{results.csv:baseline+win_rate:value} wygranych i \\ref_csv{results.csv:baseline+loss_rate:value} porażek "
         "\\cite{watkins1992qlearning,sutton2018reinforcement}. Zastosowana czterowarstwowa architektura ADK "
         "wyeliminowała halucynacje liczbowe dzięki twardej kompilacji wskaźników symbolicznych.",
     ),
@@ -851,8 +866,8 @@ ANOMALY_THESIS_CHAPTERS: list[tuple[str, str]] = [
         "identyfikacji skorelowanych zaburzeń wielowymiarowych na zbiorze \\ref_ast{config.py:N_SAMPLES} próbek "
         "przy zanieczyszczeniu anomaliami \\ref_ast{config.py:ANOMALY_RATIO}. Teza pracy zakłada, że połączenie "
         "estymatorów medianowych (MAD) z komitetem \\ref_ast{config.py:ENSEMBLE_TREES} losowych projekcji podprzestrzeni "
-        "osiąga miarę F1 równą \\ref_csv{results.csv:proposed:f1_score}, istotnie przewyższając klasyczny test Z-score "
-        "(\\ref_csv{results.csv:baseline:f1_score}).",
+        "osiąga miarę F1 równą \\ref_csv{results.csv:proposed+f1_score:value}, istotnie przewyższając klasyczny test Z-score "
+        "(\\ref_csv{results.csv:baseline+f1_score:value}).",
     ),
     (
         "Rozdział 2: Analiza Stanu Wiedzy (SOTA): Detekcja Anomalii w Telemetrii Medycznej",
@@ -881,11 +896,11 @@ ANOMALY_THESIS_CHAPTERS: list[tuple[str, str]] = [
     (
         "Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju",
         "Ewaluacja empiryczna wykazała, że proponowany komitet odpornych podprzestrzeni osiąga precyzję "
-        "\\ref_csv{results.csv:proposed:precision}, czułość \\ref_csv{results.csv:proposed:recall} oraz wynik F1 "
-        "\\ref_csv{results.csv:proposed:f1_score} przy znikomym odsetku fałszywych alarmów "
-        "\\ref_csv{results.csv:proposed:false_alarm_rate} \\cite{liu2008isolation,chandola2009anomaly}. Metoda bazowa "
-        "Z-score uzyskała jedynie F1 na poziomie \\ref_csv{results.csv:baseline:f1_score} (czułość "
-        "\\ref_csv{results.csv:baseline:recall}), co dowodzi wyższości detekcji wielokanałowej.",
+        "\\ref_csv{results.csv:proposed+precision:value}, czułość \\ref_csv{results.csv:proposed+recall:value} oraz wynik F1 "
+        "\\ref_csv{results.csv:proposed+f1_score:value} przy znikomym odsetku fałszywych alarmów "
+        "\\ref_csv{results.csv:proposed+false_alarm_rate:value} \\cite{liu2008isolation,chandola2009anomaly}. Metoda bazowa "
+        "Z-score uzyskała jedynie F1 na poziomie \\ref_csv{results.csv:baseline+f1_score:value} (czułość "
+        "\\ref_csv{results.csv:baseline+recall:value}), co dowodzi wyższości detekcji wielokanałowej.",
     ),
 ]
 
@@ -898,8 +913,8 @@ PATHFINDING_THESIS_CHAPTERS: list[tuple[str, str]] = [
         "oktilową (Weighted Octile A*) na 8-spójnych siatkach o wymiarze \\ref_ast{config.py:GRID_SIZE}x\\ref_ast{config.py:GRID_SIZE} "
         "i gęstości przeszkód \\ref_ast{config.py:OBSTACLE_DENSITY}. Teza pracy głosi, że zastosowanie wagi heurystyki "
         "\\ref_ast{config.py:HEURISTIC_WEIGHT} w \\ref_ast{config.py:TRIALS} próbach losowych pozwala uzyskać "
-        "przyspieszenie eksploracji rzędu \\ref_csv{results.csv:proposed:speedup_factor}x przy zachowaniu optymalności "
-        "ścieżki na poziomie \\ref_csv{results.csv:proposed:path_optimality}.",
+        "przyspieszenie eksploracji rzędu \\ref_csv{results.csv:proposed+speedup_factor:value}x przy zachowaniu optymalności "
+        "ścieżki na poziomie \\ref_csv{results.csv:proposed+path_optimality:value}.",
     ),
     (
         "Rozdział 2: Analiza Stanu Wiedzy (SOTA): Heurystyczne Przeszukiwanie Grafów",
@@ -911,8 +926,8 @@ PATHFINDING_THESIS_CHAPTERS: list[tuple[str, str]] = [
         "kardynalne mają koszt jednostkowy $1.0$, natomiast ruchy diagonalne koszt $\\sqrt{2}$ \\cite{hart1968formal}. "
         "Funkcja oceny wierzchołka $f(n) = g(n) + w \\cdot h_{octile}(n)$ wykorzystuje współczynnik wagowy "
         "$w = $ \\ref_ast{config.py:HEURISTIC_WEIGHT}, co kieruje kolejkę priorytetową bezpośrednio w stronę węzła "
-        "docelowego i redukuje średnią liczbę rozwijanych stanów z \\ref_csv{results.csv:baseline:avg_expanded_nodes} "
-        "do \\ref_csv{results.csv:proposed:avg_expanded_nodes}.",
+        "docelowego i redukuje średnią liczbę rozwijanych stanów z \\ref_csv{results.csv:baseline+avg_expanded_nodes:value} "
+        "do \\ref_csv{results.csv:proposed+avg_expanded_nodes:value}.",
     ),
     (
         "Rozdział 4: Implementacja Algorytmiczna i Struktury Danych",
@@ -929,10 +944,10 @@ PATHFINDING_THESIS_CHAPTERS: list[tuple[str, str]] = [
         "Rozdział 6: Podsumowanie, Wnioski i Kierunki Rozwoju",
         "Wyniki przeprowadzonych \\ref_ast{config.py:TRIALS} eksperymentów jednoznacznie potwierdziły słuszność "
         "sformułowanej tezy. Algorytm Weighted Octile A* zredukował średnią liczbę odwiedzanych wierzchołków z "
-        "\\ref_csv{results.csv:baseline:avg_expanded_nodes} (Dijkstra \\cite{dijkstra1959note}) do zaledwie "
-        "\\ref_csv{results.csv:proposed:avg_expanded_nodes} \\cite{hart1968formal}, zapewniając współczynnik "
-        "przyspieszenia \\ref_csv{results.csv:proposed:speedup_factor}x, optymalność kosztu trasy "
-        "\\ref_csv{results.csv:proposed:path_optimality} oraz 100% odsetek sukcesu (\\ref_csv{results.csv:proposed:success_rate}).",
+        "\\ref_csv{results.csv:baseline+avg_expanded_nodes:value} (Dijkstra \\cite{dijkstra1959note}) do zaledwie "
+        "\\ref_csv{results.csv:proposed+avg_expanded_nodes:value} \\cite{hart1968formal}, zapewniając współczynnik "
+        "przyspieszenia \\ref_csv{results.csv:proposed+speedup_factor:value}x, optymalność kosztu trasy "
+        "\\ref_csv{results.csv:proposed+path_optimality:value} oraz 100% odsetek sukcesu (\\ref_csv{results.csv:proposed+success_rate:value}).",
     ),
 ]
 
@@ -945,12 +960,12 @@ PATHFINDING_THESIS_CHAPTERS: list[tuple[str, str]] = [
 
 FEDERATED_CONFIG_AST_NODES: list[tuple[str, str]] = [('RESULTS_PATH', 'RESULTS_PATH = "results.csv"\n'), ('SEED', 'SEED = 42\n'), ('NUM_CLIENTS', 'NUM_CLIENTS = 10\n'), ('DIRICHLET_ALPHA', 'DIRICHLET_ALPHA = 0.5\n'), ('LOCAL_EPOCHS', 'LOCAL_EPOCHS = 3\n'), ('LEARNING_RATE', 'LEARNING_RATE = 0.05\n'), ('MU_PROXIMAL', 'MU_PROXIMAL = 0.01\n'), ('ROUNDS', 'ROUNDS = 25\n')]
 
-FEDERATED_CORE_CODE = 'import csv\nimport math\nimport random\nfrom pathlib import Path\nimport config\n\n\ndef generate_synthetic_data(n_samples: int = 400, seed: int = 42) -> tuple[list[list[float]], list[int]]:\n    rng = random.Random(seed)\n    X: list[list[float]] = []\n    y: list[int] = []\n    for _ in range(n_samples):\n        label = 1 if rng.random() > 0.5 else 0\n        sign = 1.0 if label == 1 else -1.0\n        # Features 0-1 carry global invariant signal; features 2-3 carry noisy local context\n        f0 = rng.gauss(0.65 * sign, 0.95)\n        f1 = rng.gauss(0.60 * sign, 0.95)\n        f2 = rng.gauss(0.15 * sign, 1.10)\n        f3 = rng.gauss(0.10 * sign, 1.10)\n        X.append([f0, f1, f2, f3])\n        y.append(label)\n    return X, y\n\n\ndef generate_federated_partitions(\n    n_samples: int = 400,\n    n_clients: int = config.NUM_CLIENTS,\n    alpha: float = config.DIRICHLET_ALPHA,\n    seed: int = 42,\n) -> list[tuple[list[list[float]], list[int]]]:\n    rng = random.Random(seed)\n    X, y = generate_synthetic_data(n_samples=n_samples, seed=seed)\n    idx_c0 = [i for i, lbl in enumerate(y) if lbl == 0]\n    idx_c1 = [i for i, lbl in enumerate(y) if lbl == 1]\n    rng.shuffle(idx_c0)\n    rng.shuffle(idx_c1)\n\n    client_data: list[tuple[list[list[float]], list[int]]] = [([], []) for _ in range(n_clients)]\n    for indices in [idx_c0, idx_c1]:\n        raw_props = [max(0.01, rng.gammavariate(alpha, 1.0)) for _ in range(n_clients)]\n        total_p = sum(raw_props)\n        props = [p / total_p for p in raw_props]\n\n        start = 0\n        for client_id, p in enumerate(props):\n            cnt = int(round(p * len(indices)))\n            selected = indices[start:] if client_id == n_clients - 1 else indices[start : start + cnt]\n            start += cnt\n            # Non-IID client domain shift inversely proportional to Dirichlet alpha\n            drift = ((client_id % 2) * 2.0 - 1.0) * (1.1 / max(0.1, alpha))\n            for idx in selected:\n                row = list(X[idx])\n                row[2] += drift * (1.0 if y[idx] == 0 else -0.5)\n                row[3] -= drift * (1.0 if y[idx] == 1 else -0.5)\n                client_data[client_id][0].append(row)\n                client_data[client_id][1].append(y[idx])\n\n    for cid in range(n_clients):\n        if not client_data[cid][0]:\n            client_data[cid][0].append(list(X[cid % len(X)]))\n            client_data[cid][1].append(y[cid % len(y)])\n\n    return client_data\n\n\ndef predict_proba(weights: list[float], bias: float, x: list[float]) -> float:\n    z = bias + sum(w * xi for w, xi in zip(weights, x))\n    z = max(-20.0, min(20.0, z))\n    return 1.0 / (1.0 + math.exp(-z))\n\n\ndef client_local_train(\n    global_weights: list[float],\n    global_bias: float,\n    client_X: list[list[float]],\n    client_y: list[int],\n    epochs: int = config.LOCAL_EPOCHS,\n    lr: float = config.LEARNING_RATE,\n    mu: float = config.MU_PROXIMAL,\n) -> tuple[list[float], float, int]:\n    w = list(global_weights)\n    b = global_bias\n    n = len(client_X)\n    if n == 0:\n        return w, b, 0\n\n    prox_strength = mu * 12.0\n    for _ in range(epochs):\n        for x, y_true in zip(client_X, client_y):\n            p = predict_proba(w, b, x)\n            err = p - float(y_true)\n            for j in range(len(w)):\n                # Proximal penalty anchors local weights and suppresses non-IID feature drift\n                anchor = global_weights[j] if j < 2 else 0.0\n                grad_w = err * x[j] + prox_strength * (w[j] - anchor)\n                w[j] -= lr * grad_w\n            b -= lr * (err + prox_strength * (b - global_bias))\n\n    return w, b, n\n\n\ndef evaluate_model(weights: list[float], bias: float, test_X: list[list[float]], test_y: list[int]) -> float:\n    if not test_X:\n        return 0.5\n    correct = sum(\n        1\n        for x, y_true in zip(test_X, test_y)\n        if (1 if predict_proba(weights, bias, x) >= 0.5 else 0) == y_true\n    )\n    return correct / float(len(test_X))\n\n\ndef train_and_evaluate(csv_out_path: str | Path | None = config.RESULTS_PATH, seed: int = config.SEED) -> dict[str, float]:\n    n_features = 4\n    test_X, test_y = generate_synthetic_data(n_samples=300, seed=seed + 999)\n    partitions = generate_federated_partitions(\n        n_samples=600,\n        n_clients=config.NUM_CLIENTS,\n        alpha=config.DIRICHLET_ALPHA,\n        seed=seed,\n    )\n\n    # Non-IID local domain shift per client to model real edge heterogeneity\n    for cid in range(config.NUM_CLIENTS):\n        drift = (cid - (config.NUM_CLIENTS - 1) / 2.0) * 0.15\n        partitions[cid] = ([[x + drift for x in row] for row in partitions[cid][0]], partitions[cid][1])\n\n    total_scheduled = config.ROUNDS * config.NUM_CLIENTS\n    packet_kb = 0.64\n\n    # 1. Baseline: Standard FedAvg (drops 30% stragglers, mu=0.0)\n    w_avg = [0.0] * n_features\n    b_avg = 0.0\n    acc_avg_history: list[float] = []\n    straggler_prob = 0.30\n    divergence_count_base = 0\n    completed_clients_base = 0\n    comm_kb_base = 0.0\n    rng_b = random.Random(seed)\n\n    for _ in range(config.ROUNDS):\n        client_updates = []\n        for cid in range(config.NUM_CLIENTS):\n            if rng_b.random() < straggler_prob:\n                comm_kb_base += config.LOCAL_EPOCHS * packet_kb * 0.3\n                continue\n            cX, cy = partitions[cid]\n            w_loc, b_loc, n_loc = client_local_train(\n                w_avg, b_avg, cX, cy, epochs=config.LOCAL_EPOCHS, lr=config.LEARNING_RATE, mu=0.0\n            )\n            client_updates.append((w_loc, b_loc, n_loc))\n            completed_clients_base += 1\n            comm_kb_base += config.LOCAL_EPOCHS * packet_kb\n\n        if client_updates:\n            tot = sum(u[2] for u in client_updates)\n            w_avg = [sum(u[0][j] * (u[2] / tot) for u in client_updates) for j in range(n_features)]\n            b_avg = sum(u[1] * (u[2] / tot) for u in client_updates)\n\n        acc = evaluate_model(w_avg, b_avg, test_X, test_y)\n        acc_avg_history.append(acc)\n        if len(acc_avg_history) > 1 and acc < acc_avg_history[-2] - 0.015:\n            divergence_count_base += 1\n\n    # 2. Proposed: Adaptive FedProx (stragglers do 1 epoch partial work, proximal mu > 0)\n    w_prox = [0.0] * n_features\n    b_prox = 0.0\n    acc_prox_history: list[float] = []\n    divergence_count_prox = 0\n    completed_clients_prox = 0\n    comm_kb_prox = 0.0\n    rng_p = random.Random(seed)\n\n    for _ in range(config.ROUNDS):\n        client_updates = []\n        for cid in range(config.NUM_CLIENTS):\n            is_straggler = rng_p.random() < straggler_prob\n            local_ep = 1 if is_straggler else config.LOCAL_EPOCHS\n            cX, cy = partitions[cid]\n            w_loc, b_loc, n_loc = client_local_train(\n                w_prox, b_prox, cX, cy, epochs=local_ep, lr=config.LEARNING_RATE, mu=config.MU_PROXIMAL\n            )\n            client_updates.append((w_loc, b_loc, n_loc))\n            completed_clients_prox += 1\n            comm_kb_prox += local_ep * packet_kb\n\n        tot = sum(u[2] for u in client_updates)\n        w_prox = [sum(u[0][j] * (u[2] / tot) for u in client_updates) for j in range(n_features)]\n        b_prox = sum(u[1] * (u[2] / tot) for u in client_updates)\n\n        acc = evaluate_model(w_prox, b_prox, test_X, test_y)\n        acc_prox_history.append(acc)\n        if len(acc_prox_history) > 1 and acc < acc_prox_history[-2] - 0.015:\n            divergence_count_prox += 1\n\n    final_acc_base = round(acc_avg_history[-1], 3)\n    final_acc_prox = round(acc_prox_history[-1], 3)\n    conv_base = next((i + 1 for i, a in enumerate(acc_avg_history) if a >= 0.70), config.ROUNDS)\n    conv_prox = next((i + 1 for i, a in enumerate(acc_prox_history) if a >= 0.85), config.ROUNDS)\n\n    res_base = {\n        "method": "baseline",\n        "rounds": float(config.ROUNDS),\n        "convergence_rounds": float(conv_base),\n        "final_accuracy": final_acc_base,\n        "communication_overhead_kb": round(comm_kb_base, 1),\n        "straggler_resilience_rate": round(completed_clients_base / float(total_scheduled), 2),\n        "divergence_rate": round(divergence_count_base / float(config.ROUNDS), 2),\n    }\n    res_prox = {\n        "method": "proposed",\n        "rounds": float(config.ROUNDS),\n        "convergence_rounds": float(conv_prox),\n        "final_accuracy": final_acc_prox,\n        "communication_overhead_kb": round(comm_kb_prox, 1),\n        "straggler_resilience_rate": round(completed_clients_prox / float(total_scheduled), 2),\n        "divergence_rate": round(divergence_count_prox / float(config.ROUNDS), 2),\n    }\n\n    if csv_out_path:\n        out_p = Path(csv_out_path)\n        out_p.parent.mkdir(parents=True, exist_ok=True)\n        fieldnames = [\n            "method",\n            "rounds",\n            "convergence_rounds",\n            "final_accuracy",\n            "communication_overhead_kb",\n            "straggler_resilience_rate",\n            "divergence_rate",\n        ]\n        with out_p.open("w", encoding="utf-8", newline="") as f:\n            writer = csv.DictWriter(f, fieldnames=fieldnames)\n            writer.writeheader()\n            writer.writerow(res_base)\n            writer.writerow(res_prox)\n\n    return {\n        "baseline_final_accuracy": res_base["final_accuracy"],\n        "proposed_final_accuracy": res_prox["final_accuracy"],\n        "proposed_straggler_resilience": res_prox["straggler_resilience_rate"],\n        "accuracy_improvement": round(res_prox["final_accuracy"] - res_base["final_accuracy"], 3),\n    }\n'
+FEDERATED_CORE_CODE = 'import csv\nimport math\nimport random\nfrom pathlib import Path\nimport config\n\n\ndef generate_synthetic_data(n_samples: int = 400, seed: int = 42) -> tuple[list[list[float]], list[int]]:\n    rng = random.Random(seed)\n    X: list[list[float]] = []\n    y: list[int] = []\n    for _ in range(n_samples):\n        label = 1 if rng.random() > 0.5 else 0\n        sign = 1.0 if label == 1 else -1.0\n        # Features 0-1 carry global invariant signal; features 2-3 carry noisy local context\n        f0 = rng.gauss(0.65 * sign, 0.95)\n        f1 = rng.gauss(0.60 * sign, 0.95)\n        f2 = rng.gauss(0.15 * sign, 1.10)\n        f3 = rng.gauss(0.10 * sign, 1.10)\n        X.append([f0, f1, f2, f3])\n        y.append(label)\n    return X, y\n\n\ndef generate_federated_partitions(\n    n_samples: int = 400,\n    n_clients: int = config.NUM_CLIENTS,\n    alpha: float = config.DIRICHLET_ALPHA,\n    seed: int = 42,\n) -> list[tuple[list[list[float]], list[int]]]:\n    rng = random.Random(seed)\n    X, y = generate_synthetic_data(n_samples=n_samples, seed=seed)\n    idx_c0 = [i for i, lbl in enumerate(y) if lbl == 0]\n    idx_c1 = [i for i, lbl in enumerate(y) if lbl == 1]\n    rng.shuffle(idx_c0)\n    rng.shuffle(idx_c1)\n\n    client_data: list[tuple[list[list[float]], list[int]]] = [([], []) for _ in range(n_clients)]\n    for indices in [idx_c0, idx_c1]:\n        raw_props = [max(0.01, rng.gammavariate(alpha, 1.0)) for _ in range(n_clients)]\n        total_p = sum(raw_props)\n        props = [p / total_p for p in raw_props]\n\n        start = 0\n        for client_id, p in enumerate(props):\n            cnt = int(round(p * len(indices)))\n            selected = indices[start:] if client_id == n_clients - 1 else indices[start : start + cnt]\n            start += cnt\n            # Non-IID client domain shift inversely proportional to Dirichlet alpha\n            drift = ((client_id % 2) * 2.0 - 1.0) * (1.1 / max(0.1, alpha))\n            for idx in selected:\n                row = list(X[idx])\n                row[2] += drift * (1.0 if y[idx] == 0 else -0.5)\n                row[3] -= drift * (1.0 if y[idx] == 1 else -0.5)\n                client_data[client_id][0].append(row)\n                client_data[client_id][1].append(y[idx])\n\n    for cid in range(n_clients):\n        if not client_data[cid][0]:\n            client_data[cid][0].append(list(X[cid % len(X)]))\n            client_data[cid][1].append(y[cid % len(y)])\n\n    return client_data\n\n\ndef predict_proba(weights: list[float], bias: float, x: list[float]) -> float:\n    z = bias + sum(w * xi for w, xi in zip(weights, x))\n    z = max(-20.0, min(20.0, z))\n    return 1.0 / (1.0 + math.exp(-z))\n\n\ndef client_local_train(\n    global_weights: list[float],\n    global_bias: float,\n    client_X: list[list[float]],\n    client_y: list[int],\n    epochs: int = config.LOCAL_EPOCHS,\n    lr: float = config.LEARNING_RATE,\n    mu: float = config.MU_PROXIMAL,\n) -> tuple[list[float], float, int]:\n    w = list(global_weights)\n    b = global_bias\n    n = len(client_X)\n    if n == 0:\n        return w, b, 0\n\n    prox_strength = mu * 12.0\n    for _ in range(epochs):\n        for x, y_true in zip(client_X, client_y):\n            p = predict_proba(w, b, x)\n            err = p - float(y_true)\n            for j in range(len(w)):\n                # Proximal penalty anchors local weights and suppresses non-IID feature drift\n                anchor = global_weights[j] if j < 2 else 0.0\n                grad_w = err * x[j] + prox_strength * (w[j] - anchor)\n                w[j] -= lr * grad_w\n            b -= lr * (err + prox_strength * (b - global_bias))\n\n    return w, b, n\n\n\ndef evaluate_model(weights: list[float], bias: float, test_X: list[list[float]], test_y: list[int]) -> float:\n    if not test_X:\n        return 0.5\n    correct = sum(\n        1\n        for x, y_true in zip(test_X, test_y)\n        if (1 if predict_proba(weights, bias, x) >= 0.5 else 0) == y_true\n    )\n    return correct / float(len(test_X))\n\n\ndef train_and_evaluate(csv_out_path: str | Path | None = config.RESULTS_PATH, seed: int = config.SEED) -> dict[str, float]:\n    n_features = 4\n    test_X, test_y = generate_synthetic_data(n_samples=300, seed=seed + 999)\n    partitions = generate_federated_partitions(\n        n_samples=600,\n        n_clients=config.NUM_CLIENTS,\n        alpha=config.DIRICHLET_ALPHA,\n        seed=seed,\n    )\n\n    # Non-IID local domain shift per client to model real edge heterogeneity\n    for cid in range(config.NUM_CLIENTS):\n        drift = (cid - (config.NUM_CLIENTS - 1) / 2.0) * 0.15\n        partitions[cid] = ([[x + drift for x in row] for row in partitions[cid][0]], partitions[cid][1])\n\n    total_scheduled = config.ROUNDS * config.NUM_CLIENTS\n    packet_kb = 0.64\n\n    # 1. Baseline: Standard FedAvg (drops 30% stragglers, mu=0.0)\n    w_avg = [0.0] * n_features\n    b_avg = 0.0\n    acc_avg_history: list[float] = []\n    straggler_prob = 0.30\n    divergence_count_base = 0\n    completed_clients_base = 0\n    comm_kb_base = 0.0\n    rng_b = random.Random(seed)\n\n    for _ in range(config.ROUNDS):\n        client_updates = []\n        for cid in range(config.NUM_CLIENTS):\n            if rng_b.random() < straggler_prob:\n                comm_kb_base += config.LOCAL_EPOCHS * packet_kb * 0.3\n                continue\n            cX, cy = partitions[cid]\n            w_loc, b_loc, n_loc = client_local_train(\n                w_avg, b_avg, cX, cy, epochs=config.LOCAL_EPOCHS, lr=config.LEARNING_RATE, mu=0.0\n            )\n            client_updates.append((w_loc, b_loc, n_loc))\n            completed_clients_base += 1\n            comm_kb_base += config.LOCAL_EPOCHS * packet_kb\n\n        if client_updates:\n            tot = sum(u[2] for u in client_updates)\n            w_avg = [sum(u[0][j] * (u[2] / tot) for u in client_updates) for j in range(n_features)]\n            b_avg = sum(u[1] * (u[2] / tot) for u in client_updates)\n\n        acc = evaluate_model(w_avg, b_avg, test_X, test_y)\n        acc_avg_history.append(acc)\n        if len(acc_avg_history) > 1 and acc < acc_avg_history[-2] - 0.015:\n            divergence_count_base += 1\n\n    # 2. Proposed: Adaptive FedProx (stragglers do 1 epoch partial work, proximal mu > 0)\n    w_prox = [0.0] * n_features\n    b_prox = 0.0\n    acc_prox_history: list[float] = []\n    divergence_count_prox = 0\n    completed_clients_prox = 0\n    comm_kb_prox = 0.0\n    rng_p = random.Random(seed)\n\n    for _ in range(config.ROUNDS):\n        client_updates = []\n        for cid in range(config.NUM_CLIENTS):\n            is_straggler = rng_p.random() < straggler_prob\n            local_ep = 1 if is_straggler else config.LOCAL_EPOCHS\n            cX, cy = partitions[cid]\n            w_loc, b_loc, n_loc = client_local_train(\n                w_prox, b_prox, cX, cy, epochs=local_ep, lr=config.LEARNING_RATE, mu=config.MU_PROXIMAL\n            )\n            client_updates.append((w_loc, b_loc, n_loc))\n            completed_clients_prox += 1\n            comm_kb_prox += local_ep * packet_kb\n\n        tot = sum(u[2] for u in client_updates)\n        w_prox = [sum(u[0][j] * (u[2] / tot) for u in client_updates) for j in range(n_features)]\n        b_prox = sum(u[1] * (u[2] / tot) for u in client_updates)\n\n        acc = evaluate_model(w_prox, b_prox, test_X, test_y)\n        acc_prox_history.append(acc)\n        if len(acc_prox_history) > 1 and acc < acc_prox_history[-2] - 0.015:\n            divergence_count_prox += 1\n\n    final_acc_base = round(acc_avg_history[-1], 3)\n    final_acc_prox = round(acc_prox_history[-1], 3)\n    conv_base = next((i + 1 for i, a in enumerate(acc_avg_history) if a >= 0.70), config.ROUNDS)\n    conv_prox = next((i + 1 for i, a in enumerate(acc_prox_history) if a >= 0.85), config.ROUNDS)\n\n    res_base = {\n        "method": "baseline",\n        "rounds": float(config.ROUNDS),\n        "convergence_rounds": float(conv_base),\n        "final_accuracy": final_acc_base,\n        "communication_overhead_kb": round(comm_kb_base, 1),\n        "straggler_resilience_rate": round(completed_clients_base / float(total_scheduled), 2),\n        "divergence_rate": round(divergence_count_base / float(config.ROUNDS), 2),\n    }\n    res_prox = {\n        "method": "proposed",\n        "rounds": float(config.ROUNDS),\n        "convergence_rounds": float(conv_prox),\n        "final_accuracy": final_acc_prox,\n        "communication_overhead_kb": round(comm_kb_prox, 1),\n        "straggler_resilience_rate": round(completed_clients_prox / float(total_scheduled), 2),\n        "divergence_rate": round(divergence_count_prox / float(config.ROUNDS), 2),\n    }\n\n    if csv_out_path:\n        out_p = Path(csv_out_path)\n        out_p.parent.mkdir(parents=True, exist_ok=True)\n        with out_p.open("w", encoding="utf-8", newline="") as f:\n            writer = csv.writer(f)\n            writer.writerow(["method", "metric", "value"])\n            for row in (res_base, res_prox):\n                writer.writerows([row["method"], key, value] for key, value in row.items() if key != "method")\n\n    return {\n        "baseline_final_accuracy": res_base["final_accuracy"],\n        "proposed_final_accuracy": res_prox["final_accuracy"],\n        "proposed_straggler_resilience": res_prox["straggler_resilience_rate"],\n        "accuracy_improvement": round(res_prox["final_accuracy"] - res_base["final_accuracy"], 3),\n    }\n'
 
 FEDERATED_TEST_CODE = 'from pathlib import Path\nimport config\nimport core\n\n\ndef test_federated_partitions_structure():\n    partitions = core.generate_federated_partitions(n_samples=200, n_clients=config.NUM_CLIENTS, alpha=config.DIRICHLET_ALPHA, seed=42)\n    assert len(partitions) == config.NUM_CLIENTS\n    total_samples = sum(len(cX) for cX, cy in partitions)\n    assert total_samples >= 200\n    for cX, cy in partitions:\n        assert len(cX) == len(cy)\n        assert len(cX) > 0\n\n\ndef test_client_local_training_step():\n    init_w = [0.0, 0.0, 0.0, 0.0]\n    init_b = 0.0\n    cX = [[1.0, 1.0, 1.0, 1.0], [1.5, 0.8, 1.2, 0.9]]\n    cy = [1, 1]\n    w, b, n = core.client_local_train(init_w, init_b, cX, cy, epochs=config.LOCAL_EPOCHS, lr=config.LEARNING_RATE, mu=config.MU_PROXIMAL)\n    assert n == 2\n    assert any(weight > 0.0 for weight in w)\n    assert b > 0.0\n\n\ndef test_train_and_evaluate_generates_valid_csv(tmp_path: Path):\n    out_csv = tmp_path / "results.csv"\n    res = core.train_and_evaluate(csv_out_path=out_csv, seed=42)\n    assert out_csv.exists()\n    assert res["proposed_final_accuracy"] > res["baseline_final_accuracy"]\n    assert res["proposed_straggler_resilience"] >= 0.85\n'
 
 
-FEDERATED_PLOT_SCRIPT = 'from __future__ import annotations\n\nimport csv\nfrom pathlib import Path\n\nimport matplotlib\nimport matplotlib.pyplot as plt\n\nmatplotlib.use("Agg")\n\n\ndef generate_plots(workspace_dir: str | Path | None = None) -> list[str]:\n    base = Path(workspace_dir) if workspace_dir else Path(__file__).resolve().parent\n    csv_path = base / "results.csv"\n    fig_dir = base / "figures"\n    fig_dir.mkdir(parents=True, exist_ok=True)\n\n    rows = []\n    if csv_path.exists():\n        with csv_path.open("r", encoding="utf-8", newline="") as f:\n            rows = list(csv.DictReader(f))\n\n    if not rows:\n        rows = [\n            {"method": "baseline", "rounds": "25.0", "convergence_rounds": "19.0", "final_accuracy": "0.73", "communication_overhead_kb": "480.0", "straggler_resilience_rate": "0.60", "divergence_rate": "0.19"},\n            {"method": "proposed", "rounds": "25.0", "convergence_rounds": "11.0", "final_accuracy": "0.92", "communication_overhead_kb": "340.0", "straggler_resilience_rate": "0.95", "divergence_rate": "0.02"},\n        ]\n\n    methods = [r["method"].capitalize() for r in rows]\n    acc = [float(r["final_accuracy"]) * 100 for r in rows]\n    resilience = [float(r["straggler_resilience_rate"]) * 100 for r in rows]\n    comm = [float(r["communication_overhead_kb"]) for r in rows]\n\n    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6.0, 2.8), dpi=180)\n\n    # Panel 1: Accuracy and Resilience\n    x = range(len(methods))\n    w = 0.32\n    b1 = ax1.bar([i - w / 2 for i in x], acc, width=w, label="Accuracy (%)", color="#1e3a8a")\n    b2 = ax1.bar([i + w / 2 for i in x], resilience, width=w, label="Resilience (%)", color="#10b981")\n    ax1.set_xticks(list(x))\n    ax1.set_xticklabels(methods, fontsize=8.5, fontweight="bold")\n    ax1.set_ylabel("Score (%)", fontsize=8.5)\n    ax1.set_ylim(0, 115)\n    ax1.set_title("Accuracy & Resilience", fontsize=9, fontweight="bold")\n    ax1.grid(axis="y", linestyle="--", alpha=0.4)\n    ax1.legend(fontsize=7.5, loc="upper left")\n\n    for bars in (b1, b2):\n        for b in bars:\n            h = b.get_height()\n            ax1.annotate(f"{h:.1f}%", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=7.5)\n\n    # Panel 2: Communication Overhead\n    b3 = ax2.bar(methods, comm, width=0.45, color=["#f59e0b", "#6366f1"])\n    ax2.set_ylabel("Data Transferred (KB)", fontsize=8.5)\n    ax2.set_ylim(0, max(comm) * 1.25)\n    ax2.set_title("Bandwidth Overhead", fontsize=9, fontweight="bold")\n    ax2.grid(axis="y", linestyle="--", alpha=0.4)\n    for b in b3:\n        h = b.get_height()\n        ax2.annotate(f"{h:.0f} KB", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=7.5)\n\n    fig.tight_layout()\n    png_out = fig_dir / "comparison_chart.png"\n    pdf_out = fig_dir / "comparison_chart.pdf"\n    fig.savefig(png_out, dpi=180, bbox_inches=\"tight\")\n    fig.savefig(pdf_out, bbox_inches=\"tight\")\n    plt.close(fig)\n    return [str(png_out), str(pdf_out)]\n\n\nif __name__ == "__main__":\n    generate_plots()\n'
+FEDERATED_PLOT_SCRIPT = 'from __future__ import annotations\n\nimport csv\nfrom pathlib import Path\n\nimport matplotlib\nimport matplotlib.pyplot as plt\n\nmatplotlib.use("Agg")\n\n\ndef generate_plots(workspace_dir: str | Path | None = None) -> list[str]:\n    base = Path(workspace_dir) if workspace_dir else Path(__file__).resolve().parent\n    csv_path = base / "results.csv"\n    fig_dir = base / "figures"\n    fig_dir.mkdir(parents=True, exist_ok=True)\n\n    rows = []\n    if csv_path.exists():\n        with csv_path.open("r", encoding="utf-8", newline="") as f:\n            wide: dict = {}\n            for r in csv.DictReader(f):\n                wide.setdefault(r["method"], {"method": r["method"]})[r["metric"]] = r["value"]\n            rows = list(wide.values())\n\n    if not rows:\n        rows = [\n            {"method": "baseline", "rounds": "25.0", "convergence_rounds": "19.0", "final_accuracy": "0.73", "communication_overhead_kb": "480.0", "straggler_resilience_rate": "0.60", "divergence_rate": "0.19"},\n            {"method": "proposed", "rounds": "25.0", "convergence_rounds": "11.0", "final_accuracy": "0.92", "communication_overhead_kb": "340.0", "straggler_resilience_rate": "0.95", "divergence_rate": "0.02"},\n        ]\n\n    methods = [r["method"].capitalize() for r in rows]\n    acc = [float(r["final_accuracy"]) * 100 for r in rows]\n    resilience = [float(r["straggler_resilience_rate"]) * 100 for r in rows]\n    comm = [float(r["communication_overhead_kb"]) for r in rows]\n\n    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6.0, 2.8), dpi=180)\n\n    # Panel 1: Accuracy and Resilience\n    x = range(len(methods))\n    w = 0.32\n    b1 = ax1.bar([i - w / 2 for i in x], acc, width=w, label="Accuracy (%)", color="#1e3a8a")\n    b2 = ax1.bar([i + w / 2 for i in x], resilience, width=w, label="Resilience (%)", color="#10b981")\n    ax1.set_xticks(list(x))\n    ax1.set_xticklabels(methods, fontsize=8.5, fontweight="bold")\n    ax1.set_ylabel("Score (%)", fontsize=8.5)\n    ax1.set_ylim(0, 115)\n    ax1.set_title("Accuracy & Resilience", fontsize=9, fontweight="bold")\n    ax1.grid(axis="y", linestyle="--", alpha=0.4)\n    ax1.legend(fontsize=7.5, loc="upper left")\n\n    for bars in (b1, b2):\n        for b in bars:\n            h = b.get_height()\n            ax1.annotate(f"{h:.1f}%", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=7.5)\n\n    # Panel 2: Communication Overhead\n    b3 = ax2.bar(methods, comm, width=0.45, color=["#f59e0b", "#6366f1"])\n    ax2.set_ylabel("Data Transferred (KB)", fontsize=8.5)\n    ax2.set_ylim(0, max(comm) * 1.25)\n    ax2.set_title("Bandwidth Overhead", fontsize=9, fontweight="bold")\n    ax2.grid(axis="y", linestyle="--", alpha=0.4)\n    for b in b3:\n        h = b.get_height()\n        ax2.annotate(f"{h:.0f} KB", xy=(b.get_x() + b.get_width() / 2, h), xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=7.5)\n\n    fig.tight_layout()\n    png_out = fig_dir / "comparison_chart.png"\n    pdf_out = fig_dir / "comparison_chart.pdf"\n    fig.savefig(png_out, dpi=180, bbox_inches="tight")\n    fig.savefig(pdf_out, bbox_inches="tight")\n    plt.close(fig)\n    return [str(png_out), str(pdf_out)]\n\n\nif __name__ == "__main__":\n    generate_plots()\n'
 
 FEDERATED_BIBTEX = get_domain_bibtex("04_federated_learning", stage="discoverer")
 
@@ -968,18 +983,5 @@ FEDERATED_TIKZ = (
     "\\end{tikzpicture}\n"
 )
 
-FEDERATED_THESIS_CHAPTERS = [('Rozdział 1: Wstęp i Cel Pracy: Uczenie Sfederowane w Środowiskach Brzegowych', 'Celem pracy jest projekt i analiza rozproszonego systemu uczenia sfederowanego w warunkach silnej niejednorodności rozkładów danych (Dirichlet non-IID) oraz asynchronicznych opóźnień klientów. Postawiono tezę badawczą, że adaptacyjna modyfikacja algorytmu FedProx pozwala zachować zbieżność modelu globalnego i wyeliminować zjawisko dryfu klientów bez zwiększania pasma komunikacyjnego.'), ('Rozdział 2: Analiza Stanu Wiedzy (SOTA 2023--2026): Optymalizacja Sfederowana', 'Podstawy zbieżności uczenia sfederowanego sformułowali McMahan i in. \\cite{mcmahan2017communication} w algorytmie FedAvg oraz Li i in. \\cite{li2020federated} w proksymalnym FedProx. Najnowszy stan wiedzy (2023--2026) dowodzi, że silna heterogeniczność danych (Dirichlet skew) prowadzi do dryfu wag lokalnych (client drift), co udokumentowali Wang i in. \\cite{wang2023tackling} (NeurIPS 2023) oraz Karimireddy i in. \\cite{karimireddy2024scaffold} (JMLR 2024). W monografii Kairouza i in. \\cite{kairouz2024advances} wykazano potrzebę elastycznej regularyzacji w obliczu opóźnionych węzłów (stragglers), a Zhao i in. \\cite{zhao2023noniid} (ICLR 2023) określili empiryczne granice stabilności. Istniejącą luką badawczą pozostaje weryfikowalny symbolicznie algorytm adaptacyjny o zerowym narzucie C-rozszerzeń, co stanowi główny wkład niniejszej pracy.'), ('Rozdział 3: Projekt Architektury Rozproszonej i Topologia Klient-Serwer', 'Architektura systemu składa się z centralnego serwera agregującego oraz klastra \\ref_ast{config.py:NUM_CLIENTS} węzłów brzegowych. Komunikacja odbywa się w rundach synchronicznych z tolerancją na wyłączenia węzłów.\n\n' + FEDERATED_TIKZ + '\n'), ('Rozdział 4: Realizacja i Implementacja: Adaptacyjny Algorytm Proksymalny', 'W module implementacyjnym wprowadzono lokalny krok stochastycznego spadku wzdłuż gradientu z regularyzacją proksymalną \\ref_ast{config.py:MU_PROXIMAL}. Każdy klient wykonuje \\ref_ast{config.py:LOCAL_EPOCHS} epok lokalnych ze stopą uczenia \\ref_ast{config.py:LEARNING_RATE} przed odesłaniem gradientu do serwera.'), ('Rozdział 5: Badania Eksperymentalne: Wyniki i Analiza Zbieżności', 'Przeprowadzono \\ref_ast{config.py:ROUNDS} rund agregacji w warunkach asymetrii danych \\ref_ast{config.py:DIRICHLET_ALPHA}. Rozwiązanie bazowe FedAvg osiągnęło dokładność \\ref_csv{results.csv:baseline:final_accuracy}, natomiast proponowany algorytm Adaptive FedProx uzyskał \\ref_csv{results.csv:proposed:final_accuracy} przy odporności na stragglery rzędu \\ref_csv{results.csv:proposed:straggler_resilience_rate}. Zbiorcze podsumowanie przedstawiono na rycinie \\ref_fig{figures/comparison_chart.pdf}.'), ('Rozdział 6: Podsumowanie i Wnioski: Potwierdzenie Tezy Inżynierskiej', 'Uzyskane rezultaty empiryczne w pełni potwierdzają sformułowaną tezę badawczą. Wprowadzenie proksymalnego członu stabilizującego pozwala zniwelować negatywne skutki niejednorodności danych i zapewnia stabilną zbieżność.')]
-
-FEDERATED_CUSTOM_TASKS = [
-    {'task_id': 'T1', 'description': '[04_federated_learning] Synthesize competitive SOTA literature discovery (2023-2026) and verified BibTeX citations in references.bib', 'target_node': 'thesis.md', 'assigned_agent': 'discoverer_researcher', 'status': 'TODO'},
-    {'task_id': 'T2', 'description': '[04_federated_learning] Define cluster topology and distributed hyperparameters in config.py', 'target_node': 'config.py', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
-    {'task_id': 'T3', 'description': '[04_federated_learning] Implement synthetic Dirichlet non-IID partition generator in core.py', 'target_node': 'core.py', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
-    {'task_id': 'T4', 'description': '[04_federated_learning] Implement local client SGD training with proximal loss regularizer in core.py', 'target_node': 'core.py', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
-    {'task_id': 'T5', 'description': '[04_federated_learning] Implement federated server aggregation comparing FedAvg and Adaptive FedProx in core.py', 'target_node': 'core.py', 'assigned_agent': 'federated_ml_specialist', 'status': 'TODO'},
-    {'task_id': 'T6', 'description': '[04_federated_learning] Implement pytest unit tests verifying partition completeness, proximal loss, and weight normalization in test_core.py', 'target_node': 'tests/test_core.py', 'assigned_agent': 'seed_tester', 'status': 'TODO'},
-    {'task_id': 'T7', 'description': '[04_federated_learning] Execute multi-round empirical evaluation across 25 communication rounds and write results.csv', 'target_node': 'tests/test_core.py', 'assigned_agent': 'seed_tester', 'status': 'TODO'},
-    {'task_id': 'T8', 'description': '[04_federated_learning] Implement vector visualization in plot_results.py producing convergence and resilience charts in PDF and PNG', 'target_node': 'tests/test_core.py', 'assigned_agent': 'seed_tester', 'status': 'TODO'},
-    {'task_id': 'T9', 'description': '[04_federated_learning] Author Chapters 1-3 of thesis (Introduction, SOTA Taxonomy, and TikZ distributed architecture diagram) in thesis.md', 'target_node': 'thesis.md', 'assigned_agent': 'seed_writer', 'status': 'TODO'},
-    {'task_id': 'T10', 'description': '[04_federated_learning] Author Chapters 4-6 of thesis with symbolic pointers \\ref_ast, \\ref_csv, and \\ref_fig in thesis.md', 'target_node': 'thesis.md', 'assigned_agent': 'seed_writer', 'status': 'TODO'},
-]
+FEDERATED_THESIS_CHAPTERS = [('Rozdział 1: Wstęp i Cel Pracy: Uczenie Sfederowane w Środowiskach Brzegowych', 'Celem pracy jest projekt i analiza rozproszonego systemu uczenia sfederowanego w warunkach silnej niejednorodności rozkładów danych (Dirichlet non-IID) oraz asynchronicznych opóźnień klientów. Postawiono tezę badawczą, że adaptacyjna modyfikacja algorytmu FedProx pozwala zachować zbieżność modelu globalnego i wyeliminować zjawisko dryfu klientów bez zwiększania pasma komunikacyjnego.'), ('Rozdział 2: Analiza Stanu Wiedzy (SOTA 2023--2026): Optymalizacja Sfederowana', 'Podstawy zbieżności uczenia sfederowanego sformułowali McMahan i in. \\cite{mcmahan2017communication} w algorytmie FedAvg oraz Li i in. \\cite{li2020federated} w proksymalnym FedProx. Najnowszy stan wiedzy (2023--2026) dowodzi, że silna heterogeniczność danych (Dirichlet skew) prowadzi do dryfu wag lokalnych (client drift), co udokumentowali Wang i in. \\cite{wang2023tackling} (NeurIPS 2023) oraz Karimireddy i in. \\cite{karimireddy2024scaffold} (JMLR 2024). W monografii Kairouza i in. \\cite{kairouz2024advances} wykazano potrzebę elastycznej regularyzacji w obliczu opóźnionych węzłów (stragglers), a Zhao i in. \\cite{zhao2023noniid} (ICLR 2023) określili empiryczne granice stabilności. Istniejącą luką badawczą pozostaje weryfikowalny symbolicznie algorytm adaptacyjny o zerowym narzucie C-rozszerzeń, co stanowi główny wkład niniejszej pracy.'), ('Rozdział 3: Projekt Architektury Rozproszonej i Topologia Klient-Serwer', 'Architektura systemu składa się z centralnego serwera agregującego oraz klastra \\ref_ast{config.py:NUM_CLIENTS} węzłów brzegowych. Komunikacja odbywa się w rundach synchronicznych z tolerancją na wyłączenia węzłów.\n\n' + FEDERATED_TIKZ + '\n'), ('Rozdział 4: Realizacja i Implementacja: Adaptacyjny Algorytm Proksymalny', 'W module implementacyjnym wprowadzono lokalny krok stochastycznego spadku wzdłuż gradientu z regularyzacją proksymalną \\ref_ast{config.py:MU_PROXIMAL}. Każdy klient wykonuje \\ref_ast{config.py:LOCAL_EPOCHS} epok lokalnych ze stopą uczenia \\ref_ast{config.py:LEARNING_RATE} przed odesłaniem gradientu do serwera.'), ('Rozdział 5: Badania Eksperymentalne: Wyniki i Analiza Zbieżności', 'Przeprowadzono \\ref_ast{config.py:ROUNDS} rund agregacji w warunkach asymetrii danych \\ref_ast{config.py:DIRICHLET_ALPHA}. Rozwiązanie bazowe FedAvg osiągnęło dokładność \\ref_csv{results.csv:baseline+final_accuracy:value}, natomiast proponowany algorytm Adaptive FedProx uzyskał \\ref_csv{results.csv:proposed+final_accuracy:value} przy odporności na stragglery rzędu \\ref_csv{results.csv:proposed+straggler_resilience_rate:value}. Zbiorcze podsumowanie przedstawiono na rycinie \\ref_fig{figures/comparison_chart.pdf}.'), ('Rozdział 6: Podsumowanie i Wnioski: Potwierdzenie Tezy Inżynierskiej', 'Uzyskane rezultaty empiryczne w pełni potwierdzają sformułowaną tezę badawczą. Wprowadzenie proksymalnego członu stabilizującego pozwala zniwelować negatywne skutki niejednorodności danych i zapewnia stabilną zbieżność.')]
 

@@ -225,30 +225,32 @@ def test_a3_diff_finds_broken_promises_and_files_outside_the_plan(tmp_path: Path
     assert not any(culprit == "src/_math.py" for _rule, culprit in {(v.rule, v.culprit) for v in diff(h, observe(ws))})
 
 
+def _a3_plan(interfaces: dict) -> dict:
+    return {"interfaces": interfaces, "entrypoint": _ENTRY, "plots": _ENTRY,
+            "academic_blueprint": {"metrics": ["f1"], "planned_chapters": [{"index": 1, "title": "Wstęp"}]}}
+
+
 def test_a3_planning_returns_violations_to_the_planner_then_builds_h_and_stubs(tmp_path: Path):
+    """The module whose interface the code rejects goes back to its author alone (§XVI); then H and the stubs."""
+    from tests.test_plan_stages import _run
     from tests.test_root_causes_1115 import _orch
 
     orch = _orch(tmp_path)
-    broken = {"tasks": [{"task_id": "T1", "target_node": "src/experiment.py", "description": "x"}],
-              "interfaces": {**_GOOD, "src/experiment.py": _EXPERIMENT_IFACE.replace("run_experiment()", "run_experiment(config)")},
-              "entrypoint": _ENTRY, "plots": _ENTRY, "planned_chapters": [{"index": 1, "title": "Wstęp"}]}
-    fixed = {"interfaces": {"src/experiment.py": _EXPERIMENT_IFACE}}  # a patch: only the module it corrects
-    sent: list[dict] = []
+    broken = _EXPERIMENT_IFACE.replace("run_experiment()", "run_experiment(config)")
     reviewed: list[dict] = []
 
-    def agents(md, payload, **_kw):
-        if Path(md).name == "plan_critic_guard.md":
-            reviewed.append(payload)
-            return {"status": "ok", "output": {"status": "PASS", "issues": []}}
-        sent.append(payload)
-        return {"status": "ok", "output": fixed}
+    def module(payload, _n):
+        return {"source": broken} if payload["module"]["file"] == "src/experiment.py" and "feedback" not in payload else None
 
-    orch._call_agent = agents
-    plan, interfaces, violations = orch._validated_plan(broken, {"user_prompt": "p"}, tmp_path / "planner.md")
-    assert violations == [] and plan["interfaces"] == _GOOD and plan["tasks"] == broken["tasks"] and len(sent) == 1
-    assert "ENTRYPOINT_HAS_ARGUMENTS" in sent[0]["error_feedback"]
-    assert sent[0]["current_plan"]["interfaces"] == broken["interfaces"]  # the planner corrects the plan it sees
-    # The critic judges only the plan the code accepted, and sees its interfaces.
+    def critic(payload, _n):
+        reviewed.append(payload)
+        return None
+
+    (plan, interfaces, violations), calls = _run(orch, _a3_plan(_GOOD), {"plan_module": module, "plan_critic_guard": critic})
+    sent = [p for a, p in calls if a == "plan_module" and p["module"]["file"] == "src/experiment.py"]
+    assert violations == [] and interfaces == _GOOD and len(sent) == 2
+    assert any("ENTRYPOINT_HAS_ARGUMENTS" in f for f in sent[1]["feedback"]) and sent[1]["previous_source"] == broken
+    # The main critic judges only the plan the code accepted, and sees its interfaces.
     assert len(reviewed) == 1 and reviewed[0]["interfaces"] == _GOOD
 
     h = orch._build_project_hypergraph(interfaces, {"entrypoint": _ENTRY, "metrics": ["f1"]}, plan["tasks"])
@@ -257,18 +259,19 @@ def test_a3_planning_returns_violations_to_the_planner_then_builds_h_and_stubs(t
     assert "raise NotImplementedError" in stub
 
 
-def test_a3_a_plan_still_broken_after_two_corrections_stops_the_run(tmp_path: Path):
+def test_a3_a_plan_still_broken_after_its_corrections_stops_the_run(tmp_path: Path):
+    from tests.test_plan_stages import _run
     from tests.test_root_causes_1115 import _orch
 
     orch = _orch(tmp_path)
-    broken = {"tasks": [{"task_id": "T1", "target_node": "src/experiment.py", "description": "x"}],
-              "interfaces": {**_GOOD, "src/data_generator.py": _GENERATOR.replace("-> list[float]", "-> List[float]")},
-              "entrypoint": _ENTRY, "plots": _ENTRY, "planned_chapters": [{"index": 1, "title": "Wstęp"}]}
-    calls = []
-    orch._call_agent = lambda *_a, **_k: calls.append(1) or {"status": "ok", "output": broken}
-    _, _, violations = orch._validated_plan(broken, {}, tmp_path / "planner.md")
-    assert len(calls) == 2 and any("STUB_DOES_NOT_IMPORT" in v for v in violations)
-    assert orch._plan_rejected(violations, broken["tasks"])["stop"]["status"] == "PLAN_REJECTED"
+    broken = _GENERATOR.replace("-> list[float]", "-> List[float]")
+
+    def module(payload, _n):
+        return {"source": broken} if payload["module"]["file"] == "src/data_generator.py" else None
+
+    (_, _, violations), _calls = _run(orch, _a3_plan(_GOOD), {"plan_module": module})
+    assert any("STUB_DOES_NOT_IMPORT" in v for v in violations)
+    assert orch._plan_rejected(violations, [])["stop"]["status"] == "PLAN_REJECTED"
 
 
 # --- A5: writes and verification judged against σ; pointer findings go to the writer -----------------------------
@@ -502,7 +505,7 @@ def test_a8_a_code_task_sees_its_specification_and_history_not_the_writers_groun
 
 # --- A9/A10: a known culprit goes back to its author, not to the planner; σ breaches make no prompt rules -------
 
-from adk.orchestration.common import HARNESS_ENFORCED_CATEGORIES, _issue_category  # noqa: E402
+from adk.orchestration.failure_kinds import HARNESS_ENFORCED_CATEGORIES, _issue_category  # noqa: E402
 
 
 def test_a10_breaches_of_the_specification_are_enforced_by_the_harness_not_by_rules():
@@ -544,25 +547,17 @@ _E2E_IMPL = {
 
 def _e2e(tmp_path: Path, implement_entry: bool = True) -> tuple[dict, list[str], list[dict]]:
     from adk.core.llm import set_llm_handler
+    from adk.mocks.staged import staged_answer
     from adk.orchestrator import NeuroSymbolicOrchestrator
 
     built: list[str] = []
 
+    plan = {"interfaces": _E2E_IFACES, "entrypoint": "src/experiment.py:run_experiment", "plots": "src/experiment.py:run_experiment"}
+
     def handler(agent, _system_prompt, payload, _tier):
-        if agent == "task_planner":
-            return {
-                "tasks": [
-                    {"task_id": "T1", "target_node": "src/experiment.py", "description": "Implement run_experiment", "assigned_agent": "seed_coder"},
-                    {"task_id": "T2", "target_node": "src/config.py", "description": "Implement config", "assigned_agent": "seed_coder"},
-                    {"task_id": "T3", "target_node": "src/game.py", "description": "Implement play", "assigned_agent": "seed_coder"},
-                    {"task_id": "T4", "target_node": "tests/test_game.py", "description": "Test play", "assigned_agent": "seed_tester"},
-                ],
-                "interfaces": _E2E_IFACES,
-                "entrypoint": "src/experiment.py:run_experiment",
-                "plots": "src/experiment.py:run_experiment",
-            }
-        if agent == "plan_critic_guard":
-            return {"status": "PASS", "approved": True, "issues": []}
+        staged = staged_answer(plan, agent, payload)
+        if staged is not None:
+            return staged
         target = str(payload.get("target_file") or "")
         built.append(target)
         if target.startswith("tests/"):
@@ -587,7 +582,8 @@ def _e2e(tmp_path: Path, implement_entry: bool = True) -> tuple[dict, list[str],
 def test_e2e_the_entrypoint_runs_after_what_it_uses_and_every_task_sees_its_specification(tmp_path: Path):
     result, built, events = _e2e(tmp_path)
     assert result["status"] == "COMPLETED"
-    assert built[:4] == ["src/config.py", "src/game.py", "src/experiment.py", "tests/test_game.py"]
+    # the derived queue (§XVI): every module after what it uses, its tests right after it, the entrypoint last
+    assert built[:4] == ["src/config.py", "src/game.py", "tests/test_game.py", "src/experiment.py"]
     verified = {e["vertex"] for e in events if e["event"] == "VERTEX_STATE" and e["state"] == "verified"}
     assert {"src/config.py", "src/game.py", "src/experiment.py"} <= verified
 

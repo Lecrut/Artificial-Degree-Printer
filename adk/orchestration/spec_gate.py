@@ -11,9 +11,10 @@ import re
 from adk.hypergraph import Hypergraph, Vertex, Violation, diff, load, observe, save
 from adk.hypergraph.build import spec_from_stub
 from adk.hypergraph.observe import absorbable
-from adk.hypergraph.oracles import check_behaviour, is_stub, run_fingerprint, validate_test_on_stubs
+from adk.hypergraph.oracles import check_behaviour, run_fingerprint, stub_functions, validate_test_on_stubs
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.common import _PYTEST_E_LINE, MaterializationError
+from adk.orchestration.common import MaterializationError
+from adk.orchestration.failure_kinds import _PYTEST_E_LINE
 from adk.hypergraph.model import module_import_path
 
 
@@ -51,8 +52,9 @@ class SpecGateMixin:
         found: list[Violation] = []
         for rel, v in (h.vertices.items() if h else []):
             path = self.workspace_dir / rel
-            if v.kind in ("code", "entry") and (paths is None or rel in paths) and path.is_file() and is_stub(path.read_text(encoding="utf-8")):
-                found.append(Violation("NOT_IMPLEMENTED", "a function still only raises NotImplementedError", rel, rel))
+            stubs = stub_functions(path.read_text(encoding="utf-8")) if v.kind in ("code", "entry") and (paths is None or rel in paths) and path.is_file() else []
+            if stubs:  # named: "a function" left the coder guessing for three repairs (2026-11-21, 01 game_env)
+                found.append(Violation("NOT_IMPLEMENTED", f"still without an implementation (only a stub body): {', '.join(stubs)}", rel, rel))
         return found
 
     def _behaviour_violations(self, paths: set[str] | None = None) -> list[Violation]:

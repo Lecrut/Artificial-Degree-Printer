@@ -22,6 +22,31 @@ describe('buildTimeline', () => {
     expect(q3).toMatchObject({ title: 'Q3_FIX1', status: 'ok', phase: 'repairs' })
   })
 
+  it('shows planning in stages: the outline, each module, the fused plan, a reopened part', () => {
+    const author = (agent: string) => ({ agent, task_id: null })
+    const { entries } = buildTimeline([
+      at('1', 'LLM_CALL_END', { ...author('plan_outline'), elapsed_s: 30 }),
+      at('1', 'PLAN_OUTLINE_CHECKED', { attempt: 1, modules: ['a.py', 'x.py'], problems: ['OUTLINE [x.py]: unused'], critic: [] }),
+      at('2', 'LLM_CALL_END', { ...author('plan_outline'), elapsed_s: 20 }),
+      at('2', 'LLM_CALL_END', { ...author('outline_critic_guard'), elapsed_s: 10 }),
+      at('2', 'PLAN_OUTLINE_CHECKED', { attempt: 2, modules: ['a.py'], problems: [], critic: [] }),
+      at('2', 'PLAN_OUTLINE_ACCEPTED', { attempts: 2, order: ['a.py'] }),
+      at('3', 'LLM_CALL_END', { ...author('plan_module'), elapsed_s: 5 }),
+      at('3', 'PLAN_MODULE_CHECKED', { module: 'a.py', attempt: 1, problems: [], critic: [] }),
+      at('3', 'PLAN_MODULE_ACCEPTED', { module: 'a.py', attempts: 1, over_critic: [] }),
+      at('4', 'PLAN_FUSED', { modules: ['a.py'], tasks: 7 }),
+      at('5', 'PLAN_MODULE_REOPENED', { module: 'a.py', reasons: ['PLAN_CRITIC [a.py]: wrong'] }),
+      at('5', 'PLAN_MODULE_CHECKED', { module: 'a.py', attempt: 1, problems: [], critic: [] }),
+    ])
+    expect(entries.map(e => [e.title, e.status])).toEqual([
+      ['Szkic planu', 'ok'], ['Interfejs a.py', 'ok'], ['Plan złożony', 'ok'], ['Interfejs a.py — ponownie', 'running'],
+    ])
+    expect(entries[0]).toMatchObject({ subtitle: 'a.py', llm: { calls: 3, seconds: 60, agents: ['plan_outline', 'outline_critic_guard'] } })
+    expect(entries[0]!.details.map(d => d.label)).toEqual(['próba 1', 'kod', 'próba 2'])
+    expect(entries[2]!.subtitle).toBe('7 zadań · 1 modułów')
+    expect(entries[3]!.details[0]).toMatchObject({ label: 'powód', status: 'warn' })
+  })
+
   it('shows each version of the plan with the critic and the patch', () => {
     const { entries } = buildTimeline([
       at('1', 'PLAN_CHECKED', { attempt: 0, modules: ['a.py'], blockers: { code: ['STUB_DOES_NOT_IMPORT'], instruction: [], critic: [] } }),

@@ -36,6 +36,3 @@ Return strictly a valid JSON object, for example:
 For several files at once, use `"files": [{"filename": "tests/test_<module>.py", "content": "..."}]`.
 For a change to an existing file: `"ast_edits": [{"symbol": "<TestClass>.<test_method>", "file": "tests/test_<module>.py", "code": "def <test_method>(self) -> None:\n    ...\n"}]`.
 Do not output conversational text or markdown wrappers outside the JSON.
-
-## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When validating code that processes arrays or structured data, always verify the structural type of the returned value (e.g., checking if it is a tuple, list, or numpy array) before asserting on its dimensions or length, because the actual runtime type may differ from the expected primitive collection.

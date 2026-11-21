@@ -1,4 +1,4 @@
-"""§XIV: the plan critic does not block on guessed doctest results; repairs blame the unverified one of a
+"""§XIV: repairs blame the unverified one of a
 test/module pair and stop when the author's repair leaves the very same error."""
 
 from __future__ import annotations
@@ -10,27 +10,6 @@ from adk.orchestration import repair
 from adk.orchestration.common import _RunState
 from adk.orchestration.failure_attribution import _suspect_test
 from tests.test_audit_xi import _events, _planned, _seen
-from tests.test_plan_spec_validation import _base_plan, _make_orch
-
-
-def test_a_guessed_doctest_result_is_a_warning_not_a_blocker(tmp_path: Path) -> None:
-    """Q1: about half of the critic's blockers in 02/03 predicted what an example returns ("float is fragile",
-    "might block paths"); the harness checks every example on the code itself."""
-    orch = _make_orch(tmp_path)
-    planner_calls: list[dict] = []
-
-    def agents(md, payload, **_kw):
-        if Path(md).name == "plan_critic_guard.md":
-            return {"status": "ok", "output": {"status": "FAIL", "issues": [
-                {"blocking": True, "category": "doctest", "where": "src/mod_a.py",
-                 "problem": "helper_a() may return a float that rounds differently", "fix": "round the example"},
-            ]}}
-        planner_calls.append(payload)
-        return {"status": "ok", "output": {}}
-
-    orch._call_agent = agents
-    _, _, blockers = orch._validated_plan(_base_plan(), {"user_prompt": "p"}, tmp_path / "planner.md")
-    assert blockers == [] and planner_calls == []
 
 
 def test_a_fresh_test_against_a_verified_module_is_the_suspect(tmp_path: Path) -> None:

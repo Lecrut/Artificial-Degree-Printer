@@ -221,6 +221,14 @@ def call_agent(
                 f"provider '{active_provider}' has no simulated agents installed for '{path.stem}': "
                 "install them with adk.mocks.install_simulated_agents() (or set_llm_handler)"
             )
+    except (TimeoutError, OSError) as exc:
+        # The call failed (wall-clock limit, connection, HTTP 5xx): logged, and the caller gets an answer that says
+        # so. It used to be re-raised, and one slow call ended the whole run (01, 2026-11-21).
+        fail_call(call, exc)
+        return {
+            "status": "error", "error": str(exc)[:300], "provider": effective_provider, "agent_md": str(path),
+            "model_tier": model_tier, "model_name": model_name, "output": {},
+        }
     except Exception as exc:
         fail_call(call, exc)
         raise

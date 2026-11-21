@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from adk.mocks.scenarios import ENTRYPOINT, MockScenario
+from adk.mocks.staged import outline_from_plan, staged_answer
 from adk.tools.verification.contract_check import stub_source
 
 _CHAPTER = re.compile(r"(?:chapter|rozdzia[lł])\s*(\d+)", re.I)
@@ -47,7 +48,21 @@ class SimulatedAgents:
     def __call__(self, agent: str, _system_prompt: str, payload: dict[str, Any], _tier: str) -> dict[str, Any]:
         self.calls[agent] = self.calls.get(agent, 0) + 1
         if agent == "task_planner":
-            return self._planner(payload)
+            return self._replan(payload.get("repair_dossier") or {})
+        if agent == "plan_outline":
+            return self._outline(payload)
+        if agent == "plan_module":
+            return self._module(payload)
+        if agent == "module_critic_guard":
+            rel = str((payload.get("module") or {}).get("file") or "")
+            if self._flaw("module_critic_blocks_once"):
+                return {"status": "FAIL", "issues": [{
+                    "blocking": True, "where": rel, "problem": "the interface does not say what its values mean",
+                    "fix": "state the meaning of every value in the docstrings",
+                }]}
+            return {"status": "PASS", "issues": []}
+        if agent == "outline_critic_guard":
+            return staged_answer(self._plan(payload), agent, payload) or {}
         if agent == "plan_critic_guard":
             if self._flaw("critic_blocks_once"):
                 return {"status": "FAIL", "issues": [{
@@ -80,31 +95,22 @@ class SimulatedAgents:
 
     # --- planning ---------------------------------------------------------------------------------------------
 
-    def _planner(self, payload: dict[str, Any]) -> dict[str, Any]:
-        if isinstance(payload.get("repair_dossier"), dict):
-            return self._replan(payload["repair_dossier"])
-        if isinstance(payload.get("current_plan"), dict):
-            return self._plan_patch(payload["current_plan"], str(payload.get("error_feedback", "")))
+    def _plan(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """The plan a good planner would make for the scenario (answered stage by stage through `staged_answer`)."""
         sc = self.scenario
-        thesis_type = str((payload.get("detected_template") or {}).get("thesis_type") or "inzynierska")
-        interfaces = sc.interfaces()
-        if sc.flaws and not payload.get("error_feedback") and self._flaw("planner_unrunnable_plan"):
-            interfaces["metrics_helpers.py"] = _UNRUNNABLE_MODULE
         chapters = [
             {"index": i, "title": title, "focus": title.partition(":")[2].strip() or title}
             for i, (title, _body) in enumerate(sc.thesis_chapters, 1)
         ]
         return {
-            "thesis_type": thesis_type,
-            "hitl_gate": "GATE_1_OUTLINE_APPROVAL",
-            "interfaces": interfaces,
+            "thesis_type": str((payload.get("detected_template") or {}).get("thesis_type") or "inzynierska"),
+            "interfaces": sc.interfaces(),
             "entrypoint": ENTRYPOINT,
+            "plots": "plot_results.py:generate_plots" if sc.plot_script else "",
             "academic_blueprint": {
                 "thesis_title": str(payload.get("user_prompt", ""))[:80],
                 "thesis_statement": sc.thesis_statement,
                 "baseline_comparison": "The proposed method against the baseline on the declared metrics.",
-                "entrypoint": ENTRYPOINT,
-                **({"plots": "plot_results.py:generate_plots"} if sc.plot_script else {}),
                 "metrics": list(sc.metrics),
                 "planned_chapters": chapters if sc.name != "default" else [
                     {"index": 1, "title": "Wstęp i formalizacja problemu"},
@@ -114,9 +120,34 @@ class SimulatedAgents:
                     {"index": 5, "title": "Wnioski i podsumowanie badań"},
                 ],
             },
-            "tasks": payload.get("tasks") or self._tasks(thesis_type, chapters, bool(payload.get("include_docs", True)), payload),
-            "missing_agent_specialization": sc.missing_specialization,
+            "missing_agent_specialization": self.scenario.missing_specialization,
         }
+
+    def _module(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Stage 2. The first interface of the entrypoint's module may lack the function it was to provide."""
+        answer = staged_answer(self._plan(payload), "plan_module", payload) or {}
+        file, _, func = ENTRYPOINT.partition(":")
+        if (payload.get("module") or {}).get("file") == file and not payload.get("feedback") and self._flaw("module_misses_promise"):
+            answer["source"] = str(answer["source"]).replace(f"def {func}(", f"def _{func}(", 1)
+        return answer
+
+    def _outline(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Stage 1. The first outline may carry a module the experiment never uses; a correction changes only what
+        the feedback is about."""
+        current = payload.get("current_outline")
+        if isinstance(current, dict):
+            fixed = {**current, "modules": [m for m in current.get("modules") or [] if m.get("file") != "metrics_helpers.py"]}
+            if any("PLAN_CRITIC" in str(f) for f in payload.get("feedback") or []):
+                blueprint = dict(fixed.get("academic_blueprint") or {})
+                blueprint["thesis_statement"] = str(blueprint.get("thesis_statement") or "") + (
+                    " Success: the proposed method beats the baseline on every declared metric."
+                )
+                fixed["academic_blueprint"] = blueprint
+            return fixed
+        outline = outline_from_plan(self._plan(payload))
+        if self.scenario.flaws and self._flaw("planner_unrunnable_plan"):
+            outline["modules"].append({"file": "metrics_helpers.py", "purpose": "Metric helpers.", "depends_on": [], "provides": ["normalized"]})
+        return outline
 
     def _replan(self, dossier: dict[str, Any]) -> dict[str, Any]:
         """New tasks for the failed vertices, one each."""
@@ -130,49 +161,6 @@ class SimulatedAgents:
                 agent = "seed_tester" if kind == "test" else "seed_coder"
                 tasks.append({"target_node": vertex, "description": f"Rewrite {vertex}: the earlier attempts failed", "assigned_agent": agent})
         return {"tasks": tasks}
-
-    def _plan_patch(self, plan: dict[str, Any], feedback: str) -> dict[str, Any]:
-        """A correction of the plan it was shown: only the parts the feedback is about."""
-        patch: dict[str, Any] = {}
-        if "metrics_helpers.py" in (plan.get("interfaces") or {}):
-            patch["remove_interfaces"] = ["metrics_helpers.py"]
-        if "PLAN_CRITIC" in feedback:
-            statement = str((plan.get("academic_blueprint") or {}).get("thesis_statement") or "")
-            patch["academic_blueprint"] = {
-                "thesis_statement": statement + " Success: the proposed method beats the baseline on every declared metric."
-            }
-        return patch
-
-    def _tasks(self, thesis_type: str, chapters: list[dict[str, Any]], include_docs: bool, payload: dict[str, Any]) -> list[dict[str, Any]]:
-        sc = self.scenario
-        coder = sc.missing_specialization or "seed_coder"
-        if sc.custom_tasks:
-            return [dict(t) for t in sc.custom_tasks]
-        prompt = str(payload.get("user_prompt", ""))[:80]
-        tasks: list[dict[str, Any]] = []
-        if include_docs and sc.name != "default":
-            stages = {"magisterska": ["background", "discoverer"], "paper": ["discoverer"]}.get(thesis_type, ["background"])
-            tasks += [
-                {"task_id": f"T0_{s.upper()[:3]}", "description": f"{s.title()} literature review and bibliography",
-                 "target_node": "thesis.md", "assigned_agent": f"{s}_researcher"}
-                for s in stages
-            ]
-        tasks += [
-            {"task_id": "T1", "description": f"Implement configuration parameters for: {prompt}", "target_node": "config.py", "assigned_agent": coder},
-            {"task_id": "T2", "description": f"Implement train_and_evaluate() in core.py for: {prompt}", "target_node": "core.py", "assigned_agent": coder},
-            {"task_id": "T3", "description": "Unit tests of core.py", "target_node": "tests/test_core.py", "assigned_agent": "seed_tester"},
-        ]
-        if sc.plot_script:
-            tasks.append({"task_id": "T_PLOT", "description": "Implement generate_plots() in plot_results.py", "target_node": "plot_results.py", "assigned_agent": coder})
-        if include_docs:
-            if sc.name == "default":
-                tasks.append({"task_id": "T4", "description": f"Document symbolic results for: {prompt}", "target_node": "thesis.md", "assigned_agent": "seed_writer"})
-            else:
-                tasks += [
-                    {"task_id": f"T5_{c['index']}", "description": f"Chapter {c['index']}: {c['title']}", "target_node": "thesis.md", "assigned_agent": "seed_writer"}
-                    for c in chapters
-                ]
-        return [{**t, "status": "TODO"} for t in tasks]
 
     def _remediation(self, payload: dict[str, Any]) -> dict[str, Any]:
         report = payload.get("error_report") or {}

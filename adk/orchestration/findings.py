@@ -12,6 +12,9 @@ import ast
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
+
+from adk.orchestration import agent_texts as texts
 
 _RUFF = re.compile(r"^(?P<file>[^\s:][^:\n]*\.py):(?P<line>\d+):(?P<col>\d+): (?P<code>[A-Z]+\d+) (?P<msg>.+)$", re.M)
 _PYTEST_SECTION = re.compile(r"\n_{3,} (.+?) _{3,}\n")
@@ -77,12 +80,15 @@ def _relative(raw: str, workspace: Path) -> str:
     return text if (workspace / text).is_file() else ""
 
 
-def _from_ruff(issue: str, workspace: Path) -> list[Finding]:
+def _from_ruff(issue: str, workspace: Path, hints: Callable[[str], dict[str, str]] | None = None) -> list[Finding]:
     found = []
     for m in _RUFF.finditer(issue.removeprefix("Ruff lint failure:").lstrip()):
         rel = _relative(m["file"], workspace) or m["file"]
         symbol, code = locate(workspace, rel, int(m["line"]))
-        found.append(Finding("ruff", f"{m['code']} {m['msg'].strip()}", rel, symbol, int(m["line"]), code))
+        text = f"{m['code']} {m['msg'].strip()}"
+        name = re.match(r"Undefined name `(\w+)`", m["msg"].strip()) if m["code"] == "F821" and hints else None
+        line = hints(rel).get(name.group(1)) if name else None  # D2: the one import line, as a hint
+        found.append(Finding("ruff", text + texts.IMPORT_HINT.format(line) if line else text, rel, symbol, int(m["line"]), code))
     return found
 
 
@@ -116,13 +122,14 @@ def _from_rule(issue: str) -> list[Finding]:
     return [Finding("spec", f"{m['rule']}: {detail}", m["file"])]
 
 
-def repair_findings(issues: list[object], workspace: Path) -> list[Finding]:
-    """The deterministic findings of a verification, located and each once."""
+def repair_findings(issues: list[object], workspace: Path, hints: Callable[[str], dict[str, str]] | None = None) -> list[Finding]:
+    """The deterministic findings of a verification, located and each once; `hints(rel)` gives the import line of
+    a name file `rel` uses undefined."""
     found: list[Finding] = []
     for raw in issues:
         issue = str(raw)
         if issue.startswith("Ruff lint failure"):
-            found += _from_ruff(issue, workspace) or [Finding("ruff", issue[:600])]
+            found += _from_ruff(issue, workspace, hints) or [Finding("ruff", issue[:600])]
         elif issue.startswith("Pytest failure") and "no tests ran" not in issue:
             found += _from_pytest(issue, workspace) or [Finding("pytest", issue[:800])]
         else:

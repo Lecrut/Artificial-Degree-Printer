@@ -1,52 +1,28 @@
 {
   "events": [
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T4",
-      "agent": "seed_coder",
-      "error": "The answer for 'src/ensemble_detector.py' was not saved: the fields ['error', 'issues', 'raw_response'] match no allowed shape. Allowed: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section_content}]'). Return files in 'files' as a list of {'filename', 'content'}."
+      "type": "UNKNOWN_CITATIONS_DROPPED",
+      "keys": [
+        "ca2024adversariall"
+      ]
+    },
+    {
+      "type": "UNKNOWN_CITATIONS_DROPPED",
+      "keys": [
+        "data_generation.py:ANOMALY_PROBABILITY",
+        "data_generation.py:NUM_CHANNELS",
+        "data_generation.py:N_SAMPLES",
+        "evaluation.py:N_RUNS",
+        "evaluation.py:aggregate\\texttt{_results",
+        "evaluation.py:compute_metrics",
+        "experiment.py:run\\texttt{_experiment"
+      ]
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T7",
+      "task_id": "T6",
       "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_ensemble_detector.py]: reads RandomSubspaceEnsemble.contamination, RandomSubspaceEnsemble.n_estimators, RandomSubspaceEnsemble.subspace_size, which the interface does not declare (test only declared methods and attributes)"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_baseline_zscore.py]: reads ZScoreBaseline.threshold, ZScoreBaseline.window_size, which the interface does not declare (test only declared methods and attributes)"
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_tester.md",
-        "injected_rule": "When validating code that processes arrays or structured data, always verify the structural type of the returned value (e.g., checking if it is a tuple, list, or numpy array) before asserting on its dimensions or length, because the actual runtime type may differ from the expected primitive collection.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R1_2",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_data_generator.py]: reads get_ground_truth_mask.shape, which the interface does not declare (test only declared methods and attributes)"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R1_2_FIX1",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_data_generator.py]: reads get_ground_truth_mask.shape, which the interface does not declare (test only declared methods and attributes)"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R1_2_FIX2",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_data_generator.py]: reads get_ground_truth_mask.shape, which the interface does not declare (test only declared methods and attributes)"
+      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_data_generation.py:15: invalid syntax\n    14: def test_generate_dataset_labels_binary():\n    15:     \"\"\"Test that generate_dataset returns binary labels (0 or 1).\n    16: "
     },
     {
       "type": "AGENT_MUTATED",
@@ -54,10 +30,105 @@
         "status": "mutated",
         "agent": "seed_coder",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_coder.md",
-        "injected_rule": "When implementing array manipulation logic involving indexing or shape validation, ensure that intermediate operations preserve dimensionality consistency by explicitly checking if axes are dropped (e.g., via `.flatten()` or `squeeze`) and restoring them if subsequent logic expects a specific rank, because mismatched dimensions cause index errors and assertion failures during verification.",
+        "injected_rule": "When implementing a class where methods depend on internal state initialized in `__init__`, verify that all instance attributes accessed by other methods are guaranteed to be assigned during initialization or lazy-initialization, because accessing uninitialized attributes leads to runtime errors when method contracts are violated or order of execution varies.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "BEHAVIOUR_MISMATCH [baselines.py]"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [baselines.py]: the implementation does not give the results the interface specifies:\n- example <id> expected <id>, got <id>",
+        "task_id": "R1_1",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T12",
+      "agent": "seed_tester",
+      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_evaluation.py:63: unmatched '}'\n    62:     assert abs(m1_acc_row['value'] - expected_m1_acc) < 1e-4, f\"Expected mean 0.925, got {m1_acc_row['value']}\"\n    63: }"
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "- RSADetector.fit",
+          "BEHAVIOUR_MISMATCH [rs_ensemble.py]"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example <id> expected <id>, got <id>\n- RSADetector.fit: example <id> expec",
+        "task_id": "R1_3",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "BEHAVIOUR_MISMATCH [baselines.py]"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [baselines.py]: the implementation does not give the results the interface specifies:\n- example <id> expected <id>, got <id>\n- example <id> expected <id>, got <id>",
+        "task_id": "R2_1",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "- RSADetector.fit",
+          "BEHAVIOUR_MISMATCH [rs_ensemble.py]"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example <id> expected <id>, got <id>\n- RSADetector.fit: example <id> expec",
+        "task_id": "R2_2",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "- RSADetector.fit",
+          "BEHAVIOUR_MISMATCH [rs_ensemble.py]"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example <id> expected <id>, got <id>\n- RSADetector.fit: example <id> expec",
+        "task_id": "R3_2",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "- RSADetector.fit",
+          "BEHAVIOUR_MISMATCH [rs_ensemble.py]"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example <id> expected <id>, got <id>\n- RSADetector.fit: example <id> expec",
+        "task_id": "R4_1",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "- RSADetector.fit",
+          "BEHAVIOUR_MISMATCH [rs_ensemble.py]"
+        ],
+        "signature": "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example <id> expected <id>, got <id>\n- RSADetector.fit: example <id> expec",
+        "task_id": "R5_1",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
       }
     }
   ]

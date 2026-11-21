@@ -1,0 +1,9 @@
+method,metric,value
+Random_Baseline,win_rate_vs_random,0.5
+Random_Baseline,draw_rate_vs_random,0.3
+Random_Baseline,loss_rate_vs_random,0.2
+Random_Baseline,avg_reward_final_100_episodes,-0.1
+Q-Learning,win_rate_vs_random,0.0
+Q-Learning,draw_rate_vs_random,0.0
+Q-Learning,loss_rate_vs_random,0.0
+Q-Learning,avg_reward_final_100_episodes,-0.0002

@@ -13,8 +13,6 @@ from adk.tools.planning import (
 )
 from adk.orchestration.common import (
     _merge_bibtex_entries,
-    _issue_signature,
-    _collect_report_issues,
     _fit_items,
     THESIS_FILE,
     _declared_vs_measured_metrics,
@@ -23,6 +21,7 @@ from adk.orchestration.common import (
     _agent_for_path,
     MaterializationError,
 )
+from adk.orchestration.failure_kinds import _issue_signature, _collect_report_issues
 from adk.orchestration.gates import GatesMixin
 from adk.orchestration.routing import RoutingMixin
 from adk.orchestration.building import BuildingMixin
@@ -36,6 +35,7 @@ from adk.orchestration.evolution import EvolutionMixin
 from adk.orchestration.planning import PlanningMixin
 from adk.orchestration.plan_healing import PlanHealingMixin
 from adk.orchestration.plan_spec import PlanSpecMixin
+from adk.orchestration.plan_stages import PlanStagesMixin
 from adk.orchestration.schedule import SchedulerMixin
 from adk.orchestration.spec_gate import SpecGateMixin
 from adk.orchestration.recovery import RecoveryMixin
@@ -67,6 +67,7 @@ class NeuroSymbolicOrchestrator(
     RoutingMixin,
     GatesMixin,
     PlanSpecMixin,
+    PlanStagesMixin,
     PlanChangeMixin,
     SpecGateMixin,
     SchedulerMixin,

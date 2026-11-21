@@ -35,31 +35,15 @@ def test_complexity_router_follows_the_attempt():
 
 
 def test_call_planning_agents():
-    planner_res = call_agent(
-        "agents/planning/task_planner.md",
-        {"user_prompt": "Create config validation"},
-        model_tier="LRM",
-        provider="mock",
-    )
-    assert planner_res["status"] == "ok"
-    assert len(planner_res["output"]["tasks"]) >= 1
-
-    guard_res = call_agent(
-        "agents/planning/plan_critic_guard.md",
-        {
-            "tasks": planner_res["output"]["tasks"],
-            "agent_registry": {
-                "agents": {
-                    "seed_coder": {"active": True},
-                    "seed_tester": {"active": True},
-                    "seed_writer": {"active": True},
-                }
-            },
-        },
-        model_tier="SML",
-        provider="mock",
-    )
-    assert guard_res["output"]["status"] == "PASS"
+    """The planning agents of every stage answer through the same seam (§XVI): outline, module, critics."""
+    outline = call_agent("agents/planning/plan_outline.md", {"user_prompt": "Create config validation"}, model_tier="LRM", provider="mock")
+    assert outline["status"] == "ok" and len(outline["output"]["modules"]) >= 1
+    first = outline["output"]["modules"][0]
+    module = call_agent("agents/planning/plan_module.md", {"module": first}, model_tier="LRM", provider="mock")
+    assert module["status"] == "ok" and module["output"]["source"]
+    for critic in ("outline_critic_guard", "module_critic_guard", "plan_critic_guard"):
+        verdict = call_agent(f"agents/planning/{critic}.md", {"outline": outline["output"]}, model_tier="LRM", provider="mock")
+        assert verdict["output"]["status"] == "PASS", critic
 
 
 def test_robust_json_extraction_with_think_tags_and_prose():
@@ -95,16 +79,18 @@ def test_scout_domain_conventions_routes_research_and_prescribes_nothing():
 
 
 def test_research_first_task_ordering_in_planner():
-    """The simulated planner of every benchmark plans the research first and the chapters last."""
+    """The derived queue of every benchmark (§XVI) puts the research first and a chapter last."""
     from adk.benchmarks import BENCHMARK_TASKS
     from adk.mocks.agents import SimulatedAgents
     from adk.mocks.scenarios import SCENARIOS
+    from adk.orchestration.plan_outline import outline_of
+    from adk.orchestration.plan_tasks import planned_tasks
 
     for task_id, spec in BENCHMARK_TASKS.items():
         agents = SimulatedAgents(SCENARIOS[task_id])
-        plan_out = agents("task_planner", "", {"user_prompt": spec.prompt, "error_feedback": "none"}, "LRM")
-        tasks = plan_out["tasks"]
-        assert plan_out["academic_blueprint"]["planned_chapters"], task_id
+        outline = outline_of(agents("plan_outline", "", {"user_prompt": spec.prompt}, "LRM"))
+        assert outline["academic_blueprint"]["planned_chapters"], task_id
+        tasks = planned_tasks(outline, SCENARIOS[task_id].interfaces(), spec.thesis_type, True, set())
         assert tasks[0]["target_node"] == "thesis.md" and "researcher" in tasks[0]["assigned_agent"], task_id
         assert tasks[-1]["target_node"] == "thesis.md" and tasks[-1]["assigned_agent"] == "seed_writer", task_id
 
@@ -154,26 +140,24 @@ def test_paper_card_extraction_and_arxiv_parser():
 
 
 def test_vertical_feature_slices_in_single_task_planner():
-    """Verify that task_planner cleanly produces vertical feature slices with co-evolving code, tests, and documentation, along with academic_blueprint."""
-    planner_res = call_agent(
-        "agents/planning/task_planner.md",
-        {"user_prompt": "Build Q-learning agent with unit tests and thesis documentation"},
-        model_tier="LRM",
-        provider="mock",
-    )
-    assert planner_res["status"] == "ok"
-    tasks = planner_res["output"]["tasks"]
-    assert len(tasks) >= 2
-    target_nodes = {t["target_node"] for t in tasks}
-    assert {"config.py", "core.py"} <= target_nodes
-    # Every plan carries the specification its tasks build on (Audit VI).
-    assert set(planner_res["output"]["interfaces"]) == {"config.py", "core.py", "plot_results.py"}  # figures: §XIII.8
+    """The derived queue interleaves code, its tests and the thesis; the outline carries the blueprint."""
+    from adk.mocks.staged import outline_from_plan
+    from adk.orchestration.plan_outline import outline_of
+    from adk.orchestration.plan_tasks import planned_tasks
+    from tests._plans import SPEC
 
-    # Academic blueprint must be part of single task_planner output (not a separate thesis_architect)
-    blueprint = planner_res["output"]["academic_blueprint"]
-    assert "thesis_title" in blueprint
-    assert "thesis_statement" in blueprint
+    outline_res = call_agent("agents/planning/plan_outline.md", {"user_prompt": "Build Q-learning agent with unit tests and thesis documentation"}, model_tier="LRM", provider="mock")
+    assert outline_res["status"] == "ok"
+    outline = outline_of(outline_res["output"])
+    assert {m["file"] for m in outline["modules"]} == {"config.py", "core.py", "plot_results.py"}  # figures: §XIII.8
+    blueprint = outline["academic_blueprint"]
+    assert "thesis_title" in blueprint and "thesis_statement" in blueprint
     assert len(blueprint["planned_chapters"]) >= 4
+
+    tasks = planned_tasks(outline_of(outline_from_plan({**SPEC, "academic_blueprint": blueprint})), SPEC["interfaces"], "inzynierska", True, set())
+    target_nodes = [t["target_node"] for t in tasks]
+    assert {"config.py", "core.py", "tests/test_core.py", "thesis.md"} <= set(target_nodes)
+    assert target_nodes.index("core.py") < target_nodes.index("tests/test_core.py")
 
 
 def test_unknown_topic_gets_no_borrowed_methodology(monkeypatch):
@@ -264,3 +248,13 @@ def test_benchmark_prompts_dictate_no_files_values_or_metrics():
     dictated = ("config.py", "core.py", "results.csv", "train_and_evaluate", "ALPHA", "EPISODES", "win_rate", "\\ref_")
     for key, spec in BENCHMARK_TASKS.items():
         assert not [tok for tok in dictated if tok in spec.prompt], key
+
+
+def test_arxiv_keywords_of_a_topic_card_come_from_the_english_title():
+    """A Polish topic card (2026-11-21): search terms come from its English title, not from "Temat pracy…"."""
+    from adk.benchmarks.tasks import BENCHMARK_TASKS
+    from adk.tools.building.literature_engine import arxiv_keywords
+
+    terms = arxiv_keywords(BENCHMARK_TASKS["02_ml_anomaly_detection"].prompt)
+    assert terms[:3] == ["robust", "anomaly", "detection"]
+    assert arxiv_keywords("Research question: does weighted search expand fewer nodes?")[:2] == ["weighted", "search"]

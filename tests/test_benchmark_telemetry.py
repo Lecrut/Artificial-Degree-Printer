@@ -75,8 +75,6 @@ def test_every_agent_call_is_logged_before_and_after_it_runs(tmp_path):
     """Simulated or real, each call leaves LLM_CALL_START/END (with the decision) in events.jsonl, its payload in
     agent_trace.jsonl before the answer, and an error record when it fails. Until 2026-11-18 only network calls
     reached events.jsonl, so a plan critic that never ran was indistinguishable from one that was not logged."""
-    import pytest
-
     from adk.core.llm import call_agent, set_llm_handler
     from adk.core.logger import set_process_log_dir
     from adk.core.models import resolve_adk_path
@@ -96,12 +94,12 @@ def test_every_agent_call_is_logged_before_and_after_it_runs(tmp_path):
     reset_llm_telemetry()
     try:
         out = call_agent(critic, {"tasks": [], "interfaces": {"core.py": "x = 1\n"}}, model_tier="LRM", provider="mock")
-        with pytest.raises(TimeoutError):
-            call_agent(critic, {"boom": True}, model_tier="LRM", provider="mock")
+        failed = call_agent(critic, {"boom": True}, model_tier="LRM", provider="mock")  # returned, not raised (§XVI.7)
     finally:
         set_llm_handler(None)
         set_process_log_dir(None)
 
+    assert failed["status"] == "error" and "model hung" in failed["error"] and failed["output"] == {}
     assert seen_payloads[0]["phase"] == "request" and seen_payloads[0]["user_payload"]["interfaces"] == {"core.py": "x = 1\n"}
     assert "BLOKUJĄCE core.py: no seeds" in out["decision_summary"]
     events = [json.loads(line) for line in (tmp_path / "events.jsonl").read_text(encoding="utf-8").splitlines()]

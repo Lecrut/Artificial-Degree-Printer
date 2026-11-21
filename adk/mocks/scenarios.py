@@ -5,14 +5,15 @@ the mistakes a real small model makes on the first try (`flaws`). The harness ne
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from adk.mocks import code_fixtures as fx
 
 # Mistakes the simulated agents make once, then correct after the harness's feedback (see agents.py):
 FLAWS = (
-    "planner_unrunnable_plan",  # an extra module with an impossible doctest that the experiment never imports
-    "critic_blocks_once",  # the plan critic raises a blocking finding on the first plan it sees
+    "planner_unrunnable_plan",  # the first outline has an extra module the experiment never uses
+    "critic_blocks_once",  # the main plan critic raises a blocking finding on the outline once
+    "module_misses_promise",  # the first interface of the entrypoint's module lacks the entrypoint it was to provide
+    "module_critic_blocks_once",  # the critic of the first module designed raises a blocking finding
     "coder_breaks_signature",  # the first answer for the entrypoint module renames its function (spec gate)
     "coder_adds_helper",  # the plotting module comes with a helper file it imports (recorded in H)
     "tester_uses_undeclared_name",  # the first test imports a name the interface does not declare
@@ -46,7 +47,6 @@ class MockScenario:
     discoverer_bibtex: str = ""
     discoverer_section: str = ""
     missing_specialization: str | None = None
-    custom_tasks: list[dict[str, Any]] = field(default_factory=list)
     flaws: frozenset[str] = frozenset()
 
     def interfaces(self) -> dict[str, str]:
@@ -66,6 +66,7 @@ SCENARIOS: dict[str, MockScenario] = {
         test_code=fx.TICTACTOE_TEST_CODE,
         plot_script=fx.TICTACTOE_PLOT_SCRIPT,  # every plan declares its figures (§XIII.8)
         thesis_statement="Deterministic neuro-symbolic verification eliminates metric hallucinations.",
+        metrics=["win_rate", "draw_rate"],
         thesis_chapters=[(fx.TICTACTOE_DOC_SECTION_TITLE, fx.TICTACTOE_DOC_SECTION_CONTENT)],
     ),
     "01_rl_tictactoe": MockScenario(
@@ -94,6 +95,7 @@ SCENARIOS: dict[str, MockScenario] = {
             "This thesis proposes a robust multi-channel anomaly detector combining median absolute deviation "
             "scaling with a random subspace ensemble, demonstrating superior precision and recall over univariate Z-score."
         ),
+        metrics=["precision", "recall", "f1_score", "false_alarm_rate"],
         thesis_chapters=fx.ANOMALY_THESIS_CHAPTERS,
         background_bibtex=fx.ANOMALY_BACKGROUND_BIBTEX,
         background_section=fx.ANOMALY_BACKGROUND_CONTENT,
@@ -112,6 +114,7 @@ SCENARIOS: dict[str, MockScenario] = {
             "This thesis evaluates Weighted Octile A* pathfinding on 8-connected obstacle grids against uninformed "
             "Dijkstra search, demonstrating over 5x reduction in vertex expansions while preserving path optimality."
         ),
+        metrics=["success_rate", "path_optimality", "avg_expanded_nodes", "speedup_factor"],
         thesis_chapters=fx.PATHFINDING_THESIS_CHAPTERS,
         discoverer_bibtex=fx.PATHFINDING_BIBTEX,
         discoverer_section=fx.PATHFINDING_SOTA_CONTENT,
@@ -128,11 +131,11 @@ SCENARIOS: dict[str, MockScenario] = {
             "This thesis evaluates the convergence stability and straggler resilience of Adaptive FedProx "
             "under Dirichlet non-IID data heterogeneity compared to standard FedAvg across 25 communication rounds."
         ),
+        metrics=["final_accuracy", "straggler_resilience_rate"],
         thesis_chapters=fx.FEDERATED_THESIS_CHAPTERS,
         discoverer_bibtex=fx.FEDERATED_BIBTEX,
         discoverer_section=fx.FEDERATED_SOTA_CONTENT,
         missing_specialization="federated_ml_specialist",
-        custom_tasks=fx.FEDERATED_CUSTOM_TASKS,
         flaws=_ALL_FLAWS,
     ),
 }

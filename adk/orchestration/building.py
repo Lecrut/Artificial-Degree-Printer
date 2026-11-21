@@ -4,6 +4,7 @@ from __future__ import annotations
 
 
 import ast
+import csv
 import re
 from pathlib import Path
 from typing import Any
@@ -13,10 +14,10 @@ from adk.core.models import read_json_state
 from adk.orchestration.common import (
     THESIS_FILE,
     available_package_imports,
-    _collect_report_issues,
     _is_document,
     MaterializationError,
 )
+from adk.orchestration.failure_kinds import _collect_report_issues
 
 # pytest summary line: `FAILED path.py::Class::test_name - message` (or ERROR)
 _FAILED_TEST_LINE = re.compile(r"^(?:FAILED|ERROR)\s+(\S+?\.py)::(\S+?)(?:\s+-\s+(.*))?$", re.MULTILINE)
@@ -72,6 +73,27 @@ def _document_context(document: str, task_description: str) -> str:
     elif len(body) > DOC_CONTEXT_BUDGET:
         body = body[:DOC_CONTEXT_BUDGET] + texts.clipped(len(body) - DOC_CONTEXT_BUDGET)
     return f"{texts.DOCUMENT_OUTLINE_LABEL}\n{outline}\n\n{label}\n{body}"
+
+
+RESULTS_REQUIRED = ("method", "metric", "value")
+RESULTS_OPTIONAL = ("std_dev", "n_runs")
+
+
+def _results_format_problem(path: Path) -> str:
+    """Why `results.csv` breaks its contract (empty: it keeps it): columns `method,metric,value` (+ `std_dev,n_runs`),
+    one row per method and metric. Until 2026-11-21 the contract was only in the prompts: 02 wrote a row per seed
+    with an extra `seed` column, and a thesis pointer `method+metric` silently cited the first seed."""
+    if not path.is_file():
+        return ""  # a missing file is reported by the experiment itself
+    with path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        columns = [c.strip() for c in reader.fieldnames or []]
+        rows = list(reader)
+    extra = [c for c in columns if c not in RESULTS_REQUIRED + RESULTS_OPTIONAL]
+    missing = [c for c in RESULTS_REQUIRED if c not in columns]
+    keys = [(str(r.get("method", "")).strip(), str(r.get("metric", "")).strip()) for r in rows]
+    repeated = sorted({k for k in keys if keys.count(k) > 1})
+    return texts.results_format_broken(missing, extra, [f"{m}+{k}" for m, k in repeated]) if missing or extra or repeated else ""
 
 
 class BuildingMixin:
@@ -253,6 +275,8 @@ class BuildingMixin:
         entrypoint = str(blueprint.get("entrypoint") or "").strip() if isinstance(blueprint, dict) else ""
         plots = str(blueprint.get("plots") or "").strip() if isinstance(blueprint, dict) else ""
         result = execute_workspace_experiment(self.workspace_dir, entrypoint=entrypoint or None, plots=plots or None)
+        if result.get("ok") and (problem := _results_format_problem(self.workspace_dir / "results.csv")):
+            result = {"ok": False, "error": problem}
         if result.get("skipped") or result.get("ok"):
             self._last_experiment_error = ""
             if result.get("ok"):

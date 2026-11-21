@@ -12,6 +12,7 @@ from typing import Any
 from adk.core.models import read_json_state
 from adk.hypergraph import Hypergraph
 from adk.hypergraph.observe import planned_module_for_test
+from adk.tools.building.experiment_runner import EXPERIMENT_TIMEOUT_S
 
 
 def _spec_view(h: Hypergraph, module: str) -> dict[str, Any]:
@@ -68,6 +69,7 @@ class ContextMixin:
                     "metrics": run.spec.get("metrics", []),
                     "results": sorted(m for m, role in run.members.items() if role == "O"),
                     "plots": run.spec.get("plots") or None,
+                    "time_limit_s": EXPERIMENT_TIMEOUT_S,
                 }
         elif v.kind == "chapter":
             context.update(self._document_context_slice(h))

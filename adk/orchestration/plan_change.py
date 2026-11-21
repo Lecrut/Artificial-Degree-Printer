@@ -5,10 +5,13 @@ as `SPEC_AMENDED`, and a name other modules use is never removed."""
 
 from __future__ import annotations
 
+import ast
+import difflib
 import re
 from typing import Any
 
 from adk.core.models import read_json_state, write_json_state
+from adk.orchestration import agent_texts as texts
 from adk.hypergraph import code_violations, save
 from adk.hypergraph.build import spec_from_stub
 from adk.hypergraph.model import module_import_path
@@ -21,6 +24,27 @@ AMENDMENTS_PER_MODULE = 2  # per run: after that the module's tasks fail as gaps
 
 def _spec_findings(issues: list[Any]) -> set[tuple[str, str]]:
     return {(m.group(1), m.group(2)) for issue in issues for m in _FINDING.finditer(str(issue))}
+
+
+_READS = re.compile(r"TEST_OUTSIDE_SPEC \[[^\]]+\]: reads (.+?), which the interface does not declare")
+
+
+def _typos(issues: list[Any], interface: str) -> list[str]:
+    """`read (did you mean declared?)` for every undeclared name a test reads that is a near miss of a name the
+    interface has (any identifier in its source: parameters and `self.x` count)."""
+    try:
+        tree = ast.parse(interface)
+    except SyntaxError:
+        return []
+    known = {getattr(n, attr) for n in ast.walk(tree) for attr in ("id", "attr", "arg", "name") if isinstance(getattr(n, attr, None), str)}
+    found: list[str] = []
+    for m in (m for issue in issues for m in _READS.finditer(str(issue))):
+        for read in (r.strip() for r in m.group(1).split(",")):
+            last = read.rsplit(".", 1)[-1]
+            close = [c for c in difflib.get_close_matches(last, known, n=1, cutoff=0.75) if c != last]
+            if close and f"{read} (did you mean `{close[0]}`?)" not in found:
+                found.append(f"{read} (did you mean `{close[0]}`?)")
+    return found
 
 
 class PlanChangeMixin:
@@ -46,12 +70,20 @@ class PlanChangeMixin:
         module = h.tested_module(where) if where in h.vertices and h.vertices[where].kind == "test" else where
         if f"I:{module}" not in h.edges:
             return False
+        blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+        interfaces = dict(blueprint.get("interfaces") or {})
+        typos = _typos(issues, interfaces.get(module, "")) if rule == "TEST_OUTSIDE_SPEC" else []
+        if typos:
+            # A test misspelling a declared name is the test's error, not a gap in σ (2026-11-20, 02: `no_std` for
+            # `noise_std` became an alias in the interface). Nothing to ask the planner.
+            h.vertices[owner or module].history.append({"task_id": "PLAN", "issues": [texts.test_name_typo(typos)]})
+            save(h, self.hypergraph_path)
+            self.logger.log_event("SPEC_KEPT", module=module, rule=rule, task_id=task_id, reason=f"typo: {typos}")
+            return False
         counts = self.__dict__.setdefault("_amendments", {})
         if counts.get(module, 0) >= AMENDMENTS_PER_MODULE:
             return False
         counts[module] = counts.get(module, 0) + 1
-        blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
-        interfaces = dict(blueprint.get("interfaces") or {})
         users = {
             e.id.removeprefix("I:"): e.spec.get("uses", {}).get(module, [])
             for e in h.edges.values()

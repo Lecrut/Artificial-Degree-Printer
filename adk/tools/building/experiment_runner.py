@@ -79,9 +79,12 @@ log_body = "\\n".join(notes) if notes else "EXPERIMENT_SUCCESS\\n"
 raise SystemExit(code)
 """
 
+EXPERIMENT_TIMEOUT_S = 180  # the whole run (entrypoint + plots); the planner and the coder are told (2026-11-21)
+
+
 def execute_workspace_experiment(
     workspace_dir: str | Path,
-    timeout: int = 180,
+    timeout: int = EXPERIMENT_TIMEOUT_S,
     entrypoint: str | None = None,
     plots: str | None = None,
 ) -> dict[str, Any]:

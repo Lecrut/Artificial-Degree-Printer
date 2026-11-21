@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from adk.orchestration.failure_attribution import _is_test, _pytest_culprits, _suspect_test
+from adk.orchestration.failure_attribution import _is_test, _pytest_culprits, _suspect_test, _traceback_culprit
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.factual_audit import thesis_missing_chapters
 from adk.core.models import ValidationReport, read_json_state, write_json_state
@@ -22,9 +22,9 @@ from adk.orchestration.common import (
     THESIS_FILE,
     _agent_for_path,
     _clip_log,
-    _collect_report_issues,
     _declared_vs_measured_metrics,
 )
+from adk.orchestration.failure_kinds import _collect_report_issues
 
 
 def _task_scope(node_path: str, written: set[str], h: Hypergraph | None) -> dict[str, list[str]]:
@@ -306,7 +306,10 @@ class VerificationMixin:
                 symbolic_audit["status"] = "PASS"
                 symbolic_audit["issues"] = []
 
-        metric_errors = list(metric_findings) if is_final_gate else []
+        # Only a declared metric that was never measured blocks; a measured extra one is a warning (it was blocking
+        # too, against the docstring of `_declared_vs_measured_metrics`).
+        unmeasured = {texts.metric_not_measured(m) for m in declared_metrics}
+        metric_errors = [f for f in metric_findings if f in unmeasured] if is_final_gate else []
         if is_final_gate:
             # The red team's own findings are warnings; the defense is blocked by code, pointers (above) and by
             # metrics declared in the plan that the results do not contain (counted by the harness).
@@ -339,6 +342,8 @@ class VerificationMixin:
                     break
                 if failed_file:
                     break
+            if failed_file is None and self._last_experiment_error and governs_results:
+                failed_file = _traceback_culprit(self._last_experiment_error, self.workspace_dir)
             if failed_file is None:
                 # Pointer findings name the code file a pointer aims at, but the pointer is the writer's (X6).
                 named = [
