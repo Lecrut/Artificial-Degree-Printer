@@ -1,3 +1,41 @@
 {
-  "failures": []
+  "failures": [],
+  "category_log": [
+    {
+      "cycle": 1,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T3"
+    },
+    {
+      "cycle": 2,
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T3"
+    },
+    {
+      "cycle": 3,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T4"
+    },
+    {
+      "cycle": 4,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T4"
+    },
+    {
+      "cycle": 5,
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "T9"
+    },
+    {
+      "cycle": 6,
+      "agent": "seed_coder",
+      "category": "run:NameError",
+      "task_id": "T9"
+    }
+  ]
 }

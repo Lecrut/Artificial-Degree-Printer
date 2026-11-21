@@ -1,7 +1,19 @@
 {
   "active": false,
-  "current_gate": null,
-  "approved_gates": [],
+  "current_gate": "GATE_2_METHODOLOGY_APPROVAL",
+  "approved_gates": [
+    "GATE_1_OUTLINE_APPROVAL",
+    "GATE_2_METHODOLOGY_APPROVAL"
+  ],
   "question": null,
-  "context": {}
+  "context": {
+    "interfaces": [
+      "src/experiment_runner.py",
+      "src/game_env.py",
+      "src/plot_results.py",
+      "src/q_agent.py",
+      "src/random_opponent.py"
+    ],
+    "entrypoint": "src/experiment_runner.py:run_experiment"
+  }
 }

@@ -1,1 +1,86 @@
-[]
+[
+  {
+    "task_id": "T1",
+    "description": "[Increment 1: Assumptions] Write Chapter 2 (Literature Review) in thesis.md. Cover Reinforcement Learning basics, Q-Learning algorithm derivation, and Tic-Tac-Toe as a game environment. Cite foundational RL texts and recent survey papers.",
+    "target_node": "thesis.md#ch2",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T2",
+    "description": "[Increment 1: Assumptions] Write Chapter 1 (Introduction) in thesis.md. Define the problem, thesis statement (Q-learning convergence to Nash equilibrium in zero-sum finite games against random opponents), and project scope.",
+    "target_node": "thesis.md#ch1",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T_CH3",
+    "description": "Chapter 3 (Rozdział 3: Metodyka Badań i Implementacja) in thesis.md",
+    "target_node": "thesis.md#ch3",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T3",
+    "description": "[Increment 2: Method] Implement the TicTacToeEnv class in src/game_env.py with reset, step, get_valid_moves, encode_state, and decode_state methods as defined in interfaces.",
+    "target_node": "src/game_env.py",
+    "assigned_agent": "seed_coder",
+    "status": "FAILED",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "T4",
+    "description": "[Increment 2: Method] Implement the QAgent class in src/q_agent.py with init, get_action, learn_step, and update_epsilon methods as defined in interfaces.",
+    "target_node": "src/q_agent.py",
+    "assigned_agent": "seed_coder",
+    "status": "FAILED",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "T5",
+    "description": "[Increment 2: Method] Implement the get_random_move function in src/random_opponent.py as defined in interfaces.",
+    "target_node": "src/random_opponent.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T6",
+    "description": "[Increment 2: Method] Write unit tests for TicTacToeEnv in tests/test_game_env.py. Verify reset state, valid moves, win conditions (via step), draw conditions, and encode/decode consistency.",
+    "target_node": "tests/test_game_env.py",
+    "assigned_agent": "seed_tester",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "T7",
+    "description": "[Increment 2: Method] Write unit tests for QAgent in tests/test_q_agent.py. Verify Q-table initialization shape, epsilon-greedy action selection against valid_moves, and learn_step updates with correct reward values.",
+    "target_node": "tests/test_q_agent.py",
+    "assigned_agent": "seed_tester",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "T8",
+    "description": "[Increment 3: Experiment] Implement the run_experiment function in src/experiment_runner.py. It must seed numpy, train Q-agent against random opponent for NUM_EPISODES_Q, evaluate win rates for both agents over NUM_EVALUATION_GAMES episodes, and write results.csv to the workspace root (os.getcwd()) with columns method, metric, value.",
+    "target_node": "src/experiment_runner.py",
+    "assigned_agent": "seed_coder",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "T9",
+    "description": "[Increment 3: Experiment] Implement the plot_results function in src/plot_results.py. It reads results.csv from the workspace root, generates convergence plots and comparison charts, and saves them to the figures/ directory.",
+    "target_node": "src/plot_results.py",
+    "assigned_agent": "seed_coder",
+    "status": "FAILED",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "T10",
+    "description": "[Increment 3: Text] Write Chapter 4 (Experimental Results) and Chapter 5 (Conclusions) in thesis.md. Analyze the convergence of Q-learning, compare win rates against random baseline, discuss limitations and future work.",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
+  }
+]

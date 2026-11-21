@@ -1,7 +1,7 @@
 [
   {
     "task_id": "T1",
-    "description": "[Increment 1: Assumptions] Write thesis.md Chapter 1: Wstęp, Cel i Teza Pracy (Introduction, Aim and Thesis Statement). Define the research question regarding multi-feature robust ensemble detection vs static univariate Z-score baseline in synthetic bio-signal telemetry. Include success criterion: ensemble outperforms baseline in F1-score on sparse anomalies.",
+    "description": "[Increment 1: Assumptions] Chapter 1: Wstęp (Introduction) in thesis.md",
     "target_node": "thesis.md#ch1",
     "assigned_agent": "seed_writer",
     "status": "DONE",
@@ -9,7 +9,7 @@
   },
   {
     "task_id": "T2",
-    "description": "[Increment 1: Assumptions] Chapter 2, Section 1: Background. Write literature review on anomaly detection in time-series/bio-signals (Z-score, IQR) and ensemble methods. Focus on why static univariate methods fail with correlated noise.",
+    "description": "[Increment 1: Assumptions] Chapter 2: Teoretyczne podstawy detekcji anomalii (Theoretical Background) in thesis.md",
     "target_node": "thesis.md#ch2",
     "assigned_agent": "background_researcher",
     "status": "DONE",
@@ -17,144 +17,143 @@
   },
   {
     "task_id": "T3",
-    "description": "[Increment 1: Assumptions] Chapter 2, Section 2: SOTA. Write review of recent ensemble anomaly detection methods (e.g., isolation forests, robust covariance) to justify the choice of 'robust' components.",
-    "target_node": "thesis.md#ch2",
-    "assigned_agent": "discoverer_researcher",
-    "status": "DONE",
-    "repair_attempts": 0
-  },
-  {
-    "task_id": "T4",
-    "description": "[Increment 1: Assumptions] Implement config.py: Module-level constants for experiment parameters (num_samples, noise_std, anomaly_rate, seeds, ensemble_components). Define data generation settings.",
-    "target_node": "src/config.py",
+    "description": "[Increment 2: Method] Implement the random subspace data generation module with anomaly injection in src/data_generator.py. This module creates synthetic multi-channel physiological signals, injects anomalies at specified locations, and provides ground truth masks for evaluation.",
+    "target_node": "src/data_generator.py",
     "assigned_agent": "seed_coder",
     "status": "DONE",
     "repair_attempts": 0
   },
   {
+    "task_id": "T4",
+    "description": "[Increment 2: Method] Implement the ensemble anomaly detection module in src/ensemble_detector.py. This implements Random Subspace Ensembles using Isolation Forest components, allowing for dynamic feature subspaces per estimator and an aggregation mechanism for final anomaly scores.",
+    "target_node": "src/ensemble_detector.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 1
+  },
+  {
     "task_id": "T5",
-    "description": "[Increment 1: Assumptions] Implement synthetic_data.py: Interface for generating synthetic multi-channel bio-signal telemetry. Class `SyntheticDataset`. Method `generate()` returns numpy array X and boolean mask y (1=anomaly). Must include correlated noise between channels using local RNG.",
-    "target_node": "src/synthetic_data.py",
+    "description": "[Increment 2: Method] Implement the static baseline module in src/baseline_zscore.py. This implements a univariate Z-score based detector with configurable window size and threshold, serving as the comparative baseline.",
+    "target_node": "src/baseline_zscore.py",
     "assigned_agent": "seed_coder",
     "status": "DONE",
     "repair_attempts": 0
   },
   {
     "task_id": "T6",
-    "description": "[Increment 2: Method] Implement baselines.py: Interface for the baseline. Class `UnivariateZScoreBaseline`. Method `fit(X)` computes mean/std per channel. Method `predict(X)` returns boolean array of anomalies based on fixed threshold (e.g., 3*std). Doctest provided.",
-    "target_node": "src/baselines.py",
-    "assigned_agent": "seed_coder",
+    "description": "[Increment 2: Method] Unit tests for data_generator module in tests/test_data_generator.py. Verify signal dimensions, normal range validity, and correct injection of anomalies (check ground truth mask overlaps).",
+    "target_node": "tests/test_data_generator.py",
+    "assigned_agent": "seed_tester",
     "status": "FAILED",
     "repair_attempts": 3
   },
   {
     "task_id": "T7",
-    "description": "[Increment 2: Method] Implement ensemble_detector.py: Interface for the proposed method. Class `RobustEnsembleDetector`. Components: Median Absolute Deviation (MAD) per channel + IQR filtering. Method `fit(X)` computes robust stats. Method `predict(X)` returns boolean array. **Fix:** Store `mad_per_channel_` in `fit`. In `predict`, compute `(X - median_) / mad_per_channel_` element-wise, then aggregate (e.g., sum of squares) or check per-channel thresholds to align with UnivariateBaseline 'any channel' logic.",
-    "target_node": "src/ensemble_detector.py",
-    "assigned_agent": "seed_coder",
-    "status": "DONE",
-    "repair_attempts": 0
+    "description": "[Increment 2: Method] Unit tests for ensemble_detector module in tests/test_ensemble_detector.py. Verify prediction dimensions, score ranges [0,1], and consistency across calls.",
+    "target_node": "tests/test_ensemble_detector.py",
+    "assigned_agent": "seed_tester",
+    "status": "FAILED",
+    "repair_attempts": 3
   },
   {
     "task_id": "T8",
-    "description": "[Increment 2: Method] Write unit tests for synthetic_data.py in tests/test_synthetic_data.py. Verify shape, anomaly rate and presence of anomalies.",
-    "target_node": "tests/test_synthetic_data.py",
+    "description": "[Increment 2: Method] Unit tests for baseline_zscore module in tests/test_baseline_zscore.py. Verify threshold application and output dimensions.",
+    "target_node": "tests/test_baseline_zscore.py",
     "assigned_agent": "seed_tester",
     "status": "FAILED",
     "repair_attempts": 3
   },
   {
     "task_id": "T9",
-    "description": "[Increment 2: Method] Write unit tests for baselines.py in tests/test_baselines.py. Test UnivariateZScoreBaseline predict behavior on known outliers using doctest/pytest assertions.",
-    "target_node": "tests/test_baselines.py",
-    "assigned_agent": "seed_tester",
+    "description": "[Increment 3: Experiment] Chapter 3: Proponowana metoda i rozwiązanie bazowe (Proposed Method and Baseline) in thesis.md",
+    "target_node": "thesis.md#ch3",
+    "assigned_agent": "seed_writer",
     "status": "DONE",
     "repair_attempts": 0
   },
   {
     "task_id": "T10",
-    "description": "[Increment 2: Method] Write unit tests for ensemble_detector.py in tests/test_ensemble_detector.py. Test RobustEnsembleDetector predict behavior on known outliers, specifically verifying per-channel normalization does not dominate due to scale differences.",
-    "target_node": "tests/test_ensemble_detector.py",
-    "assigned_agent": "seed_tester",
-    "status": "DONE",
-    "repair_attempts": 0
-  },
-  {
-    "task_id": "T11",
-    "description": "[Increment 3: Experiment] Implement experiment_runner.py: Entry point `run_experiment()`. Reads config, loops over seeds, generates data, fits both models, predicts, computes metrics (Precision, Recall, F1). **Fix:** Write results in long format (`method,metric,value,seed`) to `results.csv` to preserve seed-level granularity for plotting. Do not aggregate immediately.",
-    "target_node": "src/experiment_runner.py",
+    "description": "[Increment 3: Experiment] Implement the experiment entrypoint module in src/experiment.py. It must load configuration from module-level constants, import data_generator, ensemble_detector, and baseline_zscore at the top level to use them, generate synthetic data via data_generator, run ensemble_detector and baseline_zscore with multiple seeds/repetitions, compute metrics (Precision, Recall, F1 using sklearn.metrics.precision_recall_fscore_support, AUC-ROC using sklearn.metrics.roc_curve and sklearn.metrics.auc) saving results to `results.csv` (format: method,metric,value,std_dev,n_runs), and finally call plotting.plots(). Explicitly map baseline Z-scores to AUC-ROC and binary predictions to F1.",
+    "target_node": "src/experiment.py",
     "assigned_agent": "seed_coder",
     "status": "FAILED",
     "repair_attempts": 3
   },
   {
-    "task_id": "T12",
-    "description": "[Increment 3: Visualization] Implement plots.py: Function `plot_results()`. Reads `results.csv` (long format), generates boxplots of F1-scores for both methods across seeds, and a confusion matrix heatmap for the ensemble method. Saves to `figures/`.",
-    "target_node": "src/plots.py",
+    "task_id": "T11",
+    "description": "[Increment 3: Experiment] Implement the visualization module in src/plotting.py. Contains `plots()` function that reads `results.csv` and generates figures (e.g., F1 distribution across seeds, confusion matrix averages) saved to `figures/`.",
+    "target_node": "src/plotting.py",
     "assigned_agent": "seed_coder",
     "status": "DONE",
-    "repair_attempts": 0
+    "repair_attempts": 1
+  },
+  {
+    "task_id": "T12",
+    "description": "[Increment 3: Experiment] Chapter 4: Wyniki eksperymentów i ich analiza (Experimental Results and Analysis) in thesis.md. Must cite results from `results.csv` and figures from `figures/`.",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
   },
   {
     "task_id": "T13",
-    "description": "[Increment 3: Results] Chapter 3: Wwyniki Eksperymentu (Experimental Results). Describe setup, parameters from config, and report F1-scores from results.csv. Compare Ensemble vs Z-Score.",
+    "description": "[Increment 3: Experiment] Chapter 5: Wnioski (Conclusions) in thesis.md. Discuss success/failure against baseline and implications.",
     "target_node": "thesis.md",
     "assigned_agent": "seed_writer",
     "status": "WAITING"
   },
   {
     "task_id": "T14",
-    "description": "[Increment 3: Conclusions] Chapter 4: Podsumowanie i Wnioski (Conclusion). Summarize findings. Did the multi-feature robust ensemble succeed? Discuss limitations of synthetic data and future work.",
-    "target_node": "thesis.md",
-    "assigned_agent": "seed_writer",
-    "status": "WAITING"
+    "description": "[Increment 3: Experiment] Chapter 6: Przegląd literatury (Literature Review - SOTA) in thesis.md. Covers recent advances in ensemble anomaly detection and robust physiological monitoring.",
+    "target_node": "thesis.md#ch6",
+    "assigned_agent": "sota_researcher",
+    "status": "DONE",
+    "repair_attempts": 0
   },
   {
-    "task_id": "T_CH5",
-    "description": "Chapter 5 (Rozdział 5: Podsumowanie i Wnioski) in thesis.md",
-    "target_node": "thesis.md",
-    "assigned_agent": "seed_writer",
-    "status": "WAITING"
+    "task_id": "R1_2",
+    "description": "[Repair] Fix test_get_ground_truth_mask in tests/test_data_generator.py. The previous test incorrectly asserted mask length as signal_length * n_channels (flat) while the interface specifies shape (n_channels, signal_length). Update the test to assert mask.shape == (n_channels, signal_length) and check boolean values correctly for channel 0.",
+    "target_node": "tests/test_data_generator.py",
+    "assigned_agent": "seed_tester",
+    "status": "FAILED",
+    "repair_attempts": 3
   },
   {
-    "task_id": "R2_1",
-    "description": "[Increment 2: Repair] Implement src/baselines.py: Class `UnivariateZScoreBaseline`. Method `__init__(self, threshold: float) -> None`. Method `fit(self, X: np.ndarray) -> None` computes mean/std. Method `predict(self, X: np.ndarray) -> np.ndarray` returns boolean array of shape `(n_samples,)`. **Critical Fix**: The previous implementation failed doctests because it returned a 2D array or flattened incorrectly when aggregating per-channel results. The logic must be: compute Z-score matrix $(N, C)$, then return `np.any(np.abs(Z) > threshold, axis=1)`. Ensure the doctest example `det.predict(np.array([[10, 10], [1, 1]]))` returns exactly `array([ True, False])` (1D boolean array).",
-    "target_node": "src/baselines.py",
-    "assigned_agent": "seed_coder",
+    "task_id": "R1_4",
+    "description": "[Repair] Fix test_compute_scores_shape in tests/test_baseline_zscore.py. The previous test passed a 2D array of shape (4, 2) but expected scores shape to match input height (4). The interface specifies input X is (n_channels, signal_length), so output scores must be (signal_length,). Create valid input data with shape (2, 100) and assert scores.shape == (100,).",
+    "target_node": "tests/test_baseline_zscore.py",
+    "assigned_agent": "seed_tester",
     "status": "DONE",
     "repair_attempts": 1
   },
   {
-    "task_id": "R2_3",
-    "description": "[Increment 2: Repair] Rewrite unit tests for synthetic_data.py in tests/test_synthetic_data.py. **Critical Fix**: Previous test file had indentation errors (SyntaxError) causing pytest failure. Write valid Python with correct indentation. Test `SyntheticDataset.generate()` returns numpy arrays of shape `(N, C)` and boolean mask `(N,)`. Assert that the number of True labels in `y` matches `n_samples * anomaly_rate`.",
-    "target_node": "tests/test_synthetic_data.py",
+    "task_id": "R1_6",
+    "description": "[Repair] Fix test_score_ranges in tests/test_ensemble_detector.py. Isolation Forest scores are typically in [-0.5, 0.5] or similar depending on preprocessing, not necessarily [-10, 0]. Update the test to assert that scores are finite numbers and check consistency with predictions (lower score = more anomalous) rather than hard-coding a potentially incorrect range. Verify shape is (n_samples,).",
+    "target_node": "tests/test_ensemble_detector.py",
     "assigned_agent": "seed_tester",
     "status": "DONE",
-    "repair_attempts": 2
+    "repair_attempts": 0
   },
   {
-    "task_id": "R3_1",
-    "description": "[Increment 3: Repair Experiment] Implement src/experiment_runner.py. Fix NameError by importing config constants directly (`from src.config import ...`). The previous implementation referenced undefined variables like `RANDOM_STATE` and `config`. Implement the loop over seeds, data generation via `SyntheticDataset`, fitting of `UnivariateZScoreBaseline` and `RobustEnsembleDetector`, metric computation using `compute_metrics`, and writing to `results.csv` in long format (method, metric, value, seed).",
-    "target_node": "src/experiment_runner.py",
+    "task_id": "R1_7",
+    "description": "[Repair] Implement run_experiment in src/experiment.py. This module must import data_gen, ens_det, base_det at the top level. Use constants N_CHANNELS=3, SIGNAL_LENGTH=1000, N_ANOMALIES=5, REPEATS=10, SEEDS=[42, 123, 456]. Loop over seeds and repeats. Generate signal X_gen (shape: n_channels, signal_length). Create y_true_flat mask using data_gen.get_ground_truth_mask. For Baseline Z-score: call base_det.ZScoreBaseline(...).compute_scores(X_gen) -> returns scores (signal_length,) and preds (signal_length,). For Ensemble: create ens_det.RandomSubspaceEnsemble(...), fit on X_gen.T, predict_scores on X_gen.T -> returns scores_ens (signal_length,). Note: Predictions from ensemble need thresholding; use fixed threshold or percentile as specified. Calculate F1, Precision, Recall using sklearn metrics against y_true_flat and preds_zscore/preds_ensemble. Calculate AUC-ROC using roc_curve/auc against y_true_flat and scores_zscore/scores_ens. Aggregate results into a list of dicts with method, metric, value, std_dev (computed across seeds/repeats), n_runs. Save to `results.csv` using pandas. Finally call src.plotting.plots().",
+    "target_node": "src/experiment.py",
+    "assigned_agent": "seed_coder",
+    "status": "WAITING",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "R2_1",
+    "description": "[Repair] Fix src/data_generator.py: get_ground_truth_mask. The interface specifies shape (n_channels, signal_length) but the implementation returned a flat 1D array. Rewrite `get_ground_truth_mask` to create a mask with exactly `np.zeros((n_channels, signal_length), dtype=bool)` and iterate over anomalies to set `mask[a['channel'], a['start']:a['end']] = True`. Ensure `generate_signal` is deterministic.",
+    "target_node": "src/data_generator.py",
     "assigned_agent": "seed_coder",
     "status": "FAILED",
     "repair_attempts": 3
   },
   {
-    "task_id": "R4_1",
-    "description": "[Repair] Implement `src/experiment_runner.py` correctly. **Diagnosis**: Previous attempts failed because they incorrectly tried to derive ground truth labels from the synthetic data (which is noisy) or used invalid numpy syntax `np.quantile(X_true[:, 0], ...)` on a tuple if X was not array-like in context, but primarily because they confused the 'training set' logic with the 'ground truth' generation. The `SyntheticDataset.generate(seed)` already returns the correct boolean mask `y` for the generated `X`. We must use that `y`. \n\n**Implementation Steps**:\n1. Import `csv`, `numpy as np`.\n2. Import constants from `src.config`: `NUM_SAMPLES`, `NUM_CHANNELS`, `NOISE_STD`, `ANOMALY_RATE`, `SEEDS`, `ZSCORE_THRESHOLD`, `ROBUST_THRESHOLD`.\n3. Import `SyntheticDataset` from `src.synthetic_data`.\n4. Import `UnivariateZScoreBaseline` from `src.baselines` and `RobustEnsembleDetector` from `src.ensemble_detector`.\n5. Define helper function `compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict` inside this module or imported. It must return `precision`, `recall`, `f1`. Doctest: `y_true=[True, False]`, `y_pred=[False, False]` -> recall=0.0.\n6. Define `run_experiment()`: \n   - Initialize `SyntheticDataset` with config params.\n   - Iterate `seed` in `SEEDS`.\n   - Call `dataset.generate(seed)` to get `X, y`. **Crucial**: Use this `y` as the ground truth for the WHOLE dataset `X` to evaluate the detector's ability to detect injected anomalies in the raw stream (or split train/test but apply detector to test). \n   - *Correction on Logic*: The prompt asks if ensemble finds anomalies in telemetry. Usually, we fit on 'normal' data or a mix and predict on new data. However, to strictly compare detection accuracy of the *model's decision boundary* vs the *injected anomalies*, we can split `X` into train/test (80/20) for fitting the baseline/std, but the evaluation metric should be calculated on the test set against the true labels in the test set.\n   - Split: `X_train = X[:800]`, `X_test = X[800:]`. `y_train = y[:800]`, `y_test = y[800:]`.\n   - For each method ('UnivariateZScoreBaseline', 'RobustEnsembleDetector'):\n     - Create detector with appropriate threshold.\n     - Call `detector.fit(X_train)`.\n     - Call `y_pred = detector.predict(X_test)`.\n     - Compute metrics using `y_test` and `y_pred`.\n   - Write rows to `results.csv`: columns `['method', 'metric', 'value', 'seed']`. Append row for each metric per seed per method.\n   - Ensure no NameErrors by strictly importing from `src.*`.",
-    "target_node": "src/experiment_runner.py",
-    "assigned_agent": "seed_coder",
-    "status": "FAILED",
-    "repair_attempts": 3,
-    "harness_bug": {
-      "files_in_error": [
-        "Traceback (most recent call last)"
-      ],
-      "signature": "Traceback (most recent call last):\n  File <id>, line #, in <module>\n    getattr(plots_module, plots_func)()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File <id>, line #, in plot_results\n    p = axes[#]",
-      "task_id": "R4_1",
-      "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-      "source": "harness"
-    }
+    "task_id": "R2_2",
+    "description": "[Repair] Fix tests/test_data_generator.py: test_get_ground_truth_mask. The previous test asserted 1D length while the interface defines 2D shape. Update `test_get_ground_truth_mask` to check `mask.shape == (n_channels, signal_length)` and verify specific channel indices.",
+    "target_node": "tests/test_data_generator.py",
+    "assigned_agent": "seed_tester",
+    "status": "WAITING"
   }
 ]

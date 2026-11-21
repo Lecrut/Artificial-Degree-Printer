@@ -1,115 +1,162 @@
 {
   "failures": [
     {
+      "agent": "seed_tester",
+      "context": "{\"pattern\": {\"category\": \"pytest:AssertionError\", \"occurrences\": 2, \"tasks\": [\"T6\", \"T8\"], \"examples\": [\"Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\\n====================================================================================\", \"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_baseline_zscore.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n________________________________________________________________________________________________________________________________________ test_compute_scores_shape ________________________________________________________________________________________________________________________________________\\ntests\\\\test_baseline_zscore.py:12: in test_compute_scores_shape\\n    assert len(scores) == expected_shape[0], f'Shape mismatch: expected height {expected_shape[0]}, got {len(scores)}'\\nE   AssertionError: Shape mismatch: expected height 4, got 2\\nE   assert 2 == 4\\nE    +  where 2 = len((array([1., 1.]), array([0, 0])))\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_baseline_zscore.py::test_compute_scores_shape - AssertionError: Shape mismatch: expected height 4, got 2\\n1 failed in 0.11s\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 8, \"cycle_index\": 9, \"task_id\": \"T8\", \"target_node\": \"tests/test_baseline_zscore.py\", \"suggested_rule\": \"Task T8 on node tests/test_baseline_zscore.py (tests/test_baseline_zscore.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When validating code that processes arrays or structured data, always verify the structural type of the returned value (e.g., checking if it is a tuple, list, or numpy array) before asserting on its dimensions or length, because the actual runtime type may differ from the expected primitive collection."
+    },
+    {
       "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"generic\", \"occurrences\": 3, \"tasks\": [\"R2_1\", \"T11\", \"T6\"], \"examples\": [\"BEHAVIOUR_MISMATCH [src/baselines.py]: the implementation does not give the results the interface specifies:\\n- UnivariateZScoreBaseline.predict: example `det.predict(np.array([[10, 10], [1, 1]]))` expected `array([ True, False])`, got `array([[ True,  True],\\n       [ True,  True]])`\", \"BEHAVIOUR_MISMATCH [src/baselines.py]: the implementation does not give the results the interface specifies:\\n- example `print(result)` expected `[ True False]`, got `[ True  True]`\", \"Ruff lint failure: src\\\\experiment_runner.py:35:20: F821 Undefined name `config`\\nsrc\\\\experiment_runner.py:40:21: F821 Undefined name `config`\\nsrc\\\\experiment_runner.py:42:40: F821 Undefined name `config`\\nsrc\\\\experiment_runner.py:42:60: F821 Undefined name `config`\\nsrc\\\\experiment_runner.py:42:81: F821 Undefined name `config`\\nsrc\\\\experiment_runner.py:42:99: F821 Undefined name `config`\\nsrc\\\\experiment_\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/experiment_runner.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Ruff lint failure: src\\\\experiment_runner.py:35:20: F821 Undefined name `RANDOM_STATE`\\nsrc\\\\experiment_runner.py:46:48: F821 Undefined name `ZSCORE_THRESHOLD`\\nsrc\\\\experiment_runner.py:49:46: F821 Undefined name `ROBUST_THRESHOLD`\\nFound 3 errors.\", \"Traceback (most recent call last):\\n  File \\\"<string>\\\", line 44, in <module>\\n    fn()\\n    ~~^^\\n  File \\\"D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\02_ml_anomaly_detection\\\\workspace\\\\src\\\\experiment_runner.py\\\", line 35, in run_experiment\\n    np.random.seed(RANDOM_STATE)\\n                   ^^^^^^^^^^^^\\nNameError: name 'RANDOM_STATE' is not defined\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 7, \"cycle_index\": 9, \"task_id\": \"T11\", \"target_node\": \"src/experiment_runner.py\", \"suggested_rule\": \"Task T11 on node src/experiment_runner.py (src/experiment_runner.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When importing names from another module used for configuration or constants, explicitly reference them via their module path (e.g., `module.CONSTANT`) rather than relying on implicit global scope availability, because imported modules do not automatically inject their contents into the current namespace."
+      "context": "{\"pattern\": {\"category\": \"behaviour\", \"occurrences\": 2, \"tasks\": [\"R1_7\", \"R2_1\"], \"examples\": [\"BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\\n- example `mask[0, 2:5].all()` expected `True`, got `np.True_`\", \"BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\\n- example `mask[0, 2:5].all()` expected `True`, got `np.False_`\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"src/data_generator.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\\n- example `mask.shape` expected `(2, 5)`, got `(10,)`\\n- example `mask[0, 2:5].all()` raised IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed in the example's own code (after an earlier example of the same docstring failed)\", \"Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_______________________________________________________________________________________________________________________________________ test_get_ground_truth_mask ________________________________________________________________________________________________________________________________________\\ntests\\\\test_data_generator.py:15: in test_get_ground_truth_mask\\n    assert len(mask) == (signal_length * n_channels,), f'Expected length {signal_length * n_channels}, got {len(mask)}'\\nE   AssertionError: Expected length 20, got 20\\nE   assert 20 == (20,)\\nE    +  where 20 = len(array([False, False,  True,  True,  True, False, False, False, False,\\\\n       False, False, False, False, False, False, False, False, False,\\\\n       False, False]))\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_data_generator.py::test_get_ground_truth_mask - AssertionError: Expected length 20, got 20\\n1 failed, 1 passed in 0.11s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 10, \"cycle_index\": 22, \"task_id\": \"R2_1\", \"target_node\": \"src/data_generator.py\", \"suggested_rule\": \"Task R2_1 on node src/data_generator.py (src/data_generator.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When implementing array manipulation logic involving indexing or shape validation, ensure that intermediate operations preserve dimensionality consistency by explicitly checking if axes are dropped (e.g., via `.flatten()` or `squeeze`) and restoring them if subsequent logic expects a specific rank, because mismatched dimensions cause index errors and assertion failures during verification."
     }
   ],
   "category_log": [
     {
       "cycle": 1,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T6"
+      "category": "harness",
+      "task_id": "T4"
     },
     {
       "cycle": 2,
-      "agent": "seed_coder",
-      "category": "generic",
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
       "task_id": "T6"
     },
     {
       "cycle": 3,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "T8"
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "T6"
     },
     {
       "cycle": 4,
       "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "T8"
+      "category": "pytest:IndexError",
+      "task_id": "T7"
     },
     {
       "cycle": 5,
       "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "T7"
+    },
+    {
+      "cycle": 6,
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "T7"
+    },
+    {
+      "cycle": 7,
+      "agent": "seed_tester",
       "category": "harness",
       "task_id": "T8"
     },
     {
-      "cycle": 6,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R2_1"
-    },
-    {
-      "cycle": 7,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T11"
-    },
-    {
       "cycle": 8,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T11"
+      "agent": "seed_tester",
+      "category": "pytest:AttributeError",
+      "task_id": "T8"
     },
     {
       "cycle": 9,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T11"
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "T8"
     },
     {
       "cycle": 10,
-      "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "R2_3"
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "T10"
     },
     {
       "cycle": 11,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R2_3"
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "T10"
     },
     {
       "cycle": 12,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R3_1"
+      "category": "F821",
+      "task_id": "T11"
     },
     {
       "cycle": 13,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R3_1"
+      "agent": "seed_tester",
+      "category": "harness",
+      "task_id": "R1_2"
     },
     {
       "cycle": 14,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R3_1"
+      "agent": "seed_tester",
+      "category": "harness",
+      "task_id": "R1_2"
     },
     {
       "cycle": 15,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R4_1"
+      "agent": "seed_tester",
+      "category": "harness",
+      "task_id": "R1_2"
     },
     {
       "cycle": 16,
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "R1_4"
+    },
+    {
+      "cycle": 17,
       "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R4_1"
+      "category": "harness",
+      "task_id": "R1_7"
+    },
+    {
+      "cycle": 18,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R1_7"
+    },
+    {
+      "cycle": 19,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R1_7"
+    },
+    {
+      "cycle": 20,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R2_1"
+    },
+    {
+      "cycle": 21,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R2_1"
+    },
+    {
+      "cycle": 22,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "R2_1"
     }
   ],
   "rules": [
     {
-      "agent": "seed_coder",
-      "rule": "When importing names from another module used for configuration or constants, explicitly reference them via their module path (e.g., `module.CONSTANT`) rather than relying on implicit global scope availability, because imported modules do not automatically inject their contents into the current namespace.",
-      "category": "generic",
+      "agent": "seed_tester",
+      "rule": "When validating code that processes arrays or structured data, always verify the structural type of the returned value (e.g., checking if it is a tuple, list, or numpy array) before asserting on its dimensions or length, because the actual runtime type may differ from the expected primitive collection.",
+      "category": "pytest:AssertionError",
       "cycle": 9
+    },
+    {
+      "agent": "seed_coder",
+      "rule": "When implementing array manipulation logic involving indexing or shape validation, ensure that intermediate operations preserve dimensionality consistency by explicitly checking if axes are dropped (e.g., via `.flatten()` or `squeeze`) and restoring them if subsequent logic expects a specific rank, because mismatched dimensions cause index errors and assertion failures during verification.",
+      "category": "behaviour",
+      "cycle": 22
     }
   ]
 }

@@ -12,7 +12,7 @@ Names written as `<...>` below are placeholders, never values to copy. `done_whe
    - The interface of the module under test is in `specification` (`symbols`: functions, `Class.method` with parameters, declared attributes; `behaviour`: doctest examples; `import`: its import path). Test exactly that interface: never guess a method name, an argument or the order of a returned tuple.
    - Use only the classes, methods and functions listed in `specification` for the module under test. A name that is not there does not exist. An object's attributes are only its declared methods and annotated attributes; never assert on private or undeclared attributes (e.g. `model.mean_` when the interface does not declare `mean_`). Expected values come from the doctest examples in the docstrings.
    - `previous_attempts` (when present) lists why earlier versions of this test failed.
-   - Every new test file is first run against the stubs (all bodies `raise NotImplementedError`): there each test must fail only with `NotImplementedError`. An `ImportError`, `NameError`, `TypeError` or fixture error on the stubs means the test itself is wrong, and it is returned to you at once.
+   - Every new test file is first run against the stubs (all bodies `raise NotImplementedError`): there each test must fail only with `NotImplementedError`, or pass (e.g. a test of a declared constant). An `ImportError`, `NameError`, `TypeError` or fixture error on the stubs means the test itself is wrong, and it is returned to you at once.
    - One test file per module: `tests/test_<module>.py`. Import the module under test with its `import` path from `specification` (e.g. `from <package>.<module> import <Class>`). Code modules belong to `seed_coder`; if the code contradicts its own signature or docstring, report it in `summary` instead of rewriting the module.
    - A test must finish quickly: never run a full training or experiment budget, and with mocks make sure every loop has a reachable end (a mocked `done` flag must become true).
    - In a repair task, `failing_tests` contains the source of the failing tests and their errors.
@@ -36,3 +36,6 @@ Return strictly a valid JSON object, for example:
 For several files at once, use `"files": [{"filename": "tests/test_<module>.py", "content": "..."}]`.
 For a change to an existing file: `"ast_edits": [{"symbol": "<TestClass>.<test_method>", "file": "tests/test_<module>.py", "code": "def <test_method>(self) -> None:\n    ...\n"}]`.
 Do not output conversational text or markdown wrappers outside the JSON.
+
+## LEARNED RULES AND CONSTRAINTS
+- **RULE**: When validating code that processes arrays or structured data, always verify the structural type of the returned value (e.g., checking if it is a tuple, list, or numpy array) before asserting on its dimensions or length, because the actual runtime type may differ from the expected primitive collection.

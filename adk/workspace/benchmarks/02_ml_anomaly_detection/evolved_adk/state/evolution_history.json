@@ -2,9 +2,51 @@
   "events": [
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8_FIX2",
+      "task_id": "T4",
+      "agent": "seed_coder",
+      "error": "The answer for 'src/ensemble_detector.py' was not saved: the fields ['error', 'issues', 'raw_response'] match no allowed shape. Allowed: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section_content}]'). Return files in 'files' as a list of {'filename', 'content'}."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T7",
       "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_synthetic_data.py:test_generate_output_shape: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 67) at line 64 of your code: `\"\"\"` is indented by 4 spaces, the line before by 4. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_ensemble_detector.py]: reads RandomSubspaceEnsemble.contamination, RandomSubspaceEnsemble.n_estimators, RandomSubspaceEnsemble.subspace_size, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T8",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_baseline_zscore.py]: reads ZScoreBaseline.threshold, ZScoreBaseline.window_size, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_tester",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_tester.md",
+        "injected_rule": "When validating code that processes arrays or structured data, always verify the structural type of the returned value (e.g., checking if it is a tuple, list, or numpy array) before asserting on its dimensions or length, because the actual runtime type may differ from the expected primitive collection.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "R1_2",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_data_generator.py]: reads get_ground_truth_mask.shape, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "R1_2_FIX1",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_data_generator.py]: reads get_ground_truth_mask.shape, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "R1_2_FIX2",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_data_generator.py]: reads get_ground_truth_mask.shape, which the interface does not declare (test only declared methods and attributes)"
     },
     {
       "type": "AGENT_MUTATED",
@@ -12,28 +54,10 @@
         "status": "mutated",
         "agent": "seed_coder",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_coder.md",
-        "injected_rule": "When importing names from another module used for configuration or constants, explicitly reference them via their module path (e.g., `module.CONSTANT`) rather than relying on implicit global scope availability, because imported modules do not automatically inject their contents into the current namespace.",
+        "injected_rule": "When implementing array manipulation logic involving indexing or shape validation, ensure that intermediate operations preserve dimensionality consistency by explicitly checking if axes are dropped (e.g., via `.flatten()` or `squeeze`) and restoring them if subsequent logic expects a specific rank, because mismatched dimensions cause index errors and assertion failures during verification.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R2_3",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_synthetic_data.py]: reads SyntheticDataset.no_std, which the interface does not declare (test only declared methods and attributes)"
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "Traceback (most recent call last)"
-        ],
-        "signature": "Traceback (most recent call last):\n  File <id>, line #, in <module>\n    getattr(plots_module, plots_func)()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File <id>, line #, in plot_results\n    p = axes[#]",
-        "task_id": "R4_1",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
       }
     }
   ]

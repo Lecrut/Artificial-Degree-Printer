@@ -1,56 +1,113 @@
 {
-  "thesis_type": "inzynierska",
-  "template_name": "thesis_plodz",
-  "template_certain": true,
-  "thesis_title": "[DOCUMENT FORMAT: Praca Inżynierska Politechniki Łódzkiej | thesis_type=inzynierska | template_name=thesis_plodz (ThesisPLodz.cls)] Research question: can a tabular Q-Learning agent learn to play Tic-Tac-Toe well against a uniformly random opponent, and how does its play compare with that baseline? Design the experiment yourself: choose the parameters, training or search budget, number of repetitions and seeds, the metrics you will report and the success criterion, and declare the metrics and the experiment entrypoint in the plan before running anything. Implement the solution as small, single-purpose modules with unit tests, produce every result by running the declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or to a results file.",
+  "thesis_title": "Uczenie ze wzmocnieniem (Q-Learning) w grach skończonych na przykładzie gry w kółko i krzyżyk",
+  "thesis_statement": "Tabular Q-Learning converges to an optimal policy in Tic-Tac-Toe against a random opponent, demonstrating near-Nash equilibrium play in the long run compared to purely random baselines.",
+  "baseline_comparison": "Random agent (uniform selection of valid moves) vs. Trained Q-Agent.",
+  "entrypoint": "src/experiment_runner.py:run_experiment",
+  "metrics": [
+    "win_rate_q",
+    "win_rate_random",
+    "avg_reward_q"
+  ],
+  "plots": "src/plot_results.py:plot_results",
+  "planned_chapters": [
+    {
+      "index": 1,
+      "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+      "focus": "Definicja problemu uczenia się w grach, wprowadzenie do Q-Learning, cel pracy (walidacja skuteczności Q-Learningu w Tic-Tac-Toe)."
+    },
+    {
+      "index": 2,
+      "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+      "focus": "Podstawy teoretyczne Reinforcement Learningu, algorytm Q-Learning, aplikacje w grach dwuosobowych zero-sum."
+    },
+    {
+      "index": 3,
+      "title": "Rozdział 3: Metodyka Badań i Implementacja",
+      "focus": "Opis środowiska Tic-Tac-Toe, reprezentacji stanu, parametów uczenia oraz architektury agenta."
+    },
+    {
+      "index": 4,
+      "title": "Rozdział 4: Wyniki Eksperymentu",
+      "focus": "Prezentacja wyników treningu (konwergencja), porównanie ze stratą bazową, analiza statystyczna."
+    },
+    {
+      "index": 5,
+      "title": "Rozdział 5: Wnioski",
+      "focus": "Podsumowanie osiągnięć, walidacja tezy, ograniczenia i kierunki przyszłych prac."
+    }
+  ],
+  "interfaces": {
+    "src/game_env.py": "\"\"\"Implementation of Tic-Tac-Toe environment with state encoding.\"\"\"\n\nimport numpy as np\nfrom typing import Tuple, List\n\nclass TicTacToeEnv:\n    \"\"\"Tic-Tac-Toe game environment.\n\n    Grid is 3x3. Players are 1 (X) and -1 (O).\n    State encoding uses a flat tuple of length 9 for Q-table indexing.\n    Internal `_current_player` tracks turn order.\n    \"\"\"\n\n    def __init__(self) -> None:\n        \"\"\"Initialize the environment.\"\"\"\n        ...\n\n    def reset(self) -> np.ndarray:\n        \"\"\"Reset the game board. Returns state encoding as numpy array of zeros.\n\n        Resets internal `_current_player` to 1 (X starts).\n\n        Example:\n        >>> env = TicTacToeEnv()\n        >>> s = env.reset()\n        >>> assert s.shape == (3, 3)\n        >>> assert np.all(s == 0)\n        \"\"\"\n        ...\n\n    def step(self, action: int) -> Tuple[float, bool, Tuple[int, ...]]:\n        \"\"\"Execute an action for the current player.\n\n        Args:\n            action: Index 0-8 on the board.\n\n        Returns:\n            reward: +1 if current player wins, -1 if opponent wins, 0 for draw/ongoing.\n            done: Boolean indicating game end.\n            state_encoding: New flat state tuple.\n\n        Example:\n        >>> env = TicTacToeEnv()\n        >>> s = env.reset()\n        >>> r, d, _ = env.step(4)\n        >>> assert r == 0\n        \"\"\"\n        ...\n\n    def get_valid_moves(self, state: np.ndarray) -> List[int]:\n        \"\"\"Return list of valid action indices (0-8) for current state.\n\n        Example:\n        >>> env = TicTacToeEnv()\n        >>> s = env.reset()\n        >>> moves = env.get_valid_moves(s)\n        >>> assert len(moves) == 9\n        \"\"\"\n        ...\n\n    def encode_state(self, board: np.ndarray) -> Tuple[int, ...]:\n        \"\"\"Convert 3x3 board array to flat tuple for Q-table key.\n\n        Example:\n        >>> env = TicTacToeEnv()\n        >>> board = np.zeros((3, 3))\n        >>> s = env.encode_state(board)\n        >>> assert isinstance(s, tuple)\n        \"\"\"\n        ...\n\n    def decode_state(self, state: Tuple[int, ...]) -> np.ndarray:\n        \"\"\"Convert flat tuple back to 3x3 board.\n\n        Example:\n        >>> env = TicTacToeEnv()\n        >>> board = np.zeros((3, 3))\n        >>> s = env.encode_state(board)\n        >>> b_back = env.decode_state(s)\n        >>> assert np.array_equal(board, b_back)\n        \"\"\"\n        ...\n",
+    "src/q_agent.py": "\"\"\"Implementation of Tabular Q-Learning agent.\"\"\"\n\nimport numpy as np\nfrom typing import Tuple, List\n\nclass QAgent:\n    \"\"\"Q-Learning agent for Tic-Tac-Toe.\n\n    Uses epsilon-greedy policy and standard Q-update rule.\n    \"\"\"\n\n    def __init__(self, learning_rate: float = 0.1, discount_factor: float = 0.99, epsilon: float = 1.0, decay: float = 0.995) -> None:\n        \"\"\"Initialize Q-Agent.\n\n        Args:\n            learning_rate: Alpha parameter.\n            discount_factor: Gamma parameter.\n            epsilon: Initial exploration rate.\n            decay: Epsilon decay rate per episode.\n        \"\"\"\n        ...\n\n    def get_action(self, state_key: Tuple[int, ...], valid_moves: List[int]) -> int:\n        \"\"\"Select action using epsilon-greedy policy restricted to valid moves.\n\n        Example:\n        >>> import numpy as np\n        >>> agent = QAgent(epsilon=1.0)\n        >>> np.random.seed(42)\n        >>> moves = list(range(9))\n        >>> s = tuple([0]*9)\n        >>> act = agent.get_action(s, moves)\n        >>> assert act in moves\n        \"\"\"\n        ...\n\n    def learn_step(self, state_key: Tuple[int, ...], action: int, reward: float, next_state_key: Tuple[int, ...], done: bool) -> None:\n        \"\"\"Update Q-table based on experience.\n\n        Example:\n        >>> agent = QAgent()\n        >>> s = tuple([0]*9)\n        >>> ns = tuple([1]+[0]*8)\n        >>> agent.learn_step(s, 4, 0.0, ns, True)\n        \"\"\"\n        ...\n\n    def update_epsilon(self) -> None:\n        \"\"\"Decrease epsilon by decay factor.\"\"\"\n        ...\n",
+    "src/random_opponent.py": "\"\"\"Module for random move selection.\"\"\"\n\nimport numpy as np\nfrom typing import List\n\ndef get_random_move(valid_moves: List[int]) -> int:\n    \"\"\"Select a random valid move.\n    \n    Example:\n    >>> import numpy as np\n    >>> np.random.seed(10)\n    >>> moves = [1, 2]\n    >>> result = get_random_move(moves)\n    >>> assert result in [1, 2]\n    \"\"\"\n    ...\n",
+    "src/experiment_runner.py": "\"\"\"Module for running the training and evaluation experiment.\n\nWrites results.csv to the workspace root (os.getcwd()).\n\"\"\"\n\nimport numpy as np\nimport pandas as pd\nfrom src.game_env import TicTacToeEnv\nfrom src.q_agent import QAgent\nfrom src.random_opponent import get_random_move\n\n# Hyperparameters\nNUM_EPISODES_Q = 10000\nDISCOUNT_FACTOR = 0.99\nLEARNING_RATE = 0.1\nINITIAL_EPSILON = 1.0\nEPSILON_DECAY = 0.995\nFINAL_EPSILON = 0.05\nNUM_EVALUATION_GAMES = 1000\nRANDOM_SEED = 42\n\ndef run_experiment() -> None:\n    \"\"\"Run Q-learning training and evaluation against random baseline.\n    \n    1. Seeds numpy with RANDOM_SEED.\n    2. Trains Q-agent against random opponent for NUM_EPISODES_Q.\n    3. Evaluates Q-agent against random opponent for NUM_EVALUATION_GAMES (win_rate_q, avg_reward_q).\n    4. Plays NUM_EVALUATION_GAMES of random-vs-random to get baseline (win_rate_random).\n    5. Writes results.csv with metrics: win_rate_q, win_rate_random, avg_reward_q.\n    \"\"\"\n    ...\n",
+    "src/plot_results.py": "\"\"\"Module for visualizing experiment results.\"\"\"\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom pathlib import Path\n\ndef plot_results() -> None:\n    \"\"\"Read results.csv and generate figures in figures/ directory.\n\n    Figures:\n    - convergence.png: Q-learning loss/reward over episodes.\n    - comparison.png: Win rate distribution (Q vs Random).\n    \"\"\"\n    ..."
+  },
   "literature_recon": {
     "thesis_type": "inzynierska",
     "research_routing": [
       "background_researcher"
     ],
-    "analyzed_papers_count": 20,
+    "analyzed_papers_count": 7,
     "sampled_methodologies": [
-      "Qisai Liu and Zhanhong Jiang and Timilehin Ayanlade and Ashutosh Kumar Nirala and Yang Li and Aditya Balu and Soumik Sarkar (2026) [liu2026tabql]: We propose Tabular Q-Learning (TabQL), a reinforcement learning framework that replaces the conventional parametric Q-network in Deep Q-Learning (DQN) with a tabular foundation model endowed with in-c",
-      "Shreyas S R (2024) [r2024double]: Q-learning is a widely used algorithm in reinforcement learning (RL), but its convergence can be slow, especially when the discount factor is close to one.",
-      "Tony Wang and Kyle Feinstein and Sheryl Chen (2025) [wang2025reinforcemen]: Notably, despite its simplicity, standard tabular Q-learning achieved the best performance (-615.13 +- 309.58 mean return), outperforming both enhanced RL methods and traditional policy rules.",
-      "Donghwan Lee and Niao He (2020) [lee2020periodic]: In this paper, we study the so-called periodic Q-learning algorithm (PQ-learning for short), which resembles the technique used in deep Q-learning for solving infinite-horizon discounted Markov decisi",
-      "Wentao Weng and Harsh Gupta and Niao He and Lei Ying and R. Srikant (2020) [weng2020meansquared]: Our result builds upon an analysis for linear stochastic approximation based on Lyapunov equations and applies to both tabular setting and with linear function approximation, provided that the optimal",
-      "Bowen Weng and Huaqing Xiong and Lin Zhao and Yingbin Liang and Wei Zhang (2020) [weng2020momentum]: Existing studies indicate that momentum ideas in conventional optimization can be used to improve the performance of Q-learning algorithms.",
-      "Donghwan Lee (2026) [lee2026spectral]: Q-learning is a fundamental algorithm in reinforcement learning (RL) for solving discounted Markov decision processes (MDPs) when the transition kernel is unknown.",
-      "Qingfeng Lan and Yangchen Pan and Alona Fyshe and Martha White (2020) [lan2020maxmin]: Algorithms have been proposed to reduce overestimation bias, but we lack an understanding of how bias interacts with performance, and the extent to which existing algorithms mitigate bias."
+      "Jiin Woo and Laixi Shi and Gauri Joshi and Yuejie Chi (2024) [woo2024federated]: Focusing on finite-horizon episodic tabular Markov decision processes (MDPs), we design FedLCB-Q, a variant of the popular model-free Q-learning algorithm tailored for federated offline RL.",
+      "Bingyan Wang and Yuling Yan and Jianqing Fan (2021) [wang2021sampleeffici]: The curse of dimensionality is a widely known issue in reinforcement learning (RL).",
+      "Tong Yang and Shicong Cen and Yuting Wei and Yuxin Chen and Yuejie Chi (2023) [yang2023federated]: We develop federated vanilla and entropy-regularized natural policy gradient (NPG) methods in the tabular setting under softmax parameterization, where gradient tracking is applied to estimate the glo",
+      "Mohsen Amiri and Sindri Magnússon (2025) [amiri2025reinforcemen]: We introduce the Switching Non-Stationary Markov Decision Process (SNS-MDP) framework, in which the environment transitions among a finite set of MDPs governed by a latent Markov chain while the agent",
+      "Ukjo Hwang and Songnam Hong (2023) [hwang2023practical]: In this paper we present an elaborated uncertainty set by excluding some implausible MDPs from the existing sets.",
+      "Ankur Deka and Changliu Liu and Katia Sycara (2022) [deka2022arc]: Adversarial Imitation Learning (AIL) is a class of popular state-of-the-art Imitation Learning algorithms commonly used in robotics.",
+      "Hyukjun Yang and Jongchan Park and Narim Jeong and Donghwan Lee (2026) [yang2026lifted]: We formulate the Lifted Bellman Linear Program (LBLP), which lifts the linear programming characterization of Bellman optimality to the joint $(Q,V)$ space so that every constraint involves only state"
     ],
     "key_limitations_to_overcome": [
-      "Qisai Liu and Zhanhong Jiang and Timilehin Ayanlade and Ashutosh Kumar Nirala and Yang Li and Aditya Balu and Soumik Sarkar (2026) [liu2026tabql]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
-      "Shreyas S R (2024) [r2024double]: Successive Over-Relaxation (SOR) Q-learning, which introduces a relaxation factor to speed up convergence, addresses this issue but has two major limitations: I",
-      "Tony Wang and Kyle Feinstein and Sheryl Chen (2025) [wang2025reinforcemen]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
-      "Donghwan Lee and Niao He (2020) [lee2020periodic]: The use of target networks is a common practice in deep reinforcement learning for stabilizing the training; however, theoretical understanding of this techniqu",
-      "Wentao Weng and Harsh Gupta and Niao He and Lei Ying and R. Srikant (2020) [weng2020meansquared]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
-      "Bowen Weng and Huaqing Xiong and Lin Zhao and Yingbin Liang and Wei Zhang (2020) [weng2020momentum]: However, the finite-sample analysis for momentum-based Q-learning algorithms is only available for the tabular case without function approximations.",
-      "Donghwan Lee (2026) [lee2026spectral]: However, the theoretical understanding of dueling Q-learning is still limited.",
-      "Qingfeng Lan and Yangchen Pan and Alona Fyshe and Martha White (2020) [lan2020maxmin]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees"
+      "Jiin Woo and Laixi Shi and Gauri Joshi and Yuejie Chi (2024) [woo2024federated]: Offline reinforcement learning (RL), which seeks to learn an optimal policy using offline data, has garnered significant interest due to its potential in critic",
+      "Bingyan Wang and Yuling Yan and Jianqing Fan (2021) [wang2021sampleeffici]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Tong Yang and Shicong Cen and Yuting Wei and Yuxin Chen and Yuejie Chi (2023) [yang2023federated]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Mohsen Amiri and Sindri Magnússon (2025) [amiri2025reinforcemen]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Ukjo Hwang and Songnam Hong (2023) [hwang2023practical]: We introduce an additional pessimistic agent which can tackle the major bottleneck for the extension of ARQ-Learning into the cases with larger or continuous st",
+      "Ankur Deka and Changliu Liu and Katia Sycara (2022) [deka2022arc]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Hyukjun Yang and Jongchan Park and Narim Jeong and Donghwan Lee (2026) [yang2026lifted]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees"
     ],
     "available_citation_keys": [
-      "liu2026tabql",
-      "r2024double",
-      "wang2025reinforcemen",
-      "lee2020periodic",
-      "weng2020meansquared",
-      "weng2020momentum",
-      "lee2026spectral",
-      "lan2020maxmin",
-      "chasalow2025missing",
-      "tkachuk2021effect",
-      "tang2023valearning",
-      "relao2024tabular",
-      "kalweit2019composite",
-      "doan2018gan",
-      "li2021statistical",
-      "kalweit2020deep",
-      "chen2019zap",
-      "su2020conqur",
-      "lee2026switching",
-      "hasselt2015deep"
+      "woo2024federated",
+      "wang2021sampleeffici",
+      "yang2023federated",
+      "amiri2025reinforcemen",
+      "hwang2023practical",
+      "deka2022arc",
+      "yang2026lifted"
     ],
     "citation_source": "arxiv"
+  },
+  "thesis_type": "inzynierska",
+  "template_name": "thesis_plodz",
+  "template_certain": true,
+  "table_of_contents": {
+    "chapters": [
+      {
+        "index": 1,
+        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
+        "focus": "Definicja problemu uczenia się w grach, wprowadzenie do Q-Learning, cel pracy (walidacja skuteczności Q-Learningu w Tic-Tac-Toe)."
+      },
+      {
+        "index": 2,
+        "title": "Rozdział 2: Stan Badań i Przegląd Literatury",
+        "focus": "Podstawy teoretyczne Reinforcement Learningu, algorytm Q-Learning, aplikacje w grach dwuosobowych zero-sum."
+      },
+      {
+        "index": 3,
+        "title": "Rozdział 3: Metodyka Badań i Implementacja",
+        "focus": "Opis środowiska Tic-Tac-Toe, reprezentacji stanu, parametów uczenia oraz architektury agenta."
+      },
+      {
+        "index": 4,
+        "title": "Rozdział 4: Wyniki Eksperymentu",
+        "focus": "Prezentacja wyników treningu (konwergencja), porównanie ze stratą bazową, analiza statystyczna."
+      },
+      {
+        "index": 5,
+        "title": "Rozdział 5: Wnioski",
+        "focus": "Podsumowanie osiągnięć, walidacja tezy, ograniczenia i kierunki przyszłych prac."
+      }
+    ]
   }
 }

@@ -1,48 +1,53 @@
 {
-  "thesis_title": "Porównanie statycznej detekcji jednozmiennej Z-score z wielofunkcyjnym zespołowym wykresem wykrywania anomalii w syntetycznych sygnałach bio-sygnałów",
-  "thesis_statement": "Czy wielofunkcyjny, robustowy algorytm zespołowy (oparty na medianie i MAD) znajduje anomalia w syntetycznych, skorelowanych sygnałach telemetrycznych bardziej niezawodnie (wyższe F1) niż statyczny, jednozmierowy baseline Z-score?",
-  "baseline_comparison": "Statyczna metoda univariate Z-score (średnia/kowariancja) vs Propozycja: Robust Ensemble Detector (Median/MAD). Porównanie poprzez F1-Score na syntetycznym zbiorze danych z wstrzykniętymi anomaliaми.",
-  "entrypoint": "src/experiment_runner.py:run_experiment",
+  "thesis_title": "Odporna detekcja anomalii w wielokanałowej telemetrii fizjologicznej: komitety losowych podprzestrzeni",
+  "thesis_statement": "Proponowany detektor oparty na komitecie losowych podprzestrzeni (Random Subspace Ensembles) wykazuje wyższą odporność na szum i brakujące dane w telemetrii fizjologicznej niż statyczny detektor jednowymiarowy oparty na wartości Z, osiągając lepsze metryki F1 oraz stabilność między powtórzeniami.",
+  "baseline_comparison": "Statyczny detektor bazowy (Baseline Z-score) z oknem przesuwającym i progowaniem 3-sigma.",
+  "entrypoint": "src/experiment.py:run_experiment",
   "metrics": [
-    "f1",
-    "precision",
-    "recall"
+    "F1",
+    "Precision",
+    "Recall",
+    "AUC-ROC"
   ],
-  "plots": "src/plots.py:plot_results",
+  "plots": "src/plotting.py:plots",
   "planned_chapters": [
     {
       "index": 1,
-      "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-      "focus": "Definicja problemu detekcji anomalii w sygnałach bio-sygnałów, teza pracy, zakres badawczy."
+      "title": "Rozdział 1: Wstęp",
+      "focus": "Motywacja problemu, cel pracy, teza i struktura dokumentu."
     },
     {
       "index": 2,
-      "title": "Rozdział 2: Przegląd Literatury",
-      "focus": "Analiza istniejących metod (Z-score, Isolation Forest) oraz motywacja użycia metod robustowych w obecności szumu skorelowanego."
+      "title": "Rozdział 2: Teoretyczne podstawy detekcji anomalii",
+      "focus": "Przegląd metod opartych na odległościach, podprzestrzeniach oraz specyfika danych fizjologicznych."
     },
     {
       "index": 3,
-      "title": "Rozdział 3: Projekt Rozwiązania i Materiały",
-      "focus": "Opis architektury systemu: generator syntetycznych danych, implementacja baseline Z-score oraz detektora zespołowego. Parametry eksperymentu."
+      "title": "Rozdział 3: Proponowana metoda i rozwiązanie bazowe",
+      "focus": "Opis matematyczny komitetu losowych podprzestrzeni oraz implementacja detektora Z-score."
     },
     {
       "index": 4,
-      "title": "Rozdział 4: Wyniki Eksperymentu",
-      "focus": "Prezentacja wyników F1, Precision i Recall z pliku results.csv. Analiza wykresów z figures/."
+      "title": "Rozdział 4: Wyniki eksperymentów i ich analiza",
+      "focus": "Wizualizacja wyników na syntetycznych danych, porównanie metryk, analiza rozrzutu między ziareniami."
     },
     {
       "index": 5,
-      "title": "Rozdział 5: Podsumowanie i Wnioski",
-      "focus": "Weryfikacja tezy pracy. Dyskusja nad przewagą metody robustowej nad statyczną w przypadku szumu."
+      "title": "Rozdział 5: Wnioski",
+      "focus": "Podsumowanie osiągnięć, weryfikacja tezy oraz propozycje prac przyszłych."
+    },
+    {
+      "index": 6,
+      "title": "Rozdział 6: Przegląd literatury (SOTA)",
+      "focus": "Analiza najnowszych prac z zakresu ensemble learning w detekcji anomalii."
     }
   ],
   "interfaces": {
-    "src/config.py": "\"\"\"Configuration constants for the anomaly detection experiment.\"\"\"\n\nimport numpy as np\n\n# Data Generation Parameters\nNUM_SAMPLES: int = 1000\nNUM_CHANNELS: int = 5\nNOISE_STD: float = 1.0\nANOMALY_RATE: float = 0.05\n\n# Experiment Settings\nSEEDS: list[int] = [42, 43, 44]\nRANDOM_STATE: int = 42\n\n# Thresholds\nZSCORE_THRESHOLD: float = 3.0\nROBUST_THRESHOLD: float = 3.0\n",
-    "src/synthetic_data.py": "\"\"\"Module for generating synthetic multi-channel bio-signal telemetry with anomalies.\"\"\"\n\nimport numpy as np\nfrom typing import Tuple\n\nclass SyntheticDataset:\n    \"\"\"Generates synthetic time-series data with correlated noise and sparse anomalies.\"\"\"\n\n    def __init__(self, n_samples: int, n_channels: int, noise_std: float, anomaly_rate: float) -> None:\n        \"\"\"Initialize dataset parameters.\n        \n        Args:\n            n_samples: Total number of samples.\n            n_channels: Number of signal channels.\n            noise_std: Standard deviation for Gaussian noise.\n            anomaly_rate: Fraction of samples that are anomalies.\n        \"\"\"\n        self.n_samples = n_samples\n        self.n_channels = n_channels\n        self.noise_std = noise_std\n        self.anomaly_rate = anomaly_rate\n        self.no_std = noise_std\n\n    def generate(self, seed: int) -> Tuple[np.ndarray, np.ndarray]:\n        \"\"\"Generate synthetic data and ground truth labels.\n        \n        Args:\n            seed: Random seed for reproducibility.\n            \n        Returns:\n            X: numpy array of shape (n_samples, n_channels) with noisy signal.\n            y: numpy array of shape (n_samples,) with boolean flags (True if anomaly).\n        \"\"\"\n        rng = np.random.default_rng(seed)\n        # Correlated noise simulation\n        L = np.eye(self.n_channels)\n        noise = rng.multivariate_normal(np.zeros(self.n_channels), L * self.no_std, self.n_samples)\n        X = noise\n        \n        # Inject anomalies\n        y = np.zeros(self.n_samples, dtype=bool)\n        n_anomalies = int(self.n_samples * self.anomaly_rate)\n        anomaly_indices = rng.choice(self.n_samples, n_anomalies, replace=False)\n        y[anomaly_indices] = True\n        \n        # Add large magnitude to anomalies\n        X[anomaly_indices] += rng.standard_normal((n_anomalies, self.n_channels)) * 10\n        \n        return X, y\n",
-    "src/baselines.py": "\"\"\"Module implementing the static univariate Z-score baseline.\"\"\"\n\nimport numpy as np\nfrom typing import Optional\n\nclass UnivariateZScoreBaseline:\n    \"\"\"A simple baseline detector using mean and standard deviation per channel.\"\"\"\n\n    def __init__(self, threshold: float = 3.0) -> None:\n        \"\"\"Initialize with a Z-score threshold.\n        \n        Args:\n            threshold: Number of standard deviations to consider an anomaly.\n        \"\"\"\n        self.threshold = threshold\n        self.mean_: Optional[np.ndarray] = None\n        self.std_: Optional[np.ndarray] = None\n\n    def fit(self, X: np.ndarray) -> None:\n        \"\"\"Compute mean and standard deviation for each channel.\n        \n        Args:\n            X: Training data of shape (n_samples, n_features).\n        \"\"\"\n        self.mean_ = np.mean(X, axis=0)\n        self.std_ = np.std(X, axis=0)\n        # Avoid division by zero\n        self.std_[self.std_ == 0] = 1e-6\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Predict anomalies based on Z-score.\n        \n        Args:\n            X: Data to predict on of shape (n_samples, n_features).\n            \n        Returns:\n            Boolean array indicating anomalies of shape (n_samples,).\n        \n        Examples:\n        >>> det = UnivariateZScoreBaseline(threshold=1.0)\n        >>> det.fit(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]))\n        >>> # Mean is [2, 2], std is approx [0.816, 0.816]\n        >>> result = det.predict(np.array([[10.0, 10.0], [1.0, 1.0]]))\n        >>> print(result)\n        [ True  True]\n        >>> result.shape\n        (2,)\n        \"\"\"\n        if self.mean_ is None or self.std_ is None:\n            raise RuntimeError(\"Must call fit() before predict().\")\n        z_scores = np.abs((X - self.mean_) / self.std_)\n        # Return 1D boolean array: anomaly if ANY channel exceeds threshold\n        return np.any(z_scores > self.threshold, axis=1)\n",
-    "src/ensemble_detector.py": "\"\"\"Module implementing the robust multi-feature ensemble detector.\"\"\"\n\nimport numpy as np\nfrom typing import Optional\n\nclass RobustEnsembleDetector:\n    \"\"\"A robust detector using Median and MAD (Median Absolute Deviation) per channel.\"\"\"\n\n    def __init__(self, threshold: float = 3.0) -> None:\n        \"\"\"Initialize with a MAD-based threshold.\n        \n        Args:\n            threshold: Multiplier for MAD to define the anomaly boundary.\n        \"\"\"\n        self.threshold = threshold\n        self.median_: Optional[np.ndarray] = None\n        self.mad_per_channel_: Optional[np.ndarray] = None\n\n    def fit(self, X: np.ndarray) -> None:\n        \"\"\"Compute robust statistics (median and per-channel MAD) for each channel.\n        \n        Args:\n            X: Training data of shape (n_samples, n_features).\n        \"\"\"\n        self.median_ = np.median(X, axis=0)\n        # Compute MAD per channel\n        mad_channelwise = np.median(np.abs(X - self.median_), axis=0)\n        # Handle zero MAD to avoid division by zero, similar to Z-score baseline\n        self.mad_per_channel_ = np.where(mad_channelwise == 0, 1e-6, mad_channelwise)\n\n    def predict(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Predict anomalies using robust distance.\n        \n        Args:\n            X: Data to predict on of shape (n_samples, n_features).\n            \n        Returns:\n            Boolean array indicating anomalies.\n        \n        Examples:\n        >>> det = RobustEnsembleDetector(threshold=2.0)\n        >>> det.fit(np.array([[1, 1], [1, 1], [1, 1]])) # Constant input -> MAD is 0, replaced by 1e-6\n        >>> det.predict(np.array([[10, 10], [1, 1]]))\n        array([ True, False])\n        \"\"\"\n        if self.median_ is None or self.mad_per_channel_ is None:\n            raise RuntimeError(\"Must call fit() before predict().\")\n        # Robust z-scores per channel\n        robust_z_scores = np.abs((X - self.median_) / self.mad_per_channel_)\n        # Anomaly if ANY channel exceeds threshold (aligns with UnivariateBaseline logic)\n        return np.any(robust_z_scores > self.threshold, axis=1)\n",
-    "src/experiment_runner.py": "\"\"\"Module for running the anomaly detection experiment and saving results.\"\"\"\n\nimport csv\nimport numpy as np\nfrom typing import Dict\nfrom src.config import NUM_SAMPLES, NUM_CHANNELS, NOISE_STD, ANOMALY_RATE, SEEDS, ZSCORE_THRESHOLD, ROBUST_THRESHOLD\nfrom src.synthetic_data import SyntheticDataset\nfrom src.baselines import UnivariateZScoreBaseline\nfrom src.ensemble_detector import RobustEnsembleDetector\n\n\ndef compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:\n    \"\"\"Compute Precision, Recall, F1 from boolean arrays.\n    \n    Args:\n        y_true: Ground truth boolean array.\n        y_pred: Predicted boolean array.\n        \n    Returns:\n        Dictionary with 'precision', 'recall', 'f1' values (floats).\n        \n    Examples:\n    >>> y_true = np.array([True, False, True, False])\n    >>> y_pred = np.array([True, False, False, False])\n    >>> metrics = compute_metrics(y_true, y_pred)\n    >>> f\"{metrics['f1']:.2f}\"\n    '0.67'\n    \"\"\"\n    tp = int((y_true & y_pred).sum())\n    fp = int((~y_true & y_pred).sum())\n    fn = int((y_true & ~y_pred).sum())\n    \n    precision: float = tp / (tp + fp) if (tp + fp) > 0 else 0.0\n    recall: float = tp / (tp + fn) if (tp + fn) > 0 else 0.0\n    f1: float = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0\n    \n    return {'precision': float(precision), 'recall': float(recall), 'f1': float(f1)}\n\n\ndef run_experiment() -> None:\n    \"\"\"Run the anomaly detection experiment for all seeds and save results to CSV.\n    \n    Reads parameters from src.config module-level constants.\n    Splits data 80/20 train/test. Fits on train, predicts on test.\n    Writes 'results.csv' in the workspace root with columns: method, metric, value, seed.\n    One row per run per metric per method to preserve seed-level granularity.\n    \"\"\"\n    dataset_gen = SyntheticDataset(NUM_SAMPLES, NUM_CHANNELS, NOISE_STD, ANOMALY_RATE)\n    \n    methods_config = [\n        ('UnivariateZScoreBaseline', UnivariateZScoreBaseline, ZSCORE_THRESHOLD),\n        ('RobustEnsembleDetector', RobustEnsembleDetector, ROBUST_THRESHOLD)\n    ]\n    \n    rows = []\n    \n    for seed in SEEDS:\n        # Generate data and get ground truth labels from the generator\n        X, y = dataset_gen.generate(seed)\n        \n        # Split 80/20\n        n_train = int(0.8 * NUM_SAMPLES)\n        X_train = X[:n_train]\n        X_test = X[n_train:]\n        y_test = y[n_train:]  # Ground truth for the test set\n        \n        for method_name, DetectorClass, threshold in methods_config:\n            det = DetectorClass(threshold=threshold)\n            \n            # Fit on training data (anomaly-free or mixed, depending on strategy. \n            # Here we fit on the first 80% which contains some anomalies too, \n            # but this is standard for statistical baselines that need global stats)\n            det.fit(X_train)\n            \n            y_pred = det.predict(X_test)\n            metrics = compute_metrics(y_test, y_pred)\n            \n            for metric_name, value in metrics.items():\n                rows.append([method_name, metric_name, value, seed])\n    \n    with open('results.csv', 'w', newline='') as f:\n        writer = csv.writer(f)\n        writer.writerow(['method', 'metric', 'value', 'seed'])\n        writer.writerows(rows)",
-    "src/plots.py": "\"\"\"Module for plotting experiment results.\"\"\"\n\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport os\n\ndef plot_results() -> None:\n    \"\"\"Read results.csv and generate F1 score boxplots and confusion matrix.\n    \n    Saves figures to the 'figures/' directory.\n    \"\"\"\n    # Ensure figures directory exists\n    os.makedirs('figures', exist_ok=True)\n    \n    # Read data\n    df = pd.read_csv('results.csv')\n    \n    # Filter for F1 scores\n    f1_data = df[df['metric'] == 'f1'].pivot(index='seed', columns='method', values='value')\n    \n    plt.figure(figsize=(8, 6))\n    f1_data.plot(kind='box')\n    plt.title('F1 Score Comparison across Seeds')\n    plt.ylabel('F1 Score')\n    plt.xticks(rotation=45)\n    plt.tight_layout()\n    plt.savefig('figures/f1_comparison_boxplot.png')\n    plt.close()\n    \n    # Confusion Matrix for Ensemble (using one representative seed, e.g., 42)\n    # Note: This requires re-running or saving predictions. For this module, we assume\n    # the experiment runner could be modified to save prediction matrices if needed,\n    # but per constraints, we plot from results.csv. \n    # Since results.csv only has metrics, we will plot a bar chart of mean F1 for simplicity\n    # or just note that boxplot is sufficient for distribution.\n    \n    # Alternative: Plot mean precision/recall as grouped bar chart\n    agg = df.groupby(['method', 'metric']).agg({'value': 'mean'}).reset_index()\n    plt.figure(figsize=(8, 6))\n    agg.pivot(index='method', columns='metric', values='value').plot(kind='bar')\n    plt.title('Average Metrics across Seeds')\n    plt.ylabel('Value')\n    plt.xticks(rotation=45)\n    plt.tight_layout()\n    plt.savefig('figures/metrics_comparison_bar.png')\n    plt.close()\n    \n    print(\"Plots saved to figures/\")"
+    "src/data_generator.py": "\"\"\"Synthetic multi-channel physiological telemetry generation with anomaly injection.\"\"\"\nimport numpy as np\n\ndef generate_signal(\n    n_channels: int,\n    signal_length: int,\n    n_anomalies: int,\n    seed: int = 42\n) -> tuple[np.ndarray, list[dict]]:\n    \"\"\"Generate synthetic signal and anomaly ground truth.\n    \n    Returns:\n        X (np.ndarray): Shape (n_channels, signal_length). Normal values in [-1, 1].\n        anomalies (list[dict]): List of dicts with keys 'channel', 'start', 'end' defining injected anomalies.\n    \n    Example:\n        >>> X, anom = generate_signal(2, 10, 1, seed=0)\n        >>> X.shape\n        (2, 10)\n        >>> len(anom) == 1\n        True\n    \"\"\"\n    ...\n\ndef get_ground_truth_mask(\n    anomalies: list[dict],\n    signal_length: int,\n    n_channels: int\n) -> np.ndarray:\n    \"\"\"Convert anomaly definitions to a boolean mask.\n    \n    Args:\n        anomalies: List of dicts with 'channel', 'start', 'end'.\n        signal_length: Length of the time dimension.\n        n_channels: Number of channels.\n        \n    Returns:\n        mask (np.ndarray): Shape (n_channels, signal_length). True where anomaly exists.\n        \n    Example:\n        >>> mask = get_ground_truth_mask([{'channel': 0, 'start': 2, 'end': 4}], 5, 2)\n        >>> mask.shape\n        (2, 5)\n        >>> mask[0, 2:5].all()\n        True\n    \"\"\"\n    ...",
+    "src/ensemble_detector.py": "\"\"\"Random Subspace Ensemble for anomaly detection.\"\"\"\nimport numpy as np\nfrom sklearn.ensemble import IsolationForest\n\nclass RandomSubspaceEnsemble:\n    \"\"\"Ensemble of Isolation Forests trained on random feature subspaces.\n    \n    Note: Scores follow sklearn convention: higher score = more normal, lower = more anomalous.\n    \"\"\"\n\n    def __init__(self, n_estimators: int = 100, subspace_size: int = None, contamination: float = 0.1, seed: int = 42) -> None:\n        \"\"\"Initialize the ensemble.\n        \n        Args:\n            n_estimators: Number of base Isolation Forests.\n            subspace_size: Number of features per estimator. If None, uses all features.\n            contamination: Expected fraction of anomalies.\n            seed: Random seed for reproducibility.\n        \"\"\"\n        ...\n\n    def fit(self, X: np.ndarray) -> None:\n        \"\"\"Fit the ensemble on normal data (X: shape [n_samples, n_features]).\n        \n        Note: This expects transposed input relative to generator output.\n        Args:\n            X: Shape (n_samples, n_features).\n        \"\"\"\n        ...\n\n    def predict_scores(self, X: np.ndarray) -> np.ndarray:\n        \"\"\"Return anomaly scores for each sample.\n        \n        Returns:\n            scores (np.ndarray): Shape [n_samples]. Higher score = more normal, lower = more anomalous.\n        \"\"\"\n        ...\n\n    def get_subspace_indices(self) -> list[np.ndarray]:\n        \"\"\"Return the feature indices used by each estimator.\"\"\"\n        ...",
+    "src/baseline_zscore.py": "\"\"\"Static univariate Z-score baseline detector.\"\"\"\nimport numpy as np\n\nclass ZScoreBaseline:\n    \"\"\"Univariate Z-score based anomaly detection with sliding window.\n    \n    Accepts data in shape (n_channels, signal_length). Computes Z-scores per channel\n    over the time dimension and aggregates them into a single mask by taking the\n    maximum absolute Z-score across channels for each time point.\n    \"\"\"\n\n    def __init__(self, window_size: int = 50, threshold: float = 3.0) -> None:\n        \"\"\"Initialize the baseline.\n        \n        Args:\n            window_size: Size of the sliding window for statistics calculation.\n            threshold: Z-score threshold for anomaly classification.\n        \"\"\"\n        ...\n\n    def compute_scores(self, X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:\n        \"\"\"Compute Z-scores and binary predictions.\n        \n        Args:\n            X (np.ndarray): Input data of shape (n_channels, signal_length).\n            \n        Returns:\n            scores (np.ndarray): Absolute maximum Z-score per time point across all channels. Shape (signal_length,).\n            preds (np.ndarray): Binary predictions (0/1) where max channel Z-score exceeds threshold. Shape (signal_length,).\n        \"\"\"\n        ...",
+    "src/experiment.py": "\"\"\"Experiment entrypoint for comparing Ensemble vs Baseline.\"\"\"\nimport numpy as np\nimport pandas as pd\nfrom sklearn.metrics import roc_curve, auc, precision_recall_fscore_support\n\nimport src.data_generator as data_gen\nimport src.ensemble_detector as ens_det\nimport src.baseline_zscore as base_det\nimport src.plotting as plotting_module\n\n# Configuration constants\nN_CHANNELS: int = 3\nSIGNAL_LENGTH: int = 1000\nN_ANOMALIES: int = 5\nREPEATS: int = 10\nSEEDS: list[int] = [42, 123, 456]\n\ndef run_experiment() -> None:\n    \"\"\"Run the full experiment pipeline.\n    \n    Generates data using src.data_generator with n_channels=N_CHANNELS,\n    signal_length=SIGNAL_LENGTH, and N_ANOMALIES anomalies for each seed in SEEDS,\n    repeating REPEATS times per seed. Runs src.ensemble_detector.RandomSubspaceEnsemble\n    and src.baseline_zscore.ZScoreBaseline on the generated data.\n    Crucially transposes X (X.T) before passing to ensemble.fit() to satisfy \n    (n_samples, n_features) contract. Explicitly fits on X.T and predicts on X.T.\n    Computes metrics: Precision/Recall/F1 using sklearn.metrics.precision_recall_fscore_support(y_true, preds),\n    and AUC-ROC using sklearn.metrics.roc_curve(y_true, scores). Saves results to `results.csv`.\n    Calls src.plotting.plots() at the end.\n    \"\"\"\n    ...",
+    "src/plotting.py": "\"\"\"Visualization module for experimental results.\"\"\"\nimport matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt\nimport pandas as pd\n\ndef plots() -> None:\n    \"\"\"Read results.csv and generate figures in figures/ directory.\n    \n    Expected inputs: results.csv with columns method, metric, value, std_dev, n_runs.\n    \"\"\"\n    ..."
   },
   "literature_recon": {
     "thesis_type": "magisterska",
@@ -50,19 +55,10 @@
       "background_researcher",
       "discoverer_researcher"
     ],
-    "analyzed_papers_count": 2,
-    "sampled_methodologies": [
-      "Nastaran Mohammadian Rad and Seyed Mostafa Kia and Calogero Zarbo and Twan van Laarhoven and Giuseppe Jurman and Paola Venuti and Elena Marchiori and Cesare Furlanello (2017) [rad2017deep]: We propose a new application of the deep learning to facilitate automatic SMM detection using multi-axis IMUs.",
-      "Noor Islam S. Mohammad and Md. Basim Al Zabir Shammo and Hasan Siddiki and Mahmudul Hasan and Md. Faisal Sheikh and Jakaria Habib (2026) [mohammad2026sift]: We operationalize the principle in FaithShift, a stress-test protocol spanning ten shift axes, and propose SIFT, a hidden-state trajectory detector trained with cross-environment invariance objectives"
-    ],
-    "key_limitations_to_overcome": [
-      "Nastaran Mohammadian Rad and Seyed Mostafa Kia and Calogero Zarbo and Twan van Laarhoven and Giuseppe Jurman and Paola Venuti and Elena Marchiori and Cesare Furlanello (2017) [rad2017deep]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
-      "Noor Islam S. Mohammad and Md. Basim Al Zabir Shammo and Hasan Siddiki and Mahmudul Hasan and Md. Faisal Sheikh and Jakaria Habib (2026) [mohammad2026sift]: Second, the dominant bottleneck is sampling stochasticity, not shift: over 80% of detector instability stems from random seed variation, falsifying our preregis"
-    ],
-    "available_citation_keys": [
-      "rad2017deep",
-      "mohammad2026sift"
-    ],
+    "analyzed_papers_count": 0,
+    "sampled_methodologies": [],
+    "key_limitations_to_overcome": [],
+    "available_citation_keys": [],
     "citation_source": "arxiv"
   },
   "thesis_type": "magisterska",
@@ -72,28 +68,33 @@
     "chapters": [
       {
         "index": 1,
-        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-        "focus": "Definicja problemu detekcji anomalii w sygnałach bio-sygnałów, teza pracy, zakres badawczy."
+        "title": "Rozdział 1: Wstęp",
+        "focus": "Motywacja problemu, cel pracy, teza i struktura dokumentu."
       },
       {
         "index": 2,
-        "title": "Rozdział 2: Przegląd Literatury",
-        "focus": "Analiza istniejących metod (Z-score, Isolation Forest) oraz motywacja użycia metod robustowych w obecności szumu skorelowanego."
+        "title": "Rozdział 2: Teoretyczne podstawy detekcji anomalii",
+        "focus": "Przegląd metod opartych na odległościach, podprzestrzeniach oraz specyfika danych fizjologicznych."
       },
       {
         "index": 3,
-        "title": "Rozdział 3: Projekt Rozwiązania i Materiały",
-        "focus": "Opis architektury systemu: generator syntetycznych danych, implementacja baseline Z-score oraz detektora zespołowego. Parametry eksperymentu."
+        "title": "Rozdział 3: Proponowana metoda i rozwiązanie bazowe",
+        "focus": "Opis matematyczny komitetu losowych podprzestrzeni oraz implementacja detektora Z-score."
       },
       {
         "index": 4,
-        "title": "Rozdział 4: Wyniki Eksperymentu",
-        "focus": "Prezentacja wyników F1, Precision i Recall z pliku results.csv. Analiza wykresów z figures/."
+        "title": "Rozdział 4: Wyniki eksperymentów i ich analiza",
+        "focus": "Wizualizacja wyników na syntetycznych danych, porównanie metryk, analiza rozrzutu między ziareniami."
       },
       {
         "index": 5,
-        "title": "Rozdział 5: Podsumowanie i Wnioski",
-        "focus": "Weryfikacja tezy pracy. Dyskusja nad przewagą metody robustowej nad statyczną w przypadku szumu."
+        "title": "Rozdział 5: Wnioski",
+        "focus": "Podsumowanie osiągnięć, weryfikacja tezy oraz propozycje prac przyszłych."
+      },
+      {
+        "index": 6,
+        "title": "Rozdział 6: Przegląd literatury (SOTA)",
+        "focus": "Analiza najnowszych prac z zakresu ensemble learning w detekcji anomalii."
       }
     ]
   }

@@ -75,3 +75,4 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
+- **RULE**: When adding citations, first inventory the bibliography file to identify valid keys before generating LaTeX references, because hallucinating citation metadata is a preventable error when the source data exists.

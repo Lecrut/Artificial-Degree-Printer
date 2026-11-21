@@ -1,3 +1,180 @@
 {
-  "failures": []
+  "failures": [
+    {
+      "agent": "seed_writer",
+      "context": "{\"pattern\": {\"category\": \"document\", \"occurrences\": 2, \"tasks\": [\"T10\", \"T9\"], \"examples\": [\"Citation key 'dijkstra1959' not found in workspace .bib files.\", \"Citation key 'dijkstra1959' not found in workspace .bib files.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"paper_ieee.tex\", \"failed_agent\": \"seed_writer\", \"issues\": [\"Citation key 'dijkstra1959' not found in workspace .bib files.\", \"Citation key 'clark2019' not found in workspace .bib files.\", \"Citation key 'chen2013' not found in workspace .bib files.\"]}, \"failed_agent\": \"seed_writer\", \"agent_failure_count\": 9, \"cycle_index\": 11, \"task_id\": \"T10\", \"target_node\": \"paper_ieee.tex\", \"suggested_rule\": \"Task T10 on node paper_ieee.tex (paper_ieee.tex) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When adding citations, first inventory the bibliography file to identify valid keys before generating LaTeX references, because hallucinating citation metadata is a preventable error when the source data exists."
+    },
+    {
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"behaviour\", \"occurrences\": 2, \"tasks\": [\"T2\", \"T4\"], \"examples\": [\"BEHAVIOUR_MISMATCH [heuristics.py]: the implementation does not give the results the interface specifies:\\n- octile_distance: example `octile_distance((0, 0), (3, 4))` expected `5.8284`, got `5.656854249492381`\\n- octile_distance: example `octile_distance((0, 0), (0, 0))` expected `0.0`, got `0`\", \"BEHAVIOUR_MISMATCH [weighted_a_star.py]: the implementation does not give the results the interface specifies:\\n- example `len(algo.neighbors(3, 3)) > 0` raised AttributeError: 'WeightedAStar' object has no attribute 'neighbors' in the example's own code\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"weighted_a_star.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"BEHAVIOUR_MISMATCH [weighted_a_star.py]: the implementation does not give the results the interface specifies:\\n- example `len(algo.neighbors(3, 3)) > 0` expected `True`, got `False`\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 5, \"cycle_index\": 14, \"task_id\": \"T4\", \"target_node\": \"weighted_a_star.py\", \"suggested_rule\": \"Task T4 on node weighted_a_star.py (weighted_a_star.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When an algorithm implementation is provided with specific input-output examples or interface contracts, verify that all referenced methods exist in the class and that computed results match the expected values within numerical precision, because functional correctness requires strict adherence to the specified contract."
+    }
+  ],
+  "category_log": [
+    {
+      "cycle": 1,
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "T1"
+    },
+    {
+      "cycle": 2,
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "T1"
+    },
+    {
+      "cycle": 3,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T2"
+    },
+    {
+      "cycle": 4,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T2"
+    },
+    {
+      "cycle": 5,
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "T6"
+    },
+    {
+      "cycle": 6,
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "T6"
+    },
+    {
+      "cycle": 7,
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "T9"
+    },
+    {
+      "cycle": 8,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T9"
+    },
+    {
+      "cycle": 9,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T9"
+    },
+    {
+      "cycle": 10,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T10"
+    },
+    {
+      "cycle": 11,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T10"
+    },
+    {
+      "cycle": 12,
+      "agent": "seed_coder",
+      "category": "harness",
+      "task_id": "T4"
+    },
+    {
+      "cycle": 13,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T4"
+    },
+    {
+      "cycle": 14,
+      "agent": "seed_coder",
+      "category": "behaviour",
+      "task_id": "T4"
+    },
+    {
+      "cycle": 15,
+      "agent": "seed_tester",
+      "category": "pytest:TypeError",
+      "task_id": "T5"
+    },
+    {
+      "cycle": 16,
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "T5"
+    },
+    {
+      "cycle": 17,
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "T7"
+    },
+    {
+      "cycle": 18,
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "T7"
+    },
+    {
+      "cycle": 19,
+      "agent": "seed_coder",
+      "category": "harness",
+      "task_id": "T7"
+    },
+    {
+      "cycle": 20,
+      "agent": "seed_coder",
+      "category": "run:ValueError",
+      "task_id": "R5_7"
+    },
+    {
+      "cycle": 21,
+      "agent": "seed_coder",
+      "category": "harness",
+      "task_id": "R5_7"
+    },
+    {
+      "cycle": 22,
+      "agent": "seed_coder",
+      "category": "run:AttributeError",
+      "task_id": "R5_7"
+    },
+    {
+      "cycle": 23,
+      "agent": "seed_coder",
+      "category": "run:ImportError",
+      "task_id": "R6_4"
+    },
+    {
+      "cycle": 24,
+      "agent": "seed_coder",
+      "category": "run:ImportError",
+      "task_id": "R6_4"
+    },
+    {
+      "cycle": 25,
+      "agent": "seed_coder",
+      "category": "run:ImportError",
+      "task_id": "R6_4"
+    }
+  ],
+  "rules": [
+    {
+      "agent": "seed_writer",
+      "rule": "When adding citations, first inventory the bibliography file to identify valid keys before generating LaTeX references, because hallucinating citation metadata is a preventable error when the source data exists.",
+      "category": "document",
+      "cycle": 11
+    },
+    {
+      "agent": "seed_coder",
+      "rule": "When an algorithm implementation is provided with specific input-output examples or interface contracts, verify that all referenced methods exist in the class and that computed results match the expected values within numerical precision, because functional correctness requires strict adherence to the specified contract.",
+      "category": "behaviour",
+      "cycle": 14
+    }
+  ]
 }

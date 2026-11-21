@@ -1,0 +1,38 @@
+{
+  "files": [
+    ".ruff_cache/.gitignore",
+    ".ruff_cache/0.17.2/12888297897509761676",
+    ".ruff_cache/0.17.2/5262301720073484566",
+    ".ruff_cache/CACHEDIR.TAG",
+    "logs/agent_trace.jsonl",
+    "logs/events.jsonl",
+    "logs/harness_process.log",
+    "references.bib",
+    "src/experiment_runner.py",
+    "src/game_env.py",
+    "src/plot_results.py",
+    "src/q_agent.py",
+    "src/random_opponent.py",
+    "thesis.md"
+  ],
+  "pytest_status": "FAIL",
+  "pytest_errors": [
+    "Import error in plot_results.py: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import src.plot_results\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\plot_results.py\", line 13, in <module>\n    mpl.use(mpl_backend)\n    ^^^\nNameError: name 'mpl' is not defined",
+    "Ruff lint failure: src\\plot_results.py:13:1: F821 Undefined name `mpl`\nFound 1 error."
+  ],
+  "chapters_present": [
+    1,
+    2,
+    3
+  ],
+  "chapters_missing": [
+    4,
+    5
+  ],
+  "symbolic_errors": [],
+  "csv_columns": [],
+  "trigger_issues": [
+    "Import error in plot_results.py: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import src.plot_results\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\workspace\\src\\plot_results.py\", line 13, in <module>\n    mpl.use(mpl_backend)\n    ^^^\nNameError: name 'mpl' is not defined",
+    "Ruff lint failure: src\\plot_results.py:13:1: F821 Undefined name `mpl`\nFound 1 error."
+  ]
+}

@@ -8,13 +8,12 @@
   "question": null,
   "context": {
     "interfaces": [
-      "src/baselines.py",
-      "src/config.py",
+      "src/baseline_zscore.py",
+      "src/data_generator.py",
       "src/ensemble_detector.py",
-      "src/experiment_runner.py",
-      "src/plots.py",
-      "src/synthetic_data.py"
+      "src/experiment.py",
+      "src/plotting.py"
     ],
-    "entrypoint": "src/experiment_runner.py:run_experiment"
+    "entrypoint": "src/experiment.py:run_experiment"
   }
 }

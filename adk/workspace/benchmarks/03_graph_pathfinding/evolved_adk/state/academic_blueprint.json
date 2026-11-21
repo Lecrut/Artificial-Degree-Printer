@@ -1,50 +1,118 @@
 {
-  "thesis_type": "paper",
-  "template_name": "paper_ieee",
-  "template_certain": true,
-  "thesis_title": "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)] The workspace already contains a graph pathfinding project with a baseline Dijkstra search; read it before changing anything and keep the baseline working. Research question: does a weighted A* pathfinding search with an admissible octile heuristic expand fewer nodes than the baseline on 8-connected obstacle grids, and at what cost in path optimality? Design the experiment yourself: choose the parameters, training or search budget, number of repetitions and seeds, the metrics you will report and the success criterion, and declare the metrics and the experiment entrypoint in the plan before running anything. Implement the solution as small, single-purpose modules with unit tests, produce every result by running the declared entrypoint, and write the thesis so that every reported number is a symbolic pointer to the code or to a results file.",
+  "thesis_title": "Heuristic Pathfinding Optimization on Spatial Grids: Weighted Octile A* vs. Dijkstra",
+  "thesis_statement": "Weighted A* with octile heuristic expands fewer nodes than Dijkstra on dense grids, with negligible sub-optimality.",
+  "baseline_comparison": "Dijkstra (8-connected) implemented in existing core.py",
+  "entrypoint": "experiment.py:run_experiment",
+  "metrics": [
+    "path_cost",
+    "expanded_nodes"
+  ],
+  "plots": "plots.py:plot_results",
+  "planned_chapters": [
+    {
+      "index": 1,
+      "title": "Introduction",
+      "focus": "Problem statement, contribution summary."
+    },
+    {
+      "index": 2,
+      "title": "Background and Related Work",
+      "focus": "Dijkstra, A*, admissibility, octile distance."
+    },
+    {
+      "index": 3,
+      "title": "Experimental Setup and Results",
+      "focus": "Metrics, graphs comparing expansion count and cost."
+    },
+    {
+      "index": 4,
+      "title": "Conclusion",
+      "focus": "Summary of findings on efficiency vs optimality trade-off."
+    }
+  ],
+  "interfaces": {
+    "config.py": "\"\"\"Experiment configuration constants.\"\"\"\n\nSEED: int = 42\nGRID_SIZE: int = 32\nOBSTACLE_DENSITY: float = 0.22\nREPETITIONS: int = 5\nWEIGHT_A_STAR: float = 1.5\n",
+    "heuristics.py": "\"\"\"Heuristic functions for spatial grids.\"\"\"\nimport math\n\ndef octile_distance(start: tuple[int, int], goal: tuple[int, int]) -> float:\n    \"\"\"Calculate the standard octile distance between two grid points.\n\n    >>> round(octile_distance((0, 0), (3, 4)), 4)\n    5.2426\n    >>> round(octile_distance((0, 0), (0, 0)), 4)\n    0.0\n    \"\"\"\n    ...\n",
+    "weighted_a_star.py": "\"\"\"Weighted A* algorithm for spatial grids.\"\"\"\nfrom typing import Tuple\nimport heapq\nimport math\nfrom heuristics import octile_distance\n\nclass WeightedAStar:\n    \"\"\"Implements weighted A* search on an obstacle grid.\n\n    >>> algo = WeightedAStar((0,0), (5,5), 1.5)\n    >>> len(algo.neighbors(3, 3)) > 0\n    True\n    \"\"\"\n\n    def __init__(self, start: tuple[int, int], goal: tuple[int, int], weight: float) -> None:\n        \"\"\"Initialize the searcher.\"\"\"\n        ...\n\n    def solve(self, grid: list[list[int]]) -> Tuple[float, int]:\n        \"\"\"Run search. Returns (path_cost, expanded_nodes).\"\"\"\n        ...\n\n    def neighbors(self, r: int, c: int) -> list[tuple[int, int]]:\n        \"\"\"Return valid neighbor coordinates for (r, c) within the current grid bounds.\"\"\"\n        ...\n",
+    "plots.py": "\"\"\"Plotting functions for experiment results.\"\"\"\n\nimport matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\nimport os\n\ndef plot_results() -> None:\n    \"\"\"Reads results.csv and saves figures to figures/ directory.\"\"\"\n    ...\n",
+    "experiment.py": "\"\"\"Entrypoint for the pathfinding experiment.\"\"\"\n\nimport random\nimport csv\nimport config\nfrom core import generate_obstacle_grid, search_grid\nfrom weighted_a_star import WeightedAStar\n\ndef run_experiment() -> None:\n    \"\"\"Runs Dijkstra and Weighted A* comparisons and saves to results.csv.\n\n    Writes 'results.csv' with columns [method, metric, value].\n    Calls plots.py:plot_results at the end. Runs REPETITIONS times.\n    \"\"\"\n    ...\n",
+    "core.py": "\"\"\"Existing core logic: grid generation and Dijkstra search.\"\"\"\nimport heapq\nimport math\nimport random\nimport config\n\ndef generate_obstacle_grid(\n    size: int = config.GRID_SIZE, density: float = config.OBSTACLE_DENSITY, seed: int = config.SEED\n) -> list[list[int]]:\n    \"\"\"A seeded size x size grid: 1 is an obstacle, 0 a free cell.\"\"\"\n    ...\n\ndef search_grid(grid: list[list[int]], start: tuple[int, int], goal: tuple[int, int]) -> tuple[float, int]:\n    \"\"\"Dijkstra search on the 8-connected grid.\"\"\"\n    ..."
+  },
   "literature_recon": {
     "thesis_type": "paper",
     "research_routing": [
       "discoverer_researcher"
     ],
-    "analyzed_papers_count": 14,
+    "analyzed_papers_count": 20,
     "sampled_methodologies": [
+      "Xulong Tang and Dionysios Diamantopoulos and Tristan Müller and Apo Kayi and Nelson Mimura Gonzalez and Muhammad Osama and Seetharami Seelam and Haralampos Pozidis and Blake R. Johnson and Yasuko Eckert (2026) [tang2026scaling]: These constraints motivate heuristic decoding algorithms whose error-correction performance must be evaluated through large-scale simulation.",
       "Rui Zhao and Chao Chen and Longfei Xu and Chenguang Ji and Hengbin Cui and Kaikui Liu and Xiaolong Li (2026) [zhao2026customizable]: Classic graph algorithms for pathfinding use heuristic cost functions to define edge weight, thus providing no optimality guarantee of route quality.",
-      "Omid Nejati Manzari and Guillaume Lajoie and Hassan Rivaz (2026) [manzari2026recursive]: We propose R-Qwen, a recursive reasoning framework built upon a pretrained Qwen backbone.",
-      "Forest Agostinelli (2026) [agostinelli2026deepxube]: DeepXube is a free and open-source Python package and command-line tool that seeks to automate the solution of pathfinding problems by using machine learning to learn heuristic functions that guide he",
-      "Shaoqiu Zhang and Zizhong Ding and Kaicheng Yang and Junyi Wu and Xianglong Yan and Xi Li and Bingnan Duan and Jianping Fang and Yulun Zhang (2026) [zhang2026adatsq]: While post-training quantization (PTQ) has proven effective for large language models (LLMs), directly applying existing methods to DiTs yields suboptimal results due to the neglect of the unique temp",
-      "Yingfeng Liu and Shijie Sun and Kaifeng Yu and Furen Deng and Shifan Zuo and Jixia Li and Yougang Wang and Fengquan Wu and Xuelei Chen (2025) [liu2025beamforming]: All beams formed with the EBF can also be formed by the XBF method, but the latter can also generate beams which can not be generated by the former.",
-      "Zhiwei Xu (2025) [xu2025daa]: In this paper, we introduce a novel learning method, termed deep angular A* (DAA*), by incorporating the proposed path angular freedom (PAF) into A* to improve path similarity through adaptive path sm",
-      "Saman Ahmadi and Andrea Raith and Mahdi Jalili (2025) [ahmadi2025resource]: Given the recent advances in constrained and multi-criteria search with A*, this paper introduces a new resource constrained search framework on the basis of A* to tackle RCSP in large networks, even ",
-      "Kartheik G. Iyer and Mikaeel Yunus and Charles O'Neill and Christine Ye and Alina Hyk and Kiera McCormick and Ioana Ciuca and John F. Wu and Alberto Accomazzi and Simone Astarita and Rishabh Chakrabarty and Jesse Cranney and Anjalie Field and Tirthankar Ghosal and Michele Ginolfi and Marc Huertas-Company and Maja Jablonska and Sandor Kruk and Huiling Liu and Gabriel Marchidan and Rohit Mistry and J. P. Naiman and J. E. G. Peek and Mugdha Polimera and Sergio J. Rodriguez and Kevin Schawinski and Sanjib Sharma and Michael J. Smith and Yuan-Sen Ting and Mike Walmsley (2024) [iyer2024pathfinder]: We present Pathfinder, a machine learning framework designed to enable literature review and knowledge discovery in astronomy, focusing on semantic searching with natural language instead of syntactic"
+      "Junyao Wang and Yulin Xu and Mohammad Abdullah Al Faruque (2026) [wang2026vikpath]: Traditional heuristic-based algorithms, such as A*, rely on predefined heuristic functions to guide the search process.",
+      "Kabir Murjani and Mishri Bhavsar and Manish I. Patel and Jonti Talukdar (2026) [murjani2026alpharoute]: Because traditional heuristics rely on static penalty schedules that fail on complex congestion topologies, we present AlphaRoute: a multi-objective adaptive search framework reformulating rip-up and ",
+      "Aleksandr Ananikian and Daniil Drozdov and Konstantin Yakovlev (2026) [ananikian2026upath]: The performance of search algorithms for grid-based pathfinding, e.g.",
+      "Hao-Tsung Yang and Ssu-Yuan Lo and Kuan-Lun Chen and Ching-Kai Wang (2026) [yang2026generating]: Current methods are limited: traditional heuristics, such as the Niching Memetic Algorithm (NMA) or bi-criteria optimization, incur high computational complexity $O(n^3)$, while modern neural approach",
+      "Chris Tava (2025) [tava2025learning]: This research introduces a reinforcement learning technique to learn switching thresholds between two orthogonal navigation policies.",
+      "Saman Ahmadi and Mahdi Jalili (2025) [ahmadi2025fast]: We study the energy-optimal shortest path problem for electric vehicles (EVs) in large-scale road networks, where recuperated energy along downhill segments introduces negative energy costs."
     ],
     "key_limitations_to_overcome": [
+      "Xulong Tang and Dionysios Diamantopoulos and Tristan Müller and Apo Kayi and Nelson Mimura Gonzalez and Muhammad Osama and Seetharami Seelam and Haralampos Pozidis and Blake R. Johnson and Yasuko Eckert (2026) [tang2026scaling]: Using multiple graphics processing units (GPUs) is a natural way to scale these simulations, but naively distributing syndrome batches introduces host-side prep",
       "Rui Zhao and Chao Chen and Longfei Xu and Chenguang Ji and Hengbin Cui and Kaikui Liu and Xiaolong Li (2026) [zhao2026customizable]: Prior data-driven approaches equating ground truth of the optimal route with user trajectory, which is however moderately influenced by the navigation service, ",
-      "Omid Nejati Manzari and Guillaume Lajoie and Hassan Rivaz (2026) [manzari2026recursive]: While recursive models such as Hierarchical Reasoning Model (HRM) and Tiny Recursive Model (TRM) address this limitation through iterative latent-state refineme",
-      "Forest Agostinelli (2026) [agostinelli2026deepxube]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
-      "Shaoqiu Zhang and Zizhong Ding and Kaicheng Yang and Junyi Wu and Xianglong Yan and Xi Li and Bingnan Duan and Jianping Fang and Yulun Zhang (2026) [zhang2026adatsq]: However, their massive computational cost and memory footprint hinder deployment on edge devices.",
-      "Yingfeng Liu and Shijie Sun and Kaifeng Yu and Furen Deng and Shifan Zuo and Jixia Li and Yougang Wang and Fengquan Wu and Xuelei Chen (2025) [liu2025beamforming]: However, to search for transient targets such as the fast radio burst (FRB), it is more convenient to use the beam-forming technique, where the real-time voltag",
-      "Zhiwei Xu (2025) [xu2025daa]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
-      "Saman Ahmadi and Andrea Raith and Mahdi Jalili (2025) [ahmadi2025resource]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
-      "Kartheik G. Iyer and Mikaeel Yunus and Charles O'Neill and Christine Ye and Alina Hyk and Kiera McCormick and Ioana Ciuca and John F. Wu and Alberto Accomazzi and Simone Astarita and Rishabh Chakrabarty and Jesse Cranney and Anjalie Field and Tirthankar Ghosal and Michele Ginolfi and Marc Huertas-Company and Maja Jablonska and Sandor Kruk and Huiling Liu and Gabriel Marchidan and Rohit Mistry and J. P. Naiman and J. E. G. Peek and Mugdha Polimera and Sergio J. Rodriguez and Kevin Schawinski and Sanjib Sharma and Michael J. Smith and Yuan-Sen Ting and Mike Walmsley (2024) [iyer2024pathfinder]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees"
+      "Junyao Wang and Yulin Xu and Mohammad Abdullah Al Faruque (2026) [wang2026vikpath]: Recent studies have explored learning-based approaches to improve pathfinding efficiency; however, most existing methods rely on supervised learning and require",
+      "Kabir Murjani and Mishri Bhavsar and Manish I. Patel and Jonti Talukdar (2026) [murjani2026alpharoute]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Aleksandr Ananikian and Daniil Drozdov and Konstantin Yakovlev (2026) [ananikian2026upath]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Hao-Tsung Yang and Ssu-Yuan Lo and Kuan-Lun Chen and Ching-Kai Wang (2026) [yang2026generating]: To overcome these limitations, we propose a novel hybrid framework that decomposes D-TSP into two efficient steps.",
+      "Chris Tava (2025) [tava2025learning]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
+      "Saman Ahmadi and Mahdi Jalili (2025) [ahmadi2025fast]: While traditional point-to-point pathfinding algorithms for EVs assume a known initial energy level, many real-world scenarios involving uncertainty in availabl"
     ],
     "available_citation_keys": [
+      "tang2026scaling",
       "zhao2026customizable",
-      "manzari2026recursive",
-      "agostinelli2026deepxube",
-      "zhang2026adatsq",
-      "liu2025beamforming",
+      "wang2026vikpath",
+      "murjani2026alpharoute",
+      "ananikian2026upath",
+      "yang2026generating",
+      "tava2025learning",
+      "ahmadi2025fast",
+      "tang2025routing",
+      "jain2025graph",
       "xu2025daa",
-      "ahmadi2025resource",
-      "iyer2024pathfinder",
-      "zheng2024efficient",
-      "kirilenko2022transpath",
-      "ahmadi2022enhanced",
-      "david2021using",
-      "kreller2021user",
-      "burns2014bestfirst"
+      "abbasov2025optimal",
+      "casasramos2025declarealign",
+      "sagirova2025srmt",
+      "ahmadi2024resource",
+      "ahmadi2024efficient",
+      "elela2024deep",
+      "andreychuk2024mapfgpt",
+      "bai2024collaborativ",
+      "bokan2024slope"
     ],
     "citation_source": "arxiv"
+  },
+  "thesis_type": "paper",
+  "template_name": "paper_ieee",
+  "template_certain": true,
+  "table_of_contents": {
+    "chapters": [
+      {
+        "index": 1,
+        "title": "Introduction",
+        "focus": "Problem statement, contribution summary."
+      },
+      {
+        "index": 2,
+        "title": "Background and Related Work",
+        "focus": "Dijkstra, A*, admissibility, octile distance."
+      },
+      {
+        "index": 3,
+        "title": "Experimental Setup and Results",
+        "focus": "Metrics, graphs comparing expansion count and cost."
+      },
+      {
+        "index": 4,
+        "title": "Conclusion",
+        "focus": "Summary of findings on efficiency vs optimality trade-off."
+      }
+    ]
   }
 }

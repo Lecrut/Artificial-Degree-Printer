@@ -1,219 +1,265 @@
 {
   "version": 2,
   "vertices": {
-    "src/config.py": {
+    "src/data_generator.py": {
       "kind": "code",
       "owner": "coder",
-      "state": "verified",
-      "description": "[Increment 1: Assumptions] Implement config.py: Module-level constants for experiment parameters (num_samples, noise_std, anomaly_rate, seeds, ensemble_components). Define data generation settings.",
-      "attempts": 1,
-      "history": [],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T4"
-      },
-      "files": [],
-      "failures": 0
-    },
-    "src/synthetic_data.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "verified",
-      "description": "[Increment 1: Assumptions] Implement synthetic_data.py: Interface for generating synthetic multi-channel bio-signal telemetry. Class `SyntheticDataset`. Method `generate()` returns numpy array X and boolean mask y (1=anomaly). Must include correlated noise between channels using local RNG.",
-      "attempts": 1,
-      "history": [
-        {
-          "task_id": "T8",
-          "issues": [
-            "Pytest failure: ..F                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T8_FIX1"
-      },
-      "files": [],
-      "failures": 1
-    },
-    "src/baselines.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "verified",
-      "description": "[Increment 2: Method] Implement baselines.py: Interface for the baseline. Class `UnivariateZScoreBaseline`. Method `fit(X)` computes mean/std per channel. Method `predict(X)` returns boolean array of anomalies based on fixed threshold (e.g., 3*std). Doctest provided.",
+      "state": "failed",
+      "description": "[Increment 2: Method] Implement the random subspace data generation module with anomaly injection in src/data_generator.py. This module creates synthetic multi-channel physiological signals, injects anomalies at specified locations, and provides ground truth masks for evaluation.",
       "attempts": 2,
       "history": [
         {
-          "task_id": "T6",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [src/baselines.py]: the implementation does not give the results the interface specifies:\n- UnivariateZScoreBaseline.predict: example `det.predict(np.array([[10, 10], [1, 1]]))` expected `array([ True, False])`, got `array([ True,  True,  True,  True])`"
-          ]
-        },
-        {
           "task_id": "REPLAN",
           "issues": [
-            "Interface of src/baselines.py changed by the re-plan."
-          ]
-        },
-        {
-          "task_id": "REPLAN",
-          "issues": [
-            "Interface of src/baselines.py changed by the re-plan."
+            "Interface of src/data_generator.py changed by the re-plan."
           ]
         },
         {
           "task_id": "R2_1",
           "issues": [
-            "BEHAVIOUR_MISMATCH [src/baselines.py]: the implementation does not give the results the interface specifies:\n- example `print(result)` expected `[ True False]`, got `[ True  True]`"
+            "BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\n- example `mask[0, 2:5].all()` expected `True`, got `np.False_`",
+            "Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         },
         {
-          "task_id": "PLAN",
+          "task_id": "R2_1",
           "issues": [
-            "Interface of src/baselines.py amended by the planner: The doctest example in the `predict` method's docstring is incorrect. For input X=[[10.0, 10.0], [1.0, 1.0]] after fitting on [[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]], the mean is [2.0, 2.0] and the standard deviation is approximately [0.816, 0.816]. The Z-scores for the first row (10,10) are ~9.65 (anomaly). The Z-scores for the second row (1,1) are |1-2|/0.816 = 1/0.816 ≈ 1.22. Since the threshold is 1.0, 1.22 > 1.0, so the second point is also flagged as an anomaly. Thus `predict` should return `[True, True]`, not `[True, False]`. The interface's expected output contradicts the mathematical logic defined in the docstring and implemented in the code."
+            "BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\n- example `mask.shape` expected `(2, 5)`, got `(10,)`\n- example `mask[0, 2:5].all()` raised IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed in the example's own code (after an earlier example of the same docstring failed)",
+            "Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "R2_1",
+          "issues": [
+            "BEHAVIOUR_MISMATCH [src/data_generator.py]: the implementation does not give the results the interface specifies:\n- example `mask.shape` expected `(2, 5)`, got `(10,)`\n- example `mask[0, 2:5].all()` raised IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed in the example's own code (after an earlier example of the same docstring failed)",
+            "Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "R2_1_FIX1"
+        "task_id": "R2_1_FIX2"
       },
       "files": [],
-      "failures": 3
+      "failures": 6
     },
     "src/ensemble_detector.py": {
       "kind": "code",
       "owner": "coder",
       "state": "verified",
-      "description": "[Increment 2: Method] Implement ensemble_detector.py: Interface for the proposed method. Class `RobustEnsembleDetector`. Components: Median Absolute Deviation (MAD) per channel + IQR filtering. Method `fit(X)` computes robust stats. Method `predict(X)` returns boolean array. **Fix:** Store `mad_per_channel_` in `fit`. In `predict`, compute `(X - median_) / mad_per_channel_` element-wise, then aggregate (e.g., sum of squares) or check per-channel thresholds to align with UnivariateBaseline 'any channel' logic.",
+      "description": "[Increment 2: Method] Implement the ensemble anomaly detection module in src/ensemble_detector.py. This implements Random Subspace Ensembles using Isolation Forest components, allowing for dynamic feature subspaces per estimator and an aggregation mechanism for final anomaly scores.",
       "attempts": 1,
-      "history": [],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T7"
-      },
-      "files": [],
-      "failures": 0
-    },
-    "src/experiment_runner.py": {
-      "kind": "entry",
-      "owner": "coder",
-      "state": "failed",
-      "description": "[Increment 3: Experiment] Implement experiment_runner.py: Entry point `run_experiment()`. Reads config, loops over seeds, generates data, fits both models, predicts, computes metrics (Precision, Recall, F1). **Fix:** Write results in long format (`method,metric,value,seed`) to `results.csv` to preserve seed-level granularity for plotting. Do not aggregate immediately.",
-      "attempts": 3,
       "history": [
         {
-          "task_id": "R3_1",
+          "task_id": "T4",
           "issues": [
-            "Traceback (most recent call last):\n  File \"<string>\", line 59, in <module>\n    getattr(plots_module, plots_func)()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"src\\plots.py\", line 20, in plot_results\n    p = axes[0].boxplot([f1_by_method[f1_by_method.method == m]['value'].values for m in f1_by_method.method.unique()], labels=list(f1_by_method.method.unique()), patch_artist=True)\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\.venv\\Lib\\site-packages\\matplotlib\\_api\\deprecation.py\", line 477"
+            "ANSWER_REJECTED: The answer for 'src/ensemble_detector.py' was not saved: the fields ['error', 'issues', 'raw_response'] match no allowed shape. Allowed: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section"
+          ]
+        },
+        {
+          "task_id": "T4",
+          "issues": [
+            "NOT_IMPLEMENTED [src/ensemble_detector.py]: a function still only raises NotImplementedError"
           ]
         },
         {
           "task_id": "REPLAN",
           "issues": [
-            "Interface of src/experiment_runner.py changed by the re-plan."
-          ]
-        },
-        {
-          "task_id": "R4_1",
-          "issues": [
-            "Traceback (most recent call last):\n  File \"<string>\", line 59, in <module>\n    getattr(plots_module, plots_func)()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"src\\plots.py\", line 20, in plot_results\n    p = axes[0].boxplot([f1_by_method[f1_by_method.method == m]['value'].values for m in f1_by_method.method.unique()], labels=list(f1_by_method.method.unique()), patch_artist=True)\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\.venv\\Lib\\site-packages\\matplotlib\\_api\\deprecation.py\", line 477"
-          ]
-        },
-        {
-          "task_id": "R4_1",
-          "issues": [
-            "Traceback (most recent call last):\n  File \"<string>\", line 59, in <module>\n    getattr(plots_module, plots_func)()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"src\\plots.py\", line 20, in plot_results\n    p = axes[0].boxplot([f1_by_method[f1_by_method.method == m]['value'].values for m in f1_by_method.method.unique()], labels=list(f1_by_method.method.unique()), patch_artist=True)\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\.venv\\Lib\\site-packages\\matplotlib\\_api\\deprecation.py\", line 477"
+            "Interface of src/ensemble_detector.py changed by the re-plan."
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "R4_1_FIX1"
+        "task_id": "T4_FIX1"
       },
       "files": [],
-      "failures": 8
+      "failures": 2
     },
-    "src/plots.py": {
+    "src/baseline_zscore.py": {
       "kind": "code",
       "owner": "coder",
       "state": "verified",
-      "description": "[Increment 3: Visualization] Implement plots.py: Function `plot_results()`. Reads `results.csv` (long format), generates boxplots of F1-scores for both methods across seeds, and a confusion matrix heatmap for the ensemble method. Saves to `figures/`.",
+      "description": "[Increment 2: Method] Implement the static baseline module in src/baseline_zscore.py. This implements a univariate Z-score based detector with configurable window size and threshold, serving as the comparative baseline.",
       "attempts": 1,
       "history": [],
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "T12"
+        "task_id": "T5"
       },
       "files": [],
       "failures": 0
     },
-    "tests/test_synthetic_data.py": {
-      "kind": "test",
-      "owner": "tester",
-      "state": "verified",
-      "description": "[Increment 2: Method] Write unit tests for synthetic_data.py in tests/test_synthetic_data.py. Verify shape, anomaly rate and presence of anomalies.",
+    "src/experiment.py": {
+      "kind": "entry",
+      "owner": "coder",
+      "state": "impl",
+      "description": "[Increment 3: Experiment] Implement the experiment entrypoint module in src/experiment.py. It must load configuration from module-level constants, import data_generator, ensemble_detector, and baseline_zscore at the top level to use them, generate synthetic data via data_generator, run ensemble_detector and baseline_zscore with multiple seeds/repetitions, compute metrics (Precision, Recall, F1 using sklearn.metrics.precision_recall_fscore_support, AUC-ROC using sklearn.metrics.roc_curve and sklearn.metrics.auc) saving results to `results.csv` (format: method,metric,value,std_dev,n_runs), and finally call plotting.plots(). Explicitly map baseline Z-scores to AUC-ROC and binary predictions to F1.",
       "attempts": 2,
       "history": [
         {
-          "task_id": "R2_3",
+          "task_id": "T10",
           "issues": [
-            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_synthetic_data.py]: reads SyntheticDatase"
+            "Ruff lint failure: src\\experiment.py:144:5: F821 Undefined name `plt`\nsrc\\experiment.py:145:5: F821 Undefined name `plots`\nsrc\\experiment.py:145:11: F821 Undefined name `plots`\nFound 3 errors."
           ]
         },
         {
-          "task_id": "R2_3",
+          "task_id": "T10",
           "issues": [
-            "Pytest failure: ..F                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
+            "Ruff lint failure: src\\experiment.py:144:5: F821 Undefined name `src`\nFound 1 error."
+          ]
+        },
+        {
+          "task_id": "REPLAN",
+          "issues": [
+            "Interface of src/experiment.py changed by the re-plan."
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T10_FIX1"
+      },
+      "files": [],
+      "failures": 2
+    },
+    "src/plotting.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "[Increment 3: Experiment] Implement the visualization module in src/plotting.py. Contains `plots()` function that reads `results.csv` and generates figures (e.g., F1 distribution across seeds, confusion matrix averages) saved to `figures/`.",
+      "attempts": 1,
+      "history": [
+        {
+          "task_id": "T11",
+          "issues": [
+            "Ruff lint failure: src\\plotting.py:29:17: F821 Undefined name `np`\nsrc\\plotting.py:42:9: F821 Undefined name `np`\nFound 2 errors."
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T11_FIX1"
+      },
+      "files": [],
+      "failures": 1
+    },
+    "tests/test_data_generator.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "failed",
+      "description": "[Increment 2: Method] Unit tests for data_generator module in tests/test_data_generator.py. Verify signal dimensions, normal range validity, and correct injection of anomalies (check ground truth mask overlaps).",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "R1_2",
+          "issues": [
+            "Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         },
         {
           "task_id": "PLAN",
           "issues": [
-            "Interface of src/synthetic_data.py amended by the planner: The repeated findings indicate that tests are attempting to read an attribute named `no_std` on `SyntheticDataset`, but the interface only declares `noise_std`. Since this discrepancy has persisted through multiple attempts and implies a naming mismatch between the plan (interface) and the consumer/validator expectations, the interface is amended to expose `no_std` as an alias for `noise_std` to satisfy the consumers' contract."
+            "Interface of src/data_generator.py kept by the planner: The interface is coherent and correctly specifies the return type as np.ndarray for get_ground_truth_mask. The repeated finding regarding .shape is invalid because .shape is a standard attribute of numpy ndarrays, not a custom declared member requiring interface inclusion. The implementation correctly returns a numpy array with the expected shape and functionality. Previous failures were due to test logic or implementation bugs, not interface defects. No change to the interface is needed."
           ]
         },
         {
-          "task_id": "R2_3",
+          "task_id": "R1_2_FIX2",
           "issues": [
-            "Pytest failure: ..F                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_data_generator.py]: reads get_ground_trut"
+          ]
+        },
+        {
+          "task_id": "R1_2",
+          "issues": [
+            "Pytest failure: .F                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "R2_3_FIX2"
+        "task_id": "T6_FIX1"
       },
       "files": [],
-      "failures": 6
-    },
-    "tests/test_baselines.py": {
-      "kind": "test",
-      "owner": "tester",
-      "state": "verified",
-      "description": "[Increment 2: Method] Write unit tests for baselines.py in tests/test_baselines.py. Test UnivariateZScoreBaseline predict behavior on known outliers using doctest/pytest assertions.",
-      "attempts": 1,
-      "history": [],
-      "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "T9"
-      },
-      "files": [],
-      "failures": 0
+      "failures": 8
     },
     "tests/test_ensemble_detector.py": {
       "kind": "test",
       "owner": "tester",
       "state": "verified",
-      "description": "[Increment 2: Method] Write unit tests for ensemble_detector.py in tests/test_ensemble_detector.py. Test RobustEnsembleDetector predict behavior on known outliers, specifically verifying per-channel normalization does not dominate due to scale differences.",
-      "attempts": 1,
-      "history": [],
+      "description": "[Increment 2: Method] Unit tests for ensemble_detector module in tests/test_ensemble_detector.py. Verify prediction dimensions, score ranges [0,1], and consistency across calls.",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "T7",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_ensemble_detector.py]: reads RandomSubspa"
+          ]
+        },
+        {
+          "task_id": "T7",
+          "issues": [
+            "Pytest failure: FF.                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "T7",
+          "issues": [
+            "Pytest failure: .F.                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "T7",
+          "issues": [
+            "Pytest failure: .F.                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        }
+      ],
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "T10"
+        "task_id": "R1_6"
       },
       "files": [],
-      "failures": 0
+      "failures": 4
+    },
+    "tests/test_baseline_zscore.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "[Increment 2: Method] Unit tests for baseline_zscore module in tests/test_baseline_zscore.py. Verify threshold application and output dimensions.",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "T8",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_baseline_zscore.py]: reads ZScoreBaseline"
+          ]
+        },
+        {
+          "task_id": "T8",
+          "issues": [
+            "Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "T8",
+          "issues": [
+            "Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "R1_4",
+          "issues": [
+            "Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "R1_4_FIX1"
+      },
+      "files": [],
+      "failures": 4
     },
     "results.csv": {
       "kind": "data",
@@ -229,7 +275,7 @@
     "references.bib": {
       "kind": "bib",
       "owner": "writer",
-      "state": "verified",
+      "state": "spec",
       "description": "",
       "attempts": 0,
       "history": [],
@@ -241,7 +287,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Rozdział 1: Wstęp, Cel i Teza Pracy — Definicja problemu detekcji anomalii w sygnałach bio-sygnałów, teza pracy, zakres badawczy.",
+      "description": "Rozdział 1: Wstęp — Motywacja problemu, cel pracy, teza i struktura dokumentu.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -252,8 +298,8 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Rozdział 2: Przegląd Literatury — Analiza istniejących metod (Z-score, Isolation Forest) oraz motywacja użycia metod robustowych w obecności szumu skorelowanego.",
-      "attempts": 2,
+      "description": "Rozdział 2: Teoretyczne podstawy detekcji anomalii — Przegląd metod opartych na odległościach, podprzestrzeniach oraz specyfika danych fizjologicznych.",
+      "attempts": 1,
       "history": [],
       "last_writer": null,
       "files": [],
@@ -262,9 +308,9 @@
     "thesis.md#ch3": {
       "kind": "chapter",
       "owner": "writer",
-      "state": "spec",
-      "description": "Rozdział 3: Projekt Rozwiązania i Materiały — Opis architektury systemu: generator syntetycznych danych, implementacja baseline Z-score oraz detektora zespołowego. Parametry eksperymentu.",
-      "attempts": 0,
+      "state": "verified",
+      "description": "Rozdział 3: Proponowana metoda i rozwiązanie bazowe — Opis matematyczny komitetu losowych podprzestrzeni oraz implementacja detektora Z-score.",
+      "attempts": 1,
       "history": [],
       "last_writer": null,
       "files": [],
@@ -274,7 +320,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "spec",
-      "description": "Rozdział 4: Wyniki Eksperymentu — Prezentacja wyników F1, Precision i Recall z pliku results.csv. Analiza wykresów z figures/.",
+      "description": "Rozdział 4: Wyniki eksperymentów i ich analiza — Wizualizacja wyników na syntetycznych danych, porównanie metryk, analiza rozrzutu między ziareniami.",
       "attempts": 0,
       "history": [],
       "last_writer": null,
@@ -285,8 +331,19 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "spec",
-      "description": "Rozdział 5: Podsumowanie i Wnioski — Weryfikacja tezy pracy. Dyskusja nad przewagą metody robustowej nad statyczną w przypadku szumu.",
+      "description": "Rozdział 5: Wnioski — Podsumowanie osiągnięć, weryfikacja tezy oraz propozycje prac przyszłych.",
       "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch6": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Rozdział 6: Przegląd literatury (SOTA) — Analiza najnowszych prac z zakresu ensemble learning w detekcji anomalii.",
+      "attempts": 1,
       "history": [],
       "last_writer": null,
       "files": [],
@@ -294,46 +351,149 @@
     }
   },
   "edges": {
-    "I:src/config.py": {
+    "I:src/data_generator.py": {
       "type": "I",
       "members": {
-        "src/config.py": "P",
-        "src/experiment_runner.py": "C"
+        "src/data_generator.py": "P",
+        "src/experiment.py": "C",
+        "tests/test_data_generator.py": "T"
       },
       "spec": {
-        "import": "src.config",
+        "import": "src.data_generator",
         "symbols": {
-          "NUM_SAMPLES": {
-            "kind": "const",
-            "type": "int"
+          "generate_signal": {
+            "kind": "func",
+            "params": [
+              "n_channels",
+              "signal_length",
+              "n_anomalies",
+              "seed"
+            ],
+            "required": [
+              "n_channels",
+              "signal_length",
+              "n_anomalies"
+            ]
           },
-          "NUM_CHANNELS": {
-            "kind": "const",
-            "type": "int"
+          "get_ground_truth_mask": {
+            "kind": "func",
+            "params": [
+              "anomalies",
+              "signal_length",
+              "n_channels"
+            ],
+            "required": [
+              "anomalies",
+              "signal_length",
+              "n_channels"
+            ]
+          }
+        },
+        "uses": {},
+        "packages": [
+          "numpy"
+        ],
+        "behaviour": [
+          "Generate synthetic signal and anomaly ground truth.\n\nReturns:\n    X (np.ndarray): Shape (n_channels, signal_length). Normal values in [-1, 1].\n    anomalies (list[dict]): List of dicts with keys 'channel', 'start', 'end' defining injected anomalies.\n\nExample:\n    >>> X, anom = generate_signal(2, 10, 1, seed=0)\n    >>> X.shape\n    (2, 10)\n    >>> len(anom) == 1\n    True",
+          "Convert anomaly definitions to a boolean mask.\n\nArgs:\n    anomalies: List of dicts with 'channel', 'start', 'end'.\n    signal_length: Length of the time dimension.\n    n_channels: Number of channels.\n    \nReturns:\n    mask (np.ndarray): Shape (n_channels, signal_length). True where anomaly exists.\n    \nExample:\n    >>> mask = get_ground_truth_mask([{'channel': 0, 'start': 2, 'end': 4}], 5, 2)\n    >>> mask.shape\n    (2, 5)\n    >>> mask[0, 2:5].all()\n    True"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:src/ensemble_detector.py": {
+      "type": "I",
+      "members": {
+        "src/ensemble_detector.py": "P",
+        "src/experiment.py": "C",
+        "tests/test_ensemble_detector.py": "T"
+      },
+      "spec": {
+        "import": "src.ensemble_detector",
+        "symbols": {
+          "RandomSubspaceEnsemble": {
+            "kind": "class"
           },
-          "NOISE_STD": {
-            "kind": "const",
-            "type": "float"
+          "RandomSubspaceEnsemble.__init__": {
+            "kind": "method",
+            "params": [
+              "self",
+              "n_estimators",
+              "subspace_size",
+              "contamination",
+              "seed"
+            ],
+            "required": []
           },
-          "ANOMALY_RATE": {
-            "kind": "const",
-            "type": "float"
+          "RandomSubspaceEnsemble.fit": {
+            "kind": "method",
+            "params": [
+              "self",
+              "X"
+            ],
+            "required": [
+              "X"
+            ]
           },
-          "SEEDS": {
-            "kind": "const",
-            "type": "list[int]"
+          "RandomSubspaceEnsemble.predict_scores": {
+            "kind": "method",
+            "params": [
+              "self",
+              "X"
+            ],
+            "required": [
+              "X"
+            ]
           },
-          "RANDOM_STATE": {
-            "kind": "const",
-            "type": "int"
+          "RandomSubspaceEnsemble.get_subspace_indices": {
+            "kind": "method",
+            "params": [
+              "self"
+            ],
+            "required": []
+          }
+        },
+        "uses": {},
+        "packages": [
+          "numpy",
+          "sklearn"
+        ],
+        "behaviour": []
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:src/baseline_zscore.py": {
+      "type": "I",
+      "members": {
+        "src/baseline_zscore.py": "P",
+        "src/experiment.py": "C",
+        "tests/test_baseline_zscore.py": "T"
+      },
+      "spec": {
+        "import": "src.baseline_zscore",
+        "symbols": {
+          "ZScoreBaseline": {
+            "kind": "class"
           },
-          "ZSCORE_THRESHOLD": {
-            "kind": "const",
-            "type": "float"
+          "ZScoreBaseline.__init__": {
+            "kind": "method",
+            "params": [
+              "self",
+              "window_size",
+              "threshold"
+            ],
+            "required": []
           },
-          "ROBUST_THRESHOLD": {
-            "kind": "const",
-            "type": "float"
+          "ZScoreBaseline.compute_scores": {
+            "kind": "method",
+            "params": [
+              "self",
+              "X"
+            ],
+            "required": [
+              "X"
+            ]
           }
         },
         "uses": {},
@@ -345,215 +505,33 @@
       "fingerprint": null,
       "observed": []
     },
-    "I:src/synthetic_data.py": {
+    "I:src/experiment.py": {
       "type": "I",
       "members": {
-        "src/synthetic_data.py": "P",
-        "src/experiment_runner.py": "C",
-        "tests/test_synthetic_data.py": "T"
+        "src/experiment.py": "P"
       },
       "spec": {
-        "import": "src.synthetic_data",
+        "import": "src.experiment",
         "symbols": {
-          "SyntheticDataset": {
-            "kind": "class"
+          "N_CHANNELS": {
+            "kind": "const",
+            "type": "int"
           },
-          "SyntheticDataset.__init__": {
-            "kind": "method",
-            "params": [
-              "self",
-              "n_samples",
-              "n_channels",
-              "noise_std",
-              "anomaly_rate"
-            ],
-            "required": [
-              "n_samples",
-              "n_channels",
-              "noise_std",
-              "anomaly_rate"
-            ]
+          "SIGNAL_LENGTH": {
+            "kind": "const",
+            "type": "int"
           },
-          "SyntheticDataset.generate": {
-            "kind": "method",
-            "params": [
-              "self",
-              "seed"
-            ],
-            "required": [
-              "seed"
-            ]
+          "N_ANOMALIES": {
+            "kind": "const",
+            "type": "int"
           },
-          "SyntheticDataset.n_samples": {
-            "kind": "attr"
+          "REPEATS": {
+            "kind": "const",
+            "type": "int"
           },
-          "SyntheticDataset.n_channels": {
-            "kind": "attr"
-          },
-          "SyntheticDataset.noise_std": {
-            "kind": "attr"
-          },
-          "SyntheticDataset.anomaly_rate": {
-            "kind": "attr"
-          },
-          "SyntheticDataset.no_std": {
-            "kind": "attr"
-          }
-        },
-        "uses": {},
-        "packages": [
-          "numpy",
-          "typing"
-        ],
-        "behaviour": []
-      },
-      "fingerprint": null,
-      "observed": []
-    },
-    "I:src/baselines.py": {
-      "type": "I",
-      "members": {
-        "src/baselines.py": "P",
-        "src/experiment_runner.py": "C",
-        "tests/test_baselines.py": "T"
-      },
-      "spec": {
-        "import": "src.baselines",
-        "symbols": {
-          "UnivariateZScoreBaseline": {
-            "kind": "class"
-          },
-          "UnivariateZScoreBaseline.__init__": {
-            "kind": "method",
-            "params": [
-              "self",
-              "threshold"
-            ],
-            "required": []
-          },
-          "UnivariateZScoreBaseline.fit": {
-            "kind": "method",
-            "params": [
-              "self",
-              "X"
-            ],
-            "required": [
-              "X"
-            ]
-          },
-          "UnivariateZScoreBaseline.predict": {
-            "kind": "method",
-            "params": [
-              "self",
-              "X"
-            ],
-            "required": [
-              "X"
-            ]
-          },
-          "UnivariateZScoreBaseline.threshold": {
-            "kind": "attr"
-          },
-          "UnivariateZScoreBaseline.mean_": {
-            "kind": "attr"
-          },
-          "UnivariateZScoreBaseline.std_": {
-            "kind": "attr"
-          }
-        },
-        "uses": {},
-        "packages": [
-          "numpy",
-          "typing"
-        ],
-        "behaviour": [
-          "Predict anomalies based on Z-score.\n\nArgs:\n    X: Data to predict on of shape (n_samples, n_features).\n    \nReturns:\n    Boolean array indicating anomalies of shape (n_samples,).\n\nExamples:\n>>> det = UnivariateZScoreBaseline(threshold=1.0)\n>>> det.fit(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]))\n>>> # Mean is [2, 2], std is approx [0.816, 0.816]\n>>> result = det.predict(np.array([[10.0, 10.0], [1.0, 1.0]]))\n>>> print(result)\n[ True  True]\n>>> result.shape\n(2,)"
-        ]
-      },
-      "fingerprint": null,
-      "observed": []
-    },
-    "I:src/ensemble_detector.py": {
-      "type": "I",
-      "members": {
-        "src/ensemble_detector.py": "P",
-        "src/experiment_runner.py": "C",
-        "tests/test_ensemble_detector.py": "T"
-      },
-      "spec": {
-        "import": "src.ensemble_detector",
-        "symbols": {
-          "RobustEnsembleDetector": {
-            "kind": "class"
-          },
-          "RobustEnsembleDetector.__init__": {
-            "kind": "method",
-            "params": [
-              "self",
-              "threshold"
-            ],
-            "required": []
-          },
-          "RobustEnsembleDetector.fit": {
-            "kind": "method",
-            "params": [
-              "self",
-              "X"
-            ],
-            "required": [
-              "X"
-            ]
-          },
-          "RobustEnsembleDetector.predict": {
-            "kind": "method",
-            "params": [
-              "self",
-              "X"
-            ],
-            "required": [
-              "X"
-            ]
-          },
-          "RobustEnsembleDetector.threshold": {
-            "kind": "attr"
-          },
-          "RobustEnsembleDetector.median_": {
-            "kind": "attr"
-          },
-          "RobustEnsembleDetector.mad_per_channel_": {
-            "kind": "attr"
-          }
-        },
-        "uses": {},
-        "packages": [
-          "numpy",
-          "typing"
-        ],
-        "behaviour": [
-          "Predict anomalies using robust distance.\n\nArgs:\n    X: Data to predict on of shape (n_samples, n_features).\n    \nReturns:\n    Boolean array indicating anomalies.\n\nExamples:\n>>> det = RobustEnsembleDetector(threshold=2.0)\n>>> det.fit(np.array([[1, 1], [1, 1], [1, 1]])) # Constant input -> MAD is 0, replaced by 1e-6\n>>> det.predict(np.array([[10, 10], [1, 1]]))\narray([ True, False])"
-        ]
-      },
-      "fingerprint": null,
-      "observed": []
-    },
-    "I:src/experiment_runner.py": {
-      "type": "I",
-      "members": {
-        "src/experiment_runner.py": "P"
-      },
-      "spec": {
-        "import": "src.experiment_runner",
-        "symbols": {
-          "compute_metrics": {
-            "kind": "func",
-            "params": [
-              "y_true",
-              "y_pred"
-            ],
-            "required": [
-              "y_true",
-              "y_pred"
-            ]
+          "SEEDS": {
+            "kind": "const",
+            "type": "list[int]"
           },
           "run_experiment": {
             "kind": "func",
@@ -562,46 +540,31 @@
           }
         },
         "uses": {
-          "src/config.py": [
-            "ANOMALY_RATE",
-            "NOISE_STD",
-            "NUM_CHANNELS",
-            "NUM_SAMPLES",
-            "ROBUST_THRESHOLD",
-            "SEEDS",
-            "ZSCORE_THRESHOLD"
-          ],
-          "src/synthetic_data.py": [
-            "SyntheticDataset"
-          ],
-          "src/baselines.py": [
-            "UnivariateZScoreBaseline"
-          ],
-          "src/ensemble_detector.py": [
-            "RobustEnsembleDetector"
-          ]
+          "src/data_generator.py": [],
+          "src/ensemble_detector.py": [],
+          "src/baseline_zscore.py": [],
+          "src/plotting.py": []
         },
         "packages": [
-          "csv",
           "numpy",
-          "typing"
+          "pandas",
+          "sklearn"
         ],
-        "behaviour": [
-          "Compute Precision, Recall, F1 from boolean arrays.\n\nArgs:\n    y_true: Ground truth boolean array.\n    y_pred: Predicted boolean array.\n    \nReturns:\n    Dictionary with 'precision', 'recall', 'f1' values (floats).\n    \nExamples:\n>>> y_true = np.array([True, False, True, False])\n>>> y_pred = np.array([True, False, False, False])\n>>> metrics = compute_metrics(y_true, y_pred)\n>>> f\"{metrics['f1']:.2f}\"\n'0.67'"
-        ]
+        "behaviour": []
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:src/plots.py": {
+    "I:src/plotting.py": {
       "type": "I",
       "members": {
-        "src/plots.py": "P"
+        "src/plotting.py": "P",
+        "src/experiment.py": "C"
       },
       "spec": {
-        "import": "src.plots",
+        "import": "src.plotting",
         "symbols": {
-          "plot_results": {
+          "plots": {
             "kind": "func",
             "params": [],
             "required": []
@@ -610,7 +573,6 @@
         "uses": {},
         "packages": [
           "matplotlib",
-          "os",
           "pandas"
         ],
         "behaviour": []
@@ -621,22 +583,22 @@
     "R:run": {
       "type": "R",
       "members": {
-        "src/experiment_runner.py": "P",
+        "src/experiment.py": "P",
         "results.csv": "O",
-        "src/plots.py": "C",
-        "src/baselines.py": "C",
-        "src/config.py": "C",
-        "src/ensemble_detector.py": "C",
-        "src/synthetic_data.py": "C"
+        "src/plotting.py": "C",
+        "src/baseline_zscore.py": "C",
+        "src/data_generator.py": "C",
+        "src/ensemble_detector.py": "C"
       },
       "spec": {
-        "entry": "src/experiment_runner.py:run_experiment",
+        "entry": "src/experiment.py:run_experiment",
         "metrics": [
-          "f1",
-          "precision",
-          "recall"
+          "F1",
+          "Precision",
+          "Recall",
+          "AUC-ROC"
         ],
-        "plots": "src/plots.py:plot_results"
+        "plots": "src/plotting.py:plots"
       },
       "fingerprint": null,
       "observed": []
@@ -648,8 +610,8 @@
         "references.bib": "C"
       },
       "spec": {
-        "title": "Rozdział 1: Wstęp, Cel i Teza Pracy",
-        "focus": "Definicja problemu detekcji anomalii w sygnałach bio-sygnałów, teza pracy, zakres badawczy.",
+        "title": "Rozdział 1: Wstęp",
+        "focus": "Motywacja problemu, cel pracy, teza i struktura dokumentu.",
         "uses_results": false
       },
       "fingerprint": null,
@@ -662,8 +624,8 @@
         "references.bib": "C"
       },
       "spec": {
-        "title": "Rozdział 2: Przegląd Literatury",
-        "focus": "Analiza istniejących metod (Z-score, Isolation Forest) oraz motywacja użycia metod robustowych w obecności szumu skorelowanego.",
+        "title": "Rozdział 2: Teoretyczne podstawy detekcji anomalii",
+        "focus": "Przegląd metod opartych na odległościach, podprzestrzeniach oraz specyfika danych fizjologicznych.",
         "uses_results": false
       },
       "fingerprint": null,
@@ -674,15 +636,25 @@
       "members": {
         "thesis.md#ch3": "X",
         "references.bib": "C",
-        "results.csv": "C"
+        "src/plotting.py": "C",
+        "src/baseline_zscore.py": "C",
+        "src/ensemble_detector.py": "C",
+        "src/data_generator.py": "C",
+        "src/experiment.py": "C"
       },
       "spec": {
-        "title": "Rozdział 3: Projekt Rozwiązania i Materiały",
-        "focus": "Opis architektury systemu: generator syntetycznych danych, implementacja baseline Z-score oraz detektora zespołowego. Parametry eksperymentu.",
-        "uses_results": true
+        "title": "Rozdział 3: Proponowana metoda i rozwiązanie bazowe",
+        "focus": "Opis matematyczny komitetu losowych podprzestrzeni oraz implementacja detektora Z-score.",
+        "uses_results": false
       },
       "fingerprint": null,
-      "observed": []
+      "observed": [
+        "src/baseline_zscore.py",
+        "src/data_generator.py",
+        "src/ensemble_detector.py",
+        "src/experiment.py",
+        "src/plotting.py"
+      ]
     },
     "N:thesis.md#ch4": {
       "type": "N",
@@ -692,8 +664,8 @@
         "results.csv": "C"
       },
       "spec": {
-        "title": "Rozdział 4: Wyniki Eksperymentu",
-        "focus": "Prezentacja wyników F1, Precision i Recall z pliku results.csv. Analiza wykresów z figures/.",
+        "title": "Rozdział 4: Wyniki eksperymentów i ich analiza",
+        "focus": "Wizualizacja wyników na syntetycznych danych, porównanie metryk, analiza rozrzutu między ziareniami.",
         "uses_results": true
       },
       "fingerprint": null,
@@ -707,9 +679,23 @@
         "results.csv": "C"
       },
       "spec": {
-        "title": "Rozdział 5: Podsumowanie i Wnioski",
-        "focus": "Weryfikacja tezy pracy. Dyskusja nad przewagą metody robustowej nad statyczną w przypadku szumu.",
+        "title": "Rozdział 5: Wnioski",
+        "focus": "Podsumowanie osiągnięć, weryfikacja tezy oraz propozycje prac przyszłych.",
         "uses_results": true
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "N:thesis.md#ch6": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch6": "X",
+        "references.bib": "C"
+      },
+      "spec": {
+        "title": "Rozdział 6: Przegląd literatury (SOTA)",
+        "focus": "Analiza najnowszych prac z zakresu ensemble learning w detekcji anomalii.",
+        "uses_results": false
       },
       "fingerprint": null,
       "observed": []
@@ -717,44 +703,36 @@
   },
   "order": [
     [
-      "I:src/baselines.py",
-      "I:src/experiment_runner.py"
+      "I:src/baseline_zscore.py",
+      "I:src/experiment.py"
     ],
     [
-      "I:src/baselines.py",
+      "I:src/baseline_zscore.py",
       "R:run"
     ],
     [
-      "I:src/config.py",
-      "I:src/experiment_runner.py"
+      "I:src/data_generator.py",
+      "I:src/experiment.py"
     ],
     [
-      "I:src/config.py",
+      "I:src/data_generator.py",
       "R:run"
     ],
     [
       "I:src/ensemble_detector.py",
-      "I:src/experiment_runner.py"
+      "I:src/experiment.py"
     ],
     [
       "I:src/ensemble_detector.py",
       "R:run"
     ],
     [
-      "I:src/experiment_runner.py",
+      "I:src/experiment.py",
       "R:run"
     ],
     [
-      "I:src/synthetic_data.py",
-      "I:src/experiment_runner.py"
-    ],
-    [
-      "I:src/synthetic_data.py",
-      "R:run"
-    ],
-    [
-      "R:run",
-      "N:thesis.md#ch3"
+      "I:src/plotting.py",
+      "I:src/experiment.py"
     ],
     [
       "R:run",
