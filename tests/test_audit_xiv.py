@@ -42,3 +42,24 @@ def test_the_same_error_after_a_repair_ends_the_fast_repairs(tmp_path: Path) -> 
     orch._repair_task(state, task, dict(failing), "core.py", "core.py")
     assert len(built) == 1  # one fast repair, not FAST_REPAIR_ATTEMPTS
     assert [e["event"] for e in _events(orch, seen) if e["event"] == "REPAIR_SAME_ERROR"] == ["REPAIR_SAME_ERROR"]
+
+
+def test_the_same_breach_of_the_specification_does_not_skip_the_planner(tmp_path: Path) -> None:
+    """A repeated API_* breach may be the plan's fault: the shortcut to the full cycle used to end the fast repairs
+    before `_amend_spec_if_wrong` could judge the interface on the next attempt."""
+    orch, _h = _planned(tmp_path)
+    (orch.workspace_dir / "core.py").write_text(fx.TICTACTOE_CORE_CODE, encoding="utf-8")
+    built: list[dict] = []
+    judged: list[str] = []
+    orch._execute_builder_step = lambda task, **_k: built.append(task)
+    orch._refresh_experiment_after_code = lambda *_a, **_k: None
+    orch._amend_spec_if_wrong = lambda failed_file, *_a, **_k: judged.append(failed_file) or False
+    failing = {"status": "FAIL", "failed_file": "core.py", "failed_agent": "seed_coder",
+               "issues": ["API_SIGNATURE [core.py]: train_and_evaluate(seed) is called without it"], "errors": []}
+    orch._run_verification_step = lambda *_a, **_k: dict(failing)
+    task = {"task_id": "T2", "target_node": "core.py", "description": "Implement core.py", "assigned_agent": "seed_coder"}
+    state = _RunState(user_prompt="p", max_retries=repair.FAST_REPAIR_ATTEMPTS + 1, multi_cycle_waves=True, tasks=[task])
+    seen = _seen(orch)
+    orch._repair_task(state, task, dict(failing), "core.py", "core.py")
+    assert len(built) == repair.FAST_REPAIR_ATTEMPTS and judged == ["core.py"] * repair.FAST_REPAIR_ATTEMPTS
+    assert [e for e in _events(orch, seen) if e["event"] == "REPAIR_SAME_ERROR"] == []

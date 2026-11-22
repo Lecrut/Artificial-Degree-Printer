@@ -1,5 +1,5 @@
 """§XI (2026-11-18): severity of findings (B0), findings located in the code (B1), repairs aimed at the broken
-symbols (B2), a broken example of the plan goes to the plan (B3), the model follows the vertex (B4), and what failed
+symbols (B2), a repeated breach of the specification goes to the plan (B3), the model follows the vertex (B4), and what failed
 is frozen and re-planned (A)."""
 
 from __future__ import annotations
@@ -7,7 +7,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from adk.hypergraph.oracles import check_behaviour
 from adk.hypergraph.schedule import FAILED, readiness
 from adk.mocks import code_fixtures as fx
 from adk.mocks.scenarios import config_source
@@ -36,50 +35,6 @@ def _events(orch, seen: int) -> list[dict]:
 
 def _seen(orch) -> int:
     return len(orch.logger.events_path.read_text(encoding="utf-8").splitlines()) if orch.logger.events_path.exists() else 0
-
-
-# --- B1: doctests of the plan reported per example -------------------------------------------------------------
-
-_MODULE = (
-    "def double(x: int) -> int:\n"
-    '    """Twice x."""\n'
-    "    return x * 3\n"
-    "\n\n"
-    "def ratio(a: int, b: int) -> float:\n"
-    '    """a / b."""\n'
-    "    total = a / b\n"
-    "    return total\n"
-)
-_SYMBOLS = {"double": {"kind": "func"}, "ratio": {"kind": "func"}}
-
-
-def _behaviour(tmp_path: Path, *docstrings: str):
-    (tmp_path / "m.py").write_text(_MODULE, encoding="utf-8")
-    return check_behaviour(tmp_path, "m.py", {"import": "m", "symbols": _SYMBOLS, "behaviour": list(docstrings)})
-
-
-def test_a_wrong_result_names_the_symbol_the_example_and_expected_vs_got(tmp_path: Path):
-    [v] = _behaviour(tmp_path, "Twice.\n\n>>> double(2)\n4")
-    assert v.rule == "BEHAVIOUR_MISMATCH"
-    assert "- double: example `double(2)` expected `4`, got `6`" in v.detail
-    assert "doctest.py" not in v.detail
-
-
-def test_an_exception_points_at_the_line_of_the_implementation(tmp_path: Path):
-    [v] = _behaviour(tmp_path, "Ratio.\n\n>>> ratio(1, 0)\n0.0")
-    assert v.rule == "BEHAVIOUR_MISMATCH"
-    assert "raised ZeroDivisionError" in v.detail and "in m.py > ratio, line 8: `total = a / b`" in v.detail
-
-
-def test_an_example_that_cannot_pass_is_a_defect_of_the_plan(tmp_path: Path):
-    """B3: `NameError` in the example's own code, no earlier failure: no implementation can satisfy it."""
-    [v] = _behaviour(tmp_path, "Twice.\n\n>>> double(undefined_name)\n2")
-    assert v.rule == "SPEC_EXAMPLE_INVALID" and "in the example's own code" in v.detail
-
-
-def test_a_name_left_undefined_by_an_earlier_failure_is_not_blamed_on_the_plan(tmp_path: Path):
-    [v] = _behaviour(tmp_path, "Ratio.\n\n>>> y = ratio(1, 0)\n>>> y\n0.0")
-    assert v.rule == "BEHAVIOUR_MISMATCH" and "after an earlier example of the same docstring failed" in v.detail
 
 
 # --- B1/B2: tool findings located, the symbols to repair --------------------------------------------------------
@@ -170,22 +125,25 @@ def test_the_large_model_takes_over_a_vertex_after_its_second_failure(tmp_path: 
 
 def test_failures_are_counted_on_the_vertex_across_tasks(tmp_path: Path):
     orch, h = _planned(tmp_path)
-    orch._remember_verdict("core.py", "T2", ["BEHAVIOUR_MISMATCH [core.py]: x"])
+    orch._remember_verdict("core.py", "T2", ["pytest failed in tests/test_core.py: x"])
     orch._remember_verdict("core.py", "Q1_FIX_core_2", ["ANSWER_REJECTED: y"])
     assert h.vertices["core.py"].failures == 2 and orch._vertex_failures("core.py") == 2
 
 
-# --- B3: a broken example goes to the plan at once --------------------------------------------------------------
+# --- B3: a breach of the specification asks the planner when it repeats -------------------------------------------
 
 
-def test_a_broken_example_asks_the_planner_at_its_first_occurrence(tmp_path: Path):
+def test_a_breach_of_the_specification_asks_the_planner_when_it_repeats(tmp_path: Path):
     orch, _h = _planned(tmp_path)
     (orch.workspace_dir / "core.py").write_text(fx.TICTACTOE_CORE_CODE, encoding="utf-8")
     asked: list[str] = []
     orch._call_agent = lambda md, *_a, **_k: asked.append(Path(md).name) or {"status": "ok", "output": {"decision": "KEEP", "reason": "fine"}}
-    assert orch._amend_spec_if_wrong("core.py", ["BEHAVIOUR_MISMATCH [core.py]: wrong value"], "T2") is False
-    assert asked == []  # an ordinary mismatch waits for a repetition
-    orch._amend_spec_if_wrong("core.py", ["SPEC_EXAMPLE_INVALID [core.py]: the example itself raises NameError"], "T2")
+    breach = ["API_SIGNATURE [core.py]: train_and_evaluate(seed) is called without it"]
+    orch._remember_verdict("core.py", "T2", breach)
+    assert orch._amend_spec_if_wrong("core.py", breach, "T2") is False
+    assert asked == []  # the first occurrence waits for a repetition
+    orch._remember_verdict("core.py", "T2_FIX1", breach)
+    orch._amend_spec_if_wrong("core.py", breach, "T2_FIX1")
     assert asked == ["plan_change_guard.md"]
 
 

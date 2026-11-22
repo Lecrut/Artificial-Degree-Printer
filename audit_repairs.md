@@ -26,6 +26,7 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-19 | **Szanse planu i napraw — krytyczna ocena → §XIV** | krytyk dalej blokuje zgadywaniem wyników doctestów (sprawdzanych potem przez harness); naprawy kręcą się na złym teście (R1) i powtarzają identyczny błąd | Q1 (kategoria `doctest` = ostrzeżenie), Q2 (winny = niezweryfikowany z pary test/moduł), Q3 (stop przy identycznym błędzie) — w realizacji |
 | 2026-11-21 | **Audyt XI — benchmarki 20.11: 3/4 `PLAN_REJECTED`, 02 bez końca → §XV** | planista ślepy (brak `available_packages`, brak kodu workspace w 03); fałszywe blokady (`g(n)` jako nazwa API, „entrypoint musi się nazywać `run_experiment`/`main`”); komunikat doctestu bez symbolu; partial fallback rozdziela zależne zmiany; błąd `plots.py` naprawiany w entrypoincie; ewolucja na kategorii `generic`; AMEND pod literówkę testera; publisher/metryki pomijają `src/`; stuby nadpisują istniejące pliki | prompty = karty tematu od promotora, kod startowy 03 oczyszczony (§XV.4, §XV.6); **U1–U10 wdrożone + torch/gymnasium/statsmodels/sympy (§XV.7)**; sprzeczności kod↔prompt↔zadanie K1–K7 usunięte, kontrakt `results.csv` egzekwowany kodem, mocki na kontrakcie (§XV.8); podziały `thesis_publisher`/`common`/`plan_spec` (§XV.9); 21.11: CRASHED/odrzucenia przez błędy harnessu (§XV.11); 21.11 po południu **3/3 plany przeszły**, budowa: zmyślone cytowania psujące kolejne sekcje, brakujące importy, nienazwane stuby, porównanie liczb w doctestach, fałszywe `TEST_OUTSIDE_SPEC` (§XV.12); otwarte: K8, E5, błędne liczby w doctestach planu |
 | 2026-11-21 | **Planowanie etapami (decyzja użytkownika) → §XVI** | planowanie jednym wywołaniem: 13–31 min LRM na plan, krytyk co rundę przesuwa poprzeczkę, łatka jednego wielkiego planu psuje inne części, planista ręcznie pisze zadania (źródło fałszywych blokad) | szkic → interfejsy moduł po module (każdy etap z własnym krytykiem) → zadania wyprowadzane kodem → fuzja z krytykiem głównym; uwaga otwiera ponownie tylko wskazaną część; budżety i jedna eskalacja; stara pętla łatek usunięta; mocki, testy i viewer na etapach |
+| 2026-11-22 | **Audyt XII — pierwsze przebiegi na żywo po §XVI (01, 02 z 21.11; 03) → §XVII** | 01 i 02 `COMPLETED_WITH_GAPS`: planowanie 42–57% czasu (krytycy na drobiazgach), 21–23/30 porażek `02` to niemożliwe doctesty z planu (`<RSADetector object>`, błędy arytmetyczne LLM), pętla `DOCTEST_DISCARDS_RETURN` vs `check_behaviour`, błąd atrybucji `Incomplete thesis` → `figures.py` w `_defend` (`01`) | diagnoza potwierdzona w kodzie i logach; plan napraw §XVII.3 **otwarty** |
 
 ---
 
@@ -4167,3 +4168,104 @@ Przegląd kodu etapów, wszystkich siedmiu promptów planowania (porównanie z �
 Sprawdzone i bez zmian: pętle mają budżety i kończą się (`_settle` — `needs` ≤ 2, eskalacja ≤ 1, fuzja ≤ 2 rundy); nie ma martwych tekstów w `agent_texts.py` ani nieużywanych funkcji w nowych modułach; zdarzenia czytają viewer i analizator; plik ≤ 400 linii (`plan_stages.py` 352).
 
 **Koszt wywołań (do obserwacji na żywo):** każdy moduł to autor + krytyk (LRM), więc plan z n modułami to ≈ 2n + 5 wywołań LRM zamiast dotychczasowych 2–12 długich. Krótsze, ale nie ma gwarancji, że całość jest szybsza; stałe `MODULE_CRITIC_ROUNDS`, `OUTLINE_CRITIC_ROUNDS` w `plan_stages.py` pozwalają zmniejszyć liczbę rund krytyka, jeśli czas planowania urośnie.
+
+---
+
+# §XVII — 2026-11-22: Audyt XII — pierwsze przebiegi na żywo po §XVI (`01`, `02`), doctesty planu i błąd Gate 3
+
+**Analizowane artefakty:** `adk/workspace/benchmarks/{01_rl_tictactoe,02_ml_anomaly_detection,03_graph_pathfinding}/logs/events.jsonl`, wygenerowany kod i `evolved_adk/state/hypergraph.json` w `02`, `scripts/analyze_planning_evolution.py`, `adk/orchestrator.py`, `adk/hypergraph/{oracles,validate}.py`, `adk/orchestration/{plan_stages,plan_change,fragment_replan}.py`, prompty planowania.
+
+## §XVII.1. Co potwierdziły logi i ręczna inspekcja kodu
+
+1. **Planowanie etapowe jest wolne i hałaśliwe na drobiazgach:**
+   - `01_rl_tictactoe`: 36 z 63 min (57%) na planowanie (`PLAN_OUTLINE_CHECKED` ×3, `PLAN_MODULE_CHECKED` ×13, `PLAN_FUSED` ×3, `PLAN_MODULE_REOPENED` ×3).
+   - `02_ml_anomaly_detection`: 43 z 102 min (42%) na planowanie (`PLAN_OUTLINE_CHECKED` ×5, `PLAN_MODULE_CHECKED` ×22, `PLAN_MODULE_REOPENED` ×7, `PLAN_FUSED` ×3), zakończone dopiero przez `PLAN_ACCEPTED_OVER_CRITIC`.
+   - Krytycy blokowali na detalach ciał funkcji, których stuby `...` nie mają (`import csv` w `experiment.py`, niewypełnione `train_scores_` w `fit()`), podczas gdy koder i tak pisze implementację od nowa.
+2. **Główna przyczyna porażek w `02_ml_anomaly_detection` leży w doctestach planu, nie w koderze (`seed_coder`):**
+   - Ze wszystkich 30 werdyktów `VERDICT=FAIL` w `02` aż **21–23/30** było **niemożliwe do spełnienia** niezależnie od kodu:
+     - **11× `rs_ensemble.py` (`R1_3`–`R5_1`):** doctest w `predict`/`predict_scores` zawierał `>>> det.fit(X)` z oczekiwanym `<RSADetector object>`, podczas gdy Python wypisuje `<rs_ensemble.RSADetector object at 0x...>`, a `oracles.Checker` używa `doctest.ELLIPSIS` bez `...` w stringu.
+     - **6× `baselines.py` (`R1_1`, `R2_1`):** błędy arytmetyczne planisty w Z-score (`10.0` zamiast `1.4084`, `[0, 0, 0, 1]` zamiast `[0, 0, 0, 0]` przy `np.std(..., ddof=0)`, `[1.0, 0.0, 1.0]` zamiast `[1.2247, 0.0, 1.2247]`).
+     - **4× `evaluation.py` (`T11`, `R1_2`):** błędy arytmetyczne planisty (`(1.0, 0.5, 0.67, 0.75)` i `(0.5, 1.0, 0.67, 0.75)` zamiast poprawnego `(0.5, 0.5, 0.5, 0.5)`).
+     - **2× `baselines.py` (`T7`):** mieszane (`nan` od kodera + błędne `10.0` w planie).
+     - Pozostałe 7: `3× T9 rs_ensemble.py` (błędy kodera `TypeError`/`IndexError`), `2× T13 figures.py` (naprawione w 3. próbie), `2× T12 test_evaluation.py`.
+   - Ręczna inspekcja `code/{rs_ensemble,baselines,evaluation}.py` w `02` potwierdziła, że kod napisany przez `seed_coder` był w większości poprawny i czytelny.
+
+## §XVII.2. Zidentyfikowane błędy architektoniczne
+
+1. **Doctesty w planie wymuszają dokładne liczby zamiast własności i przypadków brzegowych:** mimo wzmianki o własnościach w `plan_module.md` i `task_planner.md`, oba prompty wprost zachęcają do `round(float(x), 4)`, `x.tolist()` i ręcznie liczonych wartości dziesiętnych przed istnieniem implementacji.
+2. **Martwa pętla `DOCTEST_DISCARDS_RETURN` (`validate.py`) ↔ `check_behaviour` (`oracles.py`):**
+   - `validate._discarded_returns` odrzuca gołe `det.fit(X)` bez wyjścia (`SPEC_AMEND_REJECTED` w `R3` i `R5` w `02`), a `check_behaviour` odrzuca `<RSADetector object>`.
+   - Dodatkowo `oracles._example_symbol` przypisuje błąd przykładu z docstringa `predict` do `RSADetector.fit` (ostatniego wywołania w linii), myląc kodera i planistę; `AMENDMENTS_PER_MODULE = 2` w `plan_change.py` blokuje dalszą naprawę specyfikacji.
+3. **Asymetria krytyków:** `module_critic_guard.md` i `plan_critic_guard.md` oznaczają błędy `doctest` jako zawsze nieblokujące ostrzeżenia, przez co zabójcze doctesty przechodzą do fazy budowy, a krytycy marnują czas na drobiazgi ciał funkcji.
+4. **Błąd atrybucji w Gate 3 (`orchestrator.py::_defend`) w `01_rl_tictactoe`:**
+   - W `R3_1` (`figures.py`) poleciało `DATA_FAILED` (błąd wykonania wykresów), mimo to `R3_1` dostało `VERDICT=PASS` i `figures.py` stan `verified`.
+   - Rozdziały 4–6 (`T12`–`T14`) zostały w `TASK_WAITING` (brak świeżego `results.csv`), więc kolejka wywołała `_defend(state, defense_task)`, gdzie `defense_task` to było ostatnie zadanie (`R3_1`, `figures.py`).
+   - Audyt zgłosił `Incomplete thesis: missing chapters in thesis.md`, ale `failed_file` zostało na `figures.py`, więc `self._code_vertex_of(final_report) is not None` (`orchestrator.py:337`) oznaczyło moduł kodu `figures.py` jako `failed` i zatrzymało przebieg (`PRZEPLANOWANIE BEZ POSTEPU`).
+5. **W `03_graph_pathfinding` (jeszcze stary `task_planner`):** 13× zmyślone klucze cytowań przez `seed_writer` (`dijkstra1959`, `wah2016heuristics`), 3× `Import contract violation` w `experiment.py` oraz błędna wartość w docteście `octile_distance` (`5.8284`).
+
+## §XVII.3. Plan napraw (do zrobienia)
+
+1. **Doctesty w planie → wyłącznie niezmienniki, kształty i przypadki brzegowe:**
+   - Zmienić `plan_module.md`, `task_planner.md` i `plan_change_guard.md`: zakazać ręcznie liczonych liczb zmiennoprzecinkowych/list oraz `repr()` obiektów (`<Class object>`); wymagać asercji własności, typów, kształtów i przypadków brzegowych (`det.fit(X) is det`, `scores.shape == (...)`, `bool(np.isfinite(scores).all())` dla zerowej wariancji itp.). Szczegółowe testy jednostkowe zostają wyłącznie w `seed_tester` po weryfikacji modułu.
+2. **Walidator doctestów (`adk/hypergraph/validate.py`, `oracles.py`):**
+   - Odrzucać w planie oczekiwane wyjścia w formacie `<... object>` bez `...` (eliminacja pętli z `rs_ensemble.py`).
+   - Rozważyć poprawę `_example_symbol` lub ograniczenie `check_behaviour` do asercji własnościowych.
+3. **Naprawa Gate 3 i `DATA_FAILED` (`adk/orchestrator.py::_defend` + weryfikacja `figures.py`):**
+   - Nie przypisywać błędów brakujących rozdziałów (`Incomplete thesis` / `factual_audit`) modułowi kodu z `defense_task`.
+   - Sprawdzić, dlaczego `DATA_FAILED` podczas `R3_1` (`figures.py`) pozwoliło oznaczyć `figures.py` jako `PASS` / `verified`.
+4. **Jakość blokad krytyków planowania bez cięcia rund (`adk/orchestration/plan_stages.py`, `*_critic_guard.md`):**
+   - **Decyzja użytkownika:** nie ograniczać liczby rund krytyków (zostawić „do 3 razy sztuka”, żeby drobne poprawki domykać w planie zamiast tracić czas w naprawach budowy); zamiast tego jawnie zakazać blokowania na szczegółach implementacyjnych nieistniejących ciał `...` (brakujące importy używane tylko w ciele, wewnętrzne atrybuty).
+5. **Narzędzia analizy (`scripts/analyze_planning_evolution.py`) (opcjonalnie):**
+   - Dodać automatyczne grupowanie `BEHAVIOUR_MISMATCH` na prawdopodobne błędy planu (`expected <... object>`, `SPEC_AMENDED`/`SPEC_KEPT` na tym samym przykładzie) vs błędy kodera (`TypeError`/`IndexError`/`AttributeError` w kodzie).
+
+## §XVII.4. Wdrożono plan z §XVII.3 (2026-11-22, decyzja użytkownika: „cały plan od razu”)
+
+1. **Doctesty planu** (pkt 1–2). Prompty `plan_module.md`, `task_planner.md`, `plan_change_guard.md`: przykład = własność, kształt albo przypadek brzegowy, nigdy liczba policzona w głowie. Sam prompt nie wystarczył (`plan_module.md` już prosił o własności, a planista liczył `1.4084` ręcznie), więc **egzekwuje to kod**: `validate._unsound_expectations` (część `code_violations`, więc także poprawek planu `plan_change`) odrzuca oczekiwany wynik z dziesiętną o ≥3 cyfrach znaczących (`DOCTEST_HAND_COMPUTED`) i wydruk obiektu `<Klasa object>` bez `...` (`DOCTEST_OBJECT_REPR`). Nie łapie błędnej liczby o 1–2 cyfrach (`10.0` zamiast `1.4084` zostałoby przepuszczone tylko wtedy, gdyby planista napisał `10.0`; to jest znana luka).
+2. **`oracles._example_symbol`**: wyjątek wskazuje symbol, w którym został rzucony (`where.function`), niedopasowanie wartości — wywołanie położone w przykładzie ostatnie (nie ostatnie na liście symboli); koniec mylenia `predict` z `fit`.
+3. **Gate 3 / `DATA_FAILED`** (pkt 3): (a) uwaga dokumentu (`Incomplete thesis`, wskaźniki) przy `is_final_gate` i zielonym kodzie wskazuje `thesis.md`, a nie `node_path` zadania obrony (`verification.py`); (b) błąd uruchomienia `plots` obciąża zadanie modułu `plots` (`governs_results` obejmuje teraz zadeklarowany moduł wykresów, nie tylko punkt wejścia). Testy `test_audit_xvii.py` padają na kodzie sprzed zmiany.
+4. **Krytycy planowania** (pkt 4, bez cięcia rund): `module_critic_guard.md` i `plan_critic_guard.md` zabraniają blokady na szczegółach ciał; **w kodzie** krytyk modułu i krytyk główny dostają `stub_source(...)` zamiast surowego źródła (`plan_stages._module_stage`, `plan_spec._plan_review`): planista pisał ciała mimo zakazu w prompcie i krytyk blokował na `import csv` w ciele.
+5. **`scripts/analyze_planning_evolution.py`** (pkt 5): `behaviour_split` dzieli `BEHAVIOUR_MISMATCH` na „plan” (repr obiektu, przykład pada we własnym kodzie), „koder” (wyjątek w implementacji) i „nie wiadomo” (oczekiwana ≠ wynik). Na `02`: 11 + 4 plan, 2 koder, 11 nie wiadomo (z 28).
+
+# §XVIII — 2026-11-22: ewolucja po krytyku planowania
+
+`orchestration/plan_evolution.py` (`_learn_from_critic`): blokada krytyka planowania (szkicu, modułu, głównego) = porażka autora (`plan_outline` / `plan_module`), zapisana w `failure_ledger[category_log]` z kategorią `critic`. Gdy ten sam autor ma blokady w ≥2 **nowych** miejscach (kursor `_critic_cursor` od ostatniej ewolucji tego autora), wywoływany jest architekt (LRM), a reguła trafia do `agents/planning/<autor>.md` piaskownicy tego przebiegu; planista czyta prompt przy każdym wywołaniu, więc następny moduł już z niej korzysta, a uczenie trwa przez cały przebieg (po każdej kolejnej parze nowych miejsc). Skuteczność mierzy istniejąca konsolidacja (`agent_mutator._effective_rules`, okno ≥3 cykli). `evolution.py`: planiści spoza rejestru (`_PLANNING_AUTHORS`) nie są podmieniani na `seed_coder`. Piaskownica jest per zadanie, więc reguły nie przechodzą między benchmarkami. Testy: `test_plan_evolution.py`.
+
+**Otwarte (nie wdrożone, do decyzji):** (a) `BEHAVIOUR_MISMATCH`/`SPEC_EXAMPLE_INVALID` dowodnie z przykładu planu liczyć jako porażkę `plan_module` w ewolucji (dziś architekt dostaje wzorzec `behaviour` i pisze regułę dla `seed_coder`); (b) fabrykowane klucze cytowań `seed_writer` w `03` (§XVII.2 pkt 5) bez poprawki w planie; (c) łamacz pętli: ten sam przykład, który padł tak samo po `SPEC_AMEND_REJECTED`, nie wraca w kolejnej rundzie przeplanowania.
+
+## §XVII.5. Pierwsze przebiegi na żywo po §XVII–§XVIII (2026-11-22, 01 i 02): oba `PLAN_REJECTED`, dwie przyczyny w harnessie
+
+Przebiegi z 22.11 (01: 34 min, 02: 7 min) nie zbudowały planu. Nowe reguły z §XVII.4 nie zadziałały ani razu (`DOCTEST_HAND_COMPUTED`/`DOCTEST_OBJECT_REPR` = 0 w obu `events.jsonl`); odrzucenia miały inne, wcześniejsze przyczyny:
+
+1. **02 (7 min): `provided_name("class ZScoreDetector: <Class>")` zwracało `class`.** Szkic obiecał moduł jako `class X: <Class>`, a harness wziął pierwszy token jako nazwę symbolu i żądał symbolu `class` (6 prób modułu, `PLAN_REJECTED`). Naprawa: `plan_outline.provided_name` zdejmuje wiodące słowo kluczowe (`class`, `def`, `async def`, `function`, `const`).
+2. **01 (34 min): zakleszczenie przy rewizji szkicu.** Rewizja szkicu zmieniła `provides` modułu `baseline.py` (zniknęło `evaluate_random_agent`), a zamrożony wcześniej `experiment.py` nadal je importował; autor `baseline.py` dostawał jednocześnie „zgodnie ze szkicem” i „zachowaj nazwy, które importuje odbiorca” (`module_breaks_consumer`). Naprawa: `_module_problems` chroni tylko nazwy, które szkic obiecuje; odbiorca importujący inną nazwę jest ponownie otwierany na swojej kolei przez `USES_UNDECLARED`. Testy `test_audit_xvii.py` (pada bez zmiany).
+3. **Nie naprawione (do decyzji):** (a) jedna nieudana część (moduł, który nie zbiega po 3 próbach i eskalacji) kończy całe planowanie `PLAN_REJECTED`, mimo kilkunastu zaakceptowanych modułów; (b) modele piszą źle sformatowane źródło (`unterminated triple-quoted string`, wieloliniowy doctest bez `...`): harness to wykrywa i zwraca, ale 3 próby nie zawsze wystarczają; (c) 01 zrobiło 8 mutacji planistów w jednej fazie planowania (5× `plan_module`, 3× `plan_outline`), a blokady krytyków dalej się powtarzały (te same trzy o `metrics`, `evaluate_random_agent`, `run_experiment`): brak dowodu, że reguły pomagają.
+
+## §XVII.6. Mocki i testy sprawdzają teraz to, co naprawiono (2026-11-22, na prośbę użytkownika)
+
+Do tej pory mocki nie ćwiczyły żadnej z nowych ścieżek (przebieg z 22.11 wywrócił się na tym, czego nie sprawdzał żaden test). Cztery nowe flawy w `mocks/scenarios.py` (`FLAWS`, każdy dzieje się raz, w każdym scenariuszu `0x_*`):
+
+- `outline_promises_with_keywords`: pierwszy szkic pisze obietnice jako `class X: <Class>` / `def f() -> None`. Bez poprawki `provided_name` plan jest odrzucony (test e2e pada: `COMPLETED_WITH_FAILURES`).
+- `module_unsound_examples`: pierwszy interfejs modułu wykresów ma ręcznie policzony ułamek i linię kodu bez `>>>`; kod planu odrzuca je (`DOCTEST_HAND_COMPUTED`, `DOCTEST_CODE_AS_OUTPUT`), poprawiony interfejs przechodzi.
+- `second_module_critic_blocks`: krytyk blokuje drugi moduł, więc planista zbiera 2 miejsca → architekt (mock dostał gałąź `critic`, wcześniej odpowiadał `SPLIT_AGENT`) → reguła w `plan_module.md` piaskownicy, raz.
+- `plot_run_fails`: pierwszy skrypt wykresów rzuca przy uruchomieniu po eksperymencie (zachowuje sygnaturę z planu); `DATA_FAILED`, werdykt FAIL z `failed_file = plot_results.py`, naprawa u autora wykresów.
+
+Test e2e zadania 2 sprawdza skutek każdego flawu w `events.jsonl` i to, że każdy flaw faktycznie się wydarzył (`flaws_left == set()`), bo flaw, do którego przebieg nie dochodzi, to mock, który nic nie testuje. Zakleszczenie rewizji szkicu (nazwa usunięta ze szkicu, zamrożeni odbiorcy ją importują) pokrywa osobny test na etapach planowania (`test_plan_stages.py`), który bez poprawki pada tym samym komunikatem co 01. Uwaga: e2e z `plot_run_fails` nie rozróżnia poprawki `governs_results` (w mocku wykresy budują się przed `core.py`); tę poprawkę chroni test jednostkowy `test_audit_xvii.py`.
+
+# §XIX — 2026-11-22: doctesty wyłączone (decyzja użytkownika)
+
+**Powód:** przykłady wykonywalne w planie okazały się najgorszą pojedynczą przyczyną porażek (§XVII.1: 21–23 z 30 werdyktów FAIL w `02` było niemożliwych do spełnienia niezależnie od kodu), a kolejne reguły walidatora (§XVII.4) nie zadziałały nawet raz w przebiegach z 22.11, bo plan przewracał się wcześniej na innych przyczynach (§XVII.5). Planista nie może uruchomić kodu, więc przykład z policzoną ręcznie liczbą jest zwykle błędny, a krytyk LLM liczy tak samo źle jak on.
+
+**Co jest teraz:** plan nie niesie przykładów wykonywalnych. Zachowanie opisują docstringi słowami (co zwracane: typ, kształt, zakres; konwencje; przypadki brzegowe). Kontrakt modułu = sygnatury + docstringi + σ (symbole, `uses`, pakiety).
+
+**Zmiany:**
+- Prompty: `plan_module.md` (blok „Docstrings describe the behaviour in words”, zakaz `>>>`), `task_planner.md`, `plan_change_guard.md`, `module_critic_guard.md`, `plan_critic_guard.md` (bez reguł i kategorii `doctest`), `seed_coder.md` i `seed_tester.md` (bez `behaviour`, wartości oczekiwane z opisu w docstringach i własnego obliczenia w teście).
+- `validate.py`: usunięte `_discarded_returns`, `_unsound_expectations` (wraz z `DOCTEST_*`), uruchamianie doctestów na stubach (`DOCTEST_INVALID_ON_STUBS`); sonda importu zostaje (import stubów, typy stałych).
+- `oracles.py`: usunięte `check_behaviour`, `_BEHAVIOUR_PROBE`, `_example_*`; `spec_gate._behaviour_violations` i jego użycie w `verification.py`; `build.spec_from_stub` nie zbiera `behaviour`, `context._spec_view` go nie przekazuje.
+- `plan_change.py` i `failure_kinds.py`: bez `BEHAVIOUR_MISMATCH`/`SPEC_EXAMPLE_INVALID` (kategoria `behaviour` znika).
+- `repair.py`: `REPAIR_SAME_ERROR` nie kończy szybkich napraw dla naruszenia σ (`API_*`, `TEST_OUTSIDE_SPEC`, `IMPORT_OUTSIDE_SPEC`), żeby następna próba najpierw dała planiście ocenić interfejs (`_amend_spec_if_wrong`).
+- Mocki: usunięty flaw `module_unsound_examples` i martwy `_UNRUNNABLE_MODULE`.
+- Testy: usunięte testy mechaniki doctestów (`test_audit_vi/vii/xi/xv/xvii`), przepisane tam, gdzie testowały coś jeszcze (σ po powtórzeniu naruszenia, `test_one_hypergraph`), nowe: `test_audit_xix.py` (plan z błędnym przykładem nie jest odrzucany, σ bez `behaviour`, prompty bez `>>>`), `test_audit_xiv.py` (naruszenie σ nie skraca napraw).
+
+**Cena decyzji:** harness traci jedyny oracle zachowania liczony z planu. Wartości sprawdzają teraz tylko testy `seed_tester` (po weryfikacji modułu), więc błąd merytoryczny (np. zły Z-score) przejdzie, jeśli test go nie łapie. To zamiana „plan niemożliwy do spełnienia” na „plan nieweryfikowany co do wartości”; warto zmierzyć w `02`, czy liczba porażek budowy spada bez wzrostu błędów merytorycznych w wynikach.
+
+**Do sprawdzenia na żywo (nie do zrobienia w kodzie):** `03_graph_pathfinding` — czy po ustawieniu `discoverer_researcher` przed rozdziałami nadal pojawiają się nieistniejące klucze `.bib` w `paper_ieee.tex` (§XVII.2 pkt 5).

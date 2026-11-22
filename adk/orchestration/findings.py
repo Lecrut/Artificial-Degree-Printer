@@ -2,7 +2,7 @@
 of code it is about, without the noise of the tool that found it, and each one once.
 
 2026-11-18: "config.py:28:32 F821 Undefined name `self`" named no function and showed no code; three repairs of
-config.py changed other symbols than the one with the error. Doctest reports were mostly frames of doctest.py.
+config.py changed other symbols than the one with the error.
 
 Only deterministic findings come here (B0): the verification keeps the opinions of model auditors as warnings."""
 

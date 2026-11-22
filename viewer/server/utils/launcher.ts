@@ -1,6 +1,7 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { join } from 'node:path'
 import type { LaunchRequest, LaunchStatus } from '#shared/types/live'
+import { launchArgs } from '#shared/utils/launch'
 import { REPO_ROOT } from './repo'
 
 const MAX_LINES = 500
@@ -13,11 +14,6 @@ const status: LaunchStatus = { running: false, pid: null, args: [], startedAt: n
 function collect(chunk: Buffer) {
   status.lines.push(...chunk.toString('utf-8').split(/\r?\n/).filter(Boolean))
   status.lines.splice(0, Math.max(0, status.lines.length - MAX_LINES))
-}
-
-function launchArgs(request: LaunchRequest): string[] {
-  const task = request.task === 'all' ? ['--benchmark-suite'] : ['--benchmark-task', request.task]
-  return ['main.py', '--provider', request.provider, ...task, ...(request.template ? ['--template', request.template] : [])]
 }
 
 export function launchStatus(): LaunchStatus {

@@ -4,6 +4,7 @@ produce the plan are in `plan_stages` (§XVI)."""
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,15 @@ from adk.hypergraph.oracles import is_stub
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.plan_existing import _entrypoint
 from adk.tools.verification.contract_check import stub_source
+
+_RAISE_STUB = re.compile(r"^(\s*)raise NotImplementedError\s*$", re.M)
+
+
+def interface_view(source: str) -> str:
+    """What a planning critic reads: the interface with every body as `...` (its prompt says so). The stub the harness
+    imports has `raise NotImplementedError`, and a critic that saw it asked for the body to be implemented (2026-11-22,
+    01: "plots.py:plot_results raises NotImplementedError instead of generating the charts")."""
+    return _RAISE_STUB.sub(r"\1...", stub_source(source) or source)
 
 
 def _is_proven_blocker(issue: dict[str, Any], targets: set[str]) -> bool:
@@ -86,7 +96,7 @@ class PlanSpecMixin:
         verdict = self._critic_review("plan_critic_guard.md", {
             "user_prompt": plan_payload.get("user_prompt", ""),
             "outline": plan_out.get("outline") or {},
-            "interfaces": interfaces,
+            "interfaces": {rel: interface_view(src) for rel, src in interfaces.items()},
             "entrypoint": _entrypoint(plan_out),
             "academic_blueprint": {k: v for k, v in blueprint.items() if k not in ("literature_recon", "interfaces")},
             "review_history": history or [],

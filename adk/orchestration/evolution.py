@@ -22,6 +22,9 @@ from adk.orchestration.common import (
     _NON_GENERAL_RULE,
 )
 
+# Planners that are not in the agent registry but whose prompt may still learn (rules from the planning critics).
+_PLANNING_AUTHORS = ("task_planner", "plan_outline", "plan_module")
+
 # Role words every prompt may use; naming them is not naming a file of this project.
 _GENERIC_NAMES = {"__init__", "main", "test", "tests", "config", "core", "utils", "init", "setup"}
 
@@ -243,13 +246,13 @@ class EvolutionMixin:
         # The architect may name an agent other than the one that failed (e.g. the planner). Only an unresolvable
         # name falls back to the failed agent, and that override is logged.
         if target_mut_agent in ("unknown", "") or (
-            target_mut_agent not in registry and target_mut_agent != "task_planner"
+            target_mut_agent not in registry and target_mut_agent not in _PLANNING_AUTHORS
         ):
             self.logger.log_step(
                 "EVOLUTION_OVERRIDE",
                 f"Architekt wskazał '{target_mut_agent}', którego nie ma w rejestrze -> mutacja agenta {failed_agent}.",
             )
-        if target_mut_agent not in registry and target_mut_agent != "task_planner":
+        if target_mut_agent not in registry and target_mut_agent not in _PLANNING_AUTHORS:
             target_mut_agent = self._resolve_active_agent(target_mut_agent, fallback=failed_agent)
         elif target_mut_agent in registry and not registry[target_mut_agent].get("active", True):
             for cand_id, cand_meta in registry.items():

@@ -18,11 +18,12 @@ export type LiveMessage =
   | { type: 'events', events: RunEvent[] }
   | { type: 'state', hypergraph: Hypergraph | null, queue: QueueTask[] }
 
-export type LaunchTask = '1' | '2' | '3' | '4' | 'all'
+export type LaunchTask = '1' | '2' | '3' | '4'
 export type LaunchProvider = 'mock' | 'ollama' | 'google'
 
 export interface LaunchRequest {
-  task: LaunchTask
+  /** One or more tasks of the suite, run one after another by a single `main.py`. */
+  tasks: LaunchTask[]
   provider: LaunchProvider
   template: 'thesis_plodz' | 'paper_ieee' | null
 }

@@ -17,21 +17,9 @@ from adk.tools.building.output_bundle import organize_benchmark_output_bundle
 from tests.test_plan_stages import _MOD_A, _base_plan, _make_orch
 
 
-def test_a_discarded_return_names_the_docstring_it_is_in() -> None:
-    """P5: 01 fixed `env.step(4)` in step() while the bare call sat in get_legal_actions()."""
-    source = (
-        "class Env:\n"
-        "    def step(self, a: int) -> int:\n        \"\"\"Step.\n\n        >>> r = Env().step(4)\n        \"\"\"\n        return a\n"
-        "    def legal(self) -> int:\n        \"\"\"Legal.\n\n        >>> e = Env()\n        >>> e.step(4)\n        \"\"\"\n        return 1\n"
-    )
-    found = [str(v) for v in code_violations({"env.py": source}, "", "")[1] if "DOCTEST_DISCARDS_RETURN" in str(v)]
-    assert len(found) == 1 and "the docstring of legal" in found[0]
-
-
 def test_categories_evolution_can_learn_from() -> None:
-    """E2: concise ruff findings, plan-example mismatches and experiment tracebacks all fell into `generic`."""
+    """E2: concise ruff findings and experiment tracebacks fell into `generic`."""
     assert _issue_category(["Ruff lint failure: src\\experiment_runner.py:35:20: F821 Undefined name `config`"]) == "F821"
-    assert _issue_category(["BEHAVIOUR_MISMATCH [src/baselines.py]: the implementation does not give the results"]) == "behaviour"
     trace = 'Traceback (most recent call last):\n  File "x.py", line 1, in <module>\nTypeError: boxplot() got labels'
     assert _issue_category([trace]) == "run:TypeError"
     assert _issue_category(["something nobody recognises"]) == "generic"
@@ -232,27 +220,6 @@ def test_a_stub_finding_names_the_functions() -> None:
 
     source = "class Env:\n    def reset(self):\n        raise NotImplementedError\n    def step(self):\n        return 1\n\ndef helper():\n    ...\n"
     assert sorted(stub_functions(source)) == ["Env.reset", "helper"]
-
-
-def test_a_number_matches_however_it_is_printed(tmp_path: Path) -> None:
-    """03: `expected 0.0, got 0` was a behaviour mismatch charged to the coder."""
-    from adk.hypergraph.oracles import check_behaviour
-
-    (tmp_path / "geo.py").write_text("import numpy as np\n\ndef d(a, b):\n    return 0 if a == b else np.float64(5.828427)\n", encoding="utf-8")
-    spec = {"import": "geo", "symbols": {"d": {"kind": "func"}}, "behaviour": [">>> d(1, 1)\n0.0\n", ">>> d(1, 2)\n5.8284\n"]}
-    assert check_behaviour(tmp_path, "geo.py", spec) == []
-    spec["behaviour"] = [">>> d(1, 2)\n5.0\n"]
-    assert [v.rule for v in check_behaviour(tmp_path, "geo.py", spec)] == ["BEHAVIOUR_MISMATCH"]
-
-
-def test_an_example_calling_an_undeclared_method_is_the_plans_fault(tmp_path: Path) -> None:
-    """03: the example called `algo.neighbors(3, 3)`, the interface had no `neighbors`, the write gate refused to add it."""
-    from adk.hypergraph.oracles import check_behaviour
-
-    (tmp_path / "astar.py").write_text("class A:\n    def solve(self):\n        return 1\n", encoding="utf-8")
-    spec = {"import": "astar", "symbols": {"A": {"kind": "class"}, "A.solve": {"kind": "method"}},
-            "behaviour": [">>> a = A()\n>>> len(a.neighbors(3, 3)) > 0\nTrue\n"]}
-    assert [v.rule for v in check_behaviour(tmp_path, "astar.py", spec)] == ["SPEC_EXAMPLE_INVALID"]
 
 
 def test_a_test_may_read_what_a_function_returns() -> None:

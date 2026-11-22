@@ -113,7 +113,7 @@ class VerificationMixin:
                 contract_violations += check_entrypoint_parameters(self.workspace_dir, declared_entry or None)
         # Breaches of σ name their culprit exactly (Audit VI A5): they decide who repairs, before any heuristic.
         spec_found = (
-            self._spec_violations(scope_paths) + self._behaviour_violations(scope_paths)
+            self._spec_violations(scope_paths)
             + self._unimplemented(None if is_final_gate else {node_path})
         ) if code_checked else []
         contract_violations += [str(v) for v in spec_found]
@@ -138,7 +138,12 @@ class VerificationMixin:
 
         # Only attach experiment errors to tasks that govern the results: the results file itself or the entrypoint
         # module that writes it (since U5 no task targets results.csv, so the error reached no one otherwise).
-        governs_results = is_data_scope or (bool(declared_entry) and node_path == declared_entry.partition(":")[0])
+        # The declared figures module (`plots`) runs after the entrypoint, so its failure is its own task's (2026-11-21,
+        # 01: DATA_FAILED during R3_1 for figures.py, and the task was verified).
+        declared_plots = str(blueprint_now.get("plots") or "") if isinstance(blueprint_now, dict) else ""
+        governs_results = is_data_scope or any(
+            declared and node_path == declared.partition(":")[0] for declared in (declared_entry, declared_plots)
+        )
         if self._last_experiment_error and governs_results:
             experiment_err = _clip_log(self._last_experiment_error)
             if experiment_err not in test_res["errors"]:
@@ -268,7 +273,7 @@ class VerificationMixin:
                 "issues": [],
             }
 
-        # §XI B0: an error is what the harness proved (pytest, doctest, ruff, σ, pointers, declared metrics); the
+        # §XI B0: an error is what the harness proved (pytest, ruff, σ, pointers, declared metrics); the
         # opinions of the model auditors are warnings, reported and never repaired. On 2026-11-18 the red team
         # failed all 24 defenses by rewording pytest, and every reworded copy went to the repair as work.
         opinion_warnings: list[str] = []
@@ -280,6 +285,10 @@ class VerificationMixin:
 
         # Enforce deterministic symbolic ground truth so small LLMs (e.g. gemma4:e2b) cannot ignore
         # real pytest/ruff/ref_compiler errors OR hallucinate failures when all deterministic checks pass.
+        # The approval of the defense is the red team's alone, counted by the harness below; a field of that name in an
+        # answer of the other auditors is nobody's decision (`_is_supervisor_pass` would read it as a veto).
+        for audit in (code_audit, symbolic_audit):
+            audit.pop("gate_3_approved", None)
         deterministic_code_fail = bool(
             test_res.get("status") == "FAIL" or test_res.get("errors")
         )
@@ -354,6 +363,10 @@ class VerificationMixin:
                 failed_file = next((p for p in named if scope_paths is None or p in scope_paths), None)
                 if failed_file is None and metric_errors and _is_supervisor_pass(code_audit) and _is_supervisor_pass(symbolic_audit):
                     failed_file = declared_entry.partition(":")[0] or None  # results lack a metric: the experiment's
+                if failed_file is None and is_final_gate and _is_supervisor_pass(code_audit) and not _is_supervisor_pass(symbolic_audit):
+                    # A finding about the document (missing chapters, pointers) is the thesis's, not the code of the task
+                    # the gate happens to follow (2026-11-21, 01: figures.py was marked failed for missing chapters).
+                    failed_file = THESIS_FILE
                 failed_file = failed_file or node_path
             owner = h.owner_of(str(failed_file)) if h is not None else None
             author = h.vertices[owner].last_writer if owner is not None else None

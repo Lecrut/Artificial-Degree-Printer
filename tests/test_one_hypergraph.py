@@ -16,10 +16,10 @@ _CONFIG = '"""Config."""\nSEED: int = 1\n'
 _GAME = (
     '"""Game."""\nfrom config import SEED\n\n\n'
     "def play(seed: int) -> int:\n"
-    '    """Score of one game.\n\n    >>> play(0) >= 0\n    True\n    """\n'
+    '    """Score of one game: never negative."""\n'
 )
 _RUN = '"""Run."""\nfrom game import play\n\n\ndef main() -> None:\n    """Run the experiment."""\n'
-_GAME_IMPL = _GAME.replace('    """\n', '    """\n    return seed % 3\n', 1)
+_GAME_IMPL = _GAME + "    return seed % 3\n"
 
 
 def _planned(tmp_path: Path, chapters: list[dict] | None = None):
@@ -96,7 +96,7 @@ def test_a_chapter_pointer_makes_the_cited_module_a_member_of_its_bag(tmp_path: 
 
 # --- controlled change of the plan (Audit VII B4) -------------------------------------------------------------------
 
-_MISMATCH = "BEHAVIOUR_MISMATCH [game.py]: the implementation does not give the results the interface specifies"
+_MISMATCH = "API_SIGNATURE [game.py]: play(seed) takes a different parameter than the interface plans"
 
 
 def _with_repeated_breach(orch) -> None:
@@ -126,13 +126,13 @@ def test_a_breach_seen_once_does_not_reach_the_planner(tmp_path: Path):
 def test_a_repeated_breach_lets_the_planner_amend_the_interface(tmp_path: Path):
     orch, _ = _planned(tmp_path)
     _with_repeated_breach(orch)
-    fixed = _GAME.replace("play(0) >= 0", "play(1) == 1")
+    fixed = _GAME.replace("never negative", "between 0 and 2")
     seen = _planner_answers(orch, {"decision": "AMEND", "reason": "the example was wrong", "interface": fixed})
 
     assert orch._amend_spec_if_wrong("game.py", [_MISMATCH], "T2_FIX1") is True
     assert seen[0]["module"] == "game.py" and seen[0]["used_by"] == {"run.py": ["play"]}
     h = load(orch.hypergraph_path)
-    assert any("play(1) == 1" in b for b in h.edges["I:game.py"].spec["behaviour"])
+    assert "between 0 and 2" in json.loads(orch.blueprint_path.read_text(encoding="utf-8"))["interfaces"]["game.py"]
     assert json.loads(orch.blueprint_path.read_text(encoding="utf-8"))["interfaces"]["game.py"] == fixed
     assert "amended" in h.vertices["game.py"].history[-1]["issues"][0]
 

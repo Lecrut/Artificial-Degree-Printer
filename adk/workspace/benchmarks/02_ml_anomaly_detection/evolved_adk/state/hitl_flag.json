@@ -8,13 +8,13 @@
   "question": null,
   "context": {
     "interfaces": [
-      "baselines.py",
-      "data_generation.py",
-      "evaluation.py",
-      "experiment.py",
-      "figures.py",
-      "rs_ensemble.py"
+      "baseline_zscore.py",
+      "method_rse.py",
+      "metrics.py",
+      "plot_results.py",
+      "run_experiment.py",
+      "synth_data.py"
     ],
-    "entrypoint": "experiment.py:run_experiment"
+    "entrypoint": "run_experiment.py:run_study"
   }
 }

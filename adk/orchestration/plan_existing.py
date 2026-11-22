@@ -11,12 +11,12 @@ from adk.hypergraph.model import module_import_path
 from adk.orchestration.plan_interfaces import _plan_interfaces
 
 
-# `import m` / `from m import x`, also on a doctest line (`>>> from core import search_grid`).
+# `import m` / `from m import x`.
 _IMPORT_LINE = re.compile(r"^\s*(?:>>>\s*)?(?:from\s+([\w.]+)\s+import|import\s+([\w.]+))", re.MULTILINE)
 
 
 def _with_existing(plan_out: dict[str, Any], existing: dict[str, str] | None) -> dict[str, Any]:
-    """The plan with every existing workspace module its interfaces import (transitively, doctests included) added
+    """The plan with every existing workspace module its interfaces import (transitively) added
     with its own source as its interface: code that is already there is its own specification (2026-11-21, 03: the
     plan imported the baseline `core` without declaring it, and three patches failed on "neither planned nor
     installed")."""

@@ -57,18 +57,13 @@ def resolve_import(importer: str, module: str | None, level: int, modules: dict[
 
 def spec_from_stub(rel: str, source: str, modules: dict[str, str]) -> dict[str, Any]:
     """σ(I:rel): public symbols (constants with their type, functions and methods with parameters), what the
-    module uses from other planned modules, third-party packages it imports, doctest examples (behaviour)."""
+    module uses from other planned modules, third-party packages it imports. Behaviour is described in the docstrings
+    in words; the plan carries no executable examples (2026-11-22)."""
     tree = ast.parse(source)
     symbols: dict[str, dict[str, Any]] = {}
     uses: dict[str, list[str]] = {}
     packages: set[str] = set()
     module_aliases: dict[str, str] = {}
-    behaviour: list[str] = []
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)):
-            doc = ast.get_docstring(node)
-            if doc and ">>>" in doc:
-                behaviour.append(doc)
     for node in tree.body:
         if isinstance(node, ast.ImportFrom):
             target = resolve_import(rel, node.module, node.level, modules)
@@ -116,7 +111,6 @@ def spec_from_stub(rel: str, source: str, modules: dict[str, str]) -> dict[str, 
         "symbols": symbols,
         "uses": {k: sorted(set(v)) for k, v in uses.items()},
         "packages": sorted(packages),
-        "behaviour": behaviour,
     }
 
 

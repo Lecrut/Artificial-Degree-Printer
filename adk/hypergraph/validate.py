@@ -1,11 +1,10 @@
 """Validation of the code part of a plan before any code exists (Audit VI A3, Audit VII B1-B3): the stubs of
-every interface import, constants have their declared types, doctests hold on the stubs, no example discards a
-returned value, the entrypoint takes no arguments and runs every planned module."""
+every interface import, constants have their declared types, the entrypoint takes no arguments and runs every
+planned module. Docstrings describe behaviour in words (2026-11-22: examples in the plan were unsatisfiable in 21 of
+30 failed verdicts, so the plan no longer carries executable examples)."""
 
 from __future__ import annotations
 
-import ast
-import doctest
 import importlib.util
 import json
 import subprocess
@@ -20,57 +19,11 @@ from adk.tools.verification.contract_check import stub_source
 
 
 _IMPORT_PROBE = r"""
-import contextlib, doctest, importlib, io, json, sys, traceback, typing
+import importlib, json, sys, traceback
 root, plan = sys.argv[1], json.loads(sys.argv[2])
 sys.path.insert(0, root)
 out = {}
 _SIMPLE = {"list": list, "dict": dict, "tuple": tuple, "set": set, "int": int, "float": (int, float), "str": str, "bool": bool}
-_CHECKER = doctest.OutputChecker()
-
-
-def _names(source):
-    import ast
-    tree = ast.parse(source)
-    used = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
-    bound = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name) and isinstance(n.ctx, (ast.Store, ast.Del))}
-    return used, bound
-
-
-def doctests_on_stubs(mod):
-    # Every example that does not depend on a stub's result must already hold: it does not depend on any
-    # implementation (2026-11-17: `ns = (0,)*9; ns[0]=1` raised TypeError for every implementation, 16x).
-    # A name bound by an example that called a stub is "pending"; examples reading it are not judged.
-    bad = []
-    for test in doctest.DocTestFinder(exclude_empty=True).find(mod, mod.__name__):
-        globs = dict(test.globs)
-        pending = set()
-        for ex in test.examples:
-            try:
-                used, bound = _names(ex.source)
-            except SyntaxError as exc:
-                bad.append(f"{test.name}: `{ex.source.strip()}` is not valid Python ({exc.msg})")
-                break
-            if used & pending:
-                pending |= bound
-                continue
-            buf = io.StringIO()
-            try:
-                with contextlib.redirect_stdout(buf):
-                    exec(compile(ex.source, "<doctest>", "single"), globs)
-            except NotImplementedError:
-                pending |= bound
-                continue
-            except BaseException as exc:
-                if ex.exc_msg is None:
-                    bad.append(f"{test.name}: `{ex.source.strip()}` raises {type(exc).__name__}: {exc}")
-                    break
-                continue
-            flags = sum(flag for flag, on in ex.options.items() if on)
-            if ex.exc_msg is not None or not _CHECKER.check_output(ex.want, buf.getvalue(), flags):
-                got = buf.getvalue().strip() or "nothing"
-                bad.append(f"{test.name}: `{ex.source.strip()}` gives {got!r}, the example expects {ex.want.strip() or ex.exc_msg!r}")
-                break
-    return bad
 
 
 for rel, (dotted, consts) in plan.items():
@@ -86,7 +39,7 @@ for rel, (dotted, consts) in plan.items():
         expected = _SIMPLE.get((declared or "").split("[")[0].strip())
         if expected and not isinstance(getattr(mod, name, None), expected):
             bad.append(f"{name}: declared {declared}, value is {type(getattr(mod, name, None)).__name__}")
-    out[rel] = {"const_mismatch": bad, "doctest": doctests_on_stubs(mod)}
+    out[rel] = {"const_mismatch": bad}
 print(json.dumps(out))
 """
 
@@ -111,7 +64,7 @@ def _stub_problems(specs: dict[str, dict[str, Any]], interfaces: dict[str, str])
                 capture_output=True, text=True, timeout=120, cwd=str(root),
             )
         except subprocess.TimeoutExpired:
-            return [Violation("STUB_PROBE_TIMEOUT", "importing the stubs or running their doctests took over 120 s")]
+            return [Violation("STUB_PROBE_TIMEOUT", "importing the stubs took over 120 s")]
         try:
             results = json.loads(proc.stdout.strip().splitlines()[-1])
         except (IndexError, json.JSONDecodeError):
@@ -123,8 +76,6 @@ def _stub_problems(specs: dict[str, dict[str, Any]], interfaces: dict[str, str])
                 found.append(Violation("STUB_DOES_NOT_IMPORT", res["error"], rel, culprit))
             for mismatch in res.get("const_mismatch", []):
                 found.append(Violation("CONSTANT_TYPE_MISMATCH", mismatch, rel, rel))
-            for problem in res.get("doctest", []):
-                found.append(Violation("DOCTEST_INVALID_ON_STUBS", problem, rel, rel))
     # A failure inside one module is reported once, at the module where it happens.
     unique: dict[tuple[str, str | None], Violation] = {}
     for v in found:
@@ -139,61 +90,6 @@ def _package_available(top: str) -> bool:
         return importlib.util.find_spec(top) is not None
     except (ImportError, ValueError):
         return False
-
-
-def _discarded_returns(interfaces: dict[str, str]) -> list[Violation]:
-    """Examples that call something returning a value and expect no output: doctest prints the value, so the
-    example fails for every correct implementation (2026-11-17: `>>> env.reset()` before `step`, 35x in 01).
-    On the stubs the call raises NotImplementedError first, so only the declared return type can tell."""
-    returns: dict[str, list[str]] = {}
-    trees: dict[str, ast.Module] = {}
-    for rel, source in interfaces.items():
-        try:
-            trees[rel] = ast.parse(source)
-        except SyntaxError:
-            continue
-        for node in ast.walk(trees[rel]):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name != "__init__":
-                returns.setdefault(node.name, []).append(ast.unparse(node.returns) if node.returns else "")
-            elif isinstance(node, ast.ClassDef):
-                returns.setdefault(node.name, []).append(node.name)
-    found: list[Violation] = []
-    parser = doctest.DocTestParser()
-    for rel, tree in trees.items():
-        for node in ast.walk(tree):
-            if not isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-                continue
-            doc = ast.get_docstring(node) or ""
-            if ">>>" not in doc:
-                continue
-            try:
-                examples = parser.get_examples(doc)
-            except ValueError as exc:
-                found.append(Violation("DOCTEST_MALFORMED", str(exc), rel, rel))
-                continue
-            for ex in examples:
-                if ex.want or ex.exc_msg is not None:
-                    continue
-                try:
-                    stmt = ast.parse(ex.source).body
-                except SyntaxError:
-                    continue
-                if len(stmt) != 1 or not isinstance(stmt[0], ast.Expr) or not isinstance(stmt[0].value, ast.Call):
-                    continue
-                func = stmt[0].value.func
-                name = func.attr if isinstance(func, ast.Attribute) else func.id if isinstance(func, ast.Name) else ""
-                declared = returns.get(name, [])
-                if declared and all(r and r != "None" for r in declared):
-                    # Where the example is: the same call may appear in several docstrings (2026-11-20, 01: the planner
-                    # fixed `env.step(4)` in step() while the bare one sat in get_legal_actions()).
-                    where = "the module docstring" if isinstance(node, ast.Module) else f"the docstring of {node.name}"
-                    found.append(Violation(
-                        "DOCTEST_DISCARDS_RETURN",
-                        f"`{ex.source.strip()}` in {where} returns {declared[0]}, so doctest prints it, but the example "
-                        "expects no output: write `_ = ...` or the expected value",
-                        rel, rel,
-                    ))
-    return found
 
 
 def _unused_by_entrypoint(specs: dict[str, dict[str, Any]], entry_file: str, plots_file: str = "") -> list[str]:
@@ -272,7 +168,6 @@ def code_violations(
             "experiment must run the planned method and baseline through their modules, not reimplement them",
             entry_file, entry_file,
         ) for module in _unused_by_entrypoint(specs, entry_file, plots_file)]
-    found += _discarded_returns(interfaces)
     if specs and not any(v.rule in ("INTERFACE_DOES_NOT_PARSE", "DUPLICATE_MODULE") for v in found):
         found += _stub_problems(specs, interfaces)
     return specs, found

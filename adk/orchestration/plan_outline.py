@@ -14,11 +14,14 @@ from adk.hypergraph.build import spec_from_stub
 from adk.tools.verification.contract_check import is_contract_module
 
 _NAME = re.compile(r"[A-Za-z_][\w.]*")
+_KEYWORD = re.compile(r"(?:async\s+)?(?:class|def|function|const|constant)\s+", re.I)
 
 
 def provided_name(item: Any) -> str:
-    """`LogisticModel.predict(X) -> np.ndarray` -> `LogisticModel.predict`: a promise is a name, its signature is a hint."""
-    match = _NAME.match(str(item).strip())
+    """`LogisticModel.predict(X) -> np.ndarray` -> `LogisticModel.predict`: a promise is a name, its signature is a hint.
+    A leading keyword is not the name (2026-11-22, 02: `class ZScoreDetector: <Class>` promised a symbol `class`, no
+    interface could declare it, and the plan was rejected after six attempts)."""
+    match = _NAME.match(_KEYWORD.sub("", str(item).strip(), count=1))
     return match.group(0).rstrip(".") if match else ""
 
 

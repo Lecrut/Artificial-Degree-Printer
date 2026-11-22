@@ -1,62 +1,35 @@
 {
   "version": 2,
   "vertices": {
-    "constants.py": {
+    "environment/tictactoe_env.py": {
       "kind": "code",
       "owner": "coder",
       "state": "verified",
-      "description": "Implement constants.py: Defines global constants for file paths, experiment hyperparameters (lr, gamma, epsilon, episodes), and seeds to ensure reproducibility.. Implement every name its interface declares: its constants.",
+      "description": "Implement environment/tictactoe_env.py: Implements a finite-state Tic-Tac-Toe environment using Gymnasium API, providing state representation and outcome classification (Win/Loss/Draw) to support metric calculation.. Implement every name its interface declares: TicTacToeEnv, TicTacToeEnv.__init__, TicTacToeEnv.reset, TicTacToeEnv.step, TicTacToeEnv.get_valid_actions.",
       "attempts": 1,
       "history": [
         {
-          "task_id": "T2",
+          "task_id": "T3",
           "issues": [
-            "ANSWER_REJECTED: Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- constants.py:16: unterminated triple-quoted string literal (detected at line 16)\n    15: EXPLORATION_RATE: Final[float] = 0.1\n    16: \"\"\""
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T2_FIX1"
-      },
-      "files": [],
-      "failures": 1
-    },
-    "environment.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "verified",
-      "description": "Implement environment.py: Implements the Tic-Tac-Toe game logic, state representation (numpy array), move validation, and win/draw detection.. Implement every name its interface declares: TicTacToeEnv, TicTacToeEnv.__init__, TicTacToeEnv.reset, TicTacToeEnv.step, TicTacToeEnv.get_legal_moves.",
-      "attempts": 2,
-      "history": [
-        {
-          "task_id": "PLAN",
-          "issues": [
-            "Interface of environment.py kept by the planner: The interface contains critical errors that make it impossible for a correct implementation to pass the doctests without failing Python's syntax or runtime rules. Specifically: 1) The `get_legal_moves` example calls `.step(4)` which modifies the environment state, but the subsequent check `len(moves_after) == 8` relies on the result of that call being ignored or not affecting the variable scope in a way doctests handle; more importantly, the previous failure `ValueError: The truth value of an array...` in `get_legal_moves` line `moves = [i for i in range(9) if self._board[i] == -1]` indicates the interface example implies a state where `self._board` is a 1D array or the logic is flawed. However, the deepest issue is that the interface defines `BOARD_SIZE=3` but allows resizing in init (implementation changed signature), and the `get_legal_moves` doctest assumes calling `step` updates the legal moves for the *current* player correctly without resetting. But the fatal flaw is the `step` example: `env.step(4)` returns a tuple, but the example does not assign it, nor does it handle the fact that `get_legal_moves` in the interface docstring example calls `step` which changes internal state. The repeated failures stem from the interface's doctests being non-deterministic or impossible to satisfy with a standard reset-step cycle because `step` mutates the object and the subsequent assertions rely on specific post-condition states that are fragile. More critically, the implementation failed because it used 1D indexing `self._board[i]` on a 2D array in some versions, and the interface docstring for `get_legal_moves` has an example that modifies state (`env.step(4)`) then checks legal moves. This is valid logic, but the interface description of `get_legal_moves` argument `player` being `-1` for 'current turn' is ambiguous against the implementation which tracks `self._turn`. The most robust fix is to remove the side-effecting call in the doctest and ensure the interface strictly defines the contract that `step` does not change the legal moves list *returned* by previous calls (which it doesn't), but rather changes the environment. Actually, the simplest reason for AMEND is that the doctest in `get_legal_moves` contains a statement `env.step(4)` which returns a value that is printed or ignored? In Python doctests, if you don't assign it, it's just an expression statement. If it raises an exception (e.g. invalid move on occupied cell), it fails. The example plays in the center (4). Then it calls `get_legal_moves(-1)`. The implementation of `get_legal_moves` checks `if self._turn != current_turn: return []`. After `step(4)` by player `-1`, `_turn` becomes `0`. So calling `get_legal_moves(-1)` returns `[]` (empty list), making `len(moves_after) == 8` False. Thus the doctest is logically flawed for a standard two-player alternating game. The interface requires `len(moves_after) == 8`, but with alternating turns, after one move, the legal moves for the *original* player (now opponent) should be all except the taken spot? No, `get_legal_moves(player)` in the interface says "
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- tictactoe_env.py:TicTacToeEnv.__init__: The new code of TicTacToeEnv.__init__ contains no definition of `__init__`; nothing was saved."
           ]
         },
         {
           "task_id": "T3",
           "issues": [
-            "BEHAVIOUR_MISMATCH [environment.py]: the implementation does not give the results the interface specifies:\n- TicTacToeEnv.step: example `env.step(4)` expected `(array(...), 0.0, False, False, ...)`, got `(array([[-1, -1, -1],\n       [-1, -1, -1],\n       [-1, -1, -1]], dtype=int8), 1.0, True, False, {'turn': 0, 'winner': -1, 'terminated': True, 'truncated': False})`\n- example `len(moves_after) == 8` expected `True`, got `False`"
-          ]
-        },
-        {
-          "task_id": "REPLAN",
-          "issues": [
-            "Interface of environment.py changed by the re-plan."
+            "Ruff lint failure: environment\\tictactoe_env.py:105:26: F821 Undefined name `board`\nFound 1 error."
           ]
         },
         {
           "task_id": "R1_1",
           "issues": [
-            "BEHAVIOUR_MISMATCH [environment.py]: the implementation does not give the results the interface specifies:\n- TicTacToeEnv.step: example `env.step(4)` expected `(array(...), 0.0, False, False, ...)`, got `(array([[-1, -1, -1],\n       [-1, -1, -1],\n       [-1, -1, -1]], dtype=int8), 1.0, True, False, {'turn': -1, 'winner': -1, 'terminated': True, 'truncated': False})`\n- example `len(moves_after) == 8` expected `True`, got `False`"
+            "Pytest failure: ..FFFF.                                                                                                                                                                                                                                                                                              [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         },
         {
-          "task_id": "PLAN",
+          "task_id": "R1_1_FIX1",
           "issues": [
-            "Interface of environment.py amended by the planner: The interface's doctest in `get_legal_moves` is logically flawed and incompatible with the game rules described. It calls `env.step(4)` (player -1/X) which results in `terminated=True` and `winner=-1`. In this terminal state, the loop for legal moves `range(9)` will still find 8 empty cells (since only cell 4 is occupied), so `len(moves_after)` is indeed 8. However, the previous failure report states it got `False`, implying a different implementation or state logic was used previously. More critically, the interface's `step` doctest expects `(array(...), 0.0, False, False, ...)` for `env.step(4)` on an empty board. On an empty board, playing in the center (4) does NOT result in a win immediately, so `terminated` should be `False` and `reward` `0.0`. The repeated findings say it got `1.0, True`. This implies the implementation incorrectly detected a win after one move. However, since the question is about the INTERFACE being wrong: The interface doctest for `step` does not assign the result to a variable, which is fine if the assertion relies on side effects or print output, but here it relies on values. The main flaw is that the `get_legal_moves` example assumes the game continues after `step(4)` yields no termination, but if we look at the `used_by`, `experiment.py` imports `TicTacToeEnv`. The real issue identified in previous attempts is often that the interface examples are not self-consistent or rely on implicit states. In this specific case, the example `len(moves_after) == 8` expects 8 moves. If `step(4)` worked correctly (no win), there are 8 empty spots. If `step(4)` triggered a false positive win (implementation error), `terminated` would be True. The interface docstring for `get_legal_moves` contains an example that modifies state (`env.step(4)`) without resetting, relying on the previous `reset()`. This is valid doctest syntax but fragile. The deeper issue causing 'repeated findings' is likely that the interface's `step` doctest example `env.step(4)` is insufficiently specific about the expected return values beyond `assert isinstance`, and the `get_legal_moves` example is logically dependent on the exact state after `step`. But looking closely at the first finding: `env.step(4)` got `(array(...), 1.0, True, False, ...)` which means it thought player -1 won immediately. This is impossible in Tic-Tac-Toe with one move. The interface doctest expects `0.0, False`. The implementation is wrong. BUT, the prompt asks me to decide if the *interface* is wrong. Is there an error in the interface such that *no correct implementation* can satisfy it? The interface says: `env.step(4)` on empty board -> reward 0.0, terminated False. A correct implementation will do this. The next example calls `get_legal_moves(-1)`. On a board with one X placed, there are 8 empty cells. `len` is 8. The example expects `True`. A correct implementation will return 8 legal moves. So the interface IS satisfiable. Why did it fail? The repeated findings say `len(moves_after)` got `False` (i.e., not 8). This implies either fewer or more than 8 legal moves, or an error. Wait, if `step(4)` returned `terminated=True`, the environment might be in a 'dead' state where no further moves are considered legal, or the implementation of `get_legal_moves` checks `terminated` flag and returns empty list? The interface *does not specify* this constraint. It just says 'return legal move indices'. Usually, in terminal states, legal moves is empty or undefined. If the interface allows a correct implementation where legal moves are non-empty in terminal states, then it's fine. But if standard convention dictates empty legal moves in terminal states, the interface example `len(moves_after) == 8` after a terminal step is wrong/invalid for a standard RL env contract. To fix this, we must remove the state-mutation dependency in the doctest or reset before checking. The most robust AMEND is to make the `get_legal_moves` doctest independent of the previous step's outcome by resetting, or removing the side-effectful example entirely. Let's remove the side-effectful part of the `get_legal_moves` doctest to ensure it only tests the method in isolation.)"
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- tictactoe_env.py:_reset_game: Provided new_code contains no AST statements."
           ]
         }
       ],
@@ -65,135 +38,199 @@
         "task_id": "R1_1_FIX1"
       },
       "files": [],
-      "failures": 6
+      "failures": 4
     },
-    "agents.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "verified",
-      "description": "Implement agents.py: Implements the Q-Learning agent with tabular storage and epsilon-greedy strategy, and a Random Agent class for baseline comparisons.. Implement every name its interface declares: QLearningAgent, QLearningAgent.__init__, QLearningAgent.act, QLearningAgent.update, QLearningAgent.get_q_table, RandomAgent, RandomAgent.act.",
-      "attempts": 1,
-      "history": [
-        {
-          "task_id": "T5",
-          "issues": [
-            "NOT_IMPLEMENTED [agents.py]: still without an implementation (only a stub body): QLearningAgent.get_q_table, RandomAgent.act",
-            "Ruff lint failure: agents.py:50:16: F821 Undefined name `random`\nFound 1 error."
-          ]
-        },
-        {
-          "task_id": "T5",
-          "issues": [
-            "NOT_IMPLEMENTED [agents.py]: still without an implementation (only a stub body): QLearningAgent.get_q_table, RandomAgent.act"
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T5_FIX2"
-      },
-      "files": [],
-      "failures": 2
-    },
-    "experiment.py": {
-      "kind": "entry",
-      "owner": "coder",
-      "state": "impl",
-      "description": "Implement experiment.py: Runs training and evaluation episodes for both Q-Learning and Baseline agents, logging per-episode rewards to train_log.csv and final metrics to results.csv.. Implement every name its interface declares: run_experiment.",
-      "attempts": 1,
-      "history": [
-        {
-          "task_id": "T8",
-          "issues": [
-            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- experiment.py:run_experiment: SyntaxError in new_code: unmatched '}' at line 132 of your code: `}` is indented by 0 spaces, the line before by 4. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
-          ]
-        },
-        {
-          "task_id": "T8",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [experiment.py]: the implementation does not give the results the interface specifies:\n- example `_get_legal_moves_indices(np.full((3, 3), -1))` raised ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all() in experiment.py > _get_legal_moves_indices, line 48: `return [i for i in range(9) if board[i] == -1]`",
-            "Ruff lint failure: experiment.py:72:31: F821 Undefined name `env`\nexperiment.py:74:60: F821 Undefined name `env`\nexperiment.py:77:31: F821 Undefined name `env`\nexperiment.py:79:60: F821 Undefined name `env`\nexperiment.py:121:35: F821 Undefined name `env`\nexperiment.py:123:64: F821 Undefined name `env`\nexperiment.py:126:35: F821 Undefined name `env`\nexperiment.py:128:64: F821 Undefined name `env`\nFound 8 errors.",
-            "Traceback (most recent call last):\n  File \"<string>\", line 44, in <module>\n    fn()\n    ~~^^\n  File \"experiment.py\", line 126, in run_experiment\n    legal_moves = env.get_legal_moves(0)\n                  ^^^\nNameError: name 'env' is not defined"
-          ]
-        },
-        {
-          "task_id": "T8",
-          "issues": [
-            "Traceback (most recent call last):\n  File \"<string>\", line 44, in <module>\n    fn()\n    ~~^^\n  File \"experiment.py\", line 133, in run_experiment\n    df = pd.DataFrame({'agent': agent_logs, 'run': train_logs})\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\.venv\\Lib\\site-packages\\pandas\\core\\frame.py\", line 533, in __init__\n    mgr = dict_to_mgr(data, index, columns, dtype=dtype, copy=copy)\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\.venv\\Lib\\site-packages\\pandas\\core\\internals\\construc"
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T8_FIX2"
-      },
-      "files": [],
-      "failures": 3
-    },
-    "figures.py": {
+    "agents/q_agent.py": {
       "kind": "code",
       "owner": "coder",
       "state": "failed",
-      "description": "Implement figures.py: Reads train_log.csv and results.csv to generate learning curves and win-rate comparison charts in the figures directory.. Implement every name its interface declares: generate_figures.",
+      "description": "Implement agents/q_agent.py: Implements the Tabular Q-Learning agent with epsilon-greedy exploration and standard Bellman update rule.. Implement every name its interface declares: QLearningAgent, QLearningAgent.__init__, QLearningAgent.act, QLearningAgent.learn, QLearningAgent.q_table.",
       "attempts": 3,
       "history": [
         {
+          "task_id": "R2_1",
+          "issues": [
+            "Pytest failure: .....F...F                                                                                                                                                                                                                                                                                           [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
           "task_id": "REPLAN",
           "issues": [
-            "Interface of figures.py changed by the re-plan."
-          ]
-        },
-        {
-          "task_id": "R2_1",
-          "issues": [
-            "Ruff lint failure: figures.py:40:13: F821 Undefined name `np`\nFound 1 error."
-          ]
-        },
-        {
-          "task_id": "R2_1",
-          "issues": [
-            "pytest failed in tests/test_agents.py: assertion error on line 57: TypeError: expected string, bytes or os.PathLike object, not dict",
-            "Incomplete thesis: missing chapters in thesis.md: ['Chapter 4 (Konfiguracja eksperymentu)', 'Chapter 5 (Wyniki symulacji)', 'Chapter 6 (Wnioski i dyskusja)']. Every planned chapter is required."
+            "Interface of agents/q_agent.py changed by the re-plan."
           ]
         },
         {
           "task_id": "R3_1",
           "issues": [
-            "Incomplete thesis: missing chapters in thesis.md: ['Chapter 4 (Konfiguracja eksperymentu)', 'Chapter 5 (Wyniki symulacji)', 'Chapter 6 (Wnioski i dyskusja)']. Every planned chapter is required."
+            "Pytest failure: .........F                                                                                                                                                                                                                                                                                           [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "R3_1",
+          "issues": [
+            "Pytest failure: .........F                                                                                                                                                                                                                                                                                           [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "R3_1"
+        "task_id": "R3_1_FIX1"
       },
       "files": [],
-      "failures": 5
+      "failures": 6
     },
-    "tests/test_environment.py": {
-      "kind": "test",
-      "owner": "tester",
+    "agents/random_agent.py": {
+      "kind": "code",
+      "owner": "coder",
       "state": "verified",
-      "description": "Unit tests of TicTacToeEnv from environment.py in tests/test_environment.py, through the declared interface only.",
+      "description": "Implement agents/random_agent.py: Implements the baseline random agent that selects uniformly from valid actions.. Implement every name its interface declares: RandomAgent, RandomAgent.act.",
       "attempts": 1,
       "history": [],
       "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "T4"
+        "agent": "seed_coder",
+        "task_id": "T7"
       },
       "files": [],
       "failures": 0
     },
-    "tests/test_agents.py": {
+    "experiment/run_experiment.py": {
+      "kind": "entry",
+      "owner": "coder",
+      "state": "stub",
+      "description": "Implement experiment/run_experiment.py: Orchestrates training and evaluation, logging per-episode outcomes (result: Win/Loss/Draw) for both Q-Agent and Random-Baseline to results.csv for convergence analysis and final statistical comparison.. Implement every name its interface declares: run_study.",
+      "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "visualization/plot_results.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement visualization/plot_results.py: Reads results.csv to generate convergence curves and comparative win-rate plots into the figures directory.. Implement every name its interface declares: plot_results.",
+      "attempts": 3,
+      "history": [
+        {
+          "task_id": "R1_2_FIX1",
+          "issues": [
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- plot_results.py:plot_results: an ast_edits element named after the module replaces the WHOLE file, and this code would delete FIGURES_DIR. To change one symbol, name that symbol; to replace the module, return all of it in 'files'."
+          ]
+        },
+        {
+          "task_id": "R1_2",
+          "issues": [
+            "NOT_IMPLEMENTED [visualization/plot_results.py]: still without an implementation (only a stub body): plot_results"
+          ]
+        },
+        {
+          "task_id": "R1_2_FIX2",
+          "issues": [
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- plot_results.py:plot_results: an ast_edits element named after the module replaces the WHOLE file, and this code would delete FIGURES_DIR. To change one symbol, name that symbol; to replace the module, return all of it in 'files'."
+          ]
+        },
+        {
+          "task_id": "R1_2",
+          "issues": [
+            "NOT_IMPLEMENTED [visualization/plot_results.py]: still without an implementation (only a stub body): plot_results"
+          ]
+        },
+        {
+          "task_id": "REPLAN",
+          "issues": [
+            "Interface of visualization/plot_results.py changed by the re-plan."
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "R2_3"
+      },
+      "files": [],
+      "failures": 12
+    },
+    "tests/test_tictactoe_env.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "failed",
+      "description": "Unit tests of TicTacToeEnv from environment/tictactoe_env.py in tests/test_tictactoe_env.py, through the declared interface only.",
+      "attempts": 5,
+      "history": [
+        {
+          "task_id": "R3_2",
+          "issues": [
+            "Pytest failure: .....F.                                                                                                                                                                                                                                                                                              [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "R4_2",
+          "issues": [
+            "Pytest failure: .....F.                                                                                                                                                                                                                                                                                              [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "R4_2_FIX1",
+          "issues": [
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_tictactoe_env.py:test_draw: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 317) at line 2 of your code: `\"\"\"Simulate a full board fill without wins. Check `terminated` is True and `rewa` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
+          ]
+        },
+        {
+          "task_id": "R4_2",
+          "issues": [
+            "Pytest failure: .....F.                                                                                                                                                                                                                                                                                              [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "R4_2_FIX1"
+      },
+      "files": [],
+      "failures": 13
+    },
+    "tests/test_q_agent.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "written",
+      "description": "Unit tests of QLearningAgent from agents/q_agent.py in tests/test_q_agent.py, through the declared interface only.",
+      "attempts": 1,
+      "history": [
+        {
+          "task_id": "T6",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_q_agent.py]: against the stubs a test"
+          ]
+        },
+        {
+          "task_id": "T6_FIX1",
+          "issues": [
+            "ANSWER_REJECTED: Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_q_agent.py:35: unexpected indent\n    34: delta = reward + (gamma * max([agent.q_table[s2][a] if hasattr(agent, 'q_table') and s2 in dir(agent) else 0 for a in valid_actions_next])) - old_q\n    35:     new_q_old = old_q\n    36:     "
+          ]
+        },
+        {
+          "task_id": "T6_FIX2",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_q_agent.py]: reads QLearningAgent._q_tabl"
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "T6_FIX2"
+      },
+      "files": [],
+      "failures": 3
+    },
+    "tests/test_random_agent.py": {
       "kind": "test",
       "owner": "tester",
       "state": "verified",
-      "description": "Unit tests of QLearningAgent, RandomAgent from agents.py in tests/test_agents.py, through the declared interface only.",
+      "description": "Unit tests of RandomAgent from agents/random_agent.py in tests/test_random_agent.py, through the declared interface only.",
       "attempts": 1,
       "history": [],
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "T6"
+        "task_id": "T8"
       },
       "files": [],
       "failures": 0
@@ -224,7 +261,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Wprowadzenie do uczenia ze wzmocnieniem — Definicje Markov Decision Process, pojęcia state, action, reward i funkcji wartości.",
+      "description": "Wstęp — Motywacja, cel pracy, zakres i struktura dokumentu.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -235,7 +272,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Metoda Q-Learning — Równanie Bellmana, algorytm aktualizacji wag epsilon-greedy, konwergencja w MDP.",
+      "description": "Teoretyczne podstawy uczenia ze wzmocnieniem — Definicje procesu decyzyjnego Markova (MDP), pojęcie wartości stanu i akcji, równanie Bellmana.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -246,7 +283,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Modelowanie gry w kółko i krzyżyk — Reprezentacja stanu planszy jako tensora NumPy, przestrzeń stanów i akcji, detekcja końca gry.",
+      "description": "Metoda Q-Learning i gra w kółko i krzyżyk — Opis algorytmu Sarsa/Q-Learning, specyfika gry w kółko i krzyżyk jako środowiska o pełnej informacji.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -256,9 +293,9 @@
     "thesis.md#ch4": {
       "kind": "chapter",
       "owner": "writer",
-      "state": "spec",
-      "description": "Konfiguracja eksperymentu — Uzasadnienie hiperparametrów (lr, gamma, epsilon), budżetu treningu, liczby powtórzeń oraz wyboru agenta losowego jako baselina.",
-      "attempts": 0,
+      "state": "verified",
+      "description": "Modelowanie środowiska i agenta — Reprezentacja stanu (tablica), funkcje przejścia, architektura tablicy Q i strategia eksploracji.",
+      "attempts": 1,
       "history": [],
       "last_writer": null,
       "files": [],
@@ -268,7 +305,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "spec",
-      "description": "Wyniki symulacji — Wykresy uczenia się (krzywe zbieżności), analiza macierzy wygranych vs losowy przeciwnik, kryterium sukcesu.",
+      "description": "Przebieg eksperymentu — Uzasadnienie parametrów (lr, gamma, epsilon), budżetu treningowego, liczby powtórzeń i ziaren losowości.",
       "attempts": 0,
       "history": [],
       "last_writer": null,
@@ -279,7 +316,18 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "spec",
-      "description": "Wnioski i dyskusja — Ocena osiągniętej strategii, ograniczenia tabelarycznego podejścia w większych grach.",
+      "description": "Wyniki i analiza — Prezentacja wykresów konwergencji (wyniki z run_study) oraz porównanie statystyczne z graczem losowym (results.csv).",
+      "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch7": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "spec",
+      "description": "Wnioski — Ocena osiągnięcia celu pracy, ograniczenia metody i kierunki dalszych prac.",
       "attempts": 0,
       "history": [],
       "last_writer": null,
@@ -288,83 +336,45 @@
     }
   },
   "edges": {
-    "I:constants.py": {
+    "I:environment/tictactoe_env.py": {
       "type": "I",
       "members": {
-        "constants.py": "P",
-        "experiment.py": "C",
-        "figures.py": "C"
+        "environment/tictactoe_env.py": "P",
+        "experiment/run_experiment.py": "C",
+        "tests/test_tictactoe_env.py": "T"
       },
       "spec": {
-        "import": "constants",
+        "import": "environment.tictactoe_env",
         "symbols": {
-          "RESULTS_CSV_PATH": {
+          "BOARD_SIZE": {
             "kind": "const",
-            "type": "Final[str]"
+            "type": "int"
           },
-          "TRAIN_LOG_CSV_PATH": {
+          "MAX_PLAYERS": {
             "kind": "const",
-            "type": "Final[str]"
+            "type": "List[int]"
           },
-          "FIGURES_DIR": {
+          "WINNING_LINES": {
             "kind": "const",
-            "type": "Final[str]"
+            "type": "Tuple[Tuple[int, ...], ...]"
           },
-          "EPISODES": {
-            "kind": "const",
-            "type": "Final[int]"
-          },
-          "N_RUNS": {
-            "kind": "const",
-            "type": "Final[int]"
-          },
-          "LEARNING_RATE": {
-            "kind": "const",
-            "type": "Final[float]"
-          },
-          "DISCOUNT_FACTOR": {
-            "kind": "const",
-            "type": "Final[float]"
-          },
-          "EXPLORATION_RATE": {
-            "kind": "const",
-            "type": "Final[float]"
-          }
-        },
-        "uses": {},
-        "packages": [
-          "os",
-          "typing"
-        ],
-        "behaviour": []
-      },
-      "fingerprint": null,
-      "observed": []
-    },
-    "I:environment.py": {
-      "type": "I",
-      "members": {
-        "environment.py": "P",
-        "experiment.py": "C",
-        "tests/test_environment.py": "T"
-      },
-      "spec": {
-        "import": "environment",
-        "symbols": {
           "TicTacToeEnv": {
             "kind": "class"
           },
           "TicTacToeEnv.__init__": {
             "kind": "method",
             "params": [
-              "self"
+              "self",
+              "render_mode"
             ],
             "required": []
           },
           "TicTacToeEnv.reset": {
             "kind": "method",
             "params": [
-              "self"
+              "self",
+              "seed",
+              "options"
             ],
             "required": []
           },
@@ -378,44 +388,59 @@
               "action"
             ]
           },
-          "TicTacToeEnv.get_legal_moves": {
+          "TicTacToeEnv.get_valid_actions": {
             "kind": "method",
             "params": [
-              "self",
-              "player"
+              "self"
             ],
-            "required": [
-              "player"
-            ]
+            "required": []
           },
-          "TicTacToeEnv.BOARD_SIZE": {
+          "TicTacToeEnv.metadata": {
+            "kind": "attr"
+          },
+          "TicTacToeEnv.observation_space": {
+            "kind": "attr"
+          },
+          "TicTacToeEnv.action_space": {
+            "kind": "attr"
+          },
+          "TicTacToeEnv.render_mode": {
             "kind": "attr"
           }
         },
         "uses": {},
         "packages": [
+          "__future__",
+          "gymnasium",
           "numpy",
           "typing"
-        ],
-        "behaviour": [
-          "Reset the environment to the initial empty state.\n\n>>> env = TicTacToeEnv()\n>>> obs, info = env.reset()\n>>> (obs == -1).all()\nTrue",
-          "Execute the given action in the environment.\n\nArgs:\n    action: An integer index (0-8) representing the board cell to play.\n\nReturns:\n    A tuple containing:\n    - next_state: The updated 3x3 numpy array of the board.\n    - reward: Float indicating the outcome (+1 for win, -1 for loss, 0 otherwise).\n    - terminated: Boolean flag set if the game has ended in a win or loss.\n    - truncated: Boolean flag set if the game has ended in a draw.\n    - info: Dictionary containing metadata (e.g., winner, current turn).\n\n>>> env = TicTacToeEnv()\n>>> _, _ = env.reset()\n>>> obs, reward, term, trunc, info = env.step(4)\n>>> assert isinstance(obs, np.ndarray) and obs.shape == (3, 3)\n>>> term is False  # One move doesn't win\nTrue",
-          "Return a list of legal move indices for the current game state.\n\nArgs:\n    player: Argument kept for API compatibility but not used in logic,\n            as legality depends only on empty cells on the board.\n\nReturns:\n    A list of integers representing valid board indices (0-8).\n\n>>> env = TicTacToeEnv()\n>>> _, _ = env.reset()\n>>> moves = env.get_legal_moves(-1)\n>>> len(moves) == 9\nTrue"
         ]
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:agents.py": {
+    "I:agents/q_agent.py": {
       "type": "I",
       "members": {
-        "agents.py": "P",
-        "experiment.py": "C",
-        "tests/test_agents.py": "T"
+        "agents/q_agent.py": "P",
+        "experiment/run_experiment.py": "C",
+        "tests/test_q_agent.py": "T"
       },
       "spec": {
-        "import": "agents",
+        "import": "agents.q_agent",
         "symbols": {
+          "DEFAULT_LEARNING_RATE": {
+            "kind": "const",
+            "type": "float"
+          },
+          "DEFAULT_DISCOUNT_FACTOR": {
+            "kind": "const",
+            "type": "float"
+          },
+          "DEFAULT_EPSILON": {
+            "kind": "const",
+            "type": "float"
+          },
           "QLearningAgent": {
             "kind": "class"
           },
@@ -423,59 +448,50 @@
             "kind": "method",
             "params": [
               "self",
-              "n_states",
-              "n_actions",
               "lr",
               "gamma",
               "epsilon"
             ],
-            "required": [
-              "n_states",
-              "n_actions",
-              "lr",
-              "gamma",
-              "epsilon"
-            ]
+            "required": []
           },
           "QLearningAgent.act": {
             "kind": "method",
             "params": [
               "self",
-              "state_index",
-              "legal_moves"
+              "state",
+              "valid_actions"
             ],
             "required": [
-              "state_index",
-              "legal_moves"
+              "state",
+              "valid_actions"
             ]
           },
-          "QLearningAgent.update": {
+          "QLearningAgent.learn": {
             "kind": "method",
             "params": [
               "self",
-              "state_index",
+              "state",
               "action",
               "reward",
-              "next_state_index",
-              "done"
+              "next_state",
+              "done",
+              "valid_actions_next"
             ],
             "required": [
-              "state_index",
+              "state",
               "action",
               "reward",
-              "next_state_index",
-              "done"
+              "next_state",
+              "done",
+              "valid_actions_next"
             ]
           },
-          "QLearningAgent.get_q_table": {
+          "QLearningAgent.q_table": {
             "kind": "method",
             "params": [
               "self"
             ],
             "required": []
-          },
-          "QLearningAgent.q_table": {
-            "kind": "attr"
           },
           "QLearningAgent.lr": {
             "kind": "attr"
@@ -485,7 +501,30 @@
           },
           "QLearningAgent.epsilon": {
             "kind": "attr"
-          },
+          }
+        },
+        "uses": {},
+        "packages": [
+          "__future__",
+          "copy",
+          "numpy",
+          "random",
+          "typing"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:agents/random_agent.py": {
+      "type": "I",
+      "members": {
+        "agents/random_agent.py": "P",
+        "experiment/run_experiment.py": "C",
+        "tests/test_random_agent.py": "T"
+      },
+      "spec": {
+        "import": "agents.random_agent",
+        "symbols": {
           "RandomAgent": {
             "kind": "class"
           },
@@ -493,103 +532,122 @@
             "kind": "method",
             "params": [
               "self",
-              "legal_moves"
+              "state",
+              "valid_actions"
             ],
             "required": [
-              "legal_moves"
+              "state",
+              "valid_actions"
             ]
+          },
+          "RandomAgent.name": {
+            "kind": "attr"
           }
         },
         "uses": {},
         "packages": [
+          "__future__",
           "numpy",
+          "random",
           "typing"
-        ],
-        "behaviour": [
-          "Select an action for the given state using constrained epsilon-greedy policy.\n\nArgs:\n    state_index: The integer ID of the current state.\n    legal_moves: A list of integers representing valid move indices available in this state.\n\nReturns:\n    An integer index of the chosen action from `legal_moves`.\n\n>>> agent = QLearningAgent(10, 9, 0.1, 0.9, 0.0)\n>>> # With epsilon=0, it picks best action. If all Q-values are 0, it picks first legal.\n>>> import random; random.seed(42) \n>>> res = agent.act(0, [1, 2])\n>>> res in [1, 2]\nTrue",
-          "Update Q-value for the given transition using the Q-learning formula.\n\nArgs:\n    state_index: The integer ID of the starting state.\n    action: The integer index of the action taken.\n    reward: The reward received after taking the action.\n    next_state_index: The integer ID of the resulting state.\n    done: Boolean flag indicating if the episode has ended (terminal state).\n\n>>> agent = QLearningAgent(10, 9, 0.1, 0.9, 0.5)\n>>> before = agent.q_table[0, 4]\n>>> agent.update(0, 4, 1.0, 1, True)\n>>> after = agent.q_table[0, 4]\n>>> after >= before\nTrue",
-          "Select a random action from the list of legal moves.\n\nArgs:\n    legal_moves: A list of integers representing valid move indices.\n\nReturns:\n    An integer index chosen uniformly at random from `legal_moves`.\n\n>>> agent = RandomAgent()\n>>> moves = [1, 2, 3]\n>>> res = agent.act(moves)\n>>> res in moves\nTrue"
         ]
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:experiment.py": {
+    "I:experiment/run_experiment.py": {
       "type": "I",
       "members": {
-        "experiment.py": "P"
+        "experiment/run_experiment.py": "P"
       },
       "spec": {
-        "import": "experiment",
+        "import": "experiment.run_experiment",
         "symbols": {
-          "run_experiment": {
+          "N_EPISODES": {
+            "kind": "const",
+            "type": "int"
+          },
+          "N_EVALUATION_GAMES": {
+            "kind": "const",
+            "type": "int"
+          },
+          "LEARNING_RATE": {
+            "kind": "const",
+            "type": "float"
+          },
+          "DISCOUNT_FACTOR": {
+            "kind": "const",
+            "type": "float"
+          },
+          "EXPLORATION_EPSILON_TRAINING": {
+            "kind": "const",
+            "type": "float"
+          },
+          "EXPLORATION_EPSILON_INFERENCE": {
+            "kind": "const",
+            "type": "float"
+          },
+          "SEED": {
+            "kind": "const",
+            "type": "int"
+          },
+          "RESULTS_FILENAME": {
+            "kind": "const",
+            "type": "str"
+          },
+          "run_study": {
             "kind": "func",
             "params": [],
             "required": []
           }
         },
         "uses": {
-          "constants.py": [
-            "DISCOUNT_FACTOR",
-            "EPISODES",
-            "EXPLORATION_RATE",
-            "FIGURES_DIR",
-            "LEARNING_RATE",
-            "N_RUNS",
-            "RESULTS_CSV_PATH",
-            "TRAIN_LOG_CSV_PATH"
+          "agents/q_agent.py": [
+            "QLearningAgent"
           ],
-          "environment.py": [
-            "TicTacToeEnv"
-          ],
-          "agents.py": [
-            "QLearningAgent",
+          "agents/random_agent.py": [
             "RandomAgent"
+          ],
+          "environment/tictactoe_env.py": [
+            "TicTacToeEnv"
           ]
         },
         "packages": [
+          "__future__",
           "numpy",
           "os",
           "pandas",
           "typing"
-        ],
-        "behaviour": [
-          "Convert a 3x3 board array to a unique integer state index.\n\nThe board contains -1 (empty), 0 (O), or 1 (X). We treat the flattened\nboard as digits in base-3. -1 -> 0, 0 -> 1, 1 -> 2.\n\nArgs:\n    board: A 3x3 numpy array representing the game state.\n\nReturns:\n    An integer index uniquely identifying this state (0 to 3^9 - 1).\n\n>>> import numpy as np\n>>> _board_to_state_index(np.full((3, 3), -1))\n0\n>>> board = np.full((3, 3), -1)\n>>> board[0, 0] = 1\n>>> _board_to_state_index(board) == (2 * 3**8)\nTrue",
-          "Get indices of empty cells on the board.\n\nArgs:\n    board: Current 3x3 numpy array.\n\nReturns:\n    List of integer indices (0-8) corresponding to empty cells.\n\n>>> import numpy as np\n>>> _get_legal_moves_indices(np.full((3, 3), -1))\n[0, 1, 2, 3, 4, 5, 6, 7, 8]"
         ]
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:figures.py": {
+    "I:visualization/plot_results.py": {
       "type": "I",
       "members": {
-        "figures.py": "P"
+        "visualization/plot_results.py": "P"
       },
       "spec": {
-        "import": "figures",
+        "import": "visualization.plot_results",
         "symbols": {
-          "generate_figures": {
+          "FIGURES_DIR": {
+            "kind": "const",
+            "type": "Path"
+          },
+          "plot_results": {
             "kind": "func",
             "params": [],
             "required": []
           }
         },
-        "uses": {
-          "constants.py": [
-            "FIGURES_DIR",
-            "RESULTS_CSV_PATH",
-            "TRAIN_LOG_CSV_PATH"
-          ]
-        },
+        "uses": {},
         "packages": [
+          "__future__",
           "matplotlib",
-          "numpy",
-          "os",
           "pandas",
-          "typing"
-        ],
-        "behaviour": []
+          "pathlib"
+        ]
       },
       "fingerprint": null,
       "observed": []
@@ -597,22 +655,21 @@
     "R:run": {
       "type": "R",
       "members": {
-        "experiment.py": "P",
+        "experiment/run_experiment.py": "P",
         "results.csv": "O",
-        "figures.py": "C",
-        "agents.py": "C",
-        "constants.py": "C",
-        "environment.py": "C"
+        "visualization/plot_results.py": "C",
+        "agents/q_agent.py": "C",
+        "agents/random_agent.py": "C",
+        "environment/tictactoe_env.py": "C"
       },
       "spec": {
-        "entry": "experiment.py:run_experiment",
+        "entry": "experiment/run_experiment.py:run_study",
         "metrics": [
-          "win_rate_vs_random",
-          "draw_rate_vs_random",
-          "loss_rate_vs_random",
-          "avg_reward_final_100_episodes"
+          "win_rate",
+          "draw_rate",
+          "loss_rate"
         ],
-        "plots": "figures.py:generate_figures"
+        "plots": "visualization/plot_results.py:plot_results"
       },
       "fingerprint": null,
       "observed": []
@@ -624,8 +681,8 @@
         "references.bib": "C"
       },
       "spec": {
-        "title": "Wprowadzenie do uczenia ze wzmocnieniem",
-        "focus": "Definicje Markov Decision Process, pojęcia state, action, reward i funkcji wartości.",
+        "title": "Wstęp",
+        "focus": "Motywacja, cel pracy, zakres i struktura dokumentu.",
         "uses_results": false
       },
       "fingerprint": null,
@@ -638,8 +695,8 @@
         "references.bib": "C"
       },
       "spec": {
-        "title": "Metoda Q-Learning",
-        "focus": "Równanie Bellmana, algorytm aktualizacji wag epsilon-greedy, konwergencja w MDP.",
+        "title": "Teoretyczne podstawy uczenia ze wzmocnieniem",
+        "focus": "Definicje procesu decyzyjnego Markova (MDP), pojęcie wartości stanu i akcji, równanie Bellmana.",
         "uses_results": false
       },
       "fingerprint": null,
@@ -652,8 +709,8 @@
         "references.bib": "C"
       },
       "spec": {
-        "title": "Modelowanie gry w kółko i krzyżyk",
-        "focus": "Reprezentacja stanu planszy jako tensora NumPy, przestrzeń stanów i akcji, detekcja końca gry.",
+        "title": "Metoda Q-Learning i gra w kółko i krzyżyk",
+        "focus": "Opis algorytmu Sarsa/Q-Learning, specyfika gry w kółko i krzyżyk jako środowiska o pełnej informacji.",
         "uses_results": false
       },
       "fingerprint": null,
@@ -663,13 +720,12 @@
       "type": "N",
       "members": {
         "thesis.md#ch4": "X",
-        "references.bib": "C",
-        "results.csv": "C"
+        "references.bib": "C"
       },
       "spec": {
-        "title": "Konfiguracja eksperymentu",
-        "focus": "Uzasadnienie hiperparametrów (lr, gamma, epsilon), budżetu treningu, liczby powtórzeń oraz wyboru agenta losowego jako baselina.",
-        "uses_results": true
+        "title": "Modelowanie środowiska i agenta",
+        "focus": "Reprezentacja stanu (tablica), funkcje przejścia, architektura tablicy Q i strategia eksploracji.",
+        "uses_results": false
       },
       "fingerprint": null,
       "observed": []
@@ -682,8 +738,8 @@
         "results.csv": "C"
       },
       "spec": {
-        "title": "Wyniki symulacji",
-        "focus": "Wykresy uczenia się (krzywe zbieżności), analiza macierzy wygranych vs losowy przeciwnik, kryterium sukcesu.",
+        "title": "Przebieg eksperymentu",
+        "focus": "Uzasadnienie parametrów (lr, gamma, epsilon), budżetu treningowego, liczby powtórzeń i ziaren losowości.",
         "uses_results": true
       },
       "fingerprint": null,
@@ -697,8 +753,23 @@
         "results.csv": "C"
       },
       "spec": {
-        "title": "Wnioski i dyskusja",
-        "focus": "Ocena osiągniętej strategii, ograniczenia tabelarycznego podejścia w większych grach.",
+        "title": "Wyniki i analiza",
+        "focus": "Prezentacja wykresów konwergencji (wyniki z run_study) oraz porównanie statystyczne z graczem losowym (results.csv).",
+        "uses_results": true
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "N:thesis.md#ch7": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch7": "X",
+        "references.bib": "C",
+        "results.csv": "C"
+      },
+      "spec": {
+        "title": "Wnioski",
+        "focus": "Ocena osiągnięcia celu pracy, ograniczenia metody i kierunki dalszych prac.",
         "uses_results": true
       },
       "fingerprint": null,
@@ -707,40 +778,32 @@
   },
   "order": [
     [
-      "I:agents.py",
-      "I:experiment.py"
+      "I:agents/q_agent.py",
+      "I:experiment/run_experiment.py"
     ],
     [
-      "I:agents.py",
+      "I:agents/q_agent.py",
       "R:run"
     ],
     [
-      "I:constants.py",
-      "I:experiment.py"
+      "I:agents/random_agent.py",
+      "I:experiment/run_experiment.py"
     ],
     [
-      "I:constants.py",
-      "I:figures.py"
-    ],
-    [
-      "I:constants.py",
+      "I:agents/random_agent.py",
       "R:run"
     ],
     [
-      "I:environment.py",
-      "I:experiment.py"
+      "I:environment/tictactoe_env.py",
+      "I:experiment/run_experiment.py"
     ],
     [
-      "I:environment.py",
+      "I:environment/tictactoe_env.py",
       "R:run"
     ],
     [
-      "I:experiment.py",
+      "I:experiment/run_experiment.py",
       "R:run"
-    ],
-    [
-      "R:run",
-      "N:thesis.md#ch4"
     ],
     [
       "R:run",
@@ -749,6 +812,10 @@
     [
       "R:run",
       "N:thesis.md#ch6"
+    ],
+    [
+      "R:run",
+      "N:thesis.md#ch7"
     ]
   ]
 }

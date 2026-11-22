@@ -35,6 +35,7 @@ from adk.orchestration.evolution import EvolutionMixin
 from adk.orchestration.planning import PlanningMixin
 from adk.orchestration.plan_healing import PlanHealingMixin
 from adk.orchestration.plan_spec import PlanSpecMixin
+from adk.orchestration.plan_evolution import PlanEvolutionMixin
 from adk.orchestration.plan_stages import PlanStagesMixin
 from adk.orchestration.schedule import SchedulerMixin
 from adk.orchestration.spec_gate import SpecGateMixin
@@ -68,6 +69,7 @@ class NeuroSymbolicOrchestrator(
     GatesMixin,
     PlanSpecMixin,
     PlanStagesMixin,
+    PlanEvolutionMixin,
     PlanChangeMixin,
     SpecGateMixin,
     SchedulerMixin,
@@ -112,6 +114,9 @@ class NeuroSymbolicOrchestrator(
         self._last_experiment_error = ""
         # Files written since the last verification: together with the task's node they are its verification scope.
         self._written_since_verification: set[str] = set()
+        # Blocking findings of the planning critics and the planners already evolved from them (plan_evolution).
+        self._critic_log: list[dict[str, Any]] = []
+        self._critic_cursor: dict[str, int] = {}  # per planner: where in `_critic_log` its unlearned findings start
 
     def _call_agent(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """The single seam through which every part of the orchestrator calls a model (tests patch `call_agent`)."""

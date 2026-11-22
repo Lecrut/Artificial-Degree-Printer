@@ -13,6 +13,7 @@ The harness has already checked by code, and you do NOT repeat:
 ## HARNESS RULES (DO NOT FLAG AS PROBLEMS)
 - The entrypoint (any name) and the figures function declared in `plots` (any module, any name) take **no arguments**; they read their settings from named module-level constants. How the project is split into modules, and which module holds the constants, is the author's choice — never ask for a specific file name.
 - The entrypoint writes `results.csv` in the workspace root (tidy rows `method,metric,value`, optional `std_dev,n_runs`); the file name is never a design problem.
+- **The figures module reads `results.csv` from the workspace root**, the file the entrypoint writes, and the harness calls it after the experiment. It therefore has no dependency on the experiment module (an empty `depends_on` is correct, and adding `experiment.py` would make the experiment import its own plots) and needs no constant for the file name. Never block on a missing dependency between the figures module and the experiment, and never on "hardcoding" `results.csv`.
 - Tasks and unit tests are derived by the harness from the modules and chapters: never ask for tasks.
 - `existing_files` is code the workspace already had; building on it is correct.
 - Signature hints in `provides` are hints; the exact signatures are designed in stage 2.

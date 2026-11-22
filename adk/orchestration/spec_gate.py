@@ -11,7 +11,7 @@ import re
 from adk.hypergraph import Hypergraph, Vertex, Violation, diff, load, observe, save
 from adk.hypergraph.build import spec_from_stub
 from adk.hypergraph.observe import absorbable
-from adk.hypergraph.oracles import check_behaviour, run_fingerprint, stub_functions, validate_test_on_stubs
+from adk.hypergraph.oracles import run_fingerprint, stub_functions, validate_test_on_stubs
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.common import MaterializationError
 from adk.orchestration.failure_kinds import _PYTEST_E_LINE
@@ -56,18 +56,6 @@ class SpecGateMixin:
             if stubs:  # named: "a function" left the coder guessing for three repairs (2026-11-21, 01 game_env)
                 found.append(Violation("NOT_IMPLEMENTED", f"still without an implementation (only a stub body): {', '.join(stubs)}", rel, rel))
         return found
-
-    def _behaviour_violations(self, paths: set[str] | None = None) -> list[Violation]:
-        """Φ_I.5 for the implemented modules in `paths`: σ's doctest examples run on the implementation."""
-        h = self._project_h()
-        if h is None:
-            return []
-        return [
-            v
-            for e in h.edges.values()
-            if e.type == "I" and (paths is None or e.id.removeprefix("I:") in paths)
-            for v in check_behaviour(self.workspace_dir, e.id.removeprefix("I:"), e.spec)
-        ]
 
     def _remember_verdict(self, vertex: str | None, task_id: Any, issues: list[Any]) -> None:
         """Keep the last verdicts on the vertex that has to change: the next attempt sees what was already tried
@@ -206,7 +194,7 @@ class SpecGateMixin:
                 if f"I:{producer}" in h.edges:
                     h.edges[f"I:{producer}"].members.setdefault(rel, "C")
                     h.order = sorted(set(h.order) | {(f"I:{producer}", edge.id)})
-            edge.spec = {**new, "behaviour": edge.spec.get("behaviour", [])}
+            edge.spec = new
         if changes and not refusals:
             save(h, self.hypergraph_path)
             self.logger.log_event("SPEC_CHANGED", reason=reason, changes=changes)

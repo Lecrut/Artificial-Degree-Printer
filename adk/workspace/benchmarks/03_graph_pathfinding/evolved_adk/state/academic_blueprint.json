@@ -1,43 +1,8 @@
 {
-  "thesis_title": "Heuristic Pathfinding Optimization on Spatial Grids: Weighted Octile A* vs. Dijkstra",
-  "thesis_statement": "Weighted A* with octile heuristic expands fewer nodes than Dijkstra on dense grids, with negligible sub-optimality.",
-  "baseline_comparison": "Dijkstra (8-connected) implemented in existing core.py",
-  "entrypoint": "experiment.py:run_experiment",
-  "metrics": [
-    "path_cost",
-    "expanded_nodes"
-  ],
-  "plots": "plots.py:plot_results",
-  "planned_chapters": [
-    {
-      "index": 1,
-      "title": "Introduction",
-      "focus": "Problem statement, contribution summary."
-    },
-    {
-      "index": 2,
-      "title": "Background and Related Work",
-      "focus": "Dijkstra, A*, admissibility, octile distance."
-    },
-    {
-      "index": 3,
-      "title": "Experimental Setup and Results",
-      "focus": "Metrics, graphs comparing expansion count and cost."
-    },
-    {
-      "index": 4,
-      "title": "Conclusion",
-      "focus": "Summary of findings on efficiency vs optimality trade-off."
-    }
-  ],
-  "interfaces": {
-    "config.py": "\"\"\"Experiment configuration constants.\"\"\"\n\nSEED: int = 42\nGRID_SIZE: int = 32\nOBSTACLE_DENSITY: float = 0.22\nREPETITIONS: int = 5\nWEIGHT_A_STAR: float = 1.5\n",
-    "heuristics.py": "\"\"\"Heuristic functions for spatial grids.\"\"\"\nimport math\n\ndef octile_distance(start: tuple[int, int], goal: tuple[int, int]) -> float:\n    \"\"\"Calculate the standard octile distance between two grid points.\n\n    >>> round(octile_distance((0, 0), (3, 4)), 4)\n    5.2426\n    >>> round(octile_distance((0, 0), (0, 0)), 4)\n    0.0\n    \"\"\"\n    ...\n",
-    "weighted_a_star.py": "\"\"\"Weighted A* algorithm for spatial grids.\"\"\"\nfrom typing import Tuple\nimport heapq\nimport math\nfrom heuristics import octile_distance\n\nclass WeightedAStar:\n    \"\"\"Implements weighted A* search on an obstacle grid.\n\n    >>> algo = WeightedAStar((0,0), (5,5), 1.5)\n    >>> len(algo.neighbors(3, 3)) > 0\n    True\n    \"\"\"\n\n    def __init__(self, start: tuple[int, int], goal: tuple[int, int], weight: float) -> None:\n        \"\"\"Initialize the searcher.\"\"\"\n        ...\n\n    def solve(self, grid: list[list[int]]) -> Tuple[float, int]:\n        \"\"\"Run search. Returns (path_cost, expanded_nodes).\"\"\"\n        ...\n\n    def neighbors(self, r: int, c: int) -> list[tuple[int, int]]:\n        \"\"\"Return valid neighbor coordinates for (r, c) within the current grid bounds.\"\"\"\n        ...\n",
-    "plots.py": "\"\"\"Plotting functions for experiment results.\"\"\"\n\nimport matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\nimport os\n\ndef plot_results() -> None:\n    \"\"\"Reads results.csv and saves figures to figures/ directory.\"\"\"\n    ...\n",
-    "experiment.py": "\"\"\"Entrypoint for the pathfinding experiment.\"\"\"\n\nimport random\nimport csv\nimport config\nfrom core import generate_obstacle_grid, search_grid\nfrom weighted_a_star import WeightedAStar\n\ndef run_experiment() -> None:\n    \"\"\"Runs Dijkstra and Weighted A* comparisons and saves to results.csv.\n\n    Writes 'results.csv' with columns [method, metric, value].\n    Calls plots.py:plot_results at the end. Runs REPETITIONS times.\n    \"\"\"\n    ...\n",
-    "core.py": "\"\"\"Existing core logic: grid generation and Dijkstra search.\"\"\"\nimport heapq\nimport math\nimport random\nimport config\n\ndef generate_obstacle_grid(\n    size: int = config.GRID_SIZE, density: float = config.OBSTACLE_DENSITY, seed: int = config.SEED\n) -> list[list[int]]:\n    \"\"\"A seeded size x size grid: 1 is an obstacle, 0 a free cell.\"\"\"\n    ...\n\ndef search_grid(grid: list[list[int]], start: tuple[int, int], goal: tuple[int, int]) -> tuple[float, int]:\n    \"\"\"Dijkstra search on the 8-connected grid.\"\"\"\n    ..."
-  },
+  "thesis_type": "paper",
+  "template_name": "paper_ieee",
+  "template_certain": true,
+  "thesis_title": "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)]\nTemat pracy w języku polskim\nHeurystyczna optymalizacja ścieżek na siatkach przestrzennych: ważony algorytm A* z metryką oktylową\nTemat pracy w języku angielskim\nHeuristic Pathfinding Optimization on Spatial Grids: Weighted Octile A* vs. Dijkstra\nZakres pracy\n\nPunktem wyjścia jest istniejący projekt wyszukiwania ścieżek na siatkach z przeszkodami, zawierający generator siatek oraz bazową implementację algorytmu Dijkstry dla ośmiu kierunków ruchu (krok prosty kosztuje 1, krok po przekątnej pierwiastek z 2). Projekt należy rozbudować, zachowując działanie wersji bazowej, i porównywać się z nią samą, a nie z jej ponowną implementacją.\n\nCelem artykułu jest sprawdzenie, czy ważony algorytm A*, w którym priorytet węzła to dotychczasowy koszt dojścia powiększony o odległość oktylową do celu pomnożoną przez wagę, rozwija mniej węzłów niż algorytm bazowy i jakim kosztem w optymalności znalezionej ścieżki. Parametry, rozmiary i gęstość siatek, liczbę powtórzeń i ziaren losowości, metryki oraz kryterium sukcesu należy dobrać i uzasadnić samodzielnie. Nowy kod powinien składać się z małych modułów o jednym zadaniu, pokrytych testami jednostkowymi, a wszystkie wyniki powinny pochodzić z jednego, powtarzalnego eksperymentu.\n\nArtykuł powinien przedstawić tło (algorytmy Dijkstry i A*, dopuszczalność heurystyki), opis eksperymentu, wyniki na wykresach oraz wnioski. Każda liczba podana w tekście musi wynikać z kodu albo z wyników eksperymentu.",
   "literature_recon": {
     "thesis_type": "paper",
     "research_routing": [
@@ -87,32 +52,5 @@
       "bokan2024slope"
     ],
     "citation_source": "arxiv"
-  },
-  "thesis_type": "paper",
-  "template_name": "paper_ieee",
-  "template_certain": true,
-  "table_of_contents": {
-    "chapters": [
-      {
-        "index": 1,
-        "title": "Introduction",
-        "focus": "Problem statement, contribution summary."
-      },
-      {
-        "index": 2,
-        "title": "Background and Related Work",
-        "focus": "Dijkstra, A*, admissibility, octile distance."
-      },
-      {
-        "index": 3,
-        "title": "Experimental Setup and Results",
-        "focus": "Metrics, graphs comparing expansion count and cost."
-      },
-      {
-        "index": 4,
-        "title": "Conclusion",
-        "focus": "Summary of findings on efficiency vs optimality trade-off."
-      }
-    ]
   }
 }

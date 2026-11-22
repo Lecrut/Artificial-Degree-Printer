@@ -1,6 +1,6 @@
 """Audit VII (2026-11-18): a plan that cannot work is rejected before any code, by code first and then by the critic.
 
-The cases are the plans of 2026-11-17: impossible doctests and an entrypoint that ignores the planned modules (01),
+The cases are the plans of 2026-11-17: an entrypoint that ignores the planned modules (01),
 an attribute declared by `self.x = ...` that vanished from the stub and crashed the run (02)."""
 
 from __future__ import annotations
@@ -18,19 +18,9 @@ _AGENT = (
     "    def __init__(self, lr: float) -> None:\n"
     '        """Store the learning rate."""\n        self.lr = lr\n\n'
     "    def learn(self, state: tuple, next_state: tuple) -> None:\n"
-    '        """Update the table.\n\n'
-    "        >>> agent = QAgent(lr=0.1)\n"
-    "        >>> ns = (0,)*9; ns[0]=1\n"
-    "        >>> agent.learn((0,)*9, ns)\n"
-    '        """\n\n'
+    '        """Update the table from one transition."""\n\n'
     "    def reset(self) -> tuple:\n"
-    '        """Empty board.\n\n'
-    "        >>> agent = QAgent(lr=0.1)\n"
-    "        >>> agent.reset()\n"
-    "        >>> next_s = agent.reset()\n"
-    "        >>> next_s[4] == 0\n"
-    "        True\n"
-    '        """\n'
+    '        """Empty board: nine zeros."""\n'
 )
 _EXPERIMENT_USING_AGENT = _GOOD["src/experiment.py"].replace(
     "from src.data_generator import generate_sample\n",
@@ -38,31 +28,9 @@ _EXPERIMENT_USING_AGENT = _GOOD["src/experiment.py"].replace(
 )
 
 
-def _plan(**changes: str) -> dict[str, str]:
-    return {**_GOOD, "src/agent.py": _AGENT, "src/experiment.py": _EXPERIMENT_USING_AGENT, **changes}
-
-
-def test_doctests_that_no_implementation_can_satisfy_are_rejected():
-    """01: `ns[0]=1` on a tuple (TypeError for every implementation) and a bare `reset()` whose value doctest prints.
-    Examples that only read the result of a stub (`agent.learn`, `next_s[4]`) are not judged."""
-    found = [v for v in code_violations(_plan(), _ENTRY)[1]]
-    invalid = [v for v in found if v.rule == "DOCTEST_INVALID_ON_STUBS"]
-    assert len(invalid) == 1 and "ns[0]=1" in invalid[0].detail and "TypeError" in invalid[0].detail
-    discards = [v for v in found if v.rule == "DOCTEST_DISCARDS_RETURN"]
-    assert len(discards) == 1 and "agent.reset()" in discards[0].detail and discards[0].culprit == "src/agent.py"
-
-
-def test_correct_doctests_pass():
-    fixed = _AGENT.replace("ns = (0,)*9; ns[0]=1", "ns = (1,) + (0,)*8").replace(
-        ">>> agent.reset()\n", ">>> _ = agent.reset()\n"
-    )
-    assert code_violations(_plan(**{"src/agent.py": fixed}), _ENTRY)[1] == []
-
-
 def test_entrypoint_that_never_imports_a_planned_module_is_rejected():
     """01: run_experiment in config.py imported nothing; the coder rewrote the game inside it (83x DATA_FAILED)."""
-    plan = {**_GOOD, "src/agent.py": _AGENT.replace(">>> agent.reset()\n", ">>> _ = agent.reset()\n").replace(
-        "ns = (0,)*9; ns[0]=1", "ns = (1,) + (0,)*8")}
+    plan = {**_GOOD, "src/agent.py": _AGENT}
     found = [v for v in code_violations(plan, _ENTRY)[1] if v.rule == "ENTRYPOINT_DOES_NOT_USE"]
     assert len(found) == 1 and "src/agent.py" in found[0].detail and found[0].culprit == "src/experiment.py"
 

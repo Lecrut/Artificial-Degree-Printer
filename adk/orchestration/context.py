@@ -17,7 +17,7 @@ from adk.tools.building.experiment_runner import EXPERIMENT_TIMEOUT_S
 
 def _spec_view(h: Hypergraph, module: str) -> dict[str, Any]:
     spec = h.edges[f"I:{module}"].spec
-    return {k: spec.get(k) for k in ("import", "symbols", "behaviour")}
+    return {k: spec.get(k) for k in ("import", "symbols")}
 
 
 def _results_targets(workspace: Path, outputs: list[str]) -> tuple[list[str], list[str]]:

@@ -475,3 +475,47 @@ def test_existing_code_is_kept_or_extended_never_lost(tmp_path: Path) -> None:
     first = next(p for a, p in calls if a == "plan_module" and p["module"]["file"] == "src/mod_a.py")
     assert first["previous_source"] == _MOD_A
     assert blockers and "the existing code defines helper_a" in " ".join(blockers)
+
+
+def test_a_revised_outline_that_drops_a_name_the_frozen_consumers_import_still_settles(tmp_path: Path) -> None:
+    """2026-11-22, 01: the outline was revised (`helper_a` renamed), the accepted consumers still imported the old name,
+    and the author of the changed module was told to follow the outline and to keep what the consumers import: no right
+    answer, six attempts, PLAN_REJECTED. The changed module follows the outline; its consumers are reopened at their turn."""
+    plan = _base_plan()
+    renamed = {
+        "src/mod_a.py": 'def helper_a_v2() -> int:\n    """Return 1."""\n    return 1\n',
+        "src/mod_b.py": 'from src.mod_a import helper_a_v2\n\n\ndef helper_b() -> int:\n    """Return 2."""\n    return 2\n',
+        "src/experiment.py": (
+            "from src.mod_a import helper_a_v2\nfrom src.mod_b import helper_b\n\n"
+            'def run_experiment() -> int:\n    """Run."""\n    return helper_a_v2() + helper_b()\n'
+        ),
+    }
+
+    def critic(_payload: dict, n: int) -> dict | None:
+        if n == 1:  # the main critic sends the outline back (a finding about the blueprint)
+            return {"status": "FAIL", "issues": [{
+                "blocking": True, "where": "academic_blueprint", "problem": "the success criterion is not stated", "fix": "state it",
+            }]}
+        return None
+
+    def outline(_payload: dict, n: int) -> dict | None:
+        if n == 1:
+            return None
+        revised = outline_from_plan(plan)  # the revision renames what src/mod_a.py promises
+        next(m for m in revised["modules"] if m["file"] == "src/mod_a.py")["provides"] = ["helper_a_v2"]
+        return revised
+
+    def module(payload: dict, _n: int) -> dict | None:
+        rel = payload["module"]["file"]
+        if rel == "src/mod_a.py" and payload["module"]["provides"] == ["helper_a_v2"]:
+            return {"source": renamed[rel], "needs": {}}
+        if rel in ("src/mod_b.py", "src/experiment.py") and "helper_a_v2" in str(payload["dependencies"].get("src/mod_a.py", "")):
+            return {"source": renamed[rel], "needs": {}}
+        return None
+
+    (_plan, interfaces, violations), _calls = _run(
+        _make_orch(tmp_path), plan, {"plan_critic_guard": critic, "plan_outline": outline, "plan_module": module},
+    )
+    assert violations == []
+    assert "helper_a_v2" in interfaces["src/mod_a.py"] and "helper_a_v2" in interfaces["src/experiment.py"]
+    assert "helper_a_v2" in interfaces["src/mod_b.py"]

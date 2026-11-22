@@ -1,183 +1,147 @@
 {
   "version": 2,
   "vertices": {
-    "data_generation.py": {
+    "synth_data.py": {
       "kind": "code",
       "owner": "coder",
-      "state": "verified",
-      "description": "Implement data_generation.py: Generates synthetic multi-channel physiological telemetry signals with injected anomalies for ground-truth evaluation.. Implement every name its interface declares: generate_dataset.",
+      "state": "failed",
+      "description": "Implement synth_data.py: Generuje syntetyczne dane telemetrii fizjologicznej (wielokanałowe szumy z korelacjami) i wstrzykuje anomalie o znanym położeniu.. Implement every name its interface declares: generate_dataset.",
       "attempts": 1,
-      "history": [],
+      "history": [
+        {
+          "task_id": "T6",
+          "issues": [
+            "Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        }
+      ],
       "last_writer": {
         "agent": "seed_coder",
         "task_id": "T5"
       },
       "files": [],
+      "failures": 1
+    },
+    "baseline_zscore.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement baseline_zscore.py: Implementuje statyczny, jednowymiarowy detektor bazowy oparty na wartościach Z dla każdego kanału osobno.. Implement every name its interface declares: ZScoreBaseline, ZScoreBaseline.__init__, ZScoreBaseline.fit, ZScoreBaseline.predict.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T7"
+      },
+      "files": [],
       "failures": 0
     },
-    "baselines.py": {
+    "method_rse.py": {
       "kind": "code",
       "owner": "coder",
       "state": "verified",
-      "description": "Implement baselines.py: Implements the static single-variate Z-score anomaly detection baseline with methods for both binary prediction and continuous scoring.. Implement every name its interface declares: ZScoreDetector, ZScoreDetector.__init__, ZScoreDetector.predict, ZScoreDetector.predict_scores.",
-      "attempts": 4,
+      "description": "Implement method_rse.py: Implementuje proponowany detektor komitety losowych podprzestrzeni (Random Subspace Ensemble).. Implement every name its interface declares: RandomSubspaceDetector, RandomSubspaceDetector.__init__, RandomSubspaceDetector.fit, RandomSubspaceDetector.predict.",
+      "attempts": 1,
       "history": [
         {
-          "task_id": "REPLAN",
+          "task_id": "T10",
           "issues": [
-            "Interface of baselines.py changed by the re-plan."
+            "Pytest failure: ..F                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         },
         {
-          "task_id": "R2_1",
+          "task_id": "T10_FIX1",
           "issues": [
-            "BEHAVIOUR_MISMATCH [baselines.py]: the implementation does not give the results the interface specifies:\n- example `scores.tolist()` expected `[1.0, 0.0, 1.0]`, got `[1.224744871391589, 0.0, 1.224744871391589]`\n- example `y.tolist()` expected `[0, 0, 0, 1]`, got `[0, 0, 0, 0]`"
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- method_rse.py:RandomSubspaceDetector.predict: The new code of RandomSubspaceDetector.predict contains no definition of `predict`; nothing was saved."
           ]
         },
         {
-          "task_id": "R2_1",
+          "task_id": "T10",
           "issues": [
-            "BEHAVIOUR_MISMATCH [baselines.py]: the implementation does not give the results the interface specifies:\n- example `y.tolist()` expected `[0, 0, 0, 1]`, got `[0, 0, 0, 0]`"
-          ]
-        },
-        {
-          "task_id": "R2_1",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [baselines.py]: the implementation does not give the results the interface specifies:\n- example `scores.tolist()` expected `[1.0, 0.0, 1.0]`, got `[1.224744871391589, 0.0, 1.224744871391589]`\n- example `y.tolist()` expected `[0, 0, 0, 1]`, got `[0, 0, 0, 0]`"
-          ]
-        },
-        {
-          "task_id": "REPLAN",
-          "issues": [
-            "Interface of baselines.py changed by the re-plan."
+            "Pytest failure: ..F                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "R3_1"
+        "task_id": "T10_FIX2"
       },
       "files": [],
-      "failures": 8
+      "failures": 3
     },
-    "rs_ensemble.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "failed",
-      "description": "Implement rs_ensemble.py: Implements the proposed Random Subspace Ensemble detector with methods for fitting and continuous scoring.. Implement every name its interface declares: RSADetector, RSADetector.__init__, RSADetector.fit, RSADetector.predict, RSADetector.predict_scores.",
-      "attempts": 6,
-      "history": [
-        {
-          "task_id": "R4_1",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000001AFAC09F750>`\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000001AFADA69220>`"
-          ]
-        },
-        {
-          "task_id": "R4_1",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x0000024BFF9EF750>`\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x0000024BFFF19220>`"
-          ]
-        },
-        {
-          "task_id": "R5_1",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000002677ED7F750>`\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000002677F0E9350>`"
-          ]
-        },
-        {
-          "task_id": "R5_1",
-          "issues": [
-            "BEHAVIOUR_MISMATCH [rs_ensemble.py]: the implementation does not give the results the interface specifies:\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000001C6FED4F750>`\n- RSADetector.fit: example `det.fit(X)` expected `<RSADetector object>`, got `<rs_ensemble.RSADetector object at 0x000001C6FF0B9350>`"
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "R5_1_FIX1"
-      },
-      "files": [],
-      "failures": 14
-    },
-    "evaluation.py": {
+    "metrics.py": {
       "kind": "code",
       "owner": "coder",
       "state": "verified",
-      "description": "Implement evaluation.py: Computes classification metrics including ROC-AUC and aggregates statistical summaries for repeated experiments.. Implement every name its interface declares: compute_metrics, aggregate_results.",
-      "attempts": 2,
+      "description": "Implement metrics.py: Udostępnia funkcje do obliczania wybranych metryk oceny detekcji anomalii.. Implement every name its interface declares: calculate_auc_roc, calculate_f1_score.",
+      "attempts": 1,
       "history": [
         {
-          "task_id": "REPLAN",
+          "task_id": "R1_3_FIX1",
           "issues": [
-            "Interface of evaluation.py changed by the re-plan."
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_metrics.py]: against the stubs a test"
           ]
         },
         {
-          "task_id": "R1_2",
+          "task_id": "R1_3_FIX2",
           "issues": [
-            "BEHAVIOUR_MISMATCH [evaluation.py]: the implementation does not give the results the interface specifies:\n- example `(round(metrics['precision'], 2), round(metrics['recall'], 2), round(metrics['f1'], 2), round(metrics['roc_auc'], 2))` expected `(0.5, 1.0, 0.67, 0.75)`, got `(0.5, 0.5, 0.5, 0.5)`"
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_metrics.py]: against the stubs a test"
           ]
         },
         {
-          "task_id": "PLAN",
+          "task_id": "R2_3_FIX1",
           "issues": [
-            "Interface of evaluation.py kept by the planner: The doctest example in `compute_metrics` is inconsistent with the provided default parameters and data. With `y_true=[0,0,1,1]`, `y_scores=[0.1,0.9,0.8,0.2]`, and default `threshold=0.5`, the predicted labels are `[0, 1, 1, 0]`. This results in precision=0.5 (1 TP out of 2 positives), recall=0.5 (1 TP out of 2 actuals), f1=0.5, and roc_auc=0.75. The interface claims the result is `(0.5, 1.0, 0.67, 0.75)`, which implies a recall of 1.0 (all true positives detected). This requires either different labels/scores or a lower threshold (e.g., 0.2 would yield `y_pred=[0,1,1,1]` giving recall=1.0 and f1=0.8). Since the input data was not changed but the expected output is clearly for a case where all positives are detected, the most minimal correction to make the example valid without changing the test data structure significantly is to adjust the `y_scores` such that the default threshold yields the expected metrics, OR adjust the expected values in the docstring. However, looking at the previous attempts, they tried to fix the implementation to match a bad interface or vice versa. Let's look closer. `y_scores=[0.1, 0.9, 0.8, 0.2]`. If threshold is 0.5: `[0, 1, 1, 0]`. TP=1, FP=0, FN=1. Precision=1/1=1? No, FP=0 in the second position? `y_scores[1]=0.9 >= 0.5` -> 1. `y_true[1]=0`. So FP=1. TP=1 (`y_scores[2]=0.8`, `y_true[2]=1`). FN=1 (`y_scores[3]=0.2`, `y_true[3]=1`). TN=1. Precision = TP/(TP+FP) = 1/2 = 0.5. Recall = TP/(TP+FN) = 1/2 = 0.5. F1 = 2*0.5*0.5 / (0.5+0.5) = 0.5. ROC-AUC is calculated on raw scores: `(0.9+0.8)/2 = 0.85`? No, AUC for `[0,0,1,1]` and `[0.1,0.9,0.8,0.2]`. Rank of positives (indices 2,3) vs negatives (0,1). Score pos: 0.8, 0.2. Score neg: 0.1, 0.9. Pairs (neg, pos): (0.1,0.8)->win, (0.1,0.2)->win, (0.9,0.8)->loss, (0.9,0.2)->loss. Wins=2, Ties=0. Total=4. AUC=0.5. Wait. The example says `roc_auc` 0.75. Let's re-calculate AUC manually. Scores: `[0.1, 0.9, 0.8, 0.2]`. Labels: `[0, 0, 1, 1]`. Negative scores: `0.1` (idx 0), `0.9` (idx 1). Positive scores: `0.8` (idx 2), `0.2` (idx 3). Comparing every positive to every negative: `(0.8, 0.1)` -> Pos > Neg (+1). `(0.8, 0.9)` -> Pos < Neg (+0). `(0.2, 0.1)` -> Pos > Neg (+1). `(0.2, 0.9)` -> Pos < Neg (+0). Total wins=2, total pairs=4. AUC = 0.5. The interface claims `0.75`. So the interface example is completely wrong mathematically for standard definitions. To fix it with minimal change, we must correct the *expected output* in the doctest to match the actual behavior of the function with the provided inputs, OR change the inputs to match the expected output. Changing inputs is safer for "
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_metrics.py]: against the stubs a test"
           ]
         },
         {
-          "task_id": "R1_2",
+          "task_id": "R2_3_FIX2",
           "issues": [
-            "BEHAVIOUR_MISMATCH [evaluation.py]: the implementation does not give the results the interface specifies:\n- example `(round(metrics['precision'], 2), round(metrics['recall'], 2), round(metrics['f1'], 2), round(metrics['roc_auc'], 2))` raised TypeError: 'NoneType' object is not subscriptable in the example's own code"
-          ]
-        },
-        {
-          "task_id": "PLAN",
-          "issues": [
-            "Interface of evaluation.py amended by the planner: The interface's doctest example for `compute_metrics` contains mathematically incorrect expected outputs. With the provided inputs `y_true=[0,0,1,1]`, `y_scores=[0.1,0.9,0.8,0.2]` and default threshold 0.5, `y_pred` becomes `[0,1,1,0]`. This yields Precision=0.5 (TP=1, FP=1), Recall=0.5 (FN=1), F1=0.5, and ROC-AUC=0.5 (standard calculation). The interface claims `(0.5, 1.0, 0.67, 0.75)`, which is impossible for these inputs with standard scikit-learn metrics. Additionally, the previous finding of `TypeError` in the doctest suggests potential parsing or execution issues with the specific string representation or missing imports in the example context, but the primary error is the factual impossibility of the expected values. The interface must be amended to reflect correct calculations for the given inputs."
+            "ANSWER_REJECTED: The answer for 'metrics.py' was not saved: the fields ['test_code'] match no allowed shape. Allowed: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section_content}]'). Return files in 'files"
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "R1_2_FIX2"
+        "task_id": "T12_FIX_1"
       },
       "files": [],
-      "failures": 4
+      "failures": 5
     },
-    "experiment.py": {
+    "run_experiment.py": {
       "kind": "entry",
       "owner": "coder",
       "state": "stub",
-      "description": "Implement experiment.py: Runs the full experimental loop: generates data, trains detectors, evaluates continuous scores, and writes results.csv.. Implement every name its interface declares: run_experiment.",
+      "description": "Implement run_experiment.py: Wykonuje powtarzalne eksperymenty porównujące metodę z bazową, agregując wyniki i zapisując je do results.csv.. Implement every name its interface declares: run_study.",
       "attempts": 0,
       "history": [],
       "last_writer": null,
       "files": [],
       "failures": 0
     },
-    "figures.py": {
+    "plot_results.py": {
       "kind": "code",
       "owner": "coder",
       "state": "verified",
-      "description": "Implement figures.py: Reads results.csv and generates comparison plots into the figures/ directory.. Implement every name its interface declares: plot_results.",
+      "description": "Implement plot_results.py: Generuje wykresy z wyników eksperymentu (porównanie metod, rozkład błędów) i zapisuje je w figures/.. Implement every name its interface declares: plot_figures.",
       "attempts": 1,
       "history": [
         {
           "task_id": "T13",
           "issues": [
-            "BEHAVIOUR_MISMATCH [figures.py]: the implementation does not give the results the interface specifies:\n- plot_results: example `_ = plot_results()` raised RuntimeError: results.csv not found. Creating dummy data for verification. in figures.py > plot_results, line 22: `raise RuntimeError(f'{csv_path} not found. Creating dummy data for verification.')`"
+            "Ruff lint failure: plot_results.py:17:10: F821 Undefined name `pd`\nplot_results.py:36:78: F821 Undefined name `np`\nplot_results.py:41:16: F821 Undefined name `plt`\nplot_results.py:47:5: F821 Undefined name `plt`\nplot_results.py:50:5: F821 Undefined name `plt`\nplot_results.py:51:24: F821 Undefined name `plt`\nplot_results.py:60:33: F821 Undefined name `plt`\nplot_results.py:69:5: F821 Undefined name `plt`\nplot_results.py:71:5: F821 Undefined name `plt`\nplot_results.py:72:12: F821 Undefined name `pl"
+          ]
+        },
+        {
+          "task_id": "T13_FIX1",
+          "issues": [
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- plot_results.py:py: The new code of py contains no definition of `py`; nothing was saved."
           ]
         },
         {
           "task_id": "T13",
           "issues": [
-            "BEHAVIOUR_MISMATCH [figures.py]: the implementation does not give the results the interface specifies:\n- plot_results: example `_ = plot_results()` raised IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed in figures.py > plot_results, line 38: `ax = axes[row, col]`"
-          ]
-        },
-        {
-          "task_id": "PLAN",
-          "issues": [
-            "Interface of figures.py kept by the planner: The interface is correct and coherent. The repeated failures (IndexError on `axes[row, col]` and RuntimeError about missing CSV) are caused by the implementation's internal logic: 1) The implementation uses a complex subplot grid (`plt.subplots(rows, cols)`) which may result in different array shapes than expected if not handled perfectly, leading to the IndexError when accessing `axes[row, col]`. 2) The implementation contains hardcoded fallback logic that raises an error or creates dummy data instead of relying on the external file structure defined by the interface's docstring intent ('Reads results.csv'). The interface simply promises to read a CSV and plot; the implementation must do exactly that without internal mock-data overrides or complex grid indexing errors."
+            "Ruff lint failure: plot_results.py:17:10: F821 Undefined name `pd`\nplot_results.py:36:78: F821 Undefined name `np`\nplot_results.py:41:16: F821 Undefined name `plt`\nplot_results.py:47:5: F821 Undefined name `plt`\nplot_results.py:50:5: F821 Undefined name `plt`\nplot_results.py:51:24: F821 Undefined name `plt`\nplot_results.py:60:33: F821 Undefined name `plt`\nplot_results.py:69:5: F821 Undefined name `plt`\nplot_results.py:71:5: F821 Undefined name `plt`\nplot_results.py:72:12: F821 Undefined name `pl"
           ]
         }
       ],
@@ -186,83 +150,143 @@
         "task_id": "T13_FIX2"
       },
       "files": [],
-      "failures": 2
+      "failures": 3
     },
-    "tests/test_data_generation.py": {
+    "tests/test_synth_data.py": {
       "kind": "test",
       "owner": "tester",
-      "state": "verified",
-      "description": "Unit tests of generate_dataset from data_generation.py in tests/test_data_generation.py, through the declared interface only.",
+      "state": "written",
+      "description": "Unit tests of generate_dataset from synth_data.py in tests/test_synth_data.py, through the declared interface only.",
       "attempts": 1,
       "history": [
         {
           "task_id": "T6",
           "issues": [
-            "ANSWER_REJECTED: Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_data_generation.py:15: invalid syntax\n    14: def test_generate_dataset_labels_binary():\n    15:     \"\"\"Test that generate_dataset returns binary labels (0 or 1).\n    16: "
+            "ANSWER_REJECTED: Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_synth_data.py:39: unmatched '}'\n    38:         generate_dataset(0, n_channels, anomaly_fraction, base_seed)\n    39: }"
+          ]
+        },
+        {
+          "task_id": "T6",
+          "issues": [
+            "Pytest failure: no tests ran: tests/test_synth_data.py define no test function (`def test_...`)",
+            "Ruff lint failure: tests\\test_synth_data.py:11:28: F821 Undefined name `np`\nFound 1 error."
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "T6"
+        "task_id": "T6_FIX2"
       },
       "files": [],
-      "failures": 1
+      "failures": 2
     },
-    "tests/test_baselines.py": {
+    "tests/test_baseline_zscore.py": {
       "kind": "test",
       "owner": "tester",
-      "state": "verified",
-      "description": "Unit tests of ZScoreDetector from baselines.py in tests/test_baselines.py, through the declared interface only.",
-      "attempts": 1,
-      "history": [],
-      "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "T8"
-      },
-      "files": [],
-      "failures": 0
-    },
-    "tests/test_rs_ensemble.py": {
-      "kind": "test",
-      "owner": "tester",
-      "state": "spec",
-      "description": "Unit tests of RSADetector from rs_ensemble.py in tests/test_rs_ensemble.py, through the declared interface only.",
-      "attempts": 0,
-      "history": [],
-      "last_writer": null,
-      "files": [],
-      "failures": 0
-    },
-    "tests/test_evaluation.py": {
-      "kind": "test",
-      "owner": "tester",
-      "state": "verified",
-      "description": "Unit tests of compute_metrics, aggregate_results from evaluation.py in tests/test_evaluation.py, through the declared interface only.",
-      "attempts": 1,
+      "state": "failed",
+      "description": "Unit tests of ZScoreBaseline from baseline_zscore.py in tests/test_baseline_zscore.py, through the declared interface only.",
+      "attempts": 3,
       "history": [
         {
-          "task_id": "T12",
+          "task_id": "R1_1",
           "issues": [
-            "ANSWER_REJECTED: Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_evaluation.py:63: unmatched '}'\n    62:     assert abs(m1_acc_row['value'] - expected_m1_acc) < 1e-4, f\"Expected mean 0.925, got {m1_acc_row['value']}\"\n    63: }"
+            "Pytest failure: FF...                                                                                                                                                                                                                                                                                                [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         },
         {
-          "task_id": "T12",
+          "task_id": "R2_1",
           "issues": [
-            "Pytest failure: .FF                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
+            "Pytest failure: FFFFF....                                                                                                                                                                                                                                                                                            [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         },
         {
-          "task_id": "T12",
+          "task_id": "R2_1",
           "issues": [
-            "Pytest failure: ..F                                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =============================="
+            "Pytest failure: FFFFF....                                                                                                                                                                                                                                                                                            [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "R2_1",
+          "issues": [
+            "Pytest failure: FFFFF....                                                                                                                                                                                                                                                                                            [100%]\n================================================================================================================================================ FAILURES =============================="
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "T12_FIX2"
+        "task_id": "R2_1_FIX2"
+      },
+      "files": [],
+      "failures": 9
+    },
+    "tests/test_method_rse.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "failed",
+      "description": "Unit tests of RandomSubspaceDetector from method_rse.py in tests/test_method_rse.py, through the declared interface only.",
+      "attempts": 3,
+      "history": [
+        {
+          "task_id": "R2_2",
+          "issues": [
+            "Pytest failure: ..FF.                                                                                                                                                                                                                                                                                                [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "R2_2",
+          "issues": [
+            "Pytest failure: ...F.                                                                                                                                                                                                                                                                                                [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        },
+        {
+          "task_id": "R2_2_FIX2",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_method_rse.py]: against the stubs a t"
+          ]
+        },
+        {
+          "task_id": "R2_2",
+          "issues": [
+            "Pytest failure: ...F.                                                                                                                                                                                                                                                                                                [100%]\n================================================================================================================================================ FAILURES =============================="
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "R2_2_FIX1"
+      },
+      "files": [],
+      "failures": 10
+    },
+    "tests/test_metrics.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "failed",
+      "description": "Unit tests of calculate_auc_roc, calculate_f1_score from metrics.py in tests/test_metrics.py, through the declared interface only.",
+      "attempts": 3,
+      "history": [
+        {
+          "task_id": "T12_FIX2",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_metrics.py]: against the stubs a test"
+          ]
+        },
+        {
+          "task_id": "R1_3_FIX",
+          "issues": [
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_metrics.py:None: The new code of None contains no definition of `None`; nothing was saved."
+          ]
+        },
+        {
+          "task_id": "R2_3_FIX",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_metrics.py]: against the stubs a test"
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "R2_3"
       },
       "files": [],
       "failures": 3
@@ -293,7 +317,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Wprowadzenie — Motywacja problemu detekcji anomalii w telemetrii fizjologicznej, specyfika danych (szum, artefakty) oraz cel pracy.",
+      "description": "Wprowadzenie — Motywacja problemu detekcji anomalii w telemetrii fizjologicznej, problemy z szumem i artefaktami, cel pracy.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -304,7 +328,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Przegląd metod detekcji anomalii — Omówienie statycznych metod jednowymiarowych (np. Z-score) oraz zaawansowanych podejść ensemblingowych i opartych na podprzestrzeniach.",
+      "description": "Przegląd metodyk detekcji anomalii — Klasyfikacja metod statycznych i dynamicznych, przegląd metod opartych na odległości, podprzestrzeniach oraz uczeniu głębokim w kontekście danych fizjologicznych.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -314,9 +338,9 @@
     "thesis.md#ch3": {
       "kind": "chapter",
       "owner": "writer",
-      "state": "verified",
-      "description": "Propozycja algorytmu komitetowego — Szczegółowy opis teoretyczny i implementacyjny detektora losowych podprzestrzeni (Random Subspace Ensemble) dostosowanego do danych wielokanałowych.",
-      "attempts": 1,
+      "state": "spec",
+      "description": "Propozycja metody komitetu losowych podprzestrzeni — Szczegółowy opis algorytmu RSE (Random Subspace Ensemble), strategia agregacji wyników detektorów podrzędnych oraz uzasadnienie wyborów teoretycznych.",
+      "attempts": 0,
       "history": [],
       "last_writer": null,
       "files": [],
@@ -326,7 +350,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "spec",
-      "description": "Eksperymenty i wyniki — Opis generacji danych syntetycznych, ustalone parametry, przedstawienie wyników metrycznych z uwzględnieniem rozrzutu między powtórzeniami oraz analiza porównawcza z bazą.",
+      "description": "Eksperymenty i analiza wyników — Opis generowania danych syntetycznych, konfiguracja eksperymentu (liczba powtórzeń, ziarna), wyniki liczbowe z odchyleniami standardowymi oraz interpretacja wykresów w kontekście tezy.",
       "attempts": 0,
       "history": [],
       "last_writer": null,
@@ -337,7 +361,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "spec",
-      "description": "Wnioski — Podsumowanie sukcesu lub porażki tezy oraz kierunki przyszłych prac nad odpornością na szum w detekcji medycznej.",
+      "description": "Wnioski — Podsumowanie osiągnięć pracy, potwierdzenie lub odrzucenie tezy, ograniczenia metody oraz kierunki przyszłych prac.",
       "attempts": 0,
       "history": [],
       "last_writer": null,
@@ -346,34 +370,28 @@
     }
   },
   "edges": {
-    "I:data_generation.py": {
+    "I:synth_data.py": {
       "type": "I",
       "members": {
-        "data_generation.py": "P",
-        "experiment.py": "C",
-        "tests/test_data_generation.py": "T"
+        "synth_data.py": "P",
+        "run_experiment.py": "C",
+        "tests/test_synth_data.py": "T"
       },
       "spec": {
-        "import": "data_generation",
+        "import": "synth_data",
         "symbols": {
-          "NUM_CHANNELS": {
-            "kind": "const",
-            "type": "int"
-          },
-          "ANOMALY_PROBABILITY": {
-            "kind": "const",
-            "type": "float"
-          },
-          "N_SAMPLES": {
-            "kind": "const",
-            "type": "int"
-          },
           "generate_dataset": {
             "kind": "func",
             "params": [
+              "n_samples",
+              "n_channels",
+              "anomaly_fraction",
               "seed"
             ],
             "required": [
+              "n_samples",
+              "n_channels",
+              "anomaly_fraction",
               "seed"
             ]
           }
@@ -382,28 +400,25 @@
         "packages": [
           "numpy",
           "typing"
-        ],
-        "behaviour": [
-          "Generate synthetic physiological data with anomalies and return the signal along with its ground-truth binary labels.\n\nThe function constructs a multi-channel time series where each channel\nfollows a smooth stochastic process to mimic physiological signals like ECG or EEG.\nAnomalies are injected randomly according to ANOMALY_PROBABILITY, modifying the\nsignal amplitude significantly to represent artifacts or pathological events.\n\nParameters\n----------\nseed : int\n    Random seed for reproducibility.\n\nReturns\n-------\nTuple[np.ndarray, np.ndarray]\n    A tuple containing:\n    - `data`: A numpy array of shape (N_SAMPLES, NUM_CHANNELS) representing\n      the telemetry signal with anomalies injected.\n    - `labels`: A numpy array of shape (N_SAMPLES,) with binary values (0 for normal,\n      1 for anomaly).\n\nExamples\n--------\n>>> data, labels = generate_dataset(seed=42)\n>>> data.shape\n(2000, 8)\n>>> labels.shape\n(2000,)\n>>> set(labels.tolist()).issubset({0, 1})\nTrue"
         ]
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:baselines.py": {
+    "I:baseline_zscore.py": {
       "type": "I",
       "members": {
-        "baselines.py": "P",
-        "experiment.py": "C",
-        "tests/test_baselines.py": "T"
+        "baseline_zscore.py": "P",
+        "run_experiment.py": "C",
+        "tests/test_baseline_zscore.py": "T"
       },
       "spec": {
-        "import": "baselines",
+        "import": "baseline_zscore",
         "symbols": {
-          "ZScoreDetector": {
+          "ZScoreBaseline": {
             "kind": "class"
           },
-          "ZScoreDetector.__init__": {
+          "ZScoreBaseline.__init__": {
             "kind": "method",
             "params": [
               "self",
@@ -411,115 +426,102 @@
             ],
             "required": []
           },
-          "ZScoreDetector.predict_scores": {
+          "ZScoreBaseline.fit": {
             "kind": "method",
             "params": [
               "self",
-              "data"
+              "X"
             ],
             "required": [
-              "data"
+              "X"
             ]
           },
-          "ZScoreDetector.predict": {
+          "ZScoreBaseline.predict": {
             "kind": "method",
             "params": [
               "self",
-              "data"
+              "X"
             ],
             "required": [
-              "data"
+              "X"
             ]
           },
-          "ZScoreDetector.threshold": {
+          "ZScoreBaseline.mean_": {
+            "kind": "attr"
+          },
+          "ZScoreBaseline.std_": {
+            "kind": "attr"
+          },
+          "ZScoreBaseline.threshold": {
             "kind": "attr"
           }
         },
         "uses": {},
         "packages": [
-          "numpy",
-          "typing"
-        ],
-        "behaviour": [
-          "Initialize with a Z-score threshold for anomaly detection.\n\nParameters\n----------\nthreshold : float\n    The threshold above which a sample is considered anomalous.\n\nExamples\n--------\n>>> det = ZScoreDetector(threshold=1.5)\n>>> det.threshold\n1.5",
-          "Return the maximum absolute Z-score across channels for each row.\n\nComputes mean and standard deviation for each channel over ALL samples\nin `data` (population std, ddof=0). The Z-score for a value is `(x - mean) / std`.\nReturns the maximum absolute Z-score for each sample (row).\n\nParameters\n----------\ndata : np.ndarray\n    Array of shape (n_samples, n_channels).\n\nReturns\n-------\nnp.ndarray\n    Array of shape (n_samples,) with anomaly scores.\n\nExamples\n--------\n>>> import numpy as np\n>>> det = ZScoreDetector(threshold=3.0)\n>>> # Data: [[0], [2]]. Mean=1, Std=1. Z-scores: [|0-1|/1, |2-1|/1] = [1., 1.]\n>>> d = np.array([[0], [2]])\n>>> scores = det.predict_scores(d)\n>>> scores.tolist()\n[1.0, 1.0]",
-          "Return binary anomaly labels for each row based on Z-scores.\n\nRows are flagged as anomalous (1) if any channel's absolute\nZ-score exceeds the threshold.\n\nParameters\n----------\ndata : np.ndarray\n    Array of shape (n_samples, n_channels).\n\nReturns\n-------\nnp.ndarray\n    Integer array of shape (n_samples,) with 1 for anomalous rows.\n\nExamples\n--------\n>>> import numpy as np\n>>> det = ZScoreDetector(threshold=2.0)\n>>> # Data: [[0], [0], [0], [10]]. Mean=2.5, Std=4.33. Z(10)=1.73 < 2.0 -> [0,0,0,0]\n>>> d = np.array([[0], [0], [0], [10]])\n>>> y = det.predict(d)\n>>> y.tolist()\n[0, 0, 0, 0]"
+          "numpy"
         ]
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:rs_ensemble.py": {
+    "I:method_rse.py": {
       "type": "I",
       "members": {
-        "rs_ensemble.py": "P",
-        "experiment.py": "C",
-        "tests/test_rs_ensemble.py": "T"
+        "method_rse.py": "P",
+        "run_experiment.py": "C",
+        "tests/test_method_rse.py": "T"
       },
       "spec": {
-        "import": "rs_ensemble",
+        "import": "method_rse",
         "symbols": {
-          "RSADetector": {
+          "default_subsample_ratio": {
+            "kind": "const",
+            "type": "float"
+          },
+          "RandomSubspaceDetector": {
             "kind": "class"
           },
-          "RSADetector.__init__": {
+          "RandomSubspaceDetector.__init__": {
             "kind": "method",
             "params": [
               "self",
               "n_estimators",
+              "subsample_ratio",
+              "score_aggregation",
               "random_state"
             ],
             "required": []
           },
-          "RSADetector.fit": {
+          "RandomSubspaceDetector.fit": {
             "kind": "method",
             "params": [
               "self",
-              "data"
+              "X"
             ],
             "required": [
-              "data"
+              "X"
             ]
           },
-          "RSADetector.predict": {
+          "RandomSubspaceDetector.predict": {
             "kind": "method",
             "params": [
               "self",
-              "data"
+              "X"
             ],
             "required": [
-              "data"
+              "X"
             ]
           },
-          "RSADetector.predict_scores": {
-            "kind": "method",
-            "params": [
-              "self",
-              "data"
-            ],
-            "required": [
-              "data"
-            ]
-          },
-          "RSADetector.n_estimators": {
+          "RandomSubspaceDetector.n_estimators": {
             "kind": "attr"
           },
-          "RSADetector.random_state": {
+          "RandomSubspaceDetector.subsample_ratio": {
             "kind": "attr"
           },
-          "RSADetector.estimators_": {
+          "RandomSubspaceDetector.score_aggregation": {
             "kind": "attr"
           },
-          "RSADetector.mean_subspaces_": {
-            "kind": "attr"
-          },
-          "RSADetector.std_subspaces_": {
-            "kind": "attr"
-          },
-          "RSADetector.train_score_mean_": {
-            "kind": "attr"
-          },
-          "RSADetector.train_score_std_": {
+          "RandomSubspaceDetector.random_state": {
             "kind": "attr"
           }
         },
@@ -527,116 +529,133 @@
         "packages": [
           "numpy",
           "typing"
-        ],
-        "behaviour": [
-          "Initialize the detector with hyperparameters.\n\nParameters\n----------\nn_estimators : int\n    Number of random subspaces to use.\nrandom_state : Optional[int]\n    Seed for reproducibility.\n\nExamples\n--------\n>>> det = RSADetector(n_estimators=2, random_state=42)\n>>> det.n_estimators\n2\n>>> det.random_state\n42",
-          "Fit the ensemble on training data.\n\nLearns mean and standard deviation for each random subspace,\nand stores statistics of anomaly scores computed on this training data\nto allow automatic thresholding in `predict`.\n\nParameters\n----------\ndata : np.ndarray\n    Training data of shape (n_samples, n_features).\n\nReturns\n-------\nRSADetector\n    self\n\nExamples\n--------\n>>> import numpy as np\n>>> X = np.array([[0.1, 0.2], [0.3, 0.4], [5.0, 5.0]])\n>>> det = RSADetector(n_estimators=1, random_state=42)\n>>> result = det.fit(X)\n>>> result is det\nTrue",
-          "Predict anomalies (1) or normal (0) for the given data.\n\nUses a threshold derived from training scores (mean + 3 * std)\nto determine binary prediction. Requires `fit` to have been called.\n\nParameters\n----------\ndata : np.ndarray\n    Data of shape (n_samples, n_features).\n\nReturns\n-------\nnp.ndarray\n    Integer array of shape (n_samples,).\n\nExamples\n--------\n>>> import numpy as np\n>>> X = np.array([[0.1, 0.2], [0.3, 0.4]])\n>>> det = RSADetector(n_estimators=1, random_state=42)\n>>> det.fit(X)\n<RSADetector object>\n>>> y_pred = det.predict(X)\n>>> y_pred.shape\n(2,)",
-          "Compute continuous anomaly score for each sample.\n\nReturns an array of shape (n_samples,) with float values.\n\nParameters\n----------\ndata : np.ndarray\n    Data of shape (n_samples, n_features).\n\nReturns\n-------\nnp.ndarray\n    Array of shape (n_samples,).\n\nExamples\n--------\n>>> import numpy as np\n>>> X = np.array([[0.1, 0.2], [0.3, 0.4]])\n>>> det = RSADetector(n_estimators=1, random_state=42)\n>>> det.fit(X)\n<RSADetector object>\n>>> scores = det.predict_scores(X)\n>>> scores.shape\n(2,)"
         ]
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:evaluation.py": {
+    "I:metrics.py": {
       "type": "I",
       "members": {
-        "evaluation.py": "P",
-        "experiment.py": "C",
-        "tests/test_evaluation.py": "T"
+        "metrics.py": "P",
+        "run_experiment.py": "C",
+        "tests/test_metrics.py": "T"
       },
       "spec": {
-        "import": "evaluation",
+        "import": "metrics",
+        "symbols": {
+          "calculate_auc_roc": {
+            "kind": "func",
+            "params": [
+              "y_true",
+              "y_pred"
+            ],
+            "required": [
+              "y_true",
+              "y_pred"
+            ]
+          },
+          "calculate_f1_score": {
+            "kind": "func",
+            "params": [
+              "y_true",
+              "y_pred"
+            ],
+            "required": [
+              "y_true",
+              "y_pred"
+            ]
+          }
+        },
+        "uses": {},
+        "packages": [
+          "numpy",
+          "typing"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:run_experiment.py": {
+      "type": "I",
+      "members": {
+        "run_experiment.py": "P"
+      },
+      "spec": {
+        "import": "run_experiment",
         "symbols": {
           "N_RUNS": {
             "kind": "const",
             "type": "int"
           },
-          "compute_metrics": {
-            "kind": "func",
-            "params": [
-              "y_true",
-              "y_scores",
-              "threshold"
-            ],
-            "required": [
-              "y_true",
-              "y_scores"
-            ]
+          "N_SAMPLES": {
+            "kind": "const",
+            "type": "int"
           },
-          "aggregate_results": {
-            "kind": "func",
-            "params": [
-              "runs_data"
-            ],
-            "required": [
-              "runs_data"
-            ]
-          }
-        },
-        "uses": {},
-        "packages": [
-          "numpy",
-          "sklearn",
-          "typing"
-        ],
-        "behaviour": [
-          "Computes precision, recall, f1 from thresholded scores and roc_auc from raw scores.\n\nThe threshold is used to convert continuous anomaly scores into binary predictions \nfor precision, recall, and f1-score calculation.\n\nParameters\n----------\ny_true : np.ndarray\n    Ground truth labels.\ny_scores : np.ndarray\n    Continuous anomaly scores.\nthreshold : float\n    Threshold for binarization.\n\nReturns\n-------\nDict[str, float]\n    Dictionary with keys 'precision', 'recall', 'f1', 'roc_auc'.\n\nExamples\n--------\n>>> import numpy as np\n>>> y_true = np.array([0, 0, 1, 1])\n>>> y_scores = np.array([0.1, 0.9, 0.8, 0.2])\n>>> metrics = compute_metrics(y_true, y_scores)\n>>> (round(metrics['precision'], 2), round(metrics['recall'], 2), round(metrics['f1'], 2), round(metrics['roc_auc'], 2))\n(0.5, 0.5, 0.5, 0.5)",
-          "Aggregates results from multiple experimental runs into summary rows for CSV output.\n\nCalculates mean and standard deviation for each metric across the provided runs.\nThe result is a list of dictionaries, one per unique method and metric combination,\ncontaining 'method', 'metric', 'value' (mean) and 'std_dev' (standard deviation).\n\nParameters\n----------\nruns_data : List[Dict[str, Dict[str, float]]]\n    List of results from individual runs.\n\nReturns\n-------\nList[Dict[str, str | float]]\n    Aggregated summary rows.\n\nExamples\n--------\n>>> runs = [{'m1': {'acc': 0.9}, 'm2': {'acc': 0.8}}, {'m1': {'acc': 0.95}, 'm2': {'acc': 0.85}}]\n>>> res = aggregate_results(runs)\n>>> {r['method']: r['value'] for r in res if r['metric']=='acc'}\n{'m1': 0.925, 'm2': 0.825}"
-        ]
-      },
-      "fingerprint": null,
-      "observed": []
-    },
-    "I:experiment.py": {
-      "type": "I",
-      "members": {
-        "experiment.py": "P"
-      },
-      "spec": {
-        "import": "experiment",
-        "symbols": {
-          "run_experiment": {
+          "N_CHANNELS": {
+            "kind": "const",
+            "type": "int"
+          },
+          "ANOMALY_FRACTION": {
+            "kind": "const",
+            "type": "float"
+          },
+          "BASE_SEED": {
+            "kind": "const",
+            "type": "int"
+          },
+          "RSE_THRESHOLD_SIGMAS": {
+            "kind": "const",
+            "type": "float"
+          },
+          "N_ESTIMATORS": {
+            "kind": "const",
+            "type": "int"
+          },
+          "SUBSAMPLE_RATIO": {
+            "kind": "const",
+            "type": "float"
+          },
+          "run_study": {
             "kind": "func",
             "params": [],
             "required": []
           }
         },
         "uses": {
-          "evaluation.py": [
-            "N_RUNS",
-            "aggregate_results",
-            "compute_metrics"
-          ],
-          "baselines.py": [
-            "ZScoreDetector"
-          ],
-          "rs_ensemble.py": [
-            "RSADetector"
-          ],
-          "data_generation.py": [
+          "synth_data.py": [
             "generate_dataset"
+          ],
+          "baseline_zscore.py": [
+            "ZScoreBaseline"
+          ],
+          "method_rse.py": [
+            "RandomSubspaceDetector"
+          ],
+          "metrics.py": [
+            "calculate_auc_roc",
+            "calculate_f1_score"
           ]
         },
         "packages": [
           "numpy",
+          "os",
           "pandas",
           "typing"
-        ],
-        "behaviour": []
+        ]
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:figures.py": {
+    "I:plot_results.py": {
       "type": "I",
       "members": {
-        "figures.py": "P"
+        "plot_results.py": "P"
       },
       "spec": {
-        "import": "figures",
+        "import": "plot_results",
         "symbols": {
-          "plot_results": {
+          "plot_figures": {
             "kind": "func",
             "params": [],
             "required": []
@@ -644,15 +663,8 @@
         },
         "uses": {},
         "packages": [
-          "matplotlib",
-          "numpy",
           "os",
-          "pandas",
-          "seaborn",
           "typing"
-        ],
-        "behaviour": [
-          "Reads results.csv and generates comparison plots for the thesis.\n\n>>> _ = plot_results()"
         ]
       },
       "fingerprint": null,
@@ -661,23 +673,21 @@
     "R:run": {
       "type": "R",
       "members": {
-        "experiment.py": "P",
+        "run_experiment.py": "P",
         "results.csv": "O",
-        "figures.py": "C",
-        "baselines.py": "C",
-        "data_generation.py": "C",
-        "evaluation.py": "C",
-        "rs_ensemble.py": "C"
+        "plot_results.py": "C",
+        "baseline_zscore.py": "C",
+        "method_rse.py": "C",
+        "metrics.py": "C",
+        "synth_data.py": "C"
       },
       "spec": {
-        "entry": "experiment.py:run_experiment",
+        "entry": "run_experiment.py:run_study",
         "metrics": [
-          "precision",
-          "recall",
-          "f1",
-          "roc_auc"
+          "auc_roc",
+          "f1_score"
         ],
-        "plots": "figures.py:plot_results"
+        "plots": "plot_results.py:plot_figures"
       },
       "fingerprint": null,
       "observed": []
@@ -690,7 +700,7 @@
       },
       "spec": {
         "title": "Wprowadzenie",
-        "focus": "Motywacja problemu detekcji anomalii w telemetrii fizjologicznej, specyfika danych (szum, artefakty) oraz cel pracy.",
+        "focus": "Motywacja problemu detekcji anomalii w telemetrii fizjologicznej, problemy z szumem i artefaktami, cel pracy.",
         "uses_results": false
       },
       "fingerprint": null,
@@ -700,45 +710,30 @@
       "type": "N",
       "members": {
         "thesis.md#ch2": "X",
-        "references.bib": "C",
-        "baselines.py": "C",
-        "rs_ensemble.py": "C",
-        "experiment.py": "C",
-        "data_generation.py": "C",
-        "evaluation.py": "C"
+        "references.bib": "C"
       },
       "spec": {
-        "title": "Przegląd metod detekcji anomalii",
-        "focus": "Omówienie statycznych metod jednowymiarowych (np. Z-score) oraz zaawansowanych podejść ensemblingowych i opartych na podprzestrzeniach.",
+        "title": "Przegląd metodyk detekcji anomalii",
+        "focus": "Klasyfikacja metod statycznych i dynamicznych, przegląd metod opartych na odległości, podprzestrzeniach oraz uczeniu głębokim w kontekście danych fizjologicznych.",
         "uses_results": false
       },
       "fingerprint": null,
-      "observed": [
-        "baselines.py",
-        "data_generation.py",
-        "evaluation.py",
-        "experiment.py",
-        "rs_ensemble.py"
-      ]
+      "observed": []
     },
     "N:thesis.md#ch3": {
       "type": "N",
       "members": {
         "thesis.md#ch3": "X",
         "references.bib": "C",
-        "rs_ensemble.py": "C",
-        "baselines.py": "C"
+        "results.csv": "C"
       },
       "spec": {
-        "title": "Propozycja algorytmu komitetowego",
-        "focus": "Szczegółowy opis teoretyczny i implementacyjny detektora losowych podprzestrzeni (Random Subspace Ensemble) dostosowanego do danych wielokanałowych.",
-        "uses_results": false
+        "title": "Propozycja metody komitetu losowych podprzestrzeni",
+        "focus": "Szczegółowy opis algorytmu RSE (Random Subspace Ensemble), strategia agregacji wyników detektorów podrzędnych oraz uzasadnienie wyborów teoretycznych.",
+        "uses_results": true
       },
       "fingerprint": null,
-      "observed": [
-        "baselines.py",
-        "rs_ensemble.py"
-      ]
+      "observed": []
     },
     "N:thesis.md#ch4": {
       "type": "N",
@@ -748,8 +743,8 @@
         "results.csv": "C"
       },
       "spec": {
-        "title": "Eksperymenty i wyniki",
-        "focus": "Opis generacji danych syntetycznych, ustalone parametry, przedstawienie wyników metrycznych z uwzględnieniem rozrzutu między powtórzeniami oraz analiza porównawcza z bazą.",
+        "title": "Eksperymenty i analiza wyników",
+        "focus": "Opis generowania danych syntetycznych, konfiguracja eksperymentu (liczba powtórzeń, ziarna), wyniki liczbowe z odchyleniami standardowymi oraz interpretacja wykresów w kontekście tezy.",
         "uses_results": true
       },
       "fingerprint": null,
@@ -764,7 +759,7 @@
       },
       "spec": {
         "title": "Wnioski",
-        "focus": "Podsumowanie sukcesu lub porażki tezy oraz kierunki przyszłych prac nad odpornością na szum w detekcji medycznej.",
+        "focus": "Podsumowanie osiągnięć pracy, potwierdzenie lub odrzucenie tezy, ograniczenia metody oraz kierunki przyszłych prac.",
         "uses_results": true
       },
       "fingerprint": null,
@@ -773,40 +768,44 @@
   },
   "order": [
     [
-      "I:baselines.py",
-      "I:experiment.py"
+      "I:baseline_zscore.py",
+      "I:run_experiment.py"
     ],
     [
-      "I:baselines.py",
+      "I:baseline_zscore.py",
       "R:run"
     ],
     [
-      "I:data_generation.py",
-      "I:experiment.py"
+      "I:method_rse.py",
+      "I:run_experiment.py"
     ],
     [
-      "I:data_generation.py",
+      "I:method_rse.py",
       "R:run"
     ],
     [
-      "I:evaluation.py",
-      "I:experiment.py"
+      "I:metrics.py",
+      "I:run_experiment.py"
     ],
     [
-      "I:evaluation.py",
+      "I:metrics.py",
       "R:run"
     ],
     [
-      "I:experiment.py",
+      "I:run_experiment.py",
       "R:run"
     ],
     [
-      "I:rs_ensemble.py",
-      "I:experiment.py"
+      "I:synth_data.py",
+      "I:run_experiment.py"
     ],
     [
-      "I:rs_ensemble.py",
+      "I:synth_data.py",
       "R:run"
+    ],
+    [
+      "R:run",
+      "N:thesis.md#ch3"
     ],
     [
       "R:run",

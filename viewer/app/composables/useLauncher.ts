@@ -6,7 +6,7 @@ const POLL_MS = 1500
 export function useLauncher() {
   const status = ref<LaunchStatus | null>(null)
   const error = ref<string | null>(null)
-  const request = reactive<LaunchRequest>({ task: '1', provider: 'mock', template: null })
+  const request = reactive<LaunchRequest>({ tasks: ['1'], provider: 'ollama', template: null })
 
   async function refresh() {
     status.value = await $fetch<LaunchStatus>('/api/launch').catch(() => status.value)

@@ -1,46 +1,49 @@
 {
   "files": [
     ".ruff_cache/.gitignore",
-    ".ruff_cache/0.17.2/13658026024107279180",
+    ".ruff_cache/0.17.2/11721517805703197482",
+    ".ruff_cache/0.17.2/12118297809785826094",
+    ".ruff_cache/0.17.2/14710998667371062357",
     ".ruff_cache/0.17.2/14984704555938387153",
+    ".ruff_cache/0.17.2/15078159074612205859",
+    ".ruff_cache/0.17.2/18281081095562812108",
+    ".ruff_cache/0.17.2/3294128247602053194",
     ".ruff_cache/0.17.2/5000838088791888232",
-    ".ruff_cache/0.17.2/6557967958916365441",
+    ".ruff_cache/0.17.2/5239402738303864517",
+    ".ruff_cache/0.17.2/986691253863890047",
     ".ruff_cache/CACHEDIR.TAG",
-    "agents.py",
-    "constants.py",
-    "environment.py",
-    "experiment.py",
-    "figures.py",
+    "agents/q_agent.py",
+    "agents/random_agent.py",
+    "environment/tictactoe_env.py",
+    "experiment/run_experiment.py",
     "logs/agent_trace.jsonl",
     "logs/events.jsonl",
-    "logs/experiment.log",
     "logs/harness_process.log",
     "references.bib",
-    "results.csv",
-    "tests/test_agents.py",
-    "tests/test_environment.py",
+    "tests/test_q_agent.py",
+    "tests/test_random_agent.py",
+    "tests/test_tictactoe_env.py",
     "thesis.md",
-    "train_log.csv"
+    "visualization/plot_results.py"
   ],
-  "pytest_status": "PASS",
-  "pytest_errors": [],
+  "pytest_status": "FAIL",
+  "pytest_errors": [
+    "Pytest failure: .........F.......F.                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n_______________________________________________________________________________________________________________________ TestQLearningAgentLearn.test_learn_creates_entry_if_missing _______________________________________________________________________________________________________________________\ntests\\test_q_agent.py:169: in test_learn_creates_entry_if_missing\n    assert a_new in agent.q_table[s_new]\nE   assert 1 in [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ...]\n________________________________________________________________________________________________________________________________________________ test_draw ________________________________________________________________________________________________________________________________________________\ntests\\test_tictactoe_env.py:78: in test_draw\n    assert not terminated, f'Game terminated prematurely on move {i + 1} with action {action}'\nE   AssertionError: Game terminated prematurely on move 6 with action 8\nE   assert not True\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_q_agent.py::TestQLearningAgentLearn::test_learn_creates_entry_if_missing - assert 1 in [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ...]\nFAILED tests\\test_tictactoe_env.py::test_draw - AssertionError: Game terminated prematurely on move 6 with action 8\n2 failed, 17 passed in 0.15s"
+  ],
   "chapters_present": [
     1,
     2,
-    3
+    3,
+    4
   ],
   "chapters_missing": [
-    4,
     5,
-    6
+    6,
+    7
   ],
   "symbolic_errors": [],
-  "csv_columns": [
-    "method",
-    "metric",
-    "value"
-  ],
+  "csv_columns": [],
   "trigger_issues": [
-    "Incomplete thesis: missing chapters in thesis.md: ['Chapter 4 (Konfiguracja eksperymentu)', 'Chapter 5 (Wyniki symulacji)', 'Chapter 6 (Wnioski i dyskusja)']. Every planned chapter is required."
+    "Pytest failure: .....F.                                                                                                                                                                                                                                                                                              [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n________________________________________________________________________________________________________________________________________________ test_draw ________________________________________________________________________________________________________________________________________________\ntests\\test_tictactoe_env.py:78: in test_draw\n    assert not terminated, f'Game terminated prematurely on move {i + 1} with action {action}'\nE   AssertionError: Game terminated prematurely on move 6 with action 8\nE   assert not True\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_tictactoe_env.py::test_draw - AssertionError: Game terminated prematurely on move 6 with action 8\n1 failed, 6 passed in 0.19s"
   ]
 }

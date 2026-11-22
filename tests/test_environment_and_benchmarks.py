@@ -194,9 +194,17 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
     """A benchmark with simulated agents that make the first-try mistakes of a small model: every mistake is caught
     by its own gate and corrected, and the run still ends with the full thesis bundle."""
     out_dir = tmp_path / "bench_out"
-    res = run_benchmark_suite(task_keys=["2"], provider="mock", output_root=out_dir, simulate_agents=install_simulated_agents)
+    installed: list = []
+
+    def simulate(task_id: str):
+        installed.append(install_simulated_agents(task_id))
+        return installed[-1]
+
+    res = run_benchmark_suite(task_keys=["2"], provider="mock", output_root=out_dir, simulate_agents=simulate)
     assert res["status"] == "COMPLETED"
     assert len(res["tasks"]) == 1
+    # Every mistake of the scenario was made: a flaw the run never reached would be a mock that tests nothing.
+    assert installed[0].flaws_left == set()
     # Each task runs in its own sandbox (decision H): nothing it learns or writes reaches another task.
     assert (out_dir / "_evolved_adk_state" / "02_ml_anomaly_detection" / "state" / "evolution_history.json").exists()
 
@@ -221,14 +229,30 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
     # module_critic_blocks_once: the first module's critic blocks, its second attempt is accepted over the objection.
     first = next(e for e in of("PLAN_MODULE_ACCEPTED") if e["attempts"] == 2 and e["over_critic"])
     assert first["module"] == "config.py"
+    # outline_promises_with_keywords: `class X: <Class>` promises the name after the keyword, no module is told
+    # its outline promises something it cannot declare (02, 2026-11-22: the plan was rejected over a symbol `class`).
+    import re
+
+    keyword_promise = re.compile(r"outline promises (class|def|async|function|const)")
+    assert not any(keyword_promise.search(p) for e in of("PLAN_MODULE_CHECKED") for p in e["problems"])
+    # second_module_critic_blocks: two modules blocked for the same planner is a pattern: the planner learns a rule
+    # in this run (its prompt in the sandbox), once.
+    mutated = [e["details"] for e in of("AGENT_MUTATED") if e["details"]["agent"] == "plan_module"]
+    assert len(mutated) == 1
+    sandbox_prompt = out_dir / "_evolved_adk_state" / "02_ml_anomaly_detection" / "agents" / "planning" / "plan_module.md"
+    assert mutated[0]["injected_rule"] in sandbox_prompt.read_text(encoding="utf-8")
+    # plot_run_fails: the figures script raises when the harness runs it after the experiment; the failure is the
+    # figures module's, and its author repairs it.
+    assert of("DATA_FAILED")  # (the event keeps the first 400 characters of the traceback; the verdict names the file)
+    assert any(e["status"] == "FAIL" and e["failed_file"] == "plot_results.py" for e in of("VERDICT"))
     # coder_breaks_signature + tester_uses_undeclared_name: both answers are refused before they reach the disk.
     assert len(of("SPEC_WRITE_REJECTED")) == 2
     # coder_adds_helper: the helper file is an extension recorded in H.
     assert len(of("H_EXTENDED")) == 1
     # writer_bad_pointer: one verification failure, repaired by the author (fast path).
-    assert [c["w4_action"] for c in t_res["architecture_cycles"]] == ["FAST_FIX"]
-    assert t_res["architecture_cycles"][0]["node_file"] == "thesis.md"
-    assert t_res["architecture_cycles"][0]["w3_post_remediation_status"] == "PASS"
+    cycles = {c["node_file"]: c for c in t_res["architecture_cycles"]}
+    assert sorted(cycles) == ["core.py", "thesis.md"]  # core.py: the figures run failed after it (plot_run_fails)
+    assert all(c["w4_action"] == "FAST_FIX" and c["w3_post_remediation_status"] == "PASS" for c in cycles.values())
     assert "AGENT_CREATED" in t_res["evolution"]["new_events_in_task"]  # the missing specialization
 
     compiled_md = Path(t_res["artifacts"]["compiled_md_path"]).read_text(encoding="utf-8")

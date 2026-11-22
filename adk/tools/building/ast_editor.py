@@ -69,7 +69,7 @@ def _align_body_to_docstring(code: str) -> str | None:
 
 
 def _dedent_by_header(code: str) -> str:
-    """Dedent by the indentation of the first line. `textwrap.dedent` gives up when doctest lines inside the
+    """Dedent by the indentation of the first line. `textwrap.dedent` gives up when lines inside a
     docstring start at column 0, which left `def` indented (`unexpected indent` on line 1); lines with less
     indentation than the header can only be inside a string, so they stay as they are."""
     lines = code.splitlines()

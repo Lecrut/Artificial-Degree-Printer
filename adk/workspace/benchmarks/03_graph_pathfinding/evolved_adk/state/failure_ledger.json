@@ -1,180 +1,83 @@
 {
   "failures": [
     {
-      "agent": "seed_writer",
-      "context": "{\"pattern\": {\"category\": \"document\", \"occurrences\": 2, \"tasks\": [\"T10\", \"T9\"], \"examples\": [\"Citation key 'dijkstra1959' not found in workspace .bib files.\", \"Citation key 'dijkstra1959' not found in workspace .bib files.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"paper_ieee.tex\", \"failed_agent\": \"seed_writer\", \"issues\": [\"Citation key 'dijkstra1959' not found in workspace .bib files.\", \"Citation key 'clark2019' not found in workspace .bib files.\", \"Citation key 'chen2013' not found in workspace .bib files.\"]}, \"failed_agent\": \"seed_writer\", \"agent_failure_count\": 9, \"cycle_index\": 11, \"task_id\": \"T10\", \"target_node\": \"paper_ieee.tex\", \"suggested_rule\": \"Task T10 on node paper_ieee.tex (paper_ieee.tex) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When adding citations, first inventory the bibliography file to identify valid keys before generating LaTeX references, because hallucinating citation metadata is a preventable error when the source data exists."
+      "agent": "plan_outline",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"outline:0\", \"outline:1\"], \"examples\": [\"PLAN_CRITIC [core.py]: The `search_grid_dijkstra` function returns a tuple of (path_cost, nodes_expanded), but the `metrics` module's `compute_metrics` function requires the `optimal_cost` to calculate the `optimality_gap` metric. Fix: Add a new module that wraps the Dijkstra search to compute and return the optimal cost for each grid instance, or modify the experiment flow to ensure the optimal cost is retrieved when using Dijkstra as the ground truth. Change together: [experiment.py] Update depends_on to include the new module that provides the method to obtain optimal_cost for a given grid.; [metrics.py] Ensure `compute_metrics` is called with the correct `optimal_cost` derived from the baseline run or a dedicated optimizer module, not assumed to be available from `core.py` outputs alone if `core.py` doesn't return it..\", \"PLAN_CRITIC [baseline_dijkstra.py]: The module promises a generic `search_grid` interface but depends only on `config.py`. It cannot access the actual Dijkstra implementation in `core.py` (the existing file), making the baseline unimplementable as declared. Fix: Update `baseline_dijkstra.py` to import and wrap the function from `core.py`, and add `core.py` to its `depends_on` list. Change together: [baseline_dijkstra.py] Add 'core.py' to depends_on; change purpose/import to reference core.py.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_outline\", \"issues\": [\"PLAN_CRITIC [core.py]: The `search_grid_dijkstra` function returns a tuple of (path_cost, nodes_expanded), but the `metrics` module's `compute_metrics` function requires the `optimal_cost` to calculate the `optimality_gap` metric. Fix: Add a new module that wraps the Dijkstra search to compute and return the optimal cost for each grid instance, or modify the experiment flow to ensure the optimal cost is retrieved when using Dijkstra as the ground truth. Change together: [experiment.py] Update depends_on to include the new module that provides the method to obtain optimal_cost for a given grid.; [metrics.py] Ensure `compute_metrics` is called with the correct `optimal_cost` derived from the baseline run or a dedicated optimizer module, not assumed to be available from `core.py` outputs alone if `core.py` doesn't return it..\", \"PLAN_CRITIC [baseline_dijkstra.py]: The module promises a generic `search_grid` interface but depends only on `config.py`. It cannot access the actual Dijkstra implementation in `core.py` (the existing file), making the baseline unimplementable as declared. Fix: Update `baseline_dijkstra.py` to import and wrap the function from `core.py`, and add `core.py` to its `depends_on` list. Change together: [baseline_dijkstra.py] Add 'core.py' to depends_on; change purpose/import to reference core.py.\"]}, \"failed_agent\": \"plan_outline\", \"agent_failure_count\": 2, \"cycle_index\": 2, \"source\": \"planning_critic\"}",
+      "injected_rule": "When designing module interfaces or dependencies, explicitly verify that required inputs (such as baseline metrics or return values) are available from the specified source modules before listing them, because assuming data flow without confirming the actual function signature leads to unimplementable modules and broken cross-file dependencies."
     },
     {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"behaviour\", \"occurrences\": 2, \"tasks\": [\"T2\", \"T4\"], \"examples\": [\"BEHAVIOUR_MISMATCH [heuristics.py]: the implementation does not give the results the interface specifies:\\n- octile_distance: example `octile_distance((0, 0), (3, 4))` expected `5.8284`, got `5.656854249492381`\\n- octile_distance: example `octile_distance((0, 0), (0, 0))` expected `0.0`, got `0`\", \"BEHAVIOUR_MISMATCH [weighted_a_star.py]: the implementation does not give the results the interface specifies:\\n- example `len(algo.neighbors(3, 3)) > 0` raised AttributeError: 'WeightedAStar' object has no attribute 'neighbors' in the example's own code\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"weighted_a_star.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"BEHAVIOUR_MISMATCH [weighted_a_star.py]: the implementation does not give the results the interface specifies:\\n- example `len(algo.neighbors(3, 3)) > 0` expected `True`, got `False`\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 5, \"cycle_index\": 14, \"task_id\": \"T4\", \"target_node\": \"weighted_a_star.py\", \"suggested_rule\": \"Task T4 on node weighted_a_star.py (weighted_a_star.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When an algorithm implementation is provided with specific input-output examples or interface contracts, verify that all referenced methods exist in the class and that computed results match the expected values within numerical precision, because functional correctness requires strict adherence to the specified contract."
+      "agent": "plan_module",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"core.py\", \"experiment.py\"], \"examples\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The module defines `NUM_REPETITIONS` as a constant (50) but does not expose it or the other experiment parameters (weights, coordinates). The consumer (figures.py) needs these values to properly aggregate and label the data in `results.csv`. By hiding them inside the function scope or as private constants, the interface breaks the link between the experiment logic and the visualization logic. Fix: Export `NUM_REPETITIONS`, `WEIGHTS`, `START_COORDS`, and `GOAL_COORDS` as module-level public constants so that `figures.py` can import them to interpret the results correctly. Change together: [experiment.py] Remove `NUM_REPETITIONS`, `WEIGHTS`, `START_COORDS`, and `GOAL_COORDS` from being internal-only; ensure they are part of the module's public interface or at least accessible to consumers..\", \"[showing 1 of 3 findings; the full list is in validation_report.json]\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The module defines `NUM_REPETITIONS` as a constant (50) but does not expose it or the other experiment parameters (weights, coordinates). The consumer (figures.py) needs these values to properly aggregate and label the data in `results.csv`. By hiding them inside the function scope or as private constants, the interface breaks the link between the experiment logic and the visualization logic. Fix: Export `NUM_REPETITIONS`, `WEIGHTS`, `START_COORDS`, and `GOAL_COORDS` as module-level public constants so that `figures.py` can import them to interpret the results correctly. Change together: [experiment.py] Remove `NUM_REPETITIONS`, `WEIGHTS`, `START_COORDS`, and `GOAL_COORDS` from being internal-only; ensure they are part of the module's public interface or at least accessible to consumers..\", \"[showing 1 of 3 findings; the full list is in validation_report.json]\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 2, \"cycle_index\": 5, \"source\": \"planning_critic\"}",
+      "injected_rule": "When designing a module interface, define all shared constants and parameters as public module-level exports before implementation begins, because consumers require direct access to these values for data interpretation and consistency, not just function inputs."
+    },
+    {
+      "agent": "plan_outline",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"outline:2\", \"outline:5\"], \"examples\": [\"PLAN_CRITIC [grid_generator.py]: The outline contains a duplication of responsibility for grid generation. Both `core.py` (existing) and `grid_generator.py` promise the exact same function signature `generate_obstacle_grid`. This violates the 'One concept, one place' rule and creates ambiguity about which implementation is authoritative or if they are identical wrappers. Fix: Remove `grid_generator.py` entirely and update `experiment.py` to depend directly on `core.py` for grid generation, keeping `core.py` as the single source of truth for existing code. Change together: [experiment.py] Remove 'grid_generator.py' from depends_on; keep dependency on 'core.py'.; [outline.modules (remove grid_generator.py)] Delete the module entry for 'grid_generator.py' to eliminate the duplicate responsibility..\", \"PLAN_CRITIC [baseline_dijkstra.py]: The existing `core.py` is listed as an existing file providing both grid generation and search. The outline lists `core.py` only in `config.py`'s dependency (which is incorrect, config should have no deps) and misses it in `baseline_dijkstra.py`'s direct link or implies `grid_generator.py` handles the core logic. More critically, `baseline_dijkstra.py` promises `search_grid` but its purpose says it wraps `core.py`. The harness rule 'existing modules promise only what their source has' applies to `core.py`. If `core.py` provides `search_grid`, `baseline_dijkstra.py` must explicitly depend on `core.py` to access it, which is currently missing from its `depends_on` list (it lists nothing or implies reliance on the wrong module). Wait, looking closely at input: `baseline_dijkstra.py` depends on `[core.py]`. This is correct. However, `config.py` depends on nothing. This is fine. The main issue is the duplication of `generate_obstacle_grid` between `core.py` and `grid_generator.py`. Since `core.py` is existing, we must use it. The duplicate `grid_generator.py` is redundant. Fix: This is actually covered by the previous blocker. Removing `grid_generator.py` resolves the duplication. Is there another blocking issue? Yes. `config.py` provides constants but `experiment.py` needs to inject seeds/config into `core.py` (for grid gen) and `baseline_dijkstra.py`/`weighted_astar.py`. If `config.py` is a constant provider, `experiment.py` reads it. This is fine. \\n\\nRe-evaluating `baseline_dijkstra.py`: It depends on `core.py`. `core.py` provides `search_grid`. `baseline_dijkstra.py` provides `search_grid`. This is a wrapper pattern. Is it blocking? No, as long as `experiment.py` calls `baseline_dijkstra.search_grid`.\\n\\nRe-evaluating `weighted_astar.py`: It depends on `[]`. It needs `octile_distance` calculation. Does any module provide this? None do. The outline says `weighted_astar.py` implements the algorithm. If it computes octile distance internally, that's fine. But if it relies on an external utility not listed, it's a missing dependency. However, implementing octile distance is trivial and likely internal to the module. \\n\\nLet's look at `config.py`. It provides `SEED`, `GRID_SIZE`, `OBSTACLE_DENSITY`. `experiment.py` depends on `config.py`. This is fine.\\n\\nThe main blocker was indeed the duplication. Is there another one? \\n\\nLook at `core.py` in existing files. It provides `generate_obstacle_grid` and `search_grid`. \\n`baseline_dijkstra.py` promises `search_grid`. \\n`grid_generator.py` promises `generate_obstacle_grid`. \\n`experiment.py` needs to run the experiment. It depends on `grid_generator.py` (for grids) and `baseline_dijkstra.py` (for baseline) and `weighted_astar.py` (for proposed). \\n\\nIf I remove `grid_generator.py`, does `experiment.py` still get the grid? Yes, if it depends on `core.py`. \\n\\nIs there a scope issue? The user prompt says \", \"PLAN_CRITIC [metrics.optimality_gap]: The metric `optimality_gap` is defined as `(cost_astar - cost_dijkstra) / cost_dijkstra`. The plan's entrypoint `run_experiment` iterates over weights `[1.0, ..., 3.0]` but does not exclude `weight=1.0` when computing this gap for the 'weighted_astar' method vs Dijkstra. At weight 1.0, A* should match Dijkstra exactly (costs identical), resulting in a division by zero if `cost_dijkstra` is somehow 0 (though unlikely with obstacles) or simply redundant data that confuses the statistical analysis of 'optimality loss'. More critically, the prompt asks to validate the trade-off for weights `[1.5, 3.0]`. Including `1.0` in the aggregated results without clear labeling or exclusion creates ambiguity in the thesis validation which specifically targets the non-trivial weights. Fix: Restrict the comparison metrics (specifically `optimality_gap`) and the experimental aggregation to only weights strictly greater than 1.0 (i.e., `[1.5, 2.0, 2.5, 3.0]`). Exclude `weight=1.0` from the optimality gap calculation as it is not a 'weighted' heuristic trade-off scenario and adds no value to the specific thesis claim regarding weights in `[1.5, 3.0]`. Change together: [academic_blueprint.metrics] Clarify that `optimality_gap` is computed only for non-unit weights, or update the plan to explicitly filter weight=1.0 from the gap calculation loop.; [experiment.py] In the logic of `run_experiment`, ensure that when computing `optimality_gap`, it skips cases where `weight == 1.0` or explicitly labels them as NaN/excluded to maintain statistical validity for the thesis..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_outline\", \"issues\": [\"PLAN_CRITIC [grid_generator.py]: The outline contains a duplication of responsibility for grid generation. Both `core.py` (existing) and `grid_generator.py` promise the exact same function signature `generate_obstacle_grid`. This violates the 'One concept, one place' rule and creates ambiguity about which implementation is authoritative or if they are identical wrappers. Fix: Remove `grid_generator.py` entirely and update `experiment.py` to depend directly on `core.py` for grid generation, keeping `core.py` as the single source of truth for existing code. Change together: [experiment.py] Remove 'grid_generator.py' from depends_on; keep dependency on 'core.py'.; [outline.modules (remove grid_generator.py)] Delete the module entry for 'grid_generator.py' to eliminate the duplicate responsibility..\", \"PLAN_CRITIC [baseline_dijkstra.py]: The existing `core.py` is listed as an existing file providing both grid generation and search. The outline lists `core.py` only in `config.py`'s dependency (which is incorrect, config should have no deps) and misses it in `baseline_dijkstra.py`'s direct link or implies `grid_generator.py` handles the core logic. More critically, `baseline_dijkstra.py` promises `search_grid` but its purpose says it wraps `core.py`. The harness rule 'existing modules promise only what their source has' applies to `core.py`. If `core.py` provides `search_grid`, `baseline_dijkstra.py` must explicitly depend on `core.py` to access it, which is currently missing from its `depends_on` list (it lists nothing or implies reliance on the wrong module). Wait, looking closely at input: `baseline_dijkstra.py` depends on `[core.py]`. This is correct. However, `config.py` depends on nothing. This is fine. The main issue is the duplication of `generate_obstacle_grid` between `core.py` and `grid_generator.py`. Since `core.py` is existing, we must use it. The duplicate `grid_generator.py` is redundant. Fix: This is actually covered by the previous blocker. Removing `grid_generator.py` resolves the duplication. Is there another blocking issue? Yes. `config.py` provides constants but `experiment.py` needs to inject seeds/config into `core.py` (for grid gen) and `baseline_dijkstra.py`/`weighted_astar.py`. If `config.py` is a constant provider, `experiment.py` reads it. This is fine. \\n\\nRe-evaluating `baseline_dijkstra.py`: It depends on `core.py`. `core.py` provides `search_grid`. `baseline_dijkstra.py` provides `search_grid`. This is a wrapper pattern. Is it blocking? No, as long as `experiment.py` calls `baseline_dijkstra.search_grid`.\\n\\nRe-evaluating `weighted_astar.py`: It depends on `[]`. It needs `octile_distance` calculation. Does any module provide this? None do. The outline says `weighted_astar.py` implements the algorithm. If it computes octile distance internally, that's fine. But if it relies on an external utility not listed, it's a missing dependency. However, implementing octile distance is trivial and likely internal to the module. \\n\\nLet's look at `config.py`. It provides `SEED`, `GRID_SIZE`, `OBSTACLE_DENSITY`. `experiment.py` depends on `config.py`. This is fine.\\n\\nThe main blocker was indeed the duplication. Is there another one? \\n\\nLook at `core.py` in existing files. It provides `generate_obstacle_grid` and `search_grid`. \\n`baseline_dijkstra.py` promises `search_grid`. \\n`grid_generator.py` promises `generate_obstacle_grid`. \\n`experiment.py` needs to run the experiment. It depends on `grid_generator.py` (for grids) and `baseline_dijkstra.py` (for baseline) and `weighted_astar.py` (for proposed). \\n\\nIf I remove `grid_generator.py`, does `experiment.py` still get the grid? Yes, if it depends on `core.py`. \\n\\nIs there a scope issue? The user prompt says \", \"PLAN_CRITIC [metrics.optimality_gap]: The metric `optimality_gap` is defined as `(cost_astar - cost_dijkstra) / cost_dijkstra`. The plan's entrypoint `run_experiment` iterates over weights `[1.0, ..., 3.0]` but does not exclude `weight=1.0` when computing this gap for the 'weighted_astar' method vs Dijkstra. At weight 1.0, A* should match Dijkstra exactly (costs identical), resulting in a division by zero if `cost_dijkstra` is somehow 0 (though unlikely with obstacles) or simply redundant data that confuses the statistical analysis of 'optimality loss'. More critically, the prompt asks to validate the trade-off for weights `[1.5, 3.0]`. Including `1.0` in the aggregated results without clear labeling or exclusion creates ambiguity in the thesis validation which specifically targets the non-trivial weights. Fix: Restrict the comparison metrics (specifically `optimality_gap`) and the experimental aggregation to only weights strictly greater than 1.0 (i.e., `[1.5, 2.0, 2.5, 3.0]`). Exclude `weight=1.0` from the optimality gap calculation as it is not a 'weighted' heuristic trade-off scenario and adds no value to the specific thesis claim regarding weights in `[1.5, 3.0]`. Change together: [academic_blueprint.metrics] Clarify that `optimality_gap` is computed only for non-unit weights, or update the plan to explicitly filter weight=1.0 from the gap calculation loop.; [experiment.py] In the logic of `run_experiment`, ensure that when computing `optimality_gap`, it skips cases where `weight == 1.0` or explicitly labels them as NaN/excluded to maintain statistical validity for the thesis..\"]}, \"failed_agent\": \"plan_outline\", \"agent_failure_count\": 4, \"cycle_index\": 6, \"source\": \"planning_critic\"}",
+      "injected_rule": "When designing new modules that rely on existing infrastructure, prioritize and explicitly depend on existing modules to satisfy functional requirements rather than creating duplicate wrappers or parallel implementations, because reusing existing sources prevents structural ambiguity and violates the 'One concept, one place' principle."
     }
   ],
   "category_log": [
     {
       "cycle": 1,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "T1"
+      "agent": "plan_outline",
+      "category": "critic",
+      "task_id": "outline:0"
     },
     {
       "cycle": 2,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "T1"
+      "agent": "plan_outline",
+      "category": "critic",
+      "task_id": "outline:1"
     },
     {
       "cycle": 3,
-      "agent": "seed_coder",
-      "category": "behaviour",
-      "task_id": "T2"
+      "agent": "plan_outline",
+      "category": "critic",
+      "task_id": "outline:2"
     },
     {
       "cycle": 4,
-      "agent": "seed_coder",
-      "category": "behaviour",
-      "task_id": "T2"
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "experiment.py"
     },
     {
       "cycle": 5,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "T6"
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "core.py"
     },
     {
       "cycle": 6,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "T6"
+      "agent": "plan_outline",
+      "category": "critic",
+      "task_id": "outline:5"
     },
     {
       "cycle": 7,
-      "agent": "seed_writer",
-      "category": "generic",
-      "task_id": "T9"
-    },
-    {
-      "cycle": 8,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "T9"
-    },
-    {
-      "cycle": 9,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "T9"
-    },
-    {
-      "cycle": 10,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "T10"
-    },
-    {
-      "cycle": 11,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "T10"
-    },
-    {
-      "cycle": 12,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T4"
-    },
-    {
-      "cycle": 13,
-      "agent": "seed_coder",
-      "category": "behaviour",
-      "task_id": "T4"
-    },
-    {
-      "cycle": 14,
-      "agent": "seed_coder",
-      "category": "behaviour",
-      "task_id": "T4"
-    },
-    {
-      "cycle": 15,
-      "agent": "seed_tester",
-      "category": "pytest:TypeError",
-      "task_id": "T5"
-    },
-    {
-      "cycle": 16,
-      "agent": "seed_tester",
-      "category": "pytest:assert",
-      "task_id": "T5"
-    },
-    {
-      "cycle": 17,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T7"
-    },
-    {
-      "cycle": 18,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T7"
-    },
-    {
-      "cycle": 19,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T7"
-    },
-    {
-      "cycle": 20,
-      "agent": "seed_coder",
-      "category": "run:ValueError",
-      "task_id": "R5_7"
-    },
-    {
-      "cycle": 21,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "R5_7"
-    },
-    {
-      "cycle": 22,
-      "agent": "seed_coder",
-      "category": "run:AttributeError",
-      "task_id": "R5_7"
-    },
-    {
-      "cycle": 23,
-      "agent": "seed_coder",
-      "category": "run:ImportError",
-      "task_id": "R6_4"
-    },
-    {
-      "cycle": 24,
-      "agent": "seed_coder",
-      "category": "run:ImportError",
-      "task_id": "R6_4"
-    },
-    {
-      "cycle": 25,
-      "agent": "seed_coder",
-      "category": "run:ImportError",
-      "task_id": "R6_4"
+      "agent": "plan_outline",
+      "category": "critic",
+      "task_id": "outline:6"
     }
   ],
   "rules": [
     {
-      "agent": "seed_writer",
-      "rule": "When adding citations, first inventory the bibliography file to identify valid keys before generating LaTeX references, because hallucinating citation metadata is a preventable error when the source data exists.",
-      "category": "document",
-      "cycle": 11
+      "agent": "plan_outline",
+      "rule": "When designing module interfaces or dependencies, explicitly verify that required inputs (such as baseline metrics or return values) are available from the specified source modules before listing them, because assuming data flow without confirming the actual function signature leads to unimplementable modules and broken cross-file dependencies.",
+      "category": "critic",
+      "cycle": 2
     },
     {
-      "agent": "seed_coder",
-      "rule": "When an algorithm implementation is provided with specific input-output examples or interface contracts, verify that all referenced methods exist in the class and that computed results match the expected values within numerical precision, because functional correctness requires strict adherence to the specified contract.",
-      "category": "behaviour",
-      "cycle": 14
+      "agent": "plan_module",
+      "rule": "When designing a module interface, define all shared constants and parameters as public module-level exports before implementation begins, because consumers require direct access to these values for data interpretation and consistency, not just function inputs.",
+      "category": "critic",
+      "cycle": 5
+    },
+    {
+      "agent": "plan_outline",
+      "rule": "When designing new modules that rely on existing infrastructure, prioritize and explicitly depend on existing modules to satisfy functional requirements rather than creating duplicate wrappers or parallel implementations, because reusing existing sources prevents structural ambiguity and violates the 'One concept, one place' principle.",
+      "category": "critic",
+      "cycle": 6
     }
   ]
 }

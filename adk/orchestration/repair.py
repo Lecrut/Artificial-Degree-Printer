@@ -18,6 +18,7 @@ from adk.orchestration.common import (
     _is_document,
     _RunState,
 )
+from adk.orchestration.plan_change import _spec_findings
 from adk.orchestration.failure_kinds import (
     _issue_signature,
     _issue_category,
@@ -91,7 +92,7 @@ class RepairMixin:
                     author = h.vertices[owner].last_writer if owner is not None else None
                     failed_agent = str((author or {}).get("agent") or _agent_for_path(fast_target))
                 # Controlled change of the plan (Audit VII B4): the same breach of σ again on the same vertex means
-                # the specification may be what is wrong (2026-11-17: an impossible doctest, 51 failures). The
+                # the specification may be what is wrong. The
                 # planner decides before the next attempt: amend the interface, or keep it and the coder goes on.
                 self._amend_spec_if_wrong(failed_file, issues_list, t_id)
                 # The repair names the symbols to change and each error with its line of code (§XI B1-B2): on
@@ -140,9 +141,11 @@ class RepairMixin:
                     report.setdefault("errors", []).append(builder_error)
                 if report["status"] != "PASS" and signature_before and (
                     _issue_signature({"issues": _collect_report_issues(report)}) == signature_before
-                ):
+                ) and not _spec_findings(_collect_report_issues(report)):
                     # §XIV Q3: the same error after the author's repair (01: T1 and T2 three times each) — this
-                    # author will not fix it here; go straight to the full cycle (repair planner) instead.
+                    # author will not fix it here; go straight to the full cycle (repair planner) instead. Not for a
+                    # breach of σ: the next attempt first lets the planner judge the interface (`_amend_spec_if_wrong`),
+                    # which the shortcut used to skip.
                     self.logger.log_event("REPAIR_SAME_ERROR", task_id=t_id, target=fast_target, attempt=attempt)
                     task["repair_attempts"] = max(int(task["repair_attempts"]), FAST_REPAIR_ATTEMPTS)
                 cycle_trace["w4_action"] = "FAST_FIX"

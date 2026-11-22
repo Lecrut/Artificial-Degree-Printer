@@ -25,7 +25,7 @@ from adk.orchestration.plan_outline import (
     changed_modules, dependents, existing_names, kept_as_is, module_entry, module_files, module_order, outline_of, outline_view,
     outline_violations, provided_name,
 )
-from adk.orchestration.plan_spec import plan_targets
+from adk.orchestration.plan_spec import interface_view, plan_targets
 from adk.orchestration.plan_tasks import planned_tasks
 from adk.orchestration.planning import _existing_code
 from adk.tools.verification.contract_check import stub_source
@@ -121,6 +121,9 @@ class PlanStagesMixin:
             fusion += 1
             history.append({"round": fusion, "blockers": critic + [str(v) for v in code]})
             by_module, for_outline = _route(critic, module_files(outline))
+            for rel, findings in by_module.items():
+                self._learn_from_critic("plan_module", rel, findings)
+            self._learn_from_critic("plan_outline", f"outline:{len(self._critic_log)}", for_outline)
             for v in code:
                 if v.culprit in accepted:
                     by_module.setdefault(v.culprit, []).append(str(v))
@@ -166,6 +169,7 @@ class PlanStagesMixin:
                 if critic:
                     critic_left -= 1
                     history.append({"round": attempt, "blockers": critic})
+                    self._learn_from_critic("plan_outline", f"outline:{len(self._critic_log)}", critic)
             self.logger.log_event("PLAN_OUTLINE_CHECKED", attempt=attempt, modules=module_files(candidate), problems=problems, critic=critic)
             outline = candidate
             if problems or critic:
@@ -212,14 +216,16 @@ class PlanStagesMixin:
                     accepted[rel] = existing[rel]  # code that is already there is its own interface
                     continue
                 if rel in accepted and feedback is None:
-                    feedback = self._module_problems(rel, accepted[rel], accepted, outline, existing) or None
+                    live = {r: s for r, s in accepted.items() if r not in reopen}
+                    feedback = self._module_problems(rel, accepted[rel], live, outline, existing) or None
                     if feedback is None:
                         continue
                 if rel in accepted:
                     self.logger.log_event("PLAN_MODULE_REOPENED", module=rel, reasons=feedback)
                     feedback = texts.module_reopened(rel, feedback)
+                live = {r: s for r, s in accepted.items() if r not in reopen}
                 result = self._module_stage(
-                    plan_payload, outline, rel, accepted, existing, feedback or [],
+                    plan_payload, outline, rel, live, existing, feedback or [],
                     drafts.pop(rel, None) or accepted.get(rel) or existing.get(rel),
                 )
                 needs = {d: n for d, n in result["needs"].items() if d in accepted}
@@ -269,12 +275,15 @@ class PlanStagesMixin:
             if not problems and critic_left and attempt < MODULE_ROUNDS:
                 verdict = self._critic_review("module_critic_guard.md", {
                     "user_prompt": plan_payload.get("user_prompt", ""), "outline": outline_view(outline), "module": entry,
-                    "source": source, "dependencies": deps, "consumers": consumers,
+                    # The critic reviews the interface: a body the author wrote anyway is not shown to it (2026-11-21, 02:
+                    # blockers on `import csv` and an attribute set inside a body that the coder rewrites).
+                    "source": interface_view(source), "dependencies": deps, "consumers": consumers,
                 }, {rel, Path(rel).name})
                 critic = verdict[0] if verdict else []
                 if critic:
                     critic_left -= 1
                     objections = critic
+                    self._learn_from_critic("plan_module", rel, critic)
             self.logger.log_event("PLAN_MODULE_CHECKED", module=rel, attempt=attempt, problems=problems, critic=critic)
             if problems or critic:
                 fb = problems + critic
@@ -301,7 +310,7 @@ class PlanStagesMixin:
         self, rel: str, source: str, accepted: dict[str, str], outline: dict[str, Any], existing: dict[str, str]
     ) -> list[str]:
         """What code finds wrong with `source` as the interface of `rel`, next to the accepted interfaces: its stub,
-        imports, constants, doctests on the stubs, the harness's calls, the promised names, and the names accepted
+        imports, constants, the harness's calls, the promised names, and the names accepted
         consumers already import from it."""
         if stub_source(source) is None:
             return [str(v) for v in code_violations({rel: source}, None)[1] if v.rule == "INTERFACE_DOES_NOT_PARSE"] or [texts.MODULE_NO_SOURCE]
@@ -314,8 +323,13 @@ class PlanStagesMixin:
             missing = [n for p in module_entry(outline, rel)["provides"] if (n := provided_name(p)) and n not in symbols]
             if missing:
                 problems.append(texts.module_misses_provides(rel, missing))
+            # Only what the outline promises is protected: a consumer that imports another name (it was designed against
+            # an older outline, or invented it) is reopened at its own turn by `USES_UNDECLARED`. Protecting it here
+            # left the author of a changed module with no right answer (2026-11-22, 01: the outline dropped
+            # `evaluate_random_agent`, the accepted entrypoint still imported it, six attempts, plan rejected).
+            promised = {provided_name(p).partition(".")[0] for p in module_entry(outline, rel)["provides"]}
             for other, spec in specs.items():
-                used = [n for n in spec["uses"].get(rel, []) if n not in symbols and n != "*"]
+                used = [n for n in spec["uses"].get(rel, []) if n not in symbols and n != "*" and n in promised]
                 if other != rel and used:
                     problems.append(texts.module_breaks_consumer(rel, other, used))
             dropped = sorted(existing_names(rel, existing[rel]) - set(symbols)) if rel in existing else []

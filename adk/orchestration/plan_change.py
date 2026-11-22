@@ -17,7 +17,7 @@ from adk.hypergraph.build import spec_from_stub
 from adk.hypergraph.model import module_import_path
 
 # Findings that compare the workspace with σ: when one of them repeats, σ itself may be wrong.
-_SPEC_RULES = ("SPEC_EXAMPLE_INVALID", "BEHAVIOUR_MISMATCH", "API_MISSING", "API_KIND", "API_SIGNATURE", "TEST_OUTSIDE_SPEC", "IMPORT_OUTSIDE_SPEC")
+_SPEC_RULES = ("API_MISSING", "API_KIND", "API_SIGNATURE", "TEST_OUTSIDE_SPEC", "IMPORT_OUTSIDE_SPEC")
 _FINDING = re.compile(rf"\b({'|'.join(_SPEC_RULES)}) \[([^\]]+)\]")
 AMENDMENTS_PER_MODULE = 2  # per run: after that the module's tasks fail as gaps, the plan is not rewritten forever
 
@@ -51,8 +51,7 @@ class PlanChangeMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
 
     def _amend_spec_if_wrong(self, failed_file: str, issues: list[Any], task_id: str) -> bool:
-        """Ask the planner to judge σ when a breach of it repeats on the same vertex, or at once when an example of
-        the interface cannot pass with any implementation (SPEC_EXAMPLE_INVALID). True when σ was amended."""
+        """Ask the planner to judge σ when a breach of it repeats on the same vertex. True when σ was amended."""
         h = self._project_h()
         if h is None:
             return False
@@ -60,9 +59,7 @@ class PlanChangeMixin:
         owner = h.owner_of(failed_file)
         history = h.vertices[owner].history if owner is not None else []
         before = _spec_findings([i for entry in history[:-1] for i in entry.get("issues", [])])
-        # 2026-11-18: "twice in a row" never came within the 3 attempts of a task; a broken example is the plan's
-        # fault from its first occurrence.
-        repeated = (now & before) | {f for f in now if f[0] == "SPEC_EXAMPLE_INVALID"}
+        repeated = now & before
         if not repeated:
             return False
         rule, where = sorted(repeated)[0]
@@ -125,7 +122,7 @@ class PlanChangeMixin:
     def _apply_amendment(
         self, module: str, source: str, interfaces: dict[str, str], blueprint: dict[str, Any], users: dict[str, list[str]]
     ) -> list[str]:
-        """Validate the new interface like the plan (stubs import, doctests, entrypoint) and apply it to σ and the
+        """Validate the new interface like the plan (stubs import, entrypoint) and apply it to σ and the
         blueprint. Returns the reasons it was refused."""
         h = self._project_h()
         candidate = {**interfaces, module: source}

@@ -49,7 +49,7 @@ _GATE_REJECTION = texts.GATE_REJECTION
 
 
 _SPEC_FINDING = re.compile(
-    r"(?:API_\w+|SPEC_EXAMPLE_INVALID|IMPORT_OUTSIDE_SPEC|IMPORT_NOT_IN_PLAN|FILE_OUTSIDE_PLAN|TEST_OUTSIDE_SPEC|TEST_INVALID_ON_STUBS)\b"
+    r"(?:API_\w+|IMPORT_OUTSIDE_SPEC|IMPORT_NOT_IN_PLAN|FILE_OUTSIDE_PLAN|TEST_OUTSIDE_SPEC|TEST_INVALID_ON_STUBS)\b"
     r"|Write rejected: the answer breaks the specification"
 )
 
@@ -58,7 +58,7 @@ def _issue_category(issues: list[Any]) -> str:
     """Kind of a failure, independent of the file: a ruff code (`F821`), `pytest:<Exception>`, `SyntaxError`,
     `ImportError`, `contract` (a verified finding: a test or module uses a name its neighbour does not define),
     `harness` (an answer refused by the write gate / a builder exception), `document` (unresolved thesis
-    pointers), `behaviour` (results differ from the interface's examples), `run:<Exception>` (a traceback of the
+    pointers), `run:<Exception>` (a traceback of the
     experiment), or `generic` (unrecognised; never a pattern for
     evolution: on 2026-11-20 it joined a wrong plan example and a missing import into one "pattern"). Evolution reacts to a category repeating across tasks, not to one incident.
 
@@ -72,9 +72,6 @@ def _issue_category(issues: list[Any]) -> str:
             continue
         if _GATE_REJECTION.search(text):
             counts["harness"] += 1
-            continue
-        if text.strip().startswith("BEHAVIOUR_MISMATCH"):
-            counts["behaviour"] += 1  # the model's category (A10), but its own: not mixed with unrelated failures
             continue
         counts.update(code for code, _ in _RUFF_FINDING.findall(text))
         counts.update(code for _, code in _RUFF_CONCISE.findall(text))

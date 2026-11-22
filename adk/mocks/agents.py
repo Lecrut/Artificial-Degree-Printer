@@ -14,14 +14,27 @@ from adk.mocks.staged import outline_from_plan, staged_answer
 from adk.tools.verification.contract_check import stub_source
 
 _CHAPTER = re.compile(r"(?:chapter|rozdzia[lł])\s*(\d+)", re.I)
-_UNRUNNABLE_MODULE = (
-    '"""Metric helpers."""\n\n\n'
-    "def normalized(values: tuple) -> tuple:\n"
-    '    """Values scaled to [0, 1].\n\n'
-    "    >>> v = (1, 2, 3); v[0] = 0\n"
-    '    """\n'
-)
 _HELPER = 'FIGURE_DPI: int = 150\n"""Resolution of every saved figure."""\n'
+_PLOTS_DEF = re.compile(r"^def generate_plots(\(.*?\)(?: -> [^:\n]+)?):[ \t]*$", re.M)
+
+
+def _broken_plots(script: str) -> str:
+    """The figures script whose declared function (same signature) raises when the harness runs it."""
+    found = _PLOTS_DEF.search(script)
+    signature = found.group(1) if found else "() -> None"
+    renamed = script.replace("generate_plots(", "_generate_plots_impl(")  # the definition and its calls (`__main__`)
+    return renamed + (
+        f"\n\ndef generate_plots{signature}:\n"
+        '    """Figures."""\n'
+        '    raise ValueError("simulated: the figure data is missing")\n'
+    )
+
+
+def _with_keyword(promise: str) -> str:
+    """A promise as a model writes it: a class as `class X: <Class>`, a function as `def f() -> None`."""
+    if "." in promise or promise.isupper():
+        return promise
+    return f"class {promise}: <Class>" if promise[:1].isupper() else f"def {promise}() -> None"
 
 
 def _first_answer(payload: dict[str, Any]) -> bool:
@@ -37,6 +50,7 @@ class SimulatedAgents:
         self.scenario = scenario
         self.flaws_left = set(scenario.flaws)
         self.calls: dict[str, int] = {}
+        self.blocked_modules: set[str] = set()  # modules whose critic has blocked (the second flaw needs another one)
 
     def _flaw(self, name: str) -> bool:
         """Make this mistake once."""
@@ -55,7 +69,10 @@ class SimulatedAgents:
             return self._module(payload)
         if agent == "module_critic_guard":
             rel = str((payload.get("module") or {}).get("file") or "")
-            if self._flaw("module_critic_blocks_once"):
+            if self._flaw("module_critic_blocks_once") or (
+                rel not in self.blocked_modules and self.blocked_modules and self._flaw("second_module_critic_blocks")
+            ):
+                self.blocked_modules.add(rel)
                 return {"status": "FAIL", "issues": [{
                     "blocking": True, "where": rel, "problem": "the interface does not say what its values mean",
                     "fix": "state the meaning of every value in the docstrings",
@@ -145,6 +162,9 @@ class SimulatedAgents:
                 fixed["academic_blueprint"] = blueprint
             return fixed
         outline = outline_from_plan(self._plan(payload))
+        if self._flaw("outline_promises_with_keywords"):
+            for module in outline["modules"]:
+                module["provides"] = [_with_keyword(p) for p in module["provides"]]
         if self.scenario.flaws and self._flaw("planner_unrunnable_plan"):
             outline["modules"].append({"file": "metrics_helpers.py", "purpose": "Metric helpers.", "depends_on": [], "provides": ["normalized"]})
         return outline
@@ -189,6 +209,12 @@ class SimulatedAgents:
             return {
                 "action": "CREATE_AGENT", "decision": "CREATE_AGENT", "specialization": payload["missing_specialization"],
                 "layer": payload.get("target_layer", "building"), "domain": payload.get("target_layer", "building"),
+            }
+        if (payload.get("pattern") or {}).get("category") == "critic":
+            # Blockers of a planning critic on one planner in several places (plan_evolution): a rule for that planner.
+            return {
+                "action": "MUTATE_AGENT", "decision": "MUTATE_AGENT", "agent_id": payload.get("failed_agent", "plan_module"),
+                "rule": "When you design an interface, state what every value means and who uses it, because the critic judges only what the interface states.",
             }
         if payload.get("split_agent_id") or int(payload.get("agent_failure_count", 0)) >= 2:
             return {
@@ -241,12 +267,15 @@ class SimulatedAgents:
         if target.endswith(".py") and "config" in Path(target).stem:
             return {"ast_edits": [{"symbol": sym, "code": code} for sym, code in sc.config_ast_nodes], "summary": "Configuration constants."}
         if target.endswith("plot_results.py") and sc.plot_script:
+            plot_script = sc.plot_script
+            if first and self._flaw("plot_run_fails"):
+                plot_script = _broken_plots(plot_script)
             if self._flaw("coder_adds_helper"):
-                lines = sc.plot_script.splitlines(keepends=True)
+                lines = plot_script.splitlines(keepends=True)
                 at = 1 if lines and lines[0].startswith("from __future__") else 0
                 script = "".join(lines[:at]) + "from plot_style import FIGURE_DPI  # noqa: F401\n" + "".join(lines[at:])
                 return {"files": [{"filename": "plot_style.py", "content": _HELPER}, {"filename": target, "content": script}], "summary": "Plots with a style helper."}
-            return {"source_code": sc.plot_script, "summary": "Plots of the results."}
+            return {"source_code": plot_script, "summary": "Plots of the results."}
         if target.endswith(".py"):
             code = sc.core_code
             entry_func = ENTRYPOINT.partition(":")[2]

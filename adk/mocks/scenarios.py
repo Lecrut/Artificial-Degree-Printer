@@ -19,6 +19,9 @@ FLAWS = (
     "tester_uses_undeclared_name",  # the first test imports a name the interface does not declare
     "writer_bad_pointer",  # the first chapter cites a symbol that does not exist (verification, fast repair)
     "coder_leaves_stub",  # the first answer for the entrypoint module keeps the stub bodies (NOT_IMPLEMENTED)
+    "outline_promises_with_keywords",  # the first outline writes its promises as `class X: <Class>` / `def f()` (02, 2026-11-22)
+    "second_module_critic_blocks",  # the critic of a second module blocks too: two places, so the planner is evolved
+    "plot_run_fails",  # the first figures script raises when the harness runs it after the experiment (DATA_FAILED, 01)
 )
 ENTRYPOINT = "core.py:train_and_evaluate"
 

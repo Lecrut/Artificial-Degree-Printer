@@ -250,8 +250,9 @@ def test_a3_planning_returns_violations_to_the_planner_then_builds_h_and_stubs(t
     sent = [p for a, p in calls if a == "plan_module" and p["module"]["file"] == "src/experiment.py"]
     assert violations == [] and interfaces == _GOOD and len(sent) == 2
     assert any("ENTRYPOINT_HAS_ARGUMENTS" in f for f in sent[1]["feedback"]) and sent[1]["previous_source"] == broken
-    # The main critic judges only the plan the code accepted, and sees its interfaces.
-    assert len(reviewed) == 1 and reviewed[0]["interfaces"] == _GOOD
+    # The main critic judges only the plan the code accepted, and sees its interfaces (stubs: no written bodies).
+    from adk.orchestration.plan_spec import interface_view
+    assert len(reviewed) == 1 and reviewed[0]["interfaces"] == {rel: interface_view(src) for rel, src in _GOOD.items()}
 
     h = orch._build_project_hypergraph(interfaces, {"entrypoint": _ENTRY, "metrics": ["f1"]}, plan["tasks"])
     assert h is not None and load(orch.hypergraph_path).edges.keys() == h.edges.keys()
@@ -349,9 +350,9 @@ def test_a5_pointer_findings_are_the_writers_whatever_file_they_name():
     assert not _is_pointer_finding("Import error in experiment.py: ImportError: cannot import name 'N_REPETITIONS'")
 
 
-# --- A4: behaviour in σ, tests only through σ, tests validated on the stubs --------------------------------------
+# --- A4: tests only through σ, tests validated on the stubs --------------------------------------
 
-from adk.hypergraph.oracles import check_behaviour, validate_test_on_stubs  # noqa: E402
+from adk.hypergraph.oracles import validate_test_on_stubs  # noqa: E402
 
 _BASELINE = (
     '"""Z-score baseline."""\n\n\nclass ZScoreBaseline:\n'
@@ -359,7 +360,7 @@ _BASELINE = (
     "    def __init__(self, threshold: float = 3.0) -> None:\n"
     '        """Create."""\n        self.threshold = threshold\n\n'
     "    def score(self, x: float) -> float:\n"
-    '        """Absolute score.\n\n        >>> ZScoreBaseline().score(-2.0)\n        2.0\n        """\n'
+    '        """Absolute score: never negative."""\n'
     "        return abs(x)\n"
 )
 _SPEC_IFACES = {"src/baseline.py": _BASELINE, "src/experiment.py": '"""E."""\n\n\ndef run_experiment() -> int:\n    """Run."""\n    return 0\n'}
@@ -406,17 +407,6 @@ def test_a4_a_test_is_validated_on_the_stubs_before_any_implementation(tmp_path:
     assert bad and bad[0].rule == "TEST_INVALID_ON_STUBS" and "NameError" in bad[0].detail
     good.write_text("from baseline import ZScoreBaseline\n\n\ndef test_score():\n    assert ZScoreBaseline().score(1.0) == 1.0\n", encoding="utf-8")
     assert validate_test_on_stubs(ws, "tests/test_baseline.py", h)[0].rule == "TEST_INVALID_ON_STUBS"
-
-
-def test_a4_behaviour_examples_of_the_plan_judge_the_implementation(tmp_path: Path):
-    h, ws = _baseline_h(tmp_path)
-    spec = h.edges["I:src/baseline.py"].spec
-    assert check_behaviour(ws, "src/baseline.py", spec) == []
-    (ws / "src/baseline.py").write_text(_BASELINE.replace("return abs(x)", "return x"), encoding="utf-8")
-    broken = check_behaviour(ws, "src/baseline.py", spec)
-    assert broken and broken[0].rule == "BEHAVIOUR_MISMATCH" and broken[0].culprit == "src/baseline.py"
-    (ws / "src/baseline.py").write_text(_BASELINE.replace("        return abs(x)", "        raise NotImplementedError"), encoding="utf-8")
-    assert check_behaviour(ws, "src/baseline.py", spec) == []  # a stub is not judged on behaviour yet
 
 
 # --- A6: results come from the current code (Φ_R freshness) -------------------------------------------------------
@@ -511,7 +501,6 @@ from adk.orchestration.failure_kinds import HARNESS_ENFORCED_CATEGORIES, _issue_
 def test_a10_breaches_of_the_specification_are_enforced_by_the_harness_not_by_rules():
     category = _issue_category(["IMPORT_OUTSIDE_SPEC [src/experiment.py]: imports N_REPETITIONS from src/config.py"])
     assert category == "spec" and category in HARNESS_ENFORCED_CATEGORIES
-    assert _issue_category(["BEHAVIOUR_MISMATCH [src/baseline.py]: the implementation does not give the results"]) != "spec"
 
 
 def test_a9_with_a_known_culprit_the_remediation_planner_is_skipped(tmp_path: Path):
@@ -527,14 +516,15 @@ def test_a9_with_a_known_culprit_the_remediation_planner_is_skipped(tmp_path: Pa
     state = _RunState(user_prompt="p", max_retries=3, multi_cycle_waves=True, tasks=[task])
     report, stop = orch._repair_task(state, task, dict(failing), "src/config.py", "src/config.py")
     assert stop is None and report["status"] == "FAIL"
-    assert calls == ["T2_FIX1"]  # the author's attempt left the identical error (§XIV Q3); no planner either
+    # A breach of σ keeps both fast attempts (the planner may judge the interface between them, §XIX); no remediation planner.
+    assert calls == ["T2_FIX1", "T2_FIX2"]
 
 
 # --- End to end: the spec-driven path with a scripted model ----------------------------------------------------
 
 _E2E_GAME = (
     "from src.config import N_GAMES\n\n\ndef play(seed: int) -> int:\n"
-    '    """Wins in N_GAMES games.\n\n    >>> play(0) >= 0\n    True\n    """\n    ...\n'
+    '    """Wins in N_GAMES games, never negative."""\n    ...\n'
 )
 _E2E_EXPERIMENT = 'from src.config import SEEDS\nfrom src.game import play\n\n\ndef run_experiment() -> list[int]:\n    """Wins per seed."""\n    ...\n'
 _E2E_IFACES = {"src/config.py": "N_GAMES: int = 3\nSEEDS: list[int] = [0, 1]\n", "src/game.py": _E2E_GAME, "src/experiment.py": _E2E_EXPERIMENT}
