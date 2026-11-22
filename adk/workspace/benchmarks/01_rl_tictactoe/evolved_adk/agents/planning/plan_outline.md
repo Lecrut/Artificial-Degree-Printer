@@ -71,7 +71,3 @@ Return strictly one JSON object, no text outside it:
   }
 }
 ```
-
-## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When designing an experimental plan that supports a comparative thesis claim, ensure every promised plot and metric has a defined data source in the data generation phase and a corresponding consumer in the analysis/visualization phase, because feasibility of academic outputs depends on the complete chain from data creation to interpretation.
-- **RULE**: When designing module interfaces and dependencies for data flow, explicitly ensure that every file referenced in a 'depends_on' clause or read by a consumer module is promised (file path and schema) by a producer module in the outline, because missing source contracts lead to runtime FileNotFoundError.

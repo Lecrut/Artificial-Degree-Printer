@@ -8,13 +8,14 @@
   "question": null,
   "context": {
     "interfaces": [
-      "baseline_zscore.py",
-      "method_rse.py",
-      "metrics.py",
-      "plot_results.py",
-      "run_experiment.py",
-      "synth_data.py"
+      "base_detector.py",
+      "data_generation.py",
+      "evaluation.py",
+      "experiment.py",
+      "figures.py",
+      "score_exporter.py",
+      "subspace_detector.py"
     ],
-    "entrypoint": "run_experiment.py:run_study"
+    "entrypoint": "experiment.py:run_experiment"
   }
 }

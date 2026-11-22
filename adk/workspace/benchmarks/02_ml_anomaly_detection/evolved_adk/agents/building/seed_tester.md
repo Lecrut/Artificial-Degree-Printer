@@ -36,6 +36,3 @@ Return strictly a valid JSON object, for example:
 For several files at once, use `"files": [{"filename": "tests/test_<module>.py", "content": "..."}]`.
 For a change to an existing file: `"ast_edits": [{"symbol": "<TestClass>.<test_method>", "file": "tests/test_<module>.py", "code": "def <test_method>(self) -> None:\n    ...\n"}]`.
 Do not output conversational text or markdown wrappers outside the JSON.
-
-## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When writing unit tests for methods that modify state or return computed results, verify the actual type of the returned value (e.g., scalar vs array) before asserting on it, because single-item outputs often bypass container types and must be explicitly wrapped or checked.

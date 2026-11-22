@@ -45,5 +45,10 @@ Return strictly one JSON object, no text outside it:
 }
 ```
 
+---
+
+## CONSOLIDATED EVOLUTIONARY INVARIANTS
+- **INVARIANT**: When designing signatures, declare exactly what is needed for correctness and type safety without introducing implicit defaults or hidden post-processing, because the stubbed contract must be executable by consumers who rely on explicit arguments.
+- **INVARIANT**: When validating interfaces against task requirements, ensure every method explicitly supports all input forms required by the consumer, because a mismatch between declared parameters and actual needs breaks the dependency chain.
+
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When defining an interface between a producer returning continuous values (such as anomaly scores) and consumers performing threshold-dependent or curve-based metrics (like F1-score or AUC-ROC), always explicitly specify the contract for score-to-label conversion, ensuring that either the consumer handles the transformation or distinct metric variants accepting raw scores are introduced, because implicit type mismatches break downstream evaluation integrity.

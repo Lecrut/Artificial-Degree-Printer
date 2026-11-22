@@ -108,10 +108,10 @@ _NON_GENERAL_RULE = re.compile(
     re.IGNORECASE,
 )
 
-# Budgets for findings placed in a prompt, in characters (~4 characters per token). The largest prompt of the
-# 2026-11-11 run was 20k tokens of a 32k context, so ~1.5k tokens of findings fit with room to spare.
-FINDINGS_BUDGET_CHARS = 6000
-LOG_BUDGET_CHARS = 6000
+# Budgets for findings placed in a prompt, in characters (~4 characters per token). Models have 128k context,
+# so keep generous caps that preserve full tracebacks and logs while still bounding runaway outputs.
+FINDINGS_BUDGET_CHARS = 60000
+LOG_BUDGET_CHARS = 60000
 
 
 def _fit_items(items: list[str], max_chars: int = FINDINGS_BUDGET_CHARS) -> list[str]:

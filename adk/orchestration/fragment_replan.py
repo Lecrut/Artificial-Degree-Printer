@@ -68,15 +68,27 @@ class FragmentReplanMixin:
         blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
         interfaces = blueprint.get("interfaces") or {}
         entries = []
+        def _read(rel: str) -> str:
+            p = self.workspace_dir / rel
+            return p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
+
         for vertex in failed:
             v = h.vertices[vertex]
             path = self.workspace_dir / vertex.partition("#")[0]
             module = h.tested_module(vertex) if v.kind == "test" else vertex
+            # The other side of the conflict: a failed test sees the module it tests, a failed module its tests.
+            if v.kind == "test":
+                counterpart = {module: _read(module)} if module else {}
+            elif v.kind in ("code", "entry"):
+                counterpart = {t: _read(t) for t in h.tests_of(vertex)}
+            else:
+                counterpart = {}
             entries.append({
+                "counterpart_files": {rel: src for rel, src in counterpart.items() if src},
                 "vertex": vertex,
                 "kind": v.kind,
                 "planned_interface": interfaces.get(module, "") if module else "",
-                "current_content": path.read_text(encoding="utf-8", errors="replace")[:6000] if path.is_file() and v.kind != "chapter" else "",
+                "current_content": path.read_text(encoding="utf-8", errors="replace") if path.is_file() and v.kind != "chapter" else "",
                 "attempts": v.attempts,
                 "failures": v.failures,
                 "history": v.history,
@@ -116,16 +128,22 @@ class FragmentReplanMixin:
                 },
                 "repair_dossier": dossier,
                 "available_packages": sorted(available_package_imports().values()),
-                "error_feedback": texts.replan_failed_instruction(failed),
+                "error_feedback": texts.replan_failed_instruction(failed, self.__dict__.get("_replan_uncovered") or []),
             },
         )
         out = answer.get("output") if answer.get("status") == "ok" else None
         out = out if isinstance(out, dict) else {}
         changed = self._replan_interfaces(h, out, failed, interfaces, blueprint)
         tasks, dropped = self._replan_tasks(h, out, len(progress), state)
+        covered = {self._task_vertex(t) for t in state.tasks if t.get("status") in ("TODO", "WAITING")} | {self._task_vertex(t) for t in tasks}
+        covered |= {str(g.get("vertex")) for g in out.get("gaps") or [] if isinstance(g, dict)}
+        # A failed vertex whose own dependencies did not fail has no excuse to stay without a task or a gap
+        # (2026-11-22: synth_data.py in 02 and q_agent.py in 01 were skipped round after round).
+        uncovered = [v for v in failed if v not in covered and not readiness(h, v, set())]
+        self._replan_uncovered = uncovered
         self.logger.log_event(
             "REPLANNED", round=len(progress), failed=failed, tasks=[t["task_id"] for t in tasks],
-            interfaces_changed=changed, dropped=dropped, gaps=out.get("gaps") or [],
+            interfaces_changed=changed, dropped=dropped, gaps=out.get("gaps") or [], uncovered=uncovered,
         )
         state.tasks.extend(tasks)
         write_json_state(self.task_queue_path, state.tasks)

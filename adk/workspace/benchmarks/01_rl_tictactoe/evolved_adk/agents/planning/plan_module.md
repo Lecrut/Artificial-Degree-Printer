@@ -44,6 +44,3 @@ Return strictly one JSON object, no text outside it:
   "needs": {}
 }
 ```
-
-## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When defining a module's public interface in an outline, ensure all symbols imported by other modules that rely on the official contract (rather than direct file access) are explicitly listed in the `provides` section, because the planner must maintain strict consistency between import locations and exported declarations. When introducing stateful components for simulation or training loops, define a deterministic initialization or reset mechanism to isolate independent runs, because shared mutable state across trials contaminates experimental results. When validating performance claims involving comparisons, ensure all baseline or control conditions are implemented and their metrics included in the output alongside the primary subject, because statistical verification requires symmetric data sources.

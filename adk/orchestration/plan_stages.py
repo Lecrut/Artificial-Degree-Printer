@@ -334,7 +334,7 @@ class PlanStagesMixin:
                     problems.append(texts.module_breaks_consumer(rel, other, used))
             dropped = sorted(existing_names(rel, existing[rel]) - set(symbols)) if rel in existing else []
             if dropped:
-                problems.append(texts.module_drops_existing(rel, dropped))
+                problems.append(texts.module_drops_existing(rel, dropped, existing[rel]))
         return list(dict.fromkeys(problems))
 
     # --- stages 3 and 4: tasks and fusion -----------------------------------------------------------------------

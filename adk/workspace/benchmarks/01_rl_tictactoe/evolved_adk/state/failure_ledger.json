@@ -1,92 +1,27 @@
 {
   "failures": [
     {
-      "agent": "plan_module",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"agents/q_agent.py\", \"experiment/run_experiment.py\"], \"examples\": [\"PLAN_CRITIC [experiment/run_experiment.py:run_study]: The module imports `BOARD_SIZE` from `environment/tictactoe_env.py`, but this name is not declared in that module's public interface (outline), which only lists the class and its methods. The outline entry for tictactoe_env does not promise to export `BOARD_SIZE`. Fix: Either add `BOARD_SIZE` to the `provides` list of the `environment/tictactoe_env.py` module in the outline, or change the import in `run_experiment.py` to import it directly from the file without relying on the outline's public contract if it's considered internal (though for modularity, it should be exposed in the outline). Change together: [environment/tictactoe_env.py:provides] Add `BOARD_SIZE: int` to the list of provided symbols..\", \"PLAN_CRITIC [experiment/run_experiment.py:run_study]: The module `agents/q_agent.py` does not expose a method to reset its internal Q-table. The entrypoint plans to train the agent (which requires resetting or re-initializing it for new runs/trials) and evaluates it, but without a way to clear or reset state between independent simulation runs within the single process, the Q-values from training will persist into evaluation, contaminating results, or the agent cannot be reset for statistical averaging (multiple seeds/runs). Fix: Add a `reset(self)` method to `QLearningAgent` in `agents/q_agent.py` that re-initializes the Q-table (and internal counters if any) to default empty/zero state, and call it in the entrypoint before each training run or evaluation batch. Change together: [experiment/run_experiment.py:run_study] Call `agent.reset()` before starting training or evaluation loops to ensure clean state.; [agents/q_agent.py:QLearningAgent] Add public method `def reset(self) -> None` to re-initialize the Q-table..\", \"PLAN_CRITIC [experiment/run_experiment.py:run_study]: The entrypoint calculates `eval_win_rate_vs_random` but does not compute the corresponding baseline metric for the Random Agent playing against itself (or against a perfect agent to establish floor/ceiling), which is required by the thesis statement to prove Q-learning is 'statistically better' than random. The prompt asks to compare Q-learning against the random player, but currently, only one side of that comparison is measured in `results.csv`. Without the Random Agent's performance metrics (e.g., win rate vs Random or win rate vs a baseline opponent), the claim 'better than random' cannot be verified from the output file. Fix: Modify the entrypoint to also evaluate the `RandomAgent` against itself (or a dummy optimal opponent if self-play isn't defined for random) and include its performance metrics (win_rate, draw_rate, loss_rate) in the `results.csv` output. Change together: [experiment/run_experiment.py:run_study] Add logic to play games where both agents are `RandomAgent` instances and append their metrics to the results DataFrame under method='Random Agent'.; [academic_blueprint.metrics] Ensure the thesis chapter on 'Wyniki i analiza' references both Q-Learning and Random Agent rows in `results.csv` for the comparison..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [experiment/run_experiment.py:run_study]: The module imports `BOARD_SIZE` from `environment/tictactoe_env.py`, but this name is not declared in that module's public interface (outline), which only lists the class and its methods. The outline entry for tictactoe_env does not promise to export `BOARD_SIZE`. Fix: Either add `BOARD_SIZE` to the `provides` list of the `environment/tictactoe_env.py` module in the outline, or change the import in `run_experiment.py` to import it directly from the file without relying on the outline's public contract if it's considered internal (though for modularity, it should be exposed in the outline). Change together: [environment/tictactoe_env.py:provides] Add `BOARD_SIZE: int` to the list of provided symbols..\", \"PLAN_CRITIC [experiment/run_experiment.py:run_study]: The module `agents/q_agent.py` does not expose a method to reset its internal Q-table. The entrypoint plans to train the agent (which requires resetting or re-initializing it for new runs/trials) and evaluates it, but without a way to clear or reset state between independent simulation runs within the single process, the Q-values from training will persist into evaluation, contaminating results, or the agent cannot be reset for statistical averaging (multiple seeds/runs). Fix: Add a `reset(self)` method to `QLearningAgent` in `agents/q_agent.py` that re-initializes the Q-table (and internal counters if any) to default empty/zero state, and call it in the entrypoint before each training run or evaluation batch. Change together: [experiment/run_experiment.py:run_study] Call `agent.reset()` before starting training or evaluation loops to ensure clean state.; [agents/q_agent.py:QLearningAgent] Add public method `def reset(self) -> None` to re-initialize the Q-table..\", \"PLAN_CRITIC [experiment/run_experiment.py:run_study]: The entrypoint calculates `eval_win_rate_vs_random` but does not compute the corresponding baseline metric for the Random Agent playing against itself (or against a perfect agent to establish floor/ceiling), which is required by the thesis statement to prove Q-learning is 'statistically better' than random. The prompt asks to compare Q-learning against the random player, but currently, only one side of that comparison is measured in `results.csv`. Without the Random Agent's performance metrics (e.g., win rate vs Random or win rate vs a baseline opponent), the claim 'better than random' cannot be verified from the output file. Fix: Modify the entrypoint to also evaluate the `RandomAgent` against itself (or a dummy optimal opponent if self-play isn't defined for random) and include its performance metrics (win_rate, draw_rate, loss_rate) in the `results.csv` output. Change together: [experiment/run_experiment.py:run_study] Add logic to play games where both agents are `RandomAgent` instances and append their metrics to the results DataFrame under method='Random Agent'.; [academic_blueprint.metrics] Ensure the thesis chapter on 'Wyniki i analiza' references both Q-Learning and Random Agent rows in `results.csv` for the comparison..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 4, \"cycle_index\": 5, \"source\": \"planning_critic\"}",
-      "injected_rule": "When defining a module's public interface in an outline, ensure all symbols imported by other modules that rely on the official contract (rather than direct file access) are explicitly listed in the `provides` section, because the planner must maintain strict consistency between import locations and exported declarations. When introducing stateful components for simulation or training loops, define a deterministic initialization or reset mechanism to isolate independent runs, because shared mutable state across trials contaminates experimental results. When validating performance claims involving comparisons, ensure all baseline or control conditions are implemented and their metrics included in the output alongside the primary subject, because statistical verification requires symmetric data sources."
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"F821\", \"occurrences\": 2, \"tasks\": [\"T3\", \"T7\"], \"examples\": [\"Ruff lint failure: environment.py:69:13: F821 Undefined name `info`\\nenvironment.py:70:13: F821 Undefined name `info`\\nenvironment.py:71:52: F821 Undefined name `info`\\nenvironment.py:85:9: F821 Undefined name `info`\\nenvironment.py:86:9: F821 Undefined name `info`\\nenvironment.py:87:59: F821 Undefined name `info`\\nFound 6 errors.\", \"Ruff lint failure: baseline_agent.py:9:30: F821 Undefined name `environment`\\nFound 1 error.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"baseline_agent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Ruff lint failure: baseline_agent.py:9:30: F821 Undefined name `environment`\\nFound 1 error.\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 7, \"cycle_index\": 10, \"task_id\": \"T7\", \"target_node\": \"baseline_agent.py\", \"suggested_rule\": \"Task T7 on node baseline_agent.py (baseline_agent.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When a file imports from another module in the same project, define that import using the absolute package path (e.g., `src.module`), because relative imports or bare names can break static analysis and linters if the execution context differs."
     },
     {
-      "agent": "plan_outline",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"outline:0\", \"outline:5\"], \"examples\": [\"PLAN_CRITIC [metrics]: The metric 'final_q_value_density' has no corresponding provider in any module; the outline only promises win/loss/draw rates (win_rate, draw_rate, loss_rate). This makes the declared metrics impossible to compute. Fix: Remove 'final_q_value_density' from the list of metrics to ensure all declared results are achievable by the provided modules. Change together: [academic_blueprint.metrics] Change to [\\\"win_rate\\\", \\\"draw_rate\\\", \\\"loss_rate\\\"]; [thesis_statement] Ensure the statement aligns with win/draw/loss performance rather than Q-value density, or remove if it is a primary claim..\", \"PLAN_CRITIC [academic_blueprint.metrics]: The plan fails to provide a baseline comparison metric in `results.csv`. The thesis statement claims Q-learning is 'statistically better than a random player'. The current experiment only computes metrics for Q-Learning vs Random and Random vs Random. However, the prompt requires comparing the *trained* Q-agent's performance against the *baseline* (Random). To claim 'better', you must compare the specific metric values side-by-side. While `results.csv` contains rows for both methods, the crucial missing element is that the **training** phase does not generate the learning curves needed for Chapter 6 ('Wyniki i analiza' focuses on convergence). The entrypoint tracks training reward but does not save it to a file accessible by `plot_results`, which only reads `results.csv`. This makes the 'learning curves' plot impossible. Fix: Add a module or file path (e.g., `training_log.csv` or include cumulative rewards in `results.csv` with a new metric type) and update the `academic_blueprint.plots` and `visualization/plot_results.py` to read this training data to generate the convergence plots promised in Chapter 6. Change together: [experiment/run_experiment.py:run_study] Save training progress (e.g., episode-wise win rates or average rewards) to a dedicated file (e.g., `training_log.csv`) or append structured rows to `results.csv` with a distinct `metric` identifier for temporal data.; [visualization/plot_results.py:plot_results] Update to read the new training data source and generate the 'learning curves' figure as promised in the chapter focus..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_outline\", \"issues\": [\"PLAN_CRITIC [metrics]: The metric 'final_q_value_density' has no corresponding provider in any module; the outline only promises win/loss/draw rates (win_rate, draw_rate, loss_rate). This makes the declared metrics impossible to compute. Fix: Remove 'final_q_value_density' from the list of metrics to ensure all declared results are achievable by the provided modules. Change together: [academic_blueprint.metrics] Change to [\\\"win_rate\\\", \\\"draw_rate\\\", \\\"loss_rate\\\"]; [thesis_statement] Ensure the statement aligns with win/draw/loss performance rather than Q-value density, or remove if it is a primary claim..\", \"PLAN_CRITIC [academic_blueprint.metrics]: The plan fails to provide a baseline comparison metric in `results.csv`. The thesis statement claims Q-learning is 'statistically better than a random player'. The current experiment only computes metrics for Q-Learning vs Random and Random vs Random. However, the prompt requires comparing the *trained* Q-agent's performance against the *baseline* (Random). To claim 'better', you must compare the specific metric values side-by-side. While `results.csv` contains rows for both methods, the crucial missing element is that the **training** phase does not generate the learning curves needed for Chapter 6 ('Wyniki i analiza' focuses on convergence). The entrypoint tracks training reward but does not save it to a file accessible by `plot_results`, which only reads `results.csv`. This makes the 'learning curves' plot impossible. Fix: Add a module or file path (e.g., `training_log.csv` or include cumulative rewards in `results.csv` with a new metric type) and update the `academic_blueprint.plots` and `visualization/plot_results.py` to read this training data to generate the convergence plots promised in Chapter 6. Change together: [experiment/run_experiment.py:run_study] Save training progress (e.g., episode-wise win rates or average rewards) to a dedicated file (e.g., `training_log.csv`) or append structured rows to `results.csv` with a distinct `metric` identifier for temporal data.; [visualization/plot_results.py:plot_results] Update to read the new training data source and generate the 'learning curves' figure as promised in the chapter focus..\"]}, \"failed_agent\": \"plan_outline\", \"agent_failure_count\": 2, \"cycle_index\": 6, \"source\": \"planning_critic\"}",
-      "injected_rule": "When designing an experimental plan that supports a comparative thesis claim, ensure every promised plot and metric has a defined data source in the data generation phase and a corresponding consumer in the analysis/visualization phase, because feasibility of academic outputs depends on the complete chain from data creation to interpretation."
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"pytest:TypeError\", \"occurrences\": 2, \"tasks\": [\"R1_2\", \"T6\"], \"examples\": [\"Pytest failure: .FFFFF                                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\", \"Pytest failure: ..FFF.                                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"agent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: ..FFF.                                                                                                                                                                                                                                                                                               [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n___________________________________________________________________________________________________________________________ test_qlearning_agent_act_signature_and_return_type ____________________________________________________________________________________________________________________________\\ntests\\\\test_agent.py:27: in test_qlearning_agent_act_signature_and_return_type\\n    action = q_agent.act(state)\\n             ^^^^^^^^^^^^^^^^^^\\nagent.py:55: in act\\n    return int(self.rng.integers(0, self.env.action_space.n))\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nE   TypeError: only 0-dimensional arrays can be converted to Python scalars\\n__________________________________________________________________________________________________________________________________ test_qlearning_agent_update_signature __________________________________________________________________________________________________________________________________\\ntests\\\\test_agent.py:40: in test_qlearning_agent_update_signature\\n    q_agent.update(state, action, reward, next_state, done)\\nagent.py:76: in update\\n    s_key: tuple[int, ...] = tuple(state) if not isinstance(state, tuple) else state\\n                             ^^^^^^^^^^^^\\nE   TypeError: 'int' object is not iterable\\n_____________________________________________________________________________________________________________________________ test_qlearning_agent_update_updates_attributes ______________________________________________________________________________________________________________________________\\ntests\\\\test_agent.py:52: in test_qlearning_agent_update_updates_attributes\\n    q_agent.update(state, action, reward, next_state, done)\\nagent.py:76: in update\\n    s_key: tuple[int, ...] = tuple(state) if not isinstance(state, tuple) else state\\n                             ^^^^^^^^^^^^\\nE   TypeError: 'int' object is not iterable\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_agent.py::test_qlearning_agent_act_signature_and_return_type - TypeError: only 0-dimensional arrays can be converted to Python scalars\\nFAILED tests\\\\test_agent.py::test_qlearning_agent_update_signature - TypeError: 'int' object is not iterable\\nFAILED tests\\\\test_agent.py::test_qlearning_agent_update_updates_attributes - TypeError: 'int' object is not iterable\\n3 failed, 3 passed in 0.16s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 10, \"cycle_index\": 14, \"task_id\": \"R1_2\", \"target_node\": \"agent.py\", \"suggested_rule\": \"Task R1_2 on node agent.py (agent.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When implementing methods that operate on state variables passed as arguments, explicitly handle type mismatches (such as scalar integers versus arrays or iterables) by unwrapping scalars into the expected container format before use, because assuming argument types without validation leads to runtime conversion errors."
     },
     {
-      "agent": "plan_outline",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"outline:6\", \"outline:8\"], \"examples\": [\"PLAN_CRITIC [experiment/run_experiment.py:run_study]: The entrypoint module needs to write results.csv containing a 'method' column for each agent (Q-Learning vs Random). However, the Random Agent module only promises an 'act' function, which does not provide a name/identifier. Without knowing the baseline's name from the module, the experiment cannot correctly label the baseline rows in the output file as required by the prompt's specification of tidy rows. Fix: Add 'RandomAgent.name: str' (e.g., \\\"random_agent\\\") to the provides list of agents/random_agent.py. Change together: [agents/random_agent.py] Update provides to include 'RandomAgent.name: str'.\", \"PLAN_CRITIC [visualization/plot_results.py:plot_results]: The plots module reads training_log.csv for convergence curves. However, neither the experiment module nor any other module promises the creation or schema of 'training_log.csv'. The experiment module only promises to save aggregated metrics to results.csv. Without a module explicitly handling the logging of episode-wise progress to this specific file, the visualization function will fail with a FileNotFoundError. Fix: Add 'logging/training_logger.py' to the outline with purpose 'Logs episode-wise Q-values and rewards to training_log.csv', update experiment/run_experiment.py depends_on to include it, and add a provides entry for the logging function in the new module. Change together: [academic_blueprint.modules] Add module: {file: 'logging/training_logger.py', purpose: 'Logs episode-wise Q-values and rewards to training_log.csv', depends_on: ['environment/tictactoe_env.py', 'agents/q_agent.py'], provides: ['save_episode_logs()']}; [experiment/run_experiment.py] Add 'logging/training_logger.py' to depends_on.\", \"PLAN_CRITIC [experiment/run_experiment.py]: The outline declares `win_rate`, `draw_rate`, and `loss_rate` as metrics in the thesis statement/baseline comparison context, but the environment module only provides standard single-agent RL rewards (e.g., +1/-1/0) and does not expose the game outcome categories (Win/Loss/Draw) necessary to calculate these specific rates directly. Fix: Add `get_outcome(state)` or ensure `TicTacToeEnv.reset()` returns a flag for initial state classification, OR change the metrics declared in `academic_blueprint.metrics` and the experiment's output schema to match exactly what the environment's reward function provides (e.g., `average_reward`, `convergence_steps`) and remove the explicit Win/Loss/Draw rate calculation from the core module promises unless the environment explicitly exposes it. Change together: [environment/tictactoe_env.py] Update provides to include 'TicTacToeEnv.get_valid_actions() -> list[int]' and ensure state representation allows outcome determination, or add 'TicTacToeEnv.evaluate_win(state) -> str' if not derivable from done flag alone for the specific baseline comparison.; [academic_blueprint.metrics] Ensure metrics listed ('win_rate', 'draw_rate', 'loss_rate') are explicitly computable by the experiment module using data returned by TicTacToeEnv..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_outline\", \"issues\": [\"PLAN_CRITIC [experiment/run_experiment.py:run_study]: The entrypoint module needs to write results.csv containing a 'method' column for each agent (Q-Learning vs Random). However, the Random Agent module only promises an 'act' function, which does not provide a name/identifier. Without knowing the baseline's name from the module, the experiment cannot correctly label the baseline rows in the output file as required by the prompt's specification of tidy rows. Fix: Add 'RandomAgent.name: str' (e.g., \\\"random_agent\\\") to the provides list of agents/random_agent.py. Change together: [agents/random_agent.py] Update provides to include 'RandomAgent.name: str'.\", \"PLAN_CRITIC [visualization/plot_results.py:plot_results]: The plots module reads training_log.csv for convergence curves. However, neither the experiment module nor any other module promises the creation or schema of 'training_log.csv'. The experiment module only promises to save aggregated metrics to results.csv. Without a module explicitly handling the logging of episode-wise progress to this specific file, the visualization function will fail with a FileNotFoundError. Fix: Add 'logging/training_logger.py' to the outline with purpose 'Logs episode-wise Q-values and rewards to training_log.csv', update experiment/run_experiment.py depends_on to include it, and add a provides entry for the logging function in the new module. Change together: [academic_blueprint.modules] Add module: {file: 'logging/training_logger.py', purpose: 'Logs episode-wise Q-values and rewards to training_log.csv', depends_on: ['environment/tictactoe_env.py', 'agents/q_agent.py'], provides: ['save_episode_logs()']}; [experiment/run_experiment.py] Add 'logging/training_logger.py' to depends_on.\", \"PLAN_CRITIC [experiment/run_experiment.py]: The outline declares `win_rate`, `draw_rate`, and `loss_rate` as metrics in the thesis statement/baseline comparison context, but the environment module only provides standard single-agent RL rewards (e.g., +1/-1/0) and does not expose the game outcome categories (Win/Loss/Draw) necessary to calculate these specific rates directly. Fix: Add `get_outcome(state)` or ensure `TicTacToeEnv.reset()` returns a flag for initial state classification, OR change the metrics declared in `academic_blueprint.metrics` and the experiment's output schema to match exactly what the environment's reward function provides (e.g., `average_reward`, `convergence_steps`) and remove the explicit Win/Loss/Draw rate calculation from the core module promises unless the environment explicitly exposes it. Change together: [environment/tictactoe_env.py] Update provides to include 'TicTacToeEnv.get_valid_actions() -> list[int]' and ensure state representation allows outcome determination, or add 'TicTacToeEnv.evaluate_win(state) -> str' if not derivable from done flag alone for the specific baseline comparison.; [academic_blueprint.metrics] Ensure metrics listed ('win_rate', 'draw_rate', 'loss_rate') are explicitly computable by the experiment module using data returned by TicTacToeEnv..\"]}, \"failed_agent\": \"plan_outline\", \"agent_failure_count\": 4, \"cycle_index\": 9, \"source\": \"planning_critic\"}",
-      "injected_rule": "When designing module interfaces and dependencies for data flow, explicitly ensure that every file referenced in a 'depends_on' clause or read by a consumer module is promised (file path and schema) by a producer module in the outline, because missing source contracts lead to runtime FileNotFoundError."
-    },
-    {
-      "agent": "seed_tester",
-      "context": "{\"pattern\": {\"category\": \"pytest:AssertionError\", \"occurrences\": 2, \"tasks\": [\"R1_1\", \"T4\"], \"examples\": [\"Pytest failure: FFFFFF                                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\", \"Pytest failure: ..F..F.                                                                                                                                                                                                                                                                                              [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_tictactoe_env.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: ..F..F.                                                                                                                                                                                                                                                                                              [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_________________________________________________________________________________________________________________________________________ test_step_updates_board _________________________________________________________________________________________________________________________________________\\ntests\\\\test_tictactoe_env.py:24: in test_step_updates_board\\n    assert not np.array_equal(obs, new_obs), 'Board should change after a valid step'\\nE   AssertionError: Board should change after a valid step\\nE   assert not True\\nE    +  where True = <function array_equal at 0x00000220D6356CB0>(array([1, 0, 0, 0, 0, 0, 0, 0, 0]), array([1, 0, 0, 0, 0, 0, 0, 0, 0]))\\nE    +    where <function array_equal at 0x00000220D6356CB0> = np.array_equal\\n________________________________________________________________________________________________________________________________________________ test_draw ________________________________________________________________________________________________________________________________________________\\ntests\\\\test_tictactoe_env.py:68: in test_draw\\n    assert not terminated\\nE   assert not True\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_tictactoe_env.py::test_step_updates_board - AssertionError: Board should change after a valid step\\nFAILED tests\\\\test_tictactoe_env.py::test_draw - assert not True\\n2 failed, 5 passed in 0.15s\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 7, \"cycle_index\": 13, \"task_id\": \"R1_1\", \"target_node\": \"tests/test_tictactoe_env.py\", \"suggested_rule\": \"Task R1_1 on node tests/test_tictactoe_env.py (tests/test_tictactoe_env.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When writing tests that assert a system state or value has changed, verify first that the input conditions are sufficient to trigger that change and that no logic prevents it (e.g., early returns for invalid inputs), because false negatives in testing often stem from unexecutable code paths rather than bugs in the implementation itself."
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"pytest:IndexError\", \"occurrences\": 2, \"tasks\": [\"R2_1\", \"R3_1\"], \"examples\": [\"Pytest failure: ...FF.                                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\", \"Pytest failure: ...FF.                                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"agent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: ...FF.                                                                                                                                                                                                                                                                                               [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n__________________________________________________________________________________________________________________________________ test_qlearning_agent_update_signature __________________________________________________________________________________________________________________________________\\ntests\\\\test_agent.py:40: in test_qlearning_agent_update_signature\\n    q_agent.update(state, action, reward, next_state, done)\\nagent.py:122: in update\\n    current_q: float = float(self.q_table[s_key][normalized_action])\\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nE   IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\\n_____________________________________________________________________________________________________________________________ test_qlearning_agent_update_updates_attributes ______________________________________________________________________________________________________________________________\\ntests\\\\test_agent.py:52: in test_qlearning_agent_update_updates_attributes\\n    q_agent.update(state, action, reward, next_state, done)\\nagent.py:122: in update\\n    current_q: float = float(self.q_table[s_key][normalized_action])\\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nE   IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_agent.py::test_qlearning_agent_update_signature - IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\\nFAILED tests\\\\test_agent.py::test_qlearning_agent_update_updates_attributes - IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\\n2 failed, 4 passed in 0.14s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 15, \"cycle_index\": 19, \"task_id\": \"R3_1\", \"target_node\": \"agent.py\", \"suggested_rule\": \"Task R3_1 on node agent.py (agent.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When implementing logic that accesses data structures, ensure you verify the dimensionality of array-like objects (e.g., numpy arrays or nested lists) before indexing them, because assuming a structure is multi-dimensional without validation causes runtime IndexErrors when dimensions are unexpectedly zero."
     }
   ],
   "category_log": [
     {
       "cycle": 1,
-      "agent": "plan_outline",
-      "category": "critic",
-      "task_id": "outline:0"
-    },
-    {
-      "cycle": 2,
       "agent": "plan_module",
       "category": "critic",
-      "task_id": "experiment/run_experiment.py"
-    },
-    {
-      "cycle": 3,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "experiment/run_experiment.py"
-    },
-    {
-      "cycle": 4,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "experiment/run_experiment.py"
-    },
-    {
-      "cycle": 5,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "agents/q_agent.py"
-    },
-    {
-      "cycle": 6,
-      "agent": "plan_outline",
-      "category": "critic",
-      "task_id": "outline:5"
-    },
-    {
-      "cycle": 7,
-      "agent": "plan_outline",
-      "category": "critic",
-      "task_id": "outline:6"
-    },
-    {
-      "cycle": 8,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "agents/q_agent.py"
-    },
-    {
-      "cycle": 9,
-      "agent": "plan_outline",
-      "category": "critic",
-      "task_id": "outline:8"
-    },
-    {
-      "cycle": 10,
-      "agent": "plan_outline",
-      "category": "critic",
-      "task_id": "outline:9"
-    },
-    {
-      "cycle": 11,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "agents/q_agent.py"
+      "task_id": "plots.py"
     },
     {
       "cycle": 1,
@@ -103,14 +38,14 @@
     {
       "cycle": 3,
       "agent": "seed_tester",
-      "category": "harness",
+      "category": "pytest:ValueError",
       "task_id": "T4"
     },
     {
       "cycle": 4,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "T4"
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T5"
     },
     {
       "cycle": 5,
@@ -120,167 +55,127 @@
     },
     {
       "cycle": 6,
-      "agent": "seed_tester",
-      "category": "harness",
+      "agent": "seed_coder",
+      "category": "pytest:TypeError",
       "task_id": "T6"
     },
     {
       "cycle": 7,
       "agent": "seed_coder",
-      "category": "pytest:ValueError",
+      "category": "pytest:KeyError",
       "task_id": "T6"
     },
     {
       "cycle": 8,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T9"
+      "category": "F821",
+      "task_id": "T7"
     },
     {
       "cycle": 9,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T9"
+      "category": "run:NameError",
+      "task_id": "T7"
     },
     {
       "cycle": 10,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T9"
+      "category": "F821",
+      "task_id": "T7"
     },
     {
       "cycle": 11,
       "agent": "seed_coder",
-      "category": "pytest:AttributeError",
-      "task_id": "R1_1"
+      "category": "generic",
+      "task_id": "T9"
     },
     {
       "cycle": 12,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R1_1"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T12"
     },
     {
       "cycle": 13,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R1_1"
+      "agent": "seed_coder",
+      "category": "pytest:TypeError",
+      "task_id": "R1_2"
     },
     {
       "cycle": 14,
       "agent": "seed_coder",
-      "category": "harness",
+      "category": "pytest:TypeError",
       "task_id": "R1_2"
     },
     {
       "cycle": 15,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "R1_2"
+      "category": "pytest:ValueError",
+      "task_id": "R2_1"
     },
     {
       "cycle": 16,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "R1_2"
+      "category": "pytest:IndexError",
+      "task_id": "R2_1"
     },
     {
       "cycle": 17,
       "agent": "seed_coder",
-      "category": "pytest:ValueError",
+      "category": "pytest:IndexError",
       "task_id": "R2_1"
     },
     {
       "cycle": 18,
       "agent": "seed_coder",
       "category": "pytest:IndexError",
-      "task_id": "R2_1"
+      "task_id": "R3_1"
     },
     {
       "cycle": 19,
       "agent": "seed_coder",
-      "category": "pytest:KeyError",
-      "task_id": "R2_1"
-    },
-    {
-      "cycle": 20,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R2_2"
-    },
-    {
-      "cycle": 21,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R2_2"
-    },
-    {
-      "cycle": 22,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R2_2"
-    },
-    {
-      "cycle": 23,
-      "agent": "seed_coder",
-      "category": "pytest:assert",
+      "category": "pytest:IndexError",
       "task_id": "R3_1"
-    },
-    {
-      "cycle": 24,
-      "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "R3_1"
-    },
-    {
-      "cycle": 25,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R3_2"
-    },
-    {
-      "cycle": 26,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R3_2"
-    },
-    {
-      "cycle": 27,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R4_2"
-    },
-    {
-      "cycle": 28,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "R4_2"
     }
   ],
   "rules": [
     {
-      "agent": "plan_module",
-      "rule": "When defining a module's public interface in an outline, ensure all symbols imported by other modules that rely on the official contract (rather than direct file access) are explicitly listed in the `provides` section, because the planner must maintain strict consistency between import locations and exported declarations. When introducing stateful components for simulation or training loops, define a deterministic initialization or reset mechanism to isolate independent runs, because shared mutable state across trials contaminates experimental results. When validating performance claims involving comparisons, ensure all baseline or control conditions are implemented and their metrics included in the output alongside the primary subject, because statistical verification requires symmetric data sources.",
-      "category": "critic",
-      "cycle": 5
+      "agent": "seed_coder",
+      "rule": "When a file imports from another module in the same project, define that import using the absolute package path (e.g., `src.module`), because relative imports or bare names can break static analysis and linters if the execution context differs.",
+      "category": "F821",
+      "cycle": 10
     },
     {
-      "agent": "plan_outline",
-      "rule": "When designing an experimental plan that supports a comparative thesis claim, ensure every promised plot and metric has a defined data source in the data generation phase and a corresponding consumer in the analysis/visualization phase, because feasibility of academic outputs depends on the complete chain from data creation to interpretation.",
-      "category": "critic",
-      "cycle": 6
+      "agent": "seed_coder",
+      "rule": "When implementing methods that operate on state variables passed as arguments, explicitly handle type mismatches (such as scalar integers versus arrays or iterables) by unwrapping scalars into the expected container format before use, because assuming argument types without validation leads to runtime conversion errors.",
+      "category": "pytest:TypeError",
+      "cycle": 14
     },
     {
-      "agent": "plan_outline",
-      "rule": "When designing module interfaces and dependencies for data flow, explicitly ensure that every file referenced in a 'depends_on' clause or read by a consumer module is promised (file path and schema) by a producer module in the outline, because missing source contracts lead to runtime FileNotFoundError.",
-      "category": "critic",
-      "cycle": 9
-    },
+      "agent": "seed_coder",
+      "rule": "When implementing logic that accesses data structures, ensure you verify the dimensionality of array-like objects (e.g., numpy arrays or nested lists) before indexing them, because assuming a structure is multi-dimensional without validation causes runtime IndexErrors when dimensions are unexpectedly zero.",
+      "category": "pytest:IndexError",
+      "cycle": 19
+    }
+  ],
+  "compactions": [
     {
-      "agent": "seed_tester",
-      "rule": "When writing tests that assert a system state or value has changed, verify first that the input conditions are sufficient to trigger that change and that no logic prevents it (e.g., early returns for invalid inputs), because false negatives in testing often stem from unexecutable code paths rather than bugs in the implementation itself.",
-      "category": "pytest:AssertionError",
-      "cycle": 13
+      "agent": "seed_coder",
+      "cycle": 1,
+      "rules_consolidated_count": 4,
+      "consolidated_rules": [
+        "Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.",
+        "When a file imports from another module in the same project, define that import using the absolute package path (e.g., `src.module`), because relative imports or bare names can break static analysis and linters if the execution context differs.",
+        "When implementing methods that operate on state variables passed as arguments, explicitly handle type mismatches (such as scalar integers versus arrays or iterables) by unwrapping scalars into the expected container format before use, because assuming argument types without validation leads to runtime conversion errors.",
+        "When implementing logic that accesses data structures, ensure you verify the dimensionality of array-like objects (e.g., numpy arrays or nested lists) before indexing them, because assuming a structure is multi-dimensional without validation causes runtime IndexErrors when dimensions are unexpectedly zero."
+      ],
+      "dropped_ineffective": [],
+      "invariants": [
+        "When modifying signatures or writing new public interfaces, enforce strict AST signature, parameter order, and return type compatibility with the plan's specification, because the engineering contract must remain stable for all dependent modules.",
+        "When importing symbols from other project modules, use absolute package paths (e.g., `src.module`), because relative imports are fragile and break static analysis if the execution context changes.",
+        "When handling arguments that may be scalars or containers, explicitly validate and unwrap types before use, because assuming argument structure without validation leads to silent runtime errors.",
+        "Before indexing array-like data structures, verify their dimensionality and emptiness, because assuming multi-dimensional structure causes critical `IndexError` failures on edge cases."
+      ]
     }
   ]
 }

@@ -275,8 +275,12 @@ def outline_unknown_dependency(rel: str, dep: str) -> str:
     return f"OUTLINE [{rel}]: depends on {dep}, which is neither in `modules` nor an existing file."
 
 
-def module_drops_existing(rel: str, names: list[str]) -> str:
-    return f"MODULE [{rel}]: the existing code defines {', '.join(names)}; an extension keeps them with their signatures."
+def module_drops_existing(rel: str, names: list[str], existing_source: str = "") -> str:
+    """Names the lost definitions with their existing signatures: a bare name left the author guessing (2026-11-22, 03)."""
+    short = {n.rpartition(".")[2] for n in names}
+    lines = [s.strip() for s in existing_source.splitlines() if s.lstrip().startswith(("def ", "class ")) and any(f" {n}(" in s or f" {n}:" in s for n in short)]
+    shown = f" Existing signatures, copy them exactly: {' | '.join(lines)}" if lines else ""
+    return f"MODULE [{rel}]: the existing code defines {', '.join(names)}; an extension keeps them with their signatures.{shown}"
 
 
 def outline_cycle(rels: list[str]) -> str:
@@ -376,17 +380,24 @@ NO_THESIS_FOR_PDF = "There is no thesis.md, nothing to compile to PDF."
 NO_TECTONIC_LOG = "no logs/tectonic.log"
 
 
-def replan_failed_instruction(failed: list[str]) -> str:
+def replan_failed_instruction(failed: list[str], uncovered: list[str] | None = None) -> str:
     """The re-plan of a failed part of the project (§XI A): new tasks, written knowing what went wrong."""
+    skipped = (
+        f" The previous re-plan left {', '.join(uncovered)} without a task or a gap: each of them needs one now."
+        if uncovered else ""
+    )
     return (
         f"These parts of the project failed after all their repairs: {', '.join(failed)}. `repair_dossier` lists, for "
-        "each of them, the planned interface, its current content, every attempt with its errors and every rejected "
+        "each of them, the planned interface, its current content, `counterpart_files` (the module a failed test checks, "
+        "the tests a failed module did not pass), every attempt with its errors and every rejected "
         "answer, and what waits for it; `verified_do_not_touch` works and stays as it is. Find why the attempts "
         "failed (a wrong interface or example in the plan, a task too large for one answer, a dependency) and return "
         "new work for the failed parts only: `tasks` (new tasks: `target_node`, `description`, `assigned_agent`; a "
         "description says exactly what to write and what the previous attempts got wrong), `interfaces` with the full "
         "new source of a failed module whose interface itself is wrong (names other modules use must stay), and "
-        "`gaps` (`[{\"vertex\", \"reason\"}]`) for a part that cannot be done. Return nothing else."
+        "`gaps` (`[{\"vertex\", \"reason\"}]`) for a part that cannot be done. Every failed part whose own "
+        "dependencies did not fail gets a task or a gap. Return nothing else."
+        + skipped
     )
 
 

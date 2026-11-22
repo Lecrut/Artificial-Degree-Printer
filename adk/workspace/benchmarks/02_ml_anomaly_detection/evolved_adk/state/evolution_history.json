@@ -6,185 +6,293 @@
         "status": "mutated",
         "agent": "plan_module",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
-        "injected_rule": "When defining an interface between a producer returning continuous values (such as anomaly scores) and consumers performing threshold-dependent or curve-based metrics (like F1-score or AUC-ROC), always explicitly specify the contract for score-to-label conversion, ensuring that either the consumer handles the transformation or distinct metric variants accepting raw scores are introduced, because implicit type mismatches break downstream evaluation integrity.",
+        "injected_rule": "When designing a module interface, ensure function signatures match the contract exactly by avoiding undeclared default arguments and including all required logic (such as result formatting or post-processing) within the defined methods rather than leaving them to consumers, because the plan must be executable without hidden dependencies or signature mismatches.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
       }
-    },
-    {
-      "type": "UNKNOWN_CITATIONS_DROPPED",
-      "keys": [
-        "ca024adversariall",
-        "hu2026robin"
-      ]
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T6",
-      "agent": "seed_tester",
-      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_synth_data.py:39: unmatched '}'\n    38:         generate_dataset(0, n_channels, anomaly_fraction, base_seed)\n    39: }"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_baseline_zscore.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_ZScoreBaseline_interface: Failed: DID NOT RAISE NotImplementedError"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8_FIX1",
-      "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_baseline_zscore.py:<ZScoreBaseline>.<test_predict_outside_range>: The new code of <ZScoreBaseline>.<test_predict_outside_range> contains no definition of `<test_predict_outside_range>`; nothing was saved."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8_FIX2",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_baseline_zscore.py]: reads ZScoreBaseline.threshold, which the interface does not declare (test only declared methods and attributes)"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T10",
-      "agent": "seed_tester",
-      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_method_rse.py:54: unterminated string literal (detected at line 54)\n    53:     # Check that fit does not raise errors and attributes are set after fit\n    54:     assert hasattr(detector, 'score_'), \"fit should set score_\n    55: \".replace('\\\\n', '') + '\\n'"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T10_FIX1",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- method_rse.py:RandomSubspaceDetector.predict: The new code of RandomSubspaceDetector.predict contains no definition of `predict`; nothing was saved."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T12_FIX1",
-      "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_metrics.py:test_calculate_auc_roc_basic: The new code of test_calculate_auc_roc_basic contains no definition of `test_calculate_auc_roc_basic`; nothing was saved."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T12_FIX2",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_metrics.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_calculate_auc_roc_basic: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_jdoji4q5\\tests\\test_metrics.py, line 4"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T13_FIX1",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- plot_results.py:py: The new code of py contains no definition of `py`; nothing was saved."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R1_1",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_baseline_zscore.py]: reads ZScoreBaseline.mean_, ZScoreBaseline.std_, ZScoreBaseline.threshold, which the interface does not declare (test only declared methods and attributes)"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R1_2",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_method_rse.py]: reads RandomSubspaceDetector._subspaces, which the interface does not declare (test only declared methods and attributes)"
     },
     {
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "seed_tester",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_tester.md",
-        "injected_rule": "When writing unit tests for methods that modify state or return computed results, verify the actual type of the returned value (e.g., scalar vs array) before asserting on it, because single-item outputs often bypass container types and must be explicitly wrapped or checked.",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
+        "injected_rule": "When designing a module's interface, always verify that method signatures (especially initialization or fitting methods) explicitly support all required input forms mentioned in the consumer task description, because if the interface does not accept the necessary data type, the caller cannot use it as intended.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_outline",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_outline.md",
+        "injected_rule": "When defining metrics in a blueprint, ensure every metric's computational scope matches the available aggregation capabilities of the execution modules (e.g., do not list aggregated statistics like STD_F1 unless an aggregator function is explicitly promised); and verify that all quantitative claims in the thesis statement are mapped to specific metrics defined in the blueprint, because omission breaks the verification chain.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R1_3_FIX1",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_metrics.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_calculate_auc_roc_perfect: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_9kdc78ky\\tests\\test_metrics.py, line 11; test_calculate_auc_roc_empty: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_9kdc78ky\\tests\\test_metrics.py, line 33; test_calculate_auc_roc_random: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_9kdc78ky\\tests\\test_metrics.py, line 41; test_calculate_f1_score_perfect: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_9kdc78ky\\tests\\test_metrics.py, line 49; test_calculate_f1_score_zero: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_9kdc78ky\\tests\\test_metrics.py, line 57; test_calculate_f1_score_edge_case_empty: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_9kdc78ky\\tests\\test_metrics.py, line 65"
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_outline",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_outline.md",
+        "injected_rule": "When designing module interfaces that involve metrics requiring continuous inputs (such as AUC), ensure all upstream modules expose a contract method returning the necessary raw scores, rather than only final binary predictions, because the evaluation logic must be able to access the underlying data distribution.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
     },
     {
-      "type": "SIDE_ARTIFACT_SKIPPED",
-      "node": "metrics.py",
-      "skipped": [
-        "test_code -> tests/test_metrics.py"
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
+        "injected_rule": "When defining a function interface that exposes data structures (like dictionaries or return values) to consumers, explicitly document all key names and value types in the `provides` list or signature description, ensuring they match both the implementation logic and consumer usage requirements, because incomplete interface definitions lead to contract mismatches and downstream failures.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_outline",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_outline.md",
+        "injected_rule": "When defining module interfaces that contribute to classification metrics requiring binary labels, explicitly ensure that at least one provided method generates hard predictions (e.g., `predict`) from continuous scores, because metric computation depends on the availability of y_pred which cannot be inferred solely from score-returning methods.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
+        "injected_rule": "When defining method signatures in a planning outline, strictly adhere to the specified argument list and optionality (required vs. optional) without introducing or removing default values unless explicitly instructed, because the signature contract dictates consumer calling conventions and return consistency across implementations.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "plan_module",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
+          "cycle": 1,
+          "rules_consolidated": 4,
+          "dropped_ineffective": [
+            "When defining a function interface that exposes data structures (like dictionaries or return values) to consumers, explicitly document all key names and value types in the `provides` list or signature description, ensuring they match both the implementation logic and consumer usage requirements, because incomplete interface definitions lead to contract mismatches and downstream failures."
+          ],
+          "invariants": [
+            "When designing signatures, declare exactly what is needed for correctness and type safety without introducing implicit defaults or hidden post-processing, because the stubbed contract must be executable by consumers who rely on explicit arguments.",
+            "When validating interfaces against task requirements, ensure every method explicitly supports all input forms required by the consumer, because a mismatch between declared parameters and actual needs breaks the dependency chain."
+          ]
+        }
+      }
+    },
+    {
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
+        "cycle": 1,
+        "rules_consolidated": 4,
+        "dropped_ineffective": [
+          "When defining a function interface that exposes data structures (like dictionaries or return values) to consumers, explicitly document all key names and value types in the `provides` list or signature description, ensuring they match both the implementation logic and consumer usage requirements, because incomplete interface definitions lead to contract mismatches and downstream failures."
+        ],
+        "invariants": [
+          "When designing signatures, declare exactly what is needed for correctness and type safety without introducing implicit defaults or hidden post-processing, because the stubbed contract must be executable by consumers who rely on explicit arguments.",
+          "When validating interfaces against task requirements, ensure every method explicitly supports all input forms required by the consumer, because a mismatch between declared parameters and actual needs breaks the dependency chain."
+        ]
+      }
+    },
+    {
+      "type": "UNKNOWN_CITATIONS_DROPPED",
+      "keys": [
+        "hu2026robin",
+        "wong2016robust"
       ]
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T5",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_data_generation.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_generate_sample_signature: TypeError: cannot unpack non-iterable Parameter object"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T5_FIX1",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_data_generation.py:module: The new code of module contains no definition of `module`; nothing was saved."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T7",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_base_detector.py]: reads ZScoreDetector.threshold, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T7_FIX1",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_base_detector.py]: reads ZScoreDetector.mean_, ZScoreDetector.std_, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T9",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_subspace_detector.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_initialization_params: AttributeError: 'numpy.random._generator.Generator' object has no attribute 'randn'. Did you mean: 'random'?; test_fit_interface: AttributeError: 'numpy.random._generator.Generator' object has no attribute 'randn'. Did you mean: 'random'?; test_get_anomaly_scores_interface: AttributeError: 'numpy.random._generator.Generator' object has no attribute 'randn'. Did you mean: 'random'?; test_predict_interface: AttributeError: 'numpy.random._generator.Generator' object has no attribute 'randn'. Did you mean: 'random'?"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T9_FIX1",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_subspace_detector.py:test_initialization_params: The new code of test_initialization_params also contains dummy_rng; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`.\n- test_subspace_detector.py:test_fit_interface: The new code of test_fit_interface also contains dummy_rng_2; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`.\n- test_subspace_detector.py:test_get_anomaly_scores_interface: The new code of test_get_anomaly_scores_interface also contains dummy_rng_3; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`.\n- test_subspace_detector.py:test_predict_interface: The new code of test_predict_interface also contains dummy_rng_4; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T14_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- figures.py:__init__: The new code of __init__ contains no definition of `__init__`; nothing was saved."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T14_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- figures.py:module: The new code of module contains no definition of `module`; nothing was saved."
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_coder.md",
+        "injected_rule": "When a file intends to use an external library, explicitly import that library at the top of the module before any usage occurs, because undefined names trigger static analysis failures and prevent code execution.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "R1_2",
+      "agent": "seed_coder",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- API_SIGNATURE [subspace_detector.py]: RandomSubspaceDetector.get_anomaly_scores(self, rng) breaks the interface (self): keep the planned parameters in their order; a parameter you add needs a default"
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
       "task_id": "R1_3_FIX2",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_metrics.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_calculate_auc_roc_empty: NameError: name 'metrics' is not defined"
+      "agent": "seed_coder",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- API_MISSING [base_detector.py]: the interface declares ZScoreDetector.fit, the file lacks them"
     },
     {
-      "type": "SIDE_ARTIFACT_SKIPPED",
-      "node": "metrics.py",
-      "skipped": [
-        "test_code -> tests/test_metrics.py"
-      ]
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_coder.md",
+        "injected_rule": "When implementing a stateful class with dependent execution steps, ensure methods that require prior setup (such as fitting or prediction) validate the object's internal state before performing derived computations, because calling an operation on an uninitialized or incomplete state leads to runtime errors.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R1_3_FIX",
-      "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_metrics.py:None: The new code of None contains no definition of `None`; nothing was saved."
+      "task_id": "R2_1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- base_detector.py:fit: base_detector.py has no `fit` and the planned interface of this module does not declare it (the file has: ZScoreDetector, ZScoreDetector.__init__, ZScoreDetector.fit, ZScoreDetector.get_anomaly_scores, ZScoreDetector.predict, __init__); nothing was saved. Edit one of these symbols, or check that this edit belongs to this file.\n- base_detector.py:get_anomaly_scores: base_detector.py has no `get_anomaly_scores` and the planned interface of this module does not declare it (the file has: ZScoreDetector, ZScoreDetector.__init__, ZScoreDetector.fit, ZScoreDetector.get_anomaly_scores, ZScoreDetector.predict, __init__); nothing was saved. Edit one of these symbols, or check that this edit belongs to this file.\n- base_detector.py:predict: base_detector.py has no `predict` and the planned interface of this module does not declare it (the file has: ZScoreDetector, ZScoreDetector.__init__, ZScoreDetector.fit, ZScoreDetector.get_anomaly_scores, ZScoreDetector.predict, __init__); nothing was saved. Edit one of these symbols, or check that this edit belongs to this file."
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_coder.md",
+        "injected_rule": "When implementing a method that processes iterable inputs, explicitly extract and verify intermediate results (such as return values or tensor shapes) before asserting on them, because relying on implicit state or assuming correct unpacking without verification leads to type mismatches and incorrect lengths.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "seed_coder",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_coder.md",
+          "cycle": 2,
+          "rules_consolidated": 4,
+          "dropped_ineffective": [
+            "When implementing a stateful class with dependent execution steps, ensure methods that require prior setup (such as fitting or prediction) validate the object's internal state before performing derived computations, because calling an operation on an uninitialized or incomplete state leads to runtime errors."
+          ],
+          "invariants": [
+            "When modifying or implementing a module, strictly preserve the planned AST signatures (parameter names, order, and types) and public return types, because the harness enforces interface stability and downstream modules depend on these exact contracts.",
+            "When a symbol originates from an external library, explicitly import it in the current file before any usage, because undefined names cause immediate static analysis failures and prevent execution.",
+            "When processing iterable or tensor inputs, explicitly extract and verify intermediate shapes and return values before asserting results, because relying on implicit state or assuming correct unpacking without verification leads to subtle type mismatches and logic errors."
+          ]
+        }
+      }
+    },
+    {
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_coder.md",
+        "cycle": 2,
+        "rules_consolidated": 4,
+        "dropped_ineffective": [
+          "When implementing a stateful class with dependent execution steps, ensure methods that require prior setup (such as fitting or prediction) validate the object's internal state before performing derived computations, because calling an operation on an uninitialized or incomplete state leads to runtime errors."
+        ],
+        "invariants": [
+          "When modifying or implementing a module, strictly preserve the planned AST signatures (parameter names, order, and types) and public return types, because the harness enforces interface stability and downstream modules depend on these exact contracts.",
+          "When a symbol originates from an external library, explicitly import it in the current file before any usage, because undefined names cause immediate static analysis failures and prevent execution.",
+          "When processing iterable or tensor inputs, explicitly extract and verify intermediate shapes and return values before asserting results, because relying on implicit state or assuming correct unpacking without verification leads to subtle type mismatches and logic errors."
+        ]
+      }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R2_2_FIX2",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_method_rse.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_predict_returns_array: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_y83mhi7p\\tests\\test_method_rse.py, line 53"
+      "task_id": "T15_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- experiment.py:py: The new code of py contains no definition of `py`; nothing was saved."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "R4_1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- experiment.py:run_experiment: SyntaxError in new_code: invalid syntax at line 64 of your code: `y_pred_baseline: np.ndarray, _ = z_detector.predict(BASELINE_THRESHOLD)` is indented by 8 spaces, the line before by 8. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
     },
     {
       "type": "HARNESS_BUG_REPORTED",
       "details": {
         "files_in_error": [
-          "test_method_rse.py"
+          "Traceback (most recent call last)",
+          "experiment.py"
         ],
-        "signature": "test_method_rse.py::TestRandomSubspaceDetector::test_predict_returns_array:AssertionError",
-        "task_id": "R2_2",
+        "signature": "Traceback (most recent call last):\n  File <id>, line #, in <module>\n    fn()\n    ~~^^\n  File <id>, line #, in run_experiment\n    telemetry, labels = generate_dataset(n_samples=SAMPLE_LENGTH, n_anomali\nexperiment.py:F821",
+        "task_id": "R4_1",
         "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
         "source": "harness"
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R2_3_FIX1",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_metrics.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_calculate_auc_roc_empty_inputs: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_nz98os1o\\tests\\test_metrics.py, line 22"
-    },
-    {
-      "type": "SIDE_ARTIFACT_SKIPPED",
-      "node": "metrics.py",
-      "skipped": [
-        "test_code -> tests/test_metrics.py"
-      ]
-    },
-    {
-      "type": "SIDE_ARTIFACT_SKIPPED",
-      "node": "metrics.py",
-      "skipped": [
-        "test_code -> tests/test_metrics.py"
-      ]
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R2_3_FIX2",
-      "agent": "seed_tester",
-      "error": "The answer for 'metrics.py' was not saved: the fields ['test_code'] match no allowed shape. Allowed: ('files[{filename, content}]', 'ast_edits[{symbol, code, file?}]', 'source_code (Python target only)', 'test_code + test_file', 'csv_content + benchmark_file', 'plot_script + plot_file', 'bibtex_entries + bib_file', 'literature_review_section + section_title + research_stage', 'section_title + section_content', 'sections[{section_title, section_content}]'). Return files in 'files' as a list of {'filename', 'content'}."
-    },
-    {
-      "type": "SIDE_ARTIFACT_SKIPPED",
-      "node": "metrics.py",
-      "skipped": [
-        "test_code -> tests/test_metrics.py"
-      ]
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R2_3_FIX",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_metrics.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_calculate_f1_score_zero_true_positives: NameError: name 'sklearn' is not defined"
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "Traceback (most recent call last)",
+          "ValueError",
+          "experiment.py"
+        ],
+        "signature": "Traceback (most recent call last):\n  File <id>, line #, in <module>\n    fn()\n    ~~^^\n  File <id>, line #, in run_experiment\n    raise ValueError(f<id>)\nValueError: generate_dataset returned None for \nexperiment.py:F821",
+        "task_id": "R5_1",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
     }
   ]
 }

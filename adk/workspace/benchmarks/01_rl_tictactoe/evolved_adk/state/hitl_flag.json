@@ -8,12 +8,12 @@
   "question": null,
   "context": {
     "interfaces": [
-      "agents/q_agent.py",
-      "agents/random_agent.py",
-      "environment/tictactoe_env.py",
-      "experiment/run_experiment.py",
-      "visualization/plot_results.py"
+      "agent.py",
+      "baseline_agent.py",
+      "environment.py",
+      "experiment.py",
+      "plots.py"
     ],
-    "entrypoint": "experiment/run_experiment.py:run_study"
+    "entrypoint": "experiment.py:run_experiment"
   }
 }

@@ -4269,3 +4269,26 @@ Test e2e zadania 2 sprawdza skutek każdego flawu w `events.jsonl` i to, że ka�
 **Cena decyzji:** harness traci jedyny oracle zachowania liczony z planu. Wartości sprawdzają teraz tylko testy `seed_tester` (po weryfikacji modułu), więc błąd merytoryczny (np. zły Z-score) przejdzie, jeśli test go nie łapie. To zamiana „plan niemożliwy do spełnienia” na „plan nieweryfikowany co do wartości”; warto zmierzyć w `02`, czy liczba porażek budowy spada bez wzrostu błędów merytorycznych w wynikach.
 
 **Do sprawdzenia na żywo (nie do zrobienia w kodzie):** `03_graph_pathfinding` — czy po ustawieniu `discoverer_researcher` przed rozdziałami nadal pojawiają się nieistniejące klucze `.bib` w `paper_ieee.tex` (§XVII.2 pkt 5).
+
+# §XX — 2026-11-22: diagnoza benchmarków 22.11 (01, 02, 03) i naprawa przeplanowania
+
+**Obserwacje z `events.jsonl` i `hypergraph.json`:**
+- **01** (4 rundy `REPLANNED`) i **02** (2 rundy): oba kończą `REPLAN_EXHAUSTED` (`REPLANS_WITHOUT_PROGRESS = 2`); w każdej rundzie ten sam zestaw `failed` (01: `q_agent.py`, `test_tictactoe_env.py`; 02: `synth_data.py` + 3 testy), brak nowego `verified`.
+- **03**: `PLAN_REJECTED` — `plan_module` 3× łamał sygnaturę istniejącego `search_grid` (`module_drops_existing` podawał tylko nazwę).
+
+**Przyczyny (potwierdzone w kodzie i w `hypergraph.json`):**
+1. `_remember_verdict` ucinał wpis historii do `[:500]`. Głowa raportu pytesta (pasek postępu z paddingiem + bannery `====`) zjadała cały limit, więc `history` i `repair_dossier` nie miały ani asercji, ani tracebacku; w `ANSWER_REJECTED` stały wstęp (~380 zn.) zasłaniał właściwy powód (`TEST_INVALID_ON_STUBS`). Planista przeplanowania nie widział, dlaczego coś padło.
+2. `_repair_dossier` dawał tylko plik wierzchołka: padły test bez kodu testowanego modułu, padły moduł bez testów, które go oblały.
+3. Brak sprawdzenia, że każdy `failed` (bez nieudanych zależności) dostał zadanie albo wpis w `gaps` (01: `q_agent.py`, 02: `synth_data.py` pomijane w kolejnych rundach). Część „pominięć” w 01 to jednak `dropped` jako „verified or already queued”, nie błąd planisty.
+
+**Wdrożono (2026-11-22, decyzja użytkownika: „wdrożyć wszystkie poprawki”):**
+- `spec_gate._essence`: zamiast `[:500]` usuwa pasek postępu i bannery, zwija białe znaki, skraca wstęp `…REJECTED`; limit 900 zn. Zostają linie `E`, `FAILED`, powód odrzucenia.
+- `fragment_replan._repair_dossier`: `counterpart_files` (test → kod testowanego modułu; moduł → jego testy; do 3000 zn. na plik).
+- `fragment_replan._replan_failed`: pole `uncovered` w `REPLANNED`; w następnej rundzie trafia do `error_feedback` (`replan_failed_instruction(failed, uncovered)`). To tylko ponaglenie — kod sam nie tworzy zadań.
+- `agent_texts.module_drops_existing` + `plan_stages`: komunikat zawiera istniejące sygnatury (`def …`/`class …`) utraconych nazw.
+
+**Nie zmieniono:** `REPLANS_WITHOUT_PROGRESS = 2` (rundy były bezowocne z braku kontekstu, nie z braku rund; zwiększać dopiero, gdy nowy przebieg pokaże postęp w 3. rundzie).
+
+**Weryfikacja:** pełna suita 300/300; `_essence` sprawdzony ręcznie na raporcie pytesta i na `ANSWER_REJECTED`. **Nie ma** jeszcze testów jednostkowych `_essence`, `counterpart_files` i `uncovered`, ani przebiegu na żywo — niepotwierdzone, że 03 przechodzi plan i że 01/02 wychodzą z pętli przeplanowania.
+
+**Otwarte:** (a) pętla `SyntaxError` w edycji symbolu testu (01: `test_tictactoe_env.py`, 13 porażek; historia trzyma 4 wpisy); (b) `test_metrics.py:None: The new code of None contains no definition of None` (02) — komunikat o symbolu `None` przy edycji, do zbadania w torze edycji symboli; (c) hipoteza, że `_replan_interfaces` po cichu ignoruje interfejsy plików testowych (`I:{rel}` nie w `h.edges`) — w logach 22.11 niepotwierdzona.

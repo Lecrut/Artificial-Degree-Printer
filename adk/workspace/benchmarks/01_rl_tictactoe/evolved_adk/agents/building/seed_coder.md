@@ -71,5 +71,12 @@ Paths are relative to the workspace; subdirectories are created automatically.
 Optional in any form: `"contract_change": {"reason": "<why a contracted signature changes>"}`.
 Do not include conversational filler or explanatory prose outside the JSON object.
 
+---
+
+## CONSOLIDATED EVOLUTIONARY INVARIANTS
+- **INVARIANT**: When modifying signatures or writing new public interfaces, enforce strict AST signature, parameter order, and return type compatibility with the plan's specification, because the engineering contract must remain stable for all dependent modules.
+- **INVARIANT**: When importing symbols from other project modules, use absolute package paths (e.g., `src.module`), because relative imports are fragile and break static analysis if the execution context changes.
+- **INVARIANT**: When handling arguments that may be scalars or containers, explicitly validate and unwrap types before use, because assuming argument structure without validation leads to silent runtime errors.
+- **INVARIANT**: Before indexing array-like data structures, verify their dimensionality and emptiness, because assuming multi-dimensional structure causes critical `IndexError` failures on edge cases.
+
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.

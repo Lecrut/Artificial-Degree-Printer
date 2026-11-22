@@ -71,5 +71,11 @@ Paths are relative to the workspace; subdirectories are created automatically.
 Optional in any form: `"contract_change": {"reason": "<why a contracted signature changes>"}`.
 Do not include conversational filler or explanatory prose outside the JSON object.
 
+---
+
+## CONSOLIDATED EVOLUTIONARY INVARIANTS
+- **INVARIANT**: When modifying or implementing a module, strictly preserve the planned AST signatures (parameter names, order, and types) and public return types, because the harness enforces interface stability and downstream modules depend on these exact contracts.
+- **INVARIANT**: When a symbol originates from an external library, explicitly import it in the current file before any usage, because undefined names cause immediate static analysis failures and prevent execution.
+- **INVARIANT**: When processing iterable or tensor inputs, explicitly extract and verify intermediate shapes and return values before asserting results, because relying on implicit state or assuming correct unpacking without verification leads to subtle type mismatches and logic errors.
+
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.

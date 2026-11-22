@@ -18,6 +18,20 @@ from adk.orchestration.failure_kinds import _PYTEST_E_LINE
 from adk.hypergraph.model import module_import_path
 
 
+_ISSUE_LIMIT = 900
+_NOISE_LINE = re.compile(r"^\s*(=+.*=+|-{5,}|[.FEsx\s]*\[\s*\d+%\])\s*$")  # pytest banners and progress bars
+
+
+def _essence(text: str) -> str:
+    """What a remembered issue is about: the head of a pytest report (progress bar, banners) took the whole
+    limit and left no assertion in the history (2026-11-22, 01 and 02); a refusal's fixed preamble likewise."""
+    lines = [re.sub(r" ?[.FEsx]+ \[ ?\d+%\]", "", re.sub(r"[ \t]+", " ", line)).strip() for line in text.splitlines()]
+    lines = [line for line in lines if line and not _NOISE_LINE.match(line)]
+    if len(lines) > 1 and len(lines[0]) > 120 and "REJECTED" in lines[0]:
+        lines[0] = lines[0][:120] + "..."
+    return "\n".join(lines)[:_ISSUE_LIMIT]
+
+
 class SpecGateMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
 
@@ -71,7 +85,7 @@ class SpecGateMixin:
             text = str(issue)
             for prefix in prefixes:
                 text = text.replace(prefix, "")
-            return text[:500]
+            return _essence(text)
 
         history.append({"task_id": task_id, "issues": [_short(i) for i in issues[:3]]})
         del history[:-4]

@@ -71,3 +71,8 @@ Return strictly one JSON object, no text outside it:
   }
 }
 ```
+
+## LEARNED RULES AND CONSTRAINTS
+- **RULE**: When defining metrics in a blueprint, ensure every metric's computational scope matches the available aggregation capabilities of the execution modules (e.g., do not list aggregated statistics like STD_F1 unless an aggregator function is explicitly promised); and verify that all quantitative claims in the thesis statement are mapped to specific metrics defined in the blueprint, because omission breaks the verification chain.
+- **RULE**: When designing module interfaces that involve metrics requiring continuous inputs (such as AUC), ensure all upstream modules expose a contract method returning the necessary raw scores, rather than only final binary predictions, because the evaluation logic must be able to access the underlying data distribution.
+- **RULE**: When defining module interfaces that contribute to classification metrics requiring binary labels, explicitly ensure that at least one provided method generates hard predictions (e.g., `predict`) from continuous scores, because metric computation depends on the availability of y_pred which cannot be inferred solely from score-returning methods.

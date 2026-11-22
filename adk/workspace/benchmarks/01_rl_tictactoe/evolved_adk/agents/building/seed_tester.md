@@ -36,6 +36,3 @@ Return strictly a valid JSON object, for example:
 For several files at once, use `"files": [{"filename": "tests/test_<module>.py", "content": "..."}]`.
 For a change to an existing file: `"ast_edits": [{"symbol": "<TestClass>.<test_method>", "file": "tests/test_<module>.py", "code": "def <test_method>(self) -> None:\n    ...\n"}]`.
 Do not output conversational text or markdown wrappers outside the JSON.
-
-## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When writing tests that assert a system state or value has changed, verify first that the input conditions are sufficient to trigger that change and that no logic prevents it (e.g., early returns for invalid inputs), because false negatives in testing often stem from unexecutable code paths rather than bugs in the implementation itself.

@@ -1,49 +1,42 @@
 {
   "files": [
     ".ruff_cache/.gitignore",
-    ".ruff_cache/0.17.2/11721517805703197482",
-    ".ruff_cache/0.17.2/12118297809785826094",
-    ".ruff_cache/0.17.2/14710998667371062357",
+    ".ruff_cache/0.17.2/13658026024107279180",
     ".ruff_cache/0.17.2/14984704555938387153",
-    ".ruff_cache/0.17.2/15078159074612205859",
-    ".ruff_cache/0.17.2/18281081095562812108",
-    ".ruff_cache/0.17.2/3294128247602053194",
     ".ruff_cache/0.17.2/5000838088791888232",
-    ".ruff_cache/0.17.2/5239402738303864517",
-    ".ruff_cache/0.17.2/986691253863890047",
+    ".ruff_cache/0.17.2/6557967958916365441",
     ".ruff_cache/CACHEDIR.TAG",
-    "agents/q_agent.py",
-    "agents/random_agent.py",
-    "environment/tictactoe_env.py",
-    "experiment/run_experiment.py",
+    "agent.py",
+    "baseline_agent.py",
+    "environment.py",
+    "experiment.py",
     "logs/agent_trace.jsonl",
     "logs/events.jsonl",
     "logs/harness_process.log",
+    "plots.py",
     "references.bib",
-    "tests/test_q_agent.py",
-    "tests/test_random_agent.py",
-    "tests/test_tictactoe_env.py",
-    "thesis.md",
-    "visualization/plot_results.py"
+    "tests/test_agent.py",
+    "tests/test_baseline_agent.py",
+    "tests/test_environment.py",
+    "thesis.md"
   ],
   "pytest_status": "FAIL",
   "pytest_errors": [
-    "Pytest failure: .........F.......F.                                                                                                                                                                                                                                                                                  [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n_______________________________________________________________________________________________________________________ TestQLearningAgentLearn.test_learn_creates_entry_if_missing _______________________________________________________________________________________________________________________\ntests\\test_q_agent.py:169: in test_learn_creates_entry_if_missing\n    assert a_new in agent.q_table[s_new]\nE   assert 1 in [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ...]\n________________________________________________________________________________________________________________________________________________ test_draw ________________________________________________________________________________________________________________________________________________\ntests\\test_tictactoe_env.py:78: in test_draw\n    assert not terminated, f'Game terminated prematurely on move {i + 1} with action {action}'\nE   AssertionError: Game terminated prematurely on move 6 with action 8\nE   assert not True\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_q_agent.py::TestQLearningAgentLearn::test_learn_creates_entry_if_missing - assert 1 in [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ...]\nFAILED tests\\test_tictactoe_env.py::test_draw - AssertionError: Game terminated prematurely on move 6 with action 8\n2 failed, 17 passed in 0.15s"
+    "Pytest failure: ...FF........                                                                                                                                                                                                                                                                                        [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n__________________________________________________________________________________________________________________________________ test_qlearning_agent_update_signature __________________________________________________________________________________________________________________________________\ntests\\test_agent.py:40: in test_qlearning_agent_update_signature\n    q_agent.update(state, action, reward, next_state, done)\nagent.py:122: in update\n    current_q: float = float(self.q_table[s_key][normalized_action])\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\n_____________________________________________________________________________________________________________________________ test_qlearning_agent_update_updates_attributes ______________________________________________________________________________________________________________________________\ntests\\test_agent.py:52: in test_qlearning_agent_update_updates_attributes\n    q_agent.update(state, action, reward, next_state, done)\nagent.py:122: in update\n    current_q: float = float(self.q_table[s_key][normalized_action])\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_agent.py::test_qlearning_agent_update_signature - IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\nFAILED tests\\test_agent.py::test_qlearning_agent_update_updates_attributes - IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\n2 failed, 11 passed in 0.17s"
   ],
   "chapters_present": [
-    1,
     2,
-    3,
-    4
+    3
   ],
   "chapters_missing": [
+    1,
+    4,
     5,
-    6,
-    7
+    6
   ],
   "symbolic_errors": [],
   "csv_columns": [],
   "trigger_issues": [
-    "Pytest failure: .....F.                                                                                                                                                                                                                                                                                              [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n________________________________________________________________________________________________________________________________________________ test_draw ________________________________________________________________________________________________________________________________________________\ntests\\test_tictactoe_env.py:78: in test_draw\n    assert not terminated, f'Game terminated prematurely on move {i + 1} with action {action}'\nE   AssertionError: Game terminated prematurely on move 6 with action 8\nE   assert not True\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_tictactoe_env.py::test_draw - AssertionError: Game terminated prematurely on move 6 with action 8\n1 failed, 6 passed in 0.19s"
+    "Pytest failure: ...FF.                                                                                                                                                                                                                                                                                               [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n__________________________________________________________________________________________________________________________________ test_qlearning_agent_update_signature __________________________________________________________________________________________________________________________________\ntests\\test_agent.py:40: in test_qlearning_agent_update_signature\n    q_agent.update(state, action, reward, next_state, done)\nagent.py:122: in update\n    current_q: float = float(self.q_table[s_key][normalized_action])\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\n_____________________________________________________________________________________________________________________________ test_qlearning_agent_update_updates_attributes ______________________________________________________________________________________________________________________________\ntests\\test_agent.py:52: in test_qlearning_agent_update_updates_attributes\n    q_agent.update(state, action, reward, next_state, done)\nagent.py:122: in update\n    current_q: float = float(self.q_table[s_key][normalized_action])\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_agent.py::test_qlearning_agent_update_signature - IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\nFAILED tests\\test_agent.py::test_qlearning_agent_update_updates_attributes - IndexError: too many indices for array: array is 0-dimensional, but 1 were indexed\n2 failed, 4 passed in 0.14s"
   ]
 }

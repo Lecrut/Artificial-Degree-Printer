@@ -41,7 +41,7 @@ def _test_function_source(path: Path, qualname: str) -> str | None:
 
 
 _POINTER = re.compile(r"\\ref_(?:ast|csv|fig)\{[^}]*\}")
-DOC_CONTEXT_BUDGET = 6000
+DOC_CONTEXT_BUDGET = 60000
 
 
 def _document_context(document: str, task_description: str) -> str:
@@ -150,6 +150,10 @@ class BuildingMixin:
             if failing:
                 builder_payload["failing_tests"] = failing
 
+        rejected_outputs = self.__dict__.setdefault("_last_rejected_outputs", {})
+        if node_path in rejected_outputs:
+            builder_payload["previous_rejected_answer"] = rejected_outputs[node_path]
+
         writer = {"agent": agent_id, "task_id": str(task.get("task_id", ""))}
         llm_res = self._call_agent(agent_md, builder_payload, model_tier=model_tier, provider=self.provider)
         try:
@@ -174,11 +178,22 @@ class BuildingMixin:
                 **builder_payload,
                 "rejected_answer": {
                     "error": str(exc),
+                    "output": llm_res.get("output", {}),
                     "instruction": texts.RETRY_INSTRUCTION,
                 },
             }
             llm_res = self._call_agent(agent_md, retry_payload, model_tier=model_tier, provider=self.provider)
-            self._materialize_workspace_artifact(node_path, llm_res.get("output", {}), writer=writer)
+            try:
+                self._materialize_workspace_artifact(node_path, llm_res.get("output", {}), writer=writer)
+            except MaterializationError as exc2:
+                rejected_outputs[node_path] = {
+                    "error": str(exc2),
+                    "output": llm_res.get("output", {}),
+                }
+                raise
+            rejected_outputs.pop(node_path, None)
+        else:
+            rejected_outputs.pop(node_path, None)
         return llm_res
 
     def _done_when(self, node_path: str, payload: dict[str, Any]) -> list[str]:
@@ -193,7 +208,7 @@ class BuildingMixin:
             return texts.done_when_document(bool((payload.get("may_cite") or {}).get("available_csv_rows")))
         return []
 
-    def _failing_test_sources(self, limit: int = 6, budget: int = 6000) -> dict[str, dict[str, str]]:
+    def _failing_test_sources(self, limit: int = 12, budget: int = 60000) -> dict[str, dict[str, str]]:
         """`file::Class::test` -> {error, source} for the failing tests of the last verification report."""
         report = read_json_state(self.validation_report_path) if self.validation_report_path.exists() else {}
         if report.get("status") != "FAIL":
@@ -210,7 +225,7 @@ class BuildingMixin:
             source = _test_function_source(path, qualname) if path else None
             if not source or used + len(source) > budget:
                 continue
-            found[key] = {"error": error[:300], "source": source}
+            found[key] = {"error": error, "source": source}
             used += len(source)
             if len(found) >= limit:
                 break

@@ -95,7 +95,7 @@ class PlanChangeMixin:
                 "repeated_findings": [str(i) for i in issues if any(f"{r} [" in str(i) for r, _ in repeated)][:4],
                 "previous_attempts": history,
                 "used_by": users,
-                "implementation": implementation[:6000],
+                "implementation": implementation,
             },
             model_tier="LRM",
             provider=self.provider,
