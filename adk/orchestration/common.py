@@ -151,6 +151,35 @@ def _is_document(rel_path: str) -> bool:
 THESIS_FILE = "thesis.md"
 
 
+def _result_rows(workspace_dir: Path) -> list[dict[str, str]]:
+    """Rows with a `metric` of every tidy results file of the workspace (logs and benchmark copies excluded)."""
+    rows: list[dict[str, str]] = []
+    for csv_path in workspace_dir.rglob("*.csv"):
+        rel = csv_path.relative_to(workspace_dir).parts
+        if "logs" in rel or "benchmarks" in rel:
+            continue
+        try:
+            with csv_path.open(encoding="utf-8", newline="") as handle:
+                rows += [row for row in csv.DictReader(handle) if row.get("metric")]
+        except (OSError, UnicodeDecodeError, csv.Error):
+            continue
+    return rows
+
+
+def _degenerate_metrics(workspace_dir: Path) -> list[str]:
+    """Metrics that are exactly 0 with no spread over several runs: the pipeline measures nothing (2026-11-23, 01: a
+    game environment that never ended the game gave `win_rate` 0.0 in 3 of 3 runs and every gate passed)."""
+    found: list[str] = []
+    for row in _result_rows(workspace_dir) if workspace_dir.exists() else []:
+        try:
+            value, spread, runs = float(row["value"]), float(row.get("std_dev") or 0), float(row.get("n_runs") or 0)
+        except (KeyError, TypeError, ValueError):
+            continue
+        if value == 0.0 and spread == 0.0 and runs >= 2:
+            found.append(texts.metric_degenerate(str(row["metric"]).strip()))
+    return list(dict.fromkeys(found))
+
+
 def _declared_vs_measured_metrics(declared: list[str], workspace_dir: Path) -> list[str]:
     """Compare the metrics the plan pre-registered with the `metric` column of the tidy results files.
 
@@ -159,16 +188,7 @@ def _declared_vs_measured_metrics(declared: list[str], workspace_dir: Path) -> l
     """
     if not declared or not workspace_dir.exists():
         return []
-    measured: set[str] = set()
-    for csv_path in workspace_dir.rglob("*.csv"):
-        rel = csv_path.relative_to(workspace_dir).parts
-        if "logs" in rel or "benchmarks" in rel:
-            continue
-        try:
-            with csv_path.open(encoding="utf-8", newline="") as handle:
-                measured.update(str(row.get("metric", "")).strip() for row in csv.DictReader(handle) if row.get("metric"))
-        except (OSError, UnicodeDecodeError, csv.Error):
-            continue
+    measured = {str(row["metric"]).strip() for row in _result_rows(workspace_dir)}
     if not measured:
         return []  # nothing measured yet: the experiment has not run
     measured_l, declared_l = {m.lower() for m in measured}, {m.strip().lower() for m in declared}

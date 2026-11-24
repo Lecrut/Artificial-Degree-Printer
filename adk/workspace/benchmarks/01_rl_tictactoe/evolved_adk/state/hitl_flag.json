@@ -9,10 +9,11 @@
   "context": {
     "interfaces": [
       "agent.py",
-      "baseline_agent.py",
+      "baseline.py",
+      "config.py",
       "environment.py",
       "experiment.py",
-      "plots.py"
+      "figures.py"
     ],
     "entrypoint": "experiment.py:run_experiment"
   }

@@ -4,6 +4,7 @@ import ast
 import importlib
 import json
 import importlib.metadata
+import os
 import re
 import subprocess
 import sys
@@ -11,6 +12,7 @@ from pathlib import Path
 
 from adk.benchmarks import BENCHMARK_TASKS, get_benchmark_task, run_benchmark_suite
 from adk.core.connection import LLMConnectionManager
+from adk.core.logger import get_process_logger
 from adk.mocks import install_simulated_agents
 from adk.mocks.scenarios import SCENARIOS
 from adk.tools.building.output_bundle import publish_workspace_thesis_bundle
@@ -210,6 +212,12 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
 
     t_res = res["tasks"][0]
     assert t_res["orchestrator_status"] == "COMPLETED"
+    # §VI.9a P6: the task's harness log and trace are written live into its own logs/ folder; afterwards the logger
+    # is back on the default directory.
+    task_logs = out_dir / "02_ml_anomaly_detection" / "logs"
+    assert "[ORCHESTRATOR_START]" in (task_logs / "harness_process.log").read_text(encoding="utf-8")
+    assert (task_logs / "agent_trace.jsonl").stat().st_size > 0
+    assert get_process_logger().log_dir == Path(os.environ["HARNESS_LOG_DIR"])
     events = [json.loads(line) for line in (out_dir / "02_ml_anomaly_detection" / "logs" / "events.jsonl").read_text(encoding="utf-8").splitlines()]
 
     def of(kind: str) -> list[dict]:

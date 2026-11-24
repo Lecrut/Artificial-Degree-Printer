@@ -75,3 +75,4 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
+- **RULE**: When writing analysis sections that reference external data files, always verify column names against the actual schema of the source file rather than inferring them from context or previous successful tasks, because hallucinated data keys cause validation failures.

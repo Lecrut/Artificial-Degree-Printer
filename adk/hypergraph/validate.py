@@ -124,10 +124,11 @@ def _declared_call(specs: dict[str, dict[str, Any]], declared: str, role: str) -
 
 
 def code_violations(
-    interfaces: dict[str, str], entrypoint: str | None, plots: str | None = None
+    interfaces: dict[str, str], entrypoint: str | None, plots: str | None = None, metrics: list[str] | None = None
 ) -> tuple[dict[str, dict[str, Any]], list[Violation]]:
     """σ of every planned module and every reason the code part of the plan cannot work as written
-    (invariants 2–5, 7–9 of §VII.12.10). `plots` is the optional declared figures function (§XIII F2)."""
+    (invariants 2–5, 7–9 of §VII.12.10). `plots` is the optional declared figures function (§XIII F2); `metrics`
+    the declared metrics, each of which the entrypoint's interface has to name (the plan delivers the data it promises)."""
     found: list[Violation] = []
     modules = {module_import_path(rel): rel for rel in interfaces}
     stems: dict[str, list[str]] = {}
@@ -156,6 +157,14 @@ def code_violations(
         found.append(Violation("NO_ENTRYPOINT", "the plan declares no experiment entrypoint (path.py:function)"))
     elif entry_file:
         found += _declared_call(specs, f"{entry_file}:{entry_func}", "ENTRYPOINT")
+    if entry_file in interfaces:
+        text = interfaces[entry_file].lower()
+        found += [Violation(
+            "METRIC_NOT_IN_ENTRYPOINT",
+            f"the declared metric `{m}` is not named in the interface of {entry_file}: its docstring must say which "
+            f"`results.csv` row (method, `{m}`) the experiment writes",
+            entry_file, entry_file,
+        ) for m in metrics or [] if str(m).strip().lower() not in text]
     plots_file = (plots or "").partition(":")[0]
     if plots_file:
         found += _declared_call(specs, str(plots), "PLOTS")

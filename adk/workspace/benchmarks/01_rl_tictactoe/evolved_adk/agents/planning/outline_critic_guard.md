@@ -22,7 +22,7 @@ The harness has already checked by code, and you do NOT repeat:
 `user_prompt`, `outline` (`modules` with `file`, `purpose`, `depends_on`, `provides`; `entrypoint`; `plots`; `academic_blueprint`), `existing_files` (paths), `review_history` (your earlier blockers in this stage and the author's answers; context, not scope — review the whole outline).
 
 ## WHAT TO CHECK
-1. **The experiment answers the thesis.** There is a module for the proposed method and one for the baseline; the entrypoint's module runs both through them; the declared `metrics` can decide `thesis_statement` / `baseline_comparison`.
+1. **The experiment answers the thesis.** There is a module for the proposed method and one for the baseline; the entrypoint's module runs both through them; the declared `metrics` can decide `thesis_statement` / `baseline_comparison`. A metric that measures nothing (the baseline played against an opponent of its own kind, such as random vs random; two names for one quantity) decides nothing: blocking, `where` = `academic_blueprint.metrics`.
 2. **The promises are enough.** Every module promises what its consumers and the experiment need. Example: an accuracy metric needs a prediction method promised by the model module. A capability the experiment needs that no module promises is blocking.
 3. **One concept, one place.** No two modules do the same job; data, environment and settings each have one home.
 4. **Scope fits the request.** The outline does what `user_prompt` asks — no less, and no unrelated extra work — and the chapters fit the document type.

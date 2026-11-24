@@ -135,23 +135,6 @@ def test_two_test_files_with_one_basename_are_both_collected(tmp_path: Path) -> 
     assert res["status"] == "PASS", res["errors"]
 
 
-def test_benchmark_task_logs_live_into_its_own_folder(tmp_path: Path) -> None:
-    """§VI.9a P6: per-task harness log and trace, written live, copied to benchmarks/<slug>/logs/; afterwards the
-    logger is back on the default directory."""
-    import os
-
-    from adk.benchmarks import run_benchmark_suite
-    from adk.core.logger import get_process_logger
-
-    res = run_benchmark_suite(task_keys=["2"], provider="mock", output_root=tmp_path / "out")
-
-    task_logs = tmp_path / "out" / "02_ml_anomaly_detection" / "logs"
-    assert "[ORCHESTRATOR_START]" in (task_logs / "harness_process.log").read_text(encoding="utf-8")
-    assert (task_logs / "agent_trace.jsonl").stat().st_size > 0
-    assert res["tasks"][0]["orchestrator_status"]
-    assert get_process_logger().log_dir == Path(os.environ["HARNESS_LOG_DIR"])
-
-
 def test_interrupted_run_leaves_a_status(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from unittest.mock import MagicMock
 

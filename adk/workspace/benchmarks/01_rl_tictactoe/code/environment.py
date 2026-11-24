@@ -1,117 +1,120 @@
-"""Implements the Tic-Tac-Toe game logic and a Gymnasium-compatible wrapper."""
+"""Implements the Tic-Tac-Toe game logic and a Gymnasium-compatible environment wrapper for agent interaction."""
 import gymnasium as gym
-from typing import Tuple, Optional
+from gymnasium import spaces
 import numpy as np
 
 class TicTacToeEnv(gym.Env):
-    """A Gymnasium environment for the Game of Tic-Tac-Toe.
-    
-    The board is represented as a 1D array of size 9 (3x3 flattened), 
-    where cells contain 0 (empty), 1 (player X), or -1 (player O).
-    Player X always moves first.
+    """A standard 3x3 Tic-Tac-Toe environment using Gymnasium API.
+
+    The state is represented by a 9-element integer array where:
+    - 0 represents an empty cell,
+    1 represents 'X' (the first player),
+    2 represents 'O' (the second player).
+
+    Actions are integers from 0 to 8, corresponding to the indices in the flattened 3x3 board.
     """
-    render_mode: 'object'
-    board_size: 'object'
     observation_space: 'object'
     action_space: 'object'
-    metadata = {'render_modes': ['human', 'ansi']}
+    board: 'np.ndarray[np.int32]'
+    current_player: 'int'
+    metadata = {'render_modes': ['human', 'rgb_array']}
 
-    def __init__(self, render_mode: Optional[str]=None):
-        """Initialize the environment.
+    def __init__(self) -> None:
+        """Initialize the Tic-Tac-Toe environment.
 
-    Args:
-        render_mode: Rendering mode string. Defaults to None (no rendering).
+    The parent class is initialized without passing a seed, as seed handling
+    is done explicitly in reset() to comply with Gymnasium conventions for
+    environments that do not support seeding via __init__.
     """
-        self.render_mode: str = render_mode or 'None'
-        self.board_size: int = 9
-        self.observation_space: gym.spaces.Box = gym.spaces.Box(low=0, high=2, shape=(9,), dtype=np.int8)
-        self.action_space: gym.spaces.Discrete = gym.spaces.Discrete(9)
-        self._board: np.ndarray = None
+        super().__init__()
+        self.observation_space: spaces.Discrete = spaces.Discrete(9)
+        self.action_space: spaces.Discrete = spaces.Discrete(9)
+        self.metadata = {'render_modes': ['human', 'rgb_array']}
+        self.board: np.ndarray[np.int32] = np.zeros(9, dtype=np.int32)
+        self.current_player: int = 1
 
-    def reset(self, seed: Optional[int]=None) -> Tuple[np.ndarray, dict]:
-        """Resets the environment to the initial state.
-
-    Args:
-        seed: Optional random seed for reproducibility. Defaults to None.
+    def reset(self, *, seed: int | None=None, options: dict[str, object] | None=None) -> tuple[np.ndarray, dict]:
+        """Resets the environment to an initial state.
 
     Returns:
-        observation: The initial board state (np.ndarray of shape (9,) with dtype int8).
-        info: Auxiliary diagnostic information (empty dict).
+        A tuple containing:
+        - observation (np.ndarray): The empty board representation [0, 0, ..., 0].
+        - info (dict): An info dictionary with metadata, including whose turn it is.
     """
         if seed is not None:
             np.random.seed(seed)
-        self._board = np.zeros(self.board_size, dtype=np.int8)
-        observation = self._board.copy()
-        info = {}
+        self.board = np.zeros(9, dtype=np.int32)
+        self.current_player = 1
+        observation: np.ndarray = self.board.copy()
+        info: dict = {'current_player': self.current_player}
         return (observation, info)
 
-    def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, dict]:
-        """Performs a single environment step.
+    def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
+        """Performs a single step in the environment.
 
     Args:
-        action: An integer in [0, 8] representing the cell index to place a mark.
+        action (int): An integer representing the cell index to play (0-8).
 
     Returns:
-        observation: The new board state (np.ndarray).
-        reward: Reward for the current player (+1 for win, 0 for draw, -1 for loss).
-        terminated: Boolean indicating if the game has ended due to win or loss.
-        truncated: Boolean indicating if the episode was truncated. Always False.
-        info: Auxiliary diagnostic information including if the action was legal and whose turn it is.
-
-    Raises:
-        ValueError: If the action is invalid (cell already occupied).
+        A tuple containing:
+        - observation (np.ndarray): The board after the move.
+        - reward (float): +1.0 if the acting player wins, 0.0 for a draw, -1.0 if the acting player loses.
+        - terminated (bool): True if the game has ended (win/draw), False otherwise.
+        - truncated (bool): Always False unless step limit is enforced.
+        - info (dict): Contains 'winner' or status details.
     """
-        current_player = 1 if self._board.sum() == 0 else -1
-        next_player = -current_player
-        info: dict = {}
-        if action >= self.board_size:
-            raise ValueError(f'Action {action} out of bounds. Valid actions are 0 to {self.board_size - 1}.')
-        if self._board[action] != 0:
-            info['legal_action'] = False
-            info['turn'] = current_player
-            return (self._board, 0.0, False, True, info)
-        old_state = self._board.copy()
-        self._board[action] = next_player
-        new_state = self._board.copy()
-        game_over = self._check_win(next_player) or len(old_state) == self.board_size - 1
-        if game_over:
-            win_loss_result = self._check_win(next_player)
-            reward = 1.0 if win_loss_result else 0.0 if len(new_state) == self.board_size else -1.0
-            terminated = True
-            truncated = False
-        else:
+        action = int(action)
+        if not 0 <= action < 9:
+            raise ValueError(f'Action {action} is out of bounds for Tic-Tac-Toe (must be 0-8).')
+        prev_board: np.ndarray = self.board.copy()
+        player_symbol: int = self.current_player
+        opponent_symbol: int = 3 - player_symbol
+        if self.board[action] != 0:
+            return (prev_board.copy(), 0.0, False, False, {'error': 'invalid action', 'occupied': True})
+        self.board[action] = player_symbol
+        reward: float = 0.0
+        terminated: bool = False
+        truncated: bool = False
+        winner: int | None = None
+        if not np.any(self.board == 0):
             reward = 0.0
-            terminated = False
-            truncated = False
-        info['legal_action'] = True
-        info['turn'] = current_player
-        return (new_state, reward, terminated, truncated, info)
+            winner = 0
+            terminated = True
+        else:
 
-    def _check_win(self, player: int) -> bool:
-        """Check if the specified player has won.
+            def check_won(board: np.ndarray, player: int) -> bool:
+                return board[0] == player and board[1] == player and (board[2] == player) or (board[3] == player and board[4] == player and (board[5] == player)) or (board[6] == player and board[7] == player and (board[8] == player)) or (board[0] == player and board[3] == player and (board[6] == player)) or (board[1] == player and board[4] == player and (board[7] == player)) or (board[2] == player and board[5] == player and (board[8] == player)) or (board[0] == player and board[4] == player and (board[8] == player)) or (board[2] == player and board[4] == player and (board[6] == player))
+            player_won = check_won(self.board, player_symbol)
+            opponent_won = check_won(self.board, opponent_symbol)
+            if player_won:
+                reward = 1.0
+                winner = player_symbol
+                terminated = True
+            elif opponent_won:
+                reward = -1.0
+                winner = opponent_symbol
+                terminated = True
+        self.current_player = 3 - self.current_player
+        info: dict = {'winner': winner}
+        return (self.board.copy(), reward, terminated, truncated, info)
 
-    Args:
-        player: The player identifier (1 or -1).
+    def __enter__(self) -> 'TicTacToeEnv':
+        """Enter the context manager.
 
     Returns:
-        True if the player has three in a row, False otherwise.
+        self
     """
-        rows = [self._board[i:i + 3] for i in range(0, 9, 3)]
-        cols = [[self._board[j * 3 + i] for j in range(3)] for i in range(3)]
-        diagonals = [[self._board[0], self._board[4], self._board[8]], [self._board[2], self._board[4], self._board[6]]]
-        for row in rows:
-            if player == 1 and np.all(row == 1):
-                return True
-            elif player == -1 and np.all(row == -1):
-                return True
-        for col in cols:
-            if player == 1 and np.all(col == 1):
-                return True
-            elif player == -1 and np.all(col == -1):
-                return True
-        for diag in diagonals:
-            if player == 1 and np.all(diag == 1):
-                return True
-            elif player == -1 and np.all(diag == -1):
-                return True
+        return self
+
+    def __exit__(self, exc_type: type | None, exc_val: object | None, exc_tb: object | None) -> bool:
+        """Exit the context manager.
+
+    Args:
+        exc_type: The exception type if an exception occurred.
+        exc_val: The exception value if an exception occurred.
+        exc_tb: The traceback object if an exception occurred.
+
+    Returns:
+        False (no exception suppression)
+    """
         return False

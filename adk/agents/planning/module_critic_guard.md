@@ -23,9 +23,10 @@ The harness has already checked by code, and you do NOT repeat:
 1. **It does its job.** The interface can deliver the module's `purpose` within the research of `user_prompt`. If this module holds the entrypoint, it runs the method and the baseline through their modules and computes every declared metric.
 2. **It fits its dependencies.** It calls them with the types they declare and uses one encoding of each concept (states, actions, shapes, labels) — the one the dependencies use.
 3. **It serves its consumers.** Its promised names give each consumer what its purpose needs (e.g. a model used for an accuracy metric can predict).
+4. **Its methods agree with each other.** Within one class the docstrings and return annotations do not contradict each other: the order in which methods must be called (e.g. `fit` before `predict`, a getter that needs an earlier call), what each returns (a tuple in the annotation and a single array in the docstring), and the state they share. Block only on a contradiction that makes one of the methods impossible to implement as written.
 
 ## BLOCKERS VS WARNINGS
-- `"blocking": true` ONLY when the module, as designed, certainly cannot do its job or certainly breaks a dependency or a consumer (points 1–3).
+- `"blocking": true` ONLY when the module, as designed, certainly cannot do its job or certainly breaks a dependency or a consumer (points 1–4).
   - `where` MUST be this module's path (optionally `:<symbol>`).
   - `problem` MUST give the concrete failure.
   - `fix` MUST give the single best change.
@@ -38,7 +39,7 @@ Return strictly one JSON object:
 {
   "status": "FAIL",
   "issues": [
-    {"blocking": true, "category": "purpose | dependencies | consumers", "where": "<module path>[:<symbol>]",
+    {"blocking": true, "category": "purpose | dependencies | consumers | consistency", "where": "<module path>[:<symbol>]",
      "problem": "<1-2 sentences quoting the symbol>", "fix": "<one concrete change>",
      "affects": [{"where": "<symbol of this module>", "change": "<exact change>"}]}
   ]

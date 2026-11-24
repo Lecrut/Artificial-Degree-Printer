@@ -26,6 +26,29 @@ def _spec_findings(issues: list[Any]) -> set[tuple[str, str]]:
     return {(m.group(1), m.group(2)) for issue in issues for m in _FINDING.finditer(str(issue))}
 
 
+def _returns(source: str) -> dict[str, str]:
+    """Return annotations of the public functions and methods of an interface source."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return {}
+    found: dict[str, str] = {}
+    for node in tree.body:
+        funcs = [node] if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) else []
+        owner = ""
+        if isinstance(node, ast.ClassDef):
+            owner, funcs = f"{node.name}.", [n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        for f in funcs:
+            if not f.name.startswith("_") or f.name == "__init__":
+                found[owner + f.name] = ast.unparse(f.returns) if f.returns else ""
+    return found
+
+
+def _contract_changed(old_spec: dict[str, Any], new_spec: dict[str, Any], old_source: str, new_source: str) -> bool:
+    """A change of the call contract (symbols, parameters, return annotations); a new docstring alone is not one."""
+    return old_spec.get("symbols") != new_spec.get("symbols") or _returns(old_source) != _returns(new_source)
+
+
 _READS = re.compile(r"TEST_OUTSIDE_SPEC \[[^\]]+\]: reads (.+?), which the interface does not declare")
 
 
@@ -119,6 +142,15 @@ class PlanChangeMixin:
         print(f"  [PLAN ZMIENIONY] Interfejs {module} poprawiony przez planistę: {reason[:200]}", flush=True)
         return True
 
+    def _reopen_test_review(self, h: Any, module: str) -> None:
+        """σ of `module` changed in substance: its tests were written against the old interface. Each may be reviewed
+        once more (for this version of σ) when the module fails on it; the reviewed mark of the old version goes."""
+        reviewed = self.__dict__.setdefault("_reviewed_tests", set())
+        pending = self.__dict__.setdefault("_pending_review", set())
+        for test in h.tests_of(module):
+            reviewed.discard((module, test))
+            pending.add((module, test))
+
     def _apply_amendment(
         self, module: str, source: str, interfaces: dict[str, str], blueprint: dict[str, Any], users: dict[str, list[str]]
     ) -> list[str]:
@@ -126,7 +158,7 @@ class PlanChangeMixin:
         blueprint. Returns the reasons it was refused."""
         h = self._project_h()
         candidate = {**interfaces, module: source}
-        violations = [str(v) for v in code_violations(candidate, str(blueprint.get("entrypoint") or ""), str(blueprint.get("plots") or ""))[1]]
+        violations = [str(v) for v in code_violations(candidate, str(blueprint.get("entrypoint") or ""), str(blueprint.get("plots") or ""), blueprint.get("metrics"))[1]]
         modules = {module_import_path(e.id.removeprefix("I:")): e.id.removeprefix("I:") for e in h.edges.values() if e.type == "I"}
         try:
             new = spec_from_stub(module, source, modules)
@@ -141,6 +173,8 @@ class PlanChangeMixin:
         if violations:
             return violations
         edge = h.edges[f"I:{module}"]
+        if _contract_changed(edge.spec, new, interfaces.get(module, ""), source):
+            self._reopen_test_review(h, module)
         for producer in set(new["uses"]) - set(edge.spec.get("uses", {})):
             if f"I:{producer}" in h.edges and not h.would_cycle(f"I:{producer}", edge.id):
                 h.edges[f"I:{producer}"].members.setdefault(module, "C")

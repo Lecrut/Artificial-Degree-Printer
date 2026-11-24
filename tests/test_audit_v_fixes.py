@@ -136,6 +136,7 @@ def test_failed_publishing_of_one_task_does_not_end_the_suite(tmp_path: Path, mo
     from adk.benchmarks import run_benchmark_suite, runner
 
     monkeypatch.setattr(runner, "publish_workspace_thesis_bundle", MagicMock(side_effect=PermissionError("katalog")))
+    monkeypatch.setattr(runner.NeuroSymbolicOrchestrator, "run", MagicMock(return_value={"status": "COMPLETED"}))  # only the publishing is under test
     res = run_benchmark_suite(task_keys=["2"], provider="mock", output_root=tmp_path / "out")
 
     assert "PermissionError" in res["tasks"][0]["artifacts"]["publish_error"]

@@ -12,6 +12,7 @@ from typing import Any
 from adk.core.models import read_json_state
 from adk.hypergraph import Hypergraph
 from adk.hypergraph.observe import planned_module_for_test
+from adk.orchestration.interface_view import interface_for_test, interfaces_for_coder
 from adk.tools.building.experiment_runner import EXPERIMENT_TIMEOUT_S
 
 
@@ -49,9 +50,14 @@ class ContextMixin:
         if h is None:
             return {}
         vertex = vertex or h.owner_of(node_path)
+        blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+        interfaces = (blueprint.get("interfaces") or {}) if isinstance(blueprint, dict) else {}
         if vertex is None and Path(node_path).name.startswith("test_"):
             module = planned_module_for_test(h, node_path)  # a test file the plan did not name
-            return {"specification": {module: _spec_view(h, module)}} if module else {}
+            if not module:
+                return {}
+            view = _spec_view(h, module)
+            return {"specification": {module: {**view, **self._with_interface(interface_for_test(interfaces, module))}}}
         if vertex is None:
             return self._document_context_slice(h) if node_path.endswith((".md", ".tex")) else {}
         v = h.vertices[vertex]
@@ -60,6 +66,16 @@ class ContextMixin:
             own = [e.id.removeprefix("I:") for e in h.edges.values() if e.type == "I" and vertex in e.members]
             relevant = set(own) | {p for rel in own for p in h.edges[f"I:{rel}"].spec.get("uses", {})}
             context["specification"] = {rel: _spec_view(h, rel) for rel in sorted(relevant) if f"I:{rel}" in h.edges}
+            # Names and parameters are not the whole contract: the annotations, return types and docstrings follow.
+            if v.kind == "test":
+                module = h.tested_module(vertex)
+                if module in context["specification"]:
+                    context["specification"][module].update(self._with_interface(interface_for_test(interfaces, module)))
+            else:
+                uses = h.edges[f"I:{vertex}"].spec.get("uses", {}) if f"I:{vertex}" in h.edges else {}
+                for module, part in interfaces_for_coder(interfaces, uses).items():
+                    if module in context["specification"]:
+                        context["specification"][module].update(self._with_interface(part))
             if v.kind != "test":
                 context["tested_by"] = h.tests_of(vertex)
             run = h.edges.get("R:run")
@@ -79,6 +95,10 @@ class ContextMixin:
         if v.history:
             context["previous_attempts"] = list(v.history)
         return context
+
+    @staticmethod
+    def _with_interface(source: str) -> dict[str, str]:
+        return {"interface": source} if source else {}
 
     def _h_slice(self, vertex: str | None) -> dict[str, Any]:
         """The bags of one vertex for a planner: members with their roles, σ, and the state of every member."""

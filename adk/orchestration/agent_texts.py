@@ -90,6 +90,8 @@ RETRY_INSTRUCTION = (
     "return the corrected answer in the same format."
 )
 SKELETON_SUMMARY = "Skeleton generated from the plan's interfaces."
+CALL_SITE_HINT = " -- called from {}:{} (`{}`); check what that call passes against the planned interface: if the argument is what breaks this code, the fault is at the call site, say so in your answer"
+OWN_NAME_HINT = " -- `{}` is declared by the planned interface of this file; define it at module level again (a rewrite dropped it)"
 IMPORT_HINT = " -- add the import line `{}` at the top of the file"  # D2: the one line from the source of truth
 EXPERIMENT_NO_RESULTS = "The experiment did not produce results.csv"
 
@@ -171,6 +173,17 @@ def test_contradicts_verified_module(module: str) -> str:
     )
 
 
+def test_review_before_module_repair(module: str, test: str, interface: str = "") -> str:
+    planned = f" The planned interfaces involved:\n{interface}\n" if interface else " "
+    return (
+        f"{module} fails on {test}, and {test} was never confirmed against {module} (it has not passed, or the "
+        f"interface of {module} changed since).{planned}Before {module} is repaired again, check the test, not the "
+        "module: the inputs it passes (types, shapes, mocks, fixtures), the return types and call order it assumes "
+        "and the expected values, all against that interface. If you find the test wrong, fix it. If it is "
+        "correct, leave it exactly as it is and change nothing."
+    )
+
+
 def test_name_typo(typos: list[str]) -> str:
     return f"The test reads names the interface does not have: {'; '.join(typos)}. Use the declared names."
 
@@ -209,6 +222,14 @@ def results_format_broken(missing: list[str], extra: list[str], repeated: list[s
 
 def metric_not_measured(metric: str) -> str:
     return f"Metric '{metric}' declared in the plan was not measured."
+
+
+def metric_degenerate(metric: str) -> str:
+    return (
+        f"Metric '{metric}' is exactly 0 in every run (std_dev 0): the experiment measures nothing. Find the cause in "
+        "the modules the experiment uses (a game that never ends, an agent that never learns, a value that is never "
+        "updated) and fix it there, not by changing how the number is written."
+    )
 
 
 def metric_not_declared(metric: str) -> str:
@@ -388,10 +409,15 @@ def replan_failed_instruction(failed: list[str], uncovered: list[str] | None = N
     )
     return (
         f"These parts of the project failed after all their repairs: {', '.join(failed)}. `repair_dossier` lists, for "
-        "each of them, the planned interface, its current content, `counterpart_files` (the module a failed test checks, "
+        "each of them, the planned interface, its current content, `latest_errors` (what blocks it NOW: answer these "
+        "first, `history` is the older context), `counterpart_files` (the module a failed test checks, "
         "the tests a failed module did not pass), every attempt with its errors and every rejected "
-        "answer, and what waits for it; `verified_do_not_touch` works and stays as it is. Find why the attempts "
-        "failed (a wrong interface or example in the plan, a task too large for one answer, a dependency) and return "
+        "answer, what waits for it, and `dependencies` and `dependents` (the state and code of the modules it uses and of the neighbours its errors name); "
+        "`verified_do_not_touch` works and stays as it is, with one exception: when the cause is visibly in a "
+        "`verified` module listed in `dependencies` or `dependents` (or in the module a failed test checks), give ONE task for that "
+        "module and it is reopened. Find why the attempts "
+        "failed (a wrong interface or example in the plan, a task too large for one answer, a dependency, a wrong "
+        "test) and return "
         "new work for the failed parts only: `tasks` (new tasks: `target_node`, `description`, `assigned_agent`; a "
         "description says exactly what to write and what the previous attempts got wrong), `interfaces` with the full "
         "new source of a failed module whose interface itself is wrong (names other modules use must stay), and "
@@ -399,6 +425,11 @@ def replan_failed_instruction(failed: list[str], uncovered: list[str] | None = N
         "dependencies did not fail gets a task or a gap. Return nothing else."
         + skipped
     )
+
+
+def replan_latest_errors(errors: list[str]) -> str:
+    """Appended by the harness to a re-planned task: the findings it has to clear, whatever the planner wrote."""
+    return "\n\nThe last verification of this file reported (all of it must be fixed):\n- " + "\n- ".join(errors)
 
 
 def replan_exhausted(failed: list[str]) -> str:

@@ -18,21 +18,123 @@ from adk.tools.verification.contract_check import stub_source
 _ALLOWED_ON_STUBS = ("NotImplementedError",)
 
 
+def _empty_body(node: ast.AST) -> bool:
+    """A body of nothing but a docstring, `...`, `pass` or one `raise NotImplementedError`."""
+    body = [s for s in node.body if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant)) and not isinstance(s, ast.Pass)]
+    return not body or (len(body) == 1 and isinstance(body[0], ast.Raise) and "NotImplementedError" in ast.unparse(body[0]))
+
+
 def stub_functions(source: str) -> list[str]:
     """Functions and methods (`Class.method`) without an implementation: their body (besides the docstring) is
-    empty, `...`, `pass` or only `raise NotImplementedError` (the e2e run: a body of `...` passed as implemented)."""
+    empty, `...`, `pass` or only `raise NotImplementedError` (the e2e run: a body of `...` passed as implemented).
+
+    Two designs are not stubs (2026-11-24, 01: `agents.py` was refused nine times for them): an abstract method of a
+    base class (an ABC/Protocol, an `@abstractmethod`, or a class another class of the file inherits from), and a
+    `pass` body of a method annotated `-> None` in a class that implements another method (a no-op such as
+    `RandomAgent.update`). A class of stubs only, and `...`, stay stubs."""
+    tree = ast.parse(source)
+    classes = [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
+    owner = {id(item): cls for cls in classes for item in cls.body}
+    inherited = {ast.unparse(b) for cls in classes for b in cls.bases}
+
+    def is_design(node: ast.AST, cls: ast.ClassDef | None) -> bool:
+        if cls is None:
+            return False
+        bases = {ast.unparse(b).rpartition(".")[2] for b in cls.bases}
+        if cls.name in inherited or bases & {"ABC", "Protocol"} or any("abstractmethod" in ast.unparse(d) for d in node.decorator_list):
+            return True
+        no_op = ast.unparse(node.returns) == "None" if node.returns is not None else False
+        only_pass = any(isinstance(s, ast.Pass) for s in node.body) and not any(isinstance(s, ast.Raise) for s in node.body)
+        siblings = [m for m in cls.body if m is not node and isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        return no_op and only_pass and any(not _empty_body(m) for m in siblings)
+
+    found: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and _empty_body(node):
+            cls = owner.get(id(node))
+            if not is_design(node, cls):
+                found.append((f"{cls.name}." if cls else "") + node.name)
+    return found
+
+
+def _own_nodes(func: ast.AST) -> list[ast.AST]:
+    """Nodes of a function's own body, without nested functions, lambdas and classes (their `return` is theirs)."""
+    found: list[ast.AST] = []
+    todo = list(getattr(func, "body", []))
+    while todo:
+        node = todo.pop()
+        found.append(node)
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)):
+            todo.extend(ast.iter_child_nodes(node))
+    return found
+
+
+def _asserts(nodes: list[ast.AST], helpers: set[str]) -> bool:
+    for node in nodes:
+        if isinstance(node, ast.Assert):
+            return True
+        if isinstance(node, ast.Call):
+            name = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
+            owner = ast.unparse(node.func.value) if isinstance(node.func, ast.Attribute) else ""
+            if name.startswith("assert") or name in helpers or (owner == "pytest" and name in ("raises", "warns", "approx", "fail")):
+                return True
+    return False
+
+
+def assertionless_tests(source: str) -> list[str]:
+    """Test functions (`test_*`, also in `Test*` classes) that check nothing: no `assert`, `pytest.raises/warns/approx/fail`,
+    `assert_*` / `self.assert*` call and no call of a function of the same file that asserts. Pytest passes such a test
+    (2026-11-22, 02: a test of comments only made `data_generation.py` with no `return` pass as verified)."""
+    tree = ast.parse(source)
+    funcs = [n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    helpers = {f.name for f in funcs if not f.name.startswith("test_") and any(isinstance(n, ast.Assert) for n in _own_nodes(f))}
+    return [f.name for f in funcs if f.name.startswith("test_") and not _asserts(_own_nodes(f), helpers)]
+
+
+def functions_without_return(source: str) -> list[str]:
+    """Functions and methods whose annotation promises a value (not `None`, `NoReturn`, a generator, an abstract or
+    overloaded one, a stub) but whose body has no `return <value>` and does not end with `raise`: they always return
+    `None` (2026-11-22, 02: `generate_dataset -> Tuple[...]` ended after a loop; the experiment kept being rewritten)."""
     tree = ast.parse(source)
     owner = {id(item): f"{node.name}." for node in ast.walk(tree) if isinstance(node, ast.ClassDef) for item in node.body}
     found: list[str] = []
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            body = [
-                s for s in node.body
-                if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant)) and not isinstance(s, ast.Pass)
-            ]
-            if not body or (len(body) == 1 and isinstance(body[0], ast.Raise) and "NotImplementedError" in ast.unparse(body[0])):
-                found.append(owner.get(id(node), "") + node.name)
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) or node.returns is None:
+            continue
+        name = owner.get(id(node), "") + node.name
+        annotation = ast.unparse(node.returns)
+        decorators = " ".join(ast.unparse(d) for d in node.decorator_list)
+        if _empty_body(node) or annotation in ("None", "NoReturn", "Never") or "abstractmethod" in decorators or "overload" in decorators:
+            continue
+        own = _own_nodes(node)
+        if any(isinstance(n, (ast.Yield, ast.YieldFrom)) or (isinstance(n, ast.Return) and n.value is not None) for n in own):
+            continue
+        if node.body and isinstance(node.body[-1], ast.Raise):
+            continue
+        found.append(name)
     return found
+
+
+def static_defects(workspace: str | Path, rel: str, h: Hypergraph) -> list[Violation]:
+    """Φ_I.5: a test without a single check, a function that promises a value and never returns one. Both pass
+    pytest, so only the write gate can stop them from becoming `verified`."""
+    vertex = h.vertices.get(rel)
+    path = Path(workspace) / rel
+    if vertex is None or not path.is_file():
+        return []
+    try:
+        source = path.read_text(encoding="utf-8")
+        if vertex.kind == "test":
+            names = assertionless_tests(source)
+            rule, detail = "TEST_NO_ASSERTIONS", "these tests check nothing (no `assert`, `pytest.raises`, `pytest.approx`): "
+        elif vertex.kind in ("code", "entry"):
+            names = functions_without_return(source)
+            rule, detail = "FUNCTION_NEVER_RETURNS", "the annotation promises a value, the body has no `return <value>` (is the answer cut off?): "
+        else:
+            return []
+    except SyntaxError:
+        return []  # syntax is judged by ruff and pytest, with better messages
+    return [Violation(rule, detail + ", ".join(names), rel, rel)] if names else []
 
 
 def is_stub(source: str) -> bool:

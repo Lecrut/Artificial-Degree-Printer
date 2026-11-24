@@ -11,7 +11,7 @@ import re
 from adk.hypergraph import Hypergraph, Vertex, Violation, diff, load, observe, save
 from adk.hypergraph.build import spec_from_stub
 from adk.hypergraph.observe import absorbable
-from adk.hypergraph.oracles import run_fingerprint, stub_functions, validate_test_on_stubs
+from adk.hypergraph.oracles import run_fingerprint, static_defects, stub_functions, validate_test_on_stubs
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.common import MaterializationError
 from adk.orchestration.failure_kinds import _PYTEST_E_LINE
@@ -239,6 +239,9 @@ class SpecGateMixin:
             )
             refusals = self._change_spec(h, api_rels, reason)
             violations = self._spec_violations(touched)
+        if not violations:
+            for rel in sorted(touched):
+                violations += static_defects(self.workspace_dir, rel, h)
         if not violations:
             # Φ_I.4: a new or changed test must be a valid test of the stubs before it may judge any implementation.
             for rel in sorted(r for r in touched if Path(r).name.startswith("test_")):

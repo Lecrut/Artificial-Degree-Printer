@@ -23,6 +23,7 @@ from adk.orchestration.common import (
     _agent_for_path,
     _clip_log,
     _declared_vs_measured_metrics,
+    _degenerate_metrics,
 )
 from adk.orchestration.failure_kinds import _collect_report_issues
 
@@ -149,6 +150,14 @@ class VerificationMixin:
             if experiment_err not in test_res["errors"]:
                 test_res["errors"].append(experiment_err)
             test_res["status"] = "FAIL"
+        # The entrypoint is judged on its metrics at its own task, not only at Gate 3 (2026-11-23, 01: `mean_td_error`
+        # was written as `mean_td_error_final` and two re-plan rounds went to it after everything else was verified).
+        if not is_final_gate and declared_entry and node_path == declared_entry.partition(":")[0]:
+            missing = [texts.metric_not_measured(m) for m in declared_metrics if texts.metric_not_measured(m) in metric_findings]
+            extra = [f for f in metric_findings if f not in missing and f.endswith("not declared in the plan.")] if missing else []
+            if missing or (degenerate := _degenerate_metrics(self.workspace_dir)):
+                test_res["errors"] += missing + extra + (degenerate if not missing else [])
+                test_res["status"] = "FAIL"
 
         if is_doc_scope and not is_final_gate:
             code_audit = {

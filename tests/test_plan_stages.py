@@ -34,7 +34,7 @@ _MOD_B = 'from src.mod_a import helper_a\n\n\ndef helper_b() -> int:\n    """Ret
 _EXP = (
     "from src.mod_a import helper_a\n"
     "from src.mod_b import helper_b\n\n"
-    'def run_experiment() -> int:\n    """Run."""\n    return helper_a() + helper_b()\n'
+    'def run_experiment() -> int:\n    """Run; writes score and time."""\n    return helper_a() + helper_b()\n'
 )
 _PLOTS = 'def plots() -> None:\n    """Figures."""\n'
 _ENTRY = "src/experiment.py:run_experiment"
@@ -304,8 +304,8 @@ def test_the_main_critic_is_not_asked_while_code_rejects_the_plan(tmp_path: Path
     original = plan_stages.code_violations
     seen = {"fusion": 0}
 
-    def code_violations(interfaces: dict, entry: Any, plots: Any = None) -> Any:
-        specs, found = original(interfaces, entry, plots)
+    def code_violations(interfaces: dict, entry: Any, plots: Any = None, metrics: Any = None) -> Any:
+        specs, found = original(interfaces, entry, plots, metrics)
         if seen["fusion"] == 0 and _events(orch, "PLAN_FUSED"):  # the first check of the fused plan
             from adk.hypergraph.model import Violation
 
@@ -487,7 +487,7 @@ def test_a_revised_outline_that_drops_a_name_the_frozen_consumers_import_still_s
         "src/mod_b.py": 'from src.mod_a import helper_a_v2\n\n\ndef helper_b() -> int:\n    """Return 2."""\n    return 2\n',
         "src/experiment.py": (
             "from src.mod_a import helper_a_v2\nfrom src.mod_b import helper_b\n\n"
-            'def run_experiment() -> int:\n    """Run."""\n    return helper_a_v2() + helper_b()\n'
+            'def run_experiment() -> int:\n    """Run; writes score and time."""\n    return helper_a_v2() + helper_b()\n'
         ),
     }
 

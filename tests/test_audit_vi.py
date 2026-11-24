@@ -138,7 +138,7 @@ _GENERATOR = (
     '    """One sample."""\n    pass\n'
 )
 _EXPERIMENT_IFACE = (
-    '"""Entrypoint."""\nfrom src.config import CHANNELS, N_REPETITIONS, SEEDS\n'
+    '"""Entrypoint: writes the f1 row."""\nfrom src.config import CHANNELS, N_REPETITIONS, SEEDS\n'
     "from src.data_generator import generate_sample\n\n\n"
     "def run_experiment() -> list[dict]:\n"
     '    """Run everything."""\n    pass\n'

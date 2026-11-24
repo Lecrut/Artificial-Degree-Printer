@@ -50,7 +50,7 @@ class SchedulerMixin:
                     task["status"] = "FAILED"
                     self.logger.log_event("VERTEX_BUDGET_SPENT", vertex=vertex, task_id=task.get("task_id"))
                     continue
-                reasons = readiness(h, vertex, planned) if vertex and h is not None else []
+                reasons = readiness(h, vertex, planned) if vertex and h is not None and not task.pop("force_ready", False) else []
                 if reasons:
                     task["status"] = "WAITING"
                     if str(task.get("task_id")) not in announced:

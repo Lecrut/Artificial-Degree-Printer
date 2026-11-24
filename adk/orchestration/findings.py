@@ -80,15 +80,20 @@ def _relative(raw: str, workspace: Path) -> str:
     return text if (workspace / text).is_file() else ""
 
 
-def _from_ruff(issue: str, workspace: Path, hints: Callable[[str], dict[str, str]] | None = None) -> list[Finding]:
+def _from_ruff(
+    issue: str, workspace: Path, hints: Callable[[str], dict[str, str]] | None = None,
+    own: Callable[[str], dict[str, str]] | None = None,
+) -> list[Finding]:
     found = []
     for m in _RUFF.finditer(issue.removeprefix("Ruff lint failure:").lstrip()):
         rel = _relative(m["file"], workspace) or m["file"]
         symbol, code = locate(workspace, rel, int(m["line"]))
         text = f"{m['code']} {m['msg'].strip()}"
-        name = re.match(r"Undefined name `(\w+)`", m["msg"].strip()) if m["code"] == "F821" and hints else None
-        line = hints(rel).get(name.group(1)) if name else None  # D2: the one import line, as a hint
-        found.append(Finding("ruff", text + texts.IMPORT_HINT.format(line) if line else text, rel, symbol, int(m["line"]), code))
+        name = re.match(r"Undefined name `(\w+)`", m["msg"].strip()) if m["code"] == "F821" and (hints or own) else None
+        line = hints(rel).get(name.group(1)) if name and hints else None  # D2: the one import line, as a hint
+        declared = own(rel).get(name.group(1)) if own and name and not line else None  # U5: a constant of the file itself
+        text += texts.IMPORT_HINT.format(line) if line else texts.OWN_NAME_HINT.format(declared) if declared else ""
+        found.append(Finding("ruff", text, rel, symbol, int(m["line"]), code))
     return found
 
 
@@ -106,7 +111,13 @@ def _from_pytest(issue: str, workspace: Path) -> list[Finding]:
             continue
         frame, rel = frames[-1]
         symbol, code = locate(workspace, rel, int(frame["line"]))
-        found.append(Finding("pytest", f"{name.strip()}: {exc}", rel, symbol or frame["func"], int(frame["line"]), code))
+        text = f"{name.strip()}: {exc}"
+        # The code that raised was called from another module (not the test): the argument may be what is wrong.
+        if len(frames) > 1 and frames[-2][1] != rel and not Path(frames[-2][1]).name.startswith("test_"):
+            caller_frame, caller = frames[-2]
+            _symbol, call = locate(workspace, caller, int(caller_frame["line"]))
+            text += texts.CALL_SITE_HINT.format(caller, caller_frame["line"], call)
+        found.append(Finding("pytest", text, rel, symbol or frame["func"], int(frame["line"]), code))
     return found
 
 
@@ -122,14 +133,17 @@ def _from_rule(issue: str) -> list[Finding]:
     return [Finding("spec", f"{m['rule']}: {detail}", m["file"])]
 
 
-def repair_findings(issues: list[object], workspace: Path, hints: Callable[[str], dict[str, str]] | None = None) -> list[Finding]:
+def repair_findings(
+    issues: list[object], workspace: Path, hints: Callable[[str], dict[str, str]] | None = None,
+    own: Callable[[str], dict[str, str]] | None = None,
+) -> list[Finding]:
     """The deterministic findings of a verification, located and each once; `hints(rel)` gives the import line of
-    a name file `rel` uses undefined."""
+    a name file `rel` uses undefined, `own(rel)` the constants its own planned interface declares."""
     found: list[Finding] = []
     for raw in issues:
         issue = str(raw)
         if issue.startswith("Ruff lint failure"):
-            found += _from_ruff(issue, workspace, hints) or [Finding("ruff", issue[:600])]
+            found += _from_ruff(issue, workspace, hints, own) or [Finding("ruff", issue[:600])]
         elif issue.startswith("Pytest failure") and "no tests ran" not in issue:
             found += _from_pytest(issue, workspace) or [Finding("pytest", issue[:800])]
         else:

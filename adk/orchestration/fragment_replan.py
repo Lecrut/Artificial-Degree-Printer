@@ -9,6 +9,7 @@ the queue rebuilt from the audit sent the same tasks to the same agent four time
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from adk.core.models import read_json_state, write_json_state
@@ -20,7 +21,24 @@ from adk.orchestration.plan_interfaces import _plan_interfaces
 
 REPLANS_WITHOUT_PROGRESS = 2  # re-plans in a row after which no new vertex was verified: the run ends with gaps
 MAX_REPLANS = 6
+DEPENDENCY_CHARS = 20000  # code of one dependency in the dossier: whole modules (2026-11-23, 01: environment.py was cut at 4000 of 6165 characters, `step()` never reached the planner)
+LATEST_ERROR_CHARS = 1500  # one finding of the current blocker copied into the task description
 _REPLANNABLE = ("code", "entry", "test", "chapter")
+_MARKERS = ("PLAN", "REPLAN")  # history entries written by the planner, not by a verification
+
+
+def _latest_errors(history: list[dict[str, Any]]) -> list[str]:
+    """What blocks the vertex now: the findings of the last verification, apart from the whole history (2026-11-23,
+    01: in round 5 the planner answered the errors of round 2 and not the two missing metrics of the last attempt)."""
+    for entry in reversed(history):
+        if entry.get("task_id") not in _MARKERS and entry.get("issues"):
+            return [str(i) for i in entry["issues"]]
+    return []
+
+
+def _mentioned(text: str, rel: str) -> bool:
+    """Whether a file is named in error text (a traceback frame `trainer.py:63`, a pytest path `tests\\test_x.py`)."""
+    return re.search(rf"(?<!\w){re.escape(rel)}", text.replace("\\", "/")) is not None
 
 
 def _dependents(h: Hypergraph, vertex: str) -> list[str]:
@@ -64,6 +82,41 @@ class FragmentReplanMixin:
         owner = h.owner_of(str(report.get("failed_file") or "")) if h is not None else None
         return owner if owner is not None and h.vertices[owner].kind in ("code", "entry", "test") else None
 
+    def _dependency_sources(self, h: Hypergraph, vertex: str, read: Any) -> dict[str, dict[str, str]]:
+        """The modules a failed module uses (their state and code): the fault may be there, behind a `verified`
+        (2026-11-22, 02: `generate_dataset` returned `None`, `experiment.py` was rewritten five times)."""
+        edge = h.edges.get(f"I:{vertex}")
+        if h.vertices[vertex].kind not in ("code", "entry") or edge is None:
+            return {}
+        used = [m for m in edge.spec.get("uses", {}) if m in h.vertices and h.vertices[m].kind in ("code", "entry")]
+        return {m: {"state": h.vertices[m].state, "source": read(m)[:DEPENDENCY_CHARS]} for m in sorted(used)}
+
+    def _dependent_sources(self, h: Hypergraph, vertex: str, read: Any, counterpart: set[str]) -> dict[str, dict[str, str]]:
+        """The neighbours above a failed vertex (what uses it, what waits for it) that its own errors name: the
+        caller may be the one at fault (2026-11-23, 01: `trainer.py` passed a board in a form `agent_qlearn.py` could
+        not hash; the agent was rewritten five times). Together with `_dependency_sources` this is one rule: any
+        neighbour named in the errors of a failed vertex is a suspect, whichever way the edge points."""
+        text = " ".join(str(i) for e in h.vertices[vertex].history for i in e.get("issues", []))
+        found = [
+            d for d in _dependents(h, vertex)
+            if d not in counterpart and d in h.vertices and h.vertices[d].kind in ("code", "entry", "test")
+            and h.vertices[d].state != FAILED and _mentioned(text, d)
+        ]
+        return {d: {"state": h.vertices[d].state, "source": read(d)[:DEPENDENCY_CHARS]} for d in found}
+
+    def _reopenable(self, h: Hypergraph, dossier: dict[str, Any]) -> set[str]:
+        """Verified vertices a re-plan may reopen: what a failed module uses, what uses it or waits for it and its
+        errors name, and the module a failed test checks."""
+        found = {
+            m for e in dossier["failed"] for key in ("dependencies", "dependents")
+            for m, d in e.get(key, {}).items() if d["state"] == "verified"
+        }
+        for e in dossier["failed"]:
+            module = h.tested_module(e["vertex"]) if e["kind"] == "test" else None
+            if module in h.vertices and h.vertices[module].state == "verified" and h.vertices[module].kind in ("code", "entry"):
+                found.add(module)
+        return found - self.__dict__.setdefault("_replan_reopened", set())
+
     def _repair_dossier(self, h: Hypergraph, failed: list[str]) -> dict[str, Any]:
         blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
         interfaces = blueprint.get("interfaces") or {}
@@ -85,12 +138,15 @@ class FragmentReplanMixin:
                 counterpart = {}
             entries.append({
                 "counterpart_files": {rel: src for rel, src in counterpart.items() if src},
+                "dependencies": self._dependency_sources(h, vertex, _read),
+                "dependents": self._dependent_sources(h, vertex, _read, set(counterpart)),
                 "vertex": vertex,
                 "kind": v.kind,
                 "planned_interface": interfaces.get(module, "") if module else "",
                 "current_content": path.read_text(encoding="utf-8", errors="replace") if path.is_file() and v.kind != "chapter" else "",
                 "attempts": v.attempts,
                 "failures": v.failures,
+                "latest_errors": _latest_errors(v.history),
                 "history": v.history,
                 "last_writer": v.last_writer,
                 "waiting_on_it": _dependents(h, vertex),
@@ -134,7 +190,7 @@ class FragmentReplanMixin:
         out = answer.get("output") if answer.get("status") == "ok" else None
         out = out if isinstance(out, dict) else {}
         changed = self._replan_interfaces(h, out, failed, interfaces, blueprint)
-        tasks, dropped = self._replan_tasks(h, out, len(progress), state)
+        tasks, dropped, updated, reopened = self._replan_tasks(h, out, len(progress), state, self._reopenable(h, dossier))
         covered = {self._task_vertex(t) for t in state.tasks if t.get("status") in ("TODO", "WAITING")} | {self._task_vertex(t) for t in tasks}
         covered |= {str(g.get("vertex")) for g in out.get("gaps") or [] if isinstance(g, dict)}
         # A failed vertex whose own dependencies did not fail has no excuse to stay without a task or a gap
@@ -143,7 +199,8 @@ class FragmentReplanMixin:
         self._replan_uncovered = uncovered
         self.logger.log_event(
             "REPLANNED", round=len(progress), failed=failed, tasks=[t["task_id"] for t in tasks],
-            interfaces_changed=changed, dropped=dropped, gaps=out.get("gaps") or [], uncovered=uncovered,
+            interfaces_changed=changed, dropped=dropped, updated=updated, reopened=reopened,
+            gaps=out.get("gaps") or [], uncovered=uncovered,
         )
         state.tasks.extend(tasks)
         write_json_state(self.task_queue_path, state.tasks)
@@ -157,7 +214,11 @@ class FragmentReplanMixin:
         allowed = {h.tested_module(v) if h.vertices[v].kind == "test" else v for v in failed}
         changed: list[str] = []
         for rel, source in _plan_interfaces(out).items():
-            if rel not in allowed or interfaces.get(rel) == source or f"I:{rel}" not in h.edges:
+            if interfaces.get(rel) == source:
+                continue
+            if rel not in allowed or f"I:{rel}" not in h.edges:
+                reason = "not a failed module" if f"I:{rel}" in h.edges else "not a module of the plan"
+                self.logger.log_event("SPEC_AMEND_SKIPPED", module=rel, task_id="REPLAN", reason=reason)
                 continue
             users = {
                 e.id.removeprefix("I:"): e.spec.get("uses", {}).get(rel, [])
@@ -176,31 +237,61 @@ class FragmentReplanMixin:
         return changed
 
     def _replan_tasks(
-        self, h: Hypergraph, out: dict[str, Any], round_no: int, state: _RunState
-    ) -> tuple[list[dict[str, Any]], list[str]]:
-        """New tasks of the re-plan: on vertices that are not verified, one per vertex that has no open task."""
-        open_vertices = {self._task_vertex(t) for t in state.tasks if t.get("status") in ("TODO", "WAITING")}
+        self, h: Hypergraph, out: dict[str, Any], round_no: int, state: _RunState, reopenable: set[str]
+    ) -> tuple[list[dict[str, Any]], list[str], list[str], list[str]]:
+        """New tasks of the re-plan: on vertices that are not verified, one per vertex. A vertex that already has an
+        open task gets the new description there (2026-11-22, 01: the fix of a test waiting for its failed module was
+        dropped as "already queued" and the module was rewritten four times against the wrong test). One verified
+        module of the dossier may be reopened per round (`stale`), if it was not reopened before."""
+        open_tasks = {self._task_vertex(t): t for t in state.tasks if t.get("status") in ("TODO", "WAITING")}
         tasks: list[dict[str, Any]] = []
         dropped: list[str] = []
+        updated: list[str] = []
+        reopened: list[str] = []
         for i, raw in enumerate(out.get("tasks") or [], 1):
             if not isinstance(raw, dict) or not raw.get("target_node"):
                 dropped.append(str(raw)[:120])
                 continue
             task = {
                 "task_id": f"R{round_no}_{i}",
-                "description": str(raw.get("description") or ""),
+                "description": self._with_latest_errors(h, raw),
                 "target_node": str(raw["target_node"]),
                 "assigned_agent": str(raw.get("assigned_agent") or ""),
                 "status": "TODO",
             }
             vertex = self._task_vertex(task)
-            if vertex is None or h.vertices[vertex].state == "verified" or vertex in open_vertices:
-                dropped.append(f"{task['target_node']}: {'verified' if vertex else 'not in the plan'} or already queued")
+            if vertex is None:
+                dropped.append(f"{task['target_node']}: not in the plan")
+                continue
+            if h.vertices[vertex].state == "verified":
+                if vertex not in reopenable or reopened:
+                    dropped.append(f"{task['target_node']}: verified")
+                    continue
+                self._set_vertex_state(vertex, "stale", task_id="REPLAN", by="REPLAN_REOPENED")
+                self.__dict__.setdefault("_replan_reopened", set()).add(vertex)
+                reopened.append(vertex)
+            if h.vertices[vertex].kind == "test" and h.vertices.get(h.tested_module(vertex) or "") is not None                     and h.vertices[h.tested_module(vertex)].state == FAILED:
+                task["force_ready"] = True  # once: the test is fixed first, the failed module is judged by the fixed test
+            if vertex in open_tasks:
+                open_tasks[vertex]["description"] = task["description"]
+                if task.get("force_ready"):
+                    open_tasks[vertex]["force_ready"] = True
+                updated.append(vertex)
                 continue
             task["assigned_agent"] = self._resolve_active_agent(task["assigned_agent"], fallback=_agent_for_path(vertex.partition("#")[0]))
-            open_vertices.add(vertex)
+            open_tasks[vertex] = task
             tasks.append(task)
-        return tasks, dropped
+        tasks.sort(key=lambda t: not t.get("force_ready"))
+        return tasks, dropped, updated, reopened
+
+    def _with_latest_errors(self, h: Hypergraph, raw: dict[str, Any]) -> str:
+        """The planner's description plus, by the harness, the findings of the last verification of the vertex."""
+        description = str(raw.get("description") or "")
+        vertex = self._task_vertex({"target_node": str(raw.get("target_node") or "")})
+        latest = _latest_errors(h.vertices[vertex].history) if vertex in h.vertices else []
+        if not latest:
+            return description
+        return description + texts.replan_latest_errors([e[:LATEST_ERROR_CHARS] for e in latest])
 
     def _replan_exhausted(self, state: _RunState, failed: list[str]) -> dict[str, Any]:
         """The run ends with the failed part listed as gaps, like an exhausted queue."""

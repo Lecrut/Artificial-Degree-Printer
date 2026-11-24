@@ -101,7 +101,7 @@ class PlanStagesMixin:
                 outline = self._revise_outline(outline, revised, accepted, reopen)
                 continue
             plan_out, interfaces = self._fused(outline, accepted, existing, plan_payload)
-            code = code_violations(interfaces, outline["entrypoint"], outline["plots"])[1]
+            code = code_violations(interfaces, outline["entrypoint"], outline["plots"], outline["academic_blueprint"].get("metrics"))[1]
             critic, warnings = ([], []) if code else self._plan_review(plan_out, interfaces, plan_payload, history)
             self.logger.log_event(
                 "PLAN_CHECKED", attempt=fusion, modules=sorted(interfaces),
@@ -316,7 +316,7 @@ class PlanStagesMixin:
             return [str(v) for v in code_violations({rel: source}, None)[1] if v.rule == "INTERFACE_DOES_NOT_PARSE"] or [texts.MODULE_NO_SOURCE]
         subset = _with_existing({"interfaces": {**{r: s for r, s in accepted.items() if r != rel}, rel: source}}, existing)["interfaces"]
         # Findings about other modules (e.g. the entrypoint's module not designed yet) belong to their own stage.
-        specs, found = code_violations(subset, outline["entrypoint"], outline["plots"])
+        specs, found = code_violations(subset, outline["entrypoint"], outline["plots"], outline["academic_blueprint"].get("metrics"))
         problems = [str(v) for v in found if (v.culprit or v.vertex) == rel]
         symbols = specs.get(rel, {}).get("symbols", {})
         if rel in specs:

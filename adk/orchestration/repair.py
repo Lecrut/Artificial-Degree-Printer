@@ -8,8 +8,9 @@ from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
 from adk.tools.planning import select_model_tier
 from adk.orchestration.findings import focus_symbols, repair_findings, symbol_sources
-from adk.orchestration.import_hints import importable_names
-from adk.orchestration.failure_attribution import _is_test, _suspect_test
+from adk.orchestration.interface_view import labelled
+from adk.orchestration.import_hints import importable_names, own_declarations
+from adk.orchestration.failure_attribution import _is_test, _suspect_test, _test_to_review
 from adk.orchestration.common import (
     _agent_for_path,
     available_package_imports,
@@ -30,6 +31,12 @@ from adk.orchestration.failure_kinds import (
 
 class RepairMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
+
+    def _planned_interface(self, modules: list[str]) -> str:
+        """The full planned interfaces (annotations and docstrings) of the modules a test review involves: the
+        module that fails and the one the test is for."""
+        blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+        return labelled(blueprint.get("interfaces") or {}, modules)
 
     def _repair_task(
         self,
@@ -79,14 +86,24 @@ class RepairMixin:
             # architect's input (2026-11-12: ~46k characters per call, 87-90% of it two copies of pytest output).
             remediation_directive = texts.remediation_directive(t_id, node_id, node_file)
 
-            if attempt <= FAST_REPAIR_ATTEMPTS:
+            h = self._project_h()
+            produced_by = self._repair_target(failed_file)
+            review = (
+                _test_to_review(h, produced_by, self.__dict__.setdefault("_reviewed_tests", set()), self.__dict__.setdefault("_pending_review", set()))
+                if h is not None else None
+            )
+            if attempt <= FAST_REPAIR_ATTEMPTS or review:
                 # Fast path: the findings are deterministic and self-describing (syntax, import, ruff, pytest,
                 # contracts), so the author of the failed file gets them verbatim, right away, with no planner
                 # and no evolution in between. 2026-11-13: that detour cost ~1.5 min per failure.
                 # A derived artifact (CSV, figure) is repaired through its producer: on 2026-11-14 agents were
                 # sent to "fix" figures/comparison.pdf and results.csv, files no one can edit.
-                fast_target = self._repair_target(failed_file)
-                h = self._project_h()
+                fast_target = review or self._repair_target(failed_file)
+                if review:  # once per (module, test, version of σ) and not counted against the repair budget
+                    self._reviewed_tests.add((produced_by, review))
+                    self._pending_review.discard((produced_by, review))
+                    task["repair_attempts"] = attempt - 1
+                    self.logger.log_event("TEST_REVIEW", task_id=t_id, module=produced_by, test=review)
                 if fast_target != failed_file:
                     owner = h.owner_of(fast_target) if h is not None else None
                     author = h.vertices[owner].last_writer if owner is not None else None
@@ -97,12 +114,19 @@ class RepairMixin:
                 self._amend_spec_if_wrong(failed_file, issues_list, t_id)
                 # The repair names the symbols to change and each error with its line of code (§XI B1-B2): on
                 # 2026-11-18 three repairs of config.py changed other symbols than the one with the error.
-                findings = repair_findings(issues_list, self.workspace_dir, lambda rel: importable_names(h, rel, available_package_imports()))
+                findings = repair_findings(
+                    issues_list, self.workspace_dir, lambda rel: importable_names(h, rel, available_package_imports()),
+                    lambda rel: own_declarations(h, rel),
+                )
                 focus = focus_symbols(findings, fast_target)
                 notes = [str(f) for f in findings]
                 module = h.tested_module(fast_target) if h is not None and _is_test(fast_target) else None
                 if module and _suspect_test(h, module, fast_target):
                     notes.insert(0, texts.test_contradicts_verified_module(module))  # §XIV Q2
+                if review:
+                    notes.insert(0, texts.test_review_before_module_repair(
+                        produced_by, review, self._planned_interface([produced_by, h.tested_module(review) or ""])
+                    ))
                 fast_task = {
                     **task,
                     "repair_of": t_id,
@@ -141,7 +165,7 @@ class RepairMixin:
                     report.setdefault("errors", []).append(builder_error)
                 if report["status"] != "PASS" and signature_before and (
                     _issue_signature({"issues": _collect_report_issues(report)}) == signature_before
-                ) and not _spec_findings(_collect_report_issues(report)):
+                ) and not _spec_findings(_collect_report_issues(report)) and not review:
                     # §XIV Q3: the same error after the author's repair (01: T1 and T2 three times each) — this
                     # author will not fix it here; go straight to the full cycle (repair planner) instead. Not for a
                     # breach of σ: the next attempt first lets the planner judge the interface (`_amend_spec_if_wrong`),
