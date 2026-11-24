@@ -33,6 +33,7 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-23 | **Audyt XIII — benchmarki 22.11 v2 (01, 02) → §XXI** | fałszywy `verified` (test bez asercji, funkcja bez `return`), przeplanowanie bez kodu zależności, test czekający na moduł, który pada przez ten test | wdrożone (guardy `TEST_NO_ASSERTIONS`/`FUNCTION_NEVER_RETURNS`, `force_ready`, `dependencies`, cofnięcie `verified → stale`, przegląd testu); niepotwierdzone na żywo |
 | 2026-11-23 | **Przyczyny porażek 01 i 02 i plan U1–U5 → §XXII** | planista nie zmienia struktury plików (kod ją zamraża), wina z najgłębszej ramki, zmiana σ bez przeglądu testów, typ zwracany niesprawdzany | wdrożone U1+U3 (wspólny `TEST_REVIEW`), U2 etap 1 (`SPEC_AMEND_SKIPPED`), U4a, U5; **wstrzymane** U4b i U2 etap 2 |
 | 2026-11-23 | **Nowy 01: jedna reguła sąsiedztwa i interfejs w kontekście agentów → §XXIII** | błąd na granicy dwóch plików z winnym sąsiadem (`trainer.py` → `agent_qlearn.py`, test innego modułu); tester i koder nie widzieli typów i docstringów interfejsu | wdrożone (`dependents`, przegląd testów innych modułów, „called from”, `interface` w kontekście); niepotwierdzone na żywo |
+| 2026-11-24 | **Audyt XIV — przebieg 01 (`COMPLETED_WITH_GAPS`): błąd prozy niszczy dane, PDF `\\`, rzymskie rozdziały → §XXIV** | kod przeszedł (`T1`–`T11`), po czym `remediation_planner` dla `\ref_csv` bez `:value` skierował naprawę na `experiment.py` (`info['turn']` vs `current_player` → `DATA_FAILED`), co zablokowało `thesis.md`; niezależnie: `\\pi` z JSON-a wywala XeTeX, `factual_audit.py` nie widzi `Rozdział I/VI` | diagnoza potwierdzona; **plan A1–A4, B5–B6, C7–C8, `repeated=3`, D do wdrożenia** |
 
 ---
 
@@ -4185,9 +4186,6 @@ Sprawdzone i bez zmian: pętle mają budżety i kończą się (`_settle` — `ne
 
 1. **Planowanie etapowe jest wolne i hałaśliwe na drobiazgach:**
    - `01_rl_tictactoe`: 36 z 63 min (57%) na planowanie (`PLAN_OUTLINE_CHECKED` ×3, `PLAN_MODULE_CHECKED` ×13, `PLAN_FUSED` ×3, `PLAN_MODULE_REOPENED` ×3).
-   - `02_ml_anomaly_detection`: 43 z 102 min (42%) na planowanie (`PLAN_OUTLINE_CHECKED` ×5, `PLAN_MODULE_CHECKED` ×22, `PLAN_MODULE_REOPENED` ×7, `PLAN_FUSED` ×3), zakończone dopiero przez `PLAN_ACCEPTED_OVER_CRITIC`.
-   - Krytycy blokowali na detalach ciał funkcji, których stuby `...` nie mają (`import csv` w `experiment.py`, niewypełnione `train_scores_` w `fit()`), podczas gdy koder i tak pisze implementację od nowa.
-2. **Główna przyczyna porażek w `02_ml_anomaly_detection` leży w doctestach planu, nie w koderze (`seed_coder`):**
    - Ze wszystkich 30 werdyktów `VERDICT=FAIL` w `02` aż **21–23/30** było **niemożliwe do spełnienia** niezależnie od kodu:
      - **11× `rs_ensemble.py` (`R1_3`–`R5_1`):** doctest w `predict`/`predict_scores` zawierał `>>> det.fit(X)` z oczekiwanym `<RSADetector object>`, podczas gdy Python wypisuje `<rs_ensemble.RSADetector object at 0x...>`, a `oracles.Checker` używa `doctest.ELLIPSIS` bez `...` w stringu.
      - **6× `baselines.py` (`R1_1`, `R2_1`):** błędy arytmetyczne planisty w Z-score (`10.0` zamiast `1.4084`, `[0, 0, 0, 1]` zamiast `[0, 0, 0, 0]` przy `np.std(..., ddof=0)`, `[1.0, 0.0, 1.0]` zamiast `[1.2247, 0.0, 1.2247]`).
@@ -4383,3 +4381,46 @@ Test e2e zadania 2 sprawdza skutek każdego flawu w `events.jsonl` i to, że ka�
 
 **Uzupełnienie §XXIII — agenci widzą interfejs, z którego mają pisać (2026-11-23, wdrożone).** Sprzeczność prompt ↔ kontekst: `seed_tester.md` każe brać oczekiwane wartości z docstringów interfejsu, `seed_coder.md` mówi, że tester widzi interfejsy planu, a `_context_for` dawał obu tylko `_spec_view` (nazwy, parametry, typy stałych; bez adnotacji zwrotu, docstringów i typów atrybutów, a tester nie widział nawet źródła testowanego modułu). To tłumaczy testy sprzeczne z σ (01: `q_table` jako `np.ndarray` przy σ `dict`; 02: `len(predict(X))` przy zadeklarowanej krotce) i zgadywane wywołania (01: `env.step` jako 3-krotka, plansza jako lista tam, gdzie σ deklaruje krotkę). Zmiana (`orchestration/interface_view.py`, `context._context_for`): `specification[<moduł>]["interface"]` = pełne źródło interfejsu z blueprintu dla testowanego modułu (≤ 6000 zn.) i wycinek użytych nazw (z `uses`, klasa z metodami i docstringami, ≤ 3000 zn. na moduł, ≤ 9000 łącznie) dla modułów, których używa koder; własny interfejs kodera zostaje w `existing_content`. Przegląd testu (`repair._planned_interface`) używa tego samego helpera. Prompty `seed_tester.md` i `seed_coder.md` opisują pole. Testy: `test_replan_reopen.py` (+3); pełna suita 330/330. **Ryzyko:** dłuższy kontekst dla SML; limity zn. są pierwszym przybliżeniem. **Powiązanie:** interfejs jest teraz kontraktem, do którego piszą agenci, więc zaakceptowany moduł łamiący go po cichu (typ zwracany niesprawdzany) podnosi wagę U4b. **Nie zmieniono** σ (brak `returns` i typu atrybutu w `spec_from_stub`) — osobna decyzja razem z U4b. Pomiar po benchmarku: liczba `TEST_INVALID_ON_STUBS` i porażek testów na pierwszej próbie, rozmiar promptów w `llm_interactions.jsonl`.
 
+
+# §XXIV — 2026-11-24: przebieg 01 (`COMPLETED_WITH_GAPS`) — błąd w prozie niszczy dane, PDF `\\` i rzymskie rozdziały (plan do wdrożenia)
+
+Źródło: `adk/workspace/benchmarks/benchmark_summary.json`, `01_rl_tictactoe/logs/events.jsonl`, `01_rl_tictactoe/evolved_adk/state/{validation_report.json,factual_audit.json,failure_ledger.json}`, `01_rl_tictactoe/academic_blueprint.json`, `01_rl_tictactoe/thesis/{thesis.md,thesis.tex}` oraz kod `adk/`.
+
+**Diagnoza (potwierdzona w logach i kodzie):**
+1. **Główny łańcuch porażki (błąd prozy → zepsuty kod → blokada dokumentu):**
+   - Część kodowa (`T1`–`T11`) przeszła pomyślnie, `experiment.py` wygenerował `results.csv` i wykresy (`DATA_PRODUCED` o `11:50:13`).
+   - W fazie dokumentu (`Q2_CH6`, `R2_1`, `R2_2`) `seed_writer` pisał wskaźniki bez kolumny (np. `\ref_csv{results.csv:q_learning+win_rate}`), ponieważ `_results_targets` (`adk/orchestration/context.py:37`) zwracało w `available_csv_rows` samo `file:method+metric` bez `:value`, a `ref_compiler.py:114-120` zgłaszał mylące `Column 'q_learning+win_rate' not found in 'results.csv'`.
+   - `remediation_planner` w `adk/orchestration/repair.py:326-390` (gdzie nie działa filtr z `recovery.py:118`, bo ten drugi jest tylko w `_rebuild_queue`) wygenerował zadanie `R2_2_FIX_1` na `experiment.py`.
+   - `seed_coder` zmienił `experiment.py:73` na `turn_player = info['turn']`, podczas gdy `environment.py` zwraca `info = {'current_player': ...}` (w `academic_blueprint.json` w ciele referencyjnym było `turn`, ale docstringi `step()` i `reset()` nie nazywały kluczy słownika). Wywołało to `DATA_FAILED` (`KeyError: 'turn'`) i unieważniło `results.csv` (`stale`, finalnie `csv_rows: 0`).
+   - Przy kolejnych próbach (`R3_1` na `thesis.md#ch1`) `verification.py:145-152` nie przekazywał `_last_experiment_error` do zadań na dokumencie, więc `symbolic_auditor` obwiniał `seed_writer` za brak `results.csv` zamiast wskazać `experiment.py`; `R3_2` wisiało jako `TASK_WAITING`, a pętla zakończyła się komunikatem `PRZEPLANOWANIE BEZ POSTEPU`.
+   - Dodatkowo `tests/test_experiment.py` ma `2× TypeError` w `track_df` i `F821 Undefined name 'mock_rand'` (z `R2_1_VERIFY_EXP`).
+2. **Niezależny błąd kompilacji PDF:** `thesis.md` zawiera podwójnie eskejpowane z JSON-a polecenia matematyczne (`$$ V_\\pi(s) = \\mathbb{E}_\\pi ... $$`, `$v_\\\\pi(s)$` w `thesis.tex`), ponieważ `write_gate.py:382-391` zapisuje `section_content` bez normalizacji `\\` → `\`; `XeTeX` pada na `thesis.tex:39: Missing { inserted`.
+3. **Ślepy punkt detektora rozdziałów:** `thesis.md` zawiera `## Rozdział I: Wprowadzenie` oraz `## Rozdział VI: Zakończenie` (obok duplikatów 4/IV, 5/V, 6/VI), ale `_audit_factual_state` (`adk/orchestration/factual_audit.py:94`) szuka wyłącznie cyfr arabskich (`r"^##\s+.*?(\d+)"`), a `thesis_missing_chapters` (`factual_audit.py:27`) również zakłada `\d+`, przez co audyt zgłaszał `chapters_missing: [1, 6]`.
+
+**Plan napraw (zatwierdzony przez użytkownika, do wdrożenia):**
+- **A. Główny łańcuch porażki:**
+  - **A1.** `_results_targets` (`adk/orchestration/context.py:37`): dla tidy CSV dopisywać `:value` do `available_csv_rows`; poprawić `adk/agents/building/seed_writer.md:34` i sprawdzić `tests/test_prompt_consistency.py`.
+  - **A2.** `adk/tools/verification/ref_compiler.py:114-120`: gdy selektor z jednym dwukropkiem pasuje do wiersza `method+metric` w CSV, zwracać komunikat `Pointer selects row X but names no column; append :value` zamiast `Column … not found`.
+  - **A3.** `adk/orchestration/repair.py`: wymusić w kodzie, żeby błędy `\ref_csv` / `Column … not found` w prozie trafiały do pisarza; zadanie na `experiment.py` może powstać tylko wtedy, gdy `results.csv` faktycznie nie istnieje albo nie zawiera danej metryki.
+  - **A4.** Zabezpieczenie przy zmianie producenta (`adk/orchestration/building.py` / `write_gate.py`): jeśli po zmianie `experiment.py` eksperyment przestaje się uruchamiać (`DATA_FAILED`), zmiana ma zostać odrzucona albo cofnięta, żeby nie unieważniać działającego `results.csv`.
+- **B. Błąd wygenerowanego kodu:**
+  - **B5.** Kontrakt `info`: sprawdzić i doprecyzować w `plan_module` / `module_critic_guard` (oraz tym, co widzi koder), aby docstringi metod zwracających `dict` jawnie wymieniały nazwy zwracanych kluczy.
+  - **B6.** `tests/test_experiment.py` (`2× TypeError` w `track_df`, `F821 mock_rand`): po wdrożeniu A3/A4 sprawdzić, czy problem znika dzięki zablokowaniu zbędnych napraw `experiment.py` przy błędach prozy.
+- **C. Błąd niezależny (PDF i audyt rozdziałów):**
+  - **C7.** Podwójne ukośniki w matematyce: jedna poprawka przy zapisie sekcji w `write_gate.py` (normalizacja podwójnego escapowania JSON) + guard weryfikacji zgłaszający `\\` przed literą w trybie matematycznym jako błąd (D3: zgłasza, nie naprawia automatycznie).
+  - **C8.** Obsługa rzymskich numerów rozdziałów (`I`–`XII`) w `adk/orchestration/factual_audit.py` (`_audit_factual_state` i `thesis_missing_chapters`).
+- **Budżet szans (`recovery.py:247`):** podnieść próg `repeated` do `3` (z `2`), aby nie ucinać zbyt wcześnie przebiegów bliskich ukończenia.
+- **D. Weryfikacja:** testy jednostkowe dla A1–A3, C7 (i C8), pełne `pytest` i `ruff`, następnie ponowny przebieg benchmarku `01_rl_tictactoe`.
+
+
+
+**Wdrożone 2026-11-24 (§XXIV, A1–A4, B5, C7, C8, próg `repeated`):**
+- A1 `context._results_targets`: `available_csv_rows` to kompletne wskaźniki `plik:metoda+metryka:value`; `seed_writer.md` zaktualizowany.
+- A2 `ref_compiler`: wskaźnik wiersza bez kolumny → „selects a row but names no column: write …:value”.
+- A3 `recovery._pointer_fix_is_writers` + `repair._repair_cycle`: gdy dokument padł wyłącznie na wskaźnikach i `results.csv` istnieje, zadanie naprawcze na kod jest kierowane do pisarza. Bez wyników zostaje decyzja planisty.
+- A4 `building._guard_results_from_prose_fix` / `_restore_files`: naprawa dokumentu, która zmienia kod i zostawia eksperyment w stanie `DATA_FAILED` (przy działającym wcześniej eksperymencie i istniejącym `results.csv`), jest cofana (plik + `results.csv`), zdarzenie `PRODUCER_CHANGE_REVERTED`. Nie obejmuje napraw kodu wywołanych błędem kodu (zmiana kontraktu może wymagać kolejnych zadań).
+- B5 `plan_module.md` / `module_critic_guard.md`: docstring nazywa klucze zwracanego słownika (`info`), wywołujący nie zgaduje.
+- C7 `doc_editor._single_backslash_commands` (zapis sekcji `.md`: `\` przed literą → `\`; `\` + spacja/nowa linia zostaje) + guard w `ref_compiler` („Doubled backslash before a command”).
+- C8 `factual_audit._chapter_number`: rozdziały rzymskie; `_audit_factual_state` używa `thesis_missing_chapters`.
+- `recovery._rebuild_queue`: powtórzony audyt zatrzymuje przebieg od generacji 3 (było 2).
+- Testy: `tests/test_audit_xxiv.py` (8), `test_rebuild_queue_detects_oscillating_failures` dostosowany; `pytest` 343 OK, `ruff` czysty. **Nie ma** przebiegu na żywo.

@@ -6,44 +6,45 @@
     ".ruff_cache/0.17.2/18264368662214927456",
     ".ruff_cache/0.17.2/9495599101739719050",
     ".ruff_cache/CACHEDIR.TAG",
-    "base_detector.py",
+    "baseline_detector.py",
     "data_generation.py",
-    "evaluation.py",
+    "evaluation_metrics.py",
     "experiment.py",
-    "figures/scores_for_plots.csv",
     "figures.py",
     "logs/agent_trace.jsonl",
     "logs/events.jsonl",
     "logs/experiment.log",
     "logs/harness_process.log",
-    "references.bib",
-    "score_exporter.py",
-    "subspace_detector.py",
-    "tests/test_base_detector.py",
+    "results.csv",
+    "rs_ensemble_detector.py",
+    "tests/test_baseline_detector.py",
     "tests/test_data_generation.py",
-    "tests/test_evaluation.py",
-    "tests/test_score_exporter.py",
-    "tests/test_subspace_detector.py",
+    "tests/test_evaluation_metrics.py",
+    "tests/test_rs_ensemble_detector.py",
     "thesis.md"
   ],
-  "pytest_status": "FAIL",
-  "pytest_errors": [
-    "Ruff lint failure: experiment.py:60:59: F821 Undefined name `N_ESTIMATORS`\nexperiment.py:60:86: F821 Undefined name `SUBSPACE_DIMENSION`\nFound 2 errors."
-  ],
+  "pytest_status": "PASS",
+  "pytest_errors": [],
   "chapters_present": [
     1,
-    2
+    2,
+    3
   ],
   "chapters_missing": [
-    3,
     4,
-    5,
-    6
+    5
   ],
-  "symbolic_errors": [],
-  "csv_columns": [],
+  "symbolic_errors": [
+    "\\ref_csv{<file>:<method>+F1:value}: no such file. The results are in results.csv: write \\ref_csv{results.csv:<method>+F1:value} with a column from 'available_csv_columns'."
+  ],
+  "csv_columns": [
+    "method",
+    "metric",
+    "value",
+    "std_dev",
+    "n_runs"
+  ],
   "trigger_issues": [
-    "Ruff lint failure: experiment.py:60:59: F821 Undefined name `N_ESTIMATORS`\nexperiment.py:60:86: F821 Undefined name `SUBSPACE_DIMENSION`\nFound 2 errors.",
-    "Traceback (most recent call last):\n  File \"<string>\", line 44, in <module>\n    fn()\n    ~~^^\n  File \"D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\workspace\\experiment.py\", line 47, in run_experiment\n    raise ValueError(f'generate_dataset returned None for run {run_idx + 1}')\nValueError: generate_dataset returned None for run 1"
+    "\\ref_csv{<file>:<method>+F1:value}: no such file. The results are in results.csv: write \\ref_csv{results.csv:<method>+F1:value} with a column from 'available_csv_columns'."
   ]
 }

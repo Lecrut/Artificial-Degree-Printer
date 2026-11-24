@@ -18,15 +18,30 @@ from adk.orchestration.common import _fit_items
 from adk.orchestration.failure_kinds import _collect_report_issues
 
 
+_ROMAN = {"i": 1, "v": 5, "x": 10}
+
+
+def _chapter_number(heading: str) -> int | None:
+    """The number in `Rozdział 3`, `Chapter 3` or `Rozdział III` (the writer numbers in both ways); None without one."""
+    found = re.search(r"(?:rozdzia[łl]|chapter)\s+(\d+|[ivx]+)\b", heading.lower())
+    if not found:
+        return None
+    token = found.group(1)
+    if token.isdigit():
+        return int(token)
+    values = [_ROMAN[c] for c in token]
+    return sum(-v if i + 1 < len(values) and v < values[i + 1] else v for i, v in enumerate(values))
+
+
 def thesis_missing_chapters(thesis_text: str, expected: dict[int, str]) -> list[int]:
     """Planned chapters (number -> title) with no `## ` heading in the thesis: a heading counts by its number
     (`Rozdział 3`, `Chapter 3`) or, without one, by the planned title it contains."""
     found: set[int] = set()
     for match in re.finditer(r"^##\s+([^\n]+)", thesis_text, flags=re.MULTILINE):
         heading = match.group(1).lower()
-        number = re.search(r"(?:rozdzia[łl]|chapter)\s+(\d+)", heading)
-        if number:
-            found.add(int(number.group(1)))
+        number = _chapter_number(heading)
+        if number is not None:
+            found.add(number)
             continue
         hit = next((n for n, title in expected.items() if title and title.lower()[:18] in heading), None)
         if hit is not None:
@@ -87,15 +102,10 @@ class FactualAuditMixin:
                 if path.is_file() and "__pycache__" not in path.parts and ".compiled." not in path.name:
                     files.append(path.relative_to(self.workspace_dir).as_posix())
 
-        chapters_present: list[int] = []
         expected = self._expected_chapters()
         thesis = self.workspace_dir / "thesis.md"
-        if thesis.exists():
-            for match in re.finditer(r"^##\s+.*?(\d+)", thesis.read_text(encoding="utf-8"), flags=re.MULTILINE):
-                number = int(match.group(1))
-                if number in expected and number not in chapters_present:
-                    chapters_present.append(number)
-        chapters_missing = [n for n in expected if n not in chapters_present] if self.include_docs else []
+        thesis_text = thesis.read_text(encoding="utf-8") if thesis.exists() else ""
+        chapters_missing = thesis_missing_chapters(thesis_text, expected) if self.include_docs else []
 
         symbolic_errors: list[str] = []
         if thesis.exists() and self.include_docs:
@@ -113,7 +123,7 @@ class FactualAuditMixin:
             "files": files,
             "pytest_status": test_res.get("status"),
             "pytest_errors": [str(err) for err in test_res.get("errors", [])][:8],
-            "chapters_present": chapters_present,
+            "chapters_present": [n for n in expected if n not in chapters_missing],
             "chapters_missing": chapters_missing,
             "symbolic_errors": symbolic_errors,
             "csv_columns": csv_columns,

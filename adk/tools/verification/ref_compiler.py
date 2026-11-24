@@ -61,6 +61,14 @@ def _wrong_results_file(key: str, column: str) -> str:
     )
 
 
+def _row_exists(reader: list[dict[str, Any]], selector: str) -> bool:
+    """Whether some row has every `+`-joined part of `selector` among its cells (tidy `method+metric`)."""
+    wanted = [part.strip().lower() for part in selector.split("+") if part.strip()]
+    return bool(wanted) and any(
+        all(part in {str(v).strip().lower() for v in row.values() if v is not None} for part in wanted) for row in reader
+    )
+
+
 def _lookup_csv_value(csv_file: Path, column_spec: str) -> tuple[bool, Any]:
     """Extract a CSV value by 'column' (latest row) or 'row_selector:column' (specific method/metric row or index)."""
     if not csv_file.is_file():
@@ -116,6 +124,11 @@ def _lookup_csv_value(csv_file: Path, column_spec: str) -> tuple[bool, Any]:
             match_col = next((k for k in last_row if k.strip().lower() == column_spec.strip().lower()), None)
             if match_col is not None:
                 column_spec = match_col
+            elif _row_exists(reader, column_spec):
+                return False, (
+                    f"Pointer '{csv_file.name}:{column_spec}' selects a row but names no column: "
+                    f"write '{csv_file.name}:{column_spec}:value'."
+                )
             else:
                 return False, f"Column '{column_spec}' not found in '{csv_file.name}'"
         return True, last_row[column_spec]
@@ -310,6 +323,14 @@ def compile_symbolic_references(
             f"invalid: choose a full target from {source}, and write a file named in the prose as \\texttt{{...}}."
         )
     errors[:] = list(dict.fromkeys(errors))  # one message per distinct problem
+
+    # A doubled backslash before a command is a JSON escape that survived: LaTeX stops on it.
+    doubled = sorted(set(re.findall(r"\\{2,}[A-Za-z]+", text)))
+    if doubled:
+        errors.append(
+            f"Doubled backslash before a command ({', '.join(doubled[:5])}): write a single backslash, "
+            "the document does not compile."
+        )
 
     # Check balanced TikZ environments if present
     tikz_begins = len(re.findall(r"\\begin\{tikzpicture\}", compiled_text))

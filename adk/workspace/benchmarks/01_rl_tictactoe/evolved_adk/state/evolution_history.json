@@ -4,9 +4,9 @@
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "plan_module",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
-        "injected_rule": "When designing a class interface or game logic, ensure that type annotations on class attributes exactly match their constructor parameter types to maintain static analysis consistency, and define reward conventions (Win/Draw/Loss) explicitly for the acting agent to preserve signal integrity in reinforcement learning contexts.",
+        "agent": "plan_outline",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_outline.md",
+        "injected_rule": "When synthesizing an experimental baseline that must serve as a comparative reference, ensure it is an independent agent or strategy distinct from the training opponent, and verify that the declared evaluation metrics explicitly include any composite success criteria mentioned in the prompt (e.g., combining wins and draws) to avoid logical gaps.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
@@ -16,94 +16,111 @@
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "plan_module",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
-        "injected_rule": "When designing an experiment that interacts with external harnesses or requires symmetric evaluation of opposing roles, explicitly verify data format compatibility (e.g., ensuring required CSV columns like 'method' are present) and interface symmetry requirements (e.g., whether a single policy can handle both player sides without explicit state normalization or role-switching logic), because assuming implicit support for these structural details leads to inexecutable plans.",
+        "agent": "plan_outline",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_outline.md",
+        "injected_rule": "When defining metrics for an empirical study involving game agents, verify that each metric provides a necessary gradient of measurement relative to the thesis claim; specifically, when evaluating against an optimal opponent in a solved game, discard metrics that are constant (like draw rate) and prioritize those that vary with agent quality or efficiency, because static baselines do not distinguish learner competence. Additionally, ensure that any visualisation requirement (e.g., learning curves) is structurally supported by the data pipeline in the same cycle; if the experimental module only outputs aggregated final stats, explicitly add a training log mechanism to the experimental plan rather than assuming the figures module can infer temporal dynamics from static output.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T3",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.__init__: The new code of TicTacToeEnv.__init__ also contains reset, step; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`."
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When defining an interface that returns auxiliary data structures (such as `info` dicts in RL environments), the outline must explicitly declare both the schema of the return tuple and the contents of any nested dictionaries, because consumers depend on this structural contract for safe usage.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T4",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_NO_ASSERTIONS [tests/test_environment.py]: these tests check nothing (no `assert`, `pytest.raises`, `pytest.approx`): test_step_loses"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T7",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- agent.py:QLearningAgent.__init__: The new code of QLearningAgent.__init__ also contains q_table, alpha, gamma, epsilon, select_action, update, get_q_values; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8_FIX1",
-      "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_agent.py:test_update_q_learning_rule: The new code of test_update_q_learning_rule contains no definition of `test_update_q_learning_rule`; nothing was saved."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T10",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- figures.py:plot_results: The new code of plot_results also contains Expr; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T11",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- experiment.py:run_experiment: SyntaxError in new_code: invalid syntax at line 109 of your code: `max_reward_per_game = max([sum(agent_rewards)]).0 if agent_rewards else 0` is indented by 4 spaces, the line before by 4. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
-    },
-    {
-      "type": "UNKNOWN_CITATIONS_DROPPED",
-      "keys": [
-        "wu2023reinforcement"
-      ]
-    },
-    {
-      "type": "QUEUE_REBUILT",
-      "generation": 1,
-      "task_ids": [
-        "Q1_CH1",
-        "Q1_CH4",
-        "Q1_CH6",
-        "Q1_PDF"
-      ]
-    },
-    {
-      "type": "QUEUE_REBUILT",
-      "generation": 2,
-      "task_ids": [
-        "Q2_CH1",
-        "Q2_CH6",
-        "Q2_PDF"
-      ]
-    },
-    {
-      "type": "UNKNOWN_CITATIONS_DROPPED",
-      "keys": [
-        "yang2023federated]"
-      ]
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R2_1_VERIFY_EXP",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- IMPORT_OUTSIDE_SPEC [tests/test_experiment.py]: imports np, pd from experiment.py; its interface has run_experiment"
+      "type": "MUTATION_REJECTED",
+      "agent": "plan_module",
+      "rule": "When defining an agent interface that interacts with a dynamic environment, always accept the list of valid actions (e.g., `legal_actions`) as a parameter rather than deriving them or using fixed bounds, because hardcoded constants or inferred ranges are fragile when the environment state changes. When establishing module dependencies, treat the public `provides` list and docstring summaries as the strict API contract; never access internal module-level attributes (like `_SIZE` constants) directly from dependent files unless they are explicitly exported, ensuring encapsulation and preventing breakage on implementation changes.",
+      "reason": "concerns what the harness enforces (syntax, answer shape, imports)"
     },
     {
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "seed_writer",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_writer.md",
-        "injected_rule": "When writing analysis sections that reference external data files, always verify column names against the actual schema of the source file rather than inferring them from context or previous successful tasks, because hallucinated data keys cause validation failures.",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When defining an experimental pipeline that requires baseline comparisons, explicitly document the evaluation of all comparative agents (including self-play or agent-vs-identical-agent) and their corresponding output records in the CSV interface before finalizing the plan, because visualizations depend on the presence of these specific data rows which are not implicitly generated by training logs.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When defining function signatures in an outline, ensure strict alignment between the explicit interface contract (return types and argument positionality/necessity) and any existing documentation or internal logic implications, because the outline serves as the immutable source of truth for code generation and discrepancies create impossible implementation contracts.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:check_terminal: The new code of check_terminal contains no definition of `check_terminal`; nothing was saved."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T3",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_environment.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_constants_are_correct: assert 19683 == (9 ** 3)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T3_FIX1",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_environment.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_constants_are_correct: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_7js0gejr\\tests\\test_environment.py, line 1"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T5",
+      "agent": "seed_tester",
+      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_agents.py:106: unmatched '}'\n   105:     assert 0 <= index < environment.STATE_SPACE_SIZE\n   106: }"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T5_FIX1",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_agents.py]: reads QLearningAgent._state_to_index, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T5_FIX2",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_agents.py]: reads QLearningAgent._state_to_index, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T6",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- figures.py:generate_plots: SyntaxError in new_code: closing parenthesis ']' does not match opening parenthesis '(' at line 88 of your code: `random_methods = [m for m in methods if 'Random' in str(m) or 'random' in str(m]` is indented by 12 spaces, the line before by 12. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T7",
+      "agent": "seed_coder",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- IMPORT_OUTSIDE_SPEC [experiment.py]: imports is_legal_action from environment.py; its interface has ACTION_SPACE_SIZE, BOARD_SIZE, PLAYER_O, PLAYER_X, REWARD_DRAW, REWARD_LOSS, REWARD_WIN, STATE_SPACE_SIZE, TicTacToeEnv, TicTacToeEnv.__init__, TicTacToeEnv.reset, TicTacToeEnv.step"
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When iterating over a range to index into an array or list, ensure the iterator variable is strictly bounded by the length of the target collection rather than any external constant, because mismatched dimensions cause out-of-bounds access at runtime.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null

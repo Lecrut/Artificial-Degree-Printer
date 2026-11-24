@@ -6,49 +6,35 @@
     ".ruff_cache/0.17.2/5000838088791888232",
     ".ruff_cache/0.17.2/6557967958916365441",
     ".ruff_cache/CACHEDIR.TAG",
-    "agent.py",
-    "baseline.py",
-    "config.py",
+    "agents.py",
     "environment.py",
     "experiment.py",
-    "figures/final_rates_comparison.png",
-    "figures/win_rate_vs_baseline.png",
     "figures.py",
     "logs/agent_trace.jsonl",
     "logs/events.jsonl",
     "logs/experiment.log",
     "logs/harness_process.log",
-    "logs/tectonic.log",
-    "references.bib",
-    "tests/test_agent.py",
-    "tests/test_baseline.py",
-    "tests/test_experiment.py",
-    "thesis.md",
-    "thesis.tex",
-    "ThesisPLodz.cls"
+    "tests/test_agents.py",
+    "tests/test_environment.py",
+    "thesis.md"
   ],
   "pytest_status": "FAIL",
   "pytest_errors": [
-    "Pytest failure: ..........FF                                                                                                                                                                                                                                                                                         [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n__________________________________________________________________________________________________________________________ test_run_experiment_creates_csv_with_correct_columns ___________________________________________________________________________________________________________________________\ntests\\test_experiment.py:126: in test_run_experiment_creates_csv_with_correct_columns\n    experiment.run_experiment()\nexperiment.py:177: in run_experiment\n    results_df.to_csv(results_path, index=False)\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1169: in __call__\n    return self._mock_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1173: in _mock_call\n    return self._execute_mock_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1234: in _execute_mock_call\n    result = effect(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^\nE   TypeError: test_run_experiment_creates_csv_with_correct_columns.<locals>.track_df() missing 1 required positional argument: 'path_or_buf'\n_________________________________________________________________________________________________________________________________ test_run_experiment_metrics_value_types _________________________________________________________________________________________________________________________________\ntests\\test_experiment.py:170: in test_run_experiment_metrics_value_types\n    experiment.run_experiment()\nexperiment.py:177: in run_experiment\n    results_df.to_csv(results_path, index=False)\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1169: in __call__\n    return self._mock_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1173: in _mock_call\n    return self._execute_mock_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nC:\\Users\\Filip\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\mock.py:1234: in _execute_mock_call\n    result = effect(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^\nE   TypeError: test_run_experiment_metrics_value_types.<locals>.track_df() missing 1 required positional argument: 'path_or_buf'\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_experiment.py::test_run_experiment_creates_csv_with_correct_columns - TypeError: test_run_experiment_creates_csv_with_correct_columns.<locals>.track_df() missing 1 required positional argument: 'path_or_buf'\nFAILED tests\\test_experiment.py::test_run_experiment_metrics_value_types - TypeError: test_run_experiment_metrics_value_types.<locals>.track_df() missing 1 required positional argument: 'path_or_buf'\n2 failed, 10 passed in 2.59s",
-    "Ruff lint failure: tests\\test_experiment.py:154:16: F821 Undefined name `mock_rand`\nFound 1 error."
+    "Pytest failure: ...........FF                                                                                                                                                                                                                                                                                        [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n______________________________________________________________________________________________________________________________________ test_env_step_win_condition_x ______________________________________________________________________________________________________________________________________\ntests\\test_environment.py:92: in test_env_step_win_condition_x\n    assert info['player'] == environment.PLAYER_X\nE   assert -1 == 1\nE    +  where 1 = environment.PLAYER_X\n______________________________________________________________________________________________________________________________________ test_env_step_draw_condition _______________________________________________________________________________________________________________________________________\ntests\\test_environment.py:128: in test_env_step_draw_condition\n    assert last_reward == environment.REWARD_DRAW\nE   assert 1.0 == 0.0\nE    +  where 0.0 = environment.REWARD_DRAW\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_environment.py::test_env_step_win_condition_x - assert -1 == 1\nFAILED tests\\test_environment.py::test_env_step_draw_condition - assert 1.0 == 0.0\n2 failed, 11 passed in 0.11s"
   ],
   "chapters_present": [
+    1,
     2,
-    3,
-    4,
-    5
+    3
   ],
   "chapters_missing": [
-    1,
+    4,
+    5,
     6
   ],
-  "symbolic_errors": [
-    "No results exist yet (the experiment has not run, so there is no results.csv): no \\ref_csv{...} pointer can resolve. Remove every \\ref_csv{...} from your text and describe the planned metrics in words; cite settings with \\ref_ast{...} from 'available_ast_symbols'.",
-    "Malformed symbolic tag missing ':' separator: \\ref_ast{results.csv}. A pointer without a target (a bare file) is invalid: choose a full target from 'available_ast_symbols', and write a file named in the prose as \\texttt{...}."
-  ],
+  "symbolic_errors": [],
   "csv_columns": [],
   "trigger_issues": [
-    "No results exist yet (the experiment has not run, so there is no results.csv): no \\ref_csv{...} pointer can resolve. Remove every \\ref_csv{...} from your text and describe the planned metrics in words; cite settings with \\ref_ast{...} from 'available_ast_symbols'.",
-    "Malformed symbolic tag missing ':' separator: \\ref_ast{results.csv}. A pointer without a target (a bare file) is invalid: choose a full target from 'available_ast_symbols', and write a file named in the prose as \\texttt{...}."
+    "Pytest failure: .....FF                                                                                                                                                                                                                                                                                              [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n______________________________________________________________________________________________________________________________________ test_env_step_win_condition_x ______________________________________________________________________________________________________________________________________\ntests\\test_environment.py:92: in test_env_step_win_condition_x\n    assert info['player'] == environment.PLAYER_X\nE   assert -1 == 1\nE    +  where 1 = environment.PLAYER_X\n______________________________________________________________________________________________________________________________________ test_env_step_draw_condition _______________________________________________________________________________________________________________________________________\ntests\\test_environment.py:128: in test_env_step_draw_condition\n    assert last_reward == environment.REWARD_DRAW\nE   assert 1.0 == 0.0\nE    +  where 0.0 = environment.REWARD_DRAW\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_environment.py::test_env_step_win_condition_x - assert -1 == 1\nFAILED tests\\test_environment.py::test_env_step_draw_condition - assert 1.0 == 0.0\n2 failed, 5 passed in 0.09s"
   ]
 }

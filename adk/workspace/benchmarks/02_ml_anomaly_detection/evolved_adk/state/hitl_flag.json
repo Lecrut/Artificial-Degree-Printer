@@ -8,13 +8,12 @@
   "question": null,
   "context": {
     "interfaces": [
-      "base_detector.py",
+      "baseline_detector.py",
       "data_generation.py",
-      "evaluation.py",
+      "evaluation_metrics.py",
       "experiment.py",
       "figures.py",
-      "score_exporter.py",
-      "subspace_detector.py"
+      "rs_ensemble_detector.py"
     ],
     "entrypoint": "experiment.py:run_experiment"
   }

@@ -22,7 +22,8 @@ def _spec_view(h: Hypergraph, module: str) -> dict[str, Any]:
 
 
 def _results_targets(workspace: Path, outputs: list[str]) -> tuple[list[str], list[str]]:
-    """`file:column` and `file:row` pointer targets of the results files that exist (tidy rows: `method+metric`)."""
+    """`file:column` and `file:row` pointer targets of the results files that exist (tidy rows: `method+metric:value`,
+    already a complete pointer target)."""
     columns: list[str] = []
     rows: list[str] = []
     for rel in outputs:
@@ -34,7 +35,8 @@ def _results_targets(workspace: Path, outputs: list[str]) -> tuple[list[str], li
         cols = list(reader[0].keys()) if reader else []
         columns += [f"{rel}:{c}" for c in cols]
         if {"method", "metric"} <= set(cols):
-            rows += [f"{rel}:{r['method']}+{r['metric']}" for r in reader if r.get("method") and r.get("metric")]
+            suffix = ":value" if "value" in cols else ""
+            rows += [f"{rel}:{r['method']}+{r['metric']}{suffix}" for r in reader if r.get("method") and r.get("metric")]
         elif cols:
             rows += [f"{rel}:{r[cols[0]]}" for r in reader if r.get(cols[0])]
     return list(dict.fromkeys(columns)), list(dict.fromkeys(rows))

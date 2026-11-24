@@ -462,7 +462,7 @@ def test_a_chapter_may_cite_what_h_holds(tmp_path: Path):
     assert {"config.py:ALPHA", "config.py:EPISODES", "core.py:train_and_evaluate"} <= set(may_cite["available_ast_symbols"])
     assert "config.py" not in may_cite["available_ast_symbols"]
     assert "results.csv:value" in may_cite["available_csv_columns"]
-    assert "results.csv:proposed+win_rate" in may_cite["available_csv_rows"]
+    assert "results.csv:proposed+win_rate:value" in may_cite["available_csv_rows"]
     assert not any(c.startswith("ablation.csv") for c in may_cite["available_csv_columns"])
 
 
@@ -498,14 +498,17 @@ def test_rebuild_queue_detects_oscillating_failures(tmp_path: Path):
             {"pytest_status": "FAIL", "pytest_errors": [_RUFF_F841.format(name="width", line=19)]},
             {"pytest_status": "FAIL", "pytest_errors": ["FAILED test_core.py::test_draw - AssertionError"]},
             {"pytest_status": "FAIL", "pytest_errors": [_RUFF_F841.format(name="plot_df", line=17)]},
+            {"pytest_status": "FAIL", "pytest_errors": [_RUFF_F841.format(name="bars", line=24)]},
         ]
     )
     orch._audit_factual_state = lambda _report: next(audits)
     seen: list[str] = []
     assert "tasks" in orch._rebuild_queue({}, 0, seen)
     assert "tasks" in orch._rebuild_queue({}, 1, seen)
-    # Third audit repeats the first one under another variable name: A -> B -> A is a repeat.
-    assert "stop" in orch._rebuild_queue({}, 2, seen)
+    # The third audit repeats the first one under another variable name (A -> B -> A), but a repeat stops the run
+    # only from the third rebuild on (2026-11-24: runs close to done were cut off too early).
+    assert "tasks" in orch._rebuild_queue({}, 2, seen)
+    assert "stop" in orch._rebuild_queue({}, 3, seen)
 
 
 def test_mechanical_lint_is_a_warning_and_verification_never_edits(tmp_path: Path):

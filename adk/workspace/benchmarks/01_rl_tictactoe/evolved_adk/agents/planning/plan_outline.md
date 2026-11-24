@@ -71,3 +71,7 @@ Return strictly one JSON object, no text outside it:
   }
 }
 ```
+
+## LEARNED RULES AND CONSTRAINTS
+- **RULE**: When synthesizing an experimental baseline that must serve as a comparative reference, ensure it is an independent agent or strategy distinct from the training opponent, and verify that the declared evaluation metrics explicitly include any composite success criteria mentioned in the prompt (e.g., combining wins and draws) to avoid logical gaps.
+- **RULE**: When defining metrics for an empirical study involving game agents, verify that each metric provides a necessary gradient of measurement relative to the thesis claim; specifically, when evaluating against an optimal opponent in a solved game, discard metrics that are constant (like draw rate) and prioritize those that vary with agent quality or efficiency, because static baselines do not distinguish learner competence. Additionally, ensure that any visualisation requirement (e.g., learning curves) is structurally supported by the data pipeline in the same cycle; if the experimental module only outputs aggregated final stats, explicitly add a training log mechanism to the experimental plan rather than assuming the figures module can infer temporal dynamics from static output.

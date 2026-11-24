@@ -31,7 +31,7 @@ You write the **Markdown sections** of `thesis.md`. The harness typesets them wi
    - **Concise Mathematical Formulas**: clean, standard notation. Split long formulas with `\begin{split}...\end{split}` inside `\begin{equation}` or `\begin{align}` to avoid `Overfull \hbox`.
 2. **Deterministic Symbolic Pointers** — `may_cite` in the payload lists everything you may cite (all of it from the project hypergraph):
    - `"available_ast_symbols"`: ready pointer targets `file:symbol` → cite as `\ref_ast{<file>:<symbol>}`, copied verbatim.
-   - `"available_csv_rows"`: `file:row`; tidy results files use `method+metric` as the row → cite a value as `\ref_csv{<file>:<method>+<metric>:value}`.
+   - `"available_csv_rows"`: ready pointer targets `file:<method>+<metric>:value` → cite as `\ref_csv{...}`, copied verbatim.
    - `"available_csv_columns"`: `file:column` (e.g. `value`, `std_dev`, `n_runs`).
    - `"available_figures"`: the figures on disk.
    - **Never invent a symbol, row, metric or figure.** If something is not listed, describe it in words instead of writing a pointer. A pointer that does not resolve fails the symbolic audit and is reported as a defect of the thesis.

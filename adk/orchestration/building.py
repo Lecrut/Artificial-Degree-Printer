@@ -276,6 +276,30 @@ class BuildingMixin:
                 continue  # an unparsable module is the syntax guard's finding; the run shows the real error
         return False
 
+    def _guard_results_from_prose_fix(self, report: dict[str, Any], target_file: str) -> dict[str, bytes | None] | None:
+        """A repair of a document that edits code, while the experiment works and its results exist, may not leave
+        the experiment broken (2026-11-24, 01: the writer's pointer error became a rewrite of experiment.py, the
+        results were lost). Returns the files to restore if it does, else None (nothing to guard)."""
+        if not (
+            _is_document(str(report.get("failed_file") or ""))
+            and target_file.endswith(".py")
+            and not self._last_experiment_error
+            and (self.workspace_dir / "results.csv").is_file()
+        ):
+            return None
+        return {
+            name: (self.workspace_dir / name).read_bytes() if (self.workspace_dir / name).is_file() else None
+            for name in (target_file, "results.csv")
+        }
+
+    def _restore_files(self, snapshot: dict[str, bytes | None]) -> None:
+        for name, content in snapshot.items():
+            path = self.workspace_dir / name
+            if content is None:
+                path.unlink(missing_ok=True)
+            else:
+                path.write_bytes(content)
+
     def _refresh_experiment_after_code(self, node_id: str) -> None:
         """After any change to Python code, results are whatever the declared entrypoint just wrote."""
         node_path = str(node_id).partition("#")[0]

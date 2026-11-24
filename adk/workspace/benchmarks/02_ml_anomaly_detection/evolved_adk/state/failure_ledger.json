@@ -2,447 +2,302 @@
   "failures": [
     {
       "agent": "plan_module",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"data_generation.py\", \"subspace_detector.py\"], \"examples\": [\"PLAN_CRITIC [data_generation.py:generate_sample]: The source implementation of `generate_sample` includes a default argument `length: int=200` which is not declared in the module's provided interface outline (`n_channels: int`). While Python allows defaults, this modifies the function signature relative to the contract. If consumers rely on the exact signature or if the harness enforces strict parameter matching against the provided list (excluding defaults), this is a violation of the specified interface. Fix: Remove the `length` argument from `generate_sample` and use the constant `ANOMALY_DURATION_SAMPLES` or a fixed internal length, ensuring the signature exactly matches `generate_sample(n_channels: int) -> np.ndarray`. Change together: [data_generation.py:generate_sample] Change signature to `def generate_sample(n_channels: int) -> np.ndarray:` and remove `length=200`..\", \"PLAN_CRITIC [subspace_detector.py:RandomSubspaceDetector.predict_scores]: The interface `predict_scores` computes Z-scores using mean and standard deviation derived exclusively from the input `data` argument. This violates the statistical basis for anomaly detection when anomalies are injected directly into the data stream (as per `data_generation`), as the presence of outliers severely biases these statistics, making normal channels appear anomalous or masking true anomalies. Fix: Modify `RandomSubspaceDetector.__init__` to accept a `normalization_stats` argument (or a callable/loader) and require `fit` to accept/reference a clean reference dataset. Pass this clean data's mean/std to `predict_scores` to ensure robust Z-score calculation relative to healthy physiology, not the corrupted signal itself. Change together: [RandomSubspaceDetector.__init__] Add `normalization_stats: Tuple[float, float]` parameter and store it for use in scoring.; [RandomSubspaceDetector.fit] Update signature to accept reference data `ref_data` from which clean mean/std are computed if not provided explicitly, or ensure the consumer passes pre-computed stats.; [subspace_detector.py:predict_scores] Update docstring and implementation to use the stored reference mean/std for Z-score calculation instead of computing them from `data`..\", \"PLAN_CRITIC [subspace_detector.py:RandomSubspaceDetector.predict_scores]: The module lacks any method to convert the continuous anomaly scores produced by `predict_scores` into binary labels (anomaly/no-anomaly). The consumer (`experiment.py`) requires these binary predictions to call `evaluation.compute_metrics`, which expects boolean arrays. Fix: Add a `predict_threshold(data: np.ndarray, threshold: float) -> np.ndarray` method or modify `predict_scores` to return a named tuple/dict containing both scores and a default thresholded prediction, exposing the thresholding logic to the consumer. Change together: [RandomSubspaceDetector] Add public method `predict_threshold(self, data: np.ndarray, threshold: float) -> np.ndarray` that computes scores and applies `(score > threshold).astype(int)`..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [data_generation.py:generate_sample]: The source implementation of `generate_sample` includes a default argument `length: int=200` which is not declared in the module's provided interface outline (`n_channels: int`). While Python allows defaults, this modifies the function signature relative to the contract. If consumers rely on the exact signature or if the harness enforces strict parameter matching against the provided list (excluding defaults), this is a violation of the specified interface. Fix: Remove the `length` argument from `generate_sample` and use the constant `ANOMALY_DURATION_SAMPLES` or a fixed internal length, ensuring the signature exactly matches `generate_sample(n_channels: int) -> np.ndarray`. Change together: [data_generation.py:generate_sample] Change signature to `def generate_sample(n_channels: int) -> np.ndarray:` and remove `length=200`..\", \"PLAN_CRITIC [subspace_detector.py:RandomSubspaceDetector.predict_scores]: The interface `predict_scores` computes Z-scores using mean and standard deviation derived exclusively from the input `data` argument. This violates the statistical basis for anomaly detection when anomalies are injected directly into the data stream (as per `data_generation`), as the presence of outliers severely biases these statistics, making normal channels appear anomalous or masking true anomalies. Fix: Modify `RandomSubspaceDetector.__init__` to accept a `normalization_stats` argument (or a callable/loader) and require `fit` to accept/reference a clean reference dataset. Pass this clean data's mean/std to `predict_scores` to ensure robust Z-score calculation relative to healthy physiology, not the corrupted signal itself. Change together: [RandomSubspaceDetector.__init__] Add `normalization_stats: Tuple[float, float]` parameter and store it for use in scoring.; [RandomSubspaceDetector.fit] Update signature to accept reference data `ref_data` from which clean mean/std are computed if not provided explicitly, or ensure the consumer passes pre-computed stats.; [subspace_detector.py:predict_scores] Update docstring and implementation to use the stored reference mean/std for Z-score calculation instead of computing them from `data`..\", \"PLAN_CRITIC [subspace_detector.py:RandomSubspaceDetector.predict_scores]: The module lacks any method to convert the continuous anomaly scores produced by `predict_scores` into binary labels (anomaly/no-anomaly). The consumer (`experiment.py`) requires these binary predictions to call `evaluation.compute_metrics`, which expects boolean arrays. Fix: Add a `predict_threshold(data: np.ndarray, threshold: float) -> np.ndarray` method or modify `predict_scores` to return a named tuple/dict containing both scores and a default thresholded prediction, exposing the thresholding logic to the consumer. Change together: [RandomSubspaceDetector] Add public method `predict_threshold(self, data: np.ndarray, threshold: float) -> np.ndarray` that computes scores and applies `(score > threshold).astype(int)`..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 2, \"cycle_index\": 3, \"source\": \"planning_critic\"}",
-      "injected_rule": "When designing a module interface, ensure function signatures match the contract exactly by avoiding undeclared default arguments and including all required logic (such as result formatting or post-processing) within the defined methods rather than leaving them to consumers, because the plan must be executable without hidden dependencies or signature mismatches."
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"baseline_detector.py\", \"experiment.py\"], \"examples\": [\"PLAN_CRITIC [baseline_detector.py:BaselineZScore.detect]: The docstring for `detect` contradicts itself regarding the return type. It states it returns a 1D boolean array of shape `(n_samples,)` in one sentence, but then questions/mentions a column mask of shape `(n_samples, n_channels)` with no resolution, creating ambiguity about whether the function reduces across channels or keeps them separate. Fix: Remove the ambiguous alternative description in the docstring. Explicitly state that `detect` returns a 1D boolean array of shape `(n_samples,)`, where an entry is True if *any* channel exceeds the threshold for that sample, to align with standard ensemble detector interfaces and consumer expectations for temporal evaluation. Change together: [BaselineZScore.detect] Clarify docstring return type as strictly `(n_samples,)` boolean array representing union across channels..\", \"PLAN_CRITIC [experiment.py:run_experiment]: The module lacks the required constant for the number of repetitions (`N_RUNS`). The source code defines `N_RUNS` but omits `AUC_SCORES`, which is necessary because `compute_auc` requires continuous scores (e.g., Z-scores or distances), whereas the detectors currently declared only provide binary predictions. Without a mechanism to access raw scores, AUC cannot be computed. Fix: Add `AUC_SCORES: bool = True` (or equivalent logic) and ensure the experiment logic captures the raw anomaly scores (not just binary detections) from both `BaselineZScore` and `RandomSubspaceEnsemble` to pass to `compute_auc`. Alternatively, if scores are not stored, redesign the detectors' `detect` method or add a `get_scores()` method. Change together: [run_experiment] Ensure the function body captures continuous anomaly scores (not just binary outputs) from both detector modules to compute AUC, and adds the `AUC_SCORES` configuration constant if needed for logic control..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [baseline_detector.py:BaselineZScore.detect]: The docstring for `detect` contradicts itself regarding the return type. It states it returns a 1D boolean array of shape `(n_samples,)` in one sentence, but then questions/mentions a column mask of shape `(n_samples, n_channels)` with no resolution, creating ambiguity about whether the function reduces across channels or keeps them separate. Fix: Remove the ambiguous alternative description in the docstring. Explicitly state that `detect` returns a 1D boolean array of shape `(n_samples,)`, where an entry is True if *any* channel exceeds the threshold for that sample, to align with standard ensemble detector interfaces and consumer expectations for temporal evaluation. Change together: [BaselineZScore.detect] Clarify docstring return type as strictly `(n_samples,)` boolean array representing union across channels..\", \"PLAN_CRITIC [experiment.py:run_experiment]: The module lacks the required constant for the number of repetitions (`N_RUNS`). The source code defines `N_RUNS` but omits `AUC_SCORES`, which is necessary because `compute_auc` requires continuous scores (e.g., Z-scores or distances), whereas the detectors currently declared only provide binary predictions. Without a mechanism to access raw scores, AUC cannot be computed. Fix: Add `AUC_SCORES: bool = True` (or equivalent logic) and ensure the experiment logic captures the raw anomaly scores (not just binary detections) from both `BaselineZScore` and `RandomSubspaceEnsemble` to pass to `compute_auc`. Alternatively, if scores are not stored, redesign the detectors' `detect` method or add a `get_scores()` method. Change together: [run_experiment] Ensure the function body captures continuous anomaly scores (not just binary outputs) from both detector modules to compute AUC, and adds the `AUC_SCORES` configuration constant if needed for logic control..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 2, \"cycle_index\": 2, \"source\": \"planning_critic\"}",
+      "injected_rule": "When defining module interfaces or logic, verify that all referenced constants and data flow requirements are fully accounted for in the plan before committing to an implementation, because missing dependencies prevent deterministic execution."
     },
     {
       "agent": "plan_module",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"experiment.py\", \"subspace_detector.py\"], \"examples\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The module defines constants (e.g., SAMPLE_LENGTH) that duplicate names from dependencies (data_generation.py) without ensuring they refer to the same objects. This creates a risk of configuration drift and violates the principle that the interface should reflect the dependency's structure or explicitly link them. Fix: Import the reference constants directly from data_generation.py (e.g., SAMPLE_LENGTH, NORMAL_CHANNELS) instead of redefining them as local module-level variables. Change together: [experiment.py] Remove local definitions of SAMPLE_LENGTH and N_CHANNELS. Add imports: `from data_generation import generate_dataset, SAMPLE_LENGTH, NORMAL_CHANNELS`..\", \"PLAN_CRITIC [experiment.py:aggregate_metrics]: The docstring states that `run_experiment` will write results with a column 'std_dev', but the provided source code imports `aggregate_metrics` which returns a dict (as per evaluation.py spec) and does not show logic to compute or include standard deviation in the CSV output. The harness checks signature, but the purpose implies writing aggregated statistics including std_dev as per the outline's metrics list. Fix: Ensure `run_experiment` explicitly computes the standard deviation of the F1 scores from the per-run results (using numpy or `aggregate_metrics` return if it includes it) and writes this value to the CSV. The current stub is empty, but the design must account for the 'STD_F1' metric listed in the academic blueprint. Change together: [experiment.py:run_experiment] Implement the logic to extract STD_F1 from `aggregate_metrics` (or compute it if `aggregate_metrics` only returns means) and write it to `results.csv` as a row for the subspace detector..\", \"PLAN_CRITIC [subspace_detector.py:RandomSubspaceDetector.fit]: The method signature requires optional `ref_mean` and `ref_std` arguments but does not accept or use a `ref_data` argument. However, the plan for `experiment.py` relies on fitting detectors using a 'clean data subset' (raw data) which is not supported by this interface; the fit method cannot process raw reference data to derive statistics if explicit means/stds are not provided externally. Fix: Update `RandomSubspaceDetector.fit` to accept an optional `ref_data: Optional[np.ndarray]` argument and compute `ref_mean`/`ref_std` from it if they are not explicitly passed, ensuring the experiment can pass raw clean data to fit. Change together: [experiment.py] Ensure the call to `subspace_detector.fit` passes the derived `clean_data` array via the new `ref_data` argument..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The module defines constants (e.g., SAMPLE_LENGTH) that duplicate names from dependencies (data_generation.py) without ensuring they refer to the same objects. This creates a risk of configuration drift and violates the principle that the interface should reflect the dependency's structure or explicitly link them. Fix: Import the reference constants directly from data_generation.py (e.g., SAMPLE_LENGTH, NORMAL_CHANNELS) instead of redefining them as local module-level variables. Change together: [experiment.py] Remove local definitions of SAMPLE_LENGTH and N_CHANNELS. Add imports: `from data_generation import generate_dataset, SAMPLE_LENGTH, NORMAL_CHANNELS`..\", \"PLAN_CRITIC [experiment.py:aggregate_metrics]: The docstring states that `run_experiment` will write results with a column 'std_dev', but the provided source code imports `aggregate_metrics` which returns a dict (as per evaluation.py spec) and does not show logic to compute or include standard deviation in the CSV output. The harness checks signature, but the purpose implies writing aggregated statistics including std_dev as per the outline's metrics list. Fix: Ensure `run_experiment` explicitly computes the standard deviation of the F1 scores from the per-run results (using numpy or `aggregate_metrics` return if it includes it) and writes this value to the CSV. The current stub is empty, but the design must account for the 'STD_F1' metric listed in the academic blueprint. Change together: [experiment.py:run_experiment] Implement the logic to extract STD_F1 from `aggregate_metrics` (or compute it if `aggregate_metrics` only returns means) and write it to `results.csv` as a row for the subspace detector..\", \"PLAN_CRITIC [subspace_detector.py:RandomSubspaceDetector.fit]: The method signature requires optional `ref_mean` and `ref_std` arguments but does not accept or use a `ref_data` argument. However, the plan for `experiment.py` relies on fitting detectors using a 'clean data subset' (raw data) which is not supported by this interface; the fit method cannot process raw reference data to derive statistics if explicit means/stds are not provided externally. Fix: Update `RandomSubspaceDetector.fit` to accept an optional `ref_data: Optional[np.ndarray]` argument and compute `ref_mean`/`ref_std` from it if they are not explicitly passed, ensuring the experiment can pass raw clean data to fit. Change together: [experiment.py] Ensure the call to `subspace_detector.fit` passes the derived `clean_data` array via the new `ref_data` argument..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 4, \"cycle_index\": 5, \"source\": \"planning_critic\"}",
-      "injected_rule": "When designing a module's interface, always verify that method signatures (especially initialization or fitting methods) explicitly support all required input forms mentioned in the consumer task description, because if the interface does not accept the necessary data type, the caller cannot use it as intended."
-    },
-    {
-      "agent": "plan_outline",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"outline:0\", \"outline:5\"], \"examples\": [\"PLAN_CRITIC [evaluation.py]: The metric `STD_F1` listed in `academic_blueprint.metrics` is not a single-run metric. It requires standard deviation of F1 across multiple runs. `evaluation.py` promises `compute_metrics` for one sample. There is no module promising to compute statistics *across* runs or aggregate them to produce the `STD_F1` value required for the final report. The experiment orchestrates runs, but who aggregates? The prompt says 'analiza wyników z uwzględnieniem ich rozrzutu'. If `run_experiment` only calls `compute_metrics`, it gets per-run F1s. It must then compute std dev itself or call an aggregator. Currently, no module promises a function that takes the list of per-run results and outputs the aggregated metrics including STD. Fix: Add to `evaluation.py` (or a new `aggregation.py`) a promise for `aggregate_metrics(per_run_results: list[dict]) -> dict` which computes the mean and standard deviation (for STD_F1) across runs, OR ensure `evaluation.py` promises this aggregation capability. Change together: [evaluation.py] Add promise `aggregate_metrics(per_run_results: list[dict]) -> dict` to calculate mean/std for all metrics..\", \"PLAN_CRITIC [academic_blueprint.metrics]: The blueprint lists `PRECISION` and `RECALL` as required metrics but omits `SPECIFICITY` (or True Negative Rate), despite the thesis statement explicitly claiming detection with 'low false positive rate'. Without Specificity, the low FPR claim cannot be quantitatively verified in the results. Fix: Add `SPECIFICITY` to the list of declared metrics in `academic_blueprint.metrics`. Change together: [evaluation.py:compute_metrics] Update the return dictionary of `compute_metrics` to include the computed 'SPECIFICITY' value alongside AUC, F1, Precision, and Recall.; [academic_blueprint.planned_chapters[5]] Update Chapter 5 focus to include analysis of Specificity/FPR to verify the thesis claim about low false positives..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_outline\", \"issues\": [\"PLAN_CRITIC [evaluation.py]: The metric `STD_F1` listed in `academic_blueprint.metrics` is not a single-run metric. It requires standard deviation of F1 across multiple runs. `evaluation.py` promises `compute_metrics` for one sample. There is no module promising to compute statistics *across* runs or aggregate them to produce the `STD_F1` value required for the final report. The experiment orchestrates runs, but who aggregates? The prompt says 'analiza wyników z uwzględnieniem ich rozrzutu'. If `run_experiment` only calls `compute_metrics`, it gets per-run F1s. It must then compute std dev itself or call an aggregator. Currently, no module promises a function that takes the list of per-run results and outputs the aggregated metrics including STD. Fix: Add to `evaluation.py` (or a new `aggregation.py`) a promise for `aggregate_metrics(per_run_results: list[dict]) -> dict` which computes the mean and standard deviation (for STD_F1) across runs, OR ensure `evaluation.py` promises this aggregation capability. Change together: [evaluation.py] Add promise `aggregate_metrics(per_run_results: list[dict]) -> dict` to calculate mean/std for all metrics..\", \"PLAN_CRITIC [academic_blueprint.metrics]: The blueprint lists `PRECISION` and `RECALL` as required metrics but omits `SPECIFICITY` (or True Negative Rate), despite the thesis statement explicitly claiming detection with 'low false positive rate'. Without Specificity, the low FPR claim cannot be quantitatively verified in the results. Fix: Add `SPECIFICITY` to the list of declared metrics in `academic_blueprint.metrics`. Change together: [evaluation.py:compute_metrics] Update the return dictionary of `compute_metrics` to include the computed 'SPECIFICITY' value alongside AUC, F1, Precision, and Recall.; [academic_blueprint.planned_chapters[5]] Update Chapter 5 focus to include analysis of Specificity/FPR to verify the thesis claim about low false positives..\"]}, \"failed_agent\": \"plan_outline\", \"agent_failure_count\": 2, \"cycle_index\": 6, \"source\": \"planning_critic\"}",
-      "injected_rule": "When defining metrics in a blueprint, ensure every metric's computational scope matches the available aggregation capabilities of the execution modules (e.g., do not list aggregated statistics like STD_F1 unless an aggregator function is explicitly promised); and verify that all quantitative claims in the thesis statement are mapped to specific metrics defined in the blueprint, because omission breaks the verification chain."
-    },
-    {
-      "agent": "plan_outline",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"outline:6\", \"outline:7\"], \"examples\": [\"PLAN_CRITIC [evaluation.py]: The metric AUC_ROC requires the full prediction probability score vector (e.g., anomaly scores or decision function values) to compute the ROC curve. The module `evaluation.py` only promises to provide metrics from `y_true` and `y_pred`, implying it expects binary predictions as input. No module currently promises a method that returns continuous anomaly scores suitable for AUC computation. Fix: Require `subspace_detector.py` to expose a method `get_anomaly_scores(x: np.ndarray) -> np.ndarray` and update `evaluation.compute_metrics` to accept an optional `scores` argument or require the detector to provide them for AUC calculation. Change together: [subspace_detector.py] Add 'get_anomaly_scores' to provides list.; [experiment.py] Update run_experiment to pass anomaly scores to evaluation.compute_metrics for AUC calculation..\", \"PLAN_CRITIC [subspace_detector.py]: The `evaluation.py` module promises to compute AUC_ROC, which requires continuous anomaly scores. However, neither `base_detector.py` nor `subspace_detector.py` promises any method to return these raw scores; their `predict` methods only return binary classifications. Fix: Add `get_anomaly_scores` to the `provides` list of both `base_detector.py` and `subspace_detector.py`. Change together: [evaluation.py] No change; `evaluate.compute_metrics` signature in stage 2 will accept optional scores.; [experiment.py] Must call the new `get_anomaly_scores` method and pass the result to `evaluation.py` for AUC computation..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_outline\", \"issues\": [\"PLAN_CRITIC [evaluation.py]: The metric AUC_ROC requires the full prediction probability score vector (e.g., anomaly scores or decision function values) to compute the ROC curve. The module `evaluation.py` only promises to provide metrics from `y_true` and `y_pred`, implying it expects binary predictions as input. No module currently promises a method that returns continuous anomaly scores suitable for AUC computation. Fix: Require `subspace_detector.py` to expose a method `get_anomaly_scores(x: np.ndarray) -> np.ndarray` and update `evaluation.compute_metrics` to accept an optional `scores` argument or require the detector to provide them for AUC calculation. Change together: [subspace_detector.py] Add 'get_anomaly_scores' to provides list.; [experiment.py] Update run_experiment to pass anomaly scores to evaluation.compute_metrics for AUC calculation..\", \"PLAN_CRITIC [subspace_detector.py]: The `evaluation.py` module promises to compute AUC_ROC, which requires continuous anomaly scores. However, neither `base_detector.py` nor `subspace_detector.py` promises any method to return these raw scores; their `predict` methods only return binary classifications. Fix: Add `get_anomaly_scores` to the `provides` list of both `base_detector.py` and `subspace_detector.py`. Change together: [evaluation.py] No change; `evaluate.compute_metrics` signature in stage 2 will accept optional scores.; [experiment.py] Must call the new `get_anomaly_scores` method and pass the result to `evaluation.py` for AUC computation..\"]}, \"failed_agent\": \"plan_outline\", \"agent_failure_count\": 4, \"cycle_index\": 8, \"source\": \"planning_critic\"}",
-      "injected_rule": "When designing module interfaces that involve metrics requiring continuous inputs (such as AUC), ensure all upstream modules expose a contract method returning the necessary raw scores, rather than only final binary predictions, because the evaluation logic must be able to access the underlying data distribution."
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"baseline_detector.py\", \"rs_ensemble_detector.py\"], \"examples\": [\"PLAN_CRITIC [rs_ensemble_detector.py:RandomSubspaceEnsemble.detect]: The `detect` method returns a binary array (mask), but `experiment.py` declares it will use this object to compute `auc_score`. AUC requires continuous anomaly scores, not binary predictions; passing the output of `detect` to `compute_auc` will either fail type checks or produce invalid/degenerate AUC values. Fix: Add a `get_anomaly_scores(self, data: np.ndarray) -> np.ndarray` method to `RandomSubspaceEnsemble` that returns the raw aggregate scores, and update `experiment.py` to call this new method for AUC computation while keeping `detect` (or its output) for F1-score. Change together: [rs_ensemble_detector.py:RandomSubspaceEnsemble] Add `get_anomaly_scores` method to the interface.; [experiment.py:run_experiment] Call `get_anomaly_scores` instead of `detect` when computing AUC, or pass the scores directly if detecting internally is separated..\", \"PLAN_CRITIC [baseline_detector.py:BaselineZScore.detect]: The experiment needs to compute AUC for the baseline, which requires continuous scores (e.g., Z-scores). However, `BaselineZScore.detect` is defined to return a binary mask. The raw scores needed for AUC are lost once `detect` is called. Fix: Add a `get_scores(self, data: np.ndarray) -> np.ndarray` method to `BaselineZScore` that returns the absolute Z-scores, and update `experiment.py` to use these scores for AUC computation. Change together: [baseline_detector.py:BaselineZScore] Add `get_scores` method to the interface.; [experiment.py:run_experiment] Call `get_scores` on the baseline detector when computing AUC..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [rs_ensemble_detector.py:RandomSubspaceEnsemble.detect]: The `detect` method returns a binary array (mask), but `experiment.py` declares it will use this object to compute `auc_score`. AUC requires continuous anomaly scores, not binary predictions; passing the output of `detect` to `compute_auc` will either fail type checks or produce invalid/degenerate AUC values. Fix: Add a `get_anomaly_scores(self, data: np.ndarray) -> np.ndarray` method to `RandomSubspaceEnsemble` that returns the raw aggregate scores, and update `experiment.py` to call this new method for AUC computation while keeping `detect` (or its output) for F1-score. Change together: [rs_ensemble_detector.py:RandomSubspaceEnsemble] Add `get_anomaly_scores` method to the interface.; [experiment.py:run_experiment] Call `get_anomaly_scores` instead of `detect` when computing AUC, or pass the scores directly if detecting internally is separated..\", \"PLAN_CRITIC [baseline_detector.py:BaselineZScore.detect]: The experiment needs to compute AUC for the baseline, which requires continuous scores (e.g., Z-scores). However, `BaselineZScore.detect` is defined to return a binary mask. The raw scores needed for AUC are lost once `detect` is called. Fix: Add a `get_scores(self, data: np.ndarray) -> np.ndarray` method to `BaselineZScore` that returns the absolute Z-scores, and update `experiment.py` to use these scores for AUC computation. Change together: [baseline_detector.py:BaselineZScore] Add `get_scores` method to the interface.; [experiment.py:run_experiment] Call `get_scores` on the baseline detector when computing AUC..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 4, \"cycle_index\": 4, \"source\": \"planning_critic\"}",
+      "injected_rule": "When designing an interface for an agent that produces scores used by downstream components requiring different metrics (such as AUC for continuous values versus F1 for binary masks), ensure the plan exposes both the raw score output and the final thresholded decision to prevent data type loss or semantic mismatch during evaluation."
     },
     {
       "agent": "plan_module",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"evaluation.py\", \"subspace_detector.py\"], \"examples\": [\"PLAN_CRITIC [evaluation.py:aggregate_metrics]: The outline for `experiment.py` (and its academic blueprint) explicitly requires analysis of spread/variance between repetitions (std_dev). The current interface only returns a dict of means, discarding the standard deviations needed to satisfy the thesis requirement: \\\"analiza rozrzutu między powtórzeniami (std_dev)\\\". Fix: Update `aggregate_metrics` to return standard deviation values (e.g., keys like 'AUC_ROC_STD') for each metric, as indicated by the docstring but not guaranteed by the explicit signature contract in the outline which lacks these keys. Change together: [experiment.py] Must read specific '_STD' keys from the return value of aggregate_metrics to populate results.csv and figures data as required by the thesis scope..\", \"PLAN_CRITIC [evaluation.py:aggregate_metrics]: The docstring promises keys like 'AUC_ROC_STD', but the `provides` list in the outline does not declare these additional keys. This creates a mismatch between the interface description (outline) and its usage contract (consumers need specific keys for CSV writing). Fix: Explicitly document the return dictionary structure including the '_STD' suffix keys in the module's `provides` list or ensure the outline's description of `aggregate_metrics` reflects that it returns means AND standard deviations. Change together: [experiment.py] Relies on the existence of specific keys (e.g., 'AUC_ROC_STD') to write columns to results.csv. If the interface is interpreted strictly as only providing metrics without their statistics, the consumer will fail or produce incomplete data..\", \"PLAN_CRITIC [subspace_detector.py:RandomSubspaceDetector.predict]: The interface returns `tuple[np.ndarray, np.ndarray]` (always returning a scores array) but the docstring describes logic for handling `scores=False` by returning a boolean array of False values or empty logic, creating a type contradiction and inconsistent return type with `base_detector.py` which uses `Optional[np.ndarray]`. Furthermore, `get_anomaly_scores` is declared in `provides` but its signature in the interface text is duplicated/ambiguous (`None` then `np.ndarray`). Fix: Unify `RandomSubspaceDetector.predict` to strictly follow the return type `tuple[np.ndarray, Optional[np.ndarray]]` (predicting array, scores array or None) and remove the duplicate/contradictory `get_anomaly_scores` stub from the interface text if it's not needed as a distinct cached getter, or fix its signature to return `np.ndarray`. Given `evaluate.py` expects optional scores, use `Optional[np.ndarray]`. Change together: [evaluation.py:compute_metrics] Ensure the caller in `experiment.py` passes `scores=True` or handles `None` correctly based on the unified signature.; [experiment.py] Update calls to `subspace_detector.predict` to handle the optional second return value appropriately, matching the fix in `subspace_detector.py`..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [evaluation.py:aggregate_metrics]: The outline for `experiment.py` (and its academic blueprint) explicitly requires analysis of spread/variance between repetitions (std_dev). The current interface only returns a dict of means, discarding the standard deviations needed to satisfy the thesis requirement: \\\"analiza rozrzutu między powtórzeniami (std_dev)\\\". Fix: Update `aggregate_metrics` to return standard deviation values (e.g., keys like 'AUC_ROC_STD') for each metric, as indicated by the docstring but not guaranteed by the explicit signature contract in the outline which lacks these keys. Change together: [experiment.py] Must read specific '_STD' keys from the return value of aggregate_metrics to populate results.csv and figures data as required by the thesis scope..\", \"PLAN_CRITIC [evaluation.py:aggregate_metrics]: The docstring promises keys like 'AUC_ROC_STD', but the `provides` list in the outline does not declare these additional keys. This creates a mismatch between the interface description (outline) and its usage contract (consumers need specific keys for CSV writing). Fix: Explicitly document the return dictionary structure including the '_STD' suffix keys in the module's `provides` list or ensure the outline's description of `aggregate_metrics` reflects that it returns means AND standard deviations. Change together: [experiment.py] Relies on the existence of specific keys (e.g., 'AUC_ROC_STD') to write columns to results.csv. If the interface is interpreted strictly as only providing metrics without their statistics, the consumer will fail or produce incomplete data..\", \"PLAN_CRITIC [subspace_detector.py:RandomSubspaceDetector.predict]: The interface returns `tuple[np.ndarray, np.ndarray]` (always returning a scores array) but the docstring describes logic for handling `scores=False` by returning a boolean array of False values or empty logic, creating a type contradiction and inconsistent return type with `base_detector.py` which uses `Optional[np.ndarray]`. Furthermore, `get_anomaly_scores` is declared in `provides` but its signature in the interface text is duplicated/ambiguous (`None` then `np.ndarray`). Fix: Unify `RandomSubspaceDetector.predict` to strictly follow the return type `tuple[np.ndarray, Optional[np.ndarray]]` (predicting array, scores array or None) and remove the duplicate/contradictory `get_anomaly_scores` stub from the interface text if it's not needed as a distinct cached getter, or fix its signature to return `np.ndarray`. Given `evaluate.py` expects optional scores, use `Optional[np.ndarray]`. Change together: [evaluation.py:compute_metrics] Ensure the caller in `experiment.py` passes `scores=True` or handles `None` correctly based on the unified signature.; [experiment.py] Update calls to `subspace_detector.predict` to handle the optional second return value appropriately, matching the fix in `subspace_detector.py`..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 6, \"cycle_index\": 10, \"source\": \"planning_critic\"}",
-      "injected_rule": "When defining a function interface that exposes data structures (like dictionaries or return values) to consumers, explicitly document all key names and value types in the `provides` list or signature description, ensuring they match both the implementation logic and consumer usage requirements, because incomplete interface definitions lead to contract mismatches and downstream failures."
-    },
-    {
-      "agent": "plan_outline",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"outline:11\", \"outline:12\"], \"examples\": [\"PLAN_CRITIC [academic_blueprint.planned_chapters[5]]: The plan critic noted that Chapter 5 must analyze Specificity. The blueprint metrics include SPECIFICITY. However, `evaluation.py` interface docstring for `compute_metrics` says: 'If y_true has no negative samples, SPECIFICITY is 0.0.' This is mathematically incorrect for standard definitions where TN/(TN+FP) would be undefined (division by zero). If the data generation always includes normal samples (which it does), this edge case handling is fine, BUT the metric name in `aggregate_metrics` return value might mismatch if not explicitly mapped. Fix: Ensure `evaluation.py:compute_metrics` explicitly returns 'SPECIFICITY' as a key, and `aggregate_metrics` correctly maps '_STD' to it. The interface text for `compute_metrics` lists 'SPECIFICITY' in the return dict keys, which is correct. The issue is minor but let's ensure the `experiment.py` logic doesn't drop it.\", \"PLAN_CRITIC [modules: base_detector.py provides / modules: subspace_detector.py provides]: The outline declares metrics including SPECIFICITY and PRECISION, which require binary hard labels (y_pred), but the proposed detector methods only promise continuous anomaly scores via `get_anomaly_scores()`. Without a mechanism to threshold these scores into binary predictions, the experiment cannot compute the required classification metrics. Fix: Update `RandomSubspaceDetector` and `ZScoreDetector` provides list to include `predict(threshold: float) -> tuple[np.ndarray, np.ndarray]`, allowing the generation of binary predictions from the continuous scores. Change together: [modules: base_detector.py depends_on] No change needed (pure method).; [modules: subspace_detector.py depends_on] No change needed (pure method).; [experiment.py depends_on] No change needed, but `run_experiment` must call the new predict method with a fixed threshold constant during the loop..\", \"PLAN_CRITIC [modules: figures.py depends_on]: The figures module reads `results.csv` (which contains aggregated metrics) but also needs to visualize the distribution of scores or predictions to support Chapter 5's requirement for 'analiza rozrzutu' and score comparison. Since it has no dependency on the data generation or detector modules, it cannot access the raw anomaly scores required for these plots. Fix: Add `data_generation.py` and `subspace_detector.py` (or a new `score_storage.py` module) to the dependencies of `figures.py`, OR define the requirement in `experiment.py` to save raw score arrays alongside `results.csv`. Given the constraint against hardcoding file names in the figures module, the cleanest fix is adding a dependency on an intermediate data structure or ensuring `experiment.py` writes detailed score data to a location read by `figures.py`. However, simpler: Add `data_generation.py` to `figures.py`'s depends_on if it provides the ground truth structure needed for visualization, but typically figures need scores. The outline lacks a module providing raw scores to figures. Let's fix by adding a dependency on a hypothetical 'score_writer' or adjusting `experiment.py`. Actually, the prompt says `plots` reads `results.csv`. If we strictly follow that, it can't plot score distributions. The harness rule says 'The figures module reads results.csv... and needs no constant for the file name'. It doesn't forbid reading other files if declared in depends_on. But currently, nothing provides scores to figures. I will flag this as a blocking issue because you cannot visualize the 'anomaly scores' mentioned in the thesis statement without them. Fix: Add `score_exporter.py` or extend `experiment.py` to export scores, and add it to `figures.py` depends_on. To keep module count low, let's require `experiment.py` to write a `scores.csv`. But `figures.py` needs to know where it is. The harness rule says 'never ask for... hardcoding results.csv'. It implies `plots` knows the file name. I will assume `plots` can read other standard outputs. Let's change `figures.py` depends_on to include `experiment.py`? No, that creates a cycle if experiment calls plots or plots needs experiment logic. Better: The figures module is isolated. It reads `results.csv`. If `results.csv` doesn't have scores, you can't plot them. So the outline fails the 'analiza rozrzutu' requirement for the proposed method specifically regarding score distribution visualization vs simple metric bar charts. Fix: Add `experiment.py` to `figures.py` depends_on? No. Add a new module `score_writer.py`. Let's add `data_generation.py` if scores are tied to GT? No. The most direct fix is that `figures.py` must depend on something providing the raw data for visualization, or `results.csv` must contain it. Since `results.csv` is standardized as `method,metric,value`, it can't hold arrays. Therefore, a new module `score_exporter.py` is needed, or `experiment.py`'s output format is insufficient. I will flag this as blocking against `figures.py` because it cannot fulfill the visual analysis requirement for score distributions without access to raw scores, which are not in `results.csv`. Change together: [modules: figures.py depends_on] Add 'score_exporter.py' (new module) or 'experiment.py' if logic allows, but per architecture, add a new module 'score_writer.py' that exports scores and update `figures.py` to depend on it.; [modules: score_writer.py (new)] Add new module with purpose 'Exports raw anomaly scores and ground truth for visualization', depends_on ['data_generation.py', 'base_detector.py', 'subspace_detector.py'], provides 'export_scores()'; [experiment.py depends_on] Add 'score_writer.py' to dependencies and call `export_scores()`..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_outline\", \"issues\": [\"PLAN_CRITIC [academic_blueprint.planned_chapters[5]]: The plan critic noted that Chapter 5 must analyze Specificity. The blueprint metrics include SPECIFICITY. However, `evaluation.py` interface docstring for `compute_metrics` says: 'If y_true has no negative samples, SPECIFICITY is 0.0.' This is mathematically incorrect for standard definitions where TN/(TN+FP) would be undefined (division by zero). If the data generation always includes normal samples (which it does), this edge case handling is fine, BUT the metric name in `aggregate_metrics` return value might mismatch if not explicitly mapped. Fix: Ensure `evaluation.py:compute_metrics` explicitly returns 'SPECIFICITY' as a key, and `aggregate_metrics` correctly maps '_STD' to it. The interface text for `compute_metrics` lists 'SPECIFICITY' in the return dict keys, which is correct. The issue is minor but let's ensure the `experiment.py` logic doesn't drop it.\", \"PLAN_CRITIC [modules: base_detector.py provides / modules: subspace_detector.py provides]: The outline declares metrics including SPECIFICITY and PRECISION, which require binary hard labels (y_pred), but the proposed detector methods only promise continuous anomaly scores via `get_anomaly_scores()`. Without a mechanism to threshold these scores into binary predictions, the experiment cannot compute the required classification metrics. Fix: Update `RandomSubspaceDetector` and `ZScoreDetector` provides list to include `predict(threshold: float) -> tuple[np.ndarray, np.ndarray]`, allowing the generation of binary predictions from the continuous scores. Change together: [modules: base_detector.py depends_on] No change needed (pure method).; [modules: subspace_detector.py depends_on] No change needed (pure method).; [experiment.py depends_on] No change needed, but `run_experiment` must call the new predict method with a fixed threshold constant during the loop..\", \"PLAN_CRITIC [modules: figures.py depends_on]: The figures module reads `results.csv` (which contains aggregated metrics) but also needs to visualize the distribution of scores or predictions to support Chapter 5's requirement for 'analiza rozrzutu' and score comparison. Since it has no dependency on the data generation or detector modules, it cannot access the raw anomaly scores required for these plots. Fix: Add `data_generation.py` and `subspace_detector.py` (or a new `score_storage.py` module) to the dependencies of `figures.py`, OR define the requirement in `experiment.py` to save raw score arrays alongside `results.csv`. Given the constraint against hardcoding file names in the figures module, the cleanest fix is adding a dependency on an intermediate data structure or ensuring `experiment.py` writes detailed score data to a location read by `figures.py`. However, simpler: Add `data_generation.py` to `figures.py`'s depends_on if it provides the ground truth structure needed for visualization, but typically figures need scores. The outline lacks a module providing raw scores to figures. Let's fix by adding a dependency on a hypothetical 'score_writer' or adjusting `experiment.py`. Actually, the prompt says `plots` reads `results.csv`. If we strictly follow that, it can't plot score distributions. The harness rule says 'The figures module reads results.csv... and needs no constant for the file name'. It doesn't forbid reading other files if declared in depends_on. But currently, nothing provides scores to figures. I will flag this as a blocking issue because you cannot visualize the 'anomaly scores' mentioned in the thesis statement without them. Fix: Add `score_exporter.py` or extend `experiment.py` to export scores, and add it to `figures.py` depends_on. To keep module count low, let's require `experiment.py` to write a `scores.csv`. But `figures.py` needs to know where it is. The harness rule says 'never ask for... hardcoding results.csv'. It implies `plots` knows the file name. I will assume `plots` can read other standard outputs. Let's change `figures.py` depends_on to include `experiment.py`? No, that creates a cycle if experiment calls plots or plots needs experiment logic. Better: The figures module is isolated. It reads `results.csv`. If `results.csv` doesn't have scores, you can't plot them. So the outline fails the 'analiza rozrzutu' requirement for the proposed method specifically regarding score distribution visualization vs simple metric bar charts. Fix: Add `experiment.py` to `figures.py` depends_on? No. Add a new module `score_writer.py`. Let's add `data_generation.py` if scores are tied to GT? No. The most direct fix is that `figures.py` must depend on something providing the raw data for visualization, or `results.csv` must contain it. Since `results.csv` is standardized as `method,metric,value`, it can't hold arrays. Therefore, a new module `score_exporter.py` is needed, or `experiment.py`'s output format is insufficient. I will flag this as blocking against `figures.py` because it cannot fulfill the visual analysis requirement for score distributions without access to raw scores, which are not in `results.csv`. Change together: [modules: figures.py depends_on] Add 'score_exporter.py' (new module) or 'experiment.py' if logic allows, but per architecture, add a new module 'score_writer.py' that exports scores and update `figures.py` to depend on it.; [modules: score_writer.py (new)] Add new module with purpose 'Exports raw anomaly scores and ground truth for visualization', depends_on ['data_generation.py', 'base_detector.py', 'subspace_detector.py'], provides 'export_scores()'; [experiment.py depends_on] Add 'score_writer.py' to dependencies and call `export_scores()`..\"]}, \"failed_agent\": \"plan_outline\", \"agent_failure_count\": 6, \"cycle_index\": 13, \"source\": \"planning_critic\"}",
-      "injected_rule": "When defining module interfaces that contribute to classification metrics requiring binary labels, explicitly ensure that at least one provided method generates hard predictions (e.g., `predict`) from continuous scores, because metric computation depends on the availability of y_pred which cannot be inferred solely from score-returning methods."
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"baseline_detector.py\", \"data_generation.py\"], \"examples\": [\"PLAN_CRITIC [data_generation.py:generate_physio_data]: The thesis statement claims to test robustness against 'channel cross-talk' (przekrzyżenia kanałów). The current `generate_physio_data` generates data with a fixed channel order, providing no mechanism for the experiment to shuffle or permute channels to create this condition. Fix: Add an optional `channel_permutation: Optional[np.ndarray] = None` argument to `generate_physio_data`. If provided, apply the permutation to the generated data before returning it. Change together: [data_generation.py] Update signature and logic to support channel permutation.; [experiment.py:run_experiment] Generate random permutations for the ensemble test cases to validate the robustness claim in the thesis..\", \"PLAN_CRITIC [data_generation.py:generate_physio_data]: The signature includes an optional `channel_permutation` argument not declared in the outline. Since this parameter is not documented in the outline entry, consumers (like experiment.py) cannot rely on it being available or stable according to the contract, creating a risk of interface drift. Fix: Remove the `channel_permutation` parameter from the function signature and its docstring to strictly adhere to the defined outline contract. If channel permutation is needed, it should be handled by the consumer module passing permuted data or by the detector itself, not the generator's public API. Change together: [generate_physio_data] Remove `channel_permutation: Optional[np.ndarray]=None` from arguments and corresponding docstring details..\", \"PLAN_CRITIC [baseline_detector.py:BaselineZScore]: Outline promises methods `__init__` and `detect`, but the implementation provides `__init__`, `get_scores`, and `detect`. The method `detect` in the outline is implemented as `get_scores` returning raw Z-scores, while a new `detect` method is added that performs thresholding. This breaks the contract because consumers expecting the standard interface (e.g., consistent with `rs_ensemble_detector.py`) will call `detect` on an instance where `fit` has not been called, or rely on `get_scores` which was not promised in the outline. Fix: Remove the `get_scores` method and implement the logic directly inside `detect` (or rename `get_scores` to `fit` if storing stats is required, but given 'static' nature, just computing in `detect` is fine). Ensure the class only exposes `__init__` and `detect` as per the outline. Change together: [baseline_detector.py:BaselineZScore] Rename `get_scores` to `fit` or remove it if not needed, ensuring the public API matches `BaselineZScore.__init__` and `BaselineZScore.detect`.; [experiment.py] Update any calls to `get_scores` (if they exist) to use `detect` or adjust the interface usage if `baseline_detector` is the source of truth, but primarily `baseline_detector.py` must match its own outline..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [data_generation.py:generate_physio_data]: The thesis statement claims to test robustness against 'channel cross-talk' (przekrzyżenia kanałów). The current `generate_physio_data` generates data with a fixed channel order, providing no mechanism for the experiment to shuffle or permute channels to create this condition. Fix: Add an optional `channel_permutation: Optional[np.ndarray] = None` argument to `generate_physio_data`. If provided, apply the permutation to the generated data before returning it. Change together: [data_generation.py] Update signature and logic to support channel permutation.; [experiment.py:run_experiment] Generate random permutations for the ensemble test cases to validate the robustness claim in the thesis..\", \"PLAN_CRITIC [data_generation.py:generate_physio_data]: The signature includes an optional `channel_permutation` argument not declared in the outline. Since this parameter is not documented in the outline entry, consumers (like experiment.py) cannot rely on it being available or stable according to the contract, creating a risk of interface drift. Fix: Remove the `channel_permutation` parameter from the function signature and its docstring to strictly adhere to the defined outline contract. If channel permutation is needed, it should be handled by the consumer module passing permuted data or by the detector itself, not the generator's public API. Change together: [generate_physio_data] Remove `channel_permutation: Optional[np.ndarray]=None` from arguments and corresponding docstring details..\", \"PLAN_CRITIC [baseline_detector.py:BaselineZScore]: Outline promises methods `__init__` and `detect`, but the implementation provides `__init__`, `get_scores`, and `detect`. The method `detect` in the outline is implemented as `get_scores` returning raw Z-scores, while a new `detect` method is added that performs thresholding. This breaks the contract because consumers expecting the standard interface (e.g., consistent with `rs_ensemble_detector.py`) will call `detect` on an instance where `fit` has not been called, or rely on `get_scores` which was not promised in the outline. Fix: Remove the `get_scores` method and implement the logic directly inside `detect` (or rename `get_scores` to `fit` if storing stats is required, but given 'static' nature, just computing in `detect` is fine). Ensure the class only exposes `__init__` and `detect` as per the outline. Change together: [baseline_detector.py:BaselineZScore] Rename `get_scores` to `fit` or remove it if not needed, ensuring the public API matches `BaselineZScore.__init__` and `BaselineZScore.detect`.; [experiment.py] Update any calls to `get_scores` (if they exist) to use `detect` or adjust the interface usage if `baseline_detector` is the source of truth, but primarily `baseline_detector.py` must match its own outline..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 7, \"cycle_index\": 7, \"source\": \"planning_critic\"}",
+      "injected_rule": "When defining a module's public API in an outline, ensure every proposed function or method argument is explicitly documented as an optional parameter; if the outline does not document it, assume it does not exist and design consumers to handle internal variations or pass data externally, because undocumented parameters create interface drift risks for dependent modules."
     },
     {
       "agent": "plan_module",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"base_detector.py\", \"subspace_detector.py\"], \"examples\": [\"PLAN_CRITIC [base_detector.py:ZScoreDetector.fit]: The interface specifies `fit(self, data: np.ndarray) -> None`, but the experiment logic (`experiment.py` planning comments) intends to fit on a 'clean subset' of the data. The current signature works for this, BUT `subspace_detector.py` was previously fixed to accept raw data in `fit`. However, looking closely at `subspace_detector.py` interface provided: `def fit(self, ref_data: Optional[np.ndarray]=None, ref_mean: Optional[np.ndarray]=None, ref_std: Optional[np.ndarray]=None) -> 'RandomSubspaceDetector':`. This is inconsistent with `base_detector.py` which takes raw data directly. While not a hard blocker if the experiment calls them correctly, the return type mismatch (`None` vs `self`) between the two detectors' fit methods creates unnecessary API fragmentation for the experiment orchestrator. Fix: Change `RandomSubspaceDetector.fit` to return `None` (or standard Pythonic `-> None`) to match `ZScoreDetector.fit`, simplifying the experiment logic which does not rely on method chaining. Change together: [experiment.py] Remove any implicit expectation of chaining return values from `subspace_detector.fit`..\", \"PLAN_CRITIC [base_detector.py:ZScoreDetector.fit]: The outline defines `ZScoreDetector.fit(data)` but the source code omits the `data` argument in the signature. This breaks consumer code (e.g., in `experiment.py`) that is expected to pass a dataset to this method. Fix: Add the `data: np.ndarray` parameter back to the `fit` method signature: `def fit(self, data: np.ndarray) -> None:` Change together: [base_detector.py:ZScoreDetector.fit] Change signature from `def fit(self) -> None` to `def fit(self, data: np.ndarray) -> None`.\", \"PLAN_CRITIC [base_detector.py:ZScoreDetector.predict]: The outline defines `ZScoreDetector.predict(threshold: float)` with `threshold` as a required positional argument. The source code implements it as `def predict(self, threshold: float=3.0)`, making it optional. This mismatch in calling convention can lead to `TypeError` or incorrect behavior if consumers strictly follow the outline's implicit positional requirement or if the default value conflicts with intended dynamic thresholding passed by consumers. Fix: Remove the default value for `threshold` to strictly adhere to the signature `def predict(self, threshold: float) -> tuple[np.ndarray, np.ndarray]:`. Change together: [base_detector.py:ZScoreDetector.predict] Change signature from `def predict(self, threshold: float=3.0) -> ...` to `def predict(self, threshold: float) -> ...`.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [base_detector.py:ZScoreDetector.fit]: The interface specifies `fit(self, data: np.ndarray) -> None`, but the experiment logic (`experiment.py` planning comments) intends to fit on a 'clean subset' of the data. The current signature works for this, BUT `subspace_detector.py` was previously fixed to accept raw data in `fit`. However, looking closely at `subspace_detector.py` interface provided: `def fit(self, ref_data: Optional[np.ndarray]=None, ref_mean: Optional[np.ndarray]=None, ref_std: Optional[np.ndarray]=None) -> 'RandomSubspaceDetector':`. This is inconsistent with `base_detector.py` which takes raw data directly. While not a hard blocker if the experiment calls them correctly, the return type mismatch (`None` vs `self`) between the two detectors' fit methods creates unnecessary API fragmentation for the experiment orchestrator. Fix: Change `RandomSubspaceDetector.fit` to return `None` (or standard Pythonic `-> None`) to match `ZScoreDetector.fit`, simplifying the experiment logic which does not rely on method chaining. Change together: [experiment.py] Remove any implicit expectation of chaining return values from `subspace_detector.fit`..\", \"PLAN_CRITIC [base_detector.py:ZScoreDetector.fit]: The outline defines `ZScoreDetector.fit(data)` but the source code omits the `data` argument in the signature. This breaks consumer code (e.g., in `experiment.py`) that is expected to pass a dataset to this method. Fix: Add the `data: np.ndarray` parameter back to the `fit` method signature: `def fit(self, data: np.ndarray) -> None:` Change together: [base_detector.py:ZScoreDetector.fit] Change signature from `def fit(self) -> None` to `def fit(self, data: np.ndarray) -> None`.\", \"PLAN_CRITIC [base_detector.py:ZScoreDetector.predict]: The outline defines `ZScoreDetector.predict(threshold: float)` with `threshold` as a required positional argument. The source code implements it as `def predict(self, threshold: float=3.0)`, making it optional. This mismatch in calling convention can lead to `TypeError` or incorrect behavior if consumers strictly follow the outline's implicit positional requirement or if the default value conflicts with intended dynamic thresholding passed by consumers. Fix: Remove the default value for `threshold` to strictly adhere to the signature `def predict(self, threshold: float) -> tuple[np.ndarray, np.ndarray]:`. Change together: [base_detector.py:ZScoreDetector.predict] Change signature from `def predict(self, threshold: float=3.0) -> ...` to `def predict(self, threshold: float) -> ...`.\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 9, \"cycle_index\": 15, \"source\": \"planning_critic\"}",
-      "injected_rule": "When defining method signatures in a planning outline, strictly adhere to the specified argument list and optionality (required vs. optional) without introducing or removing default values unless explicitly instructed, because the signature contract dictates consumer calling conventions and return consistency across implementations."
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"data_generation.py\", \"rs_ensemble_detector.py\"], \"examples\": [\"PLAN_CRITIC [rs_ensemble_detector.py:RandomSubspaceEnsemble.detect]: The outline entry explicitly declares the method `detect` with the signature `detect(data: np.ndarray) -> np.ndarray`. The provided source code implements both `get_anomaly_scores` (which matches the outline's implied need for continuous scores via docstring description of AUC) and overrides `detect` to return binary predictions, but critically, the outline *promises* `detect` as the primary API. More importantly, there is a semantic contradiction: the module docstring claims to expose raw scores for AUC and binary for F1, yet the outline only promises `detect`. If `experiment.py` imports `get_anomaly_scores` (as suggested by the source code having it) but the outline didn't promise it, it's a contract mismatch. However, the more severe blocker is that `fit` returns `None` and `detect` returns `np.ndarray`, which matches, BUT the outline entry for `RandomSubspaceEnsemble.detect` is listed in `provides`. The source code *also* has `get_anomaly_scores`. Is `get_anomaly_scores` promised? No. Is `detect` implemented exactly as promised? Yes. Wait, looking closer at `experiment.py`'s purpose: it uses both methods. Does `experiment.py` need `get_anomaly_scores`? The outline for `evaluation_metrics.py` lists `compute_auc(y_true, scores)` which requires continuous scores. If `experiment.py` calls `detect()` to get scores for AUC, it fails because `detect()` returns binary masks. The source code provides `get_anomaly_scores` to solve this, but the *outline* for `rs_ensemble_detector.py` does NOT list `get_anomaly_scores` in its `provides`. Therefore, the consumer (`experiment.py`) cannot legally rely on `get_anomaly_scores` based on the outline contract. The coder implemented it, but the interface definition (outline) is incomplete/incorrect relative to what is needed for AUC if the module relies on this class. Fix: Add `RandomSubspaceEnsemble.get_anomaly_scores(data: np.ndarray) -> np.ndarray` to the `provides` list in the outline entry for `rs_ensemble_detector.py` so that consumers like `experiment.py` can legitimately import and use it for AUC calculation. Change together: [rs_ensemble_detector.py:RandomSubspaceEnsemble.get_anomaly_scores] Add to provides: 'RandomSubspaceEnsemble.get_anomaly_scores(data: np.ndarray) -> np.ndarray'.\", \"PLAN_CRITIC [data_generation.py:generate_physio_data]: The interface signature `generate_physio_data(n_channels, length, anomaly_rate)` lacks the parameter to control random seed. Without a seed parameter, every call in the experiment loop generates different data, making the repeated runs of the two detectors incomparable (non-coupled noise) and violating the requirement for a reproducible experiment with aggregated results. Fix: Add a `seed: Optional[int] = None` argument to `generate_physio_data` and pass it to numpy's random generator to ensure deterministic output when specified. Change together: [experiment.py:run_experiment] Update the calls to `generate_physio_data` within the loop to pass a deterministic seed derived from the run index (e.g., `seed=N_RUNS * i`) so that both detectors see identical noise patterns in each repetition.; [figures.py:_plot_signal_example] Update calls to generate synthetic data for visualization to include a fixed seed (e.g., 42) to ensure the example signal is reproducible across runs..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [rs_ensemble_detector.py:RandomSubspaceEnsemble.detect]: The outline entry explicitly declares the method `detect` with the signature `detect(data: np.ndarray) -> np.ndarray`. The provided source code implements both `get_anomaly_scores` (which matches the outline's implied need for continuous scores via docstring description of AUC) and overrides `detect` to return binary predictions, but critically, the outline *promises* `detect` as the primary API. More importantly, there is a semantic contradiction: the module docstring claims to expose raw scores for AUC and binary for F1, yet the outline only promises `detect`. If `experiment.py` imports `get_anomaly_scores` (as suggested by the source code having it) but the outline didn't promise it, it's a contract mismatch. However, the more severe blocker is that `fit` returns `None` and `detect` returns `np.ndarray`, which matches, BUT the outline entry for `RandomSubspaceEnsemble.detect` is listed in `provides`. The source code *also* has `get_anomaly_scores`. Is `get_anomaly_scores` promised? No. Is `detect` implemented exactly as promised? Yes. Wait, looking closer at `experiment.py`'s purpose: it uses both methods. Does `experiment.py` need `get_anomaly_scores`? The outline for `evaluation_metrics.py` lists `compute_auc(y_true, scores)` which requires continuous scores. If `experiment.py` calls `detect()` to get scores for AUC, it fails because `detect()` returns binary masks. The source code provides `get_anomaly_scores` to solve this, but the *outline* for `rs_ensemble_detector.py` does NOT list `get_anomaly_scores` in its `provides`. Therefore, the consumer (`experiment.py`) cannot legally rely on `get_anomaly_scores` based on the outline contract. The coder implemented it, but the interface definition (outline) is incomplete/incorrect relative to what is needed for AUC if the module relies on this class. Fix: Add `RandomSubspaceEnsemble.get_anomaly_scores(data: np.ndarray) -> np.ndarray` to the `provides` list in the outline entry for `rs_ensemble_detector.py` so that consumers like `experiment.py` can legitimately import and use it for AUC calculation. Change together: [rs_ensemble_detector.py:RandomSubspaceEnsemble.get_anomaly_scores] Add to provides: 'RandomSubspaceEnsemble.get_anomaly_scores(data: np.ndarray) -> np.ndarray'.\", \"PLAN_CRITIC [data_generation.py:generate_physio_data]: The interface signature `generate_physio_data(n_channels, length, anomaly_rate)` lacks the parameter to control random seed. Without a seed parameter, every call in the experiment loop generates different data, making the repeated runs of the two detectors incomparable (non-coupled noise) and violating the requirement for a reproducible experiment with aggregated results. Fix: Add a `seed: Optional[int] = None` argument to `generate_physio_data` and pass it to numpy's random generator to ensure deterministic output when specified. Change together: [experiment.py:run_experiment] Update the calls to `generate_physio_data` within the loop to pass a deterministic seed derived from the run index (e.g., `seed=N_RUNS * i`) so that both detectors see identical noise patterns in each repetition.; [figures.py:_plot_signal_example] Update calls to generate synthetic data for visualization to include a fixed seed (e.g., 42) to ensure the example signal is reproducible across runs..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 9, \"cycle_index\": 9, \"source\": \"planning_critic\"}",
+      "injected_rule": "When defining a module's interface in an outline, proactively list all methods that are practically necessary for downstream consumers to fulfill their specific contract obligations (such as metric calculation or reproducibility), even if they are not the primary API entry point, because omitting them creates invisible coupling where implementations rely on undocumented symbols. Also ensure that signatures include parameters like `seed` when deterministic behavior is required by the broader experiment context, because reproducibility is a cross-cutting contract requirement."
     },
     {
       "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"F821\", \"occurrences\": 2, \"tasks\": [\"T12\", \"T14\"], \"examples\": [\"Ruff lint failure: score_exporter.py:22:18: F821 Undefined name `csv`\\nFound 1 error.\", \"Ruff lint failure: figures.py:35:5: F821 Undefined name `sns`\\nfigures.py:37:10: F821 Undefined name `sns`\\nfigures.py:52:5: F821 Undefined name `sns`\\nfigures.py:58:19: F821 Undefined name `sns`\\nfigures.py:68:9: F821 Undefined name `sns`\\nFound 5 errors.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"figures.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Ruff lint failure: figures.py:35:5: F821 Undefined name `sns`\\nfigures.py:37:10: F821 Undefined name `sns`\\nfigures.py:52:5: F821 Undefined name `sns`\\nfigures.py:58:19: F821 Undefined name `sns`\\nfigures.py:68:9: F821 Undefined name `sns`\\nFound 5 errors.\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 6, \"cycle_index\": 18, \"task_id\": \"T14\", \"target_node\": \"figures.py\", \"suggested_rule\": \"Task T14 on node figures.py (figures.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When a file intends to use an external library, explicitly import that library at the top of the module before any usage occurs, because undefined names trigger static analysis failures and prevent code execution."
-    },
-    {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"pytest:RuntimeError\", \"occurrences\": 2, \"tasks\": [\"R1_3\", \"T9\"], \"examples\": [\"Pytest failure: .............F..FF..                                                                                                                                                                                                                                                                                 [100%]\\n====================================================================================\", \"Pytest failure: .FFFF                                                                                                                                                                                                                                                                                                [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"base_detector.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: .F...                                                                                                                                                                                                                                                                                                [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_________________________________________________________________________________________________________________________________________ test_ZScoreDetector_fit _________________________________________________________________________________________________________________________________________\\ntests\\\\test_base_detector.py:21: in test_ZScoreDetector_fit\\n    scores = fitted_model.get_anomaly_scores()\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nbase_detector.py:55: in get_anomaly_scores\\n    raise RuntimeError('get_anomaly_scores must be called after predict()')\\nE   RuntimeError: get_anomaly_scores must be called after predict()\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_base_detector.py::test_ZScoreDetector_fit - RuntimeError: get_anomaly_scores must be called after predict()\\n1 failed, 4 passed in 0.10s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 12, \"cycle_index\": 24, \"task_id\": \"R1_3\", \"target_node\": \"tests/test_base_detector.py\", \"suggested_rule\": \"Task R1_3 on node tests/test_base_detector.py (tests/test_base_detector.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When implementing a stateful class with dependent execution steps, ensure methods that require prior setup (such as fitting or prediction) validate the object's internal state before performing derived computations, because calling an operation on an uninitialized or incomplete state leads to runtime errors."
-    },
-    {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"pytest:assert\", \"occurrences\": 2, \"tasks\": [\"R1_2\", \"R2_2\"], \"examples\": [\"Pytest failure: ................F...                                                                                                                                                                                                                                                                                 [100%]\\n====================================================================================\", \"Pytest failure: ................F...                                                                                                                                                                                                                                                                                 [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"subspace_detector.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: ................F...                                                                                                                                                                                                                                                                                 [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n____________________________________________________________________________________________________________________________ TestPredict.test_predict_shape_matches_n_samples _____________________________________________________________________________________________________________________________\\ntests\\\\test_subspace_detector.py:240: in test_predict_shape_matches_n_samples\\n    assert len(predictions) == n_samples\\nE   assert 2 == 10\\nE    +  where 2 = len((array([False, False, False, False, False, False, False, False, False,\\\\n       False]), array([1.17058527, 0.69636544, 0.89014445, 0.79031055, 0.78635695,\\\\n       0.54957141, 1.17769771, 0.97939965, 0.43929597, 0.58312177])))\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_subspace_detector.py::TestPredict::test_predict_shape_matches_n_samples - assert 2 == 10\\n1 failed, 19 passed in 0.14s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 17, \"cycle_index\": 30, \"task_id\": \"R2_2\", \"target_node\": \"subspace_detector.py\", \"suggested_rule\": \"Task R2_2 on node subspace_detector.py (subspace_detector.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When implementing a method that processes iterable inputs, explicitly extract and verify intermediate results (such as return values or tensor shapes) before asserting on them, because relying on implicit state or assuming correct unpacking without verification leads to type mismatches and incorrect lengths."
+      "context": "{\"pattern\": {\"category\": \"pytest:AssertionError\", \"occurrences\": 2, \"tasks\": [\"R1_1\", \"T6\"], \"examples\": [\"Pytest failure: FFFF                                                                                                                                                                                                                                                                                                 [100%]\\n====================================================================================\", \"Pytest failure: FF.F                                                                                                                                                                                                                                                                                                 [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"data_generation.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: ..F.                                                                                                                                                                                                                                                                                                 [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n________________________________________________________________________________________________________________________________ test_generate_physio_data_anomaly_labels _________________________________________________________________________________________________________________________________\\ntests\\\\test_data_generation.py:32: in test_generate_physio_data_anomaly_labels\\n    assert np.max(result['labels']) == 1, 'Labels must contain at least one one value when anomaly_rate > 0.'\\nE   AssertionError: Labels must contain at least one one value when anomaly_rate > 0.\\nE   assert np.int8(0) == 1\\nE    +  where np.int8(0) = <function max at 0x000001FE583754B0>(array([[0],\\\\n       [0],\\\\n       [0],\\\\n       [0],\\\\n       [0],\\\\n       [0],\\\\n       [0],\\\\n       [0],\\\\n       [0],\\\\n       [0]], dtype=int8))\\nE    +    where <function max at 0x000001FE583754B0> = np.max\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_data_generation.py::test_generate_physio_data_anomaly_labels - AssertionError: Labels must contain at least one one value when anomaly_rate > 0.\\n1 failed, 3 passed in 0.10s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 11, \"cycle_index\": 19, \"task_id\": \"R1_1\", \"target_node\": \"data_generation.py\", \"suggested_rule\": \"Task R1_1 on node data_generation.py (data_generation.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When generating synthetic data for anomaly detection or similar skewed-distribution tasks, ensure the generation logic explicitly guarantees the existence of at least one positive sample (or target class instance) rather than relying on probabilistic sampling alone, because statistical variance can cause edge cases to fail deterministic assertions."
     }
   ],
   "category_log": [
     {
       "cycle": 1,
-      "agent": "plan_outline",
+      "agent": "plan_module",
       "category": "critic",
-      "task_id": "outline:0"
+      "task_id": "baseline_detector.py"
     },
     {
       "cycle": 2,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "data_generation.py"
-    },
-    {
-      "cycle": 3,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "subspace_detector.py"
-    },
-    {
-      "cycle": 4,
       "agent": "plan_module",
       "category": "critic",
       "task_id": "experiment.py"
     },
     {
-      "cycle": 5,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "subspace_detector.py"
-    },
-    {
-      "cycle": 6,
-      "agent": "plan_outline",
-      "category": "critic",
-      "task_id": "outline:5"
-    },
-    {
-      "cycle": 7,
-      "agent": "plan_outline",
-      "category": "critic",
-      "task_id": "outline:6"
-    },
-    {
-      "cycle": 8,
-      "agent": "plan_outline",
-      "category": "critic",
-      "task_id": "outline:7"
-    },
-    {
-      "cycle": 9,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "evaluation.py"
-    },
-    {
-      "cycle": 10,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "subspace_detector.py"
-    },
-    {
-      "cycle": 11,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "base_detector.py"
-    },
-    {
-      "cycle": 12,
-      "agent": "plan_outline",
-      "category": "critic",
-      "task_id": "outline:11"
-    },
-    {
-      "cycle": 13,
-      "agent": "plan_outline",
-      "category": "critic",
-      "task_id": "outline:12"
-    },
-    {
-      "cycle": 14,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "base_detector.py"
-    },
-    {
-      "cycle": 15,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "subspace_detector.py"
-    },
-    {
-      "cycle": 1,
-      "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "T5"
-    },
-    {
-      "cycle": 2,
-      "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "T5"
-    },
-    {
       "cycle": 3,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "T5"
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "rs_ensemble_detector.py"
     },
     {
       "cycle": 4,
-      "agent": "seed_tester",
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "baseline_detector.py"
+    },
+    {
+      "cycle": 5,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "data_generation.py"
+    },
+    {
+      "cycle": 6,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "data_generation.py"
+    },
+    {
+      "cycle": 7,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "baseline_detector.py"
+    },
+    {
+      "cycle": 8,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "rs_ensemble_detector.py"
+    },
+    {
+      "cycle": 9,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "data_generation.py"
+    },
+    {
+      "cycle": 10,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "data_generation.py"
+    },
+    {
+      "cycle": 1,
+      "agent": "seed_coder",
       "category": "pytest:AssertionError",
-      "task_id": "T7"
+      "task_id": "T6"
+    },
+    {
+      "cycle": 2,
+      "agent": "seed_coder",
+      "category": "pytest:AssertionError",
+      "task_id": "T6"
+    },
+    {
+      "cycle": 3,
+      "agent": "seed_coder",
+      "category": "pytest:ValueError",
+      "task_id": "T6"
+    },
+    {
+      "cycle": 4,
+      "agent": "seed_coder",
+      "category": "pytest:ValueError",
+      "task_id": "T6"
     },
     {
       "cycle": 5,
       "agent": "seed_tester",
-      "category": "pytest:AttributeError",
-      "task_id": "T7"
+      "category": "harness",
+      "task_id": "T8"
     },
     {
       "cycle": 6,
       "agent": "seed_tester",
-      "category": "pytest:AttributeError",
-      "task_id": "T7"
+      "category": "F821",
+      "task_id": "T8"
     },
     {
       "cycle": 7,
-      "agent": "seed_tester",
-      "category": "harness",
+      "agent": "seed_coder",
+      "category": "F821",
       "task_id": "T9"
     },
     {
       "cycle": 8,
-      "agent": "seed_tester",
-      "category": "harness",
+      "agent": "seed_coder",
+      "category": "F821",
       "task_id": "T9"
     },
     {
       "cycle": 9,
-      "agent": "seed_coder",
-      "category": "pytest:RuntimeError",
-      "task_id": "T9"
+      "agent": "seed_tester",
+      "category": "harness",
+      "task_id": "T10"
     },
     {
       "cycle": 10,
       "agent": "seed_tester",
-      "category": "pytest:KeyError",
-      "task_id": "T11"
+      "category": "harness",
+      "task_id": "T10"
     },
     {
       "cycle": 11,
       "agent": "seed_tester",
-      "category": "pytest:KeyError",
-      "task_id": "T11"
+      "category": "pytest:assert",
+      "task_id": "T10"
     },
     {
       "cycle": 12,
-      "agent": "seed_tester",
-      "category": "pytest:TypeError",
-      "task_id": "T11"
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "T13"
     },
     {
       "cycle": 13,
       "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T12"
+      "category": "generic",
+      "task_id": "T13"
     },
     {
       "cycle": 14,
-      "agent": "seed_coder",
-      "category": "pytest:FileNotFoundError",
-      "task_id": "T13"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T15"
     },
     {
       "cycle": 15,
-      "agent": "seed_tester",
-      "category": "pytest:assert",
-      "task_id": "T13"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T15"
     },
     {
       "cycle": 16,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T14"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T15"
     },
     {
       "cycle": 17,
       "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T14"
+      "category": "pytest:AssertionError",
+      "task_id": "R1_1"
     },
     {
       "cycle": 18,
       "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T14"
+      "category": "pytest:AssertionError",
+      "task_id": "R1_1"
     },
     {
       "cycle": 19,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "R1_2"
+      "category": "pytest:AssertionError",
+      "task_id": "R1_1"
     },
     {
       "cycle": 20,
       "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "R1_2"
+      "category": "pytest:AssertionError",
+      "task_id": "R2_1"
     },
     {
       "cycle": 21,
       "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "R1_2"
+      "category": "pytest:AssertionError",
+      "task_id": "R2_1"
     },
     {
       "cycle": 22,
       "agent": "seed_coder",
-      "category": "pytest:AttributeError",
-      "task_id": "R1_3"
+      "category": "F821",
+      "task_id": "T14"
     },
     {
       "cycle": 23,
       "agent": "seed_coder",
-      "category": "pytest:RuntimeError",
-      "task_id": "R1_3"
+      "category": "generic",
+      "task_id": "T14"
     },
     {
       "cycle": 24,
       "agent": "seed_coder",
-      "category": "pytest:RuntimeError",
-      "task_id": "R1_3"
+      "category": "generic",
+      "task_id": "T14"
     },
     {
       "cycle": 25,
       "agent": "seed_coder",
-      "category": "pytest:ValueError",
-      "task_id": "R1_4"
+      "category": "generic",
+      "task_id": "R4_1"
     },
     {
       "cycle": 26,
-      "agent": "seed_tester",
-      "category": "pytest:TypeError",
-      "task_id": "R1_4"
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "R4_1"
     },
     {
       "cycle": 27,
       "agent": "seed_coder",
-      "category": "pytest:RuntimeError",
-      "task_id": "R2_1"
+      "category": "run:IndexError",
+      "task_id": "R5_1"
     },
     {
       "cycle": 28,
       "agent": "seed_coder",
-      "category": "pytest:RuntimeError",
-      "task_id": "R2_1"
+      "category": "run:TypeError",
+      "task_id": "R5_1"
     },
     {
       "cycle": 29,
-      "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "R2_2"
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "R1_4"
     },
     {
       "cycle": 30,
-      "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "R2_2"
-    },
-    {
-      "cycle": 31,
-      "agent": "seed_coder",
-      "category": "pytest:assert",
-      "task_id": "R3_2"
-    },
-    {
-      "cycle": 32,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T15"
-    },
-    {
-      "cycle": 33,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T15"
-    },
-    {
-      "cycle": 34,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T15"
-    },
-    {
-      "cycle": 35,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "R4_1"
-    },
-    {
-      "cycle": 36,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "R4_1"
-    },
-    {
-      "cycle": 37,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "R4_1"
-    },
-    {
-      "cycle": 38,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "R5_1"
-    },
-    {
-      "cycle": 39,
-      "agent": "seed_coder",
-      "category": "run:ValueError",
-      "task_id": "R5_1"
-    },
-    {
-      "cycle": 40,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "R5_1"
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "R1_4"
     }
   ],
   "rules": [
     {
       "agent": "plan_module",
-      "rule": "When designing a module interface, ensure function signatures match the contract exactly by avoiding undeclared default arguments and including all required logic (such as result formatting or post-processing) within the defined methods rather than leaving them to consumers, because the plan must be executable without hidden dependencies or signature mismatches.",
+      "rule": "When defining module interfaces or logic, verify that all referenced constants and data flow requirements are fully accounted for in the plan before committing to an implementation, because missing dependencies prevent deterministic execution.",
       "category": "critic",
-      "cycle": 3
+      "cycle": 2
     },
     {
       "agent": "plan_module",
-      "rule": "When designing a module's interface, always verify that method signatures (especially initialization or fitting methods) explicitly support all required input forms mentioned in the consumer task description, because if the interface does not accept the necessary data type, the caller cannot use it as intended.",
+      "rule": "When designing an interface for an agent that produces scores used by downstream components requiring different metrics (such as AUC for continuous values versus F1 for binary masks), ensure the plan exposes both the raw score output and the final thresholded decision to prevent data type loss or semantic mismatch during evaluation.",
       "category": "critic",
-      "cycle": 5
-    },
-    {
-      "agent": "plan_outline",
-      "rule": "When defining metrics in a blueprint, ensure every metric's computational scope matches the available aggregation capabilities of the execution modules (e.g., do not list aggregated statistics like STD_F1 unless an aggregator function is explicitly promised); and verify that all quantitative claims in the thesis statement are mapped to specific metrics defined in the blueprint, because omission breaks the verification chain.",
-      "category": "critic",
-      "cycle": 6
-    },
-    {
-      "agent": "plan_outline",
-      "rule": "When designing module interfaces that involve metrics requiring continuous inputs (such as AUC), ensure all upstream modules expose a contract method returning the necessary raw scores, rather than only final binary predictions, because the evaluation logic must be able to access the underlying data distribution.",
-      "category": "critic",
-      "cycle": 8
+      "cycle": 4
     },
     {
       "agent": "plan_module",
-      "rule": "When defining a function interface that exposes data structures (like dictionaries or return values) to consumers, explicitly document all key names and value types in the `provides` list or signature description, ensuring they match both the implementation logic and consumer usage requirements, because incomplete interface definitions lead to contract mismatches and downstream failures.",
+      "rule": "When defining a module's public API in an outline, ensure every proposed function or method argument is explicitly documented as an optional parameter; if the outline does not document it, assume it does not exist and design consumers to handle internal variations or pass data externally, because undocumented parameters create interface drift risks for dependent modules.",
       "category": "critic",
-      "cycle": 10
-    },
-    {
-      "agent": "plan_outline",
-      "rule": "When defining module interfaces that contribute to classification metrics requiring binary labels, explicitly ensure that at least one provided method generates hard predictions (e.g., `predict`) from continuous scores, because metric computation depends on the availability of y_pred which cannot be inferred solely from score-returning methods.",
-      "category": "critic",
-      "cycle": 13
+      "cycle": 7
     },
     {
       "agent": "plan_module",
-      "rule": "When defining method signatures in a planning outline, strictly adhere to the specified argument list and optionality (required vs. optional) without introducing or removing default values unless explicitly instructed, because the signature contract dictates consumer calling conventions and return consistency across implementations.",
+      "rule": "When defining a module's interface in an outline, proactively list all methods that are practically necessary for downstream consumers to fulfill their specific contract obligations (such as metric calculation or reproducibility), even if they are not the primary API entry point, because omitting them creates invisible coupling where implementations rely on undocumented symbols. Also ensure that signatures include parameters like `seed` when deterministic behavior is required by the broader experiment context, because reproducibility is a cross-cutting contract requirement.",
       "category": "critic",
-      "cycle": 15
+      "cycle": 9
     },
     {
       "agent": "seed_coder",
-      "rule": "When a file intends to use an external library, explicitly import that library at the top of the module before any usage occurs, because undefined names trigger static analysis failures and prevent code execution.",
-      "category": "F821",
-      "cycle": 18
-    },
-    {
-      "agent": "seed_coder",
-      "rule": "When implementing a stateful class with dependent execution steps, ensure methods that require prior setup (such as fitting or prediction) validate the object's internal state before performing derived computations, because calling an operation on an uninitialized or incomplete state leads to runtime errors.",
-      "category": "pytest:RuntimeError",
-      "cycle": 24
-    },
-    {
-      "agent": "seed_coder",
-      "rule": "When implementing a method that processes iterable inputs, explicitly extract and verify intermediate results (such as return values or tensor shapes) before asserting on them, because relying on implicit state or assuming correct unpacking without verification leads to type mismatches and incorrect lengths.",
-      "category": "pytest:assert",
-      "cycle": 30
+      "rule": "When generating synthetic data for anomaly detection or similar skewed-distribution tasks, ensure the generation logic explicitly guarantees the existence of at least one positive sample (or target class instance) rather than relying on probabilistic sampling alone, because statistical variance can cause edge cases to fail deterministic assertions.",
+      "category": "pytest:AssertionError",
+      "cycle": 19
     }
   ],
   "compactions": [
@@ -451,48 +306,31 @@
       "cycle": 1,
       "rules_consolidated_count": 4,
       "consolidated_rules": [
-        "When designing a module interface, ensure function signatures match the contract exactly by avoiding undeclared default arguments and including all required logic (such as result formatting or post-processing) within the defined methods rather than leaving them to consumers, because the plan must be executable without hidden dependencies or signature mismatches.",
-        "When designing a module's interface, always verify that method signatures (especially initialization or fitting methods) explicitly support all required input forms mentioned in the consumer task description, because if the interface does not accept the necessary data type, the caller cannot use it as intended.",
-        "When defining a function interface that exposes data structures (like dictionaries or return values) to consumers, explicitly document all key names and value types in the `provides` list or signature description, ensuring they match both the implementation logic and consumer usage requirements, because incomplete interface definitions lead to contract mismatches and downstream failures.",
-        "When defining method signatures in a planning outline, strictly adhere to the specified argument list and optionality (required vs. optional) without introducing or removing default values unless explicitly instructed, because the signature contract dictates consumer calling conventions and return consistency across implementations."
+        "When defining module interfaces or logic, verify that all referenced constants and data flow requirements are fully accounted for in the plan before committing to an implementation, because missing dependencies prevent deterministic execution.",
+        "When designing an interface for an agent that produces scores used by downstream components requiring different metrics (such as AUC for continuous values versus F1 for binary masks), ensure the plan exposes both the raw score output and the final thresholded decision to prevent data type loss or semantic mismatch during evaluation.",
+        "When defining a module's public API in an outline, ensure every proposed function or method argument is explicitly documented as an optional parameter; if the outline does not document it, assume it does not exist and design consumers to handle internal variations or pass data externally, because undocumented parameters create interface drift risks for dependent modules.",
+        "When defining a module's interface in an outline, proactively list all methods that are practically necessary for downstream consumers to fulfill their specific contract obligations (such as metric calculation or reproducibility), even if they are not the primary API entry point, because omitting them creates invisible coupling where implementations rely on undocumented symbols. Also ensure that signatures include parameters like `seed` when deterministic behavior is required by the broader experiment context, because reproducibility is a cross-cutting contract requirement."
       ],
       "dropped_ineffective": [
         {
-          "rule": "When defining a function interface that exposes data structures (like dictionaries or return values) to consumers, explicitly document all key names and value types in the `provides` list or signature description, ensuring they match both the implementation logic and consumer usage requirements, because incomplete interface definitions lead to contract mismatches and downstream failures.",
+          "rule": "When defining module interfaces or logic, verify that all referenced constants and data flow requirements are fully accounted for in the plan before committing to an implementation, because missing dependencies prevent deterministic execution.",
           "category": "critic",
-          "before": 6,
-          "after": 3,
+          "before": 2,
+          "after": 7,
+          "cycles_after": 7
+        },
+        {
+          "rule": "When designing an interface for an agent that produces scores used by downstream components requiring different metrics (such as AUC for continuous values versus F1 for binary masks), ensure the plan exposes both the raw score output and the final thresholded decision to prevent data type loss or semantic mismatch during evaluation.",
+          "category": "critic",
+          "before": 4,
+          "after": 5,
           "cycles_after": 5
         }
       ],
       "invariants": [
-        "When designing signatures, declare exactly what is needed for correctness and type safety without introducing implicit defaults or hidden post-processing, because the stubbed contract must be executable by consumers who rely on explicit arguments.",
-        "When validating interfaces against task requirements, ensure every method explicitly supports all input forms required by the consumer, because a mismatch between declared parameters and actual needs breaks the dependency chain."
-      ]
-    },
-    {
-      "agent": "seed_coder",
-      "cycle": 2,
-      "rules_consolidated_count": 4,
-      "consolidated_rules": [
-        "Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.",
-        "When a file intends to use an external library, explicitly import that library at the top of the module before any usage occurs, because undefined names trigger static analysis failures and prevent code execution.",
-        "When implementing a stateful class with dependent execution steps, ensure methods that require prior setup (such as fitting or prediction) validate the object's internal state before performing derived computations, because calling an operation on an uninitialized or incomplete state leads to runtime errors.",
-        "When implementing a method that processes iterable inputs, explicitly extract and verify intermediate results (such as return values or tensor shapes) before asserting on them, because relying on implicit state or assuming correct unpacking without verification leads to type mismatches and incorrect lengths."
-      ],
-      "dropped_ineffective": [
-        {
-          "rule": "When implementing a stateful class with dependent execution steps, ensure methods that require prior setup (such as fitting or prediction) validate the object's internal state before performing derived computations, because calling an operation on an uninitialized or incomplete state leads to runtime errors.",
-          "category": "pytest:RuntimeError",
-          "before": 3,
-          "after": 2,
-          "cycles_after": 6
-        }
-      ],
-      "invariants": [
-        "When modifying or implementing a module, strictly preserve the planned AST signatures (parameter names, order, and types) and public return types, because the harness enforces interface stability and downstream modules depend on these exact contracts.",
-        "When a symbol originates from an external library, explicitly import it in the current file before any usage, because undefined names cause immediate static analysis failures and prevent execution.",
-        "When processing iterable or tensor inputs, explicitly extract and verify intermediate shapes and return values before asserting results, because relying on implicit state or assuming correct unpacking without verification leads to subtle type mismatches and logic errors."
+        "When defining a module's public API, list every method and parameter practically necessary for downstream consumers to fulfill their contracts, including explicit seed parameters for deterministic behavior, because reproducibility is a cross-cutting contract requirement.",
+        "When documenting the interface, explicitly annotate all parameters as required or optional rather than relying on implicit defaults, because undocumented or implied parameters create interface drift risks for dependent modules.",
+        "When signatures and docstrings interact, ensure they agree on argument types, return shapes, and conventions such that callers never have to guess, because the plan serves as the single source of truth for implementation and testing."
       ]
     }
   ]

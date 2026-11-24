@@ -31,6 +31,13 @@ def repair_task_exception(task_id: Any, node_id: str, node_file: str, exc: Any) 
     return f"Repair task {task_id} on node {node_id} ({node_file}) raised an exception: {exc}"
 
 
+def producer_change_reverted(file: str, error: str) -> str:
+    return (
+        f"Repair of a document changed {file}, after which the experiment no longer runs ({error[:200]}); the change "
+        "and the results were restored. A document is repaired in the document."
+    )
+
+
 def unparsable_code(errors: list[str]) -> str:
     return (
         "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer "

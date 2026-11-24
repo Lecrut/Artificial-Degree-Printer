@@ -15,12 +15,13 @@ from adk.tools.building import (
 from adk.orchestration.common import (
     GAPS_SECTION_TITLE,
     _clip_log,
+    _is_document,
     _plain_text,
     THESIS_FILE,
     _RunState,
     _agent_for_path,
 )
-from adk.orchestration.failure_kinds import _issue_signature
+from adk.orchestration.failure_kinds import _collect_report_issues, _issue_signature
 
 
 _POINTER_FINDING = re.compile(
@@ -35,6 +36,20 @@ def _is_pointer_finding(text: str) -> bool:
 
 class RecoveryMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
+
+    def _pointer_fix_is_writers(self, report: dict[str, Any], target_file: str) -> bool:
+        """A repair of a thesis whose findings are all pointer findings, aimed at a code file while the results exist:
+        the pointer is the writer's (it picks a target from 'may_cite'), the producer is fine. 2026-11-24 (01): the
+        planner sent `Column 'q_learning+win_rate' not found` to experiment.py, the coder broke it and the results
+        were lost. Without results the producer is the right place, so that case stays with the planner."""
+        issues = _collect_report_issues(report)
+        return bool(
+            issues
+            and _is_document(str(report.get("failed_file") or ""))
+            and not _is_document(target_file)
+            and (self.workspace_dir / "results.csv").is_file()
+            and all(_is_pointer_finding(str(i)) for i in issues)
+        )
 
     def _tasks_from_audit(self, audit: dict[str, Any], generation: int) -> list[dict[str, Any]]:
         """Turn the factual audit into the only tasks still worth doing."""
@@ -244,7 +259,7 @@ class RecoveryMixin:
         )
         repeated = signature in seen_signatures
         seen_signatures.append(signature)
-        if (repeated and generation >= 2) or generation >= 4:
+        if (repeated and generation >= 3) or generation >= 4:
             if repeated:
                 reason = "AUDYT PLIKOW SIE NIE ZMIENIL PO WIELOKROTNYCH PROBACH."
             else:

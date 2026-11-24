@@ -1,57 +1,149 @@
 [
   {
-    "task_id": "Q2_CH1",
-    "description": "Write Chapter 1 in thesis.md. Replace the section, do not append a second copy.",
+    "task_id": "T1",
+    "description": "Literature review of the foundations of the topic and its bibliography (background stage)",
+    "target_node": "thesis.md",
+    "assigned_agent": "background_researcher",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T2",
+    "description": "Implement environment.py: Implements the Tic-Tac-Toe game logic and environment interface compatible with standard reinforcement learning patterns.. Implement every name its interface declares: TicTacToeEnv, TicTacToeEnv.__init__, TicTacToeEnv.reset, TicTacToeEnv.step.",
+    "target_node": "environment.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 1
+  },
+  {
+    "task_id": "T3",
+    "description": "Unit tests of TicTacToeEnv from environment.py in tests/test_environment.py, through the declared interface only.",
+    "target_node": "tests/test_environment.py",
+    "assigned_agent": "seed_tester",
+    "status": "FAILED",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "T4",
+    "description": "Implement agents.py: Defines the Q-Learning agent with tabular update rules and the Random baseline opponent.. Implement every name its interface declares: QLearningAgent, QLearningAgent.__init__, QLearningAgent.get_action, QLearningAgent.learn, RandomAgent, RandomAgent.get_action.",
+    "target_node": "agents.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T5",
+    "description": "Unit tests of QLearningAgent, RandomAgent from agents.py in tests/test_agents.py, through the declared interface only.",
+    "target_node": "tests/test_agents.py",
+    "assigned_agent": "seed_tester",
+    "status": "FAILED",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "T6",
+    "description": "Implement figures.py: Reads results.csv and training_log.csv to generate learning curves and performance comparison plots.. Implement every name its interface declares: generate_plots.",
+    "target_node": "figures.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T7",
+    "description": "Implement experiment.py: Runs the training loop with epoch-level logging and final evaluation against random opponents, writing results to results.csv and training dynamics to training_log.csv.. Implement every name its interface declares: run_experiment.",
+    "target_node": "experiment.py",
+    "assigned_agent": "seed_coder",
+    "status": "FAILED",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "T8",
+    "description": "Chapter 1 (Wprowadzenie do uczenia ze wzmocnieniem) in thesis.md: Omówienie podstaw RL, Markov Decision Processes i roli funkcji wartości.",
     "target_node": "thesis.md#ch1",
     "assigned_agent": "seed_writer",
     "status": "DONE",
     "repair_attempts": 0
   },
   {
-    "task_id": "Q2_CH6",
-    "description": "Write Chapter 6 in thesis.md. Replace the section, do not append a second copy.",
-    "target_node": "thesis.md#ch6",
+    "task_id": "T9",
+    "description": "Chapter 2 (Metoda Q-Learningu) in thesis.md: Teoretyczne podstawy tabelarycznego Q-Learningu, dowód zbieżności w grach deterministycznych i równanie Bellmana.",
+    "target_node": "thesis.md#ch2",
     "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T10",
+    "description": "Chapter 3 (Środowisko gry w kółko i krzyżyk) in thesis.md: Opis przestrzeni stanów, akcji oraz zasad gry użytej w eksperymencie.",
+    "target_node": "thesis.md#ch3",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T11",
+    "description": "Chapter 4 (Metodologia eksperymentu) in thesis.md: Uzasadnienie doboru hiperparametrów (learning rate, discount factor, epsilon-greedy), budżetu treningu i liczby powtórzeń.",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "T12",
+    "description": "Chapter 5 (Wyniki eksperymentu) in thesis.md: Prezentacja wykresów uczenia się, statystyk końcowych oraz porównanie uzyskanej polityki z bazową strategią losową.",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "T13",
+    "description": "Chapter 6 (Wnioski) in thesis.md: Omówienie skuteczności metody w kontekście zadania i możliwości rozszerzenia na większe gry.",
+    "target_node": "thesis.md",
+    "assigned_agent": "seed_writer",
+    "status": "WAITING"
+  },
+  {
+    "task_id": "R1_1",
+    "description": "Rewrite `run_experiment` to fix the IndexError in `legal_actions` calculation. The previous attempts failed because `state[i] == 0` was applied directly to a numpy array without handling indices correctly or accessing `env.board` after reset. The logic inside `_evaluate_one_pass` also incorrectly tried to access `reward` after the episode ended (where it is undefined/stale) instead of using the winner determination logic based on player turns and terminal status. \n\nSpecifically:\n1. In `run_experiment`, use `env.board` or `obs` correctly to derive `legal_actions` as `[i for i in range(environment.ACTION_SPACE_SIZE) if obs[i] == 0]`. Note that `obs` from `reset()` is a copy, but `env.board` holds the mutable state. However, since we pass `state` (copy) into loops, we must derive legal actions from the *current* state variable being tracked in the loop.\n2. In `_evaluate_one_pass`, fix the winner determination. The `reward` variable is only valid *during* the step that causes termination. After the loop, check which player moved last (`game_length % 2 == 1 implies X moved last`). If X moved last and terminated is True:\n   - If reward (for that step) was 1, X won.\n   - If reward (for that step) was -1, O won.\n   - If draw, it's a draw.\n   If O moved last, invert the logic relative to X.\n3. Ensure `RandomAgent` instances are created and used correctly for Player O in training if not using a single instance.\n4. Remove the undefined `_get_action_from_agent` stub or implement it properly if needed, but inline is safer here given the previous history of rejection.\n\nThe last verification of this file reported (all of it must be fixed):\n- Traceback (most recent call last):\nFile \"<string>\", line 44, in <module>\nfn()\n~~^^\nFile \"experiment.py\", line 51, in run_experiment\nlegal_actions = [i for i in range(environment.ACTION_SPACE_SIZE) if state[i] == 0]\n~~~~~^^^\nIndexError: index 3 is out of bounds for axis 0 with size 3",
+    "target_node": "experiment.py",
+    "assigned_agent": "seed_coder",
     "status": "FAILED",
     "repair_attempts": 3
   },
   {
-    "task_id": "Q2_PDF",
-    "description": "Compiling thesis.pdf failed. Fix thesis.md and the code so that LaTeX builds. Log: pdf compilation failed.\nexit 1\nnote: using only cached resource files\nnote: running tex ...\nfontconfig error: cannot load default config file: no such file: (null)\n\nerror: thesis.tex:39: missing { inserted\nerror: something bad happened inside xetex; its output follows:\n\n===============================================================================\n(thesis.tex\nlatex2e <2021-11-15> patch level 1\nl3 programming layer <2022-02-24> (thesisplodz.cls\ndocument class: thesisplodz 2025/03/11 v1.0 szablon pracy dyplomowej politechni\nki lodzkiej\n(kvoptions.sty (keyval.sty) (ltxcmds.sty) (kvsetkeys.sty)) (report.cls\ndocument class: report 2021/10/04 v1.4n standard latex document class\n(size11.clo)) (iftex.sty) (fontspec.sty (xparse.sty (expl3.sty\n(l3backend-xetex.def))) (fontspec-xetex.sty (fontenc.sty) (fontspec.cfg)))\n(geometry.sty (ifvtex.sty)) (graphicx.sty (graphics.sty (trig.sty)\n(graphics.cfg) (xetex.def))) (amsmath.sty\nfor additional information on amsmath, use the `?' option.\n(amstext.sty (amsgen.sty)) (amsbsy.sty) (amsopn.sty)) (amssymb.sty\n(amsfonts.sty)) (bm.sty) (booktabs.sty) (fancyhdr.sty) (listings.sty\n(lstmisc.sty) (listings.cfg)) (xcolor.sty (color.cfg)) (setspace.sty) (tikz.sty\n (pgf.sty (pgfrcs.sty (pgfutil-common.tex (pgfutil-common-lists.tex))\n(pgfutil-latex.def) (pgfrcs.code.tex (pgf.revision.tex))) (pgfcore.sty\n(pgfsys.sty (pgfsys.code.tex (pgfkeys.code.tex (pgfkeysfiltered.code.tex))\n(pgf.cfg) (pgfsys-xetex.def (pgfsys-dvipdfmx.def (pgfsys-common-pdf.def))))\n(pgfsyssoftpath.code.tex) (pgfsysprotocol.code.tex)) (pgfcore.code.tex\n(pgfmath.code.tex (pgfmathcalc.code.tex (pgfmathutil.code.tex)\n(pgfmathparser.code.tex) (pgfmathfunctions.code.tex\n(pgfmathfunctions.basic.code.tex) (pgfmathfunctions.trigonometric.code.tex)\n(pgfmathfunctions.random.code.tex) (pgfmathfunctions.comparison.code.tex)\n(pgfmathfunctions.base.code.tex) (pgfmathfunctions.round.code.tex)\n(pgfmathfunctions.misc.code.tex) (pgfmathfunctions.integerarithmetics.code.tex)\n)) (pgfmathfloat.code.tex)) (pgfint.code.tex) (pgfcorepoints.code.tex)\n(pgfcorepathconstruct.code.tex) (pgfcorepathusage.code.tex)\n(pgfcorescopes.code.tex) (pgfcoregraphicstate.code.tex)\n(pgfcoretransformations.code.tex) (pgfcorequick.code.tex)\n(pgfcoreobjects.code.tex) (pgfcorepathprocessing.code.tex)\n(pgfcorearrows.code.tex) (pgfcoreshade.code.tex) (pgfcoreimage.code.tex\n(pgfcoreexternal.code.tex)) (pgfcorelayers.code.tex)\n(pgfcoretransparency.code.tex) (pgfcorepatterns.code.tex) (pgfcorerdf.code.tex)\n)) (pgfmoduleshapes.code.tex) (pgfmoduleplot.code.tex)\n(pgfcomp-version-0-65.sty) (pgfcomp-version-1-18.sty)) (pgffor.sty (pgfkeys.sty\n (pgfkeys.code.tex)) (pgfmath.sty (pgfmath.code.tex)) (pgffor.code.tex\n(pgfmath.code.tex))) (tikz.code.tex (pgflibraryplothandlers.code.tex)\n(pgfmodulematrix.code.tex) (tikzlibrarytopaths.code.tex))) (hyperref.sty\n(pdftexcmds.sty (infwarerr.sty)) (kvdefinekeys.sty) (pdfescape.sty)\n(hycolor.sty) (letltxmacro.sty) (auxhook.sty) (pd1enc.def) (intcalc.sty)\n(etexcmds.sty) (puenc.def) (url.sty) (bitset.sty (bigintcalc.sty))\n(atbegshi-ltx.sty)) (hxetex.def (stringenc.sty) (rerunfilecheck.sty\n(atveryend-ltx.sty) (uniquecounter.sty))) (babel.sty (xebabel.def (txtbabel.def\n)) (polish.ldf)))\n\nlatex warning: unused global option(s):\n    [w2,polski].\n\nno file thesis.aux.\n(ts1cmr.fd)\n*geometry* driver: auto-detecting\n*geometry* detected driver: xetex\n(nameref.sty (refcount.sty) (gettitlestring.sty))\n\npackage hyperref warning: rerun to get /pagelabels entry.\n\n(umsa.fd) (umsb.fd) [1] [2] [1] [2] [3] [4] [5] [6]\nrozdział 1.\n! missing { inserted.\n<to be read again> \n                   \\let \nl.39 ...a2022arc}. funkcja wartości polityki $v_\\\\\n                                                  pi(s)$ wyraża oczekiwaną n...\noutput written on thesis.xdv (8 pages, 17420 bytes).\ntranscript written on thesis.log.\n===============================================================================\nerror: the xetex engine had an unrecoverable error\ncaused by: halted on potentially-recoverable error as specified",
-    "target_node": "thesis.md#ch1",
-    "assigned_agent": "seed_writer",
+    "task_id": "R1_2",
+    "description": "Rewrite `tests/test_environment.py` to fix two issues:\n1. Import `pytest` explicitly at the top (`import pytest`).\n2. Fix the assertion in `test_env_reset_shape` and `test_env_step_valid_move`. The environment returns a board of shape `(9,)` (flat 1D array). The tests currently assert shape `(3,)` or fail due to incorrect setup.\n\nSpecifically:\n- In `test_env_reset_shape`, ensure the assertion is `assert state.shape == (9,)`.\n- In `test_env_step_valid_move`, ensure the move logic aligns with `environment.PLAYER_X` starting first.\n- Fix `test_env_step_invalid_occupied_cell` to correctly catch the `ValueError` by calling `env.step` twice on the same cell within the `pytest.raises` context or properly sequencing them.\n\nThe last verification of this file reported (all of it must be fixed):\n- Pytest failure:\n__________________________________________________________________________________________________________________________________________ test_env_reset_shape ___________________________________________________________________________________________________________________________________________\ntests\\test_environment.py:21: in test_env_reset_shape\nassert state.shape == (9,)\nE assert (3,) == (9,)\nE\nE At index 0 diff: 3 != 9\nE Use -v to get more diff\n________________________________________________________________________________________________________________________________________ test_env_step_valid_move _________________________________________________________________________________________________________________________________________\ntests\\test_environment.py:30: in test_env_step_valid_move\nnext_obs, reward, terminated, truncated, info = env.step(action=0)\n^^\n- Ruff lint failure: tests\\test_environment.py:45:10: F821 Undefined name `pytest`\ntests\\test_environment.py:55:10: F821 Undefined name `pytest`\nFound 2 errors.",
+    "target_node": "tests/test_environment.py",
+    "assigned_agent": "seed_tester",
     "status": "FAILED",
     "repair_attempts": 3
+  },
+  {
+    "task_id": "R1_3",
+    "description": "Fix `test_RandomAgent_get_action_empty` in `tests/test_agents.py`. The test asserts that the ValueError message contains \"legal_actions cannot be empty\", but the `RandomAgent.get_action` implementation raises `ValueError('No legal actions available.')`. \n\nChange the assertion to:\n`assert 'No legal actions available.' in str(exc_info.value)`\n\nThis matches the actual code in `agents.py` which is verified.\n\nThe last verification of this file reported (all of it must be fixed):\n- Pytest failure:\n____________________________________________________________________________________________________________________________________ test_RandomAgent_get_action_empty ____________________________________________________________________________________________________________________________________\ntests\\test_agents.py:123: in test_RandomAgent_get_action_empty\nassert \"legal_actions cannot be empty\" in str(exc_info.value)\nE AssertionError: assert 'legal_actions cannot be empty' in 'No legal actions available.'\nE + where 'No legal actions available.' = str(ValueError('No legal actions available.'))\nE + where ValueError('No legal actions available.') = <ExceptionInfo ValueError('No legal actions available.') tblen=2>.value\nFAILED tests\\test_agents.py::test_RandomAgent_get_action_empty - AssertionError: assert 'legal_actions cannot be empty' in 'No legal actions available.'\n1",
+    "target_node": "tests/test_agents.py",
+    "assigned_agent": "seed_tester",
+    "status": "DONE",
+    "repair_attempts": 0
   },
   {
     "task_id": "R2_1",
-    "description": "Write Chapter 1 in thesis.md. Replace the section, do not append a second copy.\n\nCrucial Correction from previous failures: The LaTeX compilation failed with `! missing { inserted` at line 39 due to an unescaped or malformed math expression involving `v_\\pi(s)`. Previous attempts generated text containing raw LaTeX commands that were not properly escaped or closed. You must ensure all inline math variables are correctly wrapped in `$ ... $` and that any backslashes used for greek letters (like `\\pi`, `\\alpha`) are valid in the `thesisplodz.cls` template context. Do not include code blocks inside this chapter. Focus on Motivation, Goal, Scope, and Structure.",
-    "target_node": "thesis.md#ch1",
-    "assigned_agent": "seed_writer",
-    "status": "FAILED",
-    "repair_attempts": 3
+    "description": "Rewrite `run_experiment` to fix the root cause of failures: the `environment.py` implementation uses a board of shape `(3,)` (representing rows or columns erroneously) or resets incorrectly, causing `state[i]` to fail when `i >= 3`. The `seed_coder` must correct `environment.py` to ensure `reset()` returns a flat array of length 9 and the internal state is consistent.\n\nThen, rewrite `experiment.py` using the corrected interface:\n1. Import `environment` and use `environment.BOARD_SIZE ** 2` (which is 9) for loop ranges, not hardcoded constants if they might drift, but strictly adhere to `environment.ACTION_SPACE_SIZE`.\n2. In `run_experiment`, call `env.reset()` which returns the observation (shape (9,)). Use this observation directly to derive legal actions: `legal_actions = [a for a in range(environment.ACTION_SPACE_SIZE) if obs[a] == 0]`.\n3. Do not use `_get_action_from_agent`. Inline the agent dispatch logic inside the loop for clarity and to avoid interface mismatches with `RandomAgent.get_action(obs, legal_actions)` vs `QLearningAgent.get_action(obs)`.\n4. In the training loop, track `current_player` (1 or -1). If X, use `agent.get_action`. If O, use `agents.RandomAgent().get_action(obs, legal_actions)`.\n5. After `env.step()`, update `obs = next_obs` and check `terminated`. If terminated, determine winner based on `reward` returned by the step relative to `current_player` (the actor). If X won (`reward=1` when X played), X is winner. If O won (`reward=-1` when X played? No, reward is for actor. So if O played and got 1, O won).\n6. In `_evaluate_one_pass`, similarly iterate games, reset env, and simulate. Use `isinstance(agent_x, agents.RandomAgent)` to decide which `get_action` signature to call.\n7. Ensure all numpy imports are at the top.\n\nPrevious attempts failed because they assumed `reset()` returned shape (9,) while the actual `environment.py` code (which we must fix) was returning or manipulating a 3-element array, or accessing indices out of bounds on a 3-element array.\n\nThe last verification of this file reported (all of it must be fixed):\n- Traceback (most recent call last):\nFile \"<string>\", line 44, in <module>\nfn()\n~~^^\nFile \"experiment.py\", line 51, in run_experiment\nlegal_actions = [i for i in range(environment.ACTION_SPACE_SIZE) if state[i] == 0]\n~~~~~^^^\nIndexError: index 3 is out of bounds for axis 0 with size 3",
+    "target_node": "experiment.py",
+    "assigned_agent": "seed_coder",
+    "status": "WAITING"
   },
   {
     "task_id": "R2_2",
-    "description": "Write Chapter 6 (Zakończenie) in thesis.md. Replace the section, do not append a second copy.\n\nThis chapter must summarize the findings based on the verified metrics from `experiment.py` and `results.csv`. State whether the hypothesis (Q-Learning achieves >= 90% non-loss rate) was supported. Discuss limitations of Tabular Q-Learning in this context and suggest future work. Do not introduce new data or formulas.",
-    "target_node": "thesis.md#ch6",
-    "assigned_agent": "seed_writer",
+    "description": "Fix `TicTacToeEnv` to correctly use a 9-cell board representation (shape `(9,)`) instead of the erroneous 3-element array seen in previous iterations. \n\n1. In `__init__`, set `self.board = np.zeros(environment.BOARD_SIZE ** 2, dtype=int)`.\n2. In `reset`, reset `self.board` to zeros and return `self.board.copy()`.\n3. In `step`, ensure `action` is validated against `BOARD_SIZE ** 2` (9) and `self.board[action]` is checked. \n4. Return `info['legal_actions']` correctly calculated from the *new* board state: `[i for i in range(environment.BOARD_SIZE ** 2) if self.board[i] == 0]`.\n5. Ensure `_check_terminal` iterates over all lines using indices 0-8.\n\nThis is required because `experiment.py` and tests rely on a 9-element vector, but the previous implementation failed with IndexError: index 3 out of bounds for axis 0 with size 3.\n\nThe last verification of this file reported (all of it must be fixed):\n- NOT_IMPLEMENTED [environment.py]: still without an implementation (only a stub body): TicTacToeEnv.__init__, TicTacToeEnv.reset, TicTacToeEnv.step",
+    "target_node": "environment.py",
+    "assigned_agent": "seed_coder",
     "status": "FAILED",
     "repair_attempts": 3
   },
   {
-    "task_id": "R3_1",
-    "description": "Write Chapter 1 (Wprowadzenie) in thesis.md. Replace the section, do not append a second copy.\n\nCrucial Correction from previous failures: The LaTeX compilation failed previously with `! missing { inserted` and `xetex` errors around math expressions like `v_\\pi(s)`. This indicates that raw LaTeX commands (backslashes for Greek letters) were not properly escaped or closed, or invalid characters were present in the inline math blocks. In this task, you must ensure all inline math variables are correctly wrapped in `$ ... $`. Do not use complex LaTeX macros unless absolutely necessary; prefer standard math symbols. Crucially, do NOT include code blocks inside this chapter as per previous constraints. Focus strictly on Motivation, Goal, Scope, and Structure of the thesis.\n\nContent to cover:\n- Motivation: Reinforcement learning applications in game theory.\n- Goal: Verifying if Tabular Q-Learning can master Tic-Tac-Toe against a random opponent.\n- Scope: Definition of the problem (finite-state MDP), comparison with Random Agent baseline.\n- Structure: Brief overview of the thesis chapters.",
-    "target_node": "thesis.md#ch1",
-    "assigned_agent": "seed_writer",
-    "status": "FAILED",
-    "repair_attempts": 3
-  },
-  {
-    "task_id": "R3_2",
-    "description": "Write Chapter 6 (Zakończenie) in thesis.md. Replace the section, do not append a second copy.\n\nThis chapter must summarize the findings based on the verified metrics from `experiment.py` and `results.csv`. State whether the hypothesis (Q-Learning achieves >= 90% non-loss rate) was supported. Discuss limitations of Tabular Q-Learning in this context and suggest future work. Do not introduce new data or formulas.\n\nEnsure all inline math is properly escaped with `$ ... $` to avoid `missing {` errors.",
-    "target_node": "thesis.md#ch6",
-    "assigned_agent": "seed_writer",
+    "task_id": "R2_3",
+    "description": "Fix `test_env_reset_shape` to assert `state.shape == (9,)`. The previous failure `assert (3,) == (9,)` indicates the test was written correctly for the *specification* but failed against the *broken code*. Now that `environment.py` is fixed, this test should pass. Ensure `import pytest` is present. \n\nAlso fix `test_env_step_valid_move`: The test asserts `info['player'] == environment.PLAYER_O`. With X moving first (index 0), the next player is O. This logic is correct. \n\nEnsure all tests align with the corrected `environment.py` interface (9-element board).\n\nThe last verification of this file reported (all of it must be fixed):\n- Pytest failure:\n__________________________________________________________________________________________________________________________________________ test_env_reset_shape ___________________________________________________________________________________________________________________________________________\ntests\\test_environment.py:23: in test_env_reset_shape\nassert state.shape == (9,)\nE assert (3,) == (9,)\nE\nE At index 0 diff: 3 != 9\nE Use -v to get more diff\n________________________________________________________________________________________________________________________________________ test_env_step_valid_move _________________________________________________________________________________________________________________________________________\ntests\\test_environment.py:33: in test_env_step_valid_move\nnext_obs, reward, terminated, truncated, info = env.step(action=0)\n^^",
+    "target_node": "tests/test_environment.py",
+    "assigned_agent": "seed_tester",
     "status": "TODO"
   }
 ]

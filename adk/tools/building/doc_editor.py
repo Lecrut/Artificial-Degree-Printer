@@ -107,6 +107,12 @@ def _demote_embedded_h2(body: str) -> str:
     return re.sub(r"^##(?=\s)", "###", body, flags=re.MULTILINE)
 
 
+def _single_backslash_commands(body: str) -> str:
+    """A JSON escape that survived (two backslashes before `pi` or `mathbb`) is not LaTeX. Two backslashes followed
+    by a space or a newline (a line break) stay."""
+    return re.sub(r"\\{2,}(?=[A-Za-z])", lambda _: "\\", body)
+
+
 def _merge_or_replace_chapter_body(existing_body: str, new_body: str) -> str:
     """If new_body is a single numbered subsection (e.g. ### 2.2) and existing_body has other subsections (e.g. ### 2.1), merge cleanly."""
     new_subs = list(re.finditer(r"^###\s+([^\n]+)", new_body.strip(), flags=re.MULTILINE))
@@ -143,7 +149,7 @@ def edit_document_section(
 
     normalized_body = _strip_duplicate_leading_heading(new_content, section_title)
     if suffix == ".md":
-        normalized_body = _demote_embedded_h2(normalized_body)
+        normalized_body = _single_backslash_commands(_demote_embedded_h2(normalized_body))
     sub_info = _extract_subsection_nums(section_title) if suffix == ".md" else None
 
     if not path.exists():

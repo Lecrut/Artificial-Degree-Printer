@@ -375,6 +375,9 @@ class RepairMixin:
         context = str(failed_task.get("description", "")).strip()
         for stask in surgical:
             st_node, st_file = self._resolve_target_node(stask.get("target_node") or node_id, task=stask, fallback=node_id)
+            if self._pointer_fix_is_writers(report, st_file):
+                stask["assigned_agent"] = ""
+                st_node, st_file = self._resolve_target_node(node_id, task=stask, fallback=node_id)
             stask["target_node"] = st_node
             default_agent = _agent_for_path(st_file)
             requested = str(stask.get("assigned_agent") or "").strip()
@@ -394,9 +397,16 @@ class RepairMixin:
                 f"[{st_file}] przez agenta '{stask['assigned_agent']}' (Tier: {st_tier})...",
                 flush=True,
             )
+            guard = self._guard_results_from_prose_fix(report, st_file)
             try:
                 self._execute_builder_step(stask, model_tier=st_tier)
                 self._refresh_experiment_after_code(st_node)
+                if guard is not None and self._last_experiment_error:
+                    broken = self._last_experiment_error
+                    self._restore_files(guard)
+                    self._last_experiment_error = ""
+                    self.logger.log_event("PRODUCER_CHANGE_REVERTED", file=st_file, error=broken[:300])
+                    raise RuntimeError(texts.producer_change_reverted(st_file, broken))
                 stask["status"] = "DONE"
             except Exception as exc:
                 err_msg = texts.repair_task_exception(stask.get("task_id"), st_node, st_file, exc)

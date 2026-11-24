@@ -20,9 +20,9 @@ The harness turns your interface into a stub (each body becomes `raise NotImplem
 - **Imports**: only `dependencies` (by the names they declare), the standard library and `available_packages`. Every name the annotations use is imported (`from typing import ...` or built-in generics).
 - **Constants** hold plain values of their declared type (no `dataclasses.field` outside a dataclass). Experiment settings (sizes, repetitions, seeds, hyperparameters) are named module-level constants, chosen to finish within `experiment_time_limit_s`.
 - **If this module holds the `entrypoint` or the `plots` function**: that function takes no required arguments (the harness calls it without any).
-  - The entrypoint imports, at module top level, the modules it runs, and writes `results.csv` in the workspace root: tidy rows `method,metric,value` (optional `std_dev,n_runs`), one row per method and metric (repetitions aggregated into it), for exactly the outline's metrics.
+  - The entrypoint imports, at module top level, the modules it runs, and writes `results.csv` in the workspace root: tidy rows `method,metric,value` (optional `std_dev,n_runs`), one row per method and metric (repetitions aggregated into it), for exactly the outline's metrics. The entrypoint's docstring names every metric literally (e.g. `mean_td_error`), with the method it is measured for: the harness refuses an interface that leaves one out.
   - The figures function reads `results.csv` and writes figures into `figures/`.
-- **Docstrings describe the behaviour in words**, for every public function and method: what it returns (type, shape, range, units), the conventions callers rely on (how states, actions or labels are encoded, indexing, determinism and seeds), and the edge cases (empty input, a single element, zero variance, a full board). The coder implements from them and the tester derives its tests from them.
+- **Docstrings describe the behaviour in words**, for every public function and method: what it returns (type, shape, range, units), the conventions callers rely on (how states, actions or labels are encoded, indexing, determinism and seeds; the keys of every dict it returns, named literally with their value types, e.g. an `info` dict whose key is `<name>` — callers must not guess them), and the edge cases (empty input, a single element, zero variance, a full board). The coder implements from them and the tester derives its tests from them.
   - Write **no executable examples** (`>>>`): the plan carries no examples, and a value worked out by hand before any code exists is wrong more often than not. Say what holds ("returns a float in [0, 1]", "the same object, fitted"), not a number.
   - Two docstrings that mention the same value agree (what `reset()` returns is what `step()` receives).
 - **Bodies are `...`**: the harness keeps no code from the plan, so a written body is wasted work.
@@ -48,7 +48,8 @@ Return strictly one JSON object, no text outside it:
 ---
 
 ## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT**: When designing signatures, declare exactly what is needed for correctness and type safety without introducing implicit defaults or hidden post-processing, because the stubbed contract must be executable by consumers who rely on explicit arguments.
-- **INVARIANT**: When validating interfaces against task requirements, ensure every method explicitly supports all input forms required by the consumer, because a mismatch between declared parameters and actual needs breaks the dependency chain.
+- **INVARIANT**: When defining a module's public API, list every method and parameter practically necessary for downstream consumers to fulfill their contracts, including explicit seed parameters for deterministic behavior, because reproducibility is a cross-cutting contract requirement.
+- **INVARIANT**: When documenting the interface, explicitly annotate all parameters as required or optional rather than relying on implicit defaults, because undocumented or implied parameters create interface drift risks for dependent modules.
+- **INVARIANT**: When signatures and docstrings interact, ensure they agree on argument types, return shapes, and conventions such that callers never have to guess, because the plan serves as the single source of truth for implementation and testing.
 
 ## LEARNED RULES AND CONSTRAINTS
