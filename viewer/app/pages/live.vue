@@ -2,11 +2,17 @@
 import { mdiChartTimelineVariant, mdiConsoleLine, mdiGraphOutline, mdiPlayCircleOutline, mdiPulse, mdiRobotOutline } from '@mdi/js'
 import { labels } from '~/utils/labels'
 
-const { task, events, hypergraph, queue, connected, loaded, failed, reconnect, summary, at } = useLiveRun()
+const { task, events, hypergraph, queue, traceStamp, connected, loaded, failed, reconnect, summary, at } = useLiveRun()
 const running = computed(() => summary.value?.status === 'RUNNING')
 const tab = ref('timeline')
+const focusTask = ref<string | null>(null)
 // The launch panel opens from the header, the empty state, or `?console=1` (the old /launch address).
 const panel = ref(useRoute().query.console === '1')
+
+function showCalls(taskId: string) {
+  focusTask.value = taskId
+  tab.value = 'agents'
+}
 </script>
 
 <template>
@@ -45,11 +51,11 @@ const panel = ref(useRoute().query.console === '1')
         <v-tab value="agents" :prepend-icon="mdiRobotOutline" :text="labels.tabs.agents" />
       </v-tabs>
       <v-tabs-window v-model="tab">
-        <v-tabs-window-item value="timeline"><TimelineRunTimeline :events="events" :at="at" @show-calls="tab = 'agents'" /></v-tabs-window-item>
+        <v-tabs-window-item value="timeline"><TimelineRunTimeline :events="events" :at="at" @show-calls="showCalls" /></v-tabs-window-item>
         <v-tabs-window-item value="graph">
           <GraphHypergraphPanel v-if="hypergraph" :hypergraph="hypergraph" :events="events" :active="tab === 'graph'" :at="at" />
         </v-tabs-window-item>
-        <v-tabs-window-item value="agents"><AgentsPanel :at="at" /></v-tabs-window-item>
+        <v-tabs-window-item value="agents"><AgentsPanel :at="at" :focus-task="focusTask" :live-stamp="traceStamp" /></v-tabs-window-item>
       </v-tabs-window>
     </template>
   </div>

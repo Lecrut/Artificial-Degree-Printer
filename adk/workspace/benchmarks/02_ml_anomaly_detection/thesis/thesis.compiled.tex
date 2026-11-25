@@ -1,34 +1,30 @@
-% IEEE Scientific Conference Paper Template (IEEEtran)
-\documentclass[conference]{IEEEtran}
-\usepackage{iftex}
-\ifXeTeX
-  \usepackage{fontspec}
-\else
-  \usepackage[utf8]{inputenc}
-  \usepackage[T1]{fontenc}
-\fi
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{booktabs}
-\usepackage{graphicx}
-\usepackage{tikz}
-\usetikzlibrary{positioning}
-\usepackage[plainpages=false,pdfpagelabels,hidelinks]{hyperref}
+% Szablon Pracy Dyplomowej Politechniki Łódzkiej (Zarządzenie Nr 6/2025 Rektora PŁ)
+\documentclass[W2, polski]{ThesisPLodz}
 
-\makeatletter
-\def\ps@IEEEtitlepagestyle{%
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
-  \def\@evenfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
+\authortitle{inż.}
+\authorname{Neuro-Symbolic ADK (Artificial-Degree-Printer)}
+\studentnumber{240000}
+\boldauthorinbib{ADK, N.-S.}
+
+\thesistitle{Odporna Detekcja Anomalii w Wielokanałowej Telemetrii Fizjologicznej: Komitety Losowych Podprzestrzeni}
+\thesisshorttitle{Robust Anomaly Detection in Multi-Channel Phy}
+
+\degreename{magisterska}
+\fieldofstudy{Sztuczna Inteligencja i Uczenie Maszynowe}
+\department{Instytut Informatyki Stosowanej}
+
+\supervisor{dr hab. inż. Promotor Akademicki, prof. PŁ}
+\bibliographyfile{references}
+
+\abstract{
+
 }
-\def\ps@plain{%
-  \let\@oddhead\@empty
-  \let\@evenhead\@empty
-  \def\@oddfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
-  \def\@evenfoot{\normalfont\footnotesize\hfil\thepage\hfil}%
+\keywords{sztuczna inteligencja, uczenie maszynowe, neuro-symbolic, weryfikacja empiryczna}
+
+\abstractsecondary{
+
 }
-\makeatother
-\pagestyle{plain}
+\keywordssecondary{artificial intelligence, machine learning, neuro-symbolic systems, empirical verification}
 
 \renewcommand{\texttt}[1]{\ifmmode\mathtt{#1}\else{\normalfont\ttfamily #1}\fi}
 \DeclareFontShape{OMS}{cmsy}{m}{n}{<-> cmsy10}{}
@@ -40,87 +36,30 @@
 
 
 
-\title{Robust Anomaly Detection in Multi-Channel Physiological Telemetry via Random Subspace Ensembles}
-
-\author{\IEEEauthorblockN{Neuro-Symbolic ADK Author}
-\IEEEauthorblockA{\textit{Institute of Applied Computer Science} \\
-\textit{Lodz University of Technology} \\
-Lodz, Poland \\
-Domain: Machine Learning \& Biomedical Signal Processing}}
+\chapter{Rozdział 1}
 
 
-\thispagestyle{plain}
+% Brak danych CSV
 
-\begin{abstract}
-Proponowana metoda oparta na komitecie losowych podprzestrzeni osiąga wyższą wartość F1-score i AUC w detekcji anomalii w szumnych, wielokanałowych danych fizjologicznych niż statyczny detektor Z-score, przy zachowaniu odporności na przekrzyżenia kanałów.
-\end{abstract}
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
 
-\begin{IEEEkeywords}
-neuro-symbolic systems, empirical verification, abstract syntax tree, automated thesis synthesis, machine learning
-\end{IEEEkeywords}
+\symbolslist{
+  $\mathcal{L}$ -- funkcja straty \\
+  $\eta$ -- krok uczenia \\
+  $\theta$ -- wektor parametrów modelu
+}
 
-\section{Rozdział 1: Wprowadzenie}
-Badanie problemu detekcji anomalii w danych wielokanałowych fizjologicznych jest uzasadnione ich specyficznym charakterem, który stanowi poważne wyzwanie dla tradycyjnych metod statystycznych. Dane te charakteryzują się wysoką rzędnymi oraz silną korelacją między kanałami pomiaru, co często prowadzi do niekorzystnych efektów skompensowanych, gdy stosuje się metody jedno-wymiarowe lub pojedyncze klasyfikatory\cite{available_ast_symbols}. Niskim poziomem rozrzutu sygnału w porównaniu do gęstości lokalnego szumu\cite{} trudne jest odróżnienie naturalnej zmienności organizmu od patologicznych zaburzeń, co szczególnie dotyczy stanów przedwczesnymi czy subtelne. Tradycyjny Z-score bazuje na założeniu o normalnym rozkładzie wartości poszczególnych kanałów i pomija strukturę zależną między nimi, co ogranicza jego skuteczność w rzeczywistości klinicznej\cite{available_ast_symbols}. 
+\abbreviationslist{
+  PŁ -- Politechnika Łódzka \\
+  ADK -- Artificial-Degree-Printer Development Kit \\
+  AST -- Abstract Syntax Tree \\
+  SOTA -- State of the Art
+}
 
-Cel tezy pracy to opracowanie i ocena odporności detektora anomalii działającego na zasadzie komitetu detektorów pracujących na losowych podprzestrzeniach cech. Proponowana architektura umożliwia równoczesny test hipotezy o normalności w odrębnych projektach, co redukuje ryzyko błędnej klasyfikacji induced przez korrelacje między kanałami\cite{available_ast_symbols}. Zgodnie z definicją zadania, badanie przeprowadzane jest wyłącznie na syntetycznych danych generowanych w ramach projektu, co zapewnia kontrolę nad punktem odniesienia i możliwość precyzyjnego określzenia metryki sukcesu bez konieczności korzystania z zewnętrznych zbiorów\cite{available_ast_symbols}. Eksperyment ma sprawdzić, czy komitet oparty na estymatorach losowych (definiowane w parametrze 50 działających w podprzestrzeniach o wymiarze 2 z próbkowaniem nadmiarowym 2.0) wykazuje lepszą wydajność niż statyczny detektor oparty na wartości Z z progiem 3.0. 
-
-Rozwiązanie testuje się w konfiguracji definiowanej przez parametr powtórzeń 10, liczbę kanałów 4 oraz długość sekwencji 500, przy stopniu wystąpienia anomalii równym 0.01. Wyniki oceniane są na podstawie metryki F1-compute\_f1 oraz AUCcompute\_auc obliczanych zgodnie z procedurą \texttt{value}, która nie została jeszcze wygenerowana. Praca obejmuje przegląd metod detekcji anomalii, szczegółowy opis zaproponowanej metody oraz wyników eksperymentalnych uwzględniających rozrzut między powtórzeńi. 
-
-Struktura dokumentu: Rozdział 2 zawiera podstawy teoretyczne i analizę istniejących podejść; Rozdział 3 omawia metodologię algorytmu; Rozdział 4 prezentuje wyniki eksperymentów; Rozdział 5 podsumowuje osiągnięcia i wnosi z nich wnioski\cite{available_ast_symbols}.
-
-\section{Rozdział 2: Analiza Stanu Wiedzy i Podstawy Teoretyczne}
-Problem detekcji anomalii (anomaly detection) stanowi kluczowe wyzwanie w dziedzinie analizi sygnału fizjologicznego, gdzie wykrywanie nienormalnych wzorców w czasie rzeczywistym jest często niezbędne dla oceniania stanu zdrowia pacjentów \cite{} . W środowisku telemetrii wielokanałowej dane charakteryzują się wysoką wymiarowością (wielu sygnałów egzenetycznych, takich jak tętno, ciśnienie krwi i saturacja tlenu), co generuje tzw. kryzyzm wydimensionowania (curse of dimensionality) \cite{} . Metody oparte na założeniu jednowymiarowości, takie jak klasyczny test wartości Z, stają się niewystarczające do wykrywania złożonych anomalii ukrytych w relacjach przestrzennych między kanałami \cite{} .
-
-W literaturze przedmiotu rozróżnia się podejścia oparte na odległościach w przestrzeni cech oraz technikach ensemblingowych. Metody unisemantyczne, takie jak One-Class SVM czy autoencodery, uczą się rozkładu normalnych obserwacji i klasyfikują jako anomalizę te, które znacząco różnią się od tej struktury \cite{} . Jednakże w przypadku sygnałów fizjologicznych, które są cykliczne i niestacjonarne, metody te mogą być nadwrażliwe na zmiany parametrów operacyjnych i trudne do kalibracji bez zewnętrznych danych treningowych \cite{} .
-
-Pojęcie ensemblinga w kontekście detekcji anomalii wynika z potrzeby zwiększenia niezawodności decydora. Łączenie wyników wielu prostych detektorów, często opartych na różnych reprezentacjach danych, pozwala na zmniejszenie wariancji błędnej klasyfikacji (false alarm rate), co jest krytyczne w zastosowaniach medycznych \cite{} . W przypadku danych wielokanałowych, kluczowym problemem staje się wybór odpowiedniej reprezentacji cech. Podprzestrzeń cech (subspace) stanowi narzędzie do redukcji wymiarowości i izolacji dominujących modów zmian w danych, co pozwala na skonstruowanie detektorów lokalnych, oświetlających specyficzne struktury danej obserwacji \cite{} .
-
-W omawianym rozdziale omówiono istniejące podejścia, jednak nie zostały one zweryfikowane ani ocenione quantitacyjnie w ramach przeprowadzonych badań. Eksperymenty opisane w dalszej części pracy mają służyć jako punkt odniesienia do potwierdzenia hipotetycznych zalet proponowanych metod. Metody porównawcze zakładać będą wykorzystanie danych syntezy generowanej przez generate\_physio\_data oraz stosowanie detektora bazowego BaselineZScore w kontraście z propozowanym komitetem RandomSubspaceEnsemble. Ocena skuteczności wykrywania i poziomu fałszywych alarmów będzie przeprowadzona na podstawie metryk obliczanych przez funkcje compute\_f1 oraz compute\_auc, przy uwzględnieniu konfiguracyjnych granic wyznaczonych w 4 i wariancie liczbą powtórzeń 10.
-
-\section{Rozdział 3: Metodologia}
-W rozdziale tym przedstawiono formalne sformułowanie proponowanego detektora anomalii opartego na komitecie losowych podprzestrzeni, co stanowi bezpośrednią odpowiedź na postawione w tezie założenie o efektywnej detekcji w warunkach wielokanałowej telemetrii. Proponowany algorytm działa w frameworku estymacji parametru RandomSubspaceEnsemble, gdzie kluczowym elementem jest proces selektywnego tworzenia podprzestrzeni cech z wymiaru definiowanym przez parametr subspace\_dim, który w tym studium został ustalone na poziomie 2. Dla każdego ze N\_CANALAŁÓW kanałów pomiarowych, system losowo wybiera subset cech o wielkości k=2, co zapewnia rozproszenie analizy przestrzennej nad całościowym obszarem danych i zmniejsza ryzyko błędnej korelacji w wyniku agregacji.
-
-Główną fazą obliczeniową jest wyznaczenie odległości Mahalanobisa wewnątrz każdej generowanej podprzestrzeni. Dla każdego wektora próbkowania \mathbf{x} i konkretnego subsetu cech \mathcal{S}\_m, policzono kwadrat normy L2 (dystans euklidesowy) skorygowany o szacowany rozkład danych wewnątrz danej podprzestrzeni. Metryka ta, oznaczona jako s\_k(x), odpowiada odległości standardyzowanej i pozwala na porównanie lokalnych anomalii nawet przy różnych skalach pomiarowych kanałów. Proces ten jest wykonywany niezależnie dla każdego z M=50 detektorów, co tworzy zbiorowy profil ryzyka, gdzie 50 jest wartością n\_estimators dobrana jako wystarczająca do pokrycia struktury przestrzennej cech przy minimalizacji kosztów obliczeniowych.
-
-Finalną fazą agregacji jest obliczenie średniej arytmetycznej wartości anomalii s(x) = (1/M) $\sum$\_{m=1}\textasciicircum{}{M} s\_k\textasciicircum{}m(x). Taki schemat działa na zasadzie komitetu, gdzie każdy detektor odpowiada na lokalny fragment danych, a ich konsensus zwiększa odporność na szumy i artefakty pojedynczych kanałów. Uwarunkowanie parametryczne subspace\_dim=2 dokonano na podstawie konieczności utrzymania stabilności szacowania wariancji w małych wymiarach przy zachowaniu informacji o korelacji między kanałami; wyższe wymiary zwiększałyby ryzyko nadmiernego siania lub biasów, co jest kluczowe dla danych fizjologicznych z wysokim poziomem szumów.
-
-Proces decyzyjny opiera się na wyborze progu T, który wynika z analizy dystrybucji otrzymanych punktów anomalii. Progi te nie są sztywne, lecz dynamicznie dobrane w ramach procesu compute\_f1, zgodnie z założeniem o minimalizacji kosztu fałszywych alarmów przy zachowaniu wysokiego wskaźnika wykrywania. Decyzja klasyfikuje próbkę jako anomalię wtedy, gdy średnia s(x) przekracza wyznaczone T.
-
-Jako porównanie służy detektor bazowy (baseline), który jest statyczny, uniwaryjny i operuje na średniej wartości sygnału przez wszystkie kanały. Algorytm ten, zaimplementowany jako klasa BaselineZScore, oblicza standardowe odchylenie dla każdej wartości czasu, normalizując sygnał globalny. Choć prostota tej metody jest jej przewagą w skali obliczeniowej, brak rozważania korelacji między kanałami stanowi jej główny punkt słaby. W sytuacji, gdy anomalія występuje w jednym z kanałów i jest równoważona przez wartości normalne w innych kanałach, wartość Z-score dla średniej może pozostać w granicach progu, co prowadzi do pominięcia patologicznego zdarzenia. Taka wrażliwość na złamanie kanonu (channel misalignment) lub rozmycie sygnału w ramach grupy kanałów (channel averaging) ogranicza skuteczność detektora w warunkach rzeczywistych, gdzie anomalie rzadkie i lokalne są szczególnie trudne do identyfikacji. Opisaną powyżej struktura metodologiczną stanowi fundament dla eksperymentu opiswanego w rozdziale następnym, a porównanie metryk precyzji 0.2608695652173913 oraz 0.2005819856119307 pozwoli na zweryfikowanie skuteczności proponowanego podejścia.
-
-\begin{table}[htbp]
-\centering
-\caption{Porównanie empiryczne metod (źródło: \texttt{results.csv}) --- Robust Anomaly Detection in Multi-Channel Physiological Telemetry via Random Subspace Ensembles}
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{method} & \textbf{metric} & \textbf{value} & \textbf{std dev} & \textbf{n runs} \\
-\midrule
-baseline & auc\_score & 0.5183333333333333 & 0.0 & 10 \\
-baseline & f1\_score & 0.2608695652173913 & 0.0 & 10 \\
-ensemble & auc\_score & 0.5801041666666666 & 0.0 & 10 \\
-ensemble & f1\_score & 0.2005819856119307 & 0.0 & 10 \\
-\bottomrule
-\end{tabular}
-\label{tab:empirical_results}
-\end{table}
-
-\section{Braki i ograniczenia realizacji}
-Poniższa lista została wygenerowana automatycznie z raportu weryfikacji, a nie przez model językowy. Wymienia ustalenia, których nie udało się usunąć w budżecie napraw.
-
-1. [rozdział] Brak rozdziału 4.
-2. [rozdział] Brak rozdziału 5.
-3. [wskaźnik] ref csv file : method +F1:value : no such file. The results are in results.csv: write ref csv results.csv: method +F1:value with a column from 'available csv columns'.
-4. [zadanie] T10 (FAILED): Unit tests of RandomSubspaceEnsemble from rs ensemble detector.py in tests/test rs ensemble detector.py, through the declared interface only.
-5. [zadanie] T14 (FAILED): Implement experiment.py: Główny moduł eksperymentu: przeprowadza pomiary dla obu metod, agreguje wyniki i zapisuje je do results.csv.. Implement every name its interface declares: run experiment.
-6. [zadanie] T15 (FAILED): Chapter 3 (Metodologia: Detektor oparty na losowych podprzestrzeniach) in thesis.md: Szczegółowy opis algorytmu Random Subspace Ensemble, uzasadnienie wyboru parametrów oraz opis detektora bazowego (Z-score).
-7. [zadanie] R1 1 (FAILED): Rewrite generate physio data to fix broadcast shape errors (previous attempts tried complex multi-frequency broadcasting that failed). Implement a simpler base signal: sum of two sine waves with fixed frequencies, plus Gauss…
-8. [zadanie] R1 4 (FAILED): Write Chapter 3 ('3. Metodologia') in thesis.md .
-9. [zadanie] R2 1 (FAILED): Rewrite generate physio data in data generation.py . The previous attempts failed because the logic for injecting anomalies was incorrect (writing to a flattened view while keeping a separate reshape or writing to indices th…
-10. [zadanie] R4 1 (FAILED): Rewrite experiment.py to fix two issues: (1) The previous version caused a timeout because it calculated AUC using a double-loop algorithm (O(N 2)) in a tight loop over 10 runs, and (2) it contained a dead pass statement at…
-11. [zadanie] R5 1 (FAILED): Rewrite run experiment to fix the timeout error (AUC computation is O(N 2) and causes 180s timeout on 5000 samples).
-
-\begin{thebibliography}{99}
-  \bibitem{adk2025} Neuro-Symbolic ADK, \textit{Dokumentacja i literatura przedmiotowa}, 2025.
-\end{thebibliography}
+\definitionslist{
+  Neuro-Symbolic Harness -- system łączący generację kodu opartą na modelach językowych z deterministyczną weryfikacją symboliczną.
+}
 
 \end{document}

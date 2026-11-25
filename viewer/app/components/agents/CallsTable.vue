@@ -6,8 +6,9 @@ import { tierColor, verdictColor } from '#shared/utils/colors'
 import { formatClock } from '#shared/utils/format'
 import { labels } from '~/utils/labels'
 
-defineProps<{ calls: AgentCallSummary[], loading: boolean, at: RunRef }>()
+const props = defineProps<{ calls: AgentCallSummary[], loading: boolean, at: RunRef }>()
 const emit = defineEmits<{ open: [step: number] }>()
+const sortBy = ref([{ key: 'step', order: props.at.source === 'live' ? ('desc' as const) : ('asc' as const) }])
 
 const headers = [
   { title: '#', key: 'step', width: 64 },
@@ -22,6 +23,7 @@ const headers = [
 
 <template>
   <v-data-table
+    v-model:sort-by="sortBy"
     :headers="headers"
     :items="calls"
     :loading="loading"
@@ -33,7 +35,7 @@ const headers = [
   >
     <template #[`item.ts`]="{ value }">{{ formatClock(value) }}</template>
     <template #[`item.agent`]="{ item }">
-      <v-chip :color="item.ok ? 'primary' : 'error'" :prepend-icon="mdiRobotOutline">{{ item.agent }}</v-chip>
+      <v-chip :color="item.running ? 'info' : item.ok ? 'primary' : 'error'" :prepend-icon="mdiRobotOutline">{{ item.agent }}</v-chip>
     </template>
     <template #[`item.tier`]="{ item }">
       <v-chip :color="item.tier === 'LRM' ? tierColor(item.tier) : undefined" :title="item.model" :prepend-icon="mdiChip">{{ item.tier }}</v-chip>
@@ -41,20 +43,26 @@ const headers = [
     <template #[`item.elapsedMs`]="{ value }">{{ value === null ? '—' : (value / 1000).toFixed(1) }}</template>
     <template #[`item.decision`]="{ item }">
       <v-sheet color="transparent" max-width="820" class="d-flex align-center ga-2 py-1">
-        <v-chip
-          v-if="item.verdict"
-          :color="verdictColor(item.verdict)"
-          :prepend-icon="item.verdict === 'PASS' ? mdiCheckCircleOutline : mdiCloseCircleOutline"
-        >
-          {{ item.verdict }}
-        </v-chip>
-        <span class="text-body-2 text-medium-emphasis text-truncate">{{ item.decision }}</span>
+        <template v-if="item.running">
+          <v-progress-circular indeterminate color="info" size="14" width="2" />
+          <span class="text-body-2 text-info">{{ labels.agents.running }}</span>
+        </template>
+        <template v-else>
+          <v-chip
+            v-if="item.verdict"
+            :color="verdictColor(item.verdict)"
+            :prepend-icon="item.verdict === 'PASS' ? mdiCheckCircleOutline : mdiCloseCircleOutline"
+          >
+            {{ item.verdict }}
+          </v-chip>
+          <span class="text-body-2 text-medium-emphasis text-truncate">{{ item.decision }}</span>
+        </template>
       </v-sheet>
     </template>
     <template #expanded-row="{ columns, item }">
       <tr>
         <td :colspan="columns.length">
-          <AgentsCallPreview :at="at" :step="item.step" @open="step => emit('open', step)" />
+          <AgentsCallPreview :at="at" :step="item.step" :running="Boolean(item.running)" @open="step => emit('open', step)" />
         </td>
       </tr>
     </template>

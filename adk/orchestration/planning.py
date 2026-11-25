@@ -33,8 +33,28 @@ def _existing_code(workspace: Path, limit: int | None = EXISTING_FILE_CHARS) -> 
     return found
 
 
+def _custom_chapter_titles(planned_chapters: list[Any] | None) -> dict[int, str]:
+    """Chapter number -> title from the blueprint's planned chapters (dicts or plain titles)."""
+    titles: dict[int, str] = {}
+    for idx, chapter in enumerate(planned_chapters or [], 1):
+        if isinstance(chapter, dict):
+            number = int(chapter.get("index") or chapter.get("chapter_index") or chapter.get("id") or idx)
+            title = str(chapter.get("title") or chapter.get("chapter_title") or "").strip()
+            if title:
+                titles[number] = title
+        elif isinstance(chapter, str) and chapter.strip():
+            titles[idx] = chapter.strip()
+    return titles
+
+
 class PlanningMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
+
+    def _planned_chapter_titles(self) -> dict[int, str]:
+        """Chapter number -> title of the plan's `planned_chapters` (the only chapters the harness knows)."""
+        blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
+        chapters = blueprint.get("planned_chapters") if isinstance(blueprint, dict) else None
+        return _custom_chapter_titles(chapters if isinstance(chapters, list) else None)
 
     def _plan_phase(
         self,
@@ -42,7 +62,6 @@ class PlanningMixin:
         missing_agent_specialization: str | None,
         interactive_gates: bool | None,
         gate_approval_callback: Callable[[str, dict[str, Any]], bool] | None,
-        multi_cycle_waves: bool,
         template_name: str | None,
         thesis_type: str | None,
     ) -> dict[str, Any]:
@@ -100,6 +119,7 @@ class PlanningMixin:
         plan_out, interfaces, spec_violations = self._staged_plan(plan_payload)
         if spec_violations:
             return self._plan_rejected(spec_violations, plan_out.get("tasks") or [])
+        write_json_state(self.plan_outline_path, plan_out.get("outline") or {})  # the design in force, for a redesign (§XXVIII.8)
 
         planned_thesis_type = str(
             (detected_thesis_type if template_is_certain else None)
@@ -228,17 +248,6 @@ class PlanningMixin:
         else:
             tasks = [t for t in raw_tasks if isinstance(t, dict)]
 
-        if multi_cycle_waves:
-            tasks = self._normalize_and_heal_task_plan(
-                tasks,
-                multi_cycle_waves=True,
-                preferred_coder=created_specialist_id or "seed_coder",
-                thesis_type=planned_thesis_type,
-                planned_chapters=planned_chapters if isinstance(planned_chapters, list) else None,
-            )
-
-        # The stubs come from the validated specification (plan_spec); a planned skeleton task is redundant.
-        tasks = [t for t in tasks if str(t.get("task_id", "")).upper() != "SKELETON"]
         write_json_state(self.task_queue_path, tasks)
         self.hypergraph = self._build_project_hypergraph(interfaces, blueprint_raw, tasks)
 

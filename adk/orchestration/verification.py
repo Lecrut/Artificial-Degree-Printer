@@ -271,7 +271,7 @@ class VerificationMixin:
                         "declared_metrics": declared_metrics,
                         "metric_registration_findings": metric_findings,
                     },
-                    model_tier="LRM",
+                    model_tier="SML",
                     provider=self.provider,
                 )["output"]
         else:

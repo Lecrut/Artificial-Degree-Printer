@@ -55,9 +55,9 @@ export function line(label: string, text: string, status: EntryStatus = 'info'):
   return { label, text, status }
 }
 
-/** Phase of a task from its id: the plan's tasks, repair queues (`Q<n>_…`, Gate 3), re-planned work (`R<n>_…`). */
+/** Phase of a task from its id: the plan's tasks, repair queues (`Q<n>_…`, Gate 3), re-planned and redesigned work (`R<n>_…`, `D<n>_…`). */
 function phaseOfTask(taskId: string): PhaseId {
-  if (/^R\d+_/.test(taskId)) return 'replans'
+  if (/^[RD]\d+_/.test(taskId)) return 'replans'
   if (/^(Q\d+_|GATE_)/.test(taskId)) return 'repairs'
   return 'building'
 }

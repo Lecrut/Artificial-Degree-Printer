@@ -9,6 +9,7 @@ export interface AgentCallSummary {
   elapsedMs: number | null
   taskId: string | null
   ok: boolean
+  running?: boolean
   verdict: string | null
   decision: string | null
 }

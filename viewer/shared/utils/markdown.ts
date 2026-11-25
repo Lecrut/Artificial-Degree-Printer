@@ -29,6 +29,11 @@ md.core.ruler.push('vuetify_classes', (state) => {
   }
 })
 
+/** Plain markdown as HTML (an agent prompt): the same Vuetify classes, no pointer marks; raw HTML in the source is escaped. */
+export function renderMarkdown(markdown: string): string {
+  return md.render(markdown)
+}
+
 const POINTER = /\\ref_(ast|csv|fig)\{([^}]*)\}/g
 const POINTER_CLASS: Record<string, string> = { ast: 'text-info', csv: 'text-primary', fig: 'text-secondary' }
 

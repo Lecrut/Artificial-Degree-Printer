@@ -73,14 +73,6 @@ class Hypergraph:
     def edges_of(self, vertex: str) -> list[str]:
         return [e.id for e in self.edges.values() if vertex in e.members]
 
-    def degree(self, vertex: str) -> int:
-        """d(v): number of I/R/N bags the vertex belongs to (S contains everything and is not counted)."""
-        return sum(1 for e in self.edges.values() if e.type != "S" and vertex in e.members)
-
-    def incidence(self) -> dict[str, dict[str, str]]:
-        """ρ as a matrix: vertex -> edge -> role (absent = not a member)."""
-        return {v: {e.id: e.members[v] for e in self.edges.values() if v in e.members} for v in self.vertices}
-
     def later(self, edge: str) -> set[str]:
         """Every edge after `edge` in ≺ (transitive)."""
         found: set[str] = set()

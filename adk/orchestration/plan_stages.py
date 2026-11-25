@@ -3,7 +3,9 @@
 1. Outline (`plan_outline.md`): modules with purpose, dependencies and promised names, entrypoint, figures, metrics,
    chapters. Checked by code (`plan_outline.outline_violations`), then by its critic (`outline_critic_guard.md`).
 2. Interfaces, one module at a time, dependencies first (`plan_module.md`): each sees the accepted interfaces it
-   builds on, is checked by code against them, then by its critic (`module_critic_guard.md`). Accepted = frozen.
+   builds on, is checked by code against them, then by its critic (`module_critic_guard.md`). Accepted = frozen. The
+   author declares a sketch with no place for a body, and the harness builds the interface from it (`plan_sketch`);
+   the first answer is the small model's, every correction the large one's.
 3. Tasks: derived by code from the outline and the interfaces (`plan_tasks`).
 4. Fusion: the whole plan checked by code and by the main critic (`plan_critic_guard.md`).
 
@@ -20,14 +22,17 @@ from typing import Any
 
 from adk.hypergraph.validate import code_violations
 from adk.orchestration import agent_texts as texts
+from adk.orchestration.interface_view import interface_view
 from adk.orchestration.plan_existing import _with_existing
 from adk.orchestration.plan_outline import (
     changed_modules, dependents, existing_names, kept_as_is, module_entry, module_files, module_order, outline_of, outline_view,
     outline_violations, provided_name,
 )
-from adk.orchestration.plan_spec import interface_view, plan_targets
+from adk.orchestration.plan_sketch import sketch_to_source, source_to_sketch
+from adk.orchestration.plan_spec import plan_targets
 from adk.orchestration.plan_tasks import planned_tasks
 from adk.orchestration.planning import _existing_code
+from adk.tools.planning import select_planning_tier
 from adk.tools.verification.contract_check import stub_source
 
 OUTLINE_ROUNDS = 3  # answers of the outline author per outline stage (first answer + corrections)
@@ -57,25 +62,6 @@ def _route(findings: list[str], files: list[str]) -> tuple[dict[str, list[str]],
     return by_module, rest
 
 
-_FENCE = re.compile(r"^\s*```(?:python|py)?\s*\n(.*?)\n?```\s*$", re.S)
-
-
-def _module_source(output: Any, rel: str) -> str:
-    """The interface a module author returned, as Python: a markdown fence is taken off, and a single line with
-    literal `\\n` escapes (a model does that) becomes lines."""
-    if not isinstance(output, dict):
-        return ""
-    interfaces = output.get("interfaces") if isinstance(output.get("interfaces"), dict) else {}
-    source = output.get("source") or output.get("interface") or output.get("code") or interfaces.get(rel)
-    if not isinstance(source, str) or not source.strip():
-        return ""
-    if fenced := _FENCE.match(source):
-        source = fenced.group(1)
-    if "\\n" in source and "\n" not in source.strip():
-        source = source.replace("\\n", "\n").replace('\\"', '"')
-    return source
-
-
 class PlanStagesMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
 
@@ -85,8 +71,14 @@ class PlanStagesMixin:
         outline, problems = self._outline_stage(plan_payload, existing, None, [])
         if outline is None:
             return {}, {}, problems
-        accepted: dict[str, str] = {}
-        reopen: dict[str, list[str]] = {}
+        return self._converge(plan_payload, existing, outline, {}, {})
+
+    def _converge(
+        self, plan_payload: dict[str, Any], existing: dict[str, str], outline: dict[str, Any],
+        accepted: dict[str, str], reopen: dict[str, list[str]],
+    ) -> tuple[dict[str, Any], dict[str, str], list[str]]:
+        """Stages 2 to 4 from an outline and what is already accepted: (plan, its interfaces, blockers). A redesign
+        (§XXVIII.8) enters here with the interfaces of the modules it keeps and the reasons to reopen the others."""
         history: list[dict[str, Any]] = []
         escalations, fusion = ESCALATIONS, 0
         while True:
@@ -250,21 +242,21 @@ class PlanStagesMixin:
         """One module's interface: written, checked by code, reviewed; `{ok, source, problems, needs}`."""
         entry = module_entry(outline, rel)
         # An existing module the outline lists as a dependency but does not plan is still the author's to see.
-        deps = {d: accepted.get(d) or existing[d] for d in self._dependency_closure(outline, rel) if d in accepted or d in existing}
+        deps = {d: interface_view(accepted.get(d) or existing[d]) for d in self._dependency_closure(outline, rel) if d in accepted or d in existing}
         consumers = [module_entry(outline, c) for c in dependents(outline, rel)]
         fb, source, critic_left, objections = list(feedback), previous or "", MODULE_CRITIC_ROUNDS, []
         for attempt in range(1, MODULE_ROUNDS + 1):
             answer = self._call_planning_agent(self.agents_dir / "planning" / "plan_module.md", {
                 **{k: plan_payload.get(k) for k in _MODULE_KEYS}, "outline": outline_view(outline), "module": entry,
                 "dependencies": deps, "consumers": consumers,
-                **({"previous_source": source} if source else {}), **({"feedback": fb} if fb else {}),
-            })
+                **({"previous_sketch": source_to_sketch(source)} if source else {}), **({"feedback": fb} if fb else {}),
+            }, model_tier=select_planning_tier("plan_module", attempt=attempt, has_feedback=bool(fb)))
             output = answer.get("output") if answer.get("status") == "ok" else None
             raw_needs = output.get("needs") if isinstance(output, dict) and isinstance(output.get("needs"), dict) else {}
             needs = {str(d): str(n) for d, n in raw_needs.items() if str(n).strip() and str(d) in entry["depends_on"]}
-            new = _module_source(output, rel)
+            new = sketch_to_source(output)
             if not new:
-                fb = [texts.MODULE_NO_SOURCE]
+                fb = [texts.MODULE_NO_SKETCH]
                 self.logger.log_event("PLAN_MODULE_CHECKED", module=rel, attempt=attempt, problems=fb, critic=[])
                 continue
             source = new
@@ -275,9 +267,7 @@ class PlanStagesMixin:
             if not problems and critic_left and attempt < MODULE_ROUNDS:
                 verdict = self._critic_review("module_critic_guard.md", {
                     "user_prompt": plan_payload.get("user_prompt", ""), "outline": outline_view(outline), "module": entry,
-                    # The critic reviews the interface: a body the author wrote anyway is not shown to it (2026-11-21, 02:
-                    # blockers on `import csv` and an attribute set inside a body that the coder rewrites).
-                    "source": interface_view(source), "dependencies": deps, "consumers": consumers,
+                    "source": source, "dependencies": deps, "consumers": consumers,
                 }, {rel, Path(rel).name})
                 critic = verdict[0] if verdict else []
                 if critic:
@@ -313,7 +303,7 @@ class PlanStagesMixin:
         imports, constants, the harness's calls, the promised names, and the names accepted
         consumers already import from it."""
         if stub_source(source) is None:
-            return [str(v) for v in code_violations({rel: source}, None)[1] if v.rule == "INTERFACE_DOES_NOT_PARSE"] or [texts.MODULE_NO_SOURCE]
+            return [str(v) for v in code_violations({rel: source}, None)[1] if v.rule == "INTERFACE_DOES_NOT_PARSE"] or [texts.MODULE_NO_SKETCH]
         subset = _with_existing({"interfaces": {**{r: s for r, s in accepted.items() if r != rel}, rel: source}}, existing)["interfaces"]
         # Findings about other modules (e.g. the entrypoint's module not designed yet) belong to their own stage.
         specs, found = code_violations(subset, outline["entrypoint"], outline["plots"], outline["academic_blueprint"].get("metrics"))

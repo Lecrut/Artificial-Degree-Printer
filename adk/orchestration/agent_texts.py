@@ -256,10 +256,6 @@ def chapter_covers(number: int) -> str:
     return f"chapter {number}"
 
 
-def node_task(node_id: str) -> str:
-    return f"Work on node {node_id}"
-
-
 def spec_breach(violations: list[str], refusals: list[str]) -> str:
     lines = violations + refusals
     return (
@@ -288,7 +284,7 @@ OUTLINE_NO_CHAPTERS = (
     "OUTLINE [academic_blueprint.planned_chapters]: the thesis has the chapters you plan, with `index`, `title` and "
     "`focus` for each; the harness does not invent a table of contents."
 )
-MODULE_NO_SOURCE = "MODULE: the answer had no `source` (the module's interface as Python source)."
+MODULE_NO_SKETCH = "MODULE: the answer declared nothing: return the sketch of the module (`functions`, `classes` or `constants`)."
 
 
 def outline_bad_file(rel: str) -> str:
@@ -441,3 +437,46 @@ def replan_latest_errors(errors: list[str]) -> str:
 
 def replan_exhausted(failed: list[str]) -> str:
     return f"PRZEPLANOWANIE BEZ POSTEPU. NIEUDANE: {', '.join(failed)}. KONCZE PRACE Z JAWNA LISTA BRAKOW."
+
+
+# --- redesign (§XXVIII.8): the designer's guidelines when the queue ended with failed vertices ------------------------
+REDESIGN_NOTHING_CHANGES = (
+    "REVISION: every module is `keep`, none changed, none was added or removed. The failed modules are rebuilt by the "
+    "re-plan anyway; a revision exists to change the design: say which module changes, which is new or which goes."
+)
+
+
+def redesign_reason(failed: list[str]) -> str:
+    return (
+        "The queue ended and these vertices failed after every repair: " + ", ".join(failed) + ". Everything that passed its "
+        "tests is only that: it passed its own tests. Read `implementation` (what the files really do) with "
+        "`unresolved_errors` and decide what to change in the design."
+    )
+
+
+def redesign_missing_status(rel: str) -> str:
+    return f"REVISION [{rel}]: no status in `revision.modules`; every module of the old and of the new outline needs one of keep, change, new, remove."
+
+
+def redesign_bad_status(rel: str, status: str) -> str:
+    return f"REVISION [{rel}]: status {status!r} is not one of keep, change, new, remove."
+
+
+def redesign_status_mismatch(rel: str, status: str, reason: str) -> str:
+    return f"REVISION [{rel}]: status {status} does not fit the outline: {reason}."
+
+
+def redesign_keep_changed(rel: str) -> str:
+    return f"REVISION [{rel}]: status keep, but its entry in the outline differs from the old one (purpose, depends_on or provides); say change, or restore the entry."
+
+
+def redesign_name_taken(rel: str) -> str:
+    return f"REVISION [{rel}]: the workspace already has a file of this name that the outline does not plan; choose another path."
+
+
+def redesign_change_feedback(rel: str, why: str) -> str:
+    return f"REVISION [{rel}]: the designer changes this module: {why or 'the implementation does not do what the interface says'}."
+
+
+def redesign_implementation_failed(rel: str) -> str:
+    return f"The description of {rel} is missing: the auditor did not answer; judge it by its declarations and its errors."

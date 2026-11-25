@@ -31,9 +31,10 @@ from adk.orchestration.write_gate import WriteGateMixin
 from adk.orchestration.verification import VerificationMixin
 from adk.orchestration.factual_audit import FactualAuditMixin
 from adk.orchestration.fragment_replan import FragmentReplanMixin
+from adk.orchestration.implementation_audit import ImplementationAuditMixin
+from adk.orchestration.redesign import RedesignMixin
 from adk.orchestration.evolution import EvolutionMixin
 from adk.orchestration.planning import PlanningMixin
-from adk.orchestration.plan_healing import PlanHealingMixin
 from adk.orchestration.plan_spec import PlanSpecMixin
 from adk.orchestration.plan_evolution import PlanEvolutionMixin
 from adk.orchestration.plan_stages import PlanStagesMixin
@@ -57,7 +58,6 @@ __all__ = [
 
 class NeuroSymbolicOrchestrator(
     PlanningMixin,
-    PlanHealingMixin,
     BuildingMixin,
     ContextMixin,
     WriteGateMixin,
@@ -67,6 +67,8 @@ class NeuroSymbolicOrchestrator(
     EvolutionMixin,
     RecoveryMixin,
     FragmentReplanMixin,
+    ImplementationAuditMixin,
+    RedesignMixin,
     RoutingMixin,
     GatesMixin,
     PlanSpecMixin,
@@ -157,7 +159,6 @@ class NeuroSymbolicOrchestrator(
             missing_agent_specialization=missing_agent_specialization,
             interactive_gates=interactive_gates,
             gate_approval_callback=gate_approval_callback,
-            multi_cycle_waves=multi_cycle_waves,
             template_name=template_name,
             thesis_type=thesis_type,
         )
@@ -268,7 +269,7 @@ class NeuroSymbolicOrchestrator(
 
         node_id, node_file = self._resolve_target_node(str(task.get("target_node") or THESIS_FILE), task=task, fallback=THESIS_FILE)
         task["target_node"] = node_id
-        tier = select_model_tier(failures=self._vertex_failures(node_file))  # a re-planned vertex keeps its count
+        tier = select_model_tier(failures=self._vertex_failures(node_file), kind=self._vertex_kind(node_file))  # a re-planned vertex keeps its count
         t_id = str(task.get("task_id", f"T{idx + 1}"))
         t_agent = str(task.get("assigned_agent", "seed_coder"))
         print(

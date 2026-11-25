@@ -4,24 +4,16 @@ produce the plan are in `plan_stages` (§XVI)."""
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import Any
 
+from adk.core.models import ModelTier
 from adk.hypergraph import Hypergraph, build_from_plan, save
 from adk.hypergraph.oracles import is_stub
 from adk.orchestration import agent_texts as texts
+from adk.orchestration.interface_view import interface_view
 from adk.orchestration.plan_existing import _entrypoint
 from adk.tools.verification.contract_check import stub_source
-
-_RAISE_STUB = re.compile(r"^(\s*)raise NotImplementedError\s*$", re.M)
-
-
-def interface_view(source: str) -> str:
-    """What a planning critic reads: the interface with every body as `...` (its prompt says so). The stub the harness
-    imports has `raise NotImplementedError`, and a critic that saw it asked for the body to be implemented (2026-11-22,
-    01: "plots.py:plot_results raises NotImplementedError instead of generating the charts")."""
-    return _RAISE_STUB.sub(r"\1...", stub_source(source) or source)
 
 
 def _is_proven_blocker(issue: dict[str, Any], targets: set[str]) -> bool:
@@ -57,10 +49,11 @@ def plan_targets(modules: list[str] | set[str]) -> set[str]:
 class PlanSpecMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
 
-    def _call_planning_agent(self, md: Path, payload: dict[str, Any]) -> dict[str, Any]:
-        """One LRM call of planning. A failed call (`status` error: timeout, unreachable model) is a failed round,
-        not the end of the run: `call_agent` returns it as an answer."""
-        return self._call_agent(md, payload, model_tier="LRM", provider=self.provider)
+    def _call_planning_agent(self, md: Path, payload: dict[str, Any], *, model_tier: ModelTier = "LRM") -> dict[str, Any]:
+        """One call of planning, on the large model unless the caller says otherwise (`select_planning_tier`). A failed
+        call (`status` error: timeout, unreachable model) is a failed round, not the end of the run: `call_agent` returns
+        it as an answer."""
+        return self._call_agent(md, payload, model_tier=model_tier, provider=self.provider)
 
     @property
     def hypergraph_path(self) -> Path:

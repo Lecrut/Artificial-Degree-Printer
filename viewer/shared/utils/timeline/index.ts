@@ -3,6 +3,7 @@ import type { EntryStatus, PhaseId, PhaseSummary, RunTimeline, TimelineEntry } f
 import { newBuilder, type Handler } from './builder'
 import { miscHandlers } from './misc'
 import { planCall, planHandlers } from './plan'
+import { redesignHandlers } from './redesign'
 import { stageCall, stageHandlers } from './planStages'
 import { taskHandlers } from './tasks'
 
@@ -10,7 +11,7 @@ export { isPlanStep } from './plan'
 
 const PHASES: PhaseId[] = ['planning', 'building', 'repairs', 'replans', 'end']
 
-const HANDLERS: Record<string, Handler> = { ...planHandlers, ...stageHandlers, ...taskHandlers, ...miscHandlers }
+const HANDLERS: Record<string, Handler> = { ...planHandlers, ...stageHandlers, ...taskHandlers, ...miscHandlers, ...redesignHandlers }
 
 function phaseStatus(entries: TimelineEntry[]): EntryStatus {
   if (entries.some(e => e.status === 'running')) return 'running'

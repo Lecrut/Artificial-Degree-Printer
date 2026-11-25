@@ -86,3 +86,46 @@ describe('buildTimeline', () => {
     expect(buildTimeline(events.slice(0, 3)).entries[1]).toMatchObject({ title: 'Weryfikacja planu 1', status: 'running' })
   })
 })
+
+describe('buildTimeline: redesign', () => {
+  const events = [
+    at('1', 'REDESIGN_STARTED', { round: 1, attempt: 1, failed: ['core.py'] }),
+    at('2', 'IMPLEMENTATION_AUDITED', { files: 4, described: 3, failed: ['core.py'] }),
+    at('2', 'REDESIGN_SOURCE_GRANTED', { files: ['core.py'] }),
+    at('3', 'REDESIGN_GUIDELINES', {
+      attempt: 1,
+      decisions: { 'core.py': { status: 'change', why: 'does two things' }, 'config.py': { status: 'keep', why: 'works' }, 'helper.py': { status: 'new', why: 'half of core' } },
+      diagnosis: { 'core.py': { cause: 'split', why: 'two jobs' } },
+      problems: [],
+    }),
+    at('4', 'REDESIGN_APPLIED', { round: 1, redesigned: ['core.py', 'helper.py'], removed: [], kept: ['config.py'], tasks: ['D1_1', 'D1_2'] }),
+    at('5', 'TASK_START', { task_id: 'D1_1', node: 'helper.py' }),
+    at('6', 'TASK_DONE', { task_id: 'D1_1' }),
+  ]
+
+  it('tells what the designer decided and what was done, in the phase of the re-plans', () => {
+    const { entries, phases } = buildTimeline(events)
+    expect(entries.map(e => e.title)).toEqual([
+      'Przeprojektowanie 1', 'Audyt implementacji', 'Projektant czyta kod', 'Wytyczne projektanta (odpowiedź 1)', 'Przeprojektowanie 1 zastosowane', 'D1_1',
+    ])
+    expect(entries[2]).toMatchObject({ status: 'info', subtitle: 'core.py' })
+    const guidelines = entries[3]!
+    expect(guidelines.status).toBe('ok')
+    expect(guidelines.details.map(d => `${d.label}|${d.text}|${d.status}`)).toEqual([
+      'zmieniony|core.py: does two things|warn', 'zostaje|config.py: works|ok', 'nowy|helper.py: half of core|info', 'przyczyna: split|core.py: two jobs|info',
+    ])
+    expect(entries[4]!.details.map(d => `${d.label}|${d.text}`)).toContain('zachowany|config.py')
+    expect(entries.every(e => e.phase === 'replans')).toBe(true) // a task `D1_…` belongs with the redesign that made it
+    expect(phases.find(p => p.id === 'replans')!.entries).toBe(6)
+  })
+
+  it('shows a redesign that did not happen as a warning with its problems', () => {
+    const { entries } = buildTimeline([
+      at('1', 'REDESIGN_GUIDELINES', { attempt: 2, decisions: {}, problems: ['REVISION [a.py]: no status'] }),
+      at('2', 'REDESIGN_FALLBACK', { reason: 'no guidelines that pass the checks' }),
+    ])
+    expect(entries.map(e => e.status)).toEqual(['warn', 'warn'])
+    expect(entries[0]!.details).toEqual([{ label: 'problem', text: 'REVISION [a.py]: no status', status: 'fail' }])
+    expect(entries[1]).toMatchObject({ title: 'Przeprojektowanie nie doszło do skutku', subtitle: 'no guidelines that pass the checks' })
+  })
+})

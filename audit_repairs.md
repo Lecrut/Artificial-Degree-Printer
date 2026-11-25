@@ -37,7 +37,8 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-24 | **Wznawianie ze stanu i migawek → §XXV** | wznawianie przebiegu z `_evolved_adk_state`, folderu wyników, commita lub migawki `.zip` po każdym zadaniu (`--resume-from`, przycisk w viewerze) | **wdrożone** (§XXV, 348/348 + viewer) |
 | 2026-11-24 | **Audyt XV — przebieg 24.11 v2 (`01`, `02`): kolizje martwego kodu, gilotyna `reopened`, wspólny proces `plots`, zatrucie rozdziałów → §XXVI** | 01 i 02 `COMPLETED_WITH_GAPS`: limit zmieniony w `recovery.py` (poza ścieżką budowy) zamiast w `fragment_replan.py`; `reopened` zmniejsza `verified` i natychmiast odpala stop (`01` o 1 linię od końca); `Q3`+`O7` obcina naprawy `.py` do 1 próby; crash `figures.py` kasuje sukces `experiment.py`/`results.csv`; `pending_files` przepuszcza `<file>:<method>` w `#ch1` i obwinia `#ch3`; `_known_citations_only` przepuszcza `\cite{}` przed `.bib`, a gołe `\mathbf` kładzie XeTeX | diagnoza potwierdzona w kodzie i logach + inwentaryzacja martwego kodu (`recovery.py`, `repair.py`, `plan_healing.py`); trzon napraw wdrożony w §XXVII |
 | 2026-11-24 | **Przegląd czasu i pełny pakiet napraw po 24.11 v2 → §XXVII** | 01: 26 z 45 min to planowanie (krytyk fuzji FAIL ×3 → `ACCEPTED_OVER_CRITIC`), w `R2_2` brak `self.current_player = next_player` w `environment.py` + błędna sekwencja remisu `[0..8]` w `test_environment.py`; 02: 15 min na 4 timeouty `experiment.py` bez stosu wywołań + zatrucie `#ch1` placeholderem `<file>:<method>`, śmieciowe `\cite{}` i gołe `\mathbf` | **wdrożone 7 poprawek** (stos `faulthandler` przy timeoucie, przegląd `failed` testu, bez skrótu `Q3` dla wierzchołków `H`, postęp = „kiedykolwiek zweryfikowane” i 3 rundy, ścisły filtr `pending_files`, czyszczenie `\cite{}` także bez `.bib`, guard na gołe makra matematyczne poza `$...$`); niepotwierdzone na żywo |
-
+| 2026-11-25 | **Audyt XVI — przebieg 25.11 (`01`, `02`, commit `4278406`): końcówka i przeplanowanie nie zmieniają przyczyny porażki; sprzątanie martwego kodu → §XXVIII** | 01 i 02 `COMPLETED_WITH_GAPS` (`PRZEPLANOWANIE BEZ POSTEPU`): przeplanowanie zmienia interfejs tego samego pliku w kolejnych rundach, choć błąd jest w uruchomieniu; rozdziały bez wyników padają na `\ref_csv`; rozdziały wynikowe stoją przez cały przebieg; Gate 3 w 01 trwa 18 min, a jego jedyna naprawa testu jest odrzucana przez `TEST_INVALID_ON_STUBS` | diagnoza z logów; **wdrożone tylko usunięcie `plan_healing.py` i drobnego martwego kodu**; naprawy P6–P10 do zrobienia (kolejność w §XXVIII.4); **przeplanowanie jest z konstrukcji lokalne, bez kroku w tył (P11, §XXVIII.5)**; propozycje: drabina zakresu i raport słowny o stanie projektu z prawem przebudowy kolejki (§XXVIII.6, do decyzji); zakładka „Przepływ” w viewerze (§XXVIII.7); **projekt przeprojektowania na audycie implementacji (`implementation_audit.json` + `implementation_auditor` + `plan_outline` w trybie rewizji), **wdrożone, bez przebiegu na żywo (§XXVIII.8, §XXVIII.9)** |
+| 2026-11-25 | **Audyt XVII — `plan_module` piszący pełne implementacje i monopol LRM (79%–100% czasu) → §XXIX** | `plan_module` zwraca pełny kod funkcji w `"source"` (kasowany potem na dysku do stubów, ale wyciekający do `dependencies`, `seed_tester` i `spec_from_stub`); LRM zjada 79% czasu w 01 i 02 (sztywne `LRM` w całym planowaniu i `redteam_critic_guard`, nieodwracalny licznik `Vertex.failures` nabijany nawet udanym `BUILDING_RETRY`, brak rozróżnienia napraw mechanicznych) | **decyzje D5–D6 zatwierdzone; plan wdrożenia rozpisany w §XXIX.4 (do realizacji)** |
 ---
 
 # Audyt I — 2026-11-08: Logi benchmarkowe 01 i 02, fiksacja na monolicie "core.py", struktura pętli błędów i ziarnistość zadań
@@ -4167,8 +4168,6 @@ Przegląd kodu etapów, wszystkich siedmiu promptów planowania (porównanie z �
 | 4 | **rozdziały o metodzie szły przed kodem** (podział tylko po `RESULTS_WORDS`: wyniki po, reszta przed) | pisarz rozdziału 3–4 nie miał jeszcze symboli do cytowania (`may_cite` puste); wcześniej planista stawiał je po kodzie (Increment 2) | `plan_tasks._NEEDS_NO_CODE`: przed kodem tylko wstęp/cel/literatura/stan wiedzy; reszta po kodzie |
 | 5 | moduł, który zgłosił `needs`, po rozszerzeniu zależności **tracił własny szkic** i projektował od zera, nie wiedząc, o co prosił | zbędna runda i utrata pracy | `_settle` pamięta szkic (`drafts`) i oddaje go jako `previous_source` z `needs_granted` |
 | 6 | istniejący moduł wymieniony tylko jako zależność nie był pokazywany autorowi modułu | autor nie widział API, na którym ma budować (03) | `dependencies` zawiera też `existing` |
-| 7 | `plan_outline.md` nie opisywał `include_docs` ani prośby wywołującego o specjalistę; `plan_module.md` nie wymieniał `user_prompt` | model czytał te wejścia „na ślepo” | dopisane; test `test_every_prompt_names_every_input_the_code_sends` pilnuje, żeby każdy klucz ładunku był w prompcie agenta |
-| 8 | `missing_agent_specialization` podane przez wywołującego było ignorowane przy zadaniach wyprowadzonych (specjalista powstawał, nikt go nie używał) | `AGENT_CREATED` bez skutku | `_fused` bierze je ze szkicu albo z ładunku; tylko gdy Layer 4 może go stworzyć (inaczej zadania zostałyby na nieistniejącym agencie) |
 | 9 | odpowiedzi modelu inne niż idealny JSON: `depends_on: "a.py"` (łańcuch → iterowanie po znakach!), `modules` jako słownik, `source` w płocie ``` albo jako jedna linia z `\n` | fałszywe zależności `a`, `.`, `p`, `y`; moduły odrzucane przez parser | `plan_outline._strings`, `outline_of` przyjmuje słownik, `plan_stages._module_source` zdejmuje płot i normalizuje `\n` (jak bramka zapisu) |
 | 10 | konsola: „Odpowiedź z polami: modules, …” dla agentów etapów | brak podglądu decyzji | `summarize_agent_decision`: `moduły: N`, `interfejs: N linii` |
 | 11 | `scripts/analyze_run.py` liczył agentów etapów jako „first build” | fałszywa statystyka pracy | `_PLANNING_AGENTS` rozszerzony |
@@ -4554,3 +4553,431 @@ Narastające dokładanie nowych warstw bez usuwania poprzednich doprowadziło do
 
 - **Ucięcie krytyka planu po pierwszej rundzie fuzji** (największy potencjalny zysk czasowy, ~13 min na `01`): zmienia jakość planu, wymaga osobnej decyzji.
 - **Rozdzielenie procesu `entrypoint` i `plots`** (§XXVI pkt 3) oraz **usunięcie nieużywanych ścieżek `recovery._tasks_from_audit` i `plan_healing.py`** (§XXVI M1/M3): odłożone, żeby przed przebiegiem na żywo nie ruszać szerszej powierzchni harmonogramu i starych testów regresyjnych.
+
+
+# §XXVIII — 2026-11-25: przebieg 25.11 (`01`, `02`, commit `4278406`) — dlaczego końcówka i przeplanowanie nie zmieniają przyczyny porażki; sprzątanie martwego kodu
+
+Źródło: `adk/workspace/benchmarks/{01_rl_tictactoe,02_ml_anomaly_detection}/logs/events.jsonl`, `benchmark_summary.json`, `adk/orchestration/{fragment_replan,recovery,repair,planning}.py`. Powód: wrażenie użytkownika, że audyt przed przeplanowaniem nie działa, zadania stoją i po przeplanowaniu niewiele się zmienia. Wnioski wynikają z zapisów w logach; to, czego nie sprawdzono w kodzie, jest oznaczone jako „nie wiadomo”.
+
+## §XXVIII.1. Stan przebiegów
+
+- **01:** `COMPLETED_WITH_GAPS`, 6 rund przeplanowania, 16 `TASK_DONE` / 19 `TASK_FAILED`, `QUEUE_REBUILT` 1×, stop `PRZEPLANOWANIE BEZ POSTEPU. NIEUDANE: experiment.py` (23:13).
+- **02:** `COMPLETED_WITH_GAPS`, 5 rund, 15 `TASK_DONE` / 8 `TASK_FAILED`, 26 wpisów `TASK_WAITING`, stop `NIEUDANE: figures.py, thesis.md#ch3` (14:37).
+- W obu przebiegach działała już poprawka §XXVII (`_replan_ever_verified`), więc stop nie wynika z gilotyny `reopened` (P1).
+- `benchmark_summary.json` ma `status: IN_PROGRESS` i `replan_count: 60` dla 01 — plik nie odpowiada tym przebiegom; nie używać go do liczenia rund.
+
+## §XXVIII.2. Potwierdzone w logach (P6–P10)
+
+**P6. Przeplanowanie zmienia kontrakt tego samego pliku, a błąd leży w uruchomieniu.** Pole `interfaces_changed` w `REPLANNED`:
+
+| przebieg | plik | rundy ze zmianą interfejsu | skutek |
+|---|---|---|---|
+| 02 | `experiment.py` | R4, R5 | `R4_1` i `R5_1` padły |
+| 02 | `data_generation.py` | R1, R3 | `R1_1`, `R2_1` padły (po ~2 min), `R3_1` przeszło w 28 s bez napraw |
+| 01 | `experiment.py` | R1, R2 | `R1_1` padło po 11 min 50 s, `R2_1` po 3 min |
+| 01 | `figures.py` | R4, R5 | `R4_2` i `R5_1` przeszły dopiero w kolejnych rundach |
+
+Każda runda to jedno zadanie na ten sam plik. Widoczne błędy (timeout `experiment.py`, wyjątek w `run_experiment` linie 168–169, wykresy) nie są błędami kontraktu. Nic w przeplanowaniu nie odróżnia „kontrakt zły” od „implementacja zła”. Nie wiadomo, dlaczego `R3_1` w 02 przeszło bez napraw po dwóch porażkach tego samego pliku (nie porównywano kontraktów z R1 i R3).
+
+**P7. Rozdziały bez wyników padają na `\ref_csv` (wariant P4).** W 01 rozdziały 2–4 (`T10`–`T12`, `R1_4`–`R1_6`, `R2_3`–`R2_5`) padły ~9 razy po 3 próby. Werdykt za każdym razem: *„No results exist yet … Remove every `\ref_csv{...}`”* (raz: literówka `TOTAL_CELS` zamiast `TOTAL_CELLS`). Pisarz dostaje składnię `\ref_csv` i wstawia wskaźnik do rozdziału, który wyników nie cytuje. W `R3_1`–`R3_3` te same rozdziały przeszły w 12–21 s bez napraw; przyczyny zmiany nie sprawdzono (hipoteza: pisarz nie dostał `\ref_csv`).
+
+**P8. Zadania „stoją” z konstrukcji.** W 02 `T16` i `T17` (`thesis.md#ch4`, `#ch5`, wyniki) czekają na `results.csv` przez cały przebieg; `T14` (`experiment.py`) czeka na wszystkie moduły (`data_generation.py failed; it waits for its re-plan`), a `R1_4` (`thesis.md#ch3`) czeka na zepsuty kod. `TASK_WAITING` jest logowane od nowa po każdej rundzie, stąd 26 wpisów na 5 różnych zadań. Konsekwencja: jeden zepsuty moduł blokuje eksperyment, ten blokuje rozdziały wynikowe — praca bez wyników nie powstaje. Rozdział 3 w 02 jest `updated` przez planistę w 4 z 5 rund, choć nigdy nie dostał szansy wykonania (czekał na kod).
+
+**P9. Końcówka w 01 trwa 18 min i niczego nie naprawia.** Po `R6_1` (22:52) wszystkie wierzchołki są zielone, ale obrona (Gate 3) widzi brak wyników (`VERDICT … failed_file: thesis.md`, „No results exist yet”). Do `QUEUE_REBUILT` (23:10) mija 18 min:
+- cykle `GATE_3_FIX_2_CORRECT_CODE`, `GATE_3_FIX_3`, `R6_1_FIX`; `SPEC_WRITE_REJECTED` 4× na `tests/test_experiment.py` — reguła `TEST_INVALID_ON_STUBS` („against the stubs a test may fail only with NotImplementedError”) odrzuca poprawkę testu, który pada przy `setup` z własnego powodu (ścieżka pliku). Bramka blokuje jedyną naprawę;
+- `DATA_PRODUCED` 22:56 i 22:59 (fingerprint `0cb2a371…`), potem `DATA_FAILED` 5× i `DATA_STALE` — poprawki kodu w Gate 3 psują eksperyment, który raz dał wyniki (guard A4 `PRODUCER_CHANGE_REVERTED` obejmuje tylko naprawy dokumentu);
+- audyt tworzy jedno zadanie `Q1_RESULTS` na `experiment.py`; nie ujmuje, że zepsuty jest też test. `Q1_RESULTS` pada po 3 min i przebieg się kończy.
+
+**P10. Reguła „brak postępu” kończy przebieg mimo realnych napraw.** Oba stopy to `PRZEPLANOWANIE BEZ POSTEPU`. W 01 rundy R4–R6 naprawiły `figures.py`, `experiment.py` (`R4_1`) i `tests/test_environment.py`; mimo to końcówka z P9 skończyła przebieg przy jednym nieudanym `experiment.py`. Postęp liczy tylko liczbę wierzchołków kiedykolwiek `verified`, a nie zmianę klasy błędu.
+
+**Dodatkowo (znane, wciąż otwarte):** w 01 `R1_2` ma `node: figures.py`, `failed_file: experiment.py` — wspólny proces `entrypoint`+`plots` (P3 z §XXVI, odłożone w §XXVII.4). Para `experiment.py`+`figures.py` zajęła w 01 ~35 z ~90 min (`R1_1` 11 min 50 s, `R1_2` 11 min 6 s, `R2_1`/`R2_2`/`R3_4`/`R3_5` po 2–3 min).
+
+## §XXVIII.3. Wdrożone dziś (tylko sprzątanie, bez zmiany zachowania)
+
+Korekta §XXVI M1/M3: stwierdzenie, że `recovery._tasks_from_audit`/`_rebuild_queue` i `_repair_cycle` są w 100% martwe, było za mocne. `_next_generation` jest wołane z pętli w `orchestrator.py`, gdy audyt padnie na dokumencie/PDF bez nieudanego wierzchołka kodu (gałęzie kodowe `Q_FIX`/`Q_CODE`/`Q_RESULTS` — gdy `pytest` pada przy samych zweryfikowanych wierzchołkach), a `_repair_cycle` jest używane w obronie końcowej i dla `thesis.md`/plików spoza H. Pozostają w kodzie; usunięcie wymaga decyzji, kto przejmuje te przypadki (§XXVIII.4, pkt 6).
+
+- **Usunięty `adk/orchestration/plan_healing.py`** (217 linii) razem z `_normalize_and_heal_task_plan`, `_clean_task`, `_insert_missing_chapters`, filtrem `SKELETON` w `planning.py` i `texts.node_task`. Powód: `plan_tasks.planned_tasks` zwraca już kanoniczne zadania (ścieżki, agenci, zadanie na każdy `planned_chapter`, brak `subtasks`), więc „leczenie” było funkcją tożsamościową. `_planned_chapter_titles` (używane w `schedule`, `factual_audit`, `orchestrator`) i `_custom_chapter_titles` przeniesione do `planning.py`; parametr `multi_cycle_waves` usunięty z `_plan_phase` (wykrył go test higieny).
+- Usunięte: `Hypergraph.degree`, `Hypergraph.incidence` (zero wywołań), zmienna `verified_after` w `scripts/analyze_planning_evolution.py`, trzy testy sprawdzające wyłącznie usunięty kod (`test_elastic_task_count_…`, `test_healing_keeps_planner_order_…`, `test_plan_never_targets_results_…`). Inwariant „plan nie celuje w `results.csv`, testy w `tests/`” zapewnia teraz `planned_tasks`.
+- `CODEBASE_MAP.md`: dwa wpisy poprawione.
+- **Weryfikacja:** `pytest` 351 OK, `ruff` czysty, `vulture` (próg 60%) zostawia tylko fałszywe trafienia (pola `models.py`, stałe mocków, `_replan_uncovered`). Nie ma przebiegu na żywo; zmiana nie dotyka ścieżki wykonania zadań.
+
+## §XXVIII.4. Plan napraw (do wdrożenia, wg kolejności)
+
+1. **P7 — nie pokazywać pisarzowi `\ref_csv`, gdy `results.csv` nie istnieje** (payload `seed_writer`, `context._results_targets`): usuwamy pokusę zamiast prosić model o ostrożność; zgodnie z decyzją „kontrakty w kodzie, nie w promptach” i bez automatycznej edycji tekstu. Test: rozdział bez wyników nie dostaje składni `\ref_csv` w zadaniu.
+2. **P3 — rozdzielić `entrypoint` i `plots`** (`experiment_runner.py`, `schedule.py`): `figures.py` czeka na zweryfikowane `results.csv` i musi zostawić ≥1 plik w `figures/`; sukces `experiment.py` (kod 0 + poprawny `results.csv`) rejestruje `DATA_PRODUCED` niezależnie od wykresów.
+3. **P6 — przeplanowanie rozróżnia klasę błędu:** gdy ten sam plik pada w dwóch kolejnych rundach z tą samą klasą błędu (timeout, wyjątek w runtime), planista dostaje pełny ślad błędu (stos z `faulthandler`, §XXVII) i nie może zmienić kontraktu bez uzasadnienia. Najpierw zbadać różnicę kontraktów w `R1_1` i `R3_1` (02).
+4. **P9 — końcówka:** (A) w Gate 3 nie stosować `TEST_INVALID_ON_STUBS` do testów, gdy kod nie jest już stubem (sprawdzić w `spec_gate.py`, czy reguła ma sens po fazie planowania); (B) audyt końcowy tworzy zadania dla wszystkich przyczyn (test i eksperyment), nie jedno `Q1_RESULTS`; (C) rozszerzyć A4 (`PRODUCER_CHANGE_REVERTED`) na poprawki kodu w Gate 3, które psują działający wcześniej eksperyment.
+5. **P10 — warunek „brak postępu”:** kończyć dopiero po rundzie bez nowego `verified` **i** bez zmiany sygnatury błędu (`_issue_signature`).
+6. **P8 / dług:** jedna pętla przeplanowania — zdecydować, czy `fragment_replan` przejmuje przypadki obsługiwane dziś przez `recovery._tasks_from_audit` (pytest pada przy samych zielonych wierzchołkach); dopiero wtedy usunąć gałęzie kodowe `recovery` i testy `test_layer4_and_orchestrator.py`/`test_root_causes_1115.py`, które je sprawdzają. Dodatkowo: logować `TASK_WAITING` tylko przy zmianie powodu, nie po każdej rundzie.
+7. **Higiena:** dopisać test na nieużywane funkcje i metody klas (jak istniejący `test_no_unused_function_arguments_in_codebase`), żeby martwy kod nie wracał; poprawić `benchmark_summary.json` (`IN_PROGRESS` i `replan_count: 60` nie odpowiadają przebiegom 25.11).
+8. **Weryfikacja każdego punktu:** najpierw migawka + `--resume-from` (§XXV) na zadaniu, które padło (01 przed `R1_1`, 02 przed `R4_1`), potem pełny przebieg 01 i 02. Żadna z napraw P7–P10 nie ma jeszcze przebiegu na żywo, podobnie jak §XXIV i §XXVII.
+
+
+
+## §XXVIII.5. Przeplanowanie nie potrafi zrobić kroku w tył (P11, potwierdzone w kodzie)
+
+Źródło: `adk/orchestration/fragment_replan.py` (`_replan_failed`, `_reopenable`, `_replan_interfaces`, `_replan_tasks`, `_repair_dossier`) i `adk/agents/planning/task_planner.md`. Zarzut użytkownika (2026-11-25): system nie może uznać, że dotychczasowy układ jest zły, i zmienić plików, które już przeszły. Zarzut jest trafny; to nie przypadek, tylko reguła „przeplanowanie jest lokalne” (§XVI).
+
+Co wolno planiście po rozpoczęciu budowy:
+- **Zadania tylko na nieudane wierzchołki.** Prompt `task_planner` (linia 25): `verified_do_not_touch` zostaje, z jednym wyjątkiem poniżej.
+- **Jeden zweryfikowany moduł na rundę** może zostać cofnięty (`stale`), i tylko taki, który jest zależnością albo zależnym nieudanego pliku wskazanym w jego błędach, albo modułem sprawdzanym przez nieudany test (`_reopenable`). **Raz na cały przebieg:** wierzchołek raz cofnięty (`_replan_reopened`) nie wraca.
+- **Interfejsy zmienia się tylko nieudanym modułom** (`_replan_interfaces`, zbiór `allowed`); zmiana interfejsu innego modułu daje `SPEC_AMEND_SKIPPED … not a failed module`.
+- **Zadanie musi wskazywać istniejący wierzchołek H** (`_replan_tasks`); inaczej trafia do `dropped` jako `not in the plan`. Nie da się dodać modułu, rozdzielić pliku ani scalić dwóch.
+- **Zarysu planu nie da się zmienić.** Wsteczne kroki planowania (moduł odsyła dowody do zarysu, `plan_stages`) kończą się z początkiem budowy; po niej architektura jest zamrożona.
+- **Budżet:** `MAX_REPLANS = 6`, `REPLANS_WITHOUT_PROGRESS = 3`.
+
+Korekta wcześniejszych sformułowań (§XXVIII.2 P6): planista ma nie „jedną dźwignię (interfejs)”, tylko pracuje wyłącznie **w obrębie nieudanych modułów**; zmiana interfejsu jest dla niego najbardziej dostępnym ruchem.
+
+Przypadki z logów, w których szersze prawo by pomogło (tylko trzy, więc to hipoteza, nie dowód):
+- 02: `data_generation.py` (rundy R1–R3, interfejs zmieniony w R1 i R3, `R3_1` przeszło w 28 s) oraz `experiment.py` (R4–R5, interfejs zmieniony dwa razy, oba padły) — nic nie pozwalało zmienić zarysu ani podziału na moduły.
+- 01: `environment.py` był fałszywie `verified` i został cofnięty dopiero w drugiej rundzie (§XXVI P1), a sprzęgnięcie `experiment.py` + `figures.py` w jednym procesie (P3) pochłonęło ~35 z ~90 min i żaden mechanizm go nie zauważył.
+
+Nie zmierzono jeszcze, czy szersze cofanie poprawia wyniki; koszt jest realny (cofnięcie stożka unieważnia testy tych modułów, a przebieg trwa 45–55 min).
+
+## §XXVIII.6. Propozycje (do decyzji; nic z tego nie jest wdrożone)
+
+**A. Drabina zakresu** (propozycja asystenta, 2026-11-25) — im dłużej ten sam fragment pada, tym szerzej wolno cofać:
+1. poziom 0, lokalny (dziś): runda 1;
+2. poziom 1, stożek zależności: ten sam plik pada drugą rundę → planista może cofnąć całe zweryfikowane otoczenie i zmieniać jego interfejsy (poluzowanie „jeden na rundę” i „raz w życiu”);
+3. poziom 2, przebudowa fragmentu planu: trzecia runda → ponowne uruchomienie planowania etapowego (`plan_stages`) dla wskazanych modułów albo zarysu, ze zweryfikowanymi plikami zachowanymi (`kept_as_is`, `plan_existing` — mechanika projektów z gotowym kodem już istnieje);
+4. poziom 3, cofnięcie w czasie: wznowienie z migawki sprzed pierwszej porażki (§XXV) ze zmienionym planem; najcięższe, odłożyć.
+Sygnały eskalacji, które już mamy w logach: ten sam wierzchołek `failed` w dwóch rundach pod rząd, `interfaces_changed` dwa razy dla tego samego pliku, niepusty `uncovered`.
+
+**B. Raport słowny o stanie projektu + prawo przebudowy kolejki** (pomysł użytkownika, 2026-11-25) — lepszy od A, bo rozstrzyga, kto i na jakiej podstawie wybiera zakres:
+- przy przeplanowaniu powstaje opis stanu: co jest w każdym pliku, jak ma się do planu, co przechodzi, co pada i dlaczego; planista na tej podstawie może przerobić kolejkę: wydzielić mniejszy plik, zrobić helper, scalić, cofnąć moduł, zmienić interfejs;
+- dwie warstwy, zgodnie z zasadą „kontrakty w kodzie, nie w promptach”: **fakty liczy kod** (stan wierzchołka, liczba prób i porażek, sygnatury ostatnich błędów, długość pliku, publiczne API, kto go używa, wyniki testów), **narrację pisze model** (co plik robi, hipoteza przyczyny, „robi dwie rzeczy”, „bardzo duży”); opisy plików małym modelem (SML), syntezę i decyzję dużym (LRM);
+- odpowiedź planisty strukturalna: dla każdego problemu akcja z listy (poprawić w miejscu, rozdzielić, wyciągnąć helper, scalić, cofnąć moduł X, zmienić interfejs, usunąć); harness stosuje ją przez istniejące walidatory;
+- **najtrudniejsze:** nowy plik to nowy wierzchołek, który musi przejść ścieżkę jak w planowaniu (interfejs od `plan_module`, krytyk modułu, kontrole kodu) z zachowaniem zweryfikowanych plików; precedens rozszerzania H w trakcie przebiegu to zdarzenie `H_EXTENDED` (testy). Potrzebny własny budżet przebudów (np. najwyżej 2 na przebieg), żeby system nie tasował modułów w nieskończoność;
+- **zastosowanie do znanych przypadków:** raport powinien wskazać sprzęgnięcie `experiment.py` + `figures.py` (P3) i zły kontrakt `data_generation.py` w 02.
+- **Ryzyka (niezmierzone):** jakość opisu napisanego przez model 4B; hipoteza, że mały model lepiej radzi sobie z krótkim plikiem (poszlaka: `experiment.py` raz zszedł z 3,7 min do 4 s po zmianie, ale to jedno zdarzenie); koszt czasowy raportu przy każdej rundzie.
+
+**Plan dwuetapowy (rekomendacja):**
+1. **Sam raport**, bez zmiany reszty: trafia do `task_planner` jako dodatkowe dane i zostaje w logach. Sprawdzić na migawkach (01 przed `R1_1`, 02 przed `R1_1`, przez `--resume-from`), czy wskazuje to, co widzimy w logach. Jeśli nie, dalsza budowa nie ma sensu.
+2. **Prawo przebudowy** (nowe wierzchołki, podział, scalanie, własny budżet) dopiero po pozytywnym wyniku kroku 1. Poziom 1 z drabiny A można zrobić wcześniej jako tani eksperyment.
+
+**Otwarte pytanie do użytkownika:** czy raport ma powstawać w każdej rundzie przeplanowania, czy dopiero gdy ten sam plik pada po raz drugi. Skłaniamy się ku: część liczona przez kod w każdej rundzie (tania), narracja modelu dopiero przy powtórzonej porażce.
+
+## §XXVIII.7. Viewer: nowa zakładka „Przepływ” (wdrożone 2026-11-25)
+
+Prośba użytkownika: czytelny diagram przepływu systemu — start, agenci po kolei od góry do dołu, rozgałęzienia jako pole „jeśli”, strzałki; klik w agenta pokazuje jego prompt. Gotowe w `viewer/` (zasady z `viewer/ARCHITECTURE.md`, §9b dopisany przed kodem):
+- strona `/flow` (`app/pages/flow.vue`, komponenty `app/components/flow/`, composables `useFlowDiagram`, `useFlowStyle`, `useAgentPrompt`): Cytoscape z pozycjami z siatki (`preset`), bez automatycznego układu; klik otwiera panel boczny z opisem bloku i, dla agenta, promptem jako markdown z przyciskiem kopiowania;
+- dane: `shared/utils/flow/{nodes,edges,index}.ts`, typy `shared/types/flow.ts`, teksty po polsku w `app/utils/labelParts/{flow,flowSteps,flowAgents}.ts`; pętle wstecz rysowane jako małe przerywane bloki „↩ …”, nie jako długie strzałki;
+- serwer: `GET /api/agents/:name` (`server/utils/agentPrompts.ts`) czyta `adk/agents/<grupa>/<name>.md`; nazwa jest dopasowywana do listy plików, nie składana w ścieżkę; sprawdzone: warianty `..%2F`, `.md`, `%00` i wielkie litery dają 404;
+- **ukryta na wersji wdrożonej** jak „Na żywo” (`localOnly` w `nav.ts`, `/flow` w `LOCAL_ONLY`), bo czyta `adk/agents/`; nie budowano wersji wdrożonej, więc wynika to z kodu;
+- **test pilnuje rozjazdu** (`shared/utils/flow/flow.test.ts`): agenci na schemacie = pliki promptów w `adk/agents/` (19), krawędzie wskazują istniejące bloki, każdy blok i etykieta ma tekst. Schemat jest jednak **ręcznym opisem** harnessu (`orchestrator.run`, `plan_stages`, `building`, `verification`, `repair`, `fragment_replan`): zmiana przepływu w harnessie (np. rozdzielenie `entrypoint` i `plots`, raport z §XXVIII.6, usunięcie `recovery`) wymaga zmiany także tutaj;
+- pokazywany jest prompt **bazowy**, nie wyewoluowany w przebiegu (ten jest w widoku Agenci);
+- weryfikacja: `bun run lint` czysty, `nuxt typecheck` bez błędów, `bun test` 38 OK, zrzut ekranu w headless Edge oraz klik w blok `seed_coder` przez DevTools (panel z promptem się otwiera). **Niesprawdzone:** widok na telefonie, klik w blok bez promptu, wersja wdrożona;
+- serwer `bun run dev` uruchomiony do tej weryfikacji na porcie 3000 został włączony i nie został zatrzymany (próba zatrzymania została zablokowana); do wyłączenia ręcznie;
+- wzięta poprawka układu po oglądzie: łańcuch badaczy przesunięty o wiersz wyżej, żeby strzałka „literatura” nie przecinała bloku `seed_writer`.
+
+
+## §XXVIII.8. Projekt: przeprojektowanie na audycie implementacji (2026-11-25; **wdrożone 2026-11-25, stan w §XXVIII.9**)
+
+**Problem.** Budowanie działa, ale przeprojektowanie nie. Zakładamy, że plik, który przeszedł testy jednostkowe i kontrole kodu, „działa”; w stanie wierzchołka `verified` znaczy to w praktyce tylko „przeszedł testy jednostkowe”. Integracja wychodzi dopiero w `experiment.py`, na końcu, gdy 6–8 modułów jest już zielonych. Wtedy `task_planner` dostaje wyłącznie to, co padło (`_repair_dossier`: pełna treść nieudanych plików i kod ich sąsiadów z błędów), a cała reszta jest dla niego niewidoczna (§XXVIII.5).
+
+**Pomysł użytkownika** (2026-11-25): w audycie pole „zaimplementowane”; dla każdego pliku rozpisane deklaracje i funkcje — dla każdej funkcji co przyjmuje, co zwraca i jak to przetwarza — w jednym dużym pliku JSON. Do projektanta trafia ten audyt, plan i aktualne, niezałatwione błędy; projektant zwraca wytyczne, co zrobić, a potem się to wdraża. Najlepiej dopasować to do projektanta z warstwy 1, żeby przy decyzji o nowym module dało się użyć istniejącej ścieżki planowania. Całość maksymalnie usystematyzowana. Dopowiedzenie użytkownika: do szukania błędów i pomysłów nie są potrzebne ciała funkcji, jeśli ktoś je opisze.
+
+**Ocena asystenta.** Kierunek jest właściwy i da się go zbudować głównie z istniejących elementów: `plan_stages` już zawiera zasadę „uwaga wskazuje część planu i tylko ona jest otwierana ponownie” (`changed_modules`, `kept_as_is`, `_revise_outline`), `plan_tasks.planned_tasks` przyjmuje zbiór `kept` (zachowane pliki nie dostają zadań), `plan_existing._with_existing` obsługuje projekty z gotowym kodem, a hipergraf ma precedens rozszerzania w trakcie przebiegu (`H_EXTENDED`). Zastrzeżenie do „ciał niepotrzebnych”: do **decyzji projektowych** (rozdziel plik, helper, zmiana interfejsu) wystarczą interfejs, opis i błędy; do **znalezienia błędu** ciało bywa konieczne — w 01 `environment.py` nie ustawiał `self.current_player = next_player` (widać tylko w ciele), w 02 `generate_dataset` zwracało `None`, a `experiment.py` przepisano pięć razy, zanim ktoś zajrzał do zależności. Dlatego ciała widzi tylko jeden mały agent, osobno na plik, i opisuje je słowami; projektant widzi opisy.
+
+### §XXVIII.8.1. Co dodać
+
+**1. `implementation_audit.json` (kod, bez modelu).** Nowy moduł `adk/orchestration/implementation_audit.py` (≤ 400 linii). Stan w `evolved_adk/state/implementation_audit.json`. Dla każdego pliku z H:
+- plik, stan wierzchołka, odcisk (hash), liczba linii, próby i porażki;
+- importy, stałe, klasy (bazy, metody);
+- funkcje: nazwa, parametry (typ, wartość domyślna), zwracany typ, docstring, jakie funkcje wywołuje, jakie wyjątki rzuca;
+- `uses` / `used_by`;
+- testy: ile przechodzi, ile pada;
+- ostatnie niezałatwione błędy (sygnatura i pierwsza linia).
+
+Wszystko poza opisem zachowania wynika z drzewa AST i hipergrafu, więc jest deterministyczne i nie może zmyślić. Elementy już istnieją (`contract_check.public_api`, `stub_source`, `interface_view`, `spec_from_stub`, lista symboli AST kompilatora wskaźników); trzeba je złożyć.
+
+**2. Agent `implementation_auditor` (nowy, SML, jedno wywołanie na plik).** Payload: ciało pliku i jego karta z pkt 1. Pytanie stałe: dla każdej funkcji — co wchodzi, co wychodzi, jak przetwarza (2–3 zdania); czy zgadza się z interfejsem z planu; co wygląda podejrzanie. Wynik trafia do `implementation_audit.json` przy funkcji (`behavior`). Opis jest zapamiętany po odcisku pliku, więc kolejna runda opisuje tylko pliki, które się zmieniły. Prompt w `adk/agents/verification/implementation_auditor.md`, teksty w `agent_texts.py`, wpis do schematu w zakładce Przepływ.
+
+**3. Projektant: `plan_outline` w trybie rewizji.** Zamiast nowego agenta rozszerzyć prompt o sekcję włączaną, gdy payload ma pole `revision`. Wejście: bieżący zarys i interfejsy, **skrócony** audyt (sygnatury i opisy, bez ciał), niezałatwione błędy (nie cała historia), powód uruchomienia. Wyjście (wytyczne): dla każdego modułu stan `keep | change | new | remove` z jednym zdaniem *dlaczego*, a dla każdego nieudanego pliku diagnoza (przyczyna w tym pliku / u sąsiada / w podziale na moduły). Format jest wymuszony przez kod: wpis `keep` musi być identyczny ze starym, usunięcie modułu wymaga zmiany jego zależnych, nowa nazwa nie może kolidować z istniejącą (część tego już sprawdza `outline_violations`, resztę dopisać).
+
+**4. Wdrożenie wytycznych — istniejąca ścieżka planowania.** `changed_modules` liczy różnicę zarysów; dla modułów `change` i `new` pracuje `plan_module`, ocenia je `module_critic_guard`, cały plan `plan_critic_guard`; `planned_tasks` dostaje `kept` = zweryfikowane i niezmienione pliki; budowa idzie jak zawsze (`seed_coder`, `seed_tester`, `seed_writer`). Nowy moduł przechodzi więc tę samą drogę co w pierwszym planowaniu.
+
+### §XXVIII.8.2. Agenci
+
+| rola | agent | nowy? | model |
+|---|---|---|---|
+| opis zachowania pliku | `implementation_auditor` | **nowy** | SML |
+| projektant (wytyczne) | `plan_outline` (tryb rewizji) | rozszerzony | LRM |
+| interfejsy zmienionych i nowych modułów | `plan_module` | istniejący | LRM |
+| krytyk modułu, krytyk planu | `module_critic_guard`, `plan_critic_guard` | istniejące | jak dziś |
+| budowa | `seed_coder`, `seed_tester`, `seed_writer` | istniejące | jak dziś |
+| ścieżka zapasowa i po wyczerpaniu limitu przebudów | `task_planner` | istniejący, zostaje | jak dziś |
+
+Jeden nowy agent i jeden rozszerzony prompt. Gdyby 4B/LRM mylił dwa tryby w `plan_outline`, wydzielić osobnego `plan_revision` z tym samym formatem wyjścia.
+
+### §XXVIII.8.3. Kiedy uruchamiać i kiedy zatrzymać
+
+**W tym samym momencie, w którym dziś rusza przeplanowanie** (decyzja użytkownika, 2026-11-25): kolejka została wykonana do końca, nie ma już zadań do wykonania, a są wierzchołki `failed` (`orchestrator.py`, wywołanie `_replan_failed`). Nie ma osobnego wyzwalacza ani wyboru ścieżki według `h.entry()` lub powtórzenia wierzchołka; dopóki nie wyczerpano limitu przebudów (`MAX_REDESIGNS = 2`), w tym miejscu wchodzi przeprojektowanie (`verified` przestaje blokować cofnięcie modułu). Udana runda przeprojektowania **nie liczy się** do limitów `MAX_REPLANS = 6` i `REPLANS_WITHOUT_PROGRESS = 3`, natomiast ma własny twardy limit `MAX_REDESIGNS = 2` na przebieg; po jego wyczerpaniu (albo gdy wytyczne nie przejdą walidacji lub zostawią wszystkie moduły jako `keep`) runda spada do `task_planner` i podlega zwykłym limitom `MAX_REPLANS` / `REPLANS_WITHOUT_PROGRESS` (patrz §XXVIII.8.6). **Bramki dla człowieka nie ma** (decyzja użytkownika, 2026-11-25): benchmarki są nieinteraktywne (`interactive_gates=False`, bramki przechodzą same), więc bramka niczego by nie chroniła.
+
+### §XXVIII.8.4. Kolejność prac (do realizacji po ustaleniach z użytkownikiem)
+
+1. **Audyt z faktów** (kod). Sprawdzić na migawkach 01 i 02, czy JSON pokazuje sprzęgnięcie `experiment.py` + `figures.py` i `None` z `generate_dataset`. Bez modelu, tanio — warunek dalszych kroków.
+2. **`implementation_auditor`** + cache po odcisku; ocenić, czy opisy są użyteczne.
+3. **Tryb rewizji `plan_outline`**, walidatory i wdrożenie przez `plan_stages` z `kept`.
+4. **Podpięcie w `_replan_failed`:** przeprojektowanie do limitu `MAX_REDESIGNS = 2`, po wyczerpaniu limitu lub odrzuceniu wytycznych — przejście na `task_planner`.
+5. **Testy i higiena:** mocki nowego agenta w `adk/mocks/agents.py` (zasada „bez gałęzi mockowych w harnessie”), `test_prompt_consistency`, aktualizacja schematu w zakładce Przepływ (`shared/utils/flow/`) i wpis w audycie.
+
+### §XXVIII.8.5. Ryzyka i niewiadome
+
+- Jakość opisów małego modelu (4B) nie jest zmierzona. Fakty z AST są niezależne, więc najgorsze scenariusze odpadają, ale „jak to przetwarza” może być płytkie. Plik z błędem, którego nie widać w opisie (np. brak jednej linii), może nadal wymagać wyjątku: projektant prosi o ciało wskazanego pliku.
+- Rozmiar: pełny JSON nie zmieści się w prompcie; projektant dostaje wersję skróconą, pełna zostaje w pliku stanu. Nie wiadomo, ile kontekstu bezpiecznie przyjmie lokalny LRM — do sprawdzenia przed krokiem 3.
+- Moduł `change` unieważnia testy zależnych (`stale`), więc runda jest droższa; to cena za krok w tył.
+- Hipoteza, że krótsze pliki ułatwiają pracę modelu 4B, ma jedną poszlakę (`experiment.py` zszedł z 3,7 min do 4 s po zmianie) i nie jest zmierzona.
+- Nie ma przebiegu na żywo, który pokazałby poprawę; weryfikacja przez migawki i `--resume-from` (§XXV).
+
+### §XXVIII.8.6. Decyzje użytkownika i domknięcie warunków brzegowych (2026-11-25)
+
+1. **Audyt powstaje wyłącznie w momencie wejścia w przeprojektowanie** (koniec kolejki z wierzchołkami `failed`, dopóki `_redesign_count < MAX_REDESIGNS`); nigdy po pojedynczych zadaniach w trakcie kolejki i nie „na zapas”. Cache opisów po odcisku pliku zostaje na wypadek drugiego przeprojektowania w tym samym przebiegu.
+2. **Bez bramki dla człowieka** (benchmarki mają działać samodzielnie). Zamiast niej zabezpieczenia w kodzie: walidatory wytycznych (`keep` identyczny ze starym, usunięcie modułu wymaga zmiany zależnych, brak kolizji nazw), twardy limit przebudów **`MAX_REDESIGNS = 2` na przebieg**, **ścieżka zapasowa na `task_planner`** (gdy wytyczne nie przejdą walidacji, zwrócą wyłącznie `keep` bez żadnej przebudowy, albo gdy wyczerpano `MAX_REDESIGNS`), oraz wytyczne zapisane jako zdarzenie w logu (do przejrzenia po fakcie w viewerze).
+3. **`task_planner` zachowuje prawo do zmiany interfejsów** — bez zmian, jako ścieżka zapasowa oraz ścieżka po wyczerpaniu `MAX_REDESIGNS`. Wcześniejsza sugestia asystenta, żeby zdjąć mu prawo zmiany interfejsów, nie ma dowodu, a jest dowód przeciw: w 02 `R3_1` przeszło w 28 s bez napraw po zmianie interfejsu przez `task_planner`. Wrócić do tematu, jeśli pomiar pokaże, że te zmiany głównie szkodzą (P6, §XXVIII.2).
+4. **Jeden wyzwalacz, bez rozgałęzienia po `h.entry()` czy powtórzeniu wierzchołka:** przeprojektowanie rusza dokładnie w tym samym momencie co dzisiejsze `_replan_failed` — kolejka się skończyła, nie ma zadań do wykonania, są wierzchołki `failed` (dopóki `_redesign_count < MAX_REDESIGNS`; potem w tym samym miejscu wchodzi `task_planner`). Odrzucone: wyzwalanie po `h.entry()`, po powtórzeniu wierzchołka w dwóch rundach i rozdzielanie „lokalnie / przeprojektowanie” według tych sygnałów.
+5. **Twardy warunek stopu (brak pętli nieskończonej):** udana runda przeprojektowania (zwiększająca `_redesign_count`, maksymalnie `MAX_REDESIGNS = 2`) nie zużywa `MAX_REPLANS = 6` ani `REPLANS_WITHOUT_PROGRESS = 3` (`fragment_replan.py`). Natomiast każda runda przekierowana do `task_planner` (po odrzuceniu wytycznych, przy braku zmian w wytycznych lub po osiągnięciu `MAX_REDESIGNS = 2`) normalnie podlega `MAX_REPLANS = 6` oraz `REPLANS_WITHOUT_PROGRESS = 3` i kończy przebieg przez `REPLAN_EXHAUSTED`. System ma więc gwarantowany koniec w co najwyżej `MAX_REDESIGNS + MAX_REPLANS` rundach końca kolejki.
+
+**Uwaga terminologiczna do opisu obecnego kodu.** Przeplanowanie uruchamia się w `orchestrator.py` (`_replan_failed`) raz po przejściu całej kolejki z co najmniej jednym wierzchołkiem `failed`; pojedyncze zadanie ma wcześniej własne próby lokalne (dwie szybkie naprawy i jeden pełny cykl, w logach `repair_attempts: 3`). Punkt wejścia nie jest zahardkodowany: pochodzi z planu (`blueprint.entrypoint`) i hipergrafu (`h.entry()`); „`experiment.py`” we wcześniejszych przykładach z logów 01 i 02 jest jedynie nazwą pliku z tamtych przebiegów.
+
+
+### §XXVIII.9. Stan wdrożenia przeprojektowania (2026-11-25): wdrożone, bez przebiegu na żywo
+
+**Weryfikacja:** `pytest` 385 OK (było 368; 17 nowych w `tests/test_redesign.py`, w tym przebieg całego `run()` i limit prób), `ruff` czysty, viewer: `lint`, `nuxt typecheck` i 38 testów `bun` czyste. **Nie ma przebiegu na żywo.** Przebieg `run()` w teście jest na mockach: pierwsze zadanie na `core.py` kończy się jak po wyczerpanych naprawach, kolejka się kończy, projektant jest pytany, `core.py` jest projektowany i budowany od nowa, `config.py` zostaje `verified`, przebieg `COMPLETED`.
+
+**Co powstało:**
+- `adk/orchestration/implementation_audit.py`: `source_facts` / `audit_facts` (deklaracje, wywołania i zgłaszane wyjątki każdej funkcji z AST, `uses` / `used_by`, testy, ostatnie błędy, `lacks_planned` = nazwy z planu, których plik nie ma), `_implementation_audit` (opisy zapamiętane po odcisku pliku w `state/implementation_audit.json`), `compact_audit` (widok dla projektanta: deklaracje i opisy, bez ciał; ponad 24 000 znaków skraca się najpierw to, co przeszło bez uwag).
+- `adk/agents/verification/implementation_auditor.md` (SML, jedno wywołanie na plik; jedyne miejsce, w którym czyta się ciała funkcji).
+- `adk/agents/planning/plan_outline.md`: sekcja REVISING (`revision`: `reason`, `failed`, `implementation`, `unresolved_errors`, `run_error`); odpowiedź to cały zarys plus `revision.modules` (status i powód każdego modułu) i `revision.diagnosis` (przyczyna: `this_file`, `neighbour`, `split`).
+- `adk/orchestration/redesign_rules.py` (`decisions_of`, `revision_violations`), `adk/orchestration/redesign.py` (`_redesign_failed`, `_guidelines`, `_apply_redesign`, `_carry_over`), teksty w `agent_texts.py`.
+- `plan_stages._converge`: etapy 2–4 planowania wydzielone z `_staged_plan`, żeby przeprojektowanie weszło w nie z zarysem i interfejsami zachowanych modułów.
+- Wyzwalacz: `fragment_replan._replan_failed` wywołuje `_redesign_failed` na samym początku, w tym samym miejscu co dotąd; rundy mają limit `MAX_REDESIGNS = 2` (atrybut `max_redesigns`, wyłączalny w testach) i nie wchodzą do `MAX_REPLANS` ani `REPLANS_WITHOUT_PROGRESS`.
+- Stan: `state/plan_outline.json` (zarys w mocy, zapisany przy planowaniu i po każdym przeprojektowaniu) i `state/implementation_audit.json` dopisane do `STATE_FILES`, więc trafiają do migawek i `--resume-from`.
+- Mocki (`implementation_auditor`; projektant w trybie rewizji: `change` dla nieudanych modułów, reszta `keep`), schemat w zakładce Przepływ (6 nowych bloków i agent `implementation_auditor`), `CODEBASE_MAP.md`.
+
+**Jak przebiega runda:**
+1. Audyt: fakty z AST i H dla każdego modułu H; opisy tylko plików zmienionych od ostatniego audytu.
+2. Projektant (`plan_outline`, LRM) dostaje payload planowania, `current_outline` i `revision`; ma dwie odpowiedzi (druga z listą problemów). Kod odrzuca: brak statusu, status spoza listy, `keep` przy zmienionym wpisie, `new` dla istniejącego modułu, nazwę nowego pliku zajętą w workspace, zwykłe naruszenia zarysu, rewizję bez żadnej zmiany.
+3. Moduły `change` dostają wpis w `reopen` z powodem i przechodzą przez `plan_module` (poprawka, więc LRM) z poprzednim szkicem; moduły `new` (pierwsza odpowiedź SML); zachowane moduły zostają zaakceptowane z dotychczasowym interfejsem (z blueprintu, nie z kodu) i `_settle` sprawdza je kodem na tle zmienionych sąsiadów, a złamany wraca do projektowania. Dalej krytyk modułu i krytyk główny jak w planowaniu.
+4. Zastosowanie: pliki modułów `remove` i ich testów są usuwane; blueprint scalony (`interfaces`, zarys, rozdziały), zarys zapisany; H budowany od nowa z pełnego zestawu zadań (`planned_tasks` bez `kept`), nowe moduły dostają stuby, zmienione zostają z dotychczasowym kodem jako bazą (stan `impl`).
+5. `_carry_over`: wierzchołek niezmieniony zachowuje stan, próby, porażki, historię i autora; nieudany zaczyna z zerowymi `attempts` (inaczej `VERTEX_BUDGET = 8` oznaczyłby jego nowe zadanie jako `FAILED` od razu), `failures` zostaje (od nich zależy model); testy modułów używających (nawet pośrednio) przeprojektowanego są `stale`; `results.csv` jest `stale`, gdy przeprojektowano moduł z worka `R:run`.
+6. Kolejka: zadania wszystkiego, co nie jest `verified`, jako `D<n>_<i>`; czekające i nowe zadania zastępują stare `TODO` / `WAITING`, zapis `DONE` i `FAILED` zostaje.
+
+**Ścieżki zapasowe (runda przechodzi do `task_planner`, H i kolejka bez zmian, runda liczy się do jego limitów):** wyczerpane `MAX_REDESIGNS`; brak zapisanego zarysu (przebiegi zaplanowane przed 25.11 i ich migawki); brak odpowiedzi, którą kod przyjmie, po dwóch próbach; rewizja, w której każdy moduł jest `keep`; plan po zmianach, którego etapy 2–4 nie zbudują. Gwarancja końca z §XXVIII.8.6 pkt 5 zachowana: najwyżej `MAX_REDESIGNS + MAX_REPLANS` rund końca kolejki. Dodatkowo (decyzja wdrożeniowa, nie z planu): próby przeprojektowania, także te bez użytecznych wytycznych, mają limit `ATTEMPTS_PER_ROUND * MAX_REDESIGNS` (4 na przebieg); bez niego zły projektant byłby pytany o dwie odpowiedzi przy każdej z sześciu rund przeplanowania.
+
+**Odstępstwa od §XXVIII.8 i decyzje wdrożeniowe:**
+1. Dla zachowanych modułów interfejsem jest dotychczasowy interfejs z planu, nie kod pliku (jak w brownfield). Dzięki temu σ zachowanych modułów się nie zmienia i dostają `verified` z przeniesienia, a nie z ponownej weryfikacji.
+2. `keep` dla modułu, który padł, oznacza „interfejs zostaje, plik jest budowany od nowa”: zadanie powstaje ze stanu wierzchołka, nie ze statusu. Status `change` przy identycznym wpisie jest dozwolony i znaczy „projekt do ponownego zrobienia, wpis ten sam”.
+3. Krytyk zarysu (`outline_critic_guard`) nie ocenia rewizji (plan §XXVIII.8.1 pkt 4 go nie przewidywał); rewizję pilnuje kod i dalej krytyk modułu i krytyk główny.
+4. `implementation_auditor` nie ma wpisu w rejestrze agentów; jest wołany po ścieżce pliku jak `code_auditor`.
+5. Ciała plików czyta audytor (obcięte do 12 000 znaków) i, wyjątkowo, projektant: wyjątek z §XXVIII.8.5 jest zbudowany (2026-11-25). Raz na rundę może odpowiedzieć samym `revision.need_source` (do 3 zaimplementowanych modułów; plik nieistniejący, niebędący modułem lub powtórzony jest pomijany); harness odsyła ich kod (po 8 000 znaków) w `revision.sources` i pyta ponownie (`REDESIGN_SOURCE_GRANTED`). Prośba nie zużywa żadnej z dwóch odpowiedzi; druga prośba w tej samej rundzie i prośba o nic, co wolno czytać, są zwykłymi odpowiedziami bez zarysu (dostają uwagę i drugą szansę).
+6. Rozdziały pracy zachowują stan z przeniesienia nawet wtedy, gdy kod, który cytują, został przeprojektowany; zweryfikuje je Gate 3 i naprawy.
+
+**Czego nie ma i co sprawdzić w pierwszym przebiegu na żywo:**
+- Zdarzenia `REDESIGN_STARTED`, `REDESIGN_GUIDELINES` (statusy, diagnoza, problemy), `REDESIGN_APPLIED`, `REDESIGN_FALLBACK`, `REDESIGN_REMOVED` są w `events.jsonl` i (od 2026-11-25) na osi czasu w viewerze, w fazie „Przeplanowania” razem z zadaniami `D<n>_…` (`viewer/shared/utils/timeline/redesign.ts`; także `IMPLEMENTATION_AUDITED` i `REDESIGN_SOURCE_GRANTED`); schemat Przepływ też je opisuje.
+- Nie wiadomo, czy projektant (LRM) odpowie w tym formacie przy pierwszej próbie i czy opisy małego modelu wskażą to, co widać w logach (sprzężenie `experiment.py` + `figures.py`, `None` z `generate_dataset`); pierwsze miejsce do sprawdzenia to `REDESIGN_GUIDELINES.problems`.
+- Rozmiar payloadu projektanta (audyt do 24 000 znaków plus zarys) przy lokalnym LRM nie był mierzony.
+- Przeprojektowanie cofa pracę: moduł `change` zwykle oznacza nowe zadania dla niego i jego testów, a testy użytkowników `stale`; jedna runda może więc kosztować kilka minut budowy.
+- Artefakt „Przepływ harnessu” w claude.ai nie ma jeszcze ścieżki przeprojektowania (zmieniono tylko zakładkę w viewerze).
+
+---
+
+# Audyt XVII — 2026-11-25: Planista piszący pełne ciała funkcji (`plan_module`) oraz monopol LRM (79%–100% czasu) (§XXIX)
+
+**Data audytu:** 2026-11-25  
+**Analizowane logi i kod:**
+- Logi benchmarków: `adk/workspace/benchmarks/{01_rl_tictactoe,02_ml_anomaly_detection,03_graph_pathfinding,04_federated_learning}/logs/events.jsonl` oraz `agent_trace.jsonl`
+- Planowanie etapami i kontrakty: `adk/agents/planning/plan_module.md`, `adk/orchestration/plan_stages.py`, `adk/orchestration/plan_spec.py`, `adk/orchestration/planning.py`, `adk/orchestration/interface_view.py`, `adk/hypergraph/build.py`, `adk/tools/verification/contract_check.py`
+- Dobór modelu (SML vs LRM): `adk/tools/planning/complexity_router.py`, `adk/orchestrator.py`, `adk/orchestration/building.py`, `adk/orchestration/repair.py`, `adk/orchestration/verification.py`, `adk/orchestration/spec_gate.py`, `adk/orchestration/plan_change.py`, `adk/orchestration/fragment_replan.py`
+
+---
+
+## §XXIX.1. Diagnoza 1: `plan_module` pisze pełne implementacje funkcji zamiast szkiców
+
+### Dowód z przebiegów
+W przebiegu `02_ml_anomaly_detection` (oraz `03_graph_pathfinding`) agent `plan_module` (etap 2 z 4 — z założenia wyłącznie projektujący interfejs modułu) wygenerował pełne implementacje algorytmów wewnątrz pola `"source"`:
+- `data_generation.py` (`generate_physio_data`): **57 linii** kompletnego kodu `numpy` (generowanie sinusoid o okresach `100` i `37`, szum Gaussa `* 0.2`, losowanie płaskich indeksów `np.random.choice`, wstrzykiwanie impulsów `* 5` i zwrot słownika),
+- `evaluation_metrics.py`: **97 linii**,
+- `figures.py`: **124 linie**,
+- `experiment.py`: **95–100 linii**.  
+Łącznie sam `plan_module` wykonał w `02` **16 wywołań LRM (`qwen3.6:35b`) za 6,5 minuty**, pisząc kompletny kod projektu już na etapie planowania.
+
+### Mechanizm i łańcuch skutków ubocznych w kodzie
+1. **Przyczyna u źródła — wymuszony format surowego pliku Pythona (`"source"`):**
+   - `adk/agents/planning/plan_module.md` (L3, L28, L41–45) prosi model o zwrócenie całego pliku Pythona w jednym wieloliniowym stringu JSON `"source"`, z miękką uwagą słowną *„Bodies are `...`: the harness keeps no code from the plan”*.
+   - Po wygenerowaniu `def generate_physio_data(...) -> dict:` oraz szczegółowego docstringa rozkład pretreningowy LLM naturalnie domyka funkcję pełnym ciałem (dodatkowo męcząc się z escapowaniem `\n` i `\"\"\"` wewnątrz JSON-a).
+2. **Zarażanie kontekstu kolejnych modułów (`dependencies`):**
+   - `plan_stages.py:243` zapisuje niezmienione `accepted[rel] = result["source"]` (razem z pełnym ciałem).
+   - `plan_stages.py:253` przekazuje `accepted` jako `dependencies` do wszystkich kolejnych wywołań `plan_module` i `module_critic_guard`. Gdy pierwszy moduł-liść (`data_generation.py`) zawiera pełny kod, model widzi w przykładach z `dependencies` pełne implementacje i powiela ten wzorzec w każdym następnym module.
+3. **Podwójna praca — kasowanie kodu na dysku dla `seed_coder`:**
+   - W `_build_project_hypergraph` (`plan_spec.py:141`) harness przepuszcza `interfaces` przez `stub_source(src)` (`contract_check.py:180-210`) i zapisuje do workspace'u wyłącznie `raise NotImplementedError`.
+   - `seed_coder` dostaje pusty szkielet i pisze od zera dokładnie tę samą funkcję, za której wygenerowanie na LRM system już raz zapłacił.
+   - W `plan_stages.py:278-280` założono wcześniej częściowy plaster (`interface_view(source)`) wyłącznie na wejściu `module_critic_guard` i `plan_critic_guard`, ukrywając objaw przed krytykiem zamiast usunąć przyczynę.
+4. **Wyciek skasowanego kodu do `seed_tester` i kontraktu σ:**
+   - `planning.py:154` zapisuje surowe `interfaces` (z ciałami z planera) do `academic_blueprint.json`.
+   - `interface_view.py:40-56` (`interface_for_test`, `interfaces_for_coder`) przekazuje ten surowy kod z `blueprint["interfaces"]` wprost do `seed_tester` oraz konsumentów `seed_coder`! Skutek: koder piszący moduł widzi na dysku tylko `NotImplementedError` i tworzy własną implementację, natomiast tester widzi w specyfikacji **wyrzucone ciało napisane przez planera** (np. amplitudę `* 5` czy konkretne składowe sinusoidalne) i pisze pod nie asercje, na których kod kodera pada.
+   - `hypergraph/build.py:38-45, 103-108` (`spec_from_stub`) robi `ast.walk` po całym drzewie AST łącznie z ciałem metody — przypadkowe `self.x = ...` lub wywołanie `mod.fn()` wewnątrz brudnopisowego ciała z planera staje się twardym wymogiem kontraktu σ (i trafia do klasy przez `contract_check._instance_attributes`).
+
+---
+
+## §XXIX.2. Diagnoza 2: Dlaczego SML jest zmarginalizowany, a LRM zjada 79%–100% czasu
+
+### Twarde dane z przebiegów
+Pomiar z `events.jsonl` (`analyze_run.py`):
+- **`01_rl_tictactoe`:** 176 wywołań, 85,1 min czasu LLM → **LRM (`qwen3.6:35b`) = 79% czasu** (97 wywołań LRM vs 79 SML). Sam `seed_coder` wykonał **33 wywołania na LRM (24,9 min)** wobec zaledwie **18 na SML (4,2 min)**; `seed_tester`: 10× LRM vs 6× SML.
+- **`02_ml_anomaly_detection`:** 98 wywołań, 40,2 min czasu LLM → **LRM = 79% czasu** (65 wywołań LRM vs 34 SML). `seed_coder`: **16× LRM (10,2 min)** vs **11× SML (2,9 min)**; `plan_module`: **16× LRM (6,5 min)**.
+- **`03_graph_pathfinding` i `04_federated_learning`:** **100% LRM** (odpowiednio 35 i 5 wywołań).
+
+### Trzy przyczyny w kodzie
+1. **Sztywne `model_tier="LRM"` na całej ścieżce planowania (`plan_spec.py:60-63`):**
+   - `_call_planning_agent` bezwarunkowo wysyła każde wywołanie do `LRM` — nie tylko architektoniczny `plan_outline` i krytyków, ale też każdą pierwszą próbę `plan_module`, mimo że `plan_module` dostaje już rozstrzygnięty wpis z `outline` (`purpose`, `depends_on`, `provides`) oraz gotowe interfejsy zależności.
+2. **Ślepy i nieodwracalny router `select_model_tier(failures)` (`complexity_router.py:10-16`):**
+   - Router sprowadza się do `return "LRM" if int(failures) >= 2 else "SML"` na podstawie `Vertex.failures` (`spec_gate.py:92`).
+   - **Błąd 2a (nabijanie eskalacji udanym `BUILDING_RETRY`):** w `building.py:176` rzut `MaterializationError` inkrementuje `v.failures += 1` *przed* natychmiastowym ponowieniem (`BUILDING_RETRY`). Nawet gdy SML w ponowieniu sekundę później poprawi kształt JSON-a i zapisze poprawny plik, wierzchołek startuje weryfikację już z `failures = 1`. Pierwszy błąd pytesta podbija licznik do `2` i blokuje SML przed jakąkolwiek szybką naprawą.
+   - **Błąd 2b (brak resetu po zmianie kontraktu):** `Vertex.failures` nigdy nie maleje — nawet gdy `plan_change.py` (`SPEC_AMENDED`) lub `fragment_replan.py` oficjalnie zmieniają błędny interfejs modułu, wszystkie kolejne zadania (`R1..R6`) na tym wierzchołku do końca przebiegu jadą na LRM.
+   - **Błąd 2c (palenie LRM na usterki mechaniczne):** gdy wierzchołek ma `failures >= 2`, `repair.py:144` wysyła na LRM nawet trywialne naprawy `FAST_FIX`, w których `repair_findings` podaje dokładną linię i gotową podpowiedź (np. `F821` z brakującym `import numpy as np`, nieużywana zmienna `F841`, `SyntaxError`, zły nagłówek kolumn `results.csv`).
+   - **Błąd 2d (brak uwzględnienia roli wierzchołka):** wierzchołki tekstowe (`chapter`, `research`, `bib`) eskalują do LRM tak samo szybko jak kod (`failures >= 2`), choć ich błędy to niemal wyłącznie literówki w symbolicznych wskaźnikach `\ref_*` z gotową listą `may_cite`.
+3. **Pusty koszt LRM w `redteam_critic_guard` (`verification.py:274`):**
+   - Na bramce końcowej (Gate 3) `redteam_critic_guard` dostaje cały kod, CSV i skompilowaną pracę (~64 tys. znaków) na `model_tier="LRM"` (w `01` zjadło to **8 wywołań = 9,1 minuty**), po czym w `verification.py:340-343` jego odpowiedź jest bezwarunkowo przenoszona do nieblokujących `opinion_warnings`, a `status` i `gate_3_approved` są nadpisywane deterministycznym sprawdzeniem metryk.
+
+---
+
+## §XXIX.3. Zatwierdzone decyzje architektoniczne (D5–D6)
+
+- **D5 — Odgórny deklaratywny szkic modułu (zero pola na ciało funkcji, żadnego wycinania ciał po fakcie):**
+  - Nie prosimy `plan_module` o pisanie pliku Pythona w polu `"source"` i nie wycinamy napisanych ciał post-factum.
+  - `plan_module` deklaruje wyłącznie ustrukturyzowany szkic JSON modułu (`docstring`, `imports`, `constants`, `functions`, `classes`, `needs`), w którym funkcje i metody mają wyłącznie pola `signature` oraz `docstring` — w schemacie wyjścia **nie istnieje pole na ciało**.
+  - Harness deterministycznie składa z tego szkicu kanoniczny kod interfejsu Pythona z ciałami `...` (a przy zapisie szkieletu na dysk — `raise NotImplementedError`). Cała dalsza walidacja (`code_violations`, `spec_from_stub`, krytycy, kontekst `seed_tester` i `seed_coder`) operuje na czystym, złożonym przez harness interfejsie bez żadnych ciał implementacyjnych.
+- **D6 — Hybrydowy podział i dobór modelu (SML jako realny koń roboczy, LRM do architektury i trudnych eskalacji):**
+  - **SML bierze:**
+    1. pierwszą próbę `plan_module` (gdy moduł jest projektowany po raz pierwszy na bazie gotowego `outline`, bez uwag naprawczych),
+    2. domyślnie całe budowanie w Warstwie 2 (`seed_coder`, `seed_tester`, `seed_writer`, agenci `researcher`),
+    3. szybkie naprawy czysto mechanicznych usterek (`SyntaxError`, `ImportError`, błędy lintera ruff jak `F821`/`F401`/`F841`/`E402`, błędy formatu `results.csv`, odrzucenia kształtu odpowiedzi) — o ile wierzchołek nie wpadł w głęboką pętlę powtórzeń,
+    4. wszystkich trzech audytorów opinii na Gate 3 (`code_auditor`, `symbolic_auditor`, `redteam_critic_guard`), skoro ich uwagi są wyłącznie ostrzeżeniami.
+  - **LRM bierze:**
+    1. decyzje architektoniczne i arbitraż kontraktu: `plan_outline`, `outline_critic_guard`, `module_critic_guard`, `plan_critic_guard`, `task_planner` (`_replan_failed`), `plan_change_guard` (`_amend_spec_if_wrong`), `evolution_architect`, `prompt_consolidator` oraz `remediation_planner`,
+    2. poprawki `plan_module` (`attempt >= 2` lub moduł ponownie otwarty z `feedback` od walidatora kodu / krytyka / `needs`),
+    3. eskalację w budowaniu i naprawach po realnych porażkach weryfikacji (`failures >= 2` dla kodu/testów, `failures >= 3` dla rozdziałów/researchu).
+  - **Higiena licznika `Vertex.failures`:**
+    1. pojedynczy `MaterializationError`, po którym natychmiastowe `BUILDING_RETRY` zakończyło się udanym zapisem artefaktu, nie podbija `Vertex.failures` (licznik rośnie dopiero, gdy całe wywołanie budowania zakończy się porażką zapisu lub gdy weryfikacja zwróci `FAIL`),
+    2. zmiana kontraktu modułu (`SPEC_AMENDED` w `plan_change.py` oraz zmiana interfejsu w `fragment_replan.py`) zeruje `failures` zmienionego modułu (oraz jego testów), przywracając `SML` na nowym kontrakcie.
+
+---
+
+## §XXIX.4. Plan wdrożenia (kolejność, pliki, kontrakty, weryfikacja)
+
+### Etap 1: Moduł składania i dekompozycji szkicu JSON (`adk/orchestration/plan_sketch.py`)
+Nowy, mały moduł (~90 linii, dzięki czemu `plan_stages.py` zostaje poniżej limitu 400 linii):
+1. **Schemat deklaratywnego szkicu JSON (`plan_module`):**
+   ```json
+   {
+     "docstring": "<one-sentence module summary>",
+     "imports": ["import numpy as np", "from <dep> import <Name>"],
+     "constants": [{"name": "<CONST>", "type": "<type>", "value": "<literal_expr>"}],
+     "functions": [
+       {"signature": "<func_name>(<arg>: <type>, ...) -> <return_type>", "docstring": "<behaviour in words>"}
+     ],
+     "classes": [
+       {
+         "name": "<ClassName>",
+         "bases": [],
+         "docstring": "<one sentence>",
+         "attributes": ["<attr>: <type>"],
+         "methods": [
+           {"signature": "__init__(self, <arg>: <type>) -> None", "docstring": "<what it initializes>"}
+         ]
+       }
+     ],
+     "needs": {}
+   }
+   ```
+2. **`sketch_to_source(raw: dict[str, Any]) -> str`:**
+   - Składa z powyższych pól czysty plik Pythona, w którym każda funkcja i metoda kończy się wyłącznie docstringiem i ciałem `...` (zero ciał implementacyjnych z konstrukcji).
+   - Odporna normalizacja drobnych wariacji modelu (np. jeśli w `signature` model wpisze `def foo(x: int) -> int:` lub `async def foo(...)`, zdejmuje dublujący się `def ` i końcowy `:`; jeśli w `constants` poda string `"N: int = 4"` lub w `attributes` słownik `{name, type}`, przyjmuje oba zapisy; jeśli model mimo wszystko doda w `signature` wieloliniowy blok kodu po dwukropku, bierze wyłącznie nagłówek sygnatury — żadne ciało nie ma fizycznej ścieżki wejścia do wygenerowanego źródła).
+3. **`source_to_sketch(source: str) -> dict[str, Any]`:**
+   - Parsuje istniejący kod Pythona (np. plik `existing[rel]` w projekcie brownfield `03_graph_pathfinding` albo zaakceptowany już interfejs przy ponownym otwarciu modułu) z powrotem do słownika szkicu JSON na potrzeby pola `previous_sketch` przekazywanego do `plan_module` podczas korekty lub rozszerzania istniejącego modułu.
+
+### Etap 2: Przepięcie `plan_module.md`, `plan_stages.py`, `agent_texts.py` i `llm_trace.py` na szkic JSON
+1. **`adk/agents/planning/plan_module.md`:**
+   - Przepisanie sekcji roli, `INPUTS` (`previous_sketch` + `feedback`), `RULES` i `OUTPUT` na deklaratywny szkic JSON (usunięcie pola `"source"` i przykładów pliku Pythona w stringu).
+   - Zachowanie wszystkich niezmienników sprawdzanych przez `tests/test_prompt_consistency.py`, `tests/test_audit_xv.py`, `tests/test_audit_xix.py` oraz `test_every_prompt_names_every_input_the_code_sends`:
+     - jawne wymienienie każdego klucza wejściowego (`user_prompt`, `module`, `outline`, `dependencies`, `consumers`, `available_packages`, `experiment_time_limit_s`, `previous_sketch`, `feedback`),
+     - kontrakty `results.csv` in the workspace root, `plots`, `Change together` oraz `no executable examples`.
+2. **`adk/orchestration/plan_stages.py`:**
+   - W `_module_stage`: zastąpienie `_module_source` wywołaniem `sketch_to_source(output)` (z zachowaniem pustego stringa `""` i błędu `texts.MODULE_NO_SKETCH`, gdy odpowiedź nie niesie żadnej deklaracji).
+   - Wysyłanie `previous_sketch: source_to_sketch(source)` zamiast surowego `previous_source` (dzięki czemu nawet przy rozszerzaniu pliku brownfield z `existing` autor modułu widzi jego sygnatury jako szkic, bez kopiowania starych ciał!).
+   - Przekazywanie `dependencies` przez `interface_view(dep_src)` (dla istniejących plików brownfield w `existing` autor widzi ich czysty interfejs z `...`, a wszystkie nowe moduły mają już `...` z samego `sketch_to_source`).
+3. **`adk/orchestration/interface_view.py`:**
+   - W `interface_for_test` i `used_part` użycie czystego widoku interfejsu (`...`) także dla plików brownfield z `existing`, żeby `seed_tester` zawsze testował kontrakt, a nie skopiowane wnętrze funkcji.
+4. **`adk/orchestration/agent_texts.py` i `adk/core/llm_trace.py`:**
+   - Zaktualizowanie komunikatu o pustej odpowiedzi modułu (`MODULE_NO_SKETCH` / `MODULE_NO_SOURCE`) oraz `summarize_agent_decision` w `llm_trace.py`, aby ładnie podsumowywał odpowiedź szkicu JSON (liczba funkcji/klas/stałych).
+
+### Etap 3: Hybrydowy router SML/LRM (`complexity_router.py`, `plan_spec.py`, `plan_stages.py`, `building.py`, `repair.py`, `verification.py`, `plan_change.py`, `fragment_replan.py`)
+1. **`adk/tools/planning/complexity_router.py`:**
+   - Rozszerzenie `select_model_tier(failures: int = 0, *, kind: str | None = None, issues: list[Any] | None = None, remediation: bool = False) -> ModelTier`:
+     - `remediation=True`: `"LRM"` już od `failures >= 1` (planer naprawczy wchodzi po wyczerpaniu szybkich napraw).
+     - Wykrywanie czysto mechanicznej usterki (`is_mechanical_failure(issues)`): wszystkie zgłoszone problemy należą do `{SyntaxError, ImportError, F401, F821, F841, E402, I001, format results.csv, odrzucenie kształtu odpowiedzi}` i brak w nich błędów logiki (`pytest:AssertionError`, `pytest:...`, `DATA_FAILED`, `NOT_IMPLEMENTED`, `API_*`, `METRIC_*`). Dla usterki mechanicznej przy `failures < 4` router zwraca `"SML"`, oszczędzając `LRM`.
+     - Dla wierzchołków dokumentowych/badawczych (`kind in ("chapter", "research", "bib")`): próg eskalacji `DOC_ESCALATE_TO_LRM_AFTER = 3` (zamiast `2`).
+     - Dla kodu i testów (`kind in ("code", "entry", "test")` lub `None`): `ESCALATE_TO_LRM_AFTER = 2` (zachowuje wsteczną zgodność prostych wywołań `select_model_tier(failures=...)`).
+   - Dodanie pomocnika `select_planning_tier(agent: str, *, attempt: int = 1, has_feedback: bool = False) -> ModelTier`:
+     - dla `plan_module` przy `attempt == 1` i `not has_feedback` → `"SML"`,
+     - w pozostałych przypadkach (poprawki `plan_module` oraz `plan_outline`, krytycy, `task_planner`) → `"LRM"`.
+2. **`adk/orchestration/plan_spec.py` + `adk/orchestration/plan_stages.py`:**
+   - `_call_planning_agent(self, md: Path, payload: dict[str, Any], *, model_tier: str = "LRM")` przyjmuje opcjonalny `model_tier`; `_module_stage` wywołuje go z `select_planning_tier("plan_module", attempt=attempt, has_feedback=bool(fb))`.
+3. **`adk/orchestration/building.py`:**
+   - W `_execute_builder_step` przy `MaterializationError`: jeśli natychmiastowe ponowienie (`BUILDING_RETRY`) **powiedzie się**, zapisujemy zdarzenie diagnostyczne, ale **nie inkrementujemy `Vertex.failures`** (albo inkrementujemy `Vertex.failures` dopiero w bloku `except MaterializationError as exc2:`, gdy również ponowienie odrzuci odpowiedź).
+4. **`adk/orchestrator.py` i `adk/orchestration/repair.py`:**
+   - Przekazywanie `kind` wierzchołka (z `H`) do `select_model_tier(...)` w `_execute_task` i `_repair_cycle`, a w szybkiej naprawie (`_repair_task`) dodatkowo `issues=issues_list`.
+5. **`adk/orchestration/plan_change.py` i `adk/orchestration/fragment_replan.py`:**
+   - Po udanym `_apply_amendment` (zmiana kontraktu `SPEC_AMENDED` lub zmiana interfejsu w `REPLAN`) wyzerowanie `h.vertices[module].failures = 0` oraz `failures = 0` dla testów tego modułu (`h.tests_of(module)`), aby nowy kontrakt startował od `SML`.
+6. **`adk/orchestration/verification.py`:**
+   - Zmiana wywołania `redteam_critic_guard.md` (L274) z `model_tier="LRM"` na `model_tier="SML"`.
+
+### Etap 4: Aktualizacja symulowanych agentów (`adk/mocks/`) i testów
+1. **`adk/mocks/staged.py` i `adk/mocks/agents.py`:**
+   - `staged_answer(..., "plan_module", payload)` zwraca deklaratywny szkic JSON wyliczony z `plan["interfaces"][rel]` (przez wspólną strukturę AST w `staged.py`, bez importowania `adk/orchestration` z `mocks/`, zgodnie z testem izolacji mocków!).
+   - Flaw `module_misses_promise` w `SimulatedAgents._module` modyfikuje nazwę funkcji w szkicu JSON (`functions`), tak aby test e2e `flaws_left == set()` przechodził w 100%.
+2. **Aktualizacja istniejących testów jednostkowych `plan_module`:**
+   - Dopasowanie nadpisań `plan_module` w `tests/test_plan_stages.py`, `tests/test_audit_vi.py` i `tests/test_audit_xvii.py` do nowego kontraktu szkicu JSON i klucza `previous_sketch` (oraz sprawdzenie w `test_audit_xi.py`, że `F821` przy `failures=2` idzie teraz celowo na `SML`, podczas gdy błąd `pytest` przy `failures=2` eskaluje na `LRM`!).
+3. **Nowe testy regresji (`tests/test_module_sketch_and_tier_routing.py`):**
+   - `plan_module` zwracający szkic JSON (importy, stałe, klasy z atrybutami i metodami, funkcje) składa się do poprawnego interfejsu z `...` i przechodzi `code_violations` oraz `spec_from_stub`,
+   - próba przemycenia kodu ciała wewnątrz pola `signature` jest ignorowana — wygenerowany interfejs nigdy nie zawiera instrukcji implementacji,
+   - `plan_module` idzie na `SML` w 1. próbie i eskaluje na `LRM` w 2. próbie (po błędzie kodu lub blokadzie krytyka),
+   - mechaniczna szybka naprawa (`F821` / `SyntaxError`) zostaje na `SML` mimo `failures=2`, natomiast błąd `AssertionError` w `pytest` przy `failures=2` idzie na `LRM`,
+   - udane `BUILDING_RETRY` po odrzuceniu kształtu JSON nie nabija `Vertex.failures`, a `SPEC_AMENDED` zeruje `Vertex.failures`,
+   - `redteam_critic_guard` na Gate 3 jest wołany z `model_tier="SML"`.
+
+### Etap 5: Pełna weryfikacja
+- Szybki przebieg po zmianach: `.venv/Scripts/python.exe -m pytest tests -q -p no:cacheprovider -m "not slow"`
+- Pełny zestaw testów (w tym e2e symulacji i higiena repozytorium): `.venv/Scripts/python.exe -m pytest tests -q -p no:cacheprovider`
+- Kontrola lintera i limitu linii rdzenia (≤ 400 linii dla nowych/edytowanych modułów): `.venv/Scripts/python.exe -m ruff check adk tests main.py scripts`
+
+---
+
+## §XXIX.5. Stan wdrożenia (2026-11-25): etapy 1–5 zrobione, bez przebiegu na żywo
+
+**Weryfikacja:** `pytest` 368 OK (było 351; 17 nowych w `tests/test_module_sketch_and_tier_routing.py` i `test_mechanical…` w `test_audit_xi.py`), `ruff` czysty, `bun run lint` / `nuxt typecheck` / `bun test` (38) czyste. **Nie ma przebiegu na żywo**, więc nie wiadomo jeszcze, czy model 4B odpowiada w schemacie szkicu (pierwsza odpowiedź `plan_module` jest teraz jego) ani ile LRM faktycznie ubędzie.
+
+**Wdrożone (zgodnie z planem):**
+- Etap 1: `adk/orchestration/plan_sketch.py` (`sketch_to_source`, `source_to_sketch`); z `signature` bierze tylko nagłówek (zdjęte `def` / `async def`, końcowy `:` i każde ciało po nim), puste szkice dają `""`.
+- Etap 2: `plan_module.md` na szkic JSON (stare pole `"source"` i przykład pliku usunięte; wszystkie niezmienniki testów promptów zachowane), `plan_stages._module_stage` (`sketch_to_source`, `previous_sketch`, `dependencies` przez `interface_view`), `interface_for_test` / `used_part` / `labelled` czytają interfejs bez ciał także dla istniejącego kodu, `MODULE_NO_SKETCH`, podsumowanie szkicu w `llm_trace`.
+- Etap 3: `select_model_tier(failures, kind, mechanical, remediation)`, `select_planning_tier`, `_call_planning_agent(model_tier=)`, `kind` wierzchołka w `_execute_task`, szybkiej naprawie i zadaniu chirurgicznym, `redteam_critic_guard` na SML, brak podbicia `failures` po naprawionej odpowiedzi, zerowanie `failures` po zmianie kontraktu.
+- Etap 4: mocki (`staged.sketch_of`, flaw `module_misses_promise` zmienia sygnaturę w szkicu), testy dostosowane, testy regresji z planu.
+
+**Odstępstwa od planu (świadome):**
+1. `select_model_tier(..., mechanical: bool)` zamiast `issues`: klasyfikację usterek robi `failure_kinds.is_mechanical_failure` na istniejącym `_issue_category` (plus rozpoznanie błędu kolumn `results.csv`), bo router w `tools/` nie powinien importować z `orchestration/` i nie duplikujemy wyrażeń regularnych.
+2. `remediation=True` to **zawsze LRM** (plan: od `failures >= 1`). Powód: obrona Gate 3 woła `_repair_cycle` bez szybkich napraw, więc `repair_attempts` = 0 i planista napraw dostałby SML, wbrew D6 (`remediation_planner` na LRM).
+3. Zerowanie `failures` jest w jednym miejscu, `plan_change._apply_amendment`, bo przechodzą przez nią zarówno `SPEC_AMENDED`, jak i zmiana interfejsu w przeplanowaniu (plan: dwa miejsca).
+4. Schemat szkicu dostał pole `decorators` (funkcje, metody, klasy): bez niego `@dataclass`, `@property`, `@staticmethod` ginęły z kontraktu σ, a dziś przechodzą walidację. `constants` i `attributes` przyjmują też gotowy zapis tekstowy (`"N: int = 4"`).
+5. `interface_view` przeniesiony z `plan_spec.py` do `interface_view.py`: jedno miejsce widoku interfejsu bez ciał (`plan_spec` go importuje). Dla krytyka modułu opakowanie zostało **usunięte** (szkic nie ma ciał), dla `plan_critic_guard` i `dependencies` zostaje, bo mogą tam wejść istniejące pliki z ciałami.
+6. `BUILDING_RETRY`: `_remember_verdict` przeniesione do bloku po drugiej odrzuconej odpowiedzi; `failures` rośnie raz (dawniej o jeden za każdą odrzuconą odpowiedź) i z powodem ostatniej.
+7. Fikstury mocków: `train_and_evaluate` we wszystkich czterech scenariuszach dostała docstring z nazwami metryk. Walidator `METRIC_NOT_IN_ENTRYPOINT` szuka metryki w całym tekście interfejsu, a po zniknięciu ciał i komentarzy zostaje tylko docstring (prompt zawsze tego wymagał; fikstury „zdawały” przez treść funkcji).
+
+**Usunięte jako bezprzedmiotowe:** `_module_source` i `_FENCE` (czytanie `source` / `interface` / `code` z ogrodzeniem markdown i literalnym `\n`), `previous_source`, `MODULE_NO_SOURCE`, trzy testy tego kodu.
+
+**Przegląd sprzeczności (2026-11-25), znalezione i poprawione:** viewer (opis `redteam_critic_guard` jako „duży model”, opis modelu szybkiej naprawy, opis `plan_module`), `CODEBASE_MAP.md` (etap 2 planowania, router, nowe moduły `plan_sketch`, `interface_view`, `is_mechanical_failure`), docstring `plan_stages`, oraz własna sprzeczność wdrożenia z D6 (pkt 2 powyżej). **Sprawdzone i bez sprzeczności:** prompty `module_critic_guard`, `plan_critic_guard`, `seed_coder`, `seed_tester` (mówią o ciałach `...` i stubach, co pasuje do szkicu); testy niezmienników promptów (`test_every_prompt_names_every_input_the_code_sends` pokrywa teraz też `previous_sketch`, bo naprawiłem test, który go nie wysyłał). **Niezmienione, sprzed listopada:** `documentation/` i `adk_architecture.txt` (opisują `redteam_critic_guard` jako SML, więc po tej zmianie są akurat zgodne).
+
+**Skutki do obserwacji w pierwszym przebiegu na żywo:**
+- interfejs z planu nie niesie już komentarzy `#`, kolejności definicji autora (stałe, klasy, funkcje) ani instrukcji innych niż deklaracje;
+- sygnatury z wieloliniowymi wartościami domyślnymi i literałami z nawiasami w napisach nie były sprawdzane z prawdziwym modelem (`_header` liczy nawiasy, nie parsuje napisów);
+- `task_planner` nadal zwraca interfejsy jako kod w `interfaces` (`plan_interfaces.py`), poza zakresem D5; jeśli i tam pojawią się ciała, to ten sam problem w innym agencie.

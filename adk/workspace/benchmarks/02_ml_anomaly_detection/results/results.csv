@@ -1,5 +1,0 @@
-method,metric,value,std_dev,n_runs
-baseline,auc_score,0.5183333333333333,0.0,10
-baseline,f1_score,0.2608695652173913,0.0,10
-ensemble,auc_score,0.5801041666666666,0.0,10
-ensemble,f1_score,0.2005819856119307,0.0,10

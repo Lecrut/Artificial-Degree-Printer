@@ -4,9 +4,9 @@
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "plan_module",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
-        "injected_rule": "When defining module interfaces or logic, verify that all referenced constants and data flow requirements are fully accounted for in the plan before committing to an implementation, because missing dependencies prevent deterministic execution.",
+        "agent": "plan_outline",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_outline.md",
+        "injected_rule": "When designing module interfaces for metrics that depend on raw scores versus binary predictions, explicitly define a deterministic thresholding or scoring conversion step within the experiment module's contract, because undefined transitions from continuous outputs to discrete labels introduce ambiguity in metric calculation.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
@@ -18,129 +18,11 @@
         "status": "mutated",
         "agent": "plan_module",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
-        "injected_rule": "When designing an interface for an agent that produces scores used by downstream components requiring different metrics (such as AUC for continuous values versus F1 for binary masks), ensure the plan exposes both the raw score output and the final thresholded decision to prevent data type loss or semantic mismatch during evaluation.",
-        "active_rules_count": 2,
+        "injected_rule": "When defining a module's interface, ensure that the functional statefulness (state persistence across calls) and shape semantics (dimensionality of inputs vs outputs) are modeled via explicit class structures or unambiguous scalar/1D return contracts respectively, because hidden instance state in pure functions leads to silent contract failures and ambiguous shapes break downstream consumer expectations.",
+        "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
       }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "plan_module",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
-        "injected_rule": "When defining a module's public API in an outline, ensure every proposed function or method argument is explicitly documented as an optional parameter; if the outline does not document it, assume it does not exist and design consumers to handle internal variations or pass data externally, because undocumented parameters create interface drift risks for dependent modules.",
-        "active_rules_count": 3,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "plan_module",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
-        "injected_rule": "When defining a module's interface in an outline, proactively list all methods that are practically necessary for downstream consumers to fulfill their specific contract obligations (such as metric calculation or reproducibility), even if they are not the primary API entry point, because omitting them creates invisible coupling where implementations rely on undocumented symbols. Also ensure that signatures include parameters like `seed` when deterministic behavior is required by the broader experiment context, because reproducibility is a cross-cutting contract requirement.",
-        "active_rules_count": 0,
-        "compacted": true,
-        "compaction_details": {
-          "status": "consolidated",
-          "agent": "plan_module",
-          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
-          "cycle": 1,
-          "rules_consolidated": 4,
-          "dropped_ineffective": [
-            "When defining module interfaces or logic, verify that all referenced constants and data flow requirements are fully accounted for in the plan before committing to an implementation, because missing dependencies prevent deterministic execution.",
-            "When designing an interface for an agent that produces scores used by downstream components requiring different metrics (such as AUC for continuous values versus F1 for binary masks), ensure the plan exposes both the raw score output and the final thresholded decision to prevent data type loss or semantic mismatch during evaluation."
-          ],
-          "invariants": [
-            "When defining a module's public API, list every method and parameter practically necessary for downstream consumers to fulfill their contracts, including explicit seed parameters for deterministic behavior, because reproducibility is a cross-cutting contract requirement.",
-            "When documenting the interface, explicitly annotate all parameters as required or optional rather than relying on implicit defaults, because undocumented or implied parameters create interface drift risks for dependent modules.",
-            "When signatures and docstrings interact, ensure they agree on argument types, return shapes, and conventions such that callers never have to guess, because the plan serves as the single source of truth for implementation and testing."
-          ]
-        }
-      }
-    },
-    {
-      "type": "PROMPT_CONSOLIDATED",
-      "details": {
-        "status": "consolidated",
-        "agent": "plan_module",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
-        "cycle": 1,
-        "rules_consolidated": 4,
-        "dropped_ineffective": [
-          "When defining module interfaces or logic, verify that all referenced constants and data flow requirements are fully accounted for in the plan before committing to an implementation, because missing dependencies prevent deterministic execution.",
-          "When designing an interface for an agent that produces scores used by downstream components requiring different metrics (such as AUC for continuous values versus F1 for binary masks), ensure the plan exposes both the raw score output and the final thresholded decision to prevent data type loss or semantic mismatch during evaluation."
-        ],
-        "invariants": [
-          "When defining a module's public API, list every method and parameter practically necessary for downstream consumers to fulfill their contracts, including explicit seed parameters for deterministic behavior, because reproducibility is a cross-cutting contract requirement.",
-          "When documenting the interface, explicitly annotate all parameters as required or optional rather than relying on implicit defaults, because undocumented or implied parameters create interface drift risks for dependent modules.",
-          "When signatures and docstrings interact, ensure they agree on argument types, return shapes, and conventions such that callers never have to guess, because the plan serves as the single source of truth for implementation and testing."
-        ]
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_baseline_detector.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_initialization_requires_positive_threshold: NameError: name 'pytest' is not defined"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T9_FIX1",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- rs_ensemble_detector.py:RandomSubspaceEnsemble.fit: SyntaxError in new_code: invalid syntax at line 14 of your code: `self.n_estimators: int = <self._config_.get('n_estimators', 10)>` is indented by 8 spaces, the line before by 4. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T10",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_rs_ensemble_detector.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_init_parameters: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_9aqjhqfj\\tests\\test_rs_ensemble_detector.py, line 5; test_detect_threshold_logic: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_9aqjhqfj\\tests\\test_rs_ensemble_detector.py, line 29; test_fit_data_shape_constraint: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_9aqjhqfj\\tests\\test_rs_ensemble_detector.py, line 51"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T10_FIX1",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_rs_ensemble_detector.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_init_parameters: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_rquls0dg\\tests\\test_rs_ensemble_detector.py, line 1; test_detect_threshold_logic: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_rquls0dg\\tests\\test_rs_ensemble_detector.py, line 17; test_fit_data_shape_constraint: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_rquls0dg\\tests\\test_rs_ensemble_detector.py, line 31"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T10_FIX2",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_rs_ensemble_detector.py]: reads RandomSubspaceEnsemble.n_estimators, RandomSubspaceEnsemble.subspace_dim, RandomSubspaceEnsemble.threshold, which the interface does not declare (test only declared methods and attributes)"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T15_FIX_1",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- experiment.py:run_experiment: SyntaxError in new_code: invalid syntax at line 72 of your code: `'metric': [f'f1_{i}', f'auc_{i}'] for i in range(len(['baseline', 'ensemble']))` is indented by 12 spaces, the line before by 12. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_coder.md",
-        "injected_rule": "When generating synthetic data for anomaly detection or similar skewed-distribution tasks, ensure the generation logic explicitly guarantees the existence of at least one positive sample (or target class instance) rather than relying on probabilistic sampling alone, because statistical variance can cause edge cases to fail deterministic assertions.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R1_2",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_rs_ensemble_detector.py]: reads RandomSubspaceEnsemble.threshold, which the interface does not declare (test only declared methods and attributes)"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T6",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_data_generation.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_generate_physio_data_anomaly_labels: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_bejhy34j\\tests\\test_data_generation.py, line 25; test_generate_physio_data_edge_cases: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_bejhy34j\\tests\\test_data_generation.py, line 31"
     }
   ]
 }

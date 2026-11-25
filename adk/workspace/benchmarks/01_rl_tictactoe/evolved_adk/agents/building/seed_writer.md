@@ -75,4 +75,3 @@ Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve AST signature compatibility and symbolic pointer validity.
-- **RULE**: When citing experimental outputs that do not yet exist in the file system, describe planned metrics or settings using text and available AST symbol references (\ref_ast) instead of creating non-resolvable CSV pointer links (\ref_csv), because citations must only reference data that is actually present and verifiable at the time of writing.

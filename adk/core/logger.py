@@ -20,6 +20,15 @@ def _tolerant_console() -> None:
                 pass
 
 
+def _console(message: str) -> None:
+    """Console output is informational only: a dead stdout handle (Windows `OSError: [Errno 22]` after the terminal
+    went away) killed a run 25 min in (2026-11-25). The log files carry everything, so the error is swallowed."""
+    try:
+        print(message)
+    except OSError:
+        pass
+
+
 class HarnessProcessLogger:
     """Logs every prompt sent to agents, raw/parsed responses, and orchestrator steps."""
 
@@ -52,7 +61,7 @@ class HarnessProcessLogger:
             f.write(entry)
 
         if self.verbose_console:
-            print(f"[{layer}] {event}")
+            _console(f"[{layer}] {event}")
 
     def log_event(self, event: str, **fields: Any) -> None:
         """One outcome per line in `events.jsonl`: the machine-readable timeline of a run (task and vertex
@@ -115,7 +124,7 @@ class HarnessProcessLogger:
             f.write(readable_block)
 
         if self.verbose_console:
-            print(
+            _console(
                 f"  -> Agent [{Path(agent_md).name}] ({provider}:{model_name}, {model_tier}) "
                 f"zakończył w {elapsed_ms:.1f} ms"
             )

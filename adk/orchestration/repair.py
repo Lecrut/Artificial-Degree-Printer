@@ -21,6 +21,7 @@ from adk.orchestration.common import (
 )
 from adk.orchestration.plan_change import _spec_findings
 from adk.orchestration.failure_kinds import (
+    is_mechanical_failure,
     _issue_signature,
     _issue_category,
     HARNESS_ENFORCED_CATEGORIES,
@@ -141,7 +142,9 @@ class RepairMixin:
                     fast_task["repair_focus"] = {"file": fast_target, "symbols": symbol_sources(self.workspace_dir, fast_target, focus)}
                 # The model follows the vertex, not the attempt number: before, the large model could never take
                 # over a fast repair (2026-11-18: 139 of 142 coder calls on the small model).
-                fast_tier = select_model_tier(failures=self._vertex_failures(fast_target))
+                fast_tier = select_model_tier(
+                    failures=self._vertex_failures(fast_target), kind=self._vertex_kind(fast_target), mechanical=is_mechanical_failure(issues_list),
+                )
                 print(
                     f"  [WARSTWA 2: SZYBKA NAPRAWA {attempt}/{FAST_REPAIR_ATTEMPTS}] {fast_target} przez '{failed_agent}' "
                     f"(Tier: {fast_tier}), bez W4/W1...",
@@ -351,8 +354,8 @@ class RepairMixin:
                 # of a test/module mismatch departs from the planned interface.
                 "specification": self._specification_symbols(),
             },
-            # The planner runs after the fast fixes failed, i.e. at the escalation point: the large model.
-            model_tier=select_model_tier(failures=int(failed_task.get("repair_attempts", 0))),
+            # The planner decides what to change, after the fast fixes of a task or in the defense of Gate 3: the large model.
+            model_tier=select_model_tier(remediation=True),
             provider=self.provider,
         )["output"]
         proposed = planner_out.get("surgical_tasks") or planner_out.get("tasks") or []
@@ -393,7 +396,7 @@ class RepairMixin:
                 stask["description"] = texts.section_context(context, str(stask.get("description", "")))
             if cycle_trace is not None:
                 cycle_trace["w1_remediation_task_id"] = str(stask["task_id"])
-            st_tier = select_model_tier(failures=self._vertex_failures(st_file))
+            st_tier = select_model_tier(failures=self._vertex_failures(st_file), kind=self._vertex_kind(st_file))
             print(
                 f"  [WARSTWA 2: BUDOWANIE NAPRAWCZE] Zadanie chirurgiczne {stask['task_id']} "
                 f"[{st_file}] przez agenta '{stask['assigned_agent']}' (Tier: {st_tier})...",

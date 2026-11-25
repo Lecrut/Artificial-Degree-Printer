@@ -1,10 +1,10 @@
-"""Defines all experiment hyperparameters and run settings as module-level constants."""
-import numpy as np
-N_EPISODES: int = 500
-N_TEST_GAMES: int = 200
-N_RUNS: int = 3
-SEED_BASE: int = 42
-LEARNING_RATE: float = 0.1
+"""Defines hyperparameters, seeds, and repetition counts for the Q-Learning Tic-Tac-Toe experiment to ensure reproducibility."""
+LEARNING_RATE: float = 0.15
+DISCOUNT_FACTOR: float = 0.9
+INITIAL_EPSILON: float = 1.0
+FINAL_EPSILON: float = 0.01
+EPSILON_DECAY: float = 0.99
+TOTAL_EPISODES: int = 50000
+TEST_EPISODES: int = 1000
+SEED: int = 42
 GAMMA: float = 0.9
-EPSILON_DECAY: float = 0.995
-EPSILON_MIN: float = 0.01

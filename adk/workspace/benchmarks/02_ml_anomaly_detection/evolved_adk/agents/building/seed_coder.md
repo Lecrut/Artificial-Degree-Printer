@@ -73,4 +73,3 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.
-- **RULE**: When generating synthetic data for anomaly detection or similar skewed-distribution tasks, ensure the generation logic explicitly guarantees the existence of at least one positive sample (or target class instance) rather than relying on probabilistic sampling alone, because statistical variance can cause edge cases to fail deterministic assertions.

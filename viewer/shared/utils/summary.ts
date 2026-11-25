@@ -21,6 +21,6 @@ export function summarizeRun(task: string, events: RunEvent[], title: string | n
     failedVerdicts: events.filter(e => e.event === 'VERDICT' && str(e, 'status') === 'FAIL').length,
     rejectedWrites: count(events, 'SPEC_WRITE_REJECTED') + count(events, 'BUILDER_ANSWER_REJECTED'),
     planVersions: count(events, 'PLAN_CHECKED'),
-    replans: count(events, 'REPLANNED') + count(events, 'QUEUE_REBUILT'),
+    replans: count(events, 'REPLANNED') + count(events, 'QUEUE_REBUILT') + count(events, 'REDESIGN_APPLIED'),
   }
 }

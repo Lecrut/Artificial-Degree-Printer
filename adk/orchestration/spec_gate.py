@@ -97,6 +97,12 @@ class SpecGateMixin:
         owner = h.owner_of(rel) if h is not None else None
         return h.vertices[owner].failures if owner is not None else 0
 
+    def _vertex_kind(self, rel: str) -> str | None:
+        """The kind in H (code, test, chapter, ...) of the vertex that owns `rel`; the model tier depends on it."""
+        h = self._project_h()
+        owner = h.owner_of(rel) if h is not None else None
+        return h.vertices[owner].kind if owner is not None else None
+
     def _absorb(self, h: Hypergraph, paths: set[str]) -> None:
         """Record in H what an accepted write added: helper files (owned by the module importing them), tests of
         planned modules (T members), imports of planned modules the plan did not foresee (C members and ≺).

@@ -1,20 +1,7 @@
 {
   "active": false,
-  "current_gate": "GATE_2_METHODOLOGY_APPROVAL",
-  "approved_gates": [
-    "GATE_1_OUTLINE_APPROVAL",
-    "GATE_2_METHODOLOGY_APPROVAL"
-  ],
+  "current_gate": null,
+  "approved_gates": [],
   "question": null,
-  "context": {
-    "interfaces": [
-      "baseline_detector.py",
-      "data_generation.py",
-      "evaluation_metrics.py",
-      "experiment.py",
-      "figures.py",
-      "rs_ensemble_detector.py"
-    ],
-    "entrypoint": "experiment.py:run_experiment"
-  }
+  "context": {}
 }

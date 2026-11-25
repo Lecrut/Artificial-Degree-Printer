@@ -10,7 +10,7 @@ import { TASK_NAME } from './sources/types'
 import { parseJson } from '#shared/utils/json'
 
 const sandbox = resolve(REPO_ROOT, SANDBOX_DIR)
-const pathOf = (task: string, key: 'events' | 'hypergraph' | 'queue') => join(sandbox, task, runPath('live', key))
+const pathOf = (task: string, key: 'events' | 'trace' | 'hypergraph' | 'queue') => join(sandbox, task, runPath('live', key))
 const mtime = (path: string) => stat(path).then(s => s.mtimeMs).catch(() => 0)
 
 /** The sandbox whose events changed last: the running benchmark task, or the last one that ran. */
@@ -42,4 +42,10 @@ export async function liveState(task: string) {
     hypergraph: await readJson<Hypergraph | null>(pathOf(task, 'hypergraph'), null),
     queue: await readJson<QueueTask[]>(pathOf(task, 'queue'), []),
   }
+}
+
+/** Stamp of `agent_trace.jsonl` (task, byte size and mtime) so the Agents view refreshes when calls start or finish. */
+export async function liveTraceStamp(task: string): Promise<string> {
+  const info = await stat(pathOf(task, 'trace')).catch(() => null)
+  return info ? `${task}:${info.size}:${Math.trunc(info.mtimeMs)}` : `${task}:0`
 }

@@ -1,18 +1,16 @@
 import type { LiveMessage } from '#shared/types/live'
-import { eventsSince, liveState, liveTask } from '../../utils/live'
+import { eventsSince, liveState, liveTask, liveTraceStamp } from '../../utils/live'
 
 const TICK_MS = 1000
 
-/** Server-sent events of the running sandbox: which task, appended events, and the state when it changes. */
-export default defineEventHandler((event) => {
-  const stream = createEventStream(event)
-  const send = (message: LiveMessage) => stream.push(JSON.stringify(message))
+function startTicker(send: (message: LiveMessage) => Promise<void>) {
   let task: string | null | undefined
   let offset = 0
   let stamp = ''
+  let trace = ''
   let busy = false
 
-  const tick = async () => {
+  return async () => {
     if (busy) return
     busy = true
     try {
@@ -21,12 +19,15 @@ export default defineEventHandler((event) => {
         task = current
         offset = 0
         stamp = ''
+        trace = ''
         await send({ type: 'run', task })
       }
       if (!task) return
       const fresh = await eventsSince(task, offset)
       offset = fresh.offset
       if (fresh.events.length) await send({ type: 'events', events: fresh.events })
+      const nextTrace = await liveTraceStamp(task)
+      if (nextTrace !== trace) await send({ type: 'trace', stamp: (trace = nextTrace) })
       const state = await liveState(task)
       if (state.stamp !== stamp) {
         stamp = state.stamp
@@ -37,7 +38,12 @@ export default defineEventHandler((event) => {
       busy = false
     }
   }
+}
 
+/** Server-sent events of the running sandbox: which task, appended events, trace changes, and the state when it changes. */
+export default defineEventHandler((event) => {
+  const stream = createEventStream(event)
+  const tick = startTicker(message => stream.push(JSON.stringify(message)))
   const timer = setInterval(tick, TICK_MS)
   void tick()
   stream.onClosed(() => clearInterval(timer))

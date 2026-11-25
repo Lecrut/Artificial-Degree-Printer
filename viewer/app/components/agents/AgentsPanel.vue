@@ -3,8 +3,8 @@ import { mdiMagnify } from '@mdi/js'
 import type { RunRef } from '#shared/types/run'
 import { labels } from '~/utils/labels'
 
-const props = defineProps<{ at: RunRef, focusTask?: string | null }>()
-const { calls, agents, agent, search, pending, error, refresh, openStep, detail, loading, detailFailed, position, move } = useAgentCalls(() => props.at)
+const props = defineProps<{ at: RunRef, focusTask?: string | null, liveStamp?: string }>()
+const { calls, agents, agent, search, pending, error, refresh, openStep, detail, loading, detailFailed, position, move } = useAgentCalls(() => props.at, () => props.liveStamp)
 watch(() => props.focusTask, (task) => { if (task) search.value = task }, { immediate: true })
 
 const dialog = computed({

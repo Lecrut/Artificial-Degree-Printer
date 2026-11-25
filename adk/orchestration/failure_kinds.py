@@ -100,6 +100,20 @@ def _issue_category(issues: list[Any]) -> str:
 HARNESS_ENFORCED_CATEGORIES = {"SyntaxError", "invalid-syntax", "E999", "ImportError", "harness", "spec"}
 UNCLASSIFIED_CATEGORY = "generic"
 
+# Failures whose finding names its own line and its fix (§XXIX D6): the small model repairs them as well as the large
+# one (2026-11-25: 01 spent 25 min of `seed_coder` on the large model, many of them on an `F821` with its import).
+MECHANICAL_CATEGORIES = {"F401", "F821", "F841", "E402", "I001", "SyntaxError", "invalid-syntax", "E999", "ImportError", "harness"}
+_RESULTS_FORMAT = re.compile(r"results\.csv .*? The file has exactly the columns", re.S)
+
+
+def is_mechanical_failure(issues: list[Any]) -> bool:
+    """Whether every finding of a failure is mechanical: a lint rule, a syntax or an import error, an answer of the wrong
+    shape, a `results.csv` of the wrong columns. One finding of logic (a failed test, a traceback of the run, a broken
+    contract, a thesis pointer) and the failure is not."""
+    return bool(issues) and all(
+        _RESULTS_FORMAT.search(str(item)) or _issue_category([item]) in MECHANICAL_CATEGORIES for item in issues
+    )
+
 def _issue_signature(report: dict[str, Any]) -> str:
     """Stable identity of a verification failure: the sorted set of `file:rule` fingerprints of its issues."""
     issues = report.get("issues") or []

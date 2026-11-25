@@ -9,6 +9,7 @@ import { changelogLabels } from './labelParts/changelog'
 import { historyLabels } from './labelParts/history'
 import { compareLabels } from './labelParts/compare'
 import { navLabels } from './labelParts/nav'
+import { flowLabels } from './labelParts/flow'
 
 // Every text of the interface (ARCHITECTURE.md §3.6).
 export const labels = {
@@ -24,8 +25,9 @@ export const labels = {
     reconnecting: 'Brak połączenia ze strumieniem na żywo — przeglądarka ponawia próbę sama.',
   },
   tagline: 'przebiegi harnessu',
-  tabs: { history: 'Historia', timeline: 'Oś czasu', graph: 'Hipergraf', agents: 'Agenci', thesis: 'Praca', live: 'Na żywo', changelog: 'Postęp', compare: 'Porównanie' },
+  tabs: { history: 'Historia', timeline: 'Oś czasu', graph: 'Hipergraf', agents: 'Agenci', thesis: 'Praca', live: 'Na żywo', changelog: 'Postęp', compare: 'Porównanie', flow: 'Przepływ' },
   history: historyLabels,
+  flow: flowLabels,
   sources: { git: 'commit', results: 'na dysku', live: 'na żywo' } satisfies Record<SourceKind, string>,
   stats: {
     tasks: 'zadania',

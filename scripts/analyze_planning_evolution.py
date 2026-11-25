@@ -137,11 +137,9 @@ def building(events: list[dict]) -> None:
         "HARNESS_BUG_REPORTED", "LLM_CALL_FAILED", "DATA_FAILED"))
     print("  repair/replan machinery:", dict(other))
     replans = [e for e in events if e["event"] == "REPLANNED"]
-    verified_after = 0
     for i, r in enumerate(replans):
         nxt = _t(replans[i + 1]) if i + 1 < len(replans) else _t(events[-1])
         ok = sum(1 for e in events if e["event"] == "TASK_DONE" and _t(r) < _t(e) <= nxt)
-        verified_after += ok
         print(f"    replan round {r['round']} failed={r['failed']} -> tasks done before next round: {ok}")
     for e in events:
         if e["event"] == "RUN_STOPPED":

@@ -14,7 +14,7 @@ ZASADY ARCHITEKTONICZNE I INWARIANTY WYKONAWCZE SYSTEMU ADK:
    zorganizowane według czterech domen funkcjonalnych: `planning` (W1), `building` (W2),
    `verification` (W3) oraz `evolution` (W4). Wewnątrz `adk/tools/` obowiązuje
    twardy zakaz używania redundantnego słowa `tool`/`tools` w nazwach plików
-   i podkatalogów (weryfikowany przez test `tests/test_repository_hygiene.py`).
+   i podkatalogów (weryfikowany przez test `tests/repository/test_repository_hygiene.py`).
 
 2. Deklaratywność agentów (.md):
    Wszyscy agenci są zdefiniowani jako ustrukturyzowane pliki Markdown w

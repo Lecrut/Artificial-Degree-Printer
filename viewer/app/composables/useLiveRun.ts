@@ -13,6 +13,7 @@ export function useLiveRun() {
   const events = shallowRef<RunEvent[]>([])
   const hypergraph = shallowRef<Hypergraph | null>(null)
   const queue = shallowRef<QueueTask[]>([])
+  const traceStamp = ref('')
   const loaded = ref(false)
 
   let incoming: RunEvent[] = []
@@ -29,14 +30,15 @@ export function useLiveRun() {
       incoming = []
       task.value = message.task
       events.value = []
+      traceStamp.value = ''
       loaded.value = true
     }
     else if (message.type === 'events') {
       incoming.push(...message.events)
-      // The first batch of a run (its history so far) shows at once; later ones are gathered.
       if (!events.value.length) flush()
       else flushing ??= setTimeout(flush, FLUSH_MS)
     }
+    else if (message.type === 'trace') traceStamp.value = message.stamp
     else {
       hypergraph.value = message.hypergraph
       queue.value = message.queue
@@ -48,5 +50,5 @@ export function useLiveRun() {
 
   const summary = computed(() => (task.value ? summarizeRun(task.value, events.value) : null))
   const at = computed<RunRef | null>(() => (task.value ? { source: 'live', ref: 'current', task: task.value } : null))
-  return { task, events, hypergraph, queue, connected, loaded, failed, reconnect, summary, at }
+  return { task, events, hypergraph, queue, traceStamp, connected, loaded, failed, reconnect, summary, at }
 }

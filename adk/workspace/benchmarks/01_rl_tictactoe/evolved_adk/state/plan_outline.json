@@ -1,0 +1,128 @@
+{
+  "modules": [
+    {
+      "file": "tictactoe_env.py",
+      "purpose": "Implements the Tic-Tac-Toe game environment with move validation, state representation, and win/draw detection for reinforcement learning.",
+      "depends_on": [],
+      "provides": [
+        "TicTacToeEnv class",
+        "TicTacToeEnv.reset() -> dict",
+        "TicTacToeEnv.step(action) -> (obs, reward, terminated, truncated, info)",
+        "get_valid_moves(env) -> list[int]"
+      ]
+    },
+    {
+      "file": "game_loop.py",
+      "purpose": "Provides the logic to run a single episode of Tic-Tac-Toe between two agents (including random play) and returns the outcome.",
+      "depends_on": [
+        "tictactoe_env.py"
+      ],
+      "provides": [
+        "play_game(agent_a, agent_b, is_agent_a_turn, rng) -> dict"
+      ]
+    },
+    {
+      "file": "q_learning_agent.py",
+      "purpose": "Implements the Q-Learning agent with epsilon-greedy exploration and tabular policy updates.",
+      "depends_on": [
+        "tictactoe_env.py"
+      ],
+      "provides": [
+        "QLearningAgent class",
+        "QLearningAgent.__init__(<kwargs>) -> None",
+        "QLearningAgent.act(state) -> int",
+        "QLearningAgent.learn(state, action, reward, next_state) -> None",
+        "QLearningAgent.reset() -> None"
+      ]
+    },
+    {
+      "file": "random_agent.py",
+      "purpose": "Implements a baseline opponent that selects uniformly at random from available moves.",
+      "depends_on": [
+        "tictactoe_env.py"
+      ],
+      "provides": [
+        "RandomAgent class",
+        "RandomAgent.act(state, rng) -> int"
+      ]
+    },
+    {
+      "file": "config.py",
+      "purpose": "Defines all experiment constants (hyperparameters, seeds, iteration counts) to ensure reproducibility and thesis citation.",
+      "depends_on": [],
+      "provides": [
+        "LEARNING_RATE",
+        "DISCOUNT_FACTOR",
+        "INITIAL_EPSILON",
+        "FINAL_EPSILON",
+        "EPSILON_DECAY",
+        "TOTAL_EPISODES",
+        "TEST_EPISODES",
+        "SEED",
+        "GAMMA"
+      ]
+    },
+    {
+      "file": "experiment.py",
+      "purpose": "Runs the training loop against a random opponent and the evaluation phase, aggregating metrics into results.csv.",
+      "depends_on": [
+        "tictactoe_env.py",
+        "q_learning_agent.py",
+        "random_agent.py",
+        "game_loop.py",
+        "config.py"
+      ],
+      "provides": [
+        "run_experiment() -> None"
+      ]
+    },
+    {
+      "file": "figures.py",
+      "purpose": "Reads results.csv and generates the required plots for the thesis.",
+      "depends_on": [],
+      "provides": [
+        "plot_results() -> None"
+      ]
+    }
+  ],
+  "entrypoint": "experiment.py:run_experiment",
+  "plots": "figures.py:plot_results",
+  "academic_blueprint": {
+    "thesis_title": "Tabelaryczne Q-Learning w optymalizacji polityki w skończonych stanach gier na przykładzie kółka i krzyżyka",
+    "thesis_statement": "Agent używający tabelarycznego Q-Learningu osiąga wynik stabilny (remis lub wygraną) przeciwko przeciwnikowi losowemu po określonej liczbie epizodów, przewyższając czysto losową strategię.",
+    "baseline_comparison": "Porównanie wygranych, remisów i przegranych agenta Q-Learning z graczem losowym w 1000 epizodach testowych po treningu.",
+    "metrics": [
+      "win_rate",
+      "draw_rate",
+      "loss_rate",
+      "avg_reward_per_episode"
+    ],
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "Wstęp",
+        "focus": "Cel pracy, zakres i struktura dokumentu."
+      },
+      {
+        "index": 2,
+        "title": "Teoretyczne podstawy uczenia ze wzmocnieniem",
+        "focus": "Definicje Markov Decision Process, równanie Bellmana oraz metoda Q-Learning."
+      },
+      {
+        "index": 3,
+        "title": "Modelowanie gry w kółko i krzyżyk",
+        "focus": "Reprezentacja stanu, akcji oraz funkcji nagrody dla środowiska gry."
+      },
+      {
+        "index": 4,
+        "title": "Konstrukcja eksperymentu",
+        "focus": "Uzasadnienie hiperparametrów, scenariusz treningowy i ewaluacji."
+      },
+      {
+        "index": 5,
+        "title": "Wyniki badań i dyskusja",
+        "focus": "Analiza wykresów uczения się, porównanie z bazą i wnioski końcowe."
+      }
+    ]
+  }
+}

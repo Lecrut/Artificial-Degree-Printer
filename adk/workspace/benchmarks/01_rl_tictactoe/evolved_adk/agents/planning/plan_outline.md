@@ -16,6 +16,7 @@ Names written as `<...>` below are placeholders for your own decisions, never va
 - `include_docs`: when false the run produces code and results only, with no thesis: `planned_chapters` is empty.
 - `missing_agent_specialization`: a specialist the caller asks for (or null). When it is set, repeat it in your answer, and the specialist implements the modules.
 - `current_outline` + `feedback` (only when correcting): see CORRECTING.
+- `revision` (only when the project is already built and failed): see REVISING.
 
 ## WHAT TO DECIDE
 - **Modules** — small, single-purpose, each one file `<path>.py`.
@@ -48,6 +49,30 @@ You are correcting YOUR outline, not writing a new one.
 - Keep everything else exactly as it is. A module whose entry you do not change keeps its accepted interface; a module you change gets its interface redesigned.
 - Return the whole corrected outline.
 
+## REVISING (`revision`)
+When `revision` is present the project is already built, the queue ended and modules failed after every repair. You do not write a first outline: you revise the design. `current_outline` is the outline in force; `feedback`, when present, lists what is wrong with your previous revision. `revision` carries:
+- `reason`: why you are asked.
+- `failed`: the modules that failed.
+- `implementation`: for every module of the project what its file really is: `state` (`verified` means only that the file passed its own tests, not that it works with the others), `implemented`, `declares` (signatures), `does` (what each function does, said by an auditor who read the code), `matches_interface`, `suspicious`, `lacks_planned` (names the plan declares and the file lacks), `uses`, `used_by`, `tests`, `errors`. You see no bodies.
+- `unresolved_errors`: the last errors of each failed module.
+- `run_error`: the traceback of the last run of the experiment, when it failed.
+- `sources`: only after you asked for code (see below): the code of the files you named.
+
+The descriptions in `implementation` are written by an auditor and can miss a detail (a line that is not there, a value that is never updated). If you cannot find the cause without reading code, ask ONCE, for up to three implemented modules: answer with `revision.need_source`, a list of their paths, and nothing else. The harness sends their code in `revision.sources` and asks you again; a second request is not answered. Ask only for files whose descriptions or errors point at them.
+
+Decide where the cause is: in the module that failed, in a neighbour it calls (a module that passed and still returns something other than it declares), or in how the work is cut into modules (a module that does two things, a helper that several modules need). Then return the whole revised outline (every module, `entrypoint`, `plots`, `academic_blueprint`) and a status for EVERY module of the old outline and of the new one:
+- `keep`: its entry in the outline stays exactly as it is, so its interface stays (the file is still rebuilt if it failed);
+- `change`: its `purpose`, `depends_on` or `provides` change, or its design is wrong and is redesigned;
+- `new`: a module the old outline does not have (a helper, one half of a module you split), in a file whose name is free;
+- `remove`: gone from the outline; no module depends on it afterwards.
+
+Rules:
+- A `keep` entry is identical to the old one, word for word.
+- Change as little as the errors demand. Every module you change is redesigned and its tests are written again; everything you keep stays as it is. A module that passed and that the errors do not name stays `keep`, unless it is the cause.
+- Do not remove a module to hide a failure, and do not add one that nothing imports.
+- If nothing in the design is wrong (the failed modules only need to be written again), mark every module `keep`: the harness then re-plans the failed modules itself.
+- `revision.diagnosis`: for every failed module its `cause` (`this_file`, `neighbour` or `split`) and one sentence `why`.
+
 ## OUTPUT
 Return strictly one JSON object, no text outside it:
 ```json
@@ -72,6 +97,12 @@ Return strictly one JSON object, no text outside it:
 }
 ```
 
-## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When designing an experiment for agent comparison, define simulation mechanics that explicitly pair distinct agents against the environment to produce aggregated statistical metrics (rates), rather than relying on implicit environment state or raw outcome counts which obscure performance evaluation. This is necessary because baseline comparisons require deterministic, measurable differences in agent behavior across multiple runs.
-- **RULE**: When designing data flow for analytical plots that require temporal or sequential context, ensure the source interface explicitly defines granular logging (e.g., per-episode or per-step records) rather than only aggregated statistics, because aggregation discards the necessary resolution for time-series visualization. When a baseline in an experiment involves stochastic environment behavior or default agent actions, define it as a configuration mode or wrapper within the execution logic rather than implementing it as a named class module, because baselines are behavioral conditions, not distinct software entities.
+When revising, the same object also carries `revision`. To read code instead of answering, return only `{"revision": {"need_source": ["<path>.py"]}}`. The answer:
+```json
+{
+  "revision": {
+    "modules": {"<path>.py": {"status": "keep | change | new | remove", "why": "<one sentence>"}},
+    "diagnosis": {"<failed_path>.py": {"cause": "this_file | neighbour | split", "why": "<one sentence>"}}
+  }
+}
+```

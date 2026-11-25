@@ -180,6 +180,10 @@ class PlanChangeMixin:
                 h.edges[f"I:{producer}"].members.setdefault(module, "C")
                 h.order = sorted(set(h.order) | {(f"I:{producer}", edge.id)})
         edge.spec = new
+        # A new contract starts the small model again (§XXIX D6): the failures counted against the old one say nothing
+        # about it. This is the only way in for `SPEC_AMENDED` and for an interface the re-plan changes.
+        for vertex in (module, *h.tests_of(module)):
+            h.vertices[vertex].failures = 0
         blueprint["interfaces"] = candidate
         write_json_state(self.blueprint_path, blueprint)
         return []

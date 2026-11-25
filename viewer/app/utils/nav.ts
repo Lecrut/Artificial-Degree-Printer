@@ -1,4 +1,4 @@
-import { mdiBookOpenPageVariantOutline, mdiCompareHorizontal, mdiHistory, mdiPulse } from '@mdi/js'
+import { mdiBookOpenPageVariantOutline, mdiCompareHorizontal, mdiHistory, mdiPulse, mdiSitemapOutline } from '@mdi/js'
 import { labels } from './labels'
 
 export interface NavPage {
@@ -15,8 +15,9 @@ export const NAV_PAGES: NavPage[] = [
   { to: '/', icon: mdiHistory, title: labels.tabs.history, exact: true },
   { to: '/compare', icon: mdiCompareHorizontal, title: labels.tabs.compare, exact: false },
   { to: '/changelog', icon: mdiBookOpenPageVariantOutline, title: labels.tabs.changelog, exact: false },
+  { to: '/flow', icon: mdiSitemapOutline, title: labels.tabs.flow, exact: false, localOnly: true },
   { to: '/live', icon: mdiPulse, title: labels.tabs.live, exact: false, localOnly: true },
 ]
 
 // Addresses the deployed viewer turns away (the old /launch opens the live page's panel).
-export const LOCAL_ONLY = ['/live', '/launch']
+export const LOCAL_ONLY = ['/live', '/launch', '/flow']

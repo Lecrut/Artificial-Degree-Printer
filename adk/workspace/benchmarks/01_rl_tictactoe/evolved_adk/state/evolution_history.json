@@ -4,9 +4,9 @@
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "plan_outline",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_outline.md",
-        "injected_rule": "When designing an experiment for agent comparison, define simulation mechanics that explicitly pair distinct agents against the environment to produce aggregated statistical metrics (rates), rather than relying on implicit environment state or raw outcome counts which obscure performance evaluation. This is necessary because baseline comparisons require deterministic, measurable differences in agent behavior across multiple runs.",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When designing a module's interface to be consumed by external logic, ensure that all return values and parameters contain sufficient context for the consumer to interpret them without relying on implicit state or ambiguous conventions, because consumers cannot map generic outcomes to their specific local entities without explicit role mapping.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
@@ -16,119 +16,135 @@
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "plan_outline",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_outline.md",
-        "injected_rule": "When designing data flow for analytical plots that require temporal or sequential context, ensure the source interface explicitly defines granular logging (e.g., per-episode or per-step records) rather than only aggregated statistics, because aggregation discards the necessary resolution for time-series visualization. When a baseline in an experiment involves stochastic environment behavior or default agent actions, define it as a configuration mode or wrapper within the execution logic rather than implementing it as a named class module, because baselines are behavioral conditions, not distinct software entities.",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When designing function interfaces for data aggregation or metric computation, return types must match the semantic nature of the data (e.g., numeric for rates/averages, not strings), because consumers cannot derive accurate quantitative metrics from incorrect or ambiguous type contracts.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
       }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T4_FIX2",
-      "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_environment.py:<top_level_imports>: The new code of <top_level_imports> contains no definition of `<top_level_imports>`; nothing was saved."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T6",
-      "agent": "seed_tester",
-      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_agent.py:30: unterminated string literal (detected at line 30)\n    29: @pytest.mark.parametrize(\n    30:     \"state_input,\n    31: \", \"102102102\","
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- figures.py:plot_results: The new code of plot_results also contains Expr, FIGURES_DIR; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "CFG_FIX",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- config.py:LEARNING_RATE: Provided new_code contains no AST statements.\n- config.py:GAMMA: Provided new_code contains no AST statements.\n- config.py:EPSILON_DECAY: Provided new_code contains no AST statements."
     },
     {
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "seed_writer",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_writer.md",
-        "injected_rule": "When citing experimental outputs that do not yet exist in the file system, describe planned metrics or settings using text and available AST symbol references (\\ref_ast) instead of creating non-resolvable CSV pointer links (\\ref_csv), because citations must only reference data that is actually present and verifiable at the time of writing.",
-        "active_rules_count": 2,
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When defining a function interface that orchestrates stateful components, ensure all necessary objects (such as environments or context handles) are explicitly passed as arguments and returned values track the lifecycle data required by higher-level consumers, because interfaces must expose all dependencies and data flows needed for correct integration.",
+        "active_rules_count": 3,
         "compacted": false,
         "compaction_details": null
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T11_FIX_Cleanup",
-      "agent": "seed_coder",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- API_MISSING [agent.py]: the interface declares QLearningAgent.select_action, QLearningAgent.update, the file lacks them"
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T13_FIX",
-      "agent": "seed_coder",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- API_MISSING [agent.py]: the interface declares QLearningAgent.select_action, QLearningAgent.update, the file lacks them"
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
+      "type": "AGENT_MUTATED",
       "details": {
-        "files_in_error": [
-          "Math command outside math mode (\\mathcal)",
-          "No results exist yet (the experiment has not run, so there is no results.csv)"
-        ],
-        "signature": "Math command outside math mode (\\mathcal): wrap every mathematical expression in $...$ (inline) or $$...$$ (display); LaTeX fails otherwise.\nNo results exist yet (the experiment has not run, so there is no results.csv): no \\ref_csv{...} pointer can resolve. Remove every \\ref_csv{...} from your text and describe the planned metrics in words",
-        "task_id": "R1_4",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When defining agent or loop interfaces, ensure that all state required for evaluation (e.g., cumulative metrics) and execution constraints (e.g., valid action masks) are explicitly passed as arguments or returned as values, because omitting them breaks the contract between environment, agent, and experiment modules.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "plan_module",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+          "cycle": 1,
+          "rules_consolidated": 4,
+          "dropped_ineffective": [
+            "When designing a module's interface to be consumed by external logic, ensure that all return values and parameters contain sufficient context for the consumer to interpret them without relying on implicit state or ambiguous conventions, because consumers cannot map generic outcomes to their specific local entities without explicit role mapping.",
+            "When designing function interfaces for data aggregation or metric computation, return types must match the semantic nature of the data (e.g., numeric for rates/averages, not strings), because consumers cannot derive accurate quantitative metrics from incorrect or ambiguous type contracts."
+          ],
+          "invariants": [
+            "When designing a function interface that orchestrates stateful components or agents, explicitly pass all necessary objects (environments, context handles) as arguments and return values must track the lifecycle data required by consumers, because interfaces must expose all dependencies and data flows needed for correct integration.",
+            "When defining agent or loop interfaces, ensure that all state required for evaluation (e.g., cumulative metrics) and execution constraints (e.g., valid action masks) are explicitly passed as arguments or returned as values, because omitting them breaks the contract between environment, agent, and experiment modules."
+          ]
+        }
       }
+    },
+    {
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "cycle": 1,
+        "rules_consolidated": 4,
+        "dropped_ineffective": [
+          "When designing a module's interface to be consumed by external logic, ensure that all return values and parameters contain sufficient context for the consumer to interpret them without relying on implicit state or ambiguous conventions, because consumers cannot map generic outcomes to their specific local entities without explicit role mapping.",
+          "When designing function interfaces for data aggregation or metric computation, return types must match the semantic nature of the data (e.g., numeric for rates/averages, not strings), because consumers cannot derive accurate quantitative metrics from incorrect or ambiguous type contracts."
+        ],
+        "invariants": [
+          "When designing a function interface that orchestrates stateful components or agents, explicitly pass all necessary objects (environments, context handles) as arguments and return values must track the lifecycle data required by consumers, because interfaces must expose all dependencies and data flows needed for correct integration.",
+          "When defining agent or loop interfaces, ensure that all state required for evaluation (e.g., cumulative metrics) and execution constraints (e.g., valid action masks) are explicitly passed as arguments or returned as values, because omitting them breaks the contract between environment, agent, and experiment modules."
+        ]
+      }
+    },
+    {
+      "type": "MUTATION_REJECTED",
+      "agent": "plan_module",
+      "rule": "When defining function interfaces in a plan outline, strictly validate that every parameter mentioned in the docstring is present in the signature and that the signature matches the parameters required by the dependency contracts or implementation details, because an outline must be a self-consistent blueprint where documentation and signatures are never out of sync with requirements.",
+      "reason": "concerns what the harness enforces (syntax, answer shape, imports)"
     },
     {
       "type": "UNKNOWN_CITATIONS_DROPPED",
       "keys": [
-        "wainwright2013highdim",
-        "watkins1992qlearning"
+        "amiri2025reinforcement"
       ]
     },
     {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "Math command outside math mode (\\mathcal)",
-          "No results exist yet (the experiment has not run, so there is no results.csv)"
-        ],
-        "signature": "Math command outside math mode (\\mathcal): wrap every mathematical expression in $...$ (inline) or $$...$$ (display); LaTeX fails otherwise.\nNo results exist yet (the experiment has not run, so there is no results.csv): no \\ref_csv{...} pointer can resolve. Remove every \\ref_csv{...} from your text and describe the planned metrics in words",
-        "task_id": "R1_5",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "Math command outside math mode (\\mathcal)",
-          "No results exist yet (the experiment has not run, so there is no results.csv)"
-        ],
-        "signature": "Math command outside math mode (\\mathcal): wrap every mathematical expression in $...$ (inline) or $$...$$ (display); LaTeX fails otherwise.\nNo results exist yet (the experiment has not run, so there is no results.csv): no \\ref_csv{...} pointer can resolve. Remove every \\ref_csv{...} from your text and describe the planned metrics in words",
-        "task_id": "R1_6",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T3_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- tictactoe_env.py:TicTacToeEnv.step: The new code of TicTacToeEnv.step contains no definition of `step`; nothing was saved."
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R2_1",
-      "agent": "seed_coder",
-      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- experiment.py:148: unexpected indent\n   147:                 # Fallback for agents that might return invalid indices\n   148:                 action = int(np.random.choice(empty_cells))\n   149:             else:"
+      "task_id": "T8_FIX1",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_q_learning_agent.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_act_epsilon_greedy: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_ryhvq37k\\tests\\test_q_learning_agent.py, line 15"
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R2_2",
+      "task_id": "T10",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_NO_ASSERTIONS [tests/test_random_agent.py]: these tests check nothing (no `assert`, `pytest.raises`, `pytest.approx`): test_act_ignores_invalid_state"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T10_FIX1",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_random_agent.py:RandomAgent.test_act_selects_random_valid_move: The new code of RandomAgent.test_act_selects_random_valid_move contains no definition of `test_act_selects_random_valid_move`; nothing was saved."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T12",
       "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- figures.py:<module>: The new code of <module> contains no definition of `<module>`; nothing was saved."
+      "error": "The answer for 'figures.py' was not saved: it is not valid JSON (cut off or an unterminated string). Return a shorter answer: only the symbols you change, in 'ast_edits', with no reasoning inside the code."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T4_FIX1",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_tictactoe_env.py:module: The new code of module contains no definition of `module`; nothing was saved."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T6",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_game_loop.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_play_game_interface_and_contract: NameError: name 'agent_a' is not defined"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T6_FIX1",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_game_loop.py:<module>: The new code of <module> contains no definition of `<module>`; nothing was saved."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "R1_2_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning_agent.py:QLearningAgent: The new code of QLearningAgent contains no definition of `QLearningAgent`; nothing was saved."
     },
     {
       "type": "AGENT_MUTATED",
@@ -136,90 +152,133 @@
         "status": "mutated",
         "agent": "seed_coder",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
-        "injected_rule": "When generating code that reads external files, use robust path resolution (e.g., via `pathlib` or inspecting `sys.argv`/environment) relative to the script's location or a known configuration root, because relying on the current working directory is fragile and often incorrect in automated execution contexts.",
+        "injected_rule": "When manipulating state objects that may be numpy arrays or native tuples, verify the type before calling array-specific methods like tolist() or hashability requirements for dictionary keys, because built-in types do not share methods with numpy objects.",
         "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
       }
     },
     {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "No results exist yet (the experiment has not run, so there is no results.csv)"
-        ],
-        "signature": "No results exist yet (the experiment has not run, so there is no results.csv): no \\ref_csv{...} pointer can resolve. Remove every \\ref_csv{...} from your text and describe the planned metrics in words",
-        "task_id": "R2_3",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "UNKNOWN_CITATIONS_DROPPED",
-      "keys": [
-        "wo2024federated"
-      ]
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "No results exist yet (the experiment has not run, so there is no results.csv)"
-        ],
-        "signature": "No results exist yet (the experiment has not run, so there is no results.csv): no \\ref_csv{...} pointer can resolve. Remove every \\ref_csv{...} from your text and describe the planned metrics in words",
-        "task_id": "R2_4",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "No results exist yet (the experiment has not run, so there is no results.csv)"
-        ],
-        "signature": "No results exist yet (the experiment has not run, so there is no results.csv): no \\ref_csv{...} pointer can resolve. Remove every \\ref_csv{...} from your text and describe the planned metrics in words",
-        "task_id": "R2_5",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
-      "type": "HARNESS_BUG_REPORTED",
-      "details": {
-        "files_in_error": [
-          "Traceback (most recent call last)"
-        ],
-        "signature": "Traceback (most recent call last):\n  File <id>, line #, in <module>\n    getattr(plots_module, plots_func)()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File <id>, line #, in plot_results\n    raise FileN",
-        "task_id": "R3_5",
-        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
-        "source": "harness"
-      }
-    },
-    {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "GATE_3_FIX_2_CORRECT_CODE",
+      "task_id": "R2_1",
       "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- config.py:load_config: config.py has no `load_config` and the planned interface of this module does not declare it (the file has: EPSILON_DECAY, EPSILON_MIN, GAMMA, LEARNING_RATE, N_EPISODES, N_RUNS, N_TEST_GAMES, SEED_BASE); nothing was saved. Edit one of these symbols, or check that this edit belongs to this file.\n- experiment.py:setup: experiment.py has no `setup` and the planned interface of this module does not declare it (the file has: _evaluate_agent, _play_single_game, _train_one_run, run_experiment); nothing was saved. Edit one of these symbols, or check that this edit belongs to this file."
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- game_loop.py:play_game: SyntaxError in new_code: invalid syntax at line 1 of your code: `// Corrected Logic Snippet (Internal Representation for AST)` is indented by 0 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When returning a multidimensional data structure such as a game board or matrix, ensure the return type explicitly matches the expected tensor dimensions (e.g., using reshape or proper initialization) rather than allowing linear flattening, because dimensionality mismatches cause assertion failures in validation contracts.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When implementing logic that operates on numpy arrays or lists, verify that indices used for access are strictly within the bounds of the array's actual length (using `len()` or `.shape`), because relying on expected dimensions without runtime checks leads to IndexError.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "seed_coder",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+          "cycle": 2,
+          "rules_consolidated": 4,
+          "dropped_ineffective": [],
+          "invariants": [
+            "When implementing public interfaces, preserve strict signature compatibility by honoring every parameter, annotation, and return type defined in `specification`, because the harness validates exports against this contract and mismatches cause immediate rejection.",
+            "When manipulating heterogeneous state objects or indexing collections, verify runtime types and bounds before access rather than relying on declared types, because silent type mismatches or out-of-bounds errors corrupt the experiment data that verification relies on."
+          ]
+        }
+      }
+    },
+    {
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "cycle": 2,
+        "rules_consolidated": 4,
+        "dropped_ineffective": [],
+        "invariants": [
+          "When implementing public interfaces, preserve strict signature compatibility by honoring every parameter, annotation, and return type defined in `specification`, because the harness validates exports against this contract and mismatches cause immediate rejection.",
+          "When manipulating heterogeneous state objects or indexing collections, verify runtime types and bounds before access rather than relying on declared types, because silent type mismatches or out-of-bounds errors corrupt the experiment data that verification relies on."
+        ]
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "test_q_learning_agent.py"
+        ],
+        "signature": "test_q_learning_agent.py::test_act_epsilon_greedy:IndexError\ntest_q_learning_agent.py::test_learn:ValueError",
+        "task_id": "R4_2",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "GATE_3_FIX_3",
+      "task_id": "T6",
       "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_experiment.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_returns_dataframe_with_correct_metrics: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_dqpxnemq\\tests\\test_experiment.py, line 10"
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_game_loop.py:test_play_game_interface_and_contract: SyntaxError in new_code: unmatched '}' at line 48 of your code: `}` is indented by 0 spaces, the line before by 4. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "test_q_learning_agent.py"
+        ],
+        "signature": "test_q_learning_agent.py::test_act_epsilon_greedy:IndexError\ntest_q_learning_agent.py::test_learn:ValueError",
+        "task_id": "R5_2",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R6_1_FIX",
+      "task_id": "T8",
       "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_experiment.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_returns_dataframe_with_correct_metrics: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_jfjp4h0g\\tests\\test_experiment.py, line 10"
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_q_learning_agent.py:test_act_epsilon_greedy: The new code of test_act_epsilon_greedy contains no definition of `test_act_epsilon_greedy`; nothing was saved."
     },
     {
-      "type": "QUEUE_REBUILT",
-      "generation": 1,
-      "task_ids": [
-        "Q1_RESULTS"
-      ]
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T8_FIX1",
+      "agent": "seed_tester",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_q_learning_agent.py:test_learn: The new code of test_learn contains no definition of `test_learn`; nothing was saved."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "R6_1_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning_agent.py:learn: q_learning_agent.py has no `learn` and the planned interface of this module does not declare it (the file has: BOARD_SIZE, QLearningAgent, QLearningAgent.__init__, QLearningAgent.act, QLearningAgent.decay, QLearningAgent.discount_factor, QLearningAgent.epsilon, QLearningAgent.initial_epsilon, QLearningAgent.learn, QLearningAgent.learning_rate, QLearningAgent.q_table, QLearningAgent.reset); nothing was saved. Edit one of these symbols, or check that this edit belongs to this file."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "R6_1_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_learning_agent.py:act: q_learning_agent.py has no `act` and the planned interface of this module does not declare it (the file has: BOARD_SIZE, QLearningAgent, QLearningAgent.__init__, QLearningAgent.act, QLearningAgent.decay, QLearningAgent.discount_factor, QLearningAgent.epsilon, QLearningAgent.initial_epsilon, QLearningAgent.learn, QLearningAgent.learning_rate, QLearningAgent.q_table, QLearningAgent.reset); nothing was saved. Edit one of these symbols, or check that this edit belongs to this file.\n- q_learning_agent.py:learn: q_learning_agent.py has no `learn` and the planned interface of this module does not declare it (the file has: BOARD_SIZE, QLearningAgent, QLearningAgent.__init__, QLearningAgent.act, QLearningAgent.decay, QLearningAgent.discount_factor, QLearningAgent.epsilon, QLearningAgent.initial_epsilon, QLearningAgent.learn, QLearningAgent.learning_rate, QLearningAgent.q_table, QLearningAgent.reset); nothing was saved. Edit one of these symbols, or check that this edit belongs to this file."
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When comparing numpy arrays (such as states stored in a dictionary) for membership or equality, never use standard Python operators like `in`, `==`, or `!=` directly, because array truth value comparison is ambiguous; instead, use vectorized methods like `np.any()` or `.tolist()` to ensure deterministic evaluation.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
     }
   ]
 }

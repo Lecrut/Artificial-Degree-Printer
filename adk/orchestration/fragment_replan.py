@@ -162,6 +162,11 @@ class FragmentReplanMixin:
         failed = self._failed_vertices()
         if not failed:
             return None
+        # The design may be what is wrong (§XXVIII.8): while rounds are left the designer revises it first, and such a
+        # round counts against none of the limits below. A round that cannot be built falls through to the re-plan.
+        redesigned = self._redesign_failed(state, failed)
+        if redesigned is not None:
+            return redesigned
         h = self._project_h()
         progress = self.__dict__.setdefault("_replan_progress", [])
         # Progress = vertices that were ever verified: a deliberate reopening (or a figure crash undoing a verified file)

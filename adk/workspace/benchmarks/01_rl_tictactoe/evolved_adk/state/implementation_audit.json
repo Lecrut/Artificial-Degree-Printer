@@ -1,0 +1,510 @@
+{
+  "failed": [
+    "game_loop.py",
+    "q_learning_agent.py"
+  ],
+  "files": {
+    "tictactoe_env.py": {
+      "file": "tictactoe_env.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 2,
+      "failures": 6,
+      "uses": {},
+      "used_by": [
+        "experiment.py",
+        "game_loop.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_tictactoe_env.py",
+          "state": "verified"
+        }
+      ],
+      "errors": [
+        "Pytest failure: Pytest: a test hung and was stopped after 20s (probably an infinite loop). Stack (newest frame first):\nTimeout (0:00:20)!\nFile \"tictactoe_env.py\", line 95 in step\nFile \"game_loop.py\", line 28 in play_game\nFile \"tests\\test_game_loop.py\", line 24 in test_play_game_interface_and_contract"
+      ],
+      "parses": true,
+      "lines": 97,
+      "fingerprint": "ee78f24dd4ea0b7910c2108d5b7a9d44b736444e6f55994448896db67afb6381",
+      "imports": [
+        "import numpy as np",
+        "from typing import Optional"
+      ],
+      "constants": [
+        "BOARD_SIZE",
+        "EMPTY_CELL",
+        "PLAYER_X",
+        "PLAYER_O"
+      ],
+      "classes": [
+        {
+          "name": "TicTacToeEnv",
+          "bases": [],
+          "attributes": [
+            "board: np.ndarray",
+            "current_player: int",
+            "history: list[int]",
+            "terminal_state: bool",
+            "winner: Optional[str]",
+            "draw: bool"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "get_valid_moves",
+          "signature": "get_valid_moves(env: TicTacToeEnv) -> list[int]",
+          "docstring": "Returns a sorted list of integer indices representing all currently empty cells.",
+          "calls": [
+            "range",
+            "valid.append"
+          ],
+          "raises": []
+        },
+        {
+          "name": "TicTacToeEnv.reset",
+          "signature": "reset(self) -> dict",
+          "docstring": "Creates a new empty board and sets the first player to move. Returns state dict with board, current_player, history, winner, and draw.",
+          "calls": [
+            "np.zeros",
+            "self.board.copy",
+            "self.history.copy"
+          ],
+          "raises": []
+        },
+        {
+          "name": "TicTacToeEnv.step",
+          "signature": "step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]",
+          "docstring": "Executes a turn by the current player. Returns observation, reward, terminated, truncated, and info dict.",
+          "calls": [
+            "self._check_draw",
+            "self._check_win",
+            "self.board.copy",
+            "self.history.append"
+          ],
+          "raises": []
+        },
+        {
+          "name": "TicTacToeEnv.__init__",
+          "signature": "__init__(self) -> None",
+          "docstring": "Initializes the Tic-Tac-Toe environment state with a new empty board and first player.",
+          "calls": [
+            "np.zeros"
+          ],
+          "raises": []
+        },
+        {
+          "name": "TicTacToeEnv._check_win",
+          "signature": "_check_win(self, board: np.ndarray) -> Optional[int]",
+          "docstring": "Checks for a winner. Returns 1 if X wins, -1 if O wins, None otherwise.",
+          "calls": [
+            "range"
+          ],
+          "raises": []
+        },
+        {
+          "name": "TicTacToeEnv._check_draw",
+          "signature": "_check_draw(self, board: np.ndarray) -> bool",
+          "docstring": "Checks if the board is full (draw).",
+          "calls": [
+            "int"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "get_valid_moves": "Iterates through all indices from 0 to 8 and collects those where the board cell equals EMPTY_CELL into a list, which is then returned without sorting.",
+          "TicTacToeEnv.reset": "Initializes instance attributes with zero-filled or empty values and returns a dictionary containing copies of these initial state components.",
+          "TicTacToeEnv.step": "Validates if the action points to an empty cell; if invalid, returns an immediate observation with an invalid move flag, otherwise updates the board and history, checks for win/draw conditions, switches players, and returns terminal signals and a reward based on who won or if it was a draw.",
+          "TicTacToeEnv.__init__": "Sets all instance attributes to their initial default values: an empty numpy array for the board, PLAYER_X as current player, and falsy/empty values for terminal state, winner, and draw.",
+          "TicTacToeEnv._check_win": "Scans rows, columns, and diagonals for three identical non-empty values, returning the cell value if a win is found or None otherwise.",
+          "TicTacToeEnv._check_draw": "Returns true only if every cell in the board is occupied (none equal to EMPTY_CELL)."
+        },
+        "matches_interface": false,
+        "suspicious": [
+          "get_valid_moves: The plan promises a sorted list but the source code does not apply sorting before returning.",
+          "_check_win: Returns an integer representing the cell value (1 or -1) while the docstring claims to return player identifiers ('X' or 'O'), causing a shape/type mismatch in calling modules.",
+          "TicTacToeEnv.reset: Assigns copies of local variables and history to instance attributes before returning, meaning the returned dictionary contains references that point back to internal state modified by step()."
+        ]
+      }
+    },
+    "game_loop.py": {
+      "file": "game_loop.py",
+      "kind": "code",
+      "state": "failed",
+      "implemented": true,
+      "attempts": 3,
+      "failures": 2,
+      "uses": {
+        "tictactoe_env.py": [
+          "PLAYER_O",
+          "PLAYER_X",
+          "TicTacToeEnv",
+          "get_valid_moves"
+        ]
+      },
+      "used_by": [
+        "experiment.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_game_loop.py",
+          "state": "written"
+        }
+      ],
+      "errors": [
+        "Pytest failure: Pytest: a test hung and was stopped after 20s (probably an infinite loop). Stack (newest frame first):\nTimeout (0:00:20)!\nFile \"game_loop.py\", line 19 in play_game\nFile \"tests\\test_game_loop.py\", line 24 in test_play_game_interface_and_contract"
+      ],
+      "parses": true,
+      "lines": 39,
+      "fingerprint": "76797258ce137c819fd9bffbfdbd9b4f8c0bcc23d037abe8534371e19592fa9a",
+      "imports": [
+        "from typing import Callable, Any",
+        "import numpy as np",
+        "from tictactoe_env import TicTacToeEnv, PLAYER_X, PLAYER_O, get_valid_moves, BOARD_SIZE"
+      ],
+      "constants": [],
+      "classes": [],
+      "functions": [
+        {
+          "name": "play_game",
+          "signature": "play_game(agent_a: Callable[[np.ndarray], int], agent_b: Callable[[np.ndarray, np.random.Generator], int], is_agent_a_turn: bool, rng: np.random.Generator) -> dict",
+          "docstring": "Runs a complete game of Tic-Tac-Toe between two agents or one random player.",
+          "calls": [
+            "TicTacToeEnv",
+            "agent_a",
+            "agent_b",
+            "env.reset",
+            "env.step",
+            "get_valid_moves",
+            "history.append",
+            "isinstance",
+            "list",
+            "np.array",
+            "obs.copy",
+            "obs.reshape"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "play_game": "Accepts two agent callables, a turn-determiner boolean, and an RNG; initializes a fresh TicTacToeEnv and loops until the environment's terminal state is reached. On each iteration, it calls the active agent (passing only the board for Agent A or board plus RNG for Agent B) to get an action, steps the environment, accumulates rewards, appends a move to history, and swaps the board state; finally re"
+        },
+        "matches_interface": true,
+        "suspicious": []
+      }
+    },
+    "q_learning_agent.py": {
+      "file": "q_learning_agent.py",
+      "kind": "code",
+      "state": "failed",
+      "implemented": true,
+      "attempts": 4,
+      "failures": 6,
+      "uses": {},
+      "used_by": [
+        "experiment.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_q_learning_agent.py",
+          "state": "written"
+        }
+      ],
+      "errors": [
+        "Pytest failure:\n_________________________________________________________________________________________________________________________________________ test_act_epsilon_greedy _________________________________________________________________________________________________________________________________________\ntests\\test_q_learning_agent.py:35: in test_act_epsilon_greedy\naction = agent_epsilon"
+      ],
+      "parses": true,
+      "lines": 70,
+      "fingerprint": "f376d53a004806c2895c810316890b1c207fff2f8a42de3320ce4e43c7e87136",
+      "imports": [
+        "import random",
+        "import numpy as np",
+        "from typing import List, Dict, Tuple"
+      ],
+      "constants": [
+        "BOARD_SIZE"
+      ],
+      "classes": [
+        {
+          "name": "QLearningAgent",
+          "bases": [],
+          "attributes": [
+            "q_table: Dict[Tuple[int, ...], np.ndarray]",
+            "learning_rate: float",
+            "discount_factor: float",
+            "epsilon: float",
+            "initial_epsilon: float",
+            "decay: float"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "QLearningAgent.__init__",
+          "signature": "__init__(self, learning_rate: float, discount_factor: float, initial_epsilon: float, decay: float) -> None",
+          "docstring": "Initializes the agent with hyperparameters and creates an empty Q-table.",
+          "calls": [],
+          "raises": []
+        },
+        {
+          "name": "QLearningAgent.act",
+          "signature": "act(self, state: Tuple[int, ...], valid_moves: List[int]) -> int",
+          "docstring": "Returns an integer action index from valid_moves using epsilon-greedy policy.",
+          "calls": [
+            "ValueError",
+            "int",
+            "isinstance",
+            "np.argmax",
+            "np.zeros",
+            "random.choice",
+            "random.random",
+            "state.tolist",
+            "tuple",
+            "type"
+          ],
+          "raises": [
+            "ValueError"
+          ]
+        },
+        {
+          "name": "QLearningAgent.learn",
+          "signature": "learn(self, state: np.ndarray, action: int, reward: float, next_state: np.ndarray, terminated: bool) -> None",
+          "docstring": "Updates the Q-value for the state-action pair using the Bellman equation.",
+          "calls": [
+            "float",
+            "next_state.tolist",
+            "np.max",
+            "np.zeros",
+            "state.tolist",
+            "tuple"
+          ],
+          "raises": []
+        },
+        {
+          "name": "QLearningAgent.reset",
+          "signature": "reset(self) -> None",
+          "docstring": "Resets the internal exploration rate epsilon to initial_epsilon.",
+          "calls": [],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "QLearningAgent.__init__": "Takes hyperparameters for learning rate, discount factor, initial epsilon, and decay; initializes an empty dictionary Q-table, stores these values as class attributes, and sets the current epsilon to the initial_epsilon value.",
+          "QLearningAgent.act": "Accepts a game state (tuple or array) and a list of valid moves; converts the state to a tuple if necessary and creates a zero-sized Q-vector for it if missing; returns an action index chosen either randomly based on epsilon probability or by maximizing Q-values among valid moves.",
+          "QLearningAgent.learn": "Takes a current state, an action, reward, next state, and termination flag; updates the Q-value for the specific state-action pair using the Bellman equation with credit assignment if the episode continues, otherwise sets the target to just the reward.",
+          "QLearningAgent.reset": "Assigns the internal epsilon variable the value of initial_epsilon; does not modify or clear the Q-table."
+        },
+        "matches_interface": true,
+        "suspicious": []
+      }
+    },
+    "random_agent.py": {
+      "file": "random_agent.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 2,
+      "failures": 3,
+      "uses": {},
+      "used_by": [
+        "experiment.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_random_agent.py",
+          "state": "verified"
+        }
+      ],
+      "errors": [
+        "Pytest failure:\n_______________________________________________________________________________________________________________________________________ test_act_returns_valid_move _______________________________________________________________________________________________________________________________________\ntests\\test_random_agent.py:27: in test_act_returns_valid_move\nassert isinstance(acti"
+      ],
+      "parses": true,
+      "lines": 19,
+      "fingerprint": "d799fe144db4cde040093228dd5fa451d5bacaf0b14274c9c646453853a03e54",
+      "imports": [
+        "from typing import Any",
+        "import numpy as np"
+      ],
+      "constants": [],
+      "classes": [
+        {
+          "name": "RandomAgent",
+          "bases": [],
+          "attributes": []
+        }
+      ],
+      "functions": [
+        {
+          "name": "RandomAgent.__init__",
+          "signature": "__init__(self, rng: np.random.Generator | None=None) -> None",
+          "docstring": "Initializes the RandomAgent with the provided RNG. The agent makes no decisions internally and relies on the passed 'rng' during action sele",
+          "calls": [],
+          "raises": []
+        },
+        {
+          "name": "RandomAgent.act",
+          "signature": "act(self, state: dict, rng: np.random.Generator) -> int",
+          "docstring": "Selects a valid move for the player corresponding to 'state'. It uses the provided 'rng' object to generate the random number; if no valid m",
+          "calls": [
+            "int",
+            "rng.choice",
+            "state.keys"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "RandomAgent.__init__": "Accepts an optional numpy random generator as an argument and stores it in a self.rng attribute, effectively accepting or rejecting the interface promise that external RNGs are unused.",
+          "RandomAgent.act": "Accepts a state dictionary representing the game board and a required numpy random generator; retrieves valid empty cells from keys marked 0 or None, selects one using rng.choice, and returns its integer index if valid moves exist."
+        },
+        "matches_interface": false,
+        "suspicious": [
+          "RandomAgent.__init__: Accepts an optional rng argument but the plan implies none is needed for internal state, contradicting the docstring claim that no decisions are made internally.",
+          "RandomAgent.act: The implementation signature requires a non-None rng object while the test failure suggests the return value assertion fails, possibly due to invalid type conversion or empty move handling."
+        ]
+      }
+    },
+    "config.py": {
+      "file": "config.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 1,
+      "failures": 0,
+      "uses": {},
+      "used_by": [
+        "experiment.py"
+      ],
+      "tests": [],
+      "errors": [],
+      "parses": true,
+      "lines": 11,
+      "fingerprint": "d4446be5d59ddcc226a86bbcc7b88732412a671f041b1546f6d1067c30f87131",
+      "imports": [],
+      "constants": [
+        "LEARNING_RATE",
+        "DISCOUNT_FACTOR",
+        "INITIAL_EPSILON",
+        "FINAL_EPSILON",
+        "EPSILON_DECAY",
+        "TOTAL_EPISODES",
+        "TEST_EPISODES",
+        "SEED",
+        "GAMMA"
+      ],
+      "classes": [],
+      "functions": [],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {},
+        "matches_interface": false,
+        "suspicious": [
+          "LEARNING_RATE: returns a value of 0.15 while the interface declares it should be 0.5",
+          "EPSILON_DECAY: returns a value of 0.99 while the interface declares it should be 0.995",
+          "TOTAL_EPISODES: returns a value of 50000 while the interface declares it should be 20000",
+          "TEST_EPISODES: returns a value of 1000 while the interface declares it should be 500"
+        ]
+      }
+    },
+    "experiment.py": {
+      "file": "experiment.py",
+      "kind": "entry",
+      "state": "stub",
+      "implemented": false,
+      "attempts": 0,
+      "failures": 0,
+      "uses": {
+        "config.py": [
+          "DISCOUNT_FACTOR",
+          "EPSILON_DECAY",
+          "FINAL_EPSILON",
+          "INITIAL_EPSILON",
+          "LEARNING_RATE",
+          "SEED",
+          "TEST_EPISODES",
+          "TOTAL_EPISODES"
+        ],
+        "tictactoe_env.py": [
+          "TicTacToeEnv"
+        ],
+        "q_learning_agent.py": [
+          "QLearningAgent"
+        ],
+        "random_agent.py": [
+          "RandomAgent"
+        ],
+        "game_loop.py": [
+          "play_game"
+        ]
+      },
+      "used_by": [],
+      "tests": [],
+      "errors": [],
+      "behavior": {}
+    },
+    "figures.py": {
+      "file": "figures.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 1,
+      "failures": 0,
+      "uses": {},
+      "used_by": [],
+      "tests": [],
+      "errors": [],
+      "parses": true,
+      "lines": 56,
+      "fingerprint": "24428c6c98b28dfac4558af7b67f0a413bc4828bf6c1c497590bd01a9596bcf7",
+      "imports": [],
+      "constants": [],
+      "classes": [],
+      "functions": [
+        {
+          "name": "plot_results",
+          "signature": "plot_results() -> None",
+          "docstring": "Reads 'results.csv' and generates visualizations for the thesis.",
+          "calls": [
+            "FontProperties",
+            "FontProperties(family='sans-serif', size=12).set_property",
+            "ax.bar",
+            "ax.grid",
+            "ax.legend",
+            "ax.plot",
+            "ax.set_title",
+            "ax.set_xlabel",
+            "ax.set_xticklabels",
+            "ax.set_xticks",
+            "ax.set_ylabel",
+            "ax.text"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "plot_results": "Reads a CSV file to extract learning curves for 'q_learning' and 'random_agent' and generates a line plot comparing their mean rewards over episodes; also reads final metric data ('win_rate', 'draw_rate', 'loss_rate') from the same CSV to create a side-by-side bar chart comparison. Uses fixed font properties in monospace style with specific sizes, saves both figures as high-resolution PNGs in the "
+        },
+        "matches_interface": false,
+        "suspicious": [
+          "plot_results: Reads 'results.csv' but sets fontfamily to 'monospace' and overrides matplotlib rcParams to 'sans-serif', contradicting the docstring's reliance on standard sans-serif styling.",
+          "plot_results: Does not save figures named after the chapter title as planned; uses static filenames ('learning_curves.png' and 'final_metrics_comparison.png') regardless of thesis content.",
+          "plot_results: Computes metric names dynamically by filtering available columns instead of explicitly declaring them, diverging from the plan's assumption of fixed columns.",
+          "plot_results: The bar chart only renders if data exists for both methods; if data is missing for one, it skips that entire subplot rather than rendering a partial view or error state."
+        ]
+      }
+    }
+  }
+}

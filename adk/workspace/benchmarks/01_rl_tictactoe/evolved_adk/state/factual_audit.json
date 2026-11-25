@@ -6,70 +6,54 @@
     ".ruff_cache/0.17.2/5000838088791888232",
     ".ruff_cache/0.17.2/6557967958916365441",
     ".ruff_cache/CACHEDIR.TAG",
-    "agent.py",
     "config.py",
-    "environment.py",
     "experiment.py",
-    "figures/payoff_comparison.png",
-    "figures/q_learning_curve.png",
     "figures.py",
+    "game_loop.py",
     "logs/agent_trace.jsonl",
     "logs/events.jsonl",
-    "logs/experiment.log",
     "logs/harness_process.log",
     "logs/snapshots/001_T1.zip",
     "logs/snapshots/002_T2.zip",
-    "logs/snapshots/003_T3.zip",
-    "logs/snapshots/004_T5.zip",
-    "logs/snapshots/005_T6.zip",
-    "logs/snapshots/006_T7.zip",
-    "logs/snapshots/007_R1_3.zip",
-    "logs/snapshots/008_R3_1.zip",
-    "logs/snapshots/009_R3_2.zip",
-    "logs/snapshots/010_R3_3.zip",
-    "logs/snapshots/011_R4_1.zip",
-    "logs/snapshots/012_T13.zip",
-    "logs/snapshots/013_T14.zip",
-    "logs/snapshots/014_R4_2.zip",
-    "logs/snapshots/015_R5_1.zip",
-    "logs/snapshots/016_R6_1.zip",
+    "logs/snapshots/003_T7.zip",
+    "logs/snapshots/004_T9.zip",
+    "logs/snapshots/005_T11.zip",
+    "logs/snapshots/006_T12.zip",
+    "logs/snapshots/007_T14.zip",
+    "logs/snapshots/008_T15.zip",
+    "logs/snapshots/009_R1_1.zip",
+    "logs/snapshots/010_T5.zip",
+    "logs/snapshots/011_R1_3.zip",
+    "logs/snapshots/012_T10.zip",
+    "logs/snapshots/013_R2_3.zip",
+    "logs/snapshots/014_R5_1.zip",
+    "logs/snapshots/015_T6.zip",
+    "q_learning_agent.py",
+    "random_agent.py",
     "references.bib",
-    "results.csv",
-    "tests/test_agent.py",
-    "tests/test_environment.py",
-    "tests/test_experiment.py",
+    "tests/test_game_loop.py",
+    "tests/test_q_learning_agent.py",
+    "tests/test_random_agent.py",
+    "tests/test_tictactoe_env.py",
     "thesis.md",
-    "training_history.csv"
+    "tictactoe_env.py"
   ],
   "pytest_status": "FAIL",
   "pytest_errors": [
-    "Pytest failure: .........FF                                                                                                                                                                                                                                                                                          [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n______________________________________________________________________________________________________________________ TestRunExperiment.test_returns_dataframe_with_correct_metrics ______________________________________________________________________________________________________________________\ntests\\test_experiment.py:42: in test_returns_dataframe_with_correct_metrics\n    result = run_experiment()\n             ^^^^^^^^^^^^^^^^\nexperiment.py:173: in run_experiment\n    results_rows.append({'method': 'Q-Learning', 'metric': 'avg_reward', 'value': metrics_run['avg_reward']})\n                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'avg_reward'\n_______________________________________________________________________________________________________________________________ TestRunExperiment.test_history_saved_to_csv _______________________________________________________________________________________________________________________________\ntests\\test_experiment.py:79: in test_history_saved_to_csv\n    run_experiment()\nexperiment.py:173: in run_experiment\n    results_rows.append({'method': 'Q-Learning', 'metric': 'avg_reward', 'value': metrics_run['avg_reward']})\n                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'avg_reward'\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_experiment.py::TestRunExperiment::test_returns_dataframe_with_correct_metrics - KeyError: 'avg_reward'\nFAILED tests\\test_experiment.py::TestRunExperiment::test_history_saved_to_csv - KeyError: 'avg_reward'\n2 failed, 9 passed in 0.39s"
+    "Pytest failure: ...F.........                                                                                                                                                                                                                                                                                        [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n_______________________________________________________________________________________________________________________________________________ test_learn ________________________________________________________________________________________________________________________________________________\ntests\\test_q_learning_agent.py:41: in test_learn\n    assert state1 in [tuple(s) for s in agent.q_table.keys()]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_q_learning_agent.py::test_learn - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n1 failed, 12 passed in 0.13s"
   ],
   "chapters_present": [
     1,
     2,
-    3,
+    3
+  ],
+  "chapters_missing": [
     4,
-    5,
-    6
+    5
   ],
-  "chapters_missing": [],
-  "symbolic_errors": [
-    "\\ref_csv{config:N_EPISODES}: no such file. The results are in results.csv: write \\ref_csv{results.csv:N_EPISODES} with a column from 'available_csv_columns'.",
-    "\\ref_csv{config:N_TEST_GAMES}: no such file. The results are in results.csv: write \\ref_csv{results.csv:N_TEST_GAMES} with a column from 'available_csv_columns'.",
-    "\\ref_csv{config:N_RUNS}: no such file. The results are in results.csv: write \\ref_csv{results.csv:N_RUNS} with a column from 'available_csv_columns'.",
-    "\\ref_csv{config:SEED_BASE}: no such file. The results are in results.csv: write \\ref_csv{results.csv:SEED_BASE} with a column from 'available_csv_columns'.",
-    "\\ref_csv{figures:plot_results}: no such file. The results are in results.csv: write \\ref_csv{results.csv:plot_results} with a column from 'available_csv_columns'."
-  ],
-  "csv_columns": [
-    "method",
-    "metric",
-    "value",
-    "std_dev",
-    "n_runs"
-  ],
+  "symbolic_errors": [],
+  "csv_columns": [],
   "trigger_issues": [
-    "Pytest failure: FF                                                                                                                                                                                                                                                                                                   [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n______________________________________________________________________________________________________________________ TestRunExperiment.test_returns_dataframe_with_correct_metrics ______________________________________________________________________________________________________________________\ntests\\test_experiment.py:42: in test_returns_dataframe_with_correct_metrics\n    result = run_experiment()\n             ^^^^^^^^^^^^^^^^\nexperiment.py:173: in run_experiment\n    results_rows.append({'method': 'Q-Learning', 'metric': 'avg_reward', 'value': metrics_run['avg_reward']})\n                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'avg_reward'\n_______________________________________________________________________________________________________________________________ TestRunExperiment.test_history_saved_to_csv _______________________________________________________________________________________________________________________________\ntests\\test_experiment.py:79: in test_history_saved_to_csv\n    run_experiment()\nexperiment.py:173: in run_experiment\n    results_rows.append({'method': 'Q-Learning', 'metric': 'avg_reward', 'value': metrics_run['avg_reward']})\n                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^\nE   KeyError: 'avg_reward'\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_experiment.py::TestRunExperiment::test_returns_dataframe_with_correct_metrics - KeyError: 'avg_reward'\nFAILED tests\\test_experiment.py::TestRunExperiment::test_history_saved_to_csv - KeyError: 'avg_reward'\n2 failed in 0.39s",
-    "Metric 'loss_rate' is exactly 0 in every run (std_dev 0): the experiment measures nothing. Find the cause in the modules the experiment uses (a game that never ends, an agent that never learns, a value that is never updated) and fix it there, not by changing how the number is written."
+    "Pytest failure: ..F..                                                                                                                                                                                                                                                                                                [100%]\n================================================================================================================================================ FAILURES =================================================================================================================================================\n_______________________________________________________________________________________________________________________________________________ test_learn ________________________________________________________________________________________________________________________________________________\ntests\\test_q_learning_agent.py:41: in test_learn\n    assert state1 in [tuple(s) for s in agent.q_table.keys()]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n========================================================================================================================================= short test summary info =========================================================================================================================================\nFAILED tests\\test_q_learning_agent.py::test_learn - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n1 failed, 4 passed in 0.11s"
   ]
 }

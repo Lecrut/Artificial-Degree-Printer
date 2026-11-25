@@ -10,6 +10,7 @@ Ten dokument jest źródłem prawdy dla kodu w `viewer/`; zmiana zasad = zmiana 
 | **Historia** | Jak wypadły dotychczasowe benchmarki? (kafelek na commit z wynikami w `adk/workspace/benchmarks`) |
 | **Porównanie** | Czym różnią się przebiegi (do 4)? Czas, wywołania, czas obliczeń SML/LRM, ≈ tokeny, postęp w czasie, agenci — na wspólnych wykresach, z różnicą względem pierwszego. |
 | **Na żywo** | Co harness robi teraz? Co z planu jest gotowe, co padło, co się toczy, który agent myśli? |
+| **Przepływ** | Jak system działa krok po kroku? Który agent po którym, gdzie są rozgałęzienia i pętle, i jaki prompt ma każdy agent (klik w agenta). |
 | **Na żywo → panel „Uruchom / konsola”** | Start i stop benchmarku oraz konsola w panelu z prawej strony podglądu na żywo (dawna strona `/launch` przekierowuje tutaj z otwartym panelem). |
 
 Widok jednego przebiegu jest wspólny dla Historii i Na żywo: **Oś czasu** (plan i jego wykonanie), **Hipergraf**, **Agenci**, **Praca**.
@@ -88,6 +89,7 @@ Commity historii: `git log --format=%H%x09%aI%x09%s -- adk/workspace/benchmarks`
 | `GET /api/runs/:source/:ref/:task` | `RunBundle` (zdarzenia, hipergraf, blueprint, kolejka, lista plików) |
 | `GET /api/runs/:source/:ref/:task/calls` | `AgentCallSummary[]` (bez promptów) |
 | `GET /api/runs/:source/:ref/:task/calls/:step` | `AgentCallDetail` (payload, odpowiedź, prompt systemowy) |
+| `GET /api/agents/:name` | `AgentPrompt`: prompt bazowy agenta z `adk/agents/<grupa>/<name>.md` (nazwa tylko `[a-z_]`, szukana na liście plików, nie składana w ścieżkę) |
 | `GET /api/runs/:source/:ref/:task/file?path=` | plik (obraz, PDF, CSV, markdown) |
 | `GET /api/live/stream` | SSE: nowe zdarzenia i zmiany stanu trwającego przebiegu |
 | `GET /api/launch` | `LaunchStatus` (czy działa, PID, argumenty, ostatnie linie konsoli) |
@@ -126,6 +128,7 @@ Każda faza z liczbą pozycji i kolorem stanu (zielona: przeszła, czerwona: pad
 | **Zadanie** | `TASK_START` … `TASK_DONE` / `TASK_FAILED` / `TASK_DEFERRED`, wszystkie `VERDICT` pomiędzy | stan końcowy zadania | **zagnieżdżona mini-oś prób**: każda próba = werdykt (błędy, ostrzeżenia), model, agent; odrzucone odpowiedzi; zmiana planu (`SPEC_AMENDED`/`SPEC_KEPT`) |
 | Czekanie | `TASK_WAITING` | `grey` | na co czeka |
 | Przeplanowanie | `REPLANNED` | `warning` | nieudane wierzchołki, nowe zadania, odrzucone propozycje, luki |
+| Przeprojektowanie (od 2026-11-25, §XXVIII.8 harnessu) | `REDESIGN_STARTED`, `IMPLEMENTATION_AUDITED`, `REDESIGN_SOURCE_GRANTED` („Projektant czyta kod”), `REDESIGN_GUIDELINES`, `REDESIGN_APPLIED`, `REDESIGN_FALLBACK` (`shared/utils/timeline/redesign.ts`) | `running` / `info` / `ok`, `warning` przy problemach w odpowiedzi projektanta i przy wycofaniu | decyzja dla każdego modułu (zostaje / zmieniony / nowy / usunięty, z powodem) i diagnoza nieudanych, co zastosowano (od nowa, usunięte, zachowane), zadania `D<n>_…`; przy wycofaniu powód i problemy. Wszystkie w fazie „Przeplanowania”, tak jak zadania `D<n>_…` |
 | Ewolucja | `AGENT_MUTATED`, `HARNESS_BUG_REPORTED` | `secondary` | reguła, agent |
 | Dane | `DATA_PRODUCED`, `DATA_STALE`, `DATA_FAILED` | `info` / `warning` / `error` | błąd eksperymentu |
 | Koniec | `RUN_END`, `RUN_STOPPED` | stan przebiegu | luki |
@@ -140,12 +143,12 @@ Zasady:
 
 - **Przegląd** (nagłówek przebiegu, `v-card` + `v-chip`): status, czas, liczniki z `TaskSummary`.
 - **Hipergraf**: dwa widoki — graf (Cytoscape w `ClientOnly`, klik w worek wygasza wszystko poza jego członkami) i macierz incydencji (`shared/utils/incidence.ts`: wiersze = wierzchołki, kolumny = worki, chip roli P/C/T/O/X, obrys = członek dopisany z obserwacji); wierzchołki = pliki/rozdziały (kolor stanu), worki = romby (I/R/N), krawędzie z rolą; panel szczegółów (`v-navigation-drawer location="end"`) dla klikniętego elementu; `v-slider` odtwarzania — stany wierzchołków po `VERTEX_STATE` do wybranej chwili.
-- **Agenci**: `v-data-table` wywołań (krok, agent, model, czas, zadanie, werdykt, decyzja); szczegóły w `v-dialog`: payload i odpowiedź jako drzewo (`v-treeview`), prompt systemowy zwinięty.
+- **Agenci**: `v-data-table` wywołań (krok, agent, model, czas, zadanie, werdykt, decyzja; na żywo domyślnie od najnowszego kroku na górze, wraz z aktualnie trwającym wywołaniem `request` ze statusem „w toku”); szczegóły w `v-dialog`: payload i odpowiedź jako drzewo (`v-treeview`), prompt systemowy zwinięty.
 - **Praca**: `thesis.md` przez markdown-it z wyróżnionymi wskaźnikami `\ref_*` (`v-chip` w treści), `results.csv` w `v-data-table`, rysunki, link do PDF.
 
 ## 9. Na żywo i Uruchom
 
-- **Na żywo**: SSE `/api/live/stream` — serwer obserwuje pliki piaskownicy (`fs.watch` + odczyt przyrostowy od ostatniego offsetu), wysyła nowe `RunEvent` i sygnał zmiany hipergrafu/kolejki. Klient: `useLiveStream()` dokleja zdarzenia do tego samego `RunBundle`, więc oś czasu i hipergraf działają bez zmian. Dodatkowo tablica zadań (`v-row` z kolumnami: czeka / w toku / gotowe / padło / odłożone) i karta „Teraz” (otwarty `LLM_CALL_START`: agent, zadanie, model, sekundy).
+- **Na żywo**: SSE `/api/live/stream` — serwer obserwuje pliki piaskownicy (odczyt przyrostowy `events.jsonl` od ostatniego offsetu oraz znaczniki zmian hipergrafu/kolejki i `agent_trace.jsonl`), wysyła nowe `RunEvent`, stan hipergrafu/kolejki oraz sygnał `trace` dla nowych wywołań agentów. Klient: `useLiveRun()` aktualizuje `events`, `hypergraph`, `queue` i `traceStamp`, dzięki czemu oś czasu, hipergraf i zakładka **Agenci** (lista wywołań, rozwinięty podgląd i otwarte okno szczegółów) odświeżają się na żywo. Dodatkowo tablica zadań (`v-row` z kolumnami: czeka / w toku / gotowe / padło / odłożone) i karta „Teraz” (otwarty `LLM_CALL_START`: agent, zadanie, model, sekundy).
 - **Uruchom**: formularz (`v-select` zadania 01–04 / cały pakiet, dostawca `mock`/`ollama`/`google`, szablon), Start/Stop, konsola (`v-sheet` z ostatnimi liniami). Serwer: jeden proces naraz (`child_process.spawn` z `.venv` Pythonem, `cwd` = korzeń repo), status w pamięci, `.env` nietykany (dostawca tylko flagą).
 
 ## 9a. Porównanie i nawigacja
@@ -157,6 +160,15 @@ Zasady:
 **Płynność:** strumień na żywo oddaje nowe zdarzenia paczką najwyżej raz na sekundę (`useLiveRun`), połączenie i ponawianie w `useEventStream`; karty commitów renderują się przy przewijaniu (`v-lazy`); układ grafu liczy się po animacji zakładki; bez przejść między stronami (czekanie 0,3 s przed każdym ciężkim montowaniem).
 
 **Nawigacja:** na desktopie wąski pasek z ikonami po lewej, rozwijany po najechaniu; na telefonie dolny pasek. **Ctrl K** (albo przycisk w pasku) otwiera paletę: wszystkie strony i wszystkie przebiegi (commit × zadanie, wyniki na dysku), filtr po każdym wpisanym słowie, ↑ ↓ i Enter.
+
+## 9b. Przepływ systemu
+
+Strona `/flow` (tylko lokalnie, jak Na żywo: czyta `adk/agents/`): schemat blokowy od **Start** do **Koniec**, od góry do dołu — krok bez modelu (prostokąt), agent (zaokrąglony prostokąt), rozgałęzienie „jeśli” (romb) i strzałki; pętle (powrót do wcześniejszego kroku) są przerywane. Klik w blok otwiera boczny panel: opis kroku i, dla agenta, jego prompt (markdown).
+
+- **Źródło prawdy o przepływie** to `shared/utils/flow/` (węzły z pozycją `col`/`row`, krawędzie z etykietą); teksty po polsku w `app/utils/labelParts/flow.ts`. To ręczny opis kodu harnessu (`orchestrator.run`, `plan_stages`, `building`, `verification`, `repair`, `fragment_replan`), nie generowany: zmiana przepływu w harnessie = zmiana tutaj.
+- **Pilnuje go test** (`flow.test.ts`): każdy plik promptu w `adk/agents/` jest na schemacie i odwrotnie, krawędzie wskazują istniejące węzły, każdy węzeł ma tekst.
+- **Prompt bazowy**, nie wyewoluowany: prompt konkretnego wywołania w przebiegu jest w widoku Agenci.
+- Układ: Cytoscape z pozycjami z danych (`preset`), bez automatycznego układu — kolejność i kolumny są decyzją autora schematu.
 
 ## 10. Struktura katalogów
 

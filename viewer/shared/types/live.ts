@@ -17,6 +17,7 @@ export type LiveMessage =
   | { type: 'run', task: string | null }
   | { type: 'events', events: RunEvent[] }
   | { type: 'state', hypergraph: Hypergraph | null, queue: QueueTask[] }
+  | { type: 'trace', stamp: string }
 
 export type LaunchTask = '1' | '2' | '3' | '4'
 export type LaunchProvider = 'mock' | 'ollama' | 'google'

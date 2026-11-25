@@ -15,4 +15,5 @@ export const agentsLabels = {
   prompt: 'Prompt systemowy',
   issues: (n: number) => `${n} uwag`,
   full: 'Pełny podgląd',
+  running: 'w toku…',
 }

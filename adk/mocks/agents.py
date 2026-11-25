@@ -64,7 +64,9 @@ class SimulatedAgents:
         if agent == "task_planner":
             return self._replan(payload.get("repair_dossier") or {})
         if agent == "plan_outline":
-            return self._outline(payload)
+            return self._revision(payload) if "revision" in payload else self._outline(payload)
+        if agent == "implementation_auditor":
+            return self._described(payload)
         if agent == "plan_module":
             return self._module(payload)
         if agent == "module_critic_guard":
@@ -145,7 +147,9 @@ class SimulatedAgents:
         answer = staged_answer(self._plan(payload), "plan_module", payload) or {}
         file, _, func = ENTRYPOINT.partition(":")
         if (payload.get("module") or {}).get("file") == file and not payload.get("feedback") and self._flaw("module_misses_promise"):
-            answer["source"] = str(answer["source"]).replace(f"def {func}(", f"def _{func}(", 1)
+            for item in answer.get("functions", []):
+                if item["signature"].startswith(f"{func}("):
+                    item["signature"] = f"_{item['signature']}"
         return answer
 
     def _outline(self, payload: dict[str, Any]) -> dict[str, Any]:
@@ -168,6 +172,22 @@ class SimulatedAgents:
         if self.scenario.flaws and self._flaw("planner_unrunnable_plan"):
             outline["modules"].append({"file": "metrics_helpers.py", "purpose": "Metric helpers.", "depends_on": [], "provides": ["normalized"]})
         return outline
+
+    def _revision(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """The designer after a failed queue: the outline as it is, every failed module `change`, the rest `keep`."""
+        current = payload["current_outline"]
+        failed = {str(v) for v in payload["revision"].get("failed") or []}
+        modules = {}
+        for module in current.get("modules") or []:
+            rel = str(module["file"])
+            rebuilt = rel in failed or f"tests/test_{Path(rel).stem}.py" in failed
+            modules[rel] = {"status": "change" if rebuilt else "keep", "why": "its implementation failed" if rebuilt else "it works"}
+        return {**current, "revision": {"modules": modules, "diagnosis": {}}}
+
+    def _described(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """The auditor: every function of the card does what its signature says."""
+        functions = (payload.get("card") or {}).get("functions") or []
+        return {"functions": {f["name"]: f"Does what its signature says: {f['signature']}." for f in functions}, "matches_interface": True, "suspicious": []}
 
     def _replan(self, dossier: dict[str, Any]) -> dict[str, Any]:
         """New tasks for the failed vertices, one each."""

@@ -10,6 +10,15 @@ const open = defineModel<boolean>({ required: true })
 const emit = defineEmits<{ move: [delta: number] }>()
 const tab = ref<'answer' | 'payload' | 'raw' | 'prompt'>('answer')
 
+watch(
+  () => [props.detail?.step, Boolean(props.detail?.running)] as const,
+  ([, isRunning], prev) => {
+    if (isRunning && tab.value === 'answer') tab.value = 'payload'
+    else if (prev?.[1] && !isRunning && tab.value === 'payload') tab.value = 'answer'
+  },
+  { immediate: true },
+)
+
 // What the copy button copies: the text of the open tab.
 const copied = computed(() => {
   const d = props.detail
@@ -26,7 +35,7 @@ const copied = computed(() => {
     :position="position"
     :total="total"
     :icon="mdiRobotOutline"
-    :color="detail?.ok === false ? 'error' : 'primary'"
+    :color="detail?.running ? 'info' : detail?.ok === false ? 'error' : 'primary'"
     :loading="loading"
     :max-width="1200"
     min-height="70vh"
@@ -36,7 +45,8 @@ const copied = computed(() => {
       <template v-if="detail">
         <span>{{ detail.agent }}</span>
         <v-chip :color="tierColor(detail.tier)">{{ detail.tier }} · {{ detail.model }}</v-chip>
-        <v-chip v-if="detail.verdict" :color="verdictColor(detail.verdict)" variant="flat">{{ detail.verdict }}</v-chip>
+        <v-chip v-if="detail.running" color="info" variant="flat">{{ labels.agents.running }}</v-chip>
+        <v-chip v-else-if="detail.verdict" :color="verdictColor(detail.verdict)" variant="flat">{{ detail.verdict }}</v-chip>
       </template>
     </template>
     <template #subtitle>

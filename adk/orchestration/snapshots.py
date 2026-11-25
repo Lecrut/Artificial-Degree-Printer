@@ -15,6 +15,8 @@ STATE_FILES = (
     "agent_registry.json",
     "failure_ledger.json",
     "evolution_history.json",
+    "plan_outline.json",
+    "implementation_audit.json",
 )
 # Sources and data only: rendered documents, figures and class files are made again by the run.
 _KEEP = (".py", ".md", ".bib", ".csv", ".json", ".txt")

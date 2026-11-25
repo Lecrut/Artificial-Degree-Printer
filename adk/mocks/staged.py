@@ -45,13 +45,43 @@ def outline_from_plan(plan: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _declared(node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, Any]:
+    returns = f" -> {ast.unparse(node.returns)}" if node.returns else ""
+    kind = "async " if isinstance(node, ast.AsyncFunctionDef) else ""
+    item: dict[str, Any] = {"signature": f"{kind}{node.name}({ast.unparse(node.args)}){returns}", "docstring": ast.get_docstring(node) or ""}
+    if node.decorator_list:
+        item["decorators"] = [ast.unparse(d) for d in node.decorator_list]
+    return item
+
+
+def sketch_of(source: str) -> dict[str, Any]:
+    """What the module author of §XXIX declares for `source`: names, signatures and docstrings, never a body."""
+    tree = ast.parse(source)
+    functions = (ast.FunctionDef, ast.AsyncFunctionDef)
+    return {
+        "docstring": ast.get_docstring(tree) or "",
+        "imports": [ast.unparse(n) for n in tree.body if isinstance(n, (ast.Import, ast.ImportFrom))],
+        "constants": [ast.unparse(n) for n in tree.body if isinstance(n, (ast.Assign, ast.AnnAssign))],
+        "functions": [_declared(n) for n in tree.body if isinstance(n, functions)],
+        "classes": [
+            {
+                "name": n.name, "bases": [ast.unparse(b) for b in n.bases], "docstring": ast.get_docstring(n) or "",
+                "decorators": [ast.unparse(d) for d in n.decorator_list],
+                "attributes": [ast.unparse(s) for s in n.body if isinstance(s, (ast.Assign, ast.AnnAssign))],
+                "methods": [_declared(s) for s in n.body if isinstance(s, functions)],
+            }
+            for n in tree.body if isinstance(n, ast.ClassDef)
+        ],
+    }
+
+
 def staged_answer(plan: dict[str, Any], agent: str, payload: dict[str, Any]) -> dict[str, Any] | None:
     """The answer of a planning agent for `plan`, or None for any other agent."""
     if agent == "plan_outline":
         return outline_from_plan(plan)
     if agent == "plan_module":
         rel = str((payload.get("module") or {}).get("file") or "")
-        return {"source": (plan.get("interfaces") or {}).get(rel, ""), "needs": {}}
+        return {**sketch_of((plan.get("interfaces") or {}).get(rel, "")), "needs": {}}
     if agent in ("outline_critic_guard", "module_critic_guard", "plan_critic_guard"):
         return {"status": "PASS", "issues": []}
     return None

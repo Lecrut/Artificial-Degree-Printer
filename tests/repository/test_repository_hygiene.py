@@ -1,0 +1,170 @@
+"""Hygiene of the repository: no empty files, valid syntax, the structure of adk/, no mock files among the tools, a harness that does not know its agents are simulated, no unused function arguments."""
+
+from __future__ import annotations
+
+import ast
+from pathlib import Path
+
+IGNORED_DIRS = {".venv", ".git", "__pycache__", ".pytest_cache", "_evolved_adk_state", "workspace", "node_modules", ".nuxt"}
+
+
+def _iter_repo_files(root: Path):
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        if any(part in IGNORED_DIRS for part in path.parts):
+            continue
+        yield path
+
+
+def test_no_empty_files_in_repository():
+    """Verify that there are no 0-byte (empty) files in the codebase, tests, ideas, or documentation."""
+    root = Path(__file__).resolve().parent.parent.parent
+
+    empty_files = []
+    for path in _iter_repo_files(root):
+        if path.name == ".gitkeep":
+            continue
+        if path.stat().st_size == 0:
+            empty_files.append(str(path.relative_to(root)))
+
+    assert not empty_files, f"Wykryto puste pliki (0 bajtów) w repozytorium: {empty_files}"
+
+
+def test_no_whitespace_only_files_in_repository():
+    """Verify that text/code files are not filled exclusively with whitespace."""
+    root = Path(__file__).resolve().parent.parent.parent
+    checked_suffixes = {".py", ".md", ".txt", ".json", ".toml", ".yaml", ".yml", ".ini"}
+
+    whitespace_only = []
+    for path in _iter_repo_files(root):
+        if path.suffix.lower() not in checked_suffixes:
+            continue
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        if not content.strip():
+            whitespace_only.append(str(path.relative_to(root)))
+
+    assert not whitespace_only, f"Wykryto pliki zawierające wyłącznie białe znaki: {whitespace_only}"
+
+
+def test_valid_python_syntax_across_repository():
+    """Verify that all Python files in the repository have valid AST syntax."""
+    root = Path(__file__).resolve().parent.parent.parent
+
+    syntax_errors = []
+    for path in _iter_repo_files(root):
+        if path.suffix != ".py":
+            continue
+        try:
+            source = path.read_text(encoding="utf-8")
+            ast.parse(source, filename=str(path))
+        except SyntaxError as exc:
+            syntax_errors.append(f"{path.relative_to(root)}: {exc}")
+
+    assert not syntax_errors, f"Wykryto błędy składni Python w repozytorium: {syntax_errors}"
+
+
+def test_no_redundant_tool_suffix_in_tools_directory():
+    """Verify that no subfolder or file inside adk/tools/ contains the redundant word 'tool' or 'tools'."""
+    tools_root = Path(__file__).resolve().parent.parent.parent / "adk" / "tools"
+    offenders = []
+    for item in tools_root.rglob("*"):
+        if "__pycache__" in item.parts:
+            continue
+        if "tool" in item.name.lower():
+            offenders.append(str(item.relative_to(tools_root)))
+
+    assert not offenders, f"Wykryto redundantny dopisek 'tool' wewnątrz katalogu adk/tools/: {offenders}"
+
+
+def test_adk_neuro_symbolic_harness_structure():
+    """Verify that all required domain-grouped files exist in adk/."""
+    adk_root = Path(__file__).resolve().parent.parent.parent / "adk"
+    expected_paths = [
+        "core/connection.py",
+        "core/llm.py",
+        "core/logger.py",
+        "core/models.py",
+        "benchmarks/inputs.py",
+        "benchmarks/tasks.py",
+        "benchmarks/runner.py",
+        "state/task_queue.json",
+        "state/agent_registry.json",
+        "state/validation_report.json",
+        "state/failure_ledger.json",
+        "state/evolution_history.json",
+        "state/hitl_flag.json",
+        "agents/planning/task_planner.md",
+        "agents/planning/plan_critic_guard.md",
+        "agents/building/seed_coder.md",
+        "agents/building/seed_tester.md",
+        "agents/building/seed_writer.md",
+        "agents/verification/code_auditor.md",
+        "agents/verification/symbolic_auditor.md",
+        "agents/verification/redteam_critic_guard.md",
+        "agents/evolution/evolution_architect.md",
+        "tools/planning/complexity_router.py",
+        "tools/building/ast_editor.py",
+        "tools/building/doc_editor.py",
+        "tools/building/thesis_publisher.py",
+        "tools/verification/test_runner.py",
+        "tools/verification/ref_compiler.py",
+        "tools/evolution/agent_creator.py",
+        "tools/evolution/agent_splitter.py",
+        "tools/evolution/agent_mutator.py",
+        "tools/evolution/sandbox_verifier.py",
+        "orchestrator.py",
+        "hypergraph/model.py",
+        "hypergraph/build.py",
+        "hypergraph/observe.py",
+        "orchestration/context.py",
+        "orchestration/plan_change.py",
+        "agents/planning/plan_change_guard.md",
+    ]
+    missing = [rel for rel in expected_paths if not (adk_root / rel).exists()]
+    assert not missing, f"Brakujące pliki w strukturze adk/: {missing}"
+
+
+def test_no_mock_files_in_tools_directory():
+    """Verify that all mock files and fixtures reside strictly in adk/mocks/, and not in adk/tools/."""
+    tools_root = Path(__file__).resolve().parent.parent.parent / "adk" / "tools"
+    mock_files = [str(p.relative_to(tools_root)) for p in tools_root.rglob("*") if "mock" in p.name.lower()]
+    assert not mock_files, f"Wykryto pliki mock wewnątrz katalogu adk/tools/: {mock_files}"
+
+
+def test_harness_never_knows_its_agents_are_simulated():
+    """The simulated agents sit behind the model and literature seams (set_llm_handler, set_paper_source). No harness
+    module outside adk/mocks imports them or compares anything to "mock"; only the provider name lives in connection.py."""
+    import ast
+
+    adk_root = Path(__file__).resolve().parent.parent.parent / "adk"
+    offenders = []
+    for path in adk_root.rglob("*.py"):
+        rel = path.relative_to(adk_root).as_posix()
+        if rel.startswith(("mocks/", "workspace/")) or rel == "core/connection.py":  # workspace: run outputs
+            continue
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("adk.mocks"):
+                offenders.append(f"{rel}:{node.lineno} imports {node.module}")
+            elif isinstance(node, ast.Import) and any(n.name.startswith("adk.mocks") for n in node.names):
+                offenders.append(f"{rel}:{node.lineno} imports adk.mocks")
+            elif isinstance(node, ast.Compare) and any(
+                isinstance(c, ast.Constant) and c.value == "mock" for c in [node.left, *node.comparators]
+            ):
+                offenders.append(f"{rel}:{node.lineno} branches on 'mock'")
+    assert not offenders, "Harness zna symulowanych agentów:\n" + "\n".join(offenders)
+
+
+def test_no_unused_function_arguments_in_codebase():
+    """Verify via Ruff ARG rule that functions across adk, tests, and main.py have no unused arguments."""
+    import subprocess
+    import sys
+
+    import pytest
+
+    root = Path(__file__).resolve().parent.parent.parent
+    cmd = [sys.executable, "-m", "ruff", "check", "--select", "ARG", "adk", "tests", "main.py"]
+    res = subprocess.run(cmd, cwd=str(root), capture_output=True, text=True, check=False)
+    if "No module named ruff" in res.stderr or "No module named 'ruff'" in res.stderr:
+        pytest.skip("Ruff is not installed in the current Python environment.")
+    assert res.returncode == 0, f"Wykryto nieużywane argumenty funkcji w repozytorium:\n{res.stdout}\n{res.stderr}"
