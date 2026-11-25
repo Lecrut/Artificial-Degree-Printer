@@ -206,7 +206,7 @@ def _repair_with(tmp_path: Path, max_retries: int):
 
 def test_the_review_goes_to_the_author_of_the_test_once_and_costs_no_repair_attempt(tmp_path: Path):
     orch, built, task = _repair_with(tmp_path, max_retries=2)
-    assert [b["target_node"] for b in built] == ["tests/test_core.py", "core.py"]
+    assert [b["target_node"] for b in built] == ["tests/test_core.py", "core.py", "core.py"]
     assert "check the test, not the module" in built[0]["description"] and "check the test" not in built[1]["description"]
     assert task["repair_attempts"] == 2  # the module's first repair came after the review as attempt 1 (the review took none)
     assert orch._reviewed_tests == {("core.py", "tests/test_core.py")}
@@ -271,7 +271,7 @@ def test_a_review_that_changes_nothing_sends_the_next_repair_to_the_module(tmp_p
     state = _state([task])
     state.max_retries = 2
     orch._repair_task(state, task, dict(failing), "core.py", "core.py")
-    assert [b["target_node"] for b in built] == ["tests/test_core.py", "core.py"]  # the review took no attempt, the module follows
+    assert [b["target_node"] for b in built] == ["tests/test_core.py", "core.py", "core.py"]  # the review took no attempt, the module follows
     assert orch._reviewed_tests == {("core.py", "tests/test_core.py")}
 
 

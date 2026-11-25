@@ -165,7 +165,9 @@ class RepairMixin:
                     report.setdefault("errors", []).append(builder_error)
                 if report["status"] != "PASS" and signature_before and (
                     _issue_signature({"issues": _collect_report_issues(report)}) == signature_before
-                ) and not _spec_findings(_collect_report_issues(report)) and not review:
+                ) and not _spec_findings(_collect_report_issues(report)) and not review and (
+                    h is None or failed_file not in h.vertices  # a vertex's `O7` below skips the planner: no shortcut (§XXVII)
+                ):
                     # §XIV Q3: the same error after the author's repair (01: T1 and T2 three times each) — this
                     # author will not fix it here; go straight to the full cycle (repair planner) instead. Not for a
                     # breach of σ: the next attempt first lets the planner judge the interface (`_amend_spec_if_wrong`),

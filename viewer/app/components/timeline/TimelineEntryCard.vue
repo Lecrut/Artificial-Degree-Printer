@@ -4,10 +4,12 @@ import type { TimelineEntry } from '#shared/types/timeline'
 import { entryStatusColor } from '#shared/utils/colors'
 import { isPlanStep } from '#shared/utils/timeline'
 import { formatClock } from '#shared/utils/format'
+import type { Snapshot } from '#shared/utils/snapshots'
 import { KIND_ICON } from '~/utils/icons'
 import { labels } from '~/utils/labels'
 
-const props = defineProps<{ entry: TimelineEntry }>()
+const props = defineProps<{ entry: TimelineEntry, snapshot?: Snapshot | null }>()
+const at = useRunAt()
 const emit = defineEmits<{ showCalls: [taskId: string], open: [] }>()
 const expandable = computed(() => props.entry.details.length > 0 || props.entry.attempts.length > 0 || isPlanStep(props.entry))
 const problems = computed(() => props.entry.attempts.filter(a => a.status === 'fail').length)
@@ -35,6 +37,7 @@ const problems = computed(() => props.entry.attempts.filter(a => a.status === 'f
             {{ labels.timeline.llm(entry.llm.calls, entry.llm.seconds) }}
           </v-chip>
           <v-chip :color="entryStatusColor(entry.status)" variant="flat">{{ labels.statuses[entry.status] }}</v-chip>
+          <LaunchResumeButton v-if="at && entry.kind === 'task'" :at="at" :snapshot="snapshot" here compact />
           <v-btn :icon="mdiArrowExpand" :title="labels.timeline.details" size="x-small" variant="tonal" @click.stop="emit('open')" />
         </div>
       </v-expansion-panel-title>

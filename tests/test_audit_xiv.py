@@ -40,8 +40,8 @@ def test_the_same_error_after_a_repair_ends_the_fast_repairs(tmp_path: Path) -> 
     state = _RunState(user_prompt="p", max_retries=repair.FAST_REPAIR_ATTEMPTS + 1, multi_cycle_waves=True, tasks=[task])
     seen = _seen(orch)
     orch._repair_task(state, task, dict(failing), "core.py", "core.py")
-    assert len(built) == 1  # one fast repair, not FAST_REPAIR_ATTEMPTS
-    assert [e["event"] for e in _events(orch, seen) if e["event"] == "REPAIR_SAME_ERROR"] == ["REPAIR_SAME_ERROR"]
+    assert len(built) == 2  # §XXVII: a vertex of H gets both author attempts (the shortcut led to `O7`, i.e. one)
+    assert not [e for e in _events(orch, seen) if e["event"] == "REPAIR_SAME_ERROR"]
 
 
 def test_the_same_breach_of_the_specification_does_not_skip_the_planner(tmp_path: Path) -> None:

@@ -206,7 +206,7 @@ def test_re_planning_without_progress_ends_the_run_with_gaps(tmp_path: Path):
     orch._finalize_with_gaps = lambda _audit, _report: {"gaps": [{"kind": "kod", "detail": "config.py"}], "pdf_ok": False}
     orch._shout_problem_stop = lambda _msg: None
     state = _RunState(user_prompt="p", max_retries=2, multi_cycle_waves=True, tasks=[])
-    assert "tasks" in orch._replan_failed(state) and "tasks" in orch._replan_failed(state)
+    assert all("tasks" in orch._replan_failed(state) for _ in range(3))
     stop = orch._replan_failed(state)["stop"]
     assert stop["status"] == "COMPLETED_WITH_GAPS" and stop["reason"] == "REPLAN_EXHAUSTED" and stop["failed_vertices"] == ["config.py"]
 

@@ -40,6 +40,8 @@ from adk.orchestration.plan_stages import PlanStagesMixin
 from adk.orchestration.schedule import SchedulerMixin
 from adk.orchestration.spec_gate import SpecGateMixin
 from adk.orchestration.recovery import RecoveryMixin
+from adk.orchestration.resume import ResumeMixin
+from adk.orchestration.snapshots import SnapshotMixin
 from adk.orchestration.repair import RepairMixin
 
 __all__ = [
@@ -73,6 +75,8 @@ class NeuroSymbolicOrchestrator(
     PlanChangeMixin,
     SpecGateMixin,
     SchedulerMixin,
+    ResumeMixin,
+    SnapshotMixin,
 ):
     """Main control loop for the Python-only Neuro-Symbolic Harness.
 
@@ -133,8 +137,10 @@ class NeuroSymbolicOrchestrator(
         multi_cycle_waves: bool = False,
         template_name: str | None = None,
         thesis_type: str | None = None,
+        resume: bool = False,
     ) -> dict[str, Any]:
-        """Execute the full Neuro-Symbolic Harness pipeline: plan, build and verify each task, defend, deliver."""
+        """Execute the full Neuro-Symbolic Harness pipeline: plan, build and verify each task, defend, deliver.
+        `resume`: the state of an earlier run is already in place (`adk.benchmarks.resume`); skip planning and go on."""
         self.current_user_prompt = user_prompt
         self.multi_cycle_waves = multi_cycle_waves
         self.logger.log_step(
@@ -146,7 +152,7 @@ class NeuroSymbolicOrchestrator(
             l4_res = self._run_evolution_step({"contradictory_requirements": True, "user_prompt": user_prompt})
             return {"status": "HITL_PAUSED", "layer4": l4_res}
 
-        planned = self._plan_phase(
+        planned = self._resume_phase() if resume else self._plan_phase(
             user_prompt,
             missing_agent_specialization=missing_agent_specialization,
             interactive_gates=interactive_gates,
@@ -300,6 +306,7 @@ class NeuroSymbolicOrchestrator(
             write_json_state(self.task_queue_path, state.tasks)
             self.logger.log_event("TASK_DONE", task_id=t_id, node=node_file, repair_attempts=task.get("repair_attempts", 0))
             self._on_task_result(task, passed=True)
+            self._save_snapshot(t_id)
             print(f"  [ZADANIE {t_id} ZATWIERDZONE] Status: DONE (Weryfikacja zakonczona sukcesem)", flush=True)
             return None
 

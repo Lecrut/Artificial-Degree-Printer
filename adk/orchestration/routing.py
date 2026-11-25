@@ -139,8 +139,8 @@ class RoutingMixin:
         made-up key stayed in the document after its task failed and failed every later section of the same file
         (2026-11-21, 03: `dijkstra1959`, four sections, 2 -> 21 errors)."""
         bibs = list(self.workspace_dir.glob("*.bib")) + list((self.workspace_dir / "thesis").glob("*.bib"))
-        if not bibs:
-            return text
+        # Without `.bib` files `keys` is empty, so every `\cite{...}` (e.g. `\cite{available_ast_symbols}` or `\cite{}`
+        # in 02 before/without bibliography) is stripped instead of poisoning `thesis.md` and XeTeX (§XXVII).
         keys = {m.group(1) for b in bibs for m in re.finditer(r"@\w+\{\s*([^,\s]+)\s*,", b.read_text(encoding="utf-8", errors="ignore"))}
         dropped: list[str] = []
 
@@ -150,7 +150,7 @@ class RoutingMixin:
             kept = [k for k in cited if k in keys]
             return m.group(1) + "\\cite{" + ",".join(kept) + "}" if kept else ""
 
-        text = re.sub(r"([ \t]*~?)\\cite\{([^}]+)\}", _keep, text)
+        text = re.sub(r"([ \t]*~?)\\cite\{([^}]*)\}", _keep, text)
         if dropped:
             self._record_evolution_event({"type": "UNKNOWN_CITATIONS_DROPPED", "keys": sorted(set(dropped))})
         return text

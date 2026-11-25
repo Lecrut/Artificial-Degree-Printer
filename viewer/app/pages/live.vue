@@ -47,7 +47,7 @@ const panel = ref(useRoute().query.console === '1')
       <v-tabs-window v-model="tab">
         <v-tabs-window-item value="timeline"><TimelineRunTimeline :events="events" :at="at" @show-calls="tab = 'agents'" /></v-tabs-window-item>
         <v-tabs-window-item value="graph">
-          <GraphHypergraphPanel v-if="hypergraph" :hypergraph="hypergraph" :events="events" :active="tab === 'graph'" />
+          <GraphHypergraphPanel v-if="hypergraph" :hypergraph="hypergraph" :events="events" :active="tab === 'graph'" :at="at" />
         </v-tabs-window-item>
         <v-tabs-window-item value="agents"><AgentsPanel :at="at" /></v-tabs-window-item>
       </v-tabs-window>

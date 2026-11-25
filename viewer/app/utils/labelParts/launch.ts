@@ -10,6 +10,17 @@ export const launchLabels = {
   autoTemplate: 'automatycznie',
   tasks: { 1: '01 · Q-learning, kółko i krzyżyk', 2: '02 · detekcja anomalii', 3: '03 · wyszukiwanie ścieżek', 4: '04 · uczenie federacyjne' } as Record<string, string>,
   providers: { ollama: 'ollama · modele lokalne', google: 'google · Gemini', mock: 'mock · symulowani agenci' } as Record<string, string>,
+  resume: 'Wznów od tego stanu',
+  resumeHere: 'Wznów stąd',
+  noSnapshot: 'Brak migawki w tym punkcie: przebieg powstał przed zapisem migawek (są od następnego benchmarku) albo zadanie jeszcze się nie skończyło',
+  endState: 'stan końcowy przebiegu',
+  snapshotInfo: (s: { taskId: string, verified: number, vertices: number, failed: number }) =>
+    `po zadaniu ${s.taskId} · zweryfikowane ${s.verified}/${s.vertices} · ${s.failed ? `błędne ${s.failed}` : 'bez błędów'}`,
+  resumeTitle: 'Wznów przebieg',
+  resumeHint: 'Nowy przebieg zaczyna od zapisanego stanu tego przebiegu: plan, hipergraf i pliki wracają, '
+    + 'zweryfikowane moduły i rozdziały nie są budowane ponownie, a harness dopracowuje tylko to, co padło lub zostało. '
+    + 'Przestrzeń robocza tego zadania zostanie nadpisana.',
+  cancel: 'Anuluj',
   start: 'Start',
   stop: 'Zatrzymaj',
   console: 'Konsola',

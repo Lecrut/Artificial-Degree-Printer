@@ -20,9 +20,9 @@ export function launchStatus(): LaunchStatus {
   return { ...status, lines: status.lines.slice(-200) }
 }
 
-export function startLaunch(request: LaunchRequest): LaunchStatus {
+export function startLaunch(request: LaunchRequest, resumeDir?: string): LaunchStatus {
   if (status.running) throw createError({ statusCode: 409, statusMessage: 'A benchmark is already running' })
-  const args = launchArgs(request)
+  const args = launchArgs(request, resumeDir)
   child = spawn(PYTHON, args, { cwd: REPO_ROOT, env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1' } })
   Object.assign(status, { running: true, pid: child.pid ?? null, args, startedAt: new Date().toISOString(), exitCode: null, lines: [] })
   child.stdout?.on('data', collect)

@@ -73,4 +73,4 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.
-- **RULE**: When iterating over a range to index into an array or list, ensure the iterator variable is strictly bounded by the length of the target collection rather than any external constant, because mismatched dimensions cause out-of-bounds access at runtime.
+- **RULE**: When generating code that reads external files, use robust path resolution (e.g., via `pathlib` or inspecting `sys.argv`/environment) relative to the script's location or a known configuration root, because relying on the current working directory is fragile and often incorrect in automated execution contexts.

@@ -1,158 +1,190 @@
-"""Runs the training loop for Q-Learning on Tic-Tac-Toe against a random opponent, logs metrics, and writes results.csv."""
-import os
-from typing import List
+"""Executes the training and evaluation loops for Q-Learning on Tic-Tac-Toe.
+
+This module orchestrates the interaction between `TicTacToeEnv`, `QLearningAgent`,
+and `RandomBaselineAgent` to generate metrics required by the thesis.
+"""
 import numpy as np
 import pandas as pd
-import environment
-import agents
-N_EPISODES: int = 50000
-EPSILON_START: float = 1.0
-EPSILON_END: float = 0.05
-DECAY_RATE: float = 0.9995
-N_EVAL_GAMES: int = 500
-SEED: int = 42
-RESULTS_FILE: str = 'results.csv'
-TRAINING_LOG_FILE: str = 'training_log.csv'
-METRICS: List[str] = ['win_rate_vs_random', 'draw_rate_vs_random', 'loss_rate_vs_random', 'avg_game_length_vs_random']
+from environment import TicTacToeEnv, RandomAgent
+from agent import QLearningAgent
+from config import N_EPISODES, N_TEST_GAMES, N_RUNS, SEED_BASE
 
-def run_experiment() -> None:
-    """Execute the full experiment pipeline.
+def _play_single_game(env: TicTacToeEnv, agents: tuple) -> dict:
+    """Execute one game between two agents and return its result metrics.
 
-    1. Initializes a `environment.TicTacToeEnv` and an `agents.QLearningAgent` with 
-       hyperparameters defined at module level (learning_rate=0.1, discount_factor=0.95).
-    2. Trains the agent for `N_EPISODES` episodes against an `agents.RandomAgent`. 
-       The epsilon parameter for action selection decays from `EPSILON_START` to 
-       `EPSILON_END` using `DECAY_RATE` per episode.
-    3. Evaluates the trained policy by playing `N_EVAL_GAMES` games against a fresh 
-       `agents.RandomAgent` (where Q-Learning is Player X).
-    4. Evaluates the baseline by playing `N_EVAL_GAMES` games where both players are 
-       `agents.RandomAgent` instances (to establish baseline performance).
-    5. Calculates the metrics specified in the outline for both agents:
-       - `win_rate_vs_random`: Proportion of games won by the agent.
-       - `draw_rate_vs_random`: Proportion of games ending in a draw.
-       - `loss_rate_vs_random`: Proportion of games lost by the agent.
-       - `avg_game_length_vs_random`: Average number of moves per game played by the agent.
-    6. Writes the aggregated results to `results.csv` with columns: `method`, `metric`, `value`.
-       Rows include both 'q_learning' and 'random' methods.
-    """
-    import numpy as np
-    import pandas as pd
-    np.random.seed(SEED)
-    env = environment.TicTacToeEnv()
-    agent = agents.QLearningAgent(learning_rate=0.1, discount_factor=0.95, epsilon=EPSILON_START)
-    training_logs: list[dict] = []
-    for episode in range(N_EPISODES):
-        obs = env.reset(seed=episode)
-        current_player = environment.PLAYER_X
-        terminated = False
-        truncated = False
-        state = obs.copy()
-        while not (terminated or truncated):
-            legal_actions = [i for i in range(environment.ACTION_SPACE_SIZE) if state[i] == 0]
-            action_idx: int = -1
-            if current_player == environment.PLAYER_X:
-                action_idx = agent.get_action(state, epsilon=agent.epsilon)
-            else:
-                opponent_agent = agents.RandomAgent()
-                action_idx = opponent_agent.get_action(state, legal_actions)
-            next_state, reward, terminated, truncated, info = env.step(action_idx)
-            agent.learn(obs=state, action=action_idx, reward=reward, next_obs=next_state, terminated=terminated or truncated)
-            state = next_state
-            current_player = -current_player
-        if (episode + 1) % 100 == 0 or episode == N_EPISODES - 1:
-            training_logs.append({'episode': episode + 1, 'epsilon': agent.epsilon})
-        agent.epsilon *= DECAY_RATE
-    logs_df = pd.DataFrame(training_logs)
-    logs_df.to_csv(TRAINING_LOG_FILE, index=False)
-    env_eval_agent = environment.TicTacToeEnv()
-    random_opponent = agents.RandomAgent()
-    results_agent = _evaluate_one_pass(env=env_eval_agent, agent_x=agent, agent_o=random_opponent, n_games=N_EVAL_GAMES, player_x_is_agent=True)
-    env_eval_baseline = environment.TicTacToeEnv()
-    random_agent_x = agents.RandomAgent()
-    random_agent_o = agents.RandomAgent()
-    results_baseline = _evaluate_one_pass(env=env_eval_baseline, agent_x=random_agent_x, agent_o=random_agent_o, n_games=N_EVAL_GAMES, player_x_is_agent=False)
-    rows = [{'method': 'q_learning', 'metric': 'win_rate_vs_random', 'value': results_agent['wins'] / N_EVAL_GAMES}, {'method': 'q_learning', 'metric': 'draw_rate_vs_random', 'value': results_agent['draws'] / N_EVAL_GAMES}, {'method': 'q_learning', 'metric': 'loss_rate_vs_random', 'value': results_agent['losses'] / N_EVAL_GAMES}, {'method': 'q_learning', 'metric': 'avg_game_length_vs_random', 'value': results_agent['avg_length']}, {'method': 'random', 'metric': 'win_rate_vs_random', 'value': results_baseline['wins'] / N_EVAL_GAMES}, {'method': 'random', 'metric': 'draw_rate_vs_random', 'value': results_baseline['draws'] / N_EVAL_GAMES}, {'method': 'random', 'metric': 'loss_rate_vs_random', 'value': results_baseline['losses'] / N_EVAL_GAMES}, {'method': 'random', 'metric': 'avg_game_length_vs_random', 'value': results_baseline['avg_length']}]
-    results_df = pd.DataFrame(rows, columns=['method', 'metric', 'value'])
-    results_df.to_csv(RESULTS_FILE, index=False)
-
-def _get_action_from_agent(env: environment.TicTacToeEnv, obs: np.ndarray, current_player: int, agent: agents.QLearningAgent | agents.RandomAgent) -> int:
-    """Dispatch action selection based on agent type.
-
-    If the agent is a `RandomAgent`, it retrieves legal actions from the environment
-    info and calls `get_action(obs, legal_actions)`. Otherwise, it assumes
-    `QLearningAgent` and calls `get_action(obs)` (using default epsilon).
+    Plays a single full episode of Tic-Tac-Toe. The environment is reset at the start.
+    Agents take turns choosing actions until termination (win/loss/draw).
+    Crucially, it ensures that only valid moves (into empty cells) are executed to
+    prevent infinite loops caused by invalid state updates.
 
     Args:
-        env: The current environment instance.
-        obs: np.ndarray of shape (9,), the current board state.
-        current_player: int, 1 for X or -1 for O. Used to determine whose turn it is 
-                        if helper methods were needed, but primarily for context.
-        agent: agents.QLearningAgent | agents.RandomAgent. The agent from which to request an action.
+        env: A fresh or reset Gymnasium-compatible TicTacToeEnv instance.
+        agents: A tuple of two objects implementing `select_action(state) -> int`.
+                The first agent plays as 'X' (state 1), the second as 'O' (state 2).
 
     Returns:
-        int: A valid action index in [0, 8].
+        metrics: A dictionary containing results for the first agent (agent1):
+            - 'reward' (float): Terminal reward received by agent1 (+1.0 win, 0.0 draw, -1.0 loss).
+            - 'done' (bool): Always True at return.
     """
-    legal_actions = [i for i in range(environment.ACTION_SPACE_SIZE) if obs[i] == 0]
-    if isinstance(agent, agents.RandomAgent):
-        return agent.get_action(obs, legal_actions)
-    else:
-        return agent.get_action(obs)
-
-def _evaluate_one_pass(env: environment.TicTacToeEnv, agent_x: agents.QLearningAgent | agents.RandomAgent, agent_o: agents.RandomAgent, n_games: int, player_x_is_agent: bool) -> dict:
-    """Run evaluation games and aggregate results.
-
-    Args:
-        env: The Tic-Tac-Toe environment instance.
-        agent_x: The agent playing as Player X.
-        agent_o: The agent playing as Player O (always RandomAgent in this design).
-        n_games: Number of games to play.
-        player_x_is_agent: If True, metrics are relative to `agent_x`'s perspective. 
-                           If False (Baseline), metrics are relative to a Random X vs Random O baseline.
-
-    Returns:
-        dict with keys:
-            - 'wins': int, count of wins for Player X.
-            - 'draws': int, count of draws.
-            - 'losses': int, count of wins for Player O (losses for X).
-            - 'avg_length': float, average game length in moves.
-    """
-    wins = 0
-    draws = 0
-    losses = 0
-    total_length = 0
-    for i in range(n_games):
-        obs = env.reset(seed=i)
-        current_player = environment.PLAYER_X
-        terminated = False
-        truncated = False
-        game_length = 0
-        state = obs.copy()
-        winner: int | None = None
-        while not (terminated or truncated):
-            legal_actions = [j for j in range(environment.ACTION_SPACE_SIZE) if state[j] == 0]
-            action_idx = -1
-            if current_player == environment.PLAYER_X:
-                if player_x_is_agent:
-                    action_idx = agent_x.get_action(state)
-                else:
-                    action_idx = agents.RandomAgent().get_action(state, legal_actions)
-            else:
-                action_idx = agent_o.get_action(state, legal_actions)
-            next_state, reward, terminated, truncated, info = env.step(action_idx)
-            state = next_state
-            game_length += 1
-            if terminated:
-                if reward == environment.REWARD_WIN:
-                    winner = current_player
-                elif reward == environment.REWARD_LOSS:
-                    winner = -current_player
-                break
-            current_player = -current_player
-        if winner is None:
-            draws += 1
-        elif winner == environment.PLAYER_X:
-            wins += 1
+    obs, _ = env.reset()
+    player = 1
+    done = False
+    while not done:
+        current_agent_idx = 0 if player == 1 else 1
+        agent = agents[current_agent_idx]
+        empty_cells = np.where(obs == 0)[0]
+        if len(empty_cells) == 0:
+            break
+        raw_action = int(agent.select_action(obs))
+        if raw_action not in empty_cells:
+            action = int(np.random.choice(empty_cells))
         else:
-            losses += 1
-        total_length += game_length
-    return {'wins': wins, 'draws': draws, 'losses': losses, 'avg_length': total_length / n_games}
+            action = raw_action
+        obs, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
+        player = 2 if player == 1 else 1
+    return {'reward': reward, 'done': True}
+
+def _evaluate_agent(q_agent: QLearningAgent, env_template: TicTacToeEnv) -> dict:
+    """Evaluate the trained Q-Agent against the Random Baseline for N_TEST_GAMES.
+
+    Sets the Q-Agent's epsilon to 0 (greedy policy) before evaluation.
+    Aggregates win, loss, and draw rates for the Q-Agent.
+
+    Args:
+        q_agent: The trained QLearningAgent instance. Its epsilon is temporarily set to 0.
+        env_template: A TicTacToeEnv instance used to create new copies via `type(env)()` 
+                      or simply reset if stateless enough (assuming fresh env per game for independence).
+
+    Returns:
+        metrics: A dictionary containing evaluation statistics for the Q-Agent:
+            - 'avg_reward' (float): Mean terminal reward for Q-Agent.
+            - 'win_rate' (float): Fraction of test games won by Q-Agent.
+            - 'loss_rate' (float): Fraction of test games lost by Q-Agent.
+            - 'draw_rate' (float): Fraction of test games drawn.
+    """
+    win_count = 0
+    loss_count = 0
+    draw_count = 0
+    total_reward_sum = 0.0
+    q_agent.epsilon = 0.0
+    for _ in range(N_TEST_GAMES):
+        env = TicTacToeEnv()
+        agents = (q_agent, RandomAgent())
+        result = _play_single_game(env, agents)
+        if result['reward'] > 0:
+            win_count += 1
+        elif result['reward'] < 0:
+            loss_count += 1
+        else:
+            draw_count += 1
+        total_reward_sum += result['reward']
+    return {'avg_reward': total_reward_sum / N_TEST_GAMES, 'win_rate': win_count / N_TEST_GAMES, 'loss_rate': loss_count / N_TEST_GAMES, 'draw_rate': draw_count / N_TEST_GAMES}
+
+def _train_one_run(run_seed: int) -> tuple:
+    """Run one repetition of training and evaluation.
+
+    1. Set global seed for reproducibility within this run.
+    2. Initialize Agent and Environment.
+    3. Train for N_EPISODES episodes against RandomAgent.
+    4. Evaluate trained agent against RandomAgent.
+
+    Args:
+        run_seed: The random seed for this specific repetition.
+
+    Returns:
+        metrics: A dictionary containing training and evaluation statistics:
+            - 'avg_reward' (float): Mean terminal reward during the last 10% of training episodes.
+            - 'win_rate' (float): Win rate in evaluation phase.
+            - 'loss_rate' (float): Loss rate in evaluation phase.
+            - 'draw_rate' (float): Draw rate in evaluation phase.
+        history: A list of dicts with keys 'episode', 'reward' for training history.
+    """
+    from agent import TOTAL_CELLS
+    np.random.seed(run_seed)
+    agent = QLearningAgent(state_size=TOTAL_CELLS, alpha=0.1, gamma=0.9, epsilon=0.2)
+    env = TicTacToeEnv()
+    recent_rewards = []
+    history = []
+    for episode_idx in range(N_EPISODES):
+        obs, _ = env.reset()
+        player = 1
+        done = False
+        total_reward = 0.0
+        prev_obs = obs
+        while not done:
+            current_agent_idx = 0 if player == 1 else 1
+            agent_obj = agent if current_agent_idx == 0 else RandomAgent()
+            empty_cells = np.where(obs == 0)[0]
+            if len(empty_cells) == 0:
+                break
+            raw_action = int(agent_obj.select_action(obs))
+            if raw_action not in empty_cells:
+                action = int(np.random.choice(empty_cells))
+            else:
+                action = raw_action
+            obs, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+            total_reward += reward
+            if current_agent_idx == 0:
+                agent.update(prev_obs, action, reward, obs, done)
+            prev_obs = obs
+            player = 2 if player == 1 else 1
+        history.append({'episode': episode_idx, 'reward': total_reward})
+        if episode_idx >= int(N_EPISODES * 0.9):
+            recent_rewards.append(total_reward)
+    avg_reward = sum(recent_rewards) / len(recent_rewards) if recent_rewards else 0.0
+    eval_metrics = _evaluate_agent(agent, env)
+    return ({'avg_reward': avg_reward, **eval_metrics}, history)
+
+def run_experiment() -> pd.DataFrame:
+    """Run the full training and evaluation experiment and return aggregated results.
+
+    This function acts as the entrypoint for the experiment. It performs ``N_RUNS``
+    independent repetitions to account for stochasticity. In each repetition:
+    1. Initializes `TicTacToeEnv`, `QLearningAgent` (with epsilon-greedy), and uses `RandomAgent` as opponent.
+    2. Trains the Q-Learning agent for ``N_EPISODES`` episodes against the random baseline.
+    3. Evaluates the trained `QLearningAgent` against `RandomBaselineAgent` for ``N_TEST_GAMES``
+       games using a greedy policy (epsilon=0).
+
+    Aggregates metrics across all runs into a tidy DataFrame with columns:
+    'method', 'metric', 'value', 'std_dev', 'n_runs'.
+
+    Metrics included:
+        - 'avg_reward' (training): Mean episode return during the last 10% of training.
+        - 'win_rate' (eval): Win rate of Q-Learning vs Random in test games.
+        - 'loss_rate' (eval): Loss rate of Q-Learning vs Random in test games.
+        - 'draw_rate' (eval): Draw rate of Q-Learning vs Random in test games
+
+    Writes the aggregated results to 'results.csv' in the workspace root.
+
+    Returns:
+        results_df: A pandas DataFrame with shape ``(num_metrics, 5)`` 
+                    containing the aggregated mean and std_dev over ``N_RUNS`` repetitions for each metric.
+                    The 'method' column will be 'Q-Learning'.
+    """
+    all_histories = []
+    results_rows = []
+    for run_idx in range(N_RUNS):
+        run_seed = SEED_BASE + run_idx
+        metrics_run, history = _train_one_run(run_seed)
+        all_histories.extend(history)
+        results_rows.append({'method': 'Q-Learning', 'metric': 'avg_reward', 'value': metrics_run['avg_reward']})
+        results_rows.append({'method': 'Q-Learning', 'metric': 'win_rate', 'value': metrics_run['win_rate']})
+        results_rows.append({'method': 'Q-Learning', 'metric': 'loss_rate', 'value': metrics_run['loss_rate']})
+        results_rows.append({'method': 'Q-Learning', 'metric': 'draw_rate', 'value': metrics_run['draw_rate']})
+    df = pd.DataFrame(results_rows)
+    aggregated = []
+    for metric_name in df['metric'].unique():
+        values = df[df['metric'] == metric_name]['value']
+        sd_val = values.std(ddof=1) if len(values) > 1 else 0.0
+        aggregated.append({'method': 'Q-Learning', 'metric': metric_name, 'value': values.mean(), 'std_dev': sd_val, 'n_runs': len(values)})
+    results_df = pd.DataFrame(aggregated)
+    import os
+    results_path = os.path.join(os.getcwd(), 'results.csv')
+    results_df.to_csv(results_path, index=False)
+    history_df = pd.DataFrame(all_histories)
+    history_path = os.path.join(os.getcwd(), 'training_history.csv')
+    history_df.to_csv(history_path, index=False)
+    return results_df

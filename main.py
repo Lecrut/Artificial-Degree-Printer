@@ -207,6 +207,12 @@ def main() -> None:
         help="Uruchom wybrane zadanie z pakietu benchmarkowego (np. '1'/'rl', '2'/'ml', '3'/'graph', '4'/'fed').",
     )
     parser.add_argument(
+        "--resume-from",
+        default=None,
+        help="Wznów jedno zadanie (--benchmark-task) ze stanu wcześniejszego przebiegu: folder piaskownicy "
+        "(_evolved_adk_state/<zadanie>) albo folder wyników (benchmarks/<zadanie>). Zweryfikowane pliki nie są powtarzane.",
+    )
+    parser.add_argument(
         "--template",
         "-T",
         default=None,
@@ -261,6 +267,7 @@ def main() -> None:
             provider=args.provider,
             template_override=args.template,
             simulate_agents=simulate,
+            resume_from=args.resume_from,
         )
         print("=" * 80)
         print(

@@ -1,0 +1,5 @@
+method,metric,value,std_dev,n_runs
+Q-Learning,avg_reward,0.895,0.021794494717703387,3
+Q-Learning,win_rate,0.895,0.021794494717703387,3
+Q-Learning,loss_rate,0.0,0.0,3
+Q-Learning,draw_rate,0.105,0.021794494717703367,3

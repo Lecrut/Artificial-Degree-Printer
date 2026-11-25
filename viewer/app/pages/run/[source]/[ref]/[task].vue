@@ -36,7 +36,7 @@ function showCalls(taskId: string) {
           <TimelineRunTimeline :events="bundle.events" :at="at" @show-calls="showCalls" />
         </v-tabs-window-item>
         <v-tabs-window-item value="graph">
-          <GraphHypergraphPanel v-if="bundle.hypergraph" :hypergraph="bundle.hypergraph" :events="bundle.events" :active="tab === 'graph'" />
+          <GraphHypergraphPanel v-if="bundle.hypergraph" :hypergraph="bundle.hypergraph" :events="bundle.events" :active="tab === 'graph'" :at="at" />
           <v-alert v-else type="info" variant="tonal" :text="labels.run.noGraph" />
         </v-tabs-window-item>
         <v-tabs-window-item value="agents">

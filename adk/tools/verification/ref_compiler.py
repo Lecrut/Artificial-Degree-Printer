@@ -268,6 +268,12 @@ def compile_symbolic_references(
         rel_file = match.group(1).strip()
         col = match.group(2).strip()
         key = f"\\ref_csv{{{rel_file}:{col}}}"
+        if "<" in key or ">" in key:
+            errors.append(
+                f"Placeholder in symbolic pointer {key}: replace `<...>` with a real target from 'may_cite', "
+                "or remove the pointer if no results exist yet."
+            )
+            return key
         csv_path = w_dir / rel_file
         if not csv_path.is_file() and (w_dir / "results" / rel_file).is_file():
             csv_path = w_dir / "results" / rel_file
@@ -330,6 +336,30 @@ def compile_symbolic_references(
         errors.append(
             f"Doubled backslash before a command ({', '.join(doubled[:5])}): write a single backslash, "
             "the document does not compile."
+        )
+
+    # Math-mode-only commands written in plain prose crash XeTeX (`! LaTeX Error: \mathbf allowed only in math mode`, 02).
+    prose_body = text.split("\\begin{document}", 1)[-1]
+    outside_math = re.sub(
+        r"```[\s\S]*?```|`[^`\n]+`|\\(?:texttt|verb)\{[^}]*\}|\$\$[\s\S]*?\$\$|(?<!\\)\$[^$\n]+?(?<!\\)\$"
+        r"|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)"
+        r"|\\begin\{(?:equation|align|gather|multline|flalign|alignat|math|displaymath|tikzpicture)\*?\}[\s\S]*?"
+        r"\\end\{(?:equation|align|gather|multline|flalign|alignat|math|displaymath|tikzpicture)\*?\}",
+        " ",
+        prose_body,
+    )
+    bare_math = sorted(
+        set(
+            re.findall(
+                r"\\(?:mathbf|mathcal|mathbb|mathrm|mathtt|mathit|mathsf|boldsymbol|bm|sum|prod|int|oint|frac|dfrac|tfrac|sqrt|binom)\b",
+                outside_math,
+            )
+        )
+    )
+    if bare_math:
+        errors.append(
+            f"Math command outside math mode ({', '.join(bare_math[:5])}): wrap every mathematical expression in $...$ "
+            "(inline) or $$...$$ (display); LaTeX fails otherwise."
         )
 
     # Check balanced TikZ environments if present

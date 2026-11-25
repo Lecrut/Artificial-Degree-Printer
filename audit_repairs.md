@@ -33,7 +33,10 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-23 | **Audyt XIII — benchmarki 22.11 v2 (01, 02) → §XXI** | fałszywy `verified` (test bez asercji, funkcja bez `return`), przeplanowanie bez kodu zależności, test czekający na moduł, który pada przez ten test | wdrożone (guardy `TEST_NO_ASSERTIONS`/`FUNCTION_NEVER_RETURNS`, `force_ready`, `dependencies`, cofnięcie `verified → stale`, przegląd testu); niepotwierdzone na żywo |
 | 2026-11-23 | **Przyczyny porażek 01 i 02 i plan U1–U5 → §XXII** | planista nie zmienia struktury plików (kod ją zamraża), wina z najgłębszej ramki, zmiana σ bez przeglądu testów, typ zwracany niesprawdzany | wdrożone U1+U3 (wspólny `TEST_REVIEW`), U2 etap 1 (`SPEC_AMEND_SKIPPED`), U4a, U5; **wstrzymane** U4b i U2 etap 2 |
 | 2026-11-23 | **Nowy 01: jedna reguła sąsiedztwa i interfejs w kontekście agentów → §XXIII** | błąd na granicy dwóch plików z winnym sąsiadem (`trainer.py` → `agent_qlearn.py`, test innego modułu); tester i koder nie widzieli typów i docstringów interfejsu | wdrożone (`dependents`, przegląd testów innych modułów, „called from”, `interface` w kontekście); niepotwierdzone na żywo |
-| 2026-11-24 | **Audyt XIV — przebieg 01 (`COMPLETED_WITH_GAPS`): błąd prozy niszczy dane, PDF `\\`, rzymskie rozdziały → §XXIV** | kod przeszedł (`T1`–`T11`), po czym `remediation_planner` dla `\ref_csv` bez `:value` skierował naprawę na `experiment.py` (`info['turn']` vs `current_player` → `DATA_FAILED`), co zablokowało `thesis.md`; niezależnie: `\\pi` z JSON-a wywala XeTeX, `factual_audit.py` nie widzi `Rozdział I/VI` | diagnoza potwierdzona; **plan A1–A4, B5–B6, C7–C8, `repeated=3`, D do wdrożenia** |
+| 2026-11-24 | **Audyt XIV — przebieg 01 (`COMPLETED_WITH_GAPS`): błąd prozy niszczy dane, PDF `\\`, rzymskie rozdziały → §XXIV** | kod przeszedł (`T1`–`T11`), po czym `remediation_planner` dla `\ref_csv` bez `:value` skierował naprawę na `experiment.py` (`info['turn']` vs `current_player` → `DATA_FAILED`), co zablokowało `thesis.md`; niezależnie: `\\pi` z JSON-a wywala XeTeX, `factual_audit.py` nie widzi `Rozdział I/VI` | **wdrożone** (§XXIV, 343/343); w przebiegu 24.11 v2 naprawiło PDF i wskaźniki w `01`, ale ujawniło, że zmiana limitu trafiła w `recovery.py`, którego faza budowy nie używa |
+| 2026-11-24 | **Wznawianie ze stanu i migawek → §XXV** | wznawianie przebiegu z `_evolved_adk_state`, folderu wyników, commita lub migawki `.zip` po każdym zadaniu (`--resume-from`, przycisk w viewerze) | **wdrożone** (§XXV, 348/348 + viewer) |
+| 2026-11-24 | **Audyt XV — przebieg 24.11 v2 (`01`, `02`): kolizje martwego kodu, gilotyna `reopened`, wspólny proces `plots`, zatrucie rozdziałów → §XXVI** | 01 i 02 `COMPLETED_WITH_GAPS`: limit zmieniony w `recovery.py` (poza ścieżką budowy) zamiast w `fragment_replan.py`; `reopened` zmniejsza `verified` i natychmiast odpala stop (`01` o 1 linię od końca); `Q3`+`O7` obcina naprawy `.py` do 1 próby; crash `figures.py` kasuje sukces `experiment.py`/`results.csv`; `pending_files` przepuszcza `<file>:<method>` w `#ch1` i obwinia `#ch3`; `_known_citations_only` przepuszcza `\cite{}` przed `.bib`, a gołe `\mathbf` kładzie XeTeX | diagnoza potwierdzona w kodzie i logach + inwentaryzacja martwego kodu (`recovery.py`, `repair.py`, `plan_healing.py`); trzon napraw wdrożony w §XXVII |
+| 2026-11-24 | **Przegląd czasu i pełny pakiet napraw po 24.11 v2 → §XXVII** | 01: 26 z 45 min to planowanie (krytyk fuzji FAIL ×3 → `ACCEPTED_OVER_CRITIC`), w `R2_2` brak `self.current_player = next_player` w `environment.py` + błędna sekwencja remisu `[0..8]` w `test_environment.py`; 02: 15 min na 4 timeouty `experiment.py` bez stosu wywołań + zatrucie `#ch1` placeholderem `<file>:<method>`, śmieciowe `\cite{}` i gołe `\mathbf` | **wdrożone 7 poprawek** (stos `faulthandler` przy timeoucie, przegląd `failed` testu, bez skrótu `Q3` dla wierzchołków `H`, postęp = „kiedykolwiek zweryfikowane” i 3 rundy, ścisły filtr `pending_files`, czyszczenie `\cite{}` także bez `.bib`, guard na gołe makra matematyczne poza `$...$`); niepotwierdzone na żywo |
 
 ---
 
@@ -4424,3 +4427,130 @@ Test e2e zadania 2 sprawdza skutek każdego flawu w `events.jsonl` i to, że ka�
 - C8 `factual_audit._chapter_number`: rozdziały rzymskie; `_audit_factual_state` używa `thesis_missing_chapters`.
 - `recovery._rebuild_queue`: powtórzony audyt zatrzymuje przebieg od generacji 3 (było 2).
 - Testy: `tests/test_audit_xxiv.py` (8), `test_rebuild_queue_detects_oscillating_failures` dostosowany; `pytest` 343 OK, `ruff` czysty. **Nie ma** przebiegu na żywo.
+
+
+# §XXV — 2026-11-24: wznawianie przebiegu ze stanu (nie powtarzamy zweryfikowanych plików)
+
+**Cel (użytkownik):** historia agentów jest zapisana, więc przebieg można wznowić od jej stanu zamiast budować od zera idealnie wykonane pliki.
+
+**Co jest zapisane i skąd:** piaskownica `_evolved_adk_state/<zadanie>/{state,agents,workspace}` (przebieg zakończony, zatrzymany lub zawieszony) albo folder wyników `benchmarks/<zadanie>/` z dysku lub commita (`evolved_adk/{state,agents}` + `code/`, `thesis/`, `results/`). Commit trzyma tylko stan końcowy przebiegu, nie migawki w trakcie; „punkt” = stan, w którym przebieg się skończył.
+
+**Wdrożono (na `main`, 2026-11-24):**
+- `adk/benchmarks/resume.py`: `stage_source` (kopia źródła poza piaskownicą, bo `_prepare_evolved_adk_sandbox(reset=True)` kasuje piaskownicę, a źródłem może być ona sama), `restore_run_state` (hipergraf, kolejka, blueprint, rejestr agentów, rejestr porażek i historia ewolucji; pliki wracają do płaskiego workspace — odwrotność `output_bundle`: `code/`→korzeń, `thesis/*` bez plików pochodnych, `results/`). Nie wracają: logi, `validation_report`, `hitl_flag`, `factual_audit` (należą do jednego przebiegu) ani prompty agentów (obowiązują bieżące, żeby poprawka po tamtym przebiegu działała; z źródła tylko agenci, których bieżący folder nie ma).
+- `orchestration/resume.py::_resume_phase` zamiast `_plan_phase` (`run(..., resume=True)`): zadania `IN_PROGRESS`/`TODO` → `TODO`; `DONE` zostaje, dopóki wierzchołek jest `verified` lub `failed`, inaczej wraca do `TODO`; `WAITING` zostaje (gotowość liczona na nowo); `FAILED` zostaje, a wierzchołki `failed` przeplanowuje zwykła pętla (`_replan_failed`) ze świeżym budżetem (`attempts` = 0 dla niezweryfikowanych, nowy `_RunState`). Zdarzenie `RUN_RESUMED`.
+- `run_benchmark_suite(resume_from=…)` (dokładnie jedno zadanie) i `main.py --resume-from`.
+- Viewer: `POST /api/launch` z `resume: {source, ref}`, `server/utils/resumeSource.ts` (wypakowanie commita `git archive` + `tar`; odmowa dla `live`, gdy `events.jsonl` zmieniono w ostatnich 2 min), przycisk `LaunchResumeButton` w `RunHeader`.
+
+**Weryfikacja:** `tests/test_resume.py` (5), `viewer/shared/utils/launch.test.ts`; `pytest` 348 OK, `ruff`, `bun test`, `bun run lint`, `bun run typecheck` czyste. Ręcznie: stan 01 wypakowany z `HEAD` → `_resume_phase`: 6 zweryfikowanych wierzchołków pominiętych, kolejka `DONE 8 / FAILED 6 / WAITING 4 / TODO 1`. **Nie ma** przebiegu na żywo z `--resume-from` (pełny przebieg nadpisałby `benchmarks/<zadanie>` i `_evolved_adk_state`).
+
+**Granice:** (a) wznowienie nie cofa błędnie zweryfikowanego pliku (jeśli test był zły, zostaje `verified`); (b) bez migawek w trakcie przebiegu nie ma wznowienia „od zadania T7” — tylko od stanu końcowego/zawieszonego; (c) wznowienie nadpisuje piaskownicę tego zadania i po końcu folder wyników; (d) źródło `live` świeżo piszącego przebiegu jest odrzucane.
+
+**Uzupełnienie §XXV — migawki w trakcie przebiegu i wybór punktu w viewerze (2026-11-24, wdrożone):** użytkownik chciał wskazać punkt na osi czasu lub w replayu hipergrafu (np. „jeszcze żaden moduł nie padł”) i kliknąć „wznów”. Commit trzyma tylko stan końcowy, więc harness zapisuje teraz po każdym zakończonym zadaniu migawkę.
+- `orchestration/snapshots.py::_save_snapshot` (wołane w `_execute_task` po `TASK_DONE`): `logs/snapshots/<n>_<zadanie>.zip` z `state/*.json` (lista `STATE_FILES`) i źródłami z workspace (`.py .md .bib .csv .json .txt`, bez logów, `figures`, PDF i plików pochodnych); zdarzenie `SNAPSHOT_SAVED {file, task_id, verified, failed, vertices}`. `logs/` jest kopiowane do folderu wyników, więc migawki trafiają do commita razem z nim (kilka–kilkadziesiąt KB na zadanie).
+- `benchmarks/resume.py::stage_source` przyjmuje też plik `.zip` migawki.
+- Viewer: `shared/utils/snapshots.ts` (`snapshotByTask`, `snapshotAt`), przycisk „Wznów stąd” na zadaniu osi czasu (zielony, gdy migawka bez błędów) i przy replayu hipergrafu (ostatnia migawka sprzed wybranego kroku), `resume.snapshot` w `POST /api/launch` (nazwa walidowana `^\d{3}_[\w.-]+\.zip$`; dla commita zip wyciągany `git show`).
+- **Granica:** przebiegi sprzed tej zmiany nie mają migawek, więc w nich działa tylko „Wznów od tego stanu” (koniec przebiegu); „Wznów stąd” pojawia się od następnego przebiegu. Test: `test_a_snapshot_is_saved_after_every_task_and_resumes` (pełny scenariusz mock), `snapshots.test.ts`.
+
+
+# §XXVI — 2026-11-24: przebieg 24.11 v2 (`01`, `02`, commit `3ac5d74`) — pięć błędów harnessu, kolizje martwych warstw i plan docelowego uproszczenia
+
+Źródło: `adk/workspace/benchmarks/benchmark_summary.json`, `{01_rl_tictactoe,02_ml_anomaly_detection}/logs/events.jsonl`, `{01,02}/evolved_adk/state/validation_report.json`, `01/code/{environment.py,tests/test_environment.py}`, `02/{code/experiment.py,code/figures.py,thesis/thesis.md}` oraz kod `adk/orchestration/` i `adk/orchestrator.py`.
+
+**Co zadziałało z §XXIV:**
+- W `01_rl_tictactoe` poprawki A1–A4, C7 i C8 naprawiły tor dokumentowy: `symbolic_status: PASS`, `tex_symbolic_status: PASS`, `thesis.pdf` zbudował się czysto bez błędów `\\` ani rzymskich rozdziałów.
+- W `02_ml_anomaly_detection` `experiment.py` w `R5_1` zszedł poniżej limitu czasu i zapisał poprawne `results.csv` (`csv_rows: 4`).
+- Mimo to **oba przebiegi zakończyły się `COMPLETED_WITH_GAPS`** — przez 5 błędów samego harnessu, w tym bezpośrednie kolizje starych i nowych warstw kodu.
+
+---
+
+### 1. Pięć przyczyn porażki (potwierdzone w logach i kodzie)
+
+1. **P1. Zmiana limitu w martwym miejscu + gilotyna `progress` karze za `reopened` (`fragment_replan.py:22,167-169` vs `recovery.py:247`):**
+   - W §XXIV podniesiono próg `repeated >= 3` w `recovery._rebuild_queue`, ale cała faza budowy działa w **`fragment_replan._replan_failed`** (`REPLANS_WITHOUT_PROGRESS = 2`, `MAX_REPLANS = 6`).
+   - Warunek `stalled = len(progress) > REPLANS_WITHOUT_PROGRESS and progress[-1] <= progress[-1 - REPLANS_WITHOUT_PROGRESS]` liczy surową sumę `x.state == "verified"`.
+   - **Jak zabiło to `01_rl_tictactoe`:** po fali 0 było `6` wierzchołków `verified`; w rundzie 1 przeszedł `tests/test_agents.py` (`7`); w rundzie 2 `task_planner` trafnie rozpoznał, że `environment.py` (fałszywie `verified` z `T2`, bo `T3` wtedy padło na stubach) tworzy planszę `(3,)` zamiast `(9,)`, i użył **`reopened: ['environment.py']`**, co cofnęło licznik `7 → 6`. W `R2_2` koder naprawił kształt planszy na `(9,)` (`5/7` testów zielonych, brakowało wyłącznie jednej linii `self.current_player = next_player` w `environment.py:62`), po czym `progress = [6, 7, 6]` dało `6 <= 6` → **natychmiastowy stop `PRZEPLANOWANIE BEZ POSTEPU`**, dając **zero rund** na dokończenie właśnie otwartego modułu.
+   - **Jak dobiło to `02_ml_anomaly_detection`:** w `R5_1` `figures.py` spadło z `verified` do `failed` (`10 → 9`), więc `progress = [..., 10, 10, 9]` → `9 <= 10` → natychmiastowy stop.
+
+2. **P2. Sprzeczność `Q3` (`REPAIR_SAME_ERROR`) z `O7` (`REMEDIATION_SKIPPED`) w `repair.py:169-174,267-274` — ucinanie napraw po 1 próbie:**
+   - `Q3` (`repair.py:169-174`) po **pierwszej** szybkiej naprawie z tą samą sygnaturą błędu przeskakuje próbę 2 z komentarzem *„go straight to the full cycle (repair planner) instead”*.
+   - Chwilę niżej `O7` (`repair.py:267-274`) robi `if failed_file in h.vertices: REMEDIATION_SKIPPED; break` z komentarzem *„its author already had the local attempts”*.
+   - Skutek w `events.jsonl`: zadania `R1_2` i `R2_2` (`01`) oraz `R4_1` i `R5_1` (`02`) dostały **tylko jedną próbę naprawy (`_FIX1`)** i od razu wyleciały jako `TASK_FAILED (repair_attempts: 3)`.
+
+3. **P3. Związanie `entrypoint` i `plots` w jeden proces (`experiment_runner.py:64-75`) + fałszywy `verified` na `figures.py` bez danych (`02`):**
+   - W `T13` (przed powstaniem `results.csv`) `figures.py:17-19` miało `if not os.path.exists('results.csv'): return`, więc przeszło bez wykonania kodu rysującego i dostało `verified`, ukrywając błąd `ax.plot(range(1000), y[:250])` w linii 87.
+   - Gdy w `R5_1` `experiment.py` naprawił timeout i w 4 s zapisał poprawne `results.csv`, `experiment_runner.py` w tym samym procesie odpalił `figures.py`, które rzuciło wyjątek i ustawiło `code = 1` (`DATA_FAILED`).
+   - Skutek: przez błąd wykresów sukces `experiment.py` przepadł — `experiment.py` został w stanie `impl`, `results.csv` nie dostało `DATA_PRODUCED`/`verified` (więc rozdziały `T16` i `T17` zostały zablokowane w `TASK_WAITING`), a `R5_1` zakończyło się porażką.
+
+4. **P4. Zatrucie międzyrozdziałowe `thesis.md` przez dziurę w filtrze `pending_files` (`verification.py:218-222`, `02`):**
+   - Podczas `T1` (`thesis.md#ch1`, przed powstaniem `results.csv`) pisarz skopiował z instrukcji dosłowny placeholder `\ref_csv{<file>:<method>+F1:value}` (`thesis.md:6`).
+   - Komunikat błędu z `ref_compiler` zawierał podpowiedź `"... The results are in results.csv: ..."`. Ponieważ `"results.csv"` było w `pending_files`, warunek `not any(pf in err for pf in pending_files)` **wyciął ten błąd** i oznaczył `thesis.md#ch1` jako `verified`.
+   - Po wygenerowaniu `results.csv` w `R5_1` ruszyło `R1_4` (`thesis.md#ch3`). Rozdział 3 miał w 100% poprawne wskaźniki (`thesis.md:28`), ale `compile_symbolic_references` waliduje cały `thesis.md` i przypisał błąd z `verified` Rozdziału 1 do `R1_4` (`thesis.md#ch3`). Pisarz 3× przepisywał niewinny Rozdział 3, nie mając prawa edytować Rozdziału 1.
+
+5. **P5. Dziurawy `_known_citations_only` (`routing.py:141-153`) + gołe komendy matematyczne poza `$...$` (`02` PDF):**
+   - `if not bibs: return text` w `routing.py:142` sprawia, że rozdziały pisane przed utworzeniem `references.bib` nie przechodzą żadnego filtrowania cytowań — do `02/thesis/thesis.md` trafiło 5× `\cite{available_ast_symbols}`; ponadto regex `r"([ \t]*~?)\\cite\{([^}]+)\}"` (`+` zamiast `*`) nigdy nie usuwa pustego `\cite{}` (8× w `02`).
+   - W `02/thesis/thesis.md:22-24` pisarz użył `\mathbf{x}`, `\mathcal{S}_m`, `\sum_{m=1}^{M}` poza `$...$`, na czym padł `XeTeX` (`! LaTeX Error: \mathbf allowed only in math mode`). Guard z C7 sprawdzał jedynie podwójny ukośnik `\\`.
+
+---
+
+### 2. Inwentaryzacja martwego i zduplikowanego kodu w `adk/orchestration/`
+
+Narastające dokładanie nowych warstw bez usuwania poprzednich doprowadziło do sytuacji, w której równoległe mechanizmy wchodzą sobie w drogę:
+- **M1. Dwie maszyny przeplanowania (`recovery.py` vs `fragment_replan.py`):** w `orchestrator.py:183-219`, dopóki jakikolwiek wierzchołek `H` ma stan `failed` (moduł, test lub rozdział `thesis.md#ch*`), pętla kręci się wyłącznie w `_replan_failed` (`fragment_replan.py`). Stary generator `_tasks_from_audit` / `_rebuild_queue` (`recovery.py:54-275`, ~220 linii zadań `Q1_CODE`, `Q1_RESULTS`, `Q1_CH*`, `Q1_FIX_*`) w trakcie budowy w ogóle się nie wykonuje — odpala się tylko w narożniku po Gate 3 (`_defend`) lub błędzie końcowego PDF, gdy `failed_vertices` jest puste, a utrzymują go przy życiu głównie bezpośrednie testy jednostkowe z 15.11 (`test_layer4_and_orchestrator.py`, `test_root_causes_1115.py`). Żywe i potrzebne są wyłącznie `_finalize_with_gaps` oraz prosta obsługa uwag z Gate 3 / PDF.
+- **M2. Martwy `_repair_cycle` (`remediation_planner`) dla kodu `.py` w `repair.py`:** odkąd wszystkie pliki `.py` są wierzchołkami `H`, warunek `O7` (`if failed_file in h.vertices: break`) sprawia, że wywołanie `_repair_cycle` wewnątrz `_execute_task` jest dla całego kodu Pythona 100% martwe (wykonuje się tylko dla `thesis.md`, bo wierzchołek to `thesis.md#chK`, oraz w `_defend`), podczas gdy pozostawione `Q3` nadal próbuje do niego przeskakiwać.
+- **M3. `plan_healing.py` (217 linii) + filtr `SKELETON` (`planning.py:231-241`):** etapowe planowanie (`plan_stages.py`, §XVI) deterministycznie wyprowadza zadania w kodzie z zatwierdzonego szkicu i interfejsów; późniejsze `_normalize_and_heal_task_plan` (spłaszczanie `subtasks`, mapowanie stringów specjalizacji, dopisywanie rozdziałów) oraz odfiltrowywanie zadania `SKELETON` to relikty jednoetapowego `task_planner` z Audytów III–V (utrzymywane przez 5 starych testów w `test_architectural_phases.py`).
+
+---
+
+### 3. Plan napraw i uproszczenia (§XXVI — do wdrożenia)
+
+1. **Jedna pętla przeplanowań i poprawny licznik postępu (`fragment_replan.py` + odchudzenie `recovery.py`):**
+   - Ustawić `REPLANS_WITHOUT_PROGRESS = 3` i `MAX_REPLANS = 8` w `fragment_replan.py`.
+   - Nie traktować celowego cofnięcia wierzchołka (`reopened`) jako braku postępu: baza porównania uwzględnia cofnięte wierzchołki (lub liczy nowo domknięte/naprawione od ostatniego przeplanowania, tak by `[6, 7, 6]` po `reopened` nie zabijało przebiegu przed wykonaniem kolejnej rundy).
+   - Wyciąć martwe gałęzie kodowe z `recovery._tasks_from_audit`, zostawiając `_finalize_with_gaps` oraz domknięcie uwag Gate 3 / PDF (z dostosowaniem starych testów).
+2. **Usunięcie kolizji `Q3` + `O7` w `repair.py`:**
+   - Dla wierzchołków w `H` wykonywać pełne 2 próby autora (bez przeskakiwania próby 2 przez `REPAIR_SAME_ERROR` w martwy blok `REMEDIATION_SKIPPED`), wymuszając 2. próbę na tierze `LRM`, aby każdy padający moduł/test miał gwarantowaną próbę dużego modelu przed przeplanowaniem.
+3. **Rozdzielenie `entrypoint` od `plots` (`experiment_runner.py`, `building.py`, `schedule.py`):**
+   - Zadanie `plots` (`figures.py`) w harmonogramie czeka na zweryfikowane `results.csv` i po uruchomieniu musi zostawić przynajmniej 1 plik wykresu w `figures/` (koniec z fałszywym `verified` na pustym `if not exists: return`).
+   - W `_refresh_experiment_after_code`: jeśli `entrypoint` zakończył się kodem `0` i `results.csv` ma poprawny format, natychmiast rejestrować `DATA_PRODUCED` (`results.csv` = `verified`), a ewentualny błąd `plots` przypisywać wyłącznie do wierzchołka `figures.py`, bez psucia stanu `experiment.py` ani blokowania rozdziałów czekających na `results.csv`.
+4. **Izolacja błędów symbolicznych per rozdział + zakaz `\ref_csv` przed wynikami (`verification.py`, `ref_compiler.py`):**
+   - Dopóki `results.csv` nie istnieje, **żaden** błąd `\ref_csv{...}` nie jest wyciszany przez `pending_files` (łapie `<file>:<method>` już w `T1`).
+   - Błędy symboliczne w `thesis.md` lokalizować po sekcji (`## ...`): błąd leżący w innym rozdziale niż bieżące zadanie `thesis.md#chK` cofa ze stanu `verified` winny rozdział (`#ch1`) zamiast obwiniać aktualnie pisany `#chK`.
+5. **Szczelne czyszczenie `\cite{...}` i guard na gołe makra matematyczne (`routing.py`, `ref_compiler.py`):**
+   - W `_known_citations_only`: gdy brak plików `.bib`, wycinać wszystkie `\cite{...}`; zmienić wzorzec na `r"([ \t]*~?)\\cite\{([^}]*)\}"` (`*` zamiast `+`), żeby usuwać również puste `\cite{}`.
+   - W `ref_compiler`: dodać guard (zgodnie z D3 — zgłasza błąd z linią i instrukcją otoczenia `$...$`) na komendy trybu matematycznego (`\mathbf`, `\mathcal`, `\mathbb`, `\mathrm`, `\mathtt`, `\sum`, `\prod`, `\int`, `\frac`, `\sqrt` itd.) użyte poza `$...$` / `$$...$$` / `\[...\]` / `\(...\)` / środowiskami matematycznymi.
+6. **Usunięcie martwego `plan_healing.py` i `SKELETON` (`planning.py`, `tests/test_architectural_phases.py`):**
+   - Usunąć `_normalize_and_heal_task_plan` oraz filtr `SKELETON` po `_staged_plan` i zaktualizować stare testy jednostkowe.
+7. **Weryfikacja:**
+   - Testy jednostkowe dla pkt 1–5, pełne `pytest` i `ruff check`, a następnie przebieg na żywo (`01_rl_tictactoe` i `02_ml_anomaly_detection` — w tym możliwość szybkiego sprawdzenia poprawki przez `--resume-from` na migawce + pełny przebieg od zera).
+
+
+# §XXVII — 2026-11-24: przegląd czasu w przebiegu 24.11 v2 i wdrożony pakiet siedmiu poprawek (§XXVI + czas)
+
+Źródło: `events.jsonl` obu przebiegów, `01/code/{environment.py,tests/test_environment.py}`, `02/thesis/thesis.md`, `validation_report.json`, kod `repair.py`, `failure_attribution.py`, `fragment_replan.py`, `experiment_runner.py`, `verification.py`, `routing.py`, `ref_compiler.py`. Cel: skrócić przebieg (~45 i ~55 min), nie zatrzymywać się o krok przed końcem i zamknąć wszystkie błędy prozy/PDF potwierdzone w `02`.
+
+## §XXVII.1. Rozkład czasu
+
+- **01 (45 min):** planowanie 26 min (58%), budowa 19 min. Krytyk fuzji dał `PLAN_REVIEWED FAIL` ×3, każda runda cofała wszystkie cztery moduły, a na końcu było `PLAN_ACCEPTED_OVER_CRITIC` — 13 min przeróbek bez wpływu na wynik.
+- **02 (55 min):** planowanie 13 min, budowa 42 min: 18 min `data_generation.py` (`T6` → `R3_1`), 15 min czterech timeoutów `experiment.py` (4 × 3,7 min; w `R5_1` ten sam eksperyment zszedł do 4 s).
+
+## §XXVII.2. Potwierdzone błędy (uzupełnienie P1–P5 z §XXVI)
+
+1. **Timeout bez miejsca zawieszenia:** `experiment_runner.py` wysyłał `f"... exceeded {timeout}s: {exc}"`, a `{exc}` to cały skrypt harnessu (`_SNIPPET`). Koder nie widział, w której pętli własnego kodu utknął program.
+2. **Przegląd testu pomijał test `failed` (sprostowanie `01/R2_2`):** `_test_to_review` miał `vertex.state == "failed" → continue`, pomijając test, który nigdy nie przeszedł. W `01/R2_2` złożyły się **dwa** błędy naraz: w `environment.py:61-62` brakowało `self.current_player = next_player` (stąd poprawny test `test_env_step_win_condition_x` padał w 2. ruchu), a jednocześnie w `tests/test_environment.py:118` test remisu używał ruchów `[0..8]` (wygrana X na `0-4-8` zamiast remisu). W `01` cztery z sześciu porażek dotyczyły testów (`T3`, `T5`, `R1_2`, `R2_2`).
+3. **Rozdział 3 w `02` ruszył przed `results.csv`** (`T15` padło 3×, podczas gdy rozdziały 4–5 dostały `TASK_WAITING` — `uses_results=false` w szkicu, mimo że pisarz wstawił wskaźniki CSV).
+
+## §XXVII.3. Wdrożone (7 poprawek — kod + proza/PDF)
+
+1. **`experiment_runner.py` (diagnostyka timeoutu):** `faulthandler.dump_traceback_later(timeout − 10)` (z `cancel_dump_traceback_later()` na wyjściu); komunikat timeoutu zwraca realny stos wywołań z chwili przekroczenia limitu + polecenie zmniejszenia obciążenia ~10× zamiast treści skryptu harnessu.
+2. **`failure_attribution._test_to_review`:** usunięty warunek pomijający test w stanie `failed` — niezweryfikowany test z wcześniejszą porażką również przechodzi jednorazowy przegląd przed kolejną naprawą modułu.
+3. **`repair.py` (koniec kolizji `Q3` + `O7`, §XXVI P2):** skrót `REPAIR_SAME_ERROR` nie kasuje 2. próby dla plików będących wierzchołkami `H` (które i tak pomijają `remediation_planner` przez `O7`); każdy wierzchołek dostaje obie próby autora.
+4. **`fragment_replan.py` (koniec gilotyny po `reopened`, §XXVI P1):** postęp mierzony liczbą wierzchołków **kiedykolwiek** zweryfikowanych (`_replan_ever_verified`), więc celowe cofnięcie `reopened` albo awaria wykresu nie wygląda jak brak postępu; `REPLANS_WITHOUT_PROGRESS` podniesione z `2` na `3`.
+5. **`verification.py` (koniec zatruwania późniejszych rozdziałów przez `pending_files`, §XXVI P4):** `pending_files` wycisza wyłącznie komunikaty o brakującym pliku lub rysunku (`File '...' does not exist`, `Figure reference '...' not found`) bez nawiasów kątowych `<...>`; błędy `\ref_csv` przed powstaniem `results.csv` oraz skopiowane placeholdery (`<file>:<method>`) zatrzymują od razu rozdział, który je wprowadził (`T1`), zamiast przechodzić jako `verified` i wybuchać w innym rozdziale (`R1_4`).
+6. **`routing._known_citations_only` (§XXVI P5a):** brak plików `.bib` oznacza pusty zbiór dozwolonych kluczy (zamiast `return text`), a wzorzec `r"([ \t]*~?)\\cite\{([^}]*)\}"` (`*` zamiast `+`) wycina zarówno zmyślone `\cite{available_ast_symbols}` przed powstaniem bibliografii, jak i puste `\cite{}`.
+7. **`ref_compiler.py` (§XXVI P5b):** guard zgłaszający komendy trybu matematycznego (`\mathbf`, `\mathcal`, `\mathbb`, `\sum`, `\prod`, `\int`, `\frac`, `\sqrt` itd.) użyte w prozie poza `$...$` / `$$...$$` / `\[...\]` / `\(...\)` / środowiskami matematycznymi, zanim położą kompilację `XeTeX`.
+- **Weryfikacja:** `tests/test_audit_xxvii.py` (5 testów), pełna suita `pytest` i `ruff` czyste; przywrócony brakujący nagłówek §XVII i notatka z końca §XVI w niniejszym dzienniku.
+
+## §XXVII.4. Świadomie odłożone (do decyzji po kolejnym przebiegu na żywo)
+
+- **Ucięcie krytyka planu po pierwszej rundzie fuzji** (największy potencjalny zysk czasowy, ~13 min na `01`): zmienia jakość planu, wymaga osobnej decyzji.
+- **Rozdzielenie procesu `entrypoint` i `plots`** (§XXVI pkt 3) oraz **usunięcie nieużywanych ścieżek `recovery._tasks_from_audit` i `plan_healing.py`** (§XXVI M1/M3): odłożone, żeby przed przebiegiem na żywo nie ruszać szerszej powierzchni harmonogramu i starych testów regresyjnych.

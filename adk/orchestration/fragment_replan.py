@@ -19,7 +19,7 @@ from adk.orchestration import agent_texts as texts
 from adk.orchestration.common import _RunState, _agent_for_path, available_package_imports
 from adk.orchestration.plan_interfaces import _plan_interfaces
 
-REPLANS_WITHOUT_PROGRESS = 2  # re-plans in a row after which no new vertex was verified: the run ends with gaps
+REPLANS_WITHOUT_PROGRESS = 3 # re-plans in a row after which no new vertex was verified: the run ends with gaps
 MAX_REPLANS = 6
 DEPENDENCY_CHARS = 20000  # code of one dependency in the dossier: whole modules (2026-11-23, 01: environment.py was cut at 4000 of 6165 characters, `step()` never reached the planner)
 LATEST_ERROR_CHARS = 1500  # one finding of the current blocker copied into the task description
@@ -164,7 +164,11 @@ class FragmentReplanMixin:
             return None
         h = self._project_h()
         progress = self.__dict__.setdefault("_replan_progress", [])
-        progress.append(sum(1 for x in h.vertices.values() if x.state == "verified"))
+        # Progress = vertices that were ever verified: a deliberate reopening (or a figure crash undoing a verified file)
+        # must not look like standing still (§XXVII: 01 stopped at [6, 7, 6] one line from a working environment.py).
+        ever = self.__dict__.setdefault("_replan_ever_verified", set())
+        ever.update(v for v, x in h.vertices.items() if x.state == "verified")
+        progress.append(len(ever))
         stalled = len(progress) > REPLANS_WITHOUT_PROGRESS and progress[-1] <= progress[-1 - REPLANS_WITHOUT_PROGRESS]
         if stalled or len(progress) > MAX_REPLANS:
             return {"stop": self._replan_exhausted(state, failed)}

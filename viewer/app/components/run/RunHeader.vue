@@ -42,6 +42,7 @@ const crumbs = computed(() => [
           <CommonStatusChip :status="summary.status" />
           <span class="text-caption text-medium-emphasis">{{ formatDate(summary.started) }}</span>
           <v-btn :to="{ path: '/compare', query: { runs: runKey(at) } }" :prepend-icon="mdiCompareHorizontal" color="primary" variant="tonal" size="small" class="mt-1" :text="labels.nav.compareThis" />
+          <LaunchResumeButton :at="at" />
         </div>
       </div>
       <v-card-text>

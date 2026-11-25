@@ -1,90 +1,81 @@
-"""Generate academic plots from experimental results stored in CSV files."""
+"""Reads experiment results and training history to generate static plots."""
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import os
 import pandas as pd
-from pathlib import Path
-from typing import Optional
-FIGURE_DIR: str = 'figures'
-RESULTS_FILE: str = 'results.csv'
-TRAINING_LOG_FILE: str = 'training_log.csv'
+FIGURES_DIR: str = 'figures'
 
-def generate_plots() -> None:
-    """Reads results.csv and training_log.csv to generate learning curves and performance comparison plots.
+def plot_results() -> None:
+    """Read `results.csv` and `training_history.csv`, generate and save plots.
 
-    This function loads aggregated experimental results from `results.csv` (tidy format with columns
-    `method`, `metric`, `value`, optional `std_dev`) and intermediate training dynamics from 
-    `training_log.csv` (columns: `step`, `epoch`, `win_rate`, `draw_rate`, `loss_rate`, etc.).
+    Reads two files from the current working directory (workspace root):
+    1. `results.csv`: Contains final aggregated metrics (`method`, `metric`, `value`).
+       Used for the payoff comparison bar chart (win/draw/loss rates).
+    2. `training_history.csv`: Contains training progress (`episode`, `reward` or `avg_reward`).
+       Used for the learning curve visualization.
 
-    It generates the following figures saved to `figures/`:
-    1. `training_dynamics.png`: Line plot of win/draw/loss rates over training epochs/steps.
-    2. `final_performance.png`: Bar chart comparing final metrics (win_rate, draw_rate, 
-       loss_rate, avg_game_length) between the Q-Learning agent and the Random baseline.
+    Generates two figures and saves them into the `figures/` directory:
+    1. `q_learning_curve.png`: Line plot of average reward over episodes.
+    2. `payoff_comparison.png`: Bar chart comparing win/draw/loss rates between methods.
 
-    If the input CSV files are missing or empty, this function does not raise an error but 
-    skips plot generation for the respective data source.
+    Ensures the `figures/` directory exists before saving.
     """
-    from pathlib import Path
-    import pandas as pd
-    ROOT_DIR = Path().resolve()
-    RESULTS_PATH = ROOT_DIR / RESULTS_FILE
-    LOG_PATH = ROOT_DIR / TRAINING_LOG_FILE
-    FIGURES_DIR = Path(FIGURE_DIR)
-    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    win_data: pd.Series | None = None
-    draw_data: pd.Series | None = None
-    loss_data: pd.Series | None = None
-    if LOG_PATH.exists() and LOG_PATH.stat().st_size > 0:
-        try:
-            df_log = pd.read_csv(LOG_PATH)
-            cols_win = ['win_rate', 'Win_rate']
-            cols_draw = ['draw_rate', 'Draw_rate']
-            cols_loss = ['loss_rate', 'Loss_rate']
-            win_data = df_log[cols_win].apply(pd.to_numeric, errors='coerce').iloc[:, 0]
-            draw_data = df_log[cols_draw].apply(pd.to_numeric, errors='coerce').iloc[:, 0]
-            loss_data = df_log[cols_loss].apply(pd.to_numeric, errors='coerce').iloc[:, 0]
-        except Exception:
-            pass
-    if win_data is not None and len(win_data) > 0:
-        try:
-            import matplotlib.pyplot as plt
-            df_train = pd.DataFrame({'epoch': list(range(len(win_data))), 'win_rate': win_data, 'draw_rate': draw_data if draw_data is not None else [0.0] * len(win_data), 'loss_rate': loss_data if loss_data is not None else [0.0] * len(win_data)})
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), tight_layout=True)
-            ax1.plot(df_train['epoch'], df_train['win_rate'], label='Win Rate', color='green')
-            ax1.set_ylabel('Rate')
-            ax1.set_title('Training Dynamics: Win Rate Over Epochs')
-            ax1.grid(True, alpha=0.3)
-            ax2.plot(df_train['epoch'], df_train['draw_rate'], label='Draw Rate', color='yellow')
-            ax2.plot(df_train['epoch'], df_train['loss_rate'], label='Loss Rate', color='red')
-            ax2.set_xlabel('Epoch')
-            ax2.set_ylabel('Rate')
-            ax2.legend()
-            ax2.grid(True, alpha=0.3)
-            fig.savefig(FIGURES_DIR / 'training_dynamics.png', bbox_inches='tight')
-        except Exception:
-            pass
-    q_data: pd.DataFrame | None = None
-    random_data: pd.DataFrame | None = None
-    if RESULTS_PATH.exists() and RESULTS_PATH.stat().st_size > 0:
-        try:
-            df_results = pd.read_csv(RESULTS_PATH)
-            q_methods = [m for m in df_results['method'].unique() if 'Q-Learning' in str(m) or 'q-learning' in str(m)]
-            random_methods = [m for m in df_results['method'].unique() if 'Random' in str(m) or 'random' in str(m)]
-            q_dfs = df_results[df_results['method'].isin(q_methods)].groupby('method').agg({'win_rate': 'mean', 'draw_rate': 'mean', 'loss_rate': 'mean', 'avg_game_length': 'mean'}).reset_index()
-            random_dfs = df_results[df_results['method'].isin(random_methods)].groupby('method').agg({'win_rate': 'mean', 'draw_rate': 'mean', 'loss_rate': 'mean', 'avg_game_length': 'mean'}).reset_index()
-            final_df = pd.concat([q_dfs, random_dfs], ignore_index=True)
-            if len(final_df) > 1:
-                fig_comp, ax = plt.subplots(figsize=(8, 6))
-                metrics_to_plot = ['win_rate', 'draw_rate', 'loss_rate', 'avg_game_length']
-                for col in metrics_to_plot:
-                    if col in final_df.columns:
-                        ax.bar(final_df['method'], final_df[col], alpha=0.7, edgecolor='black')
-                ax.set_ylabel('Value')
-                ax.set_xlabel('Method')
-                ax.set_title('Final Performance Comparison: Q-Learning vs Random Baseline')
-                ax.grid(axis='y', alpha=0.3)
+    base_dir: str = os.getcwd()
+    results_path: str = os.path.join(base_dir, 'results.csv')
+    history_path: str = os.path.join(base_dir, 'training_history.csv')
+    os.makedirs(FIGURES_DIR, exist_ok=True)
+    if not os.path.isfile(results_path):
+        return
+    df_results: pd.DataFrame = pd.read_csv(results_path)
+    methods = sorted(df_results['method'].unique())
+    fig_payoff, ax_payoff = plt.subplots(figsize=(8, 6))
+    x_indices: list[int] = []
+    labels: list[str] = []
+    bar_width = 0.35
+    index = 0.0
+    for method in methods:
+        wins = df_results.loc[(df_results['method'] == method) & (df_results['metric'] == 'win_rate'), 'value']
+        draws = df_results.loc[(df_results['method'] == method) & (df_results['metric'] == 'draw_rate'), 'value']
+        losses = df_results.loc[(df_results['method'] == method) & (df_results['metric'] == 'loss_rate'), 'value']
+        val_win: float = wins.values[0] if len(wins) > 0 else 0.0
+        val_draw: float = draws.values[0] if len(draws) > 0 else 0.0
+        val_loss: float = losses.values[0] if len(losses) > 0 else 0.0
+        x_indices.append(index)
+        labels.append(method.replace('_', ' ').title())
+        ax_payoff.bar(index, val_win, bar_width, color='green', label='Win')
+        ax_payoff.bar(index, val_draw, bar_width, bottom=val_win, color='gray', label='Draw (Offset: 1)')
+        ax_payoff.bar(index, val_loss, bar_width, bottom=val_win + val_draw, color='red', label='Loss (Offset: 2)')
+        index += bar_width + 0.1
+    ax_payoff.set_xticks([i + bar_width / 2 for i in x_indices])
+    ax_payoff.set_xticklabels(labels)
+    ax_payoff.set_ylabel('Rate')
+    ax_payoff.set_title('Payoff Comparison (Win/Draw/Loss)')
+    handles, legend_labels = ax_payoff.get_legend_handles_labels()
+    if legend_labels:
+        unique_handles: list = []
+        for h_item, lbl in zip(handles, legend_labels):
+            if lbl not in [item_lbl for _, item_lbl in unique_handles]:
+                unique_handles.append((h_item, lbl))
+        ax_payoff.legend([h for h, _ in unique_handles], [lbl for _, lbl in unique_handles], title=None)
+    plt.tight_layout()
+    plt.savefig(os.path.join(FIGURES_DIR, 'payoff_comparison.png'), bbox_inches='tight')
+    plt.close(fig_payoff)
+    if os.path.isfile(history_path):
+        df_history = pd.read_csv(history_path)
+        if len(df_history) > 0:
+            fig_curve, ax_curve = plt.subplots(figsize=(10, 6))
+            reward_col: str | None = 'avg_reward' if 'avg_reward' in df_history.columns else 'reward' if 'reward' in df_history.columns else None
+            if reward_col is not None:
+                df_history_sorted = df_history.sort_values(by='episode')
+                episodes: list[float] = df_history_sorted['episode'].values.tolist()
+                rewards: list[float] = df_history_sorted[reward_col].values.tolist()
+                ax_curve.plot(episodes, rewards, marker='o', linestyle='-', color='#b22232', label='Avg Reward')
+                ax_curve.set_title('Average Reward Over Episodes (Q-Learning)')
+                ax_curve.set_xlabel('Episode')
+                ax_curve.set_ylabel('Average Reward')
+                ax_curve.legend(loc='lower right')
+                ax_curve.grid(True, linestyle='--', alpha=0.6)
                 plt.tight_layout()
-                fig_comp.savefig(FIGURES_DIR / 'final_performance.png', bbox_inches='tight')
-            else:
-                print('Warning: Only one method group found. Skipping comparative bar chart.')
-        except Exception:
-            pass
+                plt.savefig(os.path.join(FIGURES_DIR, 'q_learning_curve.png'), bbox_inches='tight')
+                plt.close(fig_curve)

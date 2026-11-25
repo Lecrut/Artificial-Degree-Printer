@@ -8,7 +8,8 @@
   "question": null,
   "context": {
     "interfaces": [
-      "agents.py",
+      "agent.py",
+      "config.py",
       "environment.py",
       "experiment.py",
       "figures.py"

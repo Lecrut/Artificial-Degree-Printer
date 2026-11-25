@@ -88,7 +88,9 @@ def _test_to_review(
     candidates = h.tests_of(module) + sorted(v for v, x in h.vertices.items() if x.kind == "test" and v not in h.tests_of(module))
     for test in candidates:
         vertex = h.vertices.get(test)
-        if vertex is None or vertex.state == "failed" or (module, test) in reviewed:
+        # A `failed` test is reviewed too: in 01 R2_2 `test_env_step_draw_condition` used moves [0..8] (X wins on
+        # 0-4-8, not a draw) alongside `environment.py` missing `self.current_player = next_player` (§XXVII).
+        if vertex is None or (module, test) in reviewed:
             continue
         if vertex.state == "verified" and (module, test) not in pending:
             continue

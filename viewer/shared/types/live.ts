@@ -1,5 +1,5 @@
 import type { Hypergraph } from './hypergraph'
-import type { RunEvent } from './run'
+import type { RunEvent, SourceKind } from './run'
 
 /** One task of `task_queue.json`. */
 export interface QueueTask {
@@ -21,11 +21,21 @@ export type LiveMessage =
 export type LaunchTask = '1' | '2' | '3' | '4'
 export type LaunchProvider = 'mock' | 'ollama' | 'google'
 
+/** The run whose saved state a new run continues from (`main.py --resume-from`): one task, no planning, nothing verified is redone. */
+export interface ResumeFrom {
+  source: SourceKind
+  ref: string
+  /** A file of the run's `logs/snapshots/`: continue from the moment after that task instead of the end state. */
+  snapshot?: string
+}
+
 export interface LaunchRequest {
   /** One or more tasks of the suite, run one after another by a single `main.py`. */
   tasks: LaunchTask[]
   provider: LaunchProvider
   template: 'thesis_plodz' | 'paper_ieee' | null
+  /** Needs exactly one task. */
+  resume?: ResumeFrom | null
 }
 
 export interface LaunchStatus {

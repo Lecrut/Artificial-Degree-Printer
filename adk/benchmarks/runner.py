@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
 
 from adk.benchmarks.llm_logging import export_task_llm_interactions  # noqa: E402
+from adk.benchmarks.resume import discard_staged, restore_run_state, stage_source  # noqa: E402
 from adk.benchmarks.tasks import BENCHMARK_TASKS, BenchmarkTaskSpec, get_benchmark_task  # noqa: E402
 from adk.core.connection import LLMConnectionManager  # noqa: E402
 from adk.core.llm_trace import get_llm_telemetry, reset_llm_telemetry  # noqa: E402
@@ -197,11 +198,15 @@ def run_benchmark_suite(
     output_root: str | Path | None = None,
     template_override: str | None = None,
     simulate_agents: Callable[[str], Any] | None = None,
+    resume_from: str | Path | None = None,
 ) -> dict[str, Any]:
     """Run the self-expanding ADK benchmark suite, producing runnable code, LaTeX, HTML, and PDFs per task.
 
     `simulate_agents(task_id)` (e.g. `adk.mocks.install_simulated_agents`) installs simulated agents before each task;
-    without it the provider's model answers. The suite itself never knows which."""
+    without it the provider's model answers. The suite itself never knows which.
+
+    `resume_from` (one task only): a sandbox or result folder of an earlier run (`adk.benchmarks.resume`); the task
+    continues from its state instead of planning from scratch."""
     base_adk = Path(adk_root).resolve() if adk_root else Path(__file__).resolve().parent.parent
     bench_out_root = (
         Path(output_root).resolve()
@@ -216,6 +221,11 @@ def run_benchmark_suite(
     lrm_model = conn.resolve_model_name(resolved_provider, "LRM")
 
     sandbox_parent = bench_out_root / "_evolved_adk_state"
+    staged_resume: Path | None = None
+    if resume_from is not None:
+        if not task_keys or len(task_keys) != 1:
+            raise ValueError("resume_from needs exactly one benchmark task")
+        staged_resume = stage_source(resume_from)  # the sandbox is wiped below, and the source may be it
 
     selected_specs: list[BenchmarkTaskSpec] = (
         [get_benchmark_task(k) for k in task_keys]
@@ -263,6 +273,9 @@ def run_benchmark_suite(
                 sandbox_root=sandbox_parent / spec.task_id,
                 reset=True,
             )
+            if staged_resume is not None:
+                restored = restore_run_state(staged_resume, evolved_adk_dir)
+                print(f"    WZNOWIENIE ze stanu ({restored['kind']}): {restored['files']} plików w przestrzeni roboczej", flush=True)
             sandbox_ws = evolved_adk_dir / "workspace"
             # Live per-task logs (harness_process.log, agent_trace.jsonl) in the task's own logs/ folder; it is
             # copied to benchmarks/<slug>/logs/ with the workspace and survives a run that dies mid-task.
@@ -270,7 +283,7 @@ def run_benchmark_suite(
             print(f"    Logi zadania (na żywo): {task_logger.text_log_path}", flush=True)
 
             # Seed brownfield initial workspace files if task_type == "evolution"
-            for rel_f, init_content in (spec.initial_workspace_files or {}).items():
+            for rel_f, init_content in ((spec.initial_workspace_files or {}) if staged_resume is None else {}).items():
                 init_p = sandbox_ws / rel_f
                 init_p.parent.mkdir(parents=True, exist_ok=True)
                 init_p.write_text(init_content, encoding="utf-8")
@@ -293,6 +306,7 @@ def run_benchmark_suite(
                     multi_cycle_waves=True,
                     template_name=effective_template,
                     thesis_type=effective_thesis_type,
+                    resume=staged_resume is not None,
                 )
             except Exception as exc:  # noqa: BLE001 - a crashed run must still leave a status and its artifacts
                 import traceback
@@ -441,6 +455,8 @@ def run_benchmark_suite(
                 break
     finally:
         set_process_log_dir(None)
+        if staged_resume is not None:
+            discard_staged(staged_resume)
 
     suite_elapsed_ms = (time.perf_counter() - suite_start) * 1000.0
     all_completed = all(t.get("orchestrator_status") == "COMPLETED" for t in results_per_task)

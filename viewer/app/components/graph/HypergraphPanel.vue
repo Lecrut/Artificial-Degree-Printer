@@ -2,15 +2,18 @@
 import { mdiGraphOutline, mdiTableLarge } from '@mdi/js'
 import { useDisplay } from 'vuetify'
 import type { Hypergraph } from '#shared/types/hypergraph'
-import type { RunEvent } from '#shared/types/run'
+import type { RunEvent, RunRef } from '#shared/types/run'
+import { snapshotAt } from '#shared/utils/snapshots'
 import { labels } from '~/utils/labels'
 
-const props = withDefaults(defineProps<{ hypergraph: Hypergraph, events: RunEvent[], active?: boolean }>(), { active: true })
+const props = withDefaults(defineProps<{ hypergraph: Hypergraph, events: RunEvent[], active?: boolean, at?: RunRef | null }>(), { active: true, at: null })
 const { elements, position, max, current, playing, play, stop } = useHypergraphReplay(() => props.hypergraph, () => props.events)
 const selected = ref<string | null>(null)
 // A phone is too narrow for the graph; the matrix scrolls instead.
 const view = ref<'graph' | 'matrix'>(useDisplay().smAndDown.value ? 'matrix' : 'graph')
 const dialog = ref(false)
+// The last snapshot saved by the replayed moment: resuming from it brings the run back to what the graph shows.
+const snapshot = computed(() => snapshotAt(props.events, current.value?.ts ?? null))
 // ← → step the replay while this tab is shown.
 useArrowKeys(() => props.active && !dialog.value, { left: () => { position.value = Math.max(0, position.value - 1) }, right: () => { position.value = Math.min(max.value, position.value + 1) } })
 const states = computed(() => Object.fromEntries(elements.value.nodes.filter(n => n.group === 'vertex').map(n => [n.id.slice(2), n.state])))
@@ -26,6 +29,7 @@ const states = computed(() => Object.fromEntries(elements.value.nodes.filter(n =
           <v-btn value="matrix" :prepend-icon="mdiTableLarge" :text="labels.graph.viewMatrix" />
         </v-btn-toggle>
         <GraphLegend />
+        <LaunchResumeButton v-if="at" :at="at" :snapshot="snapshot" here />
       </div>
     </v-card>
     <v-row>

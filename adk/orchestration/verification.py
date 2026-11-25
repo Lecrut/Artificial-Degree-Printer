@@ -216,9 +216,15 @@ class VerificationMixin:
                             ref_errors.append(texts.missing_chapters([f"Chapter {i} ({expected_ch[i]})" for i in missing_ch]))
                 if not is_final_gate:
                     pending_files = self._get_pending_future_files(current_task)
+                    # Placeholders (`<file>:<method>`) and wrong CSV file names (`...: no such file. The results are in
+                    # results.csv`) never become valid later; fail them in the chapter that wrote them (§XXVII: 02 T1).
                     ref_errors = [
                         err for err in ref_errors
-                        if not any(pf in err for pf in pending_files)
+                        if not (
+                            "<" not in err
+                            and ": no such file. The results are in " not in err
+                            and any(pf in err for pf in pending_files)
+                        )
                     ]
 
                 if is_final_gate:

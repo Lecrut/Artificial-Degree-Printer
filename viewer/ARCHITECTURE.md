@@ -91,7 +91,7 @@ Commity historii: `git log --format=%H%x09%aI%x09%s -- adk/workspace/benchmarks`
 | `GET /api/runs/:source/:ref/:task/file?path=` | plik (obraz, PDF, CSV, markdown) |
 | `GET /api/live/stream` | SSE: nowe zdarzenia i zmiany stanu trwającego przebiegu |
 | `GET /api/launch` | `LaunchStatus` (czy działa, PID, argumenty, ostatnie linie konsoli) |
-| `POST /api/launch` | start: `{ task, provider, template? }` → `main.py --benchmark-task … --provider …` |
+| `POST /api/launch` | start: `{ tasks, provider, template?, resume? }` → `main.py --benchmark-task … --provider …`; `resume: { source, ref }` (jedno zadanie) dodaje `--resume-from <folder stanu albo zip migawki>` (`resume.snapshot` = plik z `logs/snapshots/`): z dysku (`results`, `live` — odmowa, gdy przebieg pisał w ostatnich 2 min) albo wypakowany z commita (`git archive`). Przyciski „Wznów od tego stanu” (nagłówek przebiegu), „Wznów stąd” przy zadaniu na osi czasu i przy replayu hipergrafu (ostatnia migawka sprzed wybranego momentu; zielony = bez błędów) |
 | `DELETE /api/launch` | stop procesu |
 
 `:source` ∈ `git | results | live`. Każda trasa waliduje parametry (`zod` z `h3` `getValidatedRouterParams`), ścieżki plików nie mogą wyjść poza przebieg.

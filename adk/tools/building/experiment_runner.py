@@ -12,6 +12,7 @@ from typing import Any
 # the workspace configuration and the function reads it itself. The harness runs the experiment, it does not
 # configure it.
 _SNIPPET = """
+import faulthandler
 import importlib.util
 import inspect
 import os
@@ -23,6 +24,7 @@ log_dir = Path("logs")
 log_dir.mkdir(parents=True, exist_ok=True)
 notes = []
 code = 0
+faulthandler.dump_traceback_later(int(os.environ["ADK_DUMP_S"]), file=sys.stderr)
 try:
     fn = None
     declared = os.environ.get("ADK_ENTRYPOINT", "")
@@ -74,6 +76,7 @@ if plots and code == 0:
         code = 1
         notes.append(traceback.format_exc())
 
+faulthandler.cancel_dump_traceback_later()
 log_body = "\\n".join(notes) if notes else "EXPERIMENT_SUCCESS\\n"
 (log_dir / "experiment.log").write_text(log_body, encoding="utf-8")
 raise SystemExit(code)
@@ -111,6 +114,7 @@ def execute_workspace_experiment(
             "error": f"The declared entrypoint '{entrypoint}' does not exist in the workspace.",
         }
     env["ADK_ENTRYPOINT"] = f"{entry_file}:{func_name or 'main'}"
+    env["ADK_DUMP_S"] = str(max(1, timeout - 10))  # where the run stands just before the limit
 
     env["PYTHONPATH"] = os.pathsep.join(
         [str(workspace), str(workspace / "code"), str(workspace / "src"), str(entry_file.parent), env.get("PYTHONPATH", "")]
@@ -129,7 +133,15 @@ def execute_workspace_experiment(
             timeout=timeout,
         )
     except subprocess.TimeoutExpired as exc:
-        return {"ok": False, "skipped": False, "error": f"The experiment exceeded {timeout}s: {exc}"}
+        # Not `{exc}`: that is the whole harness script. The coder needs where the run was stuck (§XXVII).
+        stderr = exc.stderr.decode("utf-8", "replace") if isinstance(exc.stderr, bytes) else (exc.stderr or "")
+        where = stderr.strip()[-1500:]
+        return {
+            "ok": False,
+            "skipped": False,
+            "error": f"The experiment exceeded {timeout}s. Cut the workload (runs, samples, estimators) by about 10x so it "
+            f"finishes in a fraction of the limit. The run was here when the limit came:\n{where}",
+        }
     log_path = workspace / "logs" / "experiment.log"
     logged = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
     error = "\n".join(part for part in (logged, proc.stdout, proc.stderr) if part and part.strip())

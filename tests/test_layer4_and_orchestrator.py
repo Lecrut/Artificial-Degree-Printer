@@ -431,10 +431,12 @@ def test_evolution_waits_for_a_pattern_across_tasks(tmp_path: Path):
     res = orch.run("Zbuduj moduł walidacji parametrów")
 
     actions = [c["w4_action"] for c in res.get("architecture_cycles", [])]
-    assert actions[:3] == ["FAST_FIX", "SKIPPED_NO_PATTERN", "FAST_FIX"]
-    # The fourth cycle is the architect's own decision (the mock splits an agent with many failures); the third
+    # §XXVII: every task gets both author repairs (no `Q3` shortcut for a vertex of H); the first one's pattern is
+    # still one task, so no evolution.
+    assert actions[:3] == ["FAST_FIX", "FAST_FIX", "SKIPPED_NO_PATTERN"]
+    # The sixth cycle is the architect's own decision (the mock splits an agent with many failures); the third
     # task repeats the same category and gets no second rule.
-    assert not actions[3].startswith("SKIPPED")
+    assert not actions[5].startswith("SKIPPED")
     assert len(evolutions) == 1
     pattern = evolutions[0]["pattern"]
     assert pattern["category"] == "pytest:AssertionError" and pattern["occurrences"] == 2

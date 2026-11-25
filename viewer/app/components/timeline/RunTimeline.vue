@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { RunEvent, RunRef } from '#shared/types/run'
 import { entryStatusColor } from '#shared/utils/colors'
+import { snapshotByTask } from '#shared/utils/snapshots'
 import { KIND_ICON } from '~/utils/icons'
 import { labels } from '~/utils/labels'
 
@@ -9,6 +10,8 @@ provideRunAt(() => props.at)
 const emit = defineEmits<{ showCalls: [taskId: string] }>()
 const { phases, filters, phase, entries } = useTimeline(() => props.events)
 const opened = ref<number | null>(null)
+// A task that finished left a snapshot of the run: it can be resumed from there.
+const snapshotOf = computed(() => snapshotByTask(props.events))
 </script>
 
 <template>
@@ -28,7 +31,7 @@ const opened = ref<number | null>(null)
           size="small"
           fill-dot
         >
-          <TimelineEntryCard :entry="entry" @show-calls="id => emit('showCalls', id)" @open="opened = i" />
+          <TimelineEntryCard :entry="entry" :snapshot="entry.kind === 'task' ? snapshotOf[entry.title] : null" @show-calls="id => emit('showCalls', id)" @open="opened = i" />
         </v-timeline-item>
       </v-slide-y-transition>
     </v-timeline>

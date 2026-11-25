@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { launchArgs, normalizeTasks } from './launch'
+import { launchArgs, normalizeTasks, taskKey } from './launch'
 
 describe('launch', () => {
   test('tasks come out in suite order, without repeats and unknown keys', () => {
@@ -10,6 +10,18 @@ describe('launch', () => {
   test('several tasks are one comma-separated --benchmark-task', () => {
     expect(launchArgs({ tasks: ['2', '1'], provider: 'ollama', template: null }))
       .toEqual(['main.py', '--provider', 'ollama', '--benchmark-task', '1,2'])
+  })
+
+  test('a resume folder becomes --resume-from', () => {
+    expect(launchArgs({ tasks: ['1'], provider: 'ollama', template: null }, '/runs/01'))
+      .toEqual(['main.py', '--provider', 'ollama', '--benchmark-task', '1', '--resume-from', '/runs/01'])
+  })
+
+  test('the suite key comes from the task folder name', () => {
+    expect(taskKey('01_rl_tictactoe')).toBe('1')
+    expect(taskKey('04_federated_learning')).toBe('4')
+    expect(taskKey('09_x')).toBeNull()
+    expect(taskKey('_evolved_adk_state')).toBeNull()
   })
 
   test('the template is passed when chosen', () => {
