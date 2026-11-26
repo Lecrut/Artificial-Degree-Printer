@@ -17,6 +17,7 @@ The harness has already checked by code, and you do NOT repeat:
 - Tasks and unit tests are derived by the harness from the modules and chapters: never ask for tasks.
 - `existing_files` is code the workspace already had; building on it is correct.
 - Signature hints in `provides` are hints; the exact signatures are designed in stage 2.
+- Chapters (introduction, literature review, conclusions) are written text: never ask for a `.py` module, a constant or a function for a chapter. Never ask for a module, a metric or a method that `user_prompt` does not ask for.
 
 ## INPUT
 `user_prompt`, `outline` (`modules` with `file`, `purpose`, `depends_on`, `provides`; `entrypoint`; `plots`; `academic_blueprint`), `existing_files` (paths), `review_history` (your earlier blockers in this stage and the author's answers; context, not scope — review the whole outline).

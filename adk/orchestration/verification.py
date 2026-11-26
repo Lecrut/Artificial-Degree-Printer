@@ -26,6 +26,7 @@ from adk.orchestration.common import (
     _degenerate_metrics,
 )
 from adk.orchestration.failure_kinds import _collect_report_issues
+from adk.orchestration.findings import headlines
 
 
 def _task_scope(node_path: str, written: set[str], h: Hypergraph | None) -> dict[str, list[str]]:
@@ -36,7 +37,12 @@ def _task_scope(node_path: str, written: set[str], h: Hypergraph | None) -> dict
     if h is not None:
         owners = {h.owner_of(p) for p in candidates} - {None}
         candidates |= {f for v in owners for f in h.files_of(v) if f.endswith(".py")}
-        candidates |= {t for v in owners for t in h.tests_of(v)}
+        # A test of H the plan has not had written yet (`spec`: after a redesign its file is still the one of the old design)
+        # is not judged with the module; the tester's own task, which writes it, puts it in scope (§XXXI P5).
+        candidates |= {
+            t for v in owners for t in h.tests_of(v)
+            if t in candidates or t not in h.vertices or h.vertices[t].state != "spec"
+        }
     files = {p for p in candidates if p.endswith(".py") and not _is_test(p)}
     tests = {p for p in candidates if p.endswith(".py") and _is_test(p)}
     return {"files": sorted(files), "tests": sorted(tests)}
@@ -386,7 +392,9 @@ class VerificationMixin:
             owner = h.owner_of(str(failed_file)) if h is not None else None
             author = h.vertices[owner].last_writer if owner is not None else None
             failed_agent = (author or {}).get("agent") or current_task.get("assigned_agent")
-            if failed_agent == "harness":  # the harness wrote the stubs; the file's work belongs to its owner
+            # A test is the tester's whatever its last writer was: the coder may not write it, so a repair sent to the
+            # coder is refused every time (§XXXI P1, 01 of 2026-11-25: `D1_1_FIX2`, `R4_1_FIX1/2`, the tester never asked).
+            if failed_agent == "harness" or _is_test(str(failed_file)):  # the harness wrote the stubs; the work belongs to its owner
                 failed_agent = _agent_for_path(str(failed_file))
 
         report = ValidationReport(
@@ -417,9 +425,11 @@ class VerificationMixin:
                 (h.owner_of(str(failed_file)) if h is not None and failed_file else None) or failed_file,
                 current_task.get("task_id"), issues,
             )
+        found = headlines(issues, self.workspace_dir) if not overall_pass else []
         self.logger.log_event(
             "VERDICT", task_id=current_task.get("task_id"), node=target_node, status=report.get("status"),
-            failed_file=failed_file, failed_agent=failed_agent, first_issue=str(issues[0])[:400] if issues else None,
+            failed_file=failed_file, failed_agent=failed_agent, first_issue=(found[0] if found else str(issues[0])[:400]) if issues else None,
+            findings=found,
             errors=len(issues) if not overall_pass else 0, warnings=len(warnings),
         )
         return report

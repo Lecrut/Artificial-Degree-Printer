@@ -17,6 +17,7 @@ from adk.hypergraph import Hypergraph, save
 from adk.hypergraph.schedule import FAILED, readiness
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.common import _RunState, _agent_for_path, available_package_imports
+from adk.orchestration.failure_kinds import error_signature
 from adk.orchestration.plan_interfaces import _plan_interfaces
 
 REPLANS_WITHOUT_PROGRESS = 3 # re-plans in a row after which no new vertex was verified: the run ends with gaps
@@ -136,7 +137,12 @@ class FragmentReplanMixin:
                 counterpart = {t: _read(t) for t in h.tests_of(vertex)}
             else:
                 counterpart = {}
+            now = error_signature(_latest_errors(v.history))
+            prints = self.__dict__.setdefault("_replan_prints", {})
+            same_error = bool(now) and prints.get(vertex) == now
+            prints[vertex] = now
             entries.append({
+                "same_error_as_last_round": same_error,
                 "counterpart_files": {rel: src for rel, src in counterpart.items() if src},
                 "dependencies": self._dependency_sources(h, vertex, _read),
                 "dependents": self._dependent_sources(h, vertex, _read, set(counterpart)),
@@ -157,17 +163,26 @@ class FragmentReplanMixin:
             "entrypoint": blueprint.get("entrypoint"),
         }
 
+    def _redesign_due(self, h: Hypergraph) -> bool:
+        """At least one local re-plan has run, and since then no vertex became verified that had not been before."""
+        progress = self.__dict__.get("_replan_progress") or []
+        ever = self.__dict__.get("_replan_ever_verified") or set()
+        return bool(progress) and not ({v for v, x in h.vertices.items() if x.state == "verified"} - ever)
+
     def _replan_failed(self, state: _RunState) -> dict[str, Any] | None:
         """None when nothing failed; {"tasks": [...]} after a re-plan; {"stop": payload} when re-planning is spent."""
         failed = self._failed_vertices()
         if not failed:
             return None
-        # The design may be what is wrong (§XXVIII.8): while rounds are left the designer revises it first, and such a
-        # round counts against none of the limits below. A round that cannot be built falls through to the re-plan.
-        redesigned = self._redesign_failed(state, failed)
-        if redesigned is not None:
-            return redesigned
         h = self._project_h()
+        # The design may be what is wrong (§XXVIII.8), but only after the local re-plan had its round and the failed
+        # vertices did not move (§XXX P4: at the end of the first wave the designer saw stubs and test errors and rebuilt
+        # modules that only needed a repair). Such a round counts against none of the limits below. A round that cannot
+        # be built falls through to the re-plan.
+        if self._redesign_due(h):
+            redesigned = self._redesign_failed(state, failed)
+            if redesigned is not None:
+                return redesigned
         progress = self.__dict__.setdefault("_replan_progress", [])
         # Progress = vertices that were ever verified: a deliberate reopening (or a figure crash undoing a verified file)
         # must not look like standing still (§XXVII: 01 stopped at [6, 7, 6] one line from a working environment.py).
@@ -198,7 +213,7 @@ class FragmentReplanMixin:
         )
         out = answer.get("output") if answer.get("status") == "ok" else None
         out = out if isinstance(out, dict) else {}
-        changed = self._replan_interfaces(h, out, failed, interfaces, blueprint)
+        changed = self._replan_interfaces(h, out, failed, interfaces, blueprint, dossier)
         tasks, dropped, updated, reopened = self._replan_tasks(h, out, len(progress), state, self._reopenable(h, dossier))
         covered = {self._task_vertex(t) for t in state.tasks if t.get("status") in ("TODO", "WAITING")} | {self._task_vertex(t) for t in tasks}
         covered |= {str(g.get("vertex")) for g in out.get("gaps") or [] if isinstance(g, dict)}
@@ -217,13 +232,20 @@ class FragmentReplanMixin:
         return {"tasks": tasks}
 
     def _replan_interfaces(
-        self, h: Hypergraph, out: dict[str, Any], failed: list[str], interfaces: dict[str, str], blueprint: dict[str, Any]
+        self, h: Hypergraph, out: dict[str, Any], failed: list[str], interfaces: dict[str, str], blueprint: dict[str, Any],
+        dossier: dict[str, Any] | None = None,
     ) -> list[str]:
         """Interface changes of failed modules, each validated like the plan (`_apply_amendment`)."""
         allowed = {h.tested_module(v) if h.vertices[v].kind == "test" else v for v in failed}
+        # An interface change is no answer to an error the last re-plan did not move (§XXX P9b, 01: rounds 2-4 rewrote the
+        # interface of `game_loop.py` and `q_learning_agent.py` against an unchanged `.FF..` whose cause was a test).
+        unchanged = {e["vertex"] for e in (dossier or {}).get("failed", []) if e.get("same_error_as_last_round")}
         changed: list[str] = []
         for rel, source in _plan_interfaces(out).items():
             if interfaces.get(rel) == source:
+                continue
+            if rel in unchanged:
+                self.logger.log_event("SPEC_AMEND_SKIPPED", module=rel, task_id="REPLAN", reason="same error as after the last re-plan")
                 continue
             if rel not in allowed or f"I:{rel}" not in h.edges:
                 reason = "not a failed module" if f"I:{rel}" in h.edges else "not a module of the plan"

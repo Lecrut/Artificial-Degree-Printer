@@ -41,6 +41,19 @@ def _issue_fingerprints(issue: str) -> list[str]:
     return [re.sub(r"\d+", "#", masked).strip()[:200]]
 
 
+_E_LINES = re.compile(r"^E\s+(\S.*)$", re.MULTILINE)
+
+
+def error_signature(issues: list[str]) -> frozenset[str]:
+    """What a set of findings is about, for telling a repeated error from a new one between rounds: the `E ...` lines
+    of pytest reports (the exception and its message), the fingerprint of every other finding."""
+    found: set[str] = set()
+    for issue in issues:
+        lines = [m.strip() for m in _E_LINES.findall(issue)]
+        found.update(lines or _issue_fingerprints(issue))
+    return frozenset(found)
+
+
 # A builder answer the write gate refused (or a builder exception). The gate already returned the exact reason
 # to the agent and retried it; a prompt rule cannot add to that, so such failures never feed evolution.
 # All three exception wrappers count: task, fast repair and repair task (agent_texts.*_exception)

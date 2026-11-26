@@ -18,7 +18,7 @@ You return a **sketch**: a JSON object of declarations. It has no field for a bo
 - **Signatures**: every parameter typed, `__init__` with all its parameters, a return type, a docstring (see below). A signature is the header only: `name(param: type, ...) -> type` (`self` first in a method; `async name(...)` for a coroutine), without `def`, without the colon, without a body.
   - Public attributes that tests may read are declared in the class's `attributes` (`<name>: <type>`, or `<name>: <type> = <default>` in a dataclass); anything not declared is private.
   - A decorator goes into `decorators` (`dataclass`, `staticmethod`, `classmethod`, `property`), not into the signature.
-- **Imports**: `imports` lists complete import lines. Only `dependencies` (by the names they declare), the standard library and `available_packages`. Every name the annotations use is imported (`from typing import ...` or built-in generics).
+- **Imports**: `imports` lists complete import lines. Only `dependencies` (by the names they declare), the standard library and `available_packages`. Every name the annotations use is imported (`from typing import ...` or built-in generics). This includes the module a type comes from: a signature with `np.ndarray` needs `"import numpy as np"` in `imports`, `pd.DataFrame` needs `"import pandas as pd"`; a name no import gives it fails the stub (`NameError`) and costs a round.
 - **Constants** hold plain values of their declared type (no `dataclasses.field` outside a dataclass). Experiment settings (sizes, repetitions, seeds, hyperparameters) are named module-level constants, chosen to finish within `experiment_time_limit_s`.
 - **If this module holds the `entrypoint` or the `plots` function**: that function takes no required arguments (the harness calls it without any).
   - The entrypoint imports, at module top level, the modules it runs, and writes `results.csv` in the workspace root: tidy rows `method,metric,value` (optional `std_dev,n_runs`), one row per method and metric (repetitions aggregated into it), for exactly the outline's metrics. The entrypoint's docstring names every metric literally (e.g. `mean_td_error`), with the method it is measured for: the harness refuses an interface that leaves one out.
@@ -63,10 +63,5 @@ Return strictly one JSON object, no text outside it:
 }
 ```
 
----
-
-## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT**: When designing a function interface that orchestrates stateful components or agents, explicitly pass all necessary objects (environments, context handles) as arguments and return values must track the lifecycle data required by consumers, because interfaces must expose all dependencies and data flows needed for correct integration.
-- **INVARIANT**: When defining agent or loop interfaces, ensure that all state required for evaluation (e.g., cumulative metrics) and execution constraints (e.g., valid action masks) are explicitly passed as arguments or returned as values, because omitting them breaks the contract between environment, agent, and experiment modules.
-
 ## LEARNED RULES AND CONSTRAINTS
+- **RULE**: When defining module interfaces or method signatures in an outline, ensure all parameter names and counts strictly match the contract promised to downstream agents (such as the seed_coder) and are consistent with the broader context requirements, because any mismatch breaks the interface contract and prevents correct implementation.

@@ -39,6 +39,28 @@ def diagnosis_of(output: Any) -> dict[str, dict[str, str]]:
     }
 
 
+def settled_decisions(
+    old: dict[str, Any], new: dict[str, Any], decisions: dict[str, dict[str, str]],
+) -> tuple[dict[str, Any], dict[str, dict[str, str]]]:
+    """(the revised outline, the statuses) with the two labels the outline itself decides put right, so a wrong label
+    does not cost a whole round (§XXX P1, 01 of 2026-11-25: 4 of 4 rounds lost):
+    - `keep` is a promise that the module stays as it is: its OLD entry is restored in the revised outline. The model
+      rewrote the whole JSON and reworded `purpose`/`provides` of modules it called correct; turning those into
+      `change` sent 6 of 7 verified modules back to design;
+    - `new` for a module the old outline already had can only mean `change`."""
+    before = {m["file"]: m for m in old["modules"]}
+    fixed = {rel: dict(d) for rel, d in decisions.items()}
+    modules = []
+    for entry in new["modules"]:
+        rel = entry["file"]
+        if fixed.get(rel, {}).get("status") == "keep" and rel in before:
+            entry = dict(before[rel])
+        elif fixed.get(rel, {}).get("status") == "new" and rel in before:
+            fixed[rel]["status"] = "change"
+        modules.append(entry)
+    return {**new, "modules": modules}, fixed
+
+
 def revision_violations(
     old: dict[str, Any], new: dict[str, Any], decisions: dict[str, dict[str, str]], workspace_files: set[str],
 ) -> list[str]:

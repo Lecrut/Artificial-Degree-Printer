@@ -17,7 +17,8 @@ def _events_of(orch: NeuroSymbolicOrchestrator, since: int, *kinds: str) -> list
 
 def test_a_whole_run_redesigns_after_a_failed_module_and_completes(tmp_path: Path) -> None:
     """The real loop of `run`: the first task on `core.py` ends as if its repairs were spent, the queue goes on and
-    ends, the designer is asked, the failed module is designed and built again, and the run completes."""
+    ends, the local re-plan gets its round (§XXX P4) and its task on `core.py` fails too, so the designer is asked,
+    the failed module is designed and built again, and the run completes."""
     from adk.mocks import install_simulated_agents
     from tests.support.adk_sandbox import _clone_adk_env
 
@@ -26,7 +27,7 @@ def test_a_whole_run_redesigns_after_a_failed_module_and_completes(tmp_path: Pat
     execute, failed_once = orch._execute_task, []
 
     def spend_the_repairs(state: _RunState, idx: int, task: dict[str, Any]) -> dict[str, Any] | None:
-        if not failed_once and Path(str(task["target_node"])).name == "core.py":
+        if len(failed_once) < 2 and Path(str(task["target_node"])).name == "core.py":
             failed_once.append(task["task_id"])
             task["status"] = "FAILED"
             orch._mark_failed({"failed_file": "core.py"}, task)
@@ -36,7 +37,7 @@ def test_a_whole_run_redesigns_after_a_failed_module_and_completes(tmp_path: Pat
     orch._execute_task = spend_the_repairs
     seen = len(orch.logger.events_path.read_text(encoding="utf-8").splitlines()) if orch.logger.events_path.exists() else 0  # the log is shared
     result = orch.run("Zbuduj moduł walidacji parametrów")
-    assert failed_once and result["status"] == "COMPLETED"
+    assert len(failed_once) == 2 and failed_once[1].startswith("R1_") and result["status"] == "COMPLETED"
     assert [e["event"] for e in _events_of(orch, seen, "REDESIGN_STARTED", "REDESIGN_GUIDELINES", "REDESIGN_APPLIED")] == [
         "REDESIGN_STARTED", "REDESIGN_GUIDELINES", "REDESIGN_APPLIED",
     ]

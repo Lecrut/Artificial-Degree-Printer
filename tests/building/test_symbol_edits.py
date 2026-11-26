@@ -151,3 +151,55 @@ def test_rejected_symbol_edit_is_an_error_and_nothing_of_the_answer_is_written(t
 
     assert not (orch.workspace_dir / "helper.py").exists()
     assert (orch.workspace_dir / "agent.py").read_text(encoding="utf-8") == SKELETON_AGENT
+
+
+_AGENT = (
+    '"""Agent."""\n\n\nclass QLearningAgent:\n    """Q agent."""\n\n    def act(self, state):\n        """Act."""\n        return 0\n\n'
+    '    def learn(self, state):\n        """Learn."""\n        return None\n'
+)
+
+
+def test_a_method_named_without_its_class_is_found_when_exactly_one_class_has_it(tmp_path: Path):
+    """§XXX P7, 01 `R6_1_FIX1/2`: `learn` was refused as unknown for `QLearningAgent.learn` and the repair was lost."""
+    path = tmp_path / "agent.py"
+    path.write_text(_AGENT, encoding="utf-8")
+    res = edit_ast_node(path, "learn", "def learn(self, state):\n    \"\"\"Learn.\"\"\"\n    return 5\n", planned={"QLearningAgent.learn"})
+    assert res["status"] == "ok" and res["target_name"] == "QLearningAgent.learn" and res["action"] == "replaced"
+    assert "return 5" in path.read_text(encoding="utf-8") and path.read_text(encoding="utf-8").count("def learn") == 1
+
+
+def test_a_method_name_shared_by_two_classes_is_not_guessed(tmp_path: Path):
+    path = tmp_path / "agent.py"
+    path.write_text(_AGENT + "\n\nclass Other:\n    def learn(self):\n        return 1\n", encoding="utf-8")
+    res = edit_ast_node(path, "learn", "def learn(self, state):\n    return 5\n", planned={"QLearningAgent.learn", "Other.learn"})
+    assert res["status"] == "error" and res["guard"] == "TARGET_NOT_FOUND"
+
+
+def test_a_body_without_its_header_is_refused_with_what_to_send(tmp_path: Path):
+    """01 `T8_FIX1`: the body of `test_learn` was sent without `def`; the refusal now says what the code starts with."""
+    path = tmp_path / "agent.py"
+    path.write_text(_AGENT, encoding="utf-8")
+    res = edit_ast_node(path, "QLearningAgent.act", "return 1\n")
+    assert res["guard"] == "TARGET_NOT_IN_CODE" and "def act(...)" in res["error"] and "body alone" in res["error"]
+
+
+def test_a_slash_comment_is_named_as_such(tmp_path: Path):
+    """01 `R2_1`: `// Corrected Logic Snippet` was reported as a bare syntax error."""
+    path = tmp_path / "agent.py"
+    path.write_text(_AGENT, encoding="utf-8")
+    res = edit_ast_node(path, "QLearningAgent.act", "// Corrected Logic Snippet\ndef act(self, state):\n    return 1\n")
+    assert res["guard"] == "SYNTAX_GUARD_REJECTED" and "`//`" in res["error"] and "`#`" in res["error"]
+
+
+@pytest.mark.parametrize("alias", ["<module>", "<module-level>", "module"])
+def test_a_module_alias_means_the_whole_file_and_is_guarded_like_its_name(tmp_path: Path, alias: str):
+    """01 `T3_FIX1`, `T4_FIX1`, `T6_FIX1`: `<module-level>` was refused as a symbol that does not exist."""
+    orch = _orch(tmp_path)
+    _establish(orch)
+    path = orch.workspace_dir / "agent.py"
+    answer = {"ast_edits": [{"file": "agent.py", "symbol": alias, "code": '"""Agent."""\n\nLIMIT = 3\n'}]}
+    with pytest.raises(MaterializationError, match="replaces the WHOLE file"):  # the whole-file guard answers
+        orch._materialize_workspace_artifact("agent.py", answer)
+    whole = path.read_text(encoding="utf-8") + "\n\nLIMIT = 3\n"
+    orch._materialize_workspace_artifact("agent.py", {"ast_edits": [{"file": "agent.py", "symbol": alias, "code": whole}]})
+    assert "LIMIT = 3" in path.read_text(encoding="utf-8")

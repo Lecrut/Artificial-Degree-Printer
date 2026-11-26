@@ -41,6 +41,19 @@ Cel: znaleźć właściwe miejsce bez przeszukiwania repo. Szczegóły decyzji: 
 - Metryki: `code_violations(..., metrics)` → `METRIC_NOT_IN_ENTRYPOINT` (interfejs entrypointu nazywa każdą metrykę); przy zadaniu entrypointu blokują `metric_not_measured` i `_degenerate_metrics` (wartość 0, std 0, n_runs≥2), nie dopiero Gate 3.
 - Nie zrobione: powtórka niestabilnego testu (ryzyko ukrycia losowego błędu kodu).
 
+## Po benchmarku 25.11 (§XXX, testy w `tests/replanning/`, `tests/verification/`, `tests/building/`, `tests/planning/`)
+- Atrybucja: wyjątek rzucony tylko w ramce testu obciąża test, chyba że to nieudana asercja (`failure_attribution._WRONG_RESULT`); ten sam błąd tego samego testu po 2 różnych wersjach modułu (`version` = skrót pliku w `Vertex.history`, `_error_survives_rewrites`) obciąża test także, gdy moduł nigdy nie był `verified`. Wywołanie kodu wprost z testu dostaje `TEST_CALL_HINT`.
+- Log: `VERDICT.findings` i `first_issue` to `findings.headlines` (plik > symbol, linia, test: wyjątek), nie pasek postępu pytesta.
+- Zapis: `ast_editor` rozstrzyga `learn` → `Klasa.learn` przy jednej takiej metodzie; `write_gate.MODULE_ALIASES` (`<module>`, `<module-level>`, `module`) = cały plik (z ochroną `whole_module_loss`); komunikaty dla ciała bez `def` i komentarza `//`.
+- Przeprojektowanie: `redesign_rules.settled_decisions` (`keep` przywraca stary wpis zarysu, `new` istniejącego modułu = `change`), `previous_outline` w poprawce, jeden pełny szablon odpowiedzi w `plan_outline.md`, `implementation_audit` pokazuje `headlines` i nie przekazuje `suspicious` cichego modułu `verified`; startuje dopiero gdy lokalne przeplanowanie miało rundę i nic nowego nie przeszło na `verified` (`fragment_replan._redesign_due`).
+- Przeplanowanie: `same_error_as_last_round` w dossier (`failure_kinds.error_signature`) → zmiana interfejsu takiego modułu odrzucona (`SPEC_AMEND_SKIPPED`).
+- Planowanie: eskalacja do zarysu niesie uwagi krytyka modułu (`module_critic_objection`); blokady krytyka uczą autora (`_learn_from_critic`) dopiero po zaakceptowaniu modułu; krytyk modułu nie zmienia nazw z `provides`, krytyk zarysu nie żąda modułów `.py` dla rozdziałów.
+- Testy: fikstura wyników dla `resume` to `tests/support/resume_sandbox.small_result_folder` (nie żywy folder benchmarku).
+
+## Po przebiegu 01 z 25.11 wieczorem (§XXXI)
+- Agent naprawy pliku testu to zawsze `seed_tester` (`verification.py`, `repair.py`), nie `last_writer`.
+- Przeprojektowanie: `revision.earlier_rounds` (własne wcześniejsze rundy z wynikiem); krytycy działają jak w planie początkowym (świadomie, §XXXI P3); test z H w stanie `spec` (po przeprojektowaniu) nie wchodzi do zakresu weryfikacji modułu (`verification._task_scope`), plik zostaje do poprawy przez testera.
+
 ## Moduły (linie) — po co
 | plik | rola |
 |---|---|

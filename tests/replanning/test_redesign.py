@@ -15,7 +15,7 @@ from adk.orchestration.implementation_audit import (
     compact_audit,
     source_facts,
 )
-from adk.orchestration.redesign_rules import decisions_of, revision_violations
+from adk.orchestration.redesign_rules import decisions_of, revision_violations, settled_decisions
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from tests.support.staged_planning import _MOD_A, _MOD_B, _base_plan, _make_orch, _run
 
@@ -139,6 +139,38 @@ def test_the_audit_knows_each_module_its_neighbours_its_tests_and_what_the_plan_
     assert cards["src/mod_b.py"]["state"] == "failed" and cards["src/mod_b.py"]["errors"] and cards["src/mod_a.py"]["tests"] == [{"file": "tests/test_mod_a.py", "state": "verified"}]
 
 
+def test_the_designer_reads_the_exception_not_the_banner_of_the_pytest_report(tmp_path: Path) -> None:
+    """§XXX P3, 01: `errors[:400]` ended inside `____ test_act_epsilon_greedy ____`, so the designer never saw the
+    `IndexError` and guessed (and proposed removing working modules)."""
+    orch, _plan, _state = _project(tmp_path)
+    banner = "_" * 230 + " test_it " + "_" * 230
+    report = (
+        "Pytest failure:\n" + banner + "\ntests/test_mod_b.py:5: in test_it\n    helper_b([0.5], [0, 2])\n"
+        "src/mod_b.py:2: in helper_b\n    return [q[i] for i in moves]\nE   IndexError: index 2 is out of bounds for axis 0 with size 2\n"
+    )
+    assert len(report.split("IndexError")[0]) > 400  # the exception sits beyond the old limit
+    h = orch._project_h()
+    h.vertices["src/mod_b.py"].history[:] = [{"task_id": "T4", "issues": [report]}]
+    interfaces = json.loads(orch.blueprint_path.read_text(encoding="utf-8"))["interfaces"]
+    [line] = audit_facts(h, orch.workspace_dir, interfaces)["src/mod_b.py"]["errors"]
+    assert "IndexError: index 2 is out of bounds" in line and "src/mod_b.py" in line and "test_it" in line and "____" not in line
+
+
+def test_the_small_auditors_guesses_about_a_quiet_verified_module_do_not_reach_the_designer(tmp_path: Path) -> None:
+    """§XXX P3, 01: four `suspicious` remarks about constants of the verified `config.py` made the designer redo it."""
+    orch, _plan, _state = _project(tmp_path)
+    interfaces = json.loads(orch.blueprint_path.read_text(encoding="utf-8"))["interfaces"]
+    files = audit_facts(orch._project_h(), orch.workspace_dir, interfaces)
+    guess = {"functions": {"helper_a": "Returns 1."}, "matches_interface": True, "suspicious": ["the constant differs from the sketch"]}
+    for card in files.values():
+        card["behavior"] = dict(guess)
+    files["src/mod_b.py"]["behavior"] = dict(guess)  # failed, with errors on record: its remark stays
+    files["src/figures.py"]["behavior"] = {**guess, "matches_interface": False}  # the auditor says it does not match: stays
+    view = compact_audit({"failed": ["src/mod_b.py"], "files": files})
+    assert view["src/mod_a.py"]["suspicious"] == [] and view["src/experiment.py"]["suspicious"] == guess["suspicious"]  # experiment.py is not verified yet
+    assert view["src/mod_b.py"]["suspicious"] == guess["suspicious"] and view["src/figures.py"]["suspicious"] == guess["suspicious"]
+
+
 def test_a_file_is_described_once_and_again_only_when_it_changes(tmp_path: Path) -> None:
     orch, plan_out, _state = _project(tmp_path)
     plan_out["_plan"] = _base_plan()
@@ -179,6 +211,30 @@ def test_the_statuses_and_the_outline_must_say_the_same(tmp_path: Path) -> None:
     assert any("not one of" in v for v in revision_violations(old, new, {**decisions, "src/mod_b.py": {"status": "rewrite", "why": ""}}, set()))
     unchanged = {rel: {"status": "keep", "why": ""} for rel in decisions if rel != "src/mod_c.py"}
     assert any("every module is `keep`" in v for v in revision_violations(old, old, unchanged, set()))
+
+
+def test_keep_restores_the_old_entry_and_new_for_an_existing_module_means_change(tmp_path: Path) -> None:
+    """§XXX P1, 01: the designer called `config.py`, `random_agent.py`, `experiment.py` correct (`keep`) but rewrote the whole
+    JSON with reworded `purpose`/`provides`. `keep` is a promise: the old entry comes back, the module stays `keep`."""
+    _orch, plan_out, _state = _project(tmp_path)
+    from adk.orchestration.plan_outline import outline_of
+
+    old = outline_of(plan_out["outline"])
+    answer = _split_outline(plan_out["outline"])
+    mod_a = next(m for m in answer["modules"] if m["file"] == "src/mod_a.py")
+    mod_a["purpose"] = "Reworded by the designer although nothing was meant to change."
+    new, decisions = outline_of(answer), decisions_of(answer)
+    assert any("src/mod_a.py" in v and "differs" in v for v in revision_violations(old, new, decisions, set()))  # the old behaviour: a lost round
+
+    settled, fixed = settled_decisions(old, new, decisions)
+    kept = next(m for m in settled["modules"] if m["file"] == "src/mod_a.py")
+    assert kept == next(m for m in old["modules"] if m["file"] == "src/mod_a.py") and fixed["src/mod_a.py"]["status"] == "keep"
+    assert revision_violations(old, settled, fixed, set()) == []
+    assert [m["file"] for m in settled["modules"]] == [m["file"] for m in new["modules"]]  # the order of the answer stays
+
+    wrong = {**decisions, "src/mod_a.py": {"status": "new", "why": ""}}
+    again, relabelled = settled_decisions(old, new, wrong)
+    assert relabelled["src/mod_a.py"]["status"] == "change" and revision_violations(old, again, relabelled, set()) == []
 
 
 def test_a_redesign_splits_a_module_keeps_what_works_and_asks_for_what_is_not_verified(tmp_path: Path) -> None:
@@ -272,6 +328,20 @@ def test_a_redesign_that_changes_nothing_hands_the_round_to_the_re_plan(tmp_path
     assert orch._project_h().vertices["src/mod_b.py"].state == "failed" and state.tasks[-1]["task_id"] == "T3"  # nothing was touched
 
 
+def test_a_round_survives_a_designer_that_rewords_the_modules_it_keeps(tmp_path: Path) -> None:
+    """§XXX P1: 01 of 2026-11-25 lost 4 of 4 rounds to this; the round now goes through and the kept module is untouched."""
+    def rewords(payload: dict, _n: int) -> dict:
+        answer = _split_outline(payload["current_outline"])
+        next(m for m in answer["modules"] if m["file"] == "src/mod_a.py")["purpose"] = "Reworded, not changed."
+        return answer
+
+    orch, _state, result, calls = _redesign(tmp_path, rewords)
+    assert result is not None and [a for a, _p, _k in calls].count("plan_outline") == 1  # no correction was needed
+    assert {t["task_id"][:3] for t in result["tasks"]} == {"D1_"}  # the redesign built its queue, the round did not fall to the re-plan
+    saved = json.loads(orch.plan_outline_path.read_text(encoding="utf-8"))
+    assert next(m for m in saved["modules"] if m["file"] == "src/mod_a.py")["purpose"] != "Reworded, not changed."
+
+
 def test_a_wrong_answer_is_corrected_once(tmp_path: Path) -> None:
     def first_wrong(payload: dict, n: int) -> dict:
         answer = _split_outline(payload["current_outline"])
@@ -279,6 +349,8 @@ def test_a_wrong_answer_is_corrected_once(tmp_path: Path) -> None:
             answer["revision"]["modules"].pop("src/mod_c.py")
         else:
             assert any("no status" in f for f in payload["feedback"])
+            # §XXX P2: the correction sees the outline it is about, so it can be corrected instead of rewritten
+            assert [m["file"] for m in payload["previous_outline"]["modules"]] == [m["file"] for m in answer["modules"]]
         return answer
 
     _orch, _state, result, calls = _redesign(tmp_path, first_wrong)
@@ -295,13 +367,30 @@ def test_the_rounds_of_redesign_are_limited_and_can_be_switched_off(tmp_path: Pa
     assert orch._redesign_failed(state, ["src/mod_b.py"]) is None and calls == []
 
 
-def test_a_redesign_round_counts_against_no_limit_of_the_re_plan(tmp_path: Path) -> None:
+def test_the_first_round_is_the_local_re_plan_and_the_designer_comes_when_the_failed_did_not_move(tmp_path: Path) -> None:
+    """§XXX P4: the designer used to start the moment the first wave ended, on stubs and test errors, and rebuilt modules
+    that only needed a repair. Now the local re-plan has the first round; the designer is called when it left the
+    failed vertices where they were."""
     orch, plan_out, state = _project(tmp_path)
     plan_out["_plan"] = _base_plan()
     calls = _agents(orch, plan_out, lambda payload, _n: _split_outline(payload["current_outline"]))
-    replanned = orch._replan_failed(state)
-    assert replanned is not None and replanned["tasks"][0]["task_id"] == "D1_1" and "task_planner" not in [a for a, _p, _k in calls]
-    assert "_replan_progress" not in orch.__dict__  # the limits of the re-plan (6 rounds, 3 without progress) did not see it
+    first = orch._replan_failed(state)
+    assert first is not None and [a for a, _p, _k in calls] == ["task_planner"] and len(orch.__dict__["_replan_progress"]) == 1
+    second = orch._replan_failed(state)  # still failed, nothing newly verified
+    assert second is not None and second["tasks"][0]["task_id"] == "D1_1"
+    assert len(orch.__dict__["_replan_progress"]) == 1  # the designer's round is counted against no limit of the re-plan
+
+
+def test_the_designer_waits_while_the_local_re_plan_still_verifies_something_new(tmp_path: Path) -> None:
+    orch, plan_out, state = _project(tmp_path)
+    plan_out["_plan"] = _base_plan()
+    calls = _agents(orch, plan_out, lambda payload, _n: _split_outline(payload["current_outline"]))
+    orch._replan_failed(state)
+    h = orch._project_h()
+    h.vertices["src/experiment.py"].state = "verified"  # progress: a vertex that had not been verified before
+    assert orch._redesign_due(h) is False
+    orch._replan_failed(state)
+    assert [a for a, _p, _k in calls].count("plan_outline") == 0
 
 
 def test_when_the_rounds_of_redesign_are_spent_the_re_plan_of_the_failed_takes_the_round(tmp_path: Path) -> None:
@@ -370,3 +459,50 @@ def test_a_request_for_nothing_the_designer_may_read_is_an_answer(tmp_path: Path
     orch, _state, result, calls = _redesign(tmp_path, designer)
     assert result is not None and [a for a, _p, _k in calls].count("plan_outline") == 2
     assert not [e for e in _events(orch, "REDESIGN_SOURCE_GRANTED") if e["files"] == ["src/ghost.py"]]
+
+
+def test_the_designer_sees_what_its_earlier_rounds_decided_and_how_they_ended(tmp_path: Path) -> None:
+    """§XXXI P2, 01 of 2026-11-25: round 1 said "string states instead of numpy arrays" and round 2 "numpy arrays": the designer
+    had no memory of its own decisions, so the design flipped and was built twice."""
+    orch, state, first, calls = _redesign(tmp_path)
+    assert first is not None
+    assert not any("earlier_rounds" in p["revision"] for a, p, _k in calls if a == "plan_outline")  # nothing to remember in round 1
+    orch.max_redesigns = 3
+    orch._redesign_failed(state, ["src/mod_b.py"])
+    revision = [p for a, p, _k in calls if a == "plan_outline"][-1]["revision"]
+    [earlier] = revision["earlier_rounds"]
+    assert earlier["round"] == 1 and earlier["outcome"].startswith("applied")
+    assert earlier["decisions"]["src/mod_b.py"]["status"] == "change" and earlier["decisions"]["src/mod_c.py"]["status"] == "new"
+    assert "src/mod_a.py" not in earlier["decisions"]  # what it kept is not a decision worth repeating
+
+
+def test_a_round_that_could_not_be_built_is_remembered_with_its_reason(tmp_path: Path) -> None:
+    orch, state, _first, calls = _redesign(tmp_path)
+    orch.__dict__["_redesign_history"][-1]["outcome"] = "not built: STUB_DOES_NOT_IMPORT [figures.py]: NameError"
+    orch.max_redesigns = 3
+    orch._redesign_failed(state, ["src/mod_b.py"])
+    revision = [p for a, p, _k in calls if a == "plan_outline"][-1]["revision"]
+    assert revision["earlier_rounds"][0]["outcome"] == "not built: STUB_DOES_NOT_IMPORT [figures.py]: NameError"
+
+
+def test_a_test_the_plan_has_not_had_written_yet_is_not_judged_with_the_module_it_tests(tmp_path: Path) -> None:
+    """§XXXI P5, 01 of 2026-11-25: after a redesign `tests/test_game.py` was still the file of the old design (it imported
+    `get_current_player`, which no interface declares) and failed `D1_1`, `D2_1` and `R4_1`, the module's own verification.
+    The hypergraph knows better: the test vertex is `spec`. The file stays (the tester repairs it, imports included); it
+    joins the scope with the tester's own task."""
+    from adk.orchestration.verification import _task_scope
+
+    orch, _state, result, _calls = _redesign(tmp_path)
+    assert result is not None
+    h = load(orch.hypergraph_path)
+    assert (orch.workspace_dir / "tests/test_mod_b.py").is_file() and h.vertices["tests/test_mod_b.py"].state == "spec"
+    assert _task_scope("src/mod_b.py", set(), h)["tests"] == []  # the stale test is not judged with the new mod_b
+    assert _task_scope("tests/test_mod_b.py", {"tests/test_mod_b.py"}, h)["tests"] == ["tests/test_mod_b.py"]  # the tester's task owns it
+    h.vertices["tests/test_mod_b.py"].state = "written"
+    assert _task_scope("src/mod_b.py", set(), h)["tests"] == ["tests/test_mod_b.py"]  # written for the new design: judged again
+    assert "tests/test_mod_a.py" in _task_scope("src/mod_a.py", set(), h)["tests"]  # a kept module keeps its verified test in scope
+
+
+def test_the_new_queue_has_a_task_for_the_tester_on_the_stale_test(tmp_path: Path) -> None:
+    _orch, _state, result, _calls = _redesign(tmp_path)
+    assert any(t["target_node"] == "tests/test_mod_b.py" and t["assigned_agent"] == "seed_tester" for t in result["tasks"])

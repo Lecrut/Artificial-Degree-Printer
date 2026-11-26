@@ -192,3 +192,34 @@ def test_a_file_name_inside_another_name_is_not_a_mention():
     assert _mentioned("tests\\test_trainer.py:13: in test_x\ntrainer.py:63: in f", "trainer.py")
     assert not _mentioned("tests\\test_trainer.py:13: in test_x", "trainer.py")
     assert _mentioned("tests\\test_trainer.py:13: in test_x", "tests/test_trainer.py")
+
+
+_SAME_ERROR = "Pytest failure:\ntests/test_core.py:35: in test_act\ncore.py:42: in act\nE   IndexError: index 2 is out of bounds"
+
+
+def test_the_dossier_says_when_the_last_re_plan_did_not_move_an_error(tmp_path: Path):
+    """§XXX P9b, 01: rounds 2-4 changed interfaces against an unchanged `.FF..`; the planner now hears that it stands still."""
+    orch, h = _planned(tmp_path)
+    h.vertices["core.py"].state = FAILED
+    h.vertices["core.py"].history[:] = [{"task_id": "T3", "issues": [_SAME_ERROR]}]
+    first = orch._repair_dossier(h, ["core.py"])["failed"][0]
+    assert first["same_error_as_last_round"] is False  # nothing to compare with yet
+    assert orch._repair_dossier(h, ["core.py"])["failed"][0]["same_error_as_last_round"] is True
+    h.vertices["core.py"].history[:] = [{"task_id": "R1_1", "issues": [_SAME_ERROR.replace("IndexError: index 2", "KeyError: 2")]}]
+    assert orch._repair_dossier(h, ["core.py"])["failed"][0]["same_error_as_last_round"] is False  # a new error is a new problem
+
+
+def test_an_interface_change_is_refused_for_a_module_whose_error_did_not_move(tmp_path: Path, monkeypatch):
+    orch, h = _planned(tmp_path)
+    h.vertices["core.py"].state = FAILED
+    events: list[tuple] = []
+    monkeypatch.setattr(orch.logger, "log_event", lambda name, **kw: events.append((name, kw)))
+    dossier = {"failed": [{"vertex": "core.py", "same_error_as_last_round": True}]}
+    out = {"interfaces": {"core.py": "def f() -> int:\n    ...\n"}}
+    assert orch._replan_interfaces(h, out, ["core.py"], {}, {}, dossier) == []
+    assert events == [("SPEC_AMEND_SKIPPED", {"module": "core.py", "task_id": "REPLAN", "reason": "same error as after the last re-plan"})]
+
+
+def test_the_task_planner_prompt_names_the_unmoved_error_flag():
+    text = (Path(__file__).resolve().parents[2] / "adk" / "agents" / "planning" / "task_planner.md").read_text(encoding="utf-8")
+    assert "`same_error_as_last_round`" in text

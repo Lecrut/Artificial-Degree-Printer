@@ -241,3 +241,80 @@ def test_hung_test_is_charged_to_the_file_of_the_newest_frame():
     assert _pytest_culprits(_HANG) == [("tests/test_figures.py", False)]
     in_code = _HANG.replace(r'File "tests\test_figures.py", line ??? in mock_read_csv', 'File "figures.py", line 9 in plot')
     assert _pytest_culprits(in_code) == [("figures.py", False)]
+
+
+_TEST_ONLY = (
+    "Pytest failure:\n_____ test_learn _____\ntests/test_agent.py:41: in test_learn\n    assert s in [tuple(x) for x in q]\n"
+    "E   {exc}\n"
+)
+
+
+def test_an_exception_raised_in_the_test_frame_alone_is_the_tests_unless_it_is_a_failed_assertion():
+    """§XXX P6, 01 of 2026-11-25: `state1 in [tuple(s) ...]` raised `ValueError` in the test and six repairs of the
+    correct module followed. Only a failed assertion (`E   assert a == b`) or `Failed` is a wrong result of the code."""
+    for exc in ("ValueError: The truth value of an array is ambiguous", "IndexError: index 2 is out of bounds", "KeyError: 3"):
+        assert _pytest_culprits(_TEST_ONLY.format(exc=exc)) == [("tests/test_agent.py", False)], exc
+    for exc in ("assert 9 == 10", "AssertionError: wrong", "Failed: DID NOT RAISE"):
+        assert _pytest_culprits(_TEST_ONLY.format(exc=exc)) == [("tests/test_agent.py", True)], exc
+    in_code = _TEST_ONLY.format(exc="IndexError: index 2 is out of bounds").replace(
+        "E   Index", "agent.py:42: in act\n    q[i]\nE   Index"
+    )
+    assert _pytest_culprits(in_code) == [("agent.py", True)]  # a frame below the test: the code raised
+
+
+def _pair(module_state: str, history: list[dict], test_state: str = "written") -> SimpleNamespace:
+    mod = SimpleNamespace(state=module_state, history=history)
+    return SimpleNamespace(
+        vertices={"agent.py": mod, "tests/test_agent.py": SimpleNamespace(state=test_state, history=[])},
+        owner_of=lambda rel: rel,
+    )
+
+
+def _failure(version: str, exc: str = "IndexError: index 2 is out of bounds for axis 0 with size 2") -> dict:
+    return {"task_id": "R1_2", "version": version, "issues": [
+        f"Pytest failure:\ntests/test_agent.py:35: in test_act\nagent.py:42: in act\nE   {exc}"
+    ]}
+
+
+def test_a_test_is_suspect_when_its_error_survives_two_versions_of_a_module_that_never_passed():
+    from adk.orchestration.failure_attribution import _suspect_test
+
+    assert _suspect_test(_pair("failed", [_failure("a1"), _failure("b2")]), "agent.py", "tests/test_agent.py")
+    assert not _suspect_test(_pair("failed", [_failure("a1"), _failure("a1")]), "agent.py", "tests/test_agent.py")  # same code twice: not a rewrite
+    assert not _suspect_test(_pair("failed", [_failure("a1"), _failure("b2", "KeyError: 1")]), "agent.py", "tests/test_agent.py")  # a new error each time
+    assert not _suspect_test(_pair("failed", [_failure("a1")]), "agent.py", "tests/test_agent.py")
+    assert not _suspect_test(_pair("failed", [_failure("a1"), _failure("b2")], "verified"), "agent.py", "tests/test_agent.py")
+    assert _suspect_test(_pair("verified", []), "agent.py", "tests/test_agent.py")  # the old rule (§XIV Q2) stays
+
+
+def test_every_verdict_remembered_on_a_vertex_carries_the_version_of_its_file(tmp_path: Path) -> None:
+    orch = _game_with_test(tmp_path, "    assert size() == 9\n")
+    orch._remember_verdict("game.py", "T5", ["Pytest failure: x"])
+    first = orch._project_h().vertices["game.py"].history[-1]["version"]
+    (orch.workspace_dir / "game.py").write_text('"""Game."""\n\n\ndef size() -> int:\n    """Board size."""\n    return 8\n', encoding="utf-8")
+    orch._remember_verdict("game.py", "T5", ["Pytest failure: x"])
+    assert first and orch._project_h().vertices["game.py"].history[-1]["version"] != first
+
+
+def test_a_failure_called_directly_by_the_test_says_the_test_may_be_wrong(tmp_path: Path) -> None:
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "agent.py").write_text("def act(q, moves):\n    return [q[i] for i in moves]\n", encoding="utf-8")
+    (tmp_path / "tests/test_agent.py").write_text("def test_a():\n    act([0.5, 0.0], [0, 2])\n", encoding="utf-8")
+    issue = ("Pytest failure:\n_____ test_a _____\ntests/test_agent.py:2: in test_a\n    act([0.5, 0.0], [0, 2])\n"
+             "agent.py:2: in act\n    return [q[i] for i in moves]\nE IndexError: index 2 is out of bounds\n")
+    [finding] = repair_findings([issue], tmp_path)
+    assert finding.file == "agent.py" and "called directly by the test at tests/test_agent.py:2 (`act([0.5, 0.0], [0, 2])`)" in finding.text
+
+
+def test_a_failing_test_file_is_the_testers_even_when_the_coder_was_its_last_writer(tmp_path: Path) -> None:
+    """§XXXI P1, 01 of 2026-11-25: the repair of `tests/test_game.py` went to `seed_coder` three times and was refused three
+    times ("test files belong to the tester"); the tester was never asked. The agent follows the file, not `last_writer`."""
+    orch = _game_with_test(tmp_path, '    if size() == 9:\n        raise ValueError("the test breaks itself")\n    assert size() > 0\n')
+    orch._project_h().vertices["tests/test_game.py"].last_writer = {"agent": "seed_coder", "task_id": "T5"}
+
+    report = orch._run_verification_step(
+        {"task_id": "T5", "target_node": "game.py", "assigned_agent": "seed_coder"}, include_docs=False
+    )
+
+    assert report["status"] == "FAIL" and report["failed_file"] == "tests/test_game.py"
+    assert report["failed_agent"] == "seed_tester"

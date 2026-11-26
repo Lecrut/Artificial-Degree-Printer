@@ -108,7 +108,7 @@ class RepairMixin:
                 if fast_target != failed_file:
                     owner = h.owner_of(fast_target) if h is not None else None
                     author = h.vertices[owner].last_writer if owner is not None else None
-                    failed_agent = str((author or {}).get("agent") or _agent_for_path(fast_target))
+                    failed_agent = _agent_for_path(fast_target) if _is_test(fast_target) else str((author or {}).get("agent") or _agent_for_path(fast_target))
                 # Controlled change of the plan (Audit VII B4): the same breach of σ again on the same vertex means
                 # the specification may be what is wrong. The
                 # planner decides before the next attempt: amend the interface, or keep it and the coder goes on.

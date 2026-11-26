@@ -8,13 +8,12 @@
   "question": null,
   "context": {
     "interfaces": [
+      "agent.py",
+      "baseline.py",
       "config.py",
+      "environment.py",
       "experiment.py",
-      "figures.py",
-      "game_loop.py",
-      "q_learning_agent.py",
-      "random_agent.py",
-      "tictactoe_env.py"
+      "figures.py"
     ],
     "entrypoint": "experiment.py:run_experiment"
   }

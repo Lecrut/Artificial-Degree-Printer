@@ -56,7 +56,9 @@ When `revision` is present the project is already built, the queue ended and mod
 - `implementation`: for every module of the project what its file really is: `state` (`verified` means only that the file passed its own tests, not that it works with the others), `implemented`, `declares` (signatures), `does` (what each function does, said by an auditor who read the code), `matches_interface`, `suspicious`, `lacks_planned` (names the plan declares and the file lacks), `uses`, `used_by`, `tests`, `errors`. You see no bodies.
 - `unresolved_errors`: the last errors of each failed module.
 - `run_error`: the traceback of the last run of the experiment, when it failed.
+- `earlier_rounds`: your own earlier revisions in this run, each with the modules it changed, added or removed (`status`, `why`) and its `outcome` (`not built`: its plan could not be built, with the reason; `applied`: it was built and the failures came back). Do not reverse a decision of an earlier round (a state encoding, the owner of a responsibility, a module's interface) unless the errors show that decision as the cause: a reversal is a new decision, and its `why` names the error that proves it. A design that was applied and failed again is not wrong for being old; look for what the errors say.
 - `sources`: only after you asked for code (see below): the code of the files you named.
+- `previous_outline`: with `feedback`, the outline of your previous revision that the feedback is about; correct it, do not start over, and answer with the whole object again.
 
 The descriptions in `implementation` are written by an auditor and can miss a detail (a line that is not there, a value that is never updated). If you cannot find the cause without reading code, ask ONCE, for up to three implemented modules: answer with `revision.need_source`, a list of their paths, and nothing else. The harness sends their code in `revision.sources` and asks you again; a second request is not answered. Ask only for files whose descriptions or errors point at them.
 
@@ -74,7 +76,7 @@ Rules:
 - `revision.diagnosis`: for every failed module its `cause` (`this_file`, `neighbour` or `split`) and one sentence `why`.
 
 ## OUTPUT
-Return strictly one JSON object, no text outside it:
+Return strictly one JSON object, no text outside it. It is ALWAYS the whole outline: `modules` (every module), `entrypoint`, `plots`, `academic_blueprint`; an answer that holds only `revision` is refused. `revision` is added only when `revision` is in your input:
 ```json
 {
   "modules": [
@@ -93,16 +95,11 @@ Return strictly one JSON object, no text outside it:
     "baseline_comparison": "<metoda odniesienia i sposób porównania>",
     "metrics": ["<metryka_1>", "<metryka_2>"],
     "planned_chapters": [{"index": 1, "title": "<Rozdział 1: ...>", "focus": "<zakres rozdziału>"}]
-  }
-}
-```
-
-When revising, the same object also carries `revision`. To read code instead of answering, return only `{"revision": {"need_source": ["<path>.py"]}}`. The answer:
-```json
-{
+  },
   "revision": {
     "modules": {"<path>.py": {"status": "keep | change | new | remove", "why": "<one sentence>"}},
     "diagnosis": {"<failed_path>.py": {"cause": "this_file | neighbour | split", "why": "<one sentence>"}}
   }
 }
 ```
+To read code instead of answering, return only `{"revision": {"need_source": ["<path>.py"]}}` (the single exception to the whole-object rule).

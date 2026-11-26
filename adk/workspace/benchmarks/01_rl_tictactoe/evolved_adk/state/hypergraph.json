@@ -1,333 +1,292 @@
 {
   "version": 2,
   "vertices": {
-    "tictactoe_env.py": {
+    "environment.py": {
       "kind": "code",
       "owner": "coder",
       "state": "verified",
-      "description": "Implement tictactoe_env.py: Implements the Tic-Tac-Toe game environment with move validation, state representation, and win/draw detection for reinforcement learning.. Implement every name its interface declares: TicTacToeEnv, TicTacToeEnv.reset, TicTacToeEnv.step, get_valid_moves.",
+      "description": "Implement environment.py: Implements Tic-Tac-Toe game logic, state handling, and provides utilities for playing episodes and parsing results.. Implement every name its interface declares: TicTacToeEnv, TicTacToeEnv.__init__, TicTacToeEnv.reset, TicTacToeEnv.step, TicTacToeEnv.get_valid_actions, run_episode, parse_episode_result.",
       "attempts": 2,
       "history": [
         {
-          "task_id": "T3",
+          "task_id": "REPLAN",
           "issues": [
-            "Ruff lint failure: tictactoe_env.py:42:31: F821 Undefined name `check_win`\ntictactoe_env.py:43:30: F821 Undefined name `check_draw`\nFound 2 errors."
-          ]
-        },
-        {
-          "task_id": "T3",
-          "issues": [
-            "Ruff lint failure: tictactoe_env.py:42:31: F821 Undefined name `check_win`\ntictactoe_env.py:43:30: F821 Undefined name `check_draw`\nFound 2 errors."
+            "Interface of environment.py changed by the re-plan."
           ]
         },
         {
           "task_id": "R2_1",
           "issues": [
-            "Pytest failure: Pytest: a test hung and was stopped after 20s (probably an infinite loop). Stack (newest frame first):\nTimeout (0:00:20)!\nFile \"tictactoe_env.py\", line 95 in get_valid_moves\nFile \"game_loop.py\", line 34 in play_game\nFile \"tests\\test_game_loop.py\", line 21 in test_play_game_interface_and_contract"
-          ]
+            "Traceback (most recent call last):\nFile \"<string>\", line 46, in <module>\nfn()\n~~^^\nFile \"experiment.py\", line 63, in run_experiment\nobs, _ = env_train.reset(seed=int(rng_episode.integers(0, 2 ** 31)))\n~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFile \"environment.py\", line 21, in reset\nreturn (self._flatten_observation(), {'state': 'start', 'turn': 'X'})\n^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'TicTacToeEnv' object has no attribute '_flatten_observation'"
+          ],
+          "version": "1242bfd3254a"
         },
         {
-          "task_id": "R3_1",
+          "task_id": "R2_1_FIX1",
           "issues": [
-            "Pytest failure: Pytest: a test hung and was stopped after 20s (probably an infinite loop). Stack (newest frame first):\nTimeout (0:00:20)!\nFile \"tictactoe_env.py\", line 95 in step\nFile \"game_loop.py\", line 28 in play_game\nFile \"tests\\test_game_loop.py\", line 24 in test_play_game_interface_and_contract"
-          ]
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv._get_winner: The new code of TicTacToeEnv._get_winner also contains _flatten_observation; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`."
+          ],
+          "version": "1242bfd3254a"
+        },
+        {
+          "task_id": "R2_1",
+          "issues": [
+            "Traceback (most recent call last):\nFile \"<string>\", line 46, in <module>\nfn()\n~~^^\nFile \"experiment.py\", line 63, in run_experiment\nobs, _ = env_train.reset(seed=int(rng_episode.integers(0, 2 ** 31)))\n~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFile \"environment.py\", line 21, in reset\nreturn (self._flatten_observation(), {'state': 'start', 'turn': 'X'})\n^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'TicTacToeEnv' object has no attribute '_flatten_observation'"
+          ],
+          "version": "1242bfd3254a"
         }
       ],
       "last_writer": {
         "agent": "seed_coder",
-        "task_id": "R3_1_FIX2"
-      },
-      "files": [],
-      "failures": 6
-    },
-    "game_loop.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "verified",
-      "description": "Implement game_loop.py: Provides the logic to run a single episode of Tic-Tac-Toe between two agents (including random play) and returns the outcome.. Implement every name its interface declares: play_game.",
-      "attempts": 5,
-      "history": [
-        {
-          "task_id": "R4_1",
-          "issues": [
-            "Pytest failure:\n__________________________________________________________________________________________________________________________________ test_play_game_interface_and_contract __________________________________________________________________________________________________________________________________\ntests\\test_game_loop.py:24: in test_play_game_interface_and_contract\nresult = play_game(agent_a_state_only, agent_b_state_and_rng, is_agent_a_turn=True, rng=rng)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ngame_loop.py:20: in play_game\nstate: np.ndarray = obs['board'].copy()\n^^^^^^^^^^^^\nE IndexError: only integers, slices (`:`), ellipsis (`...`), numpy.newaxis (`None`) and integer or boolean arrays are valid indices\nFAILED tests\\test_game_loop.py::test_play_game_interface_and_contract - IndexError: only integers, slices (`:`), ellipsis ("
-          ]
-        },
-        {
-          "task_id": "R4_1",
-          "issues": [
-            "Pytest failure:\n__________________________________________________________________________________________________________________________________ test_play_game_interface_and_contract __________________________________________________________________________________________________________________________________\ntests\\test_game_loop.py:42: in test_play_game_interface_and_contract\nassert result['final_board'].shape == (3, 3), f\"Final board shape must be (3,3), got {result['final_board'].shape}.\"\nE AssertionError: Final board shape must be (3,3), got (9,).\nE assert (9,) == (3, 3)\nE\nE At index 0 diff: 9 != 3\nE Right contains one more item: 3\nE Use -v to get more diff\nFAILED tests\\test_game_loop.py::test_play_game_interface_and_contract - AssertionError: Final board shape must be (3,3), got (9,).\n1 failed in 0.10s"
-          ]
-        },
-        {
-          "task_id": "R5_1",
-          "issues": [
-            "Pytest failure:\n__________________________________________________________________________________________________________________________________ test_play_game_interface_and_contract __________________________________________________________________________________________________________________________________\ntests\\test_game_loop.py:42: in test_play_game_interface_and_contract\nassert result['final_board'].shape == (3, 3), f\"Final board shape must be (3,3), got {result['final_board'].shape}.\"\nE AssertionError: Final board shape must be (3,3), got (9,).\nE assert (9,) == (3, 3)\nE\nE At index 0 diff: 9 != 3\nE Right contains one more item: 3\nE Use -v to get more diff\nFAILED tests\\test_game_loop.py::test_play_game_interface_and_contract - AssertionError: Final board shape must be (3,3), got (9,).\n1 failed in 0.12s"
-          ]
-        },
-        {
-          "task_id": "R5_1",
-          "issues": [
-            "Pytest failure:\n__________________________________________________________________________________________________________________________________ test_play_game_interface_and_contract __________________________________________________________________________________________________________________________________\ntests\\test_game_loop.py:24: in test_play_game_interface_and_contract\nresult = play_game(agent_a_state_only, agent_b_state_and_rng, is_agent_a_turn=True, rng=rng)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ngame_loop.py:45: in play_game\nfinal_board: np.ndarray = env.board.reshape(BOARD_SIZE[0], BOARD_SIZE[1])\n^^^^^^^^^^^^^\nE TypeError: 'int' object is not subscriptable\nFAILED tests\\test_game_loop.py::test_play_game_interface_and_contract - TypeError: 'int' object is not subscriptable\n1 failed in 0.13s"
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "R5_1_FIX2"
-      },
-      "files": [],
-      "failures": 5
-    },
-    "q_learning_agent.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "failed",
-      "description": "Implement q_learning_agent.py: Implements the Q-Learning agent with epsilon-greedy exploration and tabular policy updates.. Implement every name its interface declares: QLearningAgent, QLearningAgent.__init__, QLearningAgent.act, QLearningAgent.learn, QLearningAgent.reset.",
-      "attempts": 7,
-      "history": [
-        {
-          "task_id": "T8",
-          "issues": [
-            "Pytest failure:\n_______________________________________________________________________________________________________________________________________________ test_learn ________________________________________________________________________________________________________________________________________________\ntests\\test_q_learning_agent.py:41: in test_learn\nassert state1 in [tuple(s) for s in agent.q_table.keys()]\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\nFAILED tests\\test_q_learning_agent.py::test_learn - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n1 failed, 4 passed in 0.11s"
-          ]
-        },
-        {
-          "task_id": "R6_1",
-          "issues": [
-            "Pytest failure:\n_______________________________________________________________________________________________________________________________________________ test_learn ________________________________________________________________________________________________________________________________________________\ntests\\test_q_learning_agent.py:41: in test_learn\nassert state1 in [tuple(s) for s in agent.q_table.keys()]\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\nFAILED tests\\test_q_learning_agent.py::test_learn - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n1 failed, 4 passed in 0.12s"
-          ]
-        },
-        {
-          "task_id": "R6_1",
-          "issues": [
-            "Pytest failure:\n_______________________________________________________________________________________________________________________________________________ test_learn ________________________________________________________________________________________________________________________________________________\ntests\\test_q_learning_agent.py:41: in test_learn\nassert state1 in [tuple(s) for s in agent.q_table.keys()]\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\nFAILED tests\\test_q_learning_agent.py::test_learn - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n1 failed, 4 passed in 0.11s"
-          ]
-        },
-        {
-          "task_id": "R6_1",
-          "issues": [
-            "Pytest failure:\n_______________________________________________________________________________________________________________________________________________ test_learn ________________________________________________________________________________________________________________________________________________\ntests\\test_q_learning_agent.py:41: in test_learn\nassert state1 in [tuple(s) for s in agent.q_table.keys()]\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\nFAILED tests\\test_q_learning_agent.py::test_learn - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n1 failed, 4 passed in 0.11s"
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "R6_1_FIX2"
-      },
-      "files": [],
-      "failures": 7
-    },
-    "random_agent.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "verified",
-      "description": "Implement random_agent.py: Implements a baseline opponent that selects uniformly at random from available moves.. Implement every name its interface declares: RandomAgent, RandomAgent.__init__, RandomAgent.act.",
-      "attempts": 2,
-      "history": [
-        {
-          "task_id": "T10",
-          "issues": [
-            "Pytest failure:\n_______________________________________________________________________________________________________________________________________ test_act_returns_valid_move _______________________________________________________________________________________________________________________________________\ntests\\test_random_agent.py:19: in test_act_returns_valid_move\naction = agent.act(state_with_moves, rng)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nrandom_agent.py:14: in act\nvalid_moves = [i for i in range(9) if not state['board'][i]]\n^^^^^^^^^^^^^^\nE KeyError: 'board'\n_________________________________________________________________________________________________________________________________ test_act_returns_minus_one_for_terminal _________________________________________________________________________________________________________________________________\ntests\\test_random_agent."
-          ]
-        },
-        {
-          "task_id": "T10",
-          "issues": [
-            "Pytest failure:\n_______________________________________________________________________________________________________________________________________ test_act_returns_valid_move _______________________________________________________________________________________________________________________________________\ntests\\test_random_agent.py:24: in test_act_returns_valid_move\naction = agent.act(state_with_moves, rng)\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nrandom_agent.py:14: in act\nvalid_moves = [i for i in range(9) if not state['board'][i]]\n^^^^^^^^^^^^^^\nE KeyError: 'board'\n_________________________________________________________________________________________________________________________________ test_act_returns_minus_one_for_terminal _________________________________________________________________________________________________________________________________\ntests\\test_random_agent."
-          ]
-        },
-        {
-          "task_id": "R1_3",
-          "issues": [
-            "Pytest failure:\n_______________________________________________________________________________________________________________________________________ test_act_returns_valid_move _______________________________________________________________________________________________________________________________________\ntests\\test_random_agent.py:27: in test_act_returns_valid_move\nassert isinstance(action, int), f\"act() must return an integer index, got {type(action)}\"\nE AssertionError: act() must return an integer index, got <class 'numpy.int64'>\nE assert False\nE + where False = isinstance(np.int64(3), int)\nFAILED tests\\test_random_agent.py::test_act_returns_valid_move - AssertionError: act() must return an integer index, got <class 'numpy.int64'>\n1 failed, 1 passed in 0.10s"
-          ]
-        }
-      ],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "R1_3_FIX1"
+        "task_id": "R2_1_FIX2"
       },
       "files": [],
       "failures": 3
     },
-    "config.py": {
+    "agent.py": {
       "kind": "code",
       "owner": "coder",
       "state": "verified",
-      "description": "Implement config.py: Defines all experiment constants (hyperparameters, seeds, iteration counts) to ensure reproducibility and thesis citation.. Implement every name its interface declares: its constants.",
+      "description": "Implement agent.py: Implements the Tabular Q-Learning agent with epsilon-greedy policy.. Implement every name its interface declares: QLearningAgent, QLearningAgent.__init__, QLearningAgent.choose_action, QLearningAgent.update, QLearningAgent.get_q_values.",
       "attempts": 1,
-      "history": [],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T11"
-      },
-      "files": [],
-      "failures": 0
-    },
-    "experiment.py": {
-      "kind": "entry",
-      "owner": "coder",
-      "state": "stub",
-      "description": "Implement experiment.py: Runs the training loop against a random opponent and the evaluation phase, aggregating metrics into results.csv.. Implement every name its interface declares: run_experiment.",
-      "attempts": 0,
-      "history": [],
-      "last_writer": null,
-      "files": [],
-      "failures": 0
-    },
-    "figures.py": {
-      "kind": "code",
-      "owner": "coder",
-      "state": "verified",
-      "description": "Implement figures.py: Reads results.csv and generates the required plots for the thesis.. Implement every name its interface declares: plot_results.",
-      "attempts": 1,
-      "history": [],
-      "last_writer": {
-        "agent": "seed_coder",
-        "task_id": "T12"
-      },
-      "files": [],
-      "failures": 0
-    },
-    "tests/test_tictactoe_env.py": {
-      "kind": "test",
-      "owner": "tester",
-      "state": "verified",
-      "description": "Unit tests of TicTacToeEnv, get_valid_moves from tictactoe_env.py in tests/test_tictactoe_env.py, through the declared interface only.",
-      "attempts": 2,
       "history": [
         {
           "task_id": "T4",
           "issues": [
-            "Pytest failure:\n___________________________________________________________________________________________________________________________________ test_reset_signature_and_constants ____________________________________________________________________________________________________________________________________\ntests\\test_tictactoe_env.py:9: in test_reset_signature_and_constants\nassert TicTacToeEnv.BOARD_SIZE == 9, \"BOARD_SIZE must be 9\"\n^^^^^^^^^^^^^^^^^^^^^^^\nE AttributeError: type object 'TicTacToeEnv' has no attribute 'BOARD_SIZE'\n________________________________________________________________________________________________________________________________________ test_step_invalid_action _________________________________________________________________________________________________________________________________________\ntests\\test_tictactoe_env.py:34: in test_step_invalid_act",
-            "Ruff lint failure: tests\\test_tictactoe_env.py:17:28: F821 Undefined name `np`\ntests\\test_tictactoe_env.py:19:25: F821 Undefined name `np`\ntests\\test_tictactoe_env.py:58:28: F821 Undefined name `EMPTY_CELL`\nFound 3 errors."
-          ]
-        },
-        {
-          "task_id": "T4_FIX1",
-          "issues": [
-            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_tictactoe_env.py:module: The new code of module contains no definition of `module`; nothing was saved."
-          ]
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- agent.py:QLearningAgent.__init__: SyntaxError in new_code: unexpected indent at line 12 of your code: `def __init__(` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation.\n- agent.py:QLearningAgent.choose_action: SyntaxError in new_code: unexpected indent at line 12 of your code: `def choose_action(` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation.\n- agent.py:QLearningAgent.update: SyntaxError in new_code: unexpected indent at line 15 of your code: `def update(` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation"
+          ],
+          "version": "bf40377600d2"
         },
         {
           "task_id": "T4",
           "issues": [
-            "Pytest failure:\n___________________________________________________________________________________________________________________________________ test_reset_signature_and_constants ____________________________________________________________________________________________________________________________________\ntests\\test_tictactoe_env.py:9: in test_reset_signature_and_constants\nassert TicTacToeEnv.BOARD_SIZE == 9, \"BOARD_SIZE must be 9\"\n^^^^^^^^^^^^^^^^^^^^^^^\nE AttributeError: type object 'TicTacToeEnv' has no attribute 'BOARD_SIZE'\n________________________________________________________________________________________________________________________________________ test_step_invalid_action _________________________________________________________________________________________________________________________________________\ntests\\test_tictactoe_env.py:34: in test_step_invalid_act",
-            "Ruff lint failure: tests\\test_tictactoe_env.py:17:28: F821 Undefined name `np`\ntests\\test_tictactoe_env.py:19:25: F821 Undefined name `np`\ntests\\test_tictactoe_env.py:58:28: F821 Undefined name `EMPTY_CELL`\nFound 3 errors."
-          ]
-        },
-        {
-          "task_id": "T4",
-          "issues": [
-            "Pytest failure:\n________________________________________________________________________________________________________________________________________ test_step_invalid_action _________________________________________________________________________________________________________________________________________\ntests\\test_tictactoe_env.py:37: in test_step_invalid_action\nassert info.get('invalid_move') is True, 'info.invalid_move must be True for invalid action'\nE AssertionError: info.invalid_move must be True for invalid action\nE assert None is True\nE + where None = <built-in method get of dict object at 0x000002067F5A5E80>('invalid_move')\nE + where <built-in method get of dict object at 0x000002067F5A5E80> = {'valid_move': False, 'game_over': False}.get\n_________________________________________________________________________________________________________________________________ te"
-          ]
+            "NOT_IMPLEMENTED [agent.py]: still without an implementation (only a stub body): QLearningAgent.__init__, QLearningAgent.choose_action, QLearningAgent.update, QLearningAgent.get_q_values"
+          ],
+          "version": "bf40377600d2"
         }
       ],
       "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "R2_3"
+        "agent": "seed_coder",
+        "task_id": "T4_FIX1"
       },
       "files": [],
-      "failures": 4
+      "failures": 0
     },
-    "tests/test_game_loop.py": {
-      "kind": "test",
-      "owner": "tester",
+    "baseline.py": {
+      "kind": "code",
+      "owner": "coder",
       "state": "verified",
-      "description": "Unit tests of play_game from game_loop.py in tests/test_game_loop.py, through the declared interface only.",
-      "attempts": 2,
-      "history": [
-        {
-          "task_id": "T6",
-          "issues": [
-            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_game_loop.py:<module>: The new code of <module> contains no definition of `<module>`; nothing was saved."
-          ]
-        },
-        {
-          "task_id": "T6_FIX1",
-          "issues": [
-            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_game_loop.py:<module>: The new code of <module> contains no definition of `<module>`; nothing was saved."
-          ]
-        }
-      ],
+      "description": "Implement baseline.py: Implements the random baseline agent that selects uniformly from valid actions.. Implement every name its interface declares: RandomAgent, RandomAgent.__init__, RandomAgent.choose_action.",
+      "attempts": 1,
+      "history": [],
       "last_writer": {
-        "agent": "seed_tester",
+        "agent": "seed_coder",
         "task_id": "T6"
       },
       "files": [],
       "failures": 0
     },
-    "tests/test_q_learning_agent.py": {
-      "kind": "test",
-      "owner": "tester",
-      "state": "written",
-      "description": "Unit tests of QLearningAgent from q_learning_agent.py in tests/test_q_learning_agent.py, through the declared interface only.",
-      "attempts": 2,
+    "config.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement config.py: Defines all hyperparameters, experiment settings, and constants as module-level variables.. Implement every name its interface declares: its constants.",
+      "attempts": 1,
       "history": [
         {
           "task_id": "T8",
           "issues": [
-            "Pytest failure:\n_________________________________________________________________________________________________________________________________________ test_act_epsilon_greedy _________________________________________________________________________________________________________________________________________\ntests\\test_q_learning_agent.py:40: in test_act_epsilon_greedy\nstate_with_q_values = {state: np.array([0.5, 0.0])} # Simulate having Q-values\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE TypeError: unhashable type: 'numpy.ndarray'\nFAILED tests\\test_q_learning_agent.py::test_act_epsilon_greedy - TypeError: unhashable type: 'numpy.ndarray'\n1 failed, 4 passed in 0.11s"
-          ]
-        },
-        {
-          "task_id": "T8",
-          "issues": [
-            "Pytest failure:\n_________________________________________________________________________________________________________________________________________ test_act_epsilon_greedy _________________________________________________________________________________________________________________________________________\ntests\\test_q_learning_agent.py:24: in test_act_epsilon_greedy\nassert 0 <= action1 < len(valid_moves)\nE assert 2 < 2\nE + where 2 = len([0, 2])\nFAILED tests\\test_q_learning_agent.py::test_act_epsilon_greedy - assert 2 < 2\n1 failed, 4 passed in 0.11s"
-          ]
-        },
-        {
-          "task_id": "T8",
-          "issues": [
-            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_q_learning_agent.py:test_act_epsilon_greedy: The new code of test_act_epsilon_greedy contains no definition of `test_act_epsilon_greedy`; nothing was saved."
-          ]
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- config.py:py: The new code of py contains no definition of `py`; nothing was saved. The code of one symbol starts with its header (`def py(...):` or `class py:`); a body alone cannot be placed."
+          ],
+          "version": "74bdb5dfc57b"
         },
         {
           "task_id": "T8_FIX1",
           "issues": [
-            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_q_learning_agent.py:test_act_epsilon_greedy: The new code of test_act_epsilon_greedy contains no definition of `test_act_epsilon_greedy`; nothing was saved.\n- test_q_learning_agent.py:test_learn: The new code of test_learn contains no definition of `test_learn`; nothing was saved."
-          ]
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- config.py:<module-level>: an ast_edits element named after the module replaces the WHOLE file, and this code would delete EPSILON_END, EPSILON_START. To change one symbol, name that symbol; to replace the module, return all of it in 'files'."
+          ],
+          "version": "74bdb5dfc57b"
         }
       ],
       "last_writer": {
-        "agent": "seed_tester",
-        "task_id": "R4_2_FIX1"
+        "agent": "seed_coder",
+        "task_id": "T8_FIX2"
       },
       "files": [],
       "failures": 2
     },
-    "tests/test_random_agent.py": {
-      "kind": "test",
-      "owner": "tester",
-      "state": "verified",
-      "description": "Unit tests of RandomAgent from random_agent.py in tests/test_random_agent.py, through the declared interface only.",
+    "experiment.py": {
+      "kind": "entry",
+      "owner": "coder",
+      "state": "impl",
+      "description": "Implement experiment.py: Orchestrates the training, testing, and aggregation of results for both agents across all seeds.. Implement every name its interface declares: run_experiment.",
       "attempts": 2,
       "history": [
         {
           "task_id": "T10",
           "issues": [
-            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothin...\n- TEST_INVALID_ON_STUBS [tests/test_random_agent.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_act_selects_random_valid_move: failed on setup with \"file C:\\Users\\Filip\\AppData\\Local\\Temp\\adk_test_on_stubs_b9wexs0y\\tests\\test_random_agent.py, line 1"
-          ]
+            "Ruff lint failure: experiment.py:48:44: F821 Undefined name `env_get_valid_actions`\nexperiment.py:54:25: F821 Undefined name `Optional`\nexperiment.py:77:49: F821 Undefined name `env_get_valid_actions`\nexperiment.py:84:38: F821 Undefined name `Optional`\nexperiment.py:95:38: F821 Undefined name `Optional`\nexperiment.py:115:49: F821 Undefined name `env_get_valid_actions`\nexperiment.py:121:34: F821 Undefined name `Optional`\nFound 7 errors.",
+            "Traceback (most recent call last):\nFile \"<string>\", line 46, in <module>\nfn()\n~~^^\nFile \"experiment.py\", line 35, in run_experiment\nq_agent: agent.QLearningAgent = agent.QLearningAgent(num_states=env.observation_space.n, num_actions=env.action_space.n)\n^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'Box' object has no attribute 'n'"
+          ],
+          "version": "5190c183bb54"
         },
         {
-          "task_id": "T10_FIX1",
+          "task_id": "T10",
           "issues": [
-            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_random_agent.py:RandomAgent: The new code of RandomAgent contains no definition of `RandomAgent`; nothing was saved."
+            "Traceback (most recent call last):\nFile \"<string>\", line 46, in <module>\nfn()\n~~^^\nFile \"experiment.py\", line 37, in run_experiment\nq_agent: agent.QLearningAgent = agent.QLearningAgent(num_states=int(env.observation_space.high), num_actions=int(env.action_space.n))\n~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: only 0-dimensional arrays can be converted to Python scalars"
+          ],
+          "version": "d4ca08c0287f"
+        },
+        {
+          "task_id": "T10",
+          "issues": [
+            "Ruff lint failure: experiment.py:33:81: F821 Undefined name `env`\nexperiment.py:33:143: F821 Undefined name `env`\nFound 2 errors.",
+            "Traceback (most recent call last):\nFile \"<string>\", line 46, in <module>\nfn()\n~~^^\nFile \"experiment.py\", line 33, in run_experiment\nq_agent: agent.QLearningAgent = agent.QLearningAgent(num_states=int(np.prod(env.TicTacToeEnv().observation_space.shape)), num_actions=int(env.TicTacToeEnv().action_space.n), lr=config.LEARNING_RATE, gamma=config.GAMMA, epsilon=config.EPSILON_START)\n^^^\nNameError: name 'env' is not defined"
+          ],
+          "version": "4169d03c81b5"
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "R2_1"
+      },
+      "files": [],
+      "failures": 3
+    },
+    "figures.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement figures.py: Reads results.csv and generates the required plots (learning curves, win rates) for the thesis.. Implement every name its interface declares: generate_plots.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T9"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "tests/test_environment.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "Unit tests of TicTacToeEnv, run_episode, parse_episode_result from environment.py in tests/test_environment.py, through the declared interface only.",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "T3",
+          "issues": [
+            "Pytest failure:\n________________________________________________________________________________________________________________________________________ test_tic_tac_toe_env_init ________________________________________________________________________________________________________________________________________\ntests\\test_environment.py:10: in test_tic_tac_toe_env_init\nassert len(env.observation_space.shape) == 1\nE assert 2 == 1\nE + where 2 = len((3, 3))\nE + where (3, 3) = Box(-1, 1, (3, 3), int8).shape\nE + where Box(-1, 1, (3, 3), int8) = <environment.TicTacToeEnv object at 0x0000023179FEBA10>.observation_space\nFAILED tests\\test_environment.py::test_tic_tac_toe_env_init - assert 2 == 1\n1 failed in 0.15s"
+          ],
+          "version": "44d80b86b233"
+        },
+        {
+          "task_id": "T3",
+          "issues": [
+            "Pytest failure:\n________________________________________________________________________________________________________________________________________ test_tic_tac_toe_env_init ________________________________________________________________________________________________________________________________________\ntests\\test_environment.py:10: in test_tic_tac_toe_env_init\nassert env.observation_space.high[0] == 2\nE ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\nFAILED tests\\test_environment.py::test_tic_tac_toe_env_init - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n1 failed in 0.14s"
+          ],
+          "version": "5c2408a40f36"
+        },
+        {
+          "task_id": "R2_1",
+          "issues": [
+            "Pytest failure:\n________________________________________________________________________________________________________________________________________ test_tic_tac_toe_env_init ________________________________________________________________________________________________________________________________________\ntests\\test_environment.py:10: in test_tic_tac_toe_env_init\nassert env.observation_space.high[0] == 2\nE ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\nFAILED tests\\test_environment.py::test_tic_tac_toe_env_init - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n1 failed in 0.12s",
+            "Metric 'win_rate' is exactly 0 in every run (std_dev 0): the experiment measures nothing. Find the cause in the modules the experiment uses (a game that never ends, an agent that never learns, a value that is never updated) and fix it there, not by changing how the number is written.",
+            "Metric 'loss_rate' is exactly 0 in every run (std_dev 0): the experiment measures nothing. Find the cause in the modules the experiment uses (a game that never ends, an agent that never learns, a value that is never updated) and fix it there, not by changing how the number is written."
+          ],
+          "version": "5c2408a40f36"
+        },
+        {
+          "task_id": "R2_2",
+          "issues": [
+            "Pytest failure:\n________________________________________________________________________________________________________________________________________ test_tic_tac_toe_env_init ________________________________________________________________________________________________________________________________________\ntests\\test_environment.py:21: in test_tic_tac_toe_env_init\nassert np.array_equal(obs, np.zeros((3, 3)))\nE assert False\nE + where False = <function array_equal at 0x000001CA2F64DEB0>(array([0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=int8), array([[0., 0., 0.],\\n [0., 0., 0.],\\n [0., 0., 0.]]))\nE + where <function array_equal at 0x000001CA2F64DEB0> = np.array_equal\nE + and array([[0., 0., 0.],\\n [0., 0., 0.],\\n [0., 0., 0.]]) = <built-in function zeros>((3, 3))\nE + where <built-in function zeros> = np.zeros\nFAILED tests\\test_environment.py::test_tic_tac_toe_env_init - assert False\n1 faile"
+          ],
+          "version": "749a7ce877c8"
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "R2_2_FIX1"
+      },
+      "files": [],
+      "failures": 5
+    },
+    "tests/test_agent.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "Unit tests of QLearningAgent from agent.py in tests/test_agent.py, through the declared interface only.",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "T5",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothin...\n- TEST_OUTSIDE_SPEC [tests/test_agent.py]: reads QLearningAgent.gamma, QLearningAgent.lr, which the interface does not declare (test only declared methods and attributes)"
+          ],
+          "version": ""
+        },
+        {
+          "task_id": "T5_FIX1",
+          "issues": [
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_agent.py:<module>.test_update_applies_bellman_equation: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 5) at line 2 of your code: `\"\"\"Tests that update method correctly applies the Q-Learning Bellman equation.` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation.\n- test_agent.py:<module>.test_update_sets_future_value_to_zero_when_done: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 5) at line 2 of your code: `\"\"\"Tests that update method treats future value as 0 when done=True.` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
+          ],
+          "version": ""
+        },
+        {
+          "task_id": "T5_FIX2",
+          "issues": [
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_agent.py:<module>.test_update_applies_bellman_equation: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 5) at line 2 of your code: `\"\"\"Tests that update method correctly applies the Q-Learning Bellman equation.` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation.\n- test_agent.py:<module>.test_update_sets_future_value_to_zero_when_done: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 4) at line 2 of your code: `\"\"\"Tests that update method treats future value as 0 when done=True.` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
+          ],
+          "version": ""
+        },
+        {
+          "task_id": "R1_2",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothin...\n- TEST_OUTSIDE_SPEC [tests/test_agent.py]: reads QLearningAgent.gamma, QLearningAgent.lr, which the interface does not declare (test only declared methods and attributes)"
+          ],
+          "version": ""
+        },
+        {
+          "task_id": "PLAN",
+          "issues": [
+            "Interface of agent.py amended by the planner: The interface is missing declarations for `lr` and `gamma` attributes. The tests in `test_agent.py` directly access `QLearningAgent.gamma` and `QLearningAgent.lr`. To resolve the `TEST_OUTSIDE_SPEC` error, these instance attributes must be added to the class interface."
           ]
         }
       ],
       "last_writer": {
         "agent": "seed_tester",
-        "task_id": "T10"
+        "task_id": "R1_2_FIX1"
       },
       "files": [],
-      "failures": 2
+      "failures": 0
+    },
+    "tests/test_baseline.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "Unit tests of RandomAgent from baseline.py in tests/test_baseline.py, through the declared interface only.",
+      "attempts": 1,
+      "history": [
+        {
+          "task_id": "T7",
+          "issues": [
+            "Pytest failure:\n_________________________________________________________________________________________________________________________________ test_choose_action_empty_valid_actions __________________________________________________________________________________________________________________________________\ntests\\test_baseline.py:34: in test_choose_action_empty_valid_actions\nwith pytest.raises(ValueError, match=\"empty\"):\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE AssertionError: Regex pattern did not match.\nE Expected regex: 'empty'\nE Actual message: 'high <= 0'\nFAILED tests\\test_baseline.py::test_choose_action_empty_valid_actions - AssertionError: Regex pattern did not match.\n1 failed, 2 passed in 0.11s"
+          ],
+          "version": "28f3385b16b1"
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "T7_FIX1"
+      },
+      "files": [],
+      "failures": 1
     },
     "results.csv": {
       "kind": "data",
       "owner": null,
-      "state": "spec",
+      "state": "verified",
       "description": "",
       "attempts": 0,
       "history": [],
@@ -350,8 +309,8 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Wstęp — Cel pracy, zakres i struktura dokumentu.",
-      "attempts": 1,
+      "description": "Wprowadzenie do uczenia ze wzmocnieniem — Podstawowe pojęcia: agent, środowisko, stan, akcja, nagroda; definicja procesu decyzyjnego Markova (MDP).",
+      "attempts": 4,
       "history": [],
       "last_writer": null,
       "files": [],
@@ -361,7 +320,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Teoretyczne podstawy uczenia ze wzmocnieniem — Definicje Markov Decision Process, równanie Bellmana oraz metoda Q-Learning.",
+      "description": "Metoda Q-Learning dla gier skończonych — Teoria aktualizacji tabeli Q, równanie Bellmana, eksploracja vs eksploatacja (epsilon-greedy), zbieżność w grach deterministycznych.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -372,7 +331,7 @@
       "kind": "chapter",
       "owner": "writer",
       "state": "verified",
-      "description": "Modelowanie gry w kółko i krzyżyk — Reprezentacja stanu, akcji oraz funkcji nagrody dla środowiska gry.",
+      "description": "Modelowanie gry w kółko i krzyżyk — Reprezentacja stanu planszy jako wejścia dla algorytmu, definicja funkcji nagrody (zwycięstwo/porażka/remis), przestrzeń stanów gry.",
       "attempts": 1,
       "history": [],
       "last_writer": null,
@@ -382,9 +341,9 @@
     "thesis.md#ch4": {
       "kind": "chapter",
       "owner": "writer",
-      "state": "spec",
-      "description": "Konstrukcja eksperymentu — Uzasadnienie hiperparametrów, scenariusz treningowy i ewaluacji.",
-      "attempts": 0,
+      "state": "verified",
+      "description": "Konstrukcja eksperymentu — Uzasadnienie doboru hiperparametrów, opis metody treningu i testowania, definicja metryk oceny skuteczności.",
+      "attempts": 1,
       "history": [],
       "last_writer": null,
       "files": [],
@@ -393,9 +352,20 @@
     "thesis.md#ch5": {
       "kind": "chapter",
       "owner": "writer",
-      "state": "spec",
-      "description": "Wyniki badań i dyskusja — Analiza wykresów uczения się, porównanie z bazą i wnioski końcowe.",
-      "attempts": 0,
+      "state": "verified",
+      "description": "Wyniki eksperymentu — Prezentacja wykresów nauki i statystyk końcowych (współczynnik wygranych) dla Q-Learning w porównaniu do losowego agenta.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch6": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Wnioski — Ocena sukcesu tezy, analiza trudności uczenia się w końcowej fazie gry oraz potencjalne kierunki dalszych badań (np. tablica wartości vs funkcja aproksymująca).",
+      "attempts": 1,
       "history": [],
       "last_writer": null,
       "files": [],
@@ -403,40 +373,31 @@
     }
   },
   "edges": {
-    "I:tictactoe_env.py": {
+    "I:environment.py": {
       "type": "I",
       "members": {
-        "tictactoe_env.py": "P",
-        "game_loop.py": "C",
+        "environment.py": "P",
         "experiment.py": "C",
-        "tests/test_tictactoe_env.py": "T"
+        "tests/test_environment.py": "T"
       },
       "spec": {
-        "import": "tictactoe_env",
+        "import": "environment",
         "symbols": {
-          "BOARD_SIZE": {
-            "kind": "const",
-            "type": "int"
-          },
-          "EMPTY_CELL": {
-            "kind": "const",
-            "type": "int"
-          },
-          "PLAYER_X": {
-            "kind": "const",
-            "type": "int"
-          },
-          "PLAYER_O": {
-            "kind": "const",
-            "type": "int"
-          },
           "TicTacToeEnv": {
             "kind": "class"
+          },
+          "TicTacToeEnv.__init__": {
+            "kind": "method",
+            "params": [
+              "self"
+            ],
+            "required": []
           },
           "TicTacToeEnv.reset": {
             "kind": "method",
             "params": [
-              "self"
+              "self",
+              "seed"
             ],
             "required": []
           },
@@ -450,36 +411,56 @@
               "action"
             ]
           },
+          "TicTacToeEnv.get_valid_actions": {
+            "kind": "method",
+            "params": [
+              "self",
+              "obs"
+            ],
+            "required": [
+              "obs"
+            ]
+          },
+          "TicTacToeEnv.action_space": {
+            "kind": "attr"
+          },
+          "TicTacToeEnv.observation_space": {
+            "kind": "attr"
+          },
           "TicTacToeEnv.board": {
             "kind": "attr"
           },
-          "TicTacToeEnv.current_player": {
-            "kind": "attr"
-          },
-          "TicTacToeEnv.history": {
-            "kind": "attr"
-          },
-          "TicTacToeEnv.terminal_state": {
-            "kind": "attr"
-          },
-          "TicTacToeEnv.winner": {
-            "kind": "attr"
-          },
-          "TicTacToeEnv.draw": {
-            "kind": "attr"
-          },
-          "get_valid_moves": {
+          "run_episode": {
             "kind": "func",
             "params": [
-              "env"
+              "env",
+              "agent_p1",
+              "agent_p2",
+              "player_turn"
             ],
             "required": [
-              "env"
+              "env",
+              "agent_p1",
+              "agent_p2"
+            ]
+          },
+          "parse_episode_result": {
+            "kind": "func",
+            "params": [
+              "info",
+              "p1_id",
+              "p2_id"
+            ],
+            "required": [
+              "info",
+              "p1_id",
+              "p2_id"
             ]
           }
         },
         "uses": {},
         "packages": [
+          "gymnasium",
           "numpy",
           "typing"
         ]
@@ -487,61 +468,16 @@
       "fingerprint": null,
       "observed": []
     },
-    "I:game_loop.py": {
+    "I:agent.py": {
       "type": "I",
       "members": {
-        "game_loop.py": "P",
+        "agent.py": "P",
         "experiment.py": "C",
-        "tests/test_game_loop.py": "T"
+        "tests/test_agent.py": "T"
       },
       "spec": {
-        "import": "game_loop",
+        "import": "agent",
         "symbols": {
-          "play_game": {
-            "kind": "func",
-            "params": [
-              "agent_a",
-              "agent_b",
-              "is_agent_a_turn",
-              "rng"
-            ],
-            "required": [
-              "agent_a",
-              "agent_b",
-              "is_agent_a_turn",
-              "rng"
-            ]
-          }
-        },
-        "uses": {
-          "tictactoe_env.py": [
-            "PLAYER_O",
-            "PLAYER_X",
-            "TicTacToeEnv"
-          ]
-        },
-        "packages": [
-          "numpy",
-          "typing"
-        ]
-      },
-      "fingerprint": null,
-      "observed": []
-    },
-    "I:q_learning_agent.py": {
-      "type": "I",
-      "members": {
-        "q_learning_agent.py": "P",
-        "experiment.py": "C",
-        "tests/test_q_learning_agent.py": "T"
-      },
-      "spec": {
-        "import": "q_learning_agent",
-        "symbols": {
-          "BOARD_SIZE": {
-            "kind": "const",
-            "type": "int"
-          },
           "QLearningAgent": {
             "kind": "class"
           },
@@ -549,31 +485,30 @@
             "kind": "method",
             "params": [
               "self",
-              "learning_rate",
-              "discount_factor",
-              "initial_epsilon",
-              "decay"
+              "num_states",
+              "num_actions",
+              "lr",
+              "gamma",
+              "epsilon"
             ],
             "required": [
-              "learning_rate",
-              "discount_factor",
-              "initial_epsilon",
-              "decay"
+              "num_states",
+              "num_actions"
             ]
           },
-          "QLearningAgent.act": {
+          "QLearningAgent.choose_action": {
             "kind": "method",
             "params": [
               "self",
               "state",
-              "valid_moves"
+              "valid_actions"
             ],
             "required": [
               "state",
-              "valid_moves"
+              "valid_actions"
             ]
           },
-          "QLearningAgent.learn": {
+          "QLearningAgent.update": {
             "kind": "method",
             "params": [
               "self",
@@ -581,61 +516,51 @@
               "action",
               "reward",
               "next_state",
-              "terminated"
+              "done"
             ],
             "required": [
               "state",
               "action",
               "reward",
               "next_state",
-              "terminated"
+              "done"
             ]
           },
-          "QLearningAgent.reset": {
+          "QLearningAgent.get_q_values": {
             "kind": "method",
             "params": [
               "self"
             ],
             "required": []
           },
-          "QLearningAgent.q_table": {
+          "QLearningAgent.q_values": {
             "kind": "attr"
           },
-          "QLearningAgent.learning_rate": {
+          "QLearningAgent.lr": {
             "kind": "attr"
           },
-          "QLearningAgent.discount_factor": {
-            "kind": "attr"
-          },
-          "QLearningAgent.epsilon": {
-            "kind": "attr"
-          },
-          "QLearningAgent.initial_epsilon": {
-            "kind": "attr"
-          },
-          "QLearningAgent.decay": {
+          "QLearningAgent.gamma": {
             "kind": "attr"
           }
         },
         "uses": {},
         "packages": [
           "numpy",
-          "random",
           "typing"
         ]
       },
       "fingerprint": null,
       "observed": []
     },
-    "I:random_agent.py": {
+    "I:baseline.py": {
       "type": "I",
       "members": {
-        "random_agent.py": "P",
+        "baseline.py": "P",
         "experiment.py": "C",
-        "tests/test_random_agent.py": "T"
+        "tests/test_baseline.py": "T"
       },
       "spec": {
-        "import": "random_agent",
+        "import": "baseline",
         "symbols": {
           "RandomAgent": {
             "kind": "class"
@@ -647,16 +572,15 @@
             ],
             "required": []
           },
-          "RandomAgent.act": {
+          "RandomAgent.choose_action": {
             "kind": "method",
             "params": [
               "self",
-              "state",
+              "valid_actions",
               "rng"
             ],
             "required": [
-              "state",
-              "rng"
+              "valid_actions"
             ]
           }
         },
@@ -678,27 +602,7 @@
       "spec": {
         "import": "config",
         "symbols": {
-          "LEARNING_RATE": {
-            "kind": "const",
-            "type": "float"
-          },
-          "DISCOUNT_FACTOR": {
-            "kind": "const",
-            "type": "float"
-          },
-          "INITIAL_EPSILON": {
-            "kind": "const",
-            "type": "float"
-          },
-          "FINAL_EPSILON": {
-            "kind": "const",
-            "type": "float"
-          },
-          "EPSILON_DECAY": {
-            "kind": "const",
-            "type": "float"
-          },
-          "TOTAL_EPISODES": {
+          "NUM_EPISODES": {
             "kind": "const",
             "type": "int"
           },
@@ -706,11 +610,27 @@
             "kind": "const",
             "type": "int"
           },
-          "SEED": {
+          "SEEDS": {
             "kind": "const",
-            "type": "int"
+            "type": "list[int]"
+          },
+          "LEARNING_RATE": {
+            "kind": "const",
+            "type": "float"
           },
           "GAMMA": {
+            "kind": "const",
+            "type": "float"
+          },
+          "EPSILON_START": {
+            "kind": "const",
+            "type": "float"
+          },
+          "EPSILON_END": {
+            "kind": "const",
+            "type": "float"
+          },
+          "EPSILON_DECAY": {
             "kind": "const",
             "type": "float"
           }
@@ -736,28 +656,10 @@
           }
         },
         "uses": {
-          "config.py": [
-            "DISCOUNT_FACTOR",
-            "EPSILON_DECAY",
-            "FINAL_EPSILON",
-            "INITIAL_EPSILON",
-            "LEARNING_RATE",
-            "SEED",
-            "TEST_EPISODES",
-            "TOTAL_EPISODES"
-          ],
-          "tictactoe_env.py": [
-            "TicTacToeEnv"
-          ],
-          "q_learning_agent.py": [
-            "QLearningAgent"
-          ],
-          "random_agent.py": [
-            "RandomAgent"
-          ],
-          "game_loop.py": [
-            "play_game"
-          ]
+          "config.py": [],
+          "environment.py": [],
+          "agent.py": [],
+          "baseline.py": []
         },
         "packages": [
           "numpy",
@@ -775,14 +677,16 @@
       "spec": {
         "import": "figures",
         "symbols": {
-          "plot_results": {
+          "generate_plots": {
             "kind": "func",
             "params": [],
             "required": []
           }
         },
         "uses": {},
-        "packages": []
+        "packages": [
+          "matplotlib"
+        ]
       },
       "fingerprint": null,
       "observed": []
@@ -793,23 +697,22 @@
         "experiment.py": "P",
         "results.csv": "O",
         "figures.py": "C",
+        "agent.py": "C",
+        "baseline.py": "C",
         "config.py": "C",
-        "game_loop.py": "C",
-        "q_learning_agent.py": "C",
-        "random_agent.py": "C",
-        "tictactoe_env.py": "C"
+        "environment.py": "C"
       },
       "spec": {
         "entry": "experiment.py:run_experiment",
         "metrics": [
           "win_rate",
-          "draw_rate",
           "loss_rate",
-          "avg_reward_per_episode"
+          "draw_rate",
+          "avg_reward"
         ],
-        "plots": "figures.py:plot_results"
+        "plots": "figures.py:generate_plots"
       },
-      "fingerprint": null,
+      "fingerprint": "57aef32655c77675f1596cc4b2dba9f193f865307730421d266ac7411d7d7644",
       "observed": []
     },
     "N:thesis.md#ch1": {
@@ -819,8 +722,8 @@
         "references.bib": "C"
       },
       "spec": {
-        "title": "Wstęp",
-        "focus": "Cel pracy, zakres i struktura dokumentu.",
+        "title": "Wprowadzenie do uczenia ze wzmocnieniem",
+        "focus": "Podstawowe pojęcia: agent, środowisko, stan, akcja, nagroda; definicja procesu decyzyjnego Markova (MDP).",
         "uses_results": false
       },
       "fingerprint": null,
@@ -830,122 +733,144 @@
       "type": "N",
       "members": {
         "thesis.md#ch2": "X",
-        "references.bib": "C",
-        "tictactoe_env.py": "C",
-        "q_learning_agent.py": "C"
+        "references.bib": "C"
       },
       "spec": {
-        "title": "Teoretyczne podstawy uczenia ze wzmocnieniem",
-        "focus": "Definicje Markov Decision Process, równanie Bellmana oraz metoda Q-Learning.",
+        "title": "Metoda Q-Learning dla gier skończonych",
+        "focus": "Teoria aktualizacji tabeli Q, równanie Bellmana, eksploracja vs eksploatacja (epsilon-greedy), zbieżność w grach deterministycznych.",
         "uses_results": false
       },
       "fingerprint": null,
-      "observed": [
-        "q_learning_agent.py",
-        "tictactoe_env.py"
-      ]
+      "observed": []
     },
     "N:thesis.md#ch3": {
       "type": "N",
       "members": {
         "thesis.md#ch3": "X",
-        "references.bib": "C",
-        "q_learning_agent.py": "C",
-        "config.py": "C",
-        "game_loop.py": "C",
-        "tictactoe_env.py": "C"
+        "references.bib": "C"
       },
       "spec": {
         "title": "Modelowanie gry w kółko i krzyżyk",
-        "focus": "Reprezentacja stanu, akcji oraz funkcji nagrody dla środowiska gry.",
+        "focus": "Reprezentacja stanu planszy jako wejścia dla algorytmu, definicja funkcji nagrody (zwycięstwo/porażka/remis), przestrzeń stanów gry.",
         "uses_results": false
       },
       "fingerprint": null,
-      "observed": [
-        "config.py",
-        "game_loop.py",
-        "q_learning_agent.py",
-        "tictactoe_env.py"
-      ]
+      "observed": []
     },
     "N:thesis.md#ch4": {
       "type": "N",
       "members": {
         "thesis.md#ch4": "X",
         "references.bib": "C",
-        "results.csv": "C"
+        "results.csv": "C",
+        "agent.py": "C",
+        "environment.py": "C",
+        "baseline.py": "C",
+        "config.py": "C"
       },
       "spec": {
         "title": "Konstrukcja eksperymentu",
-        "focus": "Uzasadnienie hiperparametrów, scenariusz treningowy i ewaluacji.",
+        "focus": "Uzasadnienie doboru hiperparametrów, opis metody treningu i testowania, definicja metryk oceny skuteczności.",
         "uses_results": true
       },
       "fingerprint": null,
-      "observed": []
+      "observed": [
+        "agent.py",
+        "baseline.py",
+        "config.py",
+        "environment.py"
+      ]
     },
     "N:thesis.md#ch5": {
       "type": "N",
       "members": {
         "thesis.md#ch5": "X",
         "references.bib": "C",
-        "results.csv": "C"
+        "results.csv": "C",
+        "experiment.py": "C",
+        "config.py": "C",
+        "agent.py": "C",
+        "figures.py": "C",
+        "environment.py": "C",
+        "baseline.py": "C"
       },
       "spec": {
-        "title": "Wyniki badań i dyskusja",
-        "focus": "Analiza wykresów uczения się, porównanie z bazą i wnioski końcowe.",
+        "title": "Wyniki eksperymentu",
+        "focus": "Prezentacja wykresów nauki i statystyk końcowych (współczynnik wygranych) dla Q-Learning w porównaniu do losowego agenta.",
         "uses_results": true
       },
       "fingerprint": null,
-      "observed": []
+      "observed": [
+        "agent.py",
+        "baseline.py",
+        "config.py",
+        "environment.py",
+        "experiment.py",
+        "figures.py"
+      ]
+    },
+    "N:thesis.md#ch6": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch6": "X",
+        "references.bib": "C",
+        "results.csv": "C",
+        "experiment.py": "C",
+        "config.py": "C",
+        "agent.py": "C",
+        "environment.py": "C",
+        "baseline.py": "C"
+      },
+      "spec": {
+        "title": "Wnioski",
+        "focus": "Ocena sukcesu tezy, analiza trudności uczenia się w końcowej fazie gry oraz potencjalne kierunki dalszych badań (np. tablica wartości vs funkcja aproksymująca).",
+        "uses_results": true
+      },
+      "fingerprint": null,
+      "observed": [
+        "agent.py",
+        "baseline.py",
+        "config.py",
+        "environment.py",
+        "experiment.py"
+      ]
     }
   },
   "order": [
     [
+      "I:agent.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:agent.py",
+      "R:run"
+    ],
+    [
+      "I:baseline.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:baseline.py",
+      "R:run"
+    ],
+    [
       "I:config.py",
       "I:experiment.py"
     ],
     [
       "I:config.py",
+      "R:run"
+    ],
+    [
+      "I:environment.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:environment.py",
       "R:run"
     ],
     [
       "I:experiment.py",
-      "R:run"
-    ],
-    [
-      "I:game_loop.py",
-      "I:experiment.py"
-    ],
-    [
-      "I:game_loop.py",
-      "R:run"
-    ],
-    [
-      "I:q_learning_agent.py",
-      "I:experiment.py"
-    ],
-    [
-      "I:q_learning_agent.py",
-      "R:run"
-    ],
-    [
-      "I:random_agent.py",
-      "I:experiment.py"
-    ],
-    [
-      "I:random_agent.py",
-      "R:run"
-    ],
-    [
-      "I:tictactoe_env.py",
-      "I:experiment.py"
-    ],
-    [
-      "I:tictactoe_env.py",
-      "I:game_loop.py"
-    ],
-    [
-      "I:tictactoe_env.py",
       "R:run"
     ],
     [
@@ -955,6 +880,10 @@
     [
       "R:run",
       "N:thesis.md#ch5"
+    ],
+    [
+      "R:run",
+      "N:thesis.md#ch6"
     ]
   ]
 }

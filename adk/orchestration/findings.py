@@ -113,10 +113,11 @@ def _from_pytest(issue: str, workspace: Path) -> list[Finding]:
         symbol, code = locate(workspace, rel, int(frame["line"]))
         text = f"{name.strip()}: {exc}"
         # The code that raised was called from another module (not the test): the argument may be what is wrong.
-        if len(frames) > 1 and frames[-2][1] != rel and not Path(frames[-2][1]).name.startswith("test_"):
+        if len(frames) > 1 and frames[-2][1] != rel:
             caller_frame, caller = frames[-2]
             _symbol, call = locate(workspace, caller, int(caller_frame["line"]))
-            text += texts.CALL_SITE_HINT.format(caller, caller_frame["line"], call)
+            hint = texts.TEST_CALL_HINT if Path(caller).name.startswith("test_") else texts.CALL_SITE_HINT
+            text += hint.format(caller, caller_frame["line"], call)
         found.append(Finding("pytest", text, rel, symbol or frame["func"], int(frame["line"]), code))
     return found
 
@@ -152,6 +153,12 @@ def repair_findings(
     for f in found:
         unique.setdefault((f.file, f.symbol, f.line, f.text), f)
     return list(unique.values())
+
+
+def headlines(issues: list[object], workspace: Path, limit: int = 4) -> list[str]:
+    """What a person reads in the log instead of the first issue's raw text (pytest's own first line is its progress
+    bar, `.FF..`): at most `limit` findings, each `file > symbol, line: code -- test: exception`."""
+    return [str(f)[:300] for f in repair_findings(issues, workspace)[:limit]]
 
 
 def focus_symbols(findings: list[Finding], target: str) -> list[str]:

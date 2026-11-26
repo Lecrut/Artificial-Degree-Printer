@@ -71,11 +71,6 @@ Paths are relative to the workspace; subdirectories are created automatically.
 Optional in any form: `"contract_change": {"reason": "<why a contracted signature changes>"}`.
 Do not include conversational filler or explanatory prose outside the JSON object.
 
----
-
-## CONSOLIDATED EVOLUTIONARY INVARIANTS
-- **INVARIANT**: When implementing public interfaces, preserve strict signature compatibility by honoring every parameter, annotation, and return type defined in `specification`, because the harness validates exports against this contract and mismatches cause immediate rejection.
-- **INVARIANT**: When manipulating heterogeneous state objects or indexing collections, verify runtime types and bounds before access rather than relying on declared types, because silent type mismatches or out-of-bounds errors corrupt the experiment data that verification relies on.
-
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When comparing numpy arrays (such as states stored in a dictionary) for membership or equality, never use standard Python operators like `in`, `==`, or `!=` directly, because array truth value comparison is ambiguous; instead, use vectorized methods like `np.any()` or `.tolist()` to ensure deterministic evaluation.
+- **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.
+- **RULE**: When using symbols from other modules, verify their import status by checking the contract or source file of that module first, because undefined names indicate missing imports rather than logical errors.

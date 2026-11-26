@@ -3,6 +3,7 @@ A5): what the plan declares is the contract, not whatever the first writer happe
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -87,7 +88,9 @@ class SpecGateMixin:
                 text = text.replace(prefix, "")
             return _essence(text)
 
-        history.append({"task_id": task_id, "issues": [_short(i) for i in issues[:3]]})
+        source = self.workspace_dir / vertex
+        version = hashlib.sha1(source.read_bytes()).hexdigest()[:12] if source.is_file() else ""
+        history.append({"task_id": task_id, "issues": [_short(i) for i in issues[:3]], "version": version})
         del history[:-4]
         h.vertices[vertex].failures += 1
         save(h, self.hypergraph_path)

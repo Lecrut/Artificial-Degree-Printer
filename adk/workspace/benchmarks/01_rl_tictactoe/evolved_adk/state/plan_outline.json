@@ -1,75 +1,63 @@
 {
   "modules": [
     {
-      "file": "tictactoe_env.py",
-      "purpose": "Implements the Tic-Tac-Toe game environment with move validation, state representation, and win/draw detection for reinforcement learning.",
+      "file": "environment.py",
+      "purpose": "Implements Tic-Tac-Toe game logic, state handling, and provides utilities for playing episodes and parsing results.",
       "depends_on": [],
       "provides": [
-        "TicTacToeEnv class",
+        "TicTacToeEnv",
+        "TicTacToeEnv.__init__()",
         "TicTacToeEnv.reset() -> dict",
-        "TicTacToeEnv.step(action) -> (obs, reward, terminated, truncated, info)",
-        "get_valid_moves(env) -> list[int]"
+        "TicTacToeEnv.step(action) -> tuple[obs, reward, done, trunc, info]",
+        "TicTacToeEnv.get_valid_actions(obs) -> list[int]",
+        "run_episode(env, agent_p1, agent_p2, player_turn='X') -> dict",
+        "parse_episode_result(info, p1_id, p2_id) -> dict"
       ]
     },
     {
-      "file": "game_loop.py",
-      "purpose": "Provides the logic to run a single episode of Tic-Tac-Toe between two agents (including random play) and returns the outcome.",
-      "depends_on": [
-        "tictactoe_env.py"
-      ],
+      "file": "agent.py",
+      "purpose": "Implements the Tabular Q-Learning agent with epsilon-greedy policy.",
+      "depends_on": [],
       "provides": [
-        "play_game(agent_a, agent_b, is_agent_a_turn, rng) -> dict"
+        "QLearningAgent",
+        "QLearningAgent.__init__(num_states, num_actions, lr=0.1, gamma=0.9, epsilon=1.0)",
+        "QLearningAgent.choose_action(state) -> int",
+        "QLearningAgent.update(state, action, reward, next_state, done)",
+        "QLearningAgent.get_q_values() -> np.ndarray"
       ]
     },
     {
-      "file": "q_learning_agent.py",
-      "purpose": "Implements the Q-Learning agent with epsilon-greedy exploration and tabular policy updates.",
-      "depends_on": [
-        "tictactoe_env.py"
-      ],
+      "file": "baseline.py",
+      "purpose": "Implements the random baseline agent that selects uniformly from valid actions.",
+      "depends_on": [],
       "provides": [
-        "QLearningAgent class",
-        "QLearningAgent.__init__(<kwargs>) -> None",
-        "QLearningAgent.act(state) -> int",
-        "QLearningAgent.learn(state, action, reward, next_state) -> None",
-        "QLearningAgent.reset() -> None"
-      ]
-    },
-    {
-      "file": "random_agent.py",
-      "purpose": "Implements a baseline opponent that selects uniformly at random from available moves.",
-      "depends_on": [
-        "tictactoe_env.py"
-      ],
-      "provides": [
-        "RandomAgent class",
-        "RandomAgent.act(state, rng) -> int"
+        "RandomAgent",
+        "RandomAgent.__init__()",
+        "RandomAgent.choose_action(valid_actions, rng) -> int"
       ]
     },
     {
       "file": "config.py",
-      "purpose": "Defines all experiment constants (hyperparameters, seeds, iteration counts) to ensure reproducibility and thesis citation.",
+      "purpose": "Defines all hyperparameters, experiment settings, and constants as module-level variables.",
       "depends_on": [],
       "provides": [
-        "LEARNING_RATE",
-        "DISCOUNT_FACTOR",
-        "INITIAL_EPSILON",
-        "FINAL_EPSILON",
-        "EPSILON_DECAY",
-        "TOTAL_EPISODES",
-        "TEST_EPISODES",
-        "SEED",
-        "GAMMA"
+        "NUM_EPISODES: int",
+        "TEST_EPISODES: int",
+        "SEEDS: list[int]",
+        "LEARNING_RATE: float",
+        "GAMMA: float",
+        "EPSILON_START: float",
+        "EPSILON_END: float",
+        "EPSILON_DECAY: float"
       ]
     },
     {
       "file": "experiment.py",
-      "purpose": "Runs the training loop against a random opponent and the evaluation phase, aggregating metrics into results.csv.",
+      "purpose": "Orchestrates the training, testing, and aggregation of results for both agents across all seeds.",
       "depends_on": [
-        "tictactoe_env.py",
-        "q_learning_agent.py",
-        "random_agent.py",
-        "game_loop.py",
+        "environment.py",
+        "agent.py",
+        "baseline.py",
         "config.py"
       ],
       "provides": [
@@ -78,50 +66,55 @@
     },
     {
       "file": "figures.py",
-      "purpose": "Reads results.csv and generates the required plots for the thesis.",
+      "purpose": "Reads results.csv and generates the required plots (learning curves, win rates) for the thesis.",
       "depends_on": [],
       "provides": [
-        "plot_results() -> None"
+        "generate_plots() -> None"
       ]
     }
   ],
   "entrypoint": "experiment.py:run_experiment",
-  "plots": "figures.py:plot_results",
+  "plots": "figures.py:generate_plots",
   "academic_blueprint": {
-    "thesis_title": "Tabelaryczne Q-Learning w optymalizacji polityki w skończonych stanach gier na przykładzie kółka i krzyżyka",
-    "thesis_statement": "Agent używający tabelarycznego Q-Learningu osiąga wynik stabilny (remis lub wygraną) przeciwko przeciwnikowi losowemu po określonej liczbie epizodów, przewyższając czysto losową strategię.",
-    "baseline_comparison": "Porównanie wygranych, remisów i przegranych agenta Q-Learning z graczem losowym w 1000 epizodach testowych po treningu.",
+    "thesis_title": "Optymalizacja polityki Q-Learning w środowiskach skończonych na przykładzie gry w kółko i krzyżyk",
+    "thesis_statement": "Agenty uczące się tabelarycznym Q-Learningiem osiągają poziom gry znacząco lepszy niż losowi przeciwnicy po wystarczającym budżecie treningu, dążąc do optymalnej (nieprzegrywającej) polityki w grze o sumie zerowej.",
+    "baseline_comparison": "Losowy agent (Random Agent) wybierający równe prawdopodobieństwo dla każdego dopuszczalnego ruchu jako punkt odniesienia dolnej granicy skuteczności.",
     "metrics": [
       "win_rate",
-      "draw_rate",
       "loss_rate",
-      "avg_reward_per_episode"
+      "draw_rate",
+      "avg_reward"
     ],
     "planned_chapters": [
       {
         "index": 1,
-        "title": "Wstęp",
-        "focus": "Cel pracy, zakres i struktura dokumentu."
+        "title": "Wprowadzenie do uczenia ze wzmocnieniem",
+        "focus": "Podstawowe pojęcia: agent, środowisko, stan, akcja, nagroda; definicja procesu decyzyjnego Markova (MDP)."
       },
       {
         "index": 2,
-        "title": "Teoretyczne podstawy uczenia ze wzmocnieniem",
-        "focus": "Definicje Markov Decision Process, równanie Bellmana oraz metoda Q-Learning."
+        "title": "Metoda Q-Learning dla gier skończonych",
+        "focus": "Teoria aktualizacji tabeli Q, równanie Bellmana, eksploracja vs eksploatacja (epsilon-greedy), zbieżność w grach deterministycznych."
       },
       {
         "index": 3,
         "title": "Modelowanie gry w kółko i krzyżyk",
-        "focus": "Reprezentacja stanu, akcji oraz funkcji nagrody dla środowiska gry."
+        "focus": "Reprezentacja stanu planszy jako wejścia dla algorytmu, definicja funkcji nagrody (zwycięstwo/porażka/remis), przestrzeń stanów gry."
       },
       {
         "index": 4,
         "title": "Konstrukcja eksperymentu",
-        "focus": "Uzasadnienie hiperparametrów, scenariusz treningowy i ewaluacji."
+        "focus": "Uzasadnienie doboru hiperparametrów, opis metody treningu i testowania, definicja metryk oceny skuteczności."
       },
       {
         "index": 5,
-        "title": "Wyniki badań i dyskusja",
-        "focus": "Analiza wykresów uczения się, porównanie z bazą i wnioski końcowe."
+        "title": "Wyniki eksperymentu",
+        "focus": "Prezentacja wykresów nauki i statystyk końcowych (współczynnik wygranych) dla Q-Learning w porównaniu do losowego agenta."
+      },
+      {
+        "index": 6,
+        "title": "Wnioski",
+        "focus": "Ocena sukcesu tezy, analiza trudności uczenia się w końcowej fazie gry oraz potencjalne kierunki dalszych badań (np. tablica wartości vs funkcja aproksymująca)."
       }
     ]
   }

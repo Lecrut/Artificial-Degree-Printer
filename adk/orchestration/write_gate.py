@@ -18,7 +18,7 @@ from adk.tools.building import (
     edit_ast_node,
     edit_document_section,
 )
-from adk.tools.building.ast_editor import declared_names, split_existing_symbols, whole_module_loss
+from adk.tools.building.ast_editor import MODULE_ALIASES, declared_names, split_existing_symbols, whole_module_loss
 from adk.tools.building.doc_editor import split_section_title
 from adk.orchestration.common import (
     _normalized_files,
@@ -277,7 +277,7 @@ class WriteGateMixin:
                 while len(parts) > 1 and parts[0] in rel_parts:
                     parts.pop(0)
                 symbol = ".".join(parts)
-                if not symbol or symbol in (edit_path.name, edit_path.stem):
+                if not symbol or symbol in (edit_path.name, edit_path.stem) or symbol.lower() in MODULE_ALIASES:
                     lost = whole_module_loss(edit_path.read_text(encoding="utf-8"), code_str) if edit_path.exists() else []
                     if lost:
                         edit_errors.append(texts.whole_module_loses_symbols(edit_path.name, str(item["symbol"]), lost))

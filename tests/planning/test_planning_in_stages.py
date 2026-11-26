@@ -390,3 +390,58 @@ def test_a_revised_outline_that_drops_a_name_the_frozen_consumers_import_still_s
     assert violations == []
     assert "helper_a_v2" in interfaces["src/mod_a.py"] and "helper_a_v2" in interfaces["src/experiment.py"]
     assert "helper_a_v2" in interfaces["src/mod_b.py"]
+
+
+def _blocked_then_unparsable(counter: list[int]):
+    def module(payload: dict, _n: int) -> dict | None:
+        if payload["module"]["file"] != "src/mod_b.py":
+            return None
+        counter.append(1)
+        return None if len(counter) == 1 else {"functions": [{"signature": "helper_b(", "docstring": ""}]}
+
+    return module
+
+
+def test_the_outline_hears_the_critics_objection_when_a_module_cannot_settle(tmp_path: Path) -> None:
+    """§XXX P8, 02 of 2026-11-25: the critic asked for a class, the outline promised functions, the author could not satisfy
+    both; the escalation told the outline only the code's last complaint, so it never learned why the author left `provides`."""
+    orch = _make_orch(tmp_path)
+    critic = lambda payload, _n: _critic_fail("src/mod_b.py:helper_b") if payload["module"]["file"] == "src/mod_b.py" else None  # noqa: E731
+    (_, _, blockers), calls = _run(orch, _base_plan(), {"module_critic_guard": critic, "plan_module": _blocked_then_unparsable([])})
+    assert blockers
+    revisions = [p for a, p in calls if a == "plan_outline" and "current_outline" in p]
+    assert len(revisions) == 1
+    text = revisions[0]["feedback"][0]
+    assert "CRITIC OBJECTION" in text and "change `provides`" in text
+
+
+def test_a_critic_block_teaches_the_author_only_when_the_module_settles(tmp_path: Path) -> None:
+    """§XXX P8: two blocks in two modules wrote the rule "state only in classes" into `plan_module.md`; the module that
+    could not settle next to the outline's promises was one of them. A block counts once its module is accepted."""
+    orch = _make_orch(tmp_path)
+    critic = lambda payload, _n: _critic_fail("src/mod_b.py:helper_b") if payload["module"]["file"] == "src/mod_b.py" else None  # noqa: E731
+    _run(orch, _base_plan(), {"module_critic_guard": critic, "plan_module": _blocked_then_unparsable([])})
+    assert not any(e["target"] == "src/mod_b.py" for e in orch._critic_log)
+
+    settled = _make_orch(tmp_path / "settled")
+    once = lambda payload, _n: _critic_fail("src/mod_a.py:helper_a") if payload["module"]["file"] == "src/mod_a.py" else None  # noqa: E731
+    _run(settled, _base_plan(), {"module_critic_guard": once})
+    assert [e["target"] for e in settled._critic_log] == ["src/mod_a.py"]
+
+
+def test_the_critic_prompts_keep_to_the_outlines_promises_and_the_prompt_scope() -> None:
+    root = Path(__file__).resolve().parents[2] / "adk" / "agents" / "planning"
+    module_critic = (root / "module_critic_guard.md").read_text(encoding="utf-8")
+    outline_critic = (root / "outline_critic_guard.md").read_text(encoding="utf-8")
+    assert "names in `module.provides` are fixed" in module_critic and "wrap promised functions into a class" in module_critic
+    assert "never ask for a `.py` module" in outline_critic and "does not ask for" in outline_critic
+
+
+def test_the_outline_prompt_has_one_complete_answer_shape_for_writing_and_revising() -> None:
+    """§XXX P2, 01: three of eight revisions came back as a bare `{"revision": ...}` because the prompt showed that block
+    on its own; the one example now holds the whole outline and `revision` together."""
+    text = (Path(__file__).resolve().parents[2] / "adk" / "agents" / "planning" / "plan_outline.md").read_text(encoding="utf-8")
+    assert text.count("## OUTPUT") == 1
+    shape = text.split("## OUTPUT", 1)[1]
+    assert shape.index('"modules": [') < shape.index('"academic_blueprint"') < shape.index('"revision": {')
+    assert "holds only `revision` is refused" in shape and "`previous_outline`" in text

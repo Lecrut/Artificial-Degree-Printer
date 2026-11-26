@@ -7,6 +7,10 @@ from pathlib import Path
 from typing import Any
 
 
+# What a model calls "the whole file" in `ast_edits.symbol` (§XXX P7: `<module-level>`, `<module>` cost `T3_FIX1`, `T4_FIX1`, `T6_FIX1`).
+MODULE_ALIASES = {"<module>", "<module-level>", "module-level", "module"}
+
+
 def _is_main_guard(node: ast.stmt) -> bool:
     return isinstance(node, ast.If) and ast.unparse(node.test).replace("'", '"') == '__name__ == "__main__"'
 
@@ -113,6 +117,8 @@ def _syntax_feedback(exc: SyntaxError, code: str) -> str:
         return f"SyntaxError in new_code: {exc}"
     line = lines[n - 1]
     before = next((lines[i] for i in range(n - 2, -1, -1) if lines[i].strip()), "")
+    if line.lstrip().startswith("//"):
+        return f"SyntaxError in new_code: line {n} of your code starts with `//`, which is not a Python comment; comments start with `#`."
     return (
         f"SyntaxError in new_code: {exc.msg} at line {n} of your code: `{line.strip()[:80]}` is indented by "
         f"{_indent(line)} spaces, the line before by {_indent(before)}. Every statement of one block (the body of a "
@@ -267,7 +273,8 @@ def edit_ast_node(
     if matching_stmt is None:
         return _error(
             "TARGET_NOT_IN_CODE", path, target_name,
-            f"The new code of {target_name} contains no definition of `{lookup_name}`; nothing was saved.",
+            f"The new code of {target_name} contains no definition of `{lookup_name}`; nothing was saved. The code of one "
+            f"symbol starts with its header (`def {lookup_name}(...):` or `class {lookup_name}:`); a body alone cannot be placed.",
         )
     if extra_defs:
         return _error(
@@ -289,6 +296,13 @@ def edit_ast_node(
     idx = 1 if tree.body and _is_docstring(tree.body[0]) else 0
     while idx < len(tree.body) and isinstance(tree.body[idx], ast.ImportFrom) and tree.body[idx].module == "__future__":
         idx += 1
+
+    if not class_name:
+        # `learn` for `QLearningAgent.learn`: a name that is no top-level symbol but exactly one method of the file is
+        # that method (§XXX P7, `R6_1_FIX1/2`). Only the address is resolved, the code is the agent's.
+        owners = [n for n in tree.body if isinstance(n, ast.ClassDef) and any(_extract_stmt_name(s) == lookup_name for s in n.body)]
+        if len(owners) == 1 and not any(_extract_stmt_name(n) == lookup_name for n in tree.body):
+            class_name, target_name = owners[0].name, f"{owners[0].name}.{lookup_name}"
 
     if class_name:
         owner = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == class_name), None)

@@ -15,6 +15,7 @@ The harness has already checked by code, and you do NOT repeat:
 - Bodies are `...` or `raise NotImplementedError` on purpose: the coder writes them. You see the interface only, so never block on how a body would be written: an import used only inside a body, an internal attribute, a threshold, an algorithm detail, or a stub raising `NotImplementedError`. Block on what the signatures, the docstrings and the promised names make impossible.
 - Tasks and tests are derived by the harness; never ask for them.
 - Which module holds the experiment settings is the author's choice.
+- **The names in `module.provides` are fixed here.** A module-level function the outline promises stays a module-level function, a class stays a class, no promised name is renamed or removed. Never ask to wrap promised functions into a class or to move them: the harness refuses an interface without the promised names. If you find that the promised names themselves make the module impossible, block with `where` = this module, name the promise that must change, and say that the outline has to change it.
 
 ## INPUT
 `user_prompt`, `outline`, `module` (`file`, `purpose`, `depends_on`, `provides`), `source`, `dependencies` (accepted interfaces), `consumers` (outline entries of the modules that will import it).

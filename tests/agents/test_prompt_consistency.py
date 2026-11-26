@@ -94,3 +94,10 @@ def test_results_file_is_a_stated_contract_and_figures_are_declared():
         assert "plots" in text, rel
     for md in AGENTS.rglob("*.md"):
         assert "plot_results.py" not in md.read_text(encoding="utf-8"), md.name
+
+
+def test_the_module_author_is_told_that_a_type_needs_its_import() -> None:
+    """§XXX P9a, 02: the small model wrote `np.ndarray` in signatures without `import numpy as np` twice, and each time
+    the round (and then the large model) was spent on `NameError` of the stub."""
+    text = (Path(__file__).resolve().parents[2] / "adk" / "agents" / "planning" / "plan_module.md").read_text(encoding="utf-8")
+    assert '`np.ndarray` needs `"import numpy as np"`' in text and "`NameError`" in text

@@ -98,6 +98,7 @@ RETRY_INSTRUCTION = (
 )
 SKELETON_SUMMARY = "Skeleton generated from the plan's interfaces."
 CALL_SITE_HINT = " -- called from {}:{} (`{}`); check what that call passes against the planned interface: if the argument is what breaks this code, the fault is at the call site, say so in your answer"
+TEST_CALL_HINT = " -- called directly by the test at {}:{} (`{}`); if the values that call passes (arguments, data the test built) are what breaks this code, the test is wrong, not this file: say so in your answer"
 OWN_NAME_HINT = " -- `{}` is declared by the planned interface of this file; define it at module level again (a rewrite dropped it)"
 IMPORT_HINT = " -- add the import line `{}` at the top of the file"  # D2: the one line from the source of truth
 EXPERIMENT_NO_RESULTS = "The experiment did not produce results.csv"
@@ -346,8 +347,16 @@ def needs_granted(deps: list[str]) -> str:
     return f"Your request was met: {', '.join(deps)} now declares what you asked for. Finish your interface with it."
 
 
+def module_critic_objection(objection: str) -> str:
+    return f"CRITIC OBJECTION the module author had to answer: {objection[:600]}"
+
+
 def module_cannot_settle(rel: str, problems: list[str]) -> str:
-    return f"OUTLINE [{rel}]: this module could not be designed as outlined; its last problems: " + " | ".join(problems[:4])
+    return (
+        f"OUTLINE [{rel}]: this module could not be designed as outlined; its last problems: " + " | ".join(problems[:6])
+        + " -- If an objection of the critic asks for other public names or another shape than `provides` says, change `provides` "
+        "(and the entries that depend on it) in the outline; the harness accepts no interface without the names the outline promises."
+    )
 
 
 # --- tasks rebuilt from the factual audit (recovery) -----------------------------------------------------------------

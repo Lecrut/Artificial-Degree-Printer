@@ -2,43 +2,18 @@
   "failures": [
     {
       "agent": "plan_module",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"game_loop.py\", \"q_learning_agent.py\"], \"examples\": [\"PLAN_CRITIC [game_loop.py:play_game]: The docstring states the function 'initializes a new environment using the seed from global configuration', but the module's purpose is to run logic for a *single episode* and it receives an `agent_a`/`agent_b` interface that expects a state object, not an environment handle. The `TicTacToeEnv` dependency provides a class with a `reset()` method returning a `dict`, but `play_game` has no parameter to accept an initialized environment or a reset call mechanism other than relying on non-existent global state access which violates the 'small modules' constraint and creates implicit coupling. Fix: Change `play_game` to accept an already initialized `TicTacToeEnv` instance (or a callable that resets it) as a parameter, rather than instantiating it internally via globals. The signature should be `play_game(env: TicTacToeEnv, agent_a, agent_b, rng: np.random.Generator) -> dict`. Change together: [game_loop.py:play_game] Add `env: TicTacToeEnv` as the first positional argument and remove internal instantiation logic..\", \"PLAN_CRITIC [game_loop.py:play_game -> dict]: The return dict contains 'final_score' (float) and 'episode_length' (int), but the `experiment.py` module needs to compute metrics like `win_rate`, `draw_rate`, and `loss_rate`. A single float score is insufficient to determine if the Q-Agent won, lost, or drew against the Random Agent without knowing which agent was X and which was O. The current return structure lacks 'winner_agent' (e.g., 'X' or 'O') relative to the agents passed in, making it impossible for the consumer to accurately aggregate statistics for the thesis. Fix: Add a 'winner' key indicating the player symbol ('X', 'O') and ensure the caller can map this to the agent roles, or explicitly return 'agent_a_result' ('win', 'loss', 'draw'). Change together: [game_loop.py:play_game] Update return dict to include 'winner' as 'X'/'O'/None and add context or keys like 'result_a'/'result_b' if symmetric, or rely on the external 'is_agent_a_turn' logic which is ambiguous in return..\", \"PLAN_CRITIC [game_loop.py:play_game -> dict]: The docstring promises 'winner' (str: 'X', 'O', or 'DRAW'), but the `experiment.py` module aggregates results to compare Q-Learning vs Random. If the return value is just the symbol, the consumer must know which agent played which role. However, the signature `is_agent_a_turn: bool` is ambiguous: does it mean 'It is currently Agent A's turn' (stateful) or 'Agent A starts' (initial condition)? The docstring says 'alternates turns strictly according to the boolean flag', implying a static initial condition. If `agent_b` plays as 'O' and wins, the result is 'O'. Without knowing who was 'X' and who was 'O' inside `play_game`, the consumer cannot map 'O' back to `agent_b`. The interface does not provide enough context to map the generic game outcome ('X', 'O') to the specific agents (`agent_a`, `agent_b`) Fix: Return a dict with 'winner_agent' ('agent_a', 'agent_b', or 'draw') instead of just symbols, or require `play_game` to know the roles (e.g., pass `role_a='X'`). Change together: [game_loop.py:play_game] Change return 'winner' key to map directly to the input agents, e.g., {'winner': 'agent_a', ...} or add `role_a` parameter..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [game_loop.py:play_game]: The docstring states the function 'initializes a new environment using the seed from global configuration', but the module's purpose is to run logic for a *single episode* and it receives an `agent_a`/`agent_b` interface that expects a state object, not an environment handle. The `TicTacToeEnv` dependency provides a class with a `reset()` method returning a `dict`, but `play_game` has no parameter to accept an initialized environment or a reset call mechanism other than relying on non-existent global state access which violates the 'small modules' constraint and creates implicit coupling. Fix: Change `play_game` to accept an already initialized `TicTacToeEnv` instance (or a callable that resets it) as a parameter, rather than instantiating it internally via globals. The signature should be `play_game(env: TicTacToeEnv, agent_a, agent_b, rng: np.random.Generator) -> dict`. Change together: [game_loop.py:play_game] Add `env: TicTacToeEnv` as the first positional argument and remove internal instantiation logic..\", \"PLAN_CRITIC [game_loop.py:play_game -> dict]: The return dict contains 'final_score' (float) and 'episode_length' (int), but the `experiment.py` module needs to compute metrics like `win_rate`, `draw_rate`, and `loss_rate`. A single float score is insufficient to determine if the Q-Agent won, lost, or drew against the Random Agent without knowing which agent was X and which was O. The current return structure lacks 'winner_agent' (e.g., 'X' or 'O') relative to the agents passed in, making it impossible for the consumer to accurately aggregate statistics for the thesis. Fix: Add a 'winner' key indicating the player symbol ('X', 'O') and ensure the caller can map this to the agent roles, or explicitly return 'agent_a_result' ('win', 'loss', 'draw'). Change together: [game_loop.py:play_game] Update return dict to include 'winner' as 'X'/'O'/None and add context or keys like 'result_a'/'result_b' if symmetric, or rely on the external 'is_agent_a_turn' logic which is ambiguous in return..\", \"PLAN_CRITIC [game_loop.py:play_game -> dict]: The docstring promises 'winner' (str: 'X', 'O', or 'DRAW'), but the `experiment.py` module aggregates results to compare Q-Learning vs Random. If the return value is just the symbol, the consumer must know which agent played which role. However, the signature `is_agent_a_turn: bool` is ambiguous: does it mean 'It is currently Agent A's turn' (stateful) or 'Agent A starts' (initial condition)? The docstring says 'alternates turns strictly according to the boolean flag', implying a static initial condition. If `agent_b` plays as 'O' and wins, the result is 'O'. Without knowing who was 'X' and who was 'O' inside `play_game`, the consumer cannot map 'O' back to `agent_b`. The interface does not provide enough context to map the generic game outcome ('X', 'O') to the specific agents (`agent_a`, `agent_b`) Fix: Return a dict with 'winner_agent' ('agent_a', 'agent_b', or 'draw') instead of just symbols, or require `play_game` to know the roles (e.g., pass `role_a='X'`). Change together: [game_loop.py:play_game] Change return 'winner' key to map directly to the input agents, e.g., {'winner': 'agent_a', ...} or add `role_a` parameter..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 2, \"cycle_index\": 3, \"source\": \"planning_critic\"}",
-      "injected_rule": "When designing a module's interface to be consumed by external logic, ensure that all return values and parameters contain sufficient context for the consumer to interpret them without relying on implicit state or ambiguous conventions, because consumers cannot map generic outcomes to their specific local entities without explicit role mapping."
-    },
-    {
-      "agent": "plan_module",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"experiment.py\", \"game_loop.py\"], \"examples\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The module interface for `play_game` declares a return type of `Dict[str, str]`, but the purpose requires computing numeric metrics (win/draw/loss rates and average rewards). A dict with only string values cannot provide the numeric data needed for `results.csv`. Furthermore, the `run_experiment` docstring does not specify which agent is Player X (agent_a) to interpret these strings correctly, creating ambiguity in metric calculation. Fix: Change the return type annotation of `play_game` in its documentation to include numeric fields (e.g., 'winner_score' or boolean flags like 'is_win_x'), OR clarify that `run_experiment` must parse the string rewards into numbers. Specifically, update the interface description of `play_game` to indicate it returns numeric indicators for the evaluator, such as `{'winner': int, 'reward_a': float, 'reward_b': float}` or similar, ensuring the consumer can derive rates from integers/floats. Change together: [game_loop.py:play_game] Update the return type annotation and docstring to reflect that it returns numeric values (int/float) suitable for metric aggregation, rather than just strings..\", \"PLAN_CRITIC [game_loop.py:play_game]: The signature `play_game(env, agent_a, agent_b, rng)` requires two separate agent objects. However, the thesis aims to compare a single Q-Learning agent against a random baseline. A true 'random baseline' for comparison should be the performance of a random player (or the Q-agent playing randomly) in identical conditions. The current design prevents `experiment.py` from running the same method (e.g., 'q_learning') twice or switching opponents easily without creating new agent instances, and it conflates the 'method' being tested with the specific opponent. More critically, `experiment.py` needs to record metrics for the Q-agent specifically. If `play_game` returns generic rewards, distinguishing whether the Q-agent is playing as X or O matters for the bias in Tic-Tac-Toe. Fix: Redesign `play_game` to take a single `player_a` and `player_b` callable (or agent object) and explicitly return which player won, along with their cumulative rewards. Alternatively, pass a `rng` generator that is consumed by the function, ensuring the agents don't need separate RNG management in the loop signature if they share a seed context. Specifically, change the signature to `play_game(env, agent_x, agent_o, rng) -> dict` where `agent_x` plays X and `agent_o` plays O. Change together: [experiment.py:run_experiment] Update calls to `play_game` to instantiate `QLearningAgent()` for one side and `RandomAgent()` (or another `QLearningAgent` with epsilon=1.0) for the other, depending on the method being tested ('q_learning' vs 'random_baseline').; [tictactoe_env.py:TicTacToeEnv] Ensure `reset()` clearly initializes `current_player` to a known state (e.g., PLAYER_X) so the first move is deterministic based on seed..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The module interface for `play_game` declares a return type of `Dict[str, str]`, but the purpose requires computing numeric metrics (win/draw/loss rates and average rewards). A dict with only string values cannot provide the numeric data needed for `results.csv`. Furthermore, the `run_experiment` docstring does not specify which agent is Player X (agent_a) to interpret these strings correctly, creating ambiguity in metric calculation. Fix: Change the return type annotation of `play_game` in its documentation to include numeric fields (e.g., 'winner_score' or boolean flags like 'is_win_x'), OR clarify that `run_experiment` must parse the string rewards into numbers. Specifically, update the interface description of `play_game` to indicate it returns numeric indicators for the evaluator, such as `{'winner': int, 'reward_a': float, 'reward_b': float}` or similar, ensuring the consumer can derive rates from integers/floats. Change together: [game_loop.py:play_game] Update the return type annotation and docstring to reflect that it returns numeric values (int/float) suitable for metric aggregation, rather than just strings..\", \"PLAN_CRITIC [game_loop.py:play_game]: The signature `play_game(env, agent_a, agent_b, rng)` requires two separate agent objects. However, the thesis aims to compare a single Q-Learning agent against a random baseline. A true 'random baseline' for comparison should be the performance of a random player (or the Q-agent playing randomly) in identical conditions. The current design prevents `experiment.py` from running the same method (e.g., 'q_learning') twice or switching opponents easily without creating new agent instances, and it conflates the 'method' being tested with the specific opponent. More critically, `experiment.py` needs to record metrics for the Q-agent specifically. If `play_game` returns generic rewards, distinguishing whether the Q-agent is playing as X or O matters for the bias in Tic-Tac-Toe. Fix: Redesign `play_game` to take a single `player_a` and `player_b` callable (or agent object) and explicitly return which player won, along with their cumulative rewards. Alternatively, pass a `rng` generator that is consumed by the function, ensuring the agents don't need separate RNG management in the loop signature if they share a seed context. Specifically, change the signature to `play_game(env, agent_x, agent_o, rng) -> dict` where `agent_x` plays X and `agent_o` plays O. Change together: [experiment.py:run_experiment] Update calls to `play_game` to instantiate `QLearningAgent()` for one side and `RandomAgent()` (or another `QLearningAgent` with epsilon=1.0) for the other, depending on the method being tested ('q_learning' vs 'random_baseline').; [tictactoe_env.py:TicTacToeEnv] Ensure `reset()` clearly initializes `current_player` to a known state (e.g., PLAYER_X) so the first move is deterministic based on seed..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 4, \"cycle_index\": 5, \"source\": \"planning_critic\"}",
-      "injected_rule": "When designing function interfaces for data aggregation or metric computation, return types must match the semantic nature of the data (e.g., numeric for rates/averages, not strings), because consumers cannot derive accurate quantitative metrics from incorrect or ambiguous type contracts."
-    },
-    {
-      "agent": "plan_module",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"experiment.py\", \"game_loop.py\"], \"examples\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The `academic_blueprint` metrics include `avg_reward_per_episode`. The interface for `q_learning_agent.py:QLearningAgent.act` returns an action. The experiment needs to accumulate rewards per episode. Currently, there is no declared mechanism in the interfaces for `game_loop.py` or `experiment.py` to track cumulative reward per episode during training or testing. Without this, the metric `avg_reward_per_episode` cannot be computed correctly (e.g., does it sum immediate rewards? Does it apply discounting at the end?). Fix: Add a return value or side effect in `game_loop.py:play_game` to return `cumulative_reward_agent_a` and `cumulative_reward_agent_b` (or just the relevant agent's reward). Update `experiment.py` to aggregate these values over episodes. Change together: [game_loop.py:play_game] Change return type of `play_game` to include 'reward_a' and 'reward_b' floats, calculated by summing the `reward` from `env.step()` for each player's turn.; [academic_blueprint.metrics] Ensure `avg_reward_per_episode` is clearly defined as mean of cumulative discounted or undiscounted rewards. Given Q-learning uses gamma, usually we look at total return. Clarify in experiment.py logic..\", \"PLAN_CRITIC [game_loop.py:play_game]: The dependency `tictactoe_env.py` defines `get_valid_moves(env)` which requires a `TicTacToeEnv` instance, but the `play_game` interface signature omits access to an environment instance or valid move set, preventing the caller from enforcing move validity during the loop. Fix: Add an optional `env: TicTacToeEnv | None = None` argument to `play_game` and use it to query valid moves when `agent_b` (or any agent needing validation) acts, or ensure agents provide their own move sets if they manage state. Change together: [game_loop.py:play_game] Change signature to def play_game(agent_a, agent_b, is_agent_a_turn, rng, env: TicTacToeEnv = None) -> dict.\", \"PLAN_CRITIC [game_loop.py:play_game]: The dependency `tictactoe_env.py` defines `reset()` returning a dict with key `'board'`, but the docstring for `step` implies `obs` is returned as part of a tuple; more critically, the environment class attributes `board` and `current_player` are accessed by consumers indirectly via `get_valid_moves` or direct access, but `play_game` has no handle to instantiate or reset this environment. Fix: Pass an existing `TicTacToeEnv` instance to `play_game` so it can call `reset()` and use the instance's state/valid move logic consistently with other modules. Change together: [game_loop.py:play_game] Add `env: TicTacToeEnv` as a required argument.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The `academic_blueprint` metrics include `avg_reward_per_episode`. The interface for `q_learning_agent.py:QLearningAgent.act` returns an action. The experiment needs to accumulate rewards per episode. Currently, there is no declared mechanism in the interfaces for `game_loop.py` or `experiment.py` to track cumulative reward per episode during training or testing. Without this, the metric `avg_reward_per_episode` cannot be computed correctly (e.g., does it sum immediate rewards? Does it apply discounting at the end?). Fix: Add a return value or side effect in `game_loop.py:play_game` to return `cumulative_reward_agent_a` and `cumulative_reward_agent_b` (or just the relevant agent's reward). Update `experiment.py` to aggregate these values over episodes. Change together: [game_loop.py:play_game] Change return type of `play_game` to include 'reward_a' and 'reward_b' floats, calculated by summing the `reward` from `env.step()` for each player's turn.; [academic_blueprint.metrics] Ensure `avg_reward_per_episode` is clearly defined as mean of cumulative discounted or undiscounted rewards. Given Q-learning uses gamma, usually we look at total return. Clarify in experiment.py logic..\", \"PLAN_CRITIC [game_loop.py:play_game]: The dependency `tictactoe_env.py` defines `get_valid_moves(env)` which requires a `TicTacToeEnv` instance, but the `play_game` interface signature omits access to an environment instance or valid move set, preventing the caller from enforcing move validity during the loop. Fix: Add an optional `env: TicTacToeEnv | None = None` argument to `play_game` and use it to query valid moves when `agent_b` (or any agent needing validation) acts, or ensure agents provide their own move sets if they manage state. Change together: [game_loop.py:play_game] Change signature to def play_game(agent_a, agent_b, is_agent_a_turn, rng, env: TicTacToeEnv = None) -> dict.\", \"PLAN_CRITIC [game_loop.py:play_game]: The dependency `tictactoe_env.py` defines `reset()` returning a dict with key `'board'`, but the docstring for `step` implies `obs` is returned as part of a tuple; more critically, the environment class attributes `board` and `current_player` are accessed by consumers indirectly via `get_valid_moves` or direct access, but `play_game` has no handle to instantiate or reset this environment. Fix: Pass an existing `TicTacToeEnv` instance to `play_game` so it can call `reset()` and use the instance's state/valid move logic consistently with other modules. Change together: [game_loop.py:play_game] Add `env: TicTacToeEnv` as a required argument.\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 6, \"cycle_index\": 7, \"source\": \"planning_critic\"}",
-      "injected_rule": "When defining a function interface that orchestrates stateful components, ensure all necessary objects (such as environments or context handles) are explicitly passed as arguments and returned values track the lifecycle data required by higher-level consumers, because interfaces must expose all dependencies and data flows needed for correct integration."
-    },
-    {
-      "agent": "plan_module",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"game_loop.py\", \"q_learning_agent.py\"], \"examples\": [\"PLAN_CRITIC [game_loop.py:play_game]: The interface for `play_game` defines the signature `(agent_a, agent_b, ...)` but lacks any parameter or return value to pass or report cumulative rewards during the episode. Without tracking the sum of rewards produced by `env.step()` for each player, the experiment cannot compute the declared metric `avg_reward_per_episode`. Fix: Add a `cumulative_rewards: dict[str, float]` argument to `play_game` that is updated in-place during the loop with keys 'A' and 'B', or add 'reward_a' and 'reward_b' to the return dictionary. Given RL needs per-step access for training, an in-place dict or a returned list of step tuples is required; here we mandate returning them. Change together: [game_loop.py:play_game] Update signature to accept `cumulative_rewards: dict` and update it with `cumulative_rewards['A'] += reward` (and 'B') inside the loop; ensure return dict includes these final values or that the input dict is used.; [experiment.py:run_experiment] Instantiate a `cumulative_rewards` dict in the training/testing loops, pass it to `play_game`, and read the final values to aggregate into `results.csv`..\", \"PLAN_CRITIC [q_learning_agent.py:QLearningAgent.act]: The interface for `act` takes only `state` but ignores `valid_moves`. In Tabular Q-Learning for Tic-Tac-Toe, actions must be restricted to empty cells; if the agent selects an invalid action index (which is possible with epsilon-greedy exploration over the full board space), it will either crash or produce incorrect updates. The environment interface provides `get_valid_moves`, but the agent cannot use them without receiving them. Fix: Add `valid_moves: list[int]` as a required argument to `act` so the agent can perform epsilon-greedy selection exclusively over legal actions. Change together: [q_learning_agent.py:QLearningAgent.act] Update signature to `def act(self, state: np.ndarray, valid_moves: list[int]) -> int`.; [experiment.py:run_experiment] Update all calls to `agent.act(state, valid_moves)` to fetch valid moves from the environment instance before calling the agent..\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [game_loop.py:play_game]: The interface for `play_game` defines the signature `(agent_a, agent_b, ...)` but lacks any parameter or return value to pass or report cumulative rewards during the episode. Without tracking the sum of rewards produced by `env.step()` for each player, the experiment cannot compute the declared metric `avg_reward_per_episode`. Fix: Add a `cumulative_rewards: dict[str, float]` argument to `play_game` that is updated in-place during the loop with keys 'A' and 'B', or add 'reward_a' and 'reward_b' to the return dictionary. Given RL needs per-step access for training, an in-place dict or a returned list of step tuples is required; here we mandate returning them. Change together: [game_loop.py:play_game] Update signature to accept `cumulative_rewards: dict` and update it with `cumulative_rewards['A'] += reward` (and 'B') inside the loop; ensure return dict includes these final values or that the input dict is used.; [experiment.py:run_experiment] Instantiate a `cumulative_rewards` dict in the training/testing loops, pass it to `play_game`, and read the final values to aggregate into `results.csv`..\", \"PLAN_CRITIC [q_learning_agent.py:QLearningAgent.act]: The interface for `act` takes only `state` but ignores `valid_moves`. In Tabular Q-Learning for Tic-Tac-Toe, actions must be restricted to empty cells; if the agent selects an invalid action index (which is possible with epsilon-greedy exploration over the full board space), it will either crash or produce incorrect updates. The environment interface provides `get_valid_moves`, but the agent cannot use them without receiving them. Fix: Add `valid_moves: list[int]` as a required argument to `act` so the agent can perform epsilon-greedy selection exclusively over legal actions. Change together: [q_learning_agent.py:QLearningAgent.act] Update signature to `def act(self, state: np.ndarray, valid_moves: list[int]) -> int`.; [experiment.py:run_experiment] Update all calls to `agent.act(state, valid_moves)` to fetch valid moves from the environment instance before calling the agent..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 8, \"cycle_index\": 9, \"source\": \"planning_critic\"}",
-      "injected_rule": "When defining agent or loop interfaces, ensure that all state required for evaluation (e.g., cumulative metrics) and execution constraints (e.g., valid action masks) are explicitly passed as arguments or returned as values, because omitting them breaks the contract between environment, agent, and experiment modules."
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"agent.py\", \"experiment.py\"], \"examples\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The thesis requires comparing Q-Learning against a random baseline. The current plan defines `baseline.py` and `RandomAgent`, but the entrypoint in `experiment.py` only mentions training the Q-Learning agent. It does not describe running episodes with the Random Agent as the primary player to establish the baseline metrics. Fix: Explicitly define two distinct experimental phases or loops in the experiment module: one where P1 is `QLearningAgent` trained against a fixed opponent, and one where P1 is `RandomAgent` playing against itself (or the same fixed opponent) to generate baseline win/loss/draw rates. Change together: [academic_blueprint.metrics] Ensure metrics are collected for both 'q_learning' and 'random_baseline' methods so they can be compared in the thesis.; [figures.py:generate_plots] Update docstring/expectations to read data for both method labels to generate the comparative bar plot mentioned in Chapter 5..\", \"PLAN_CRITIC [agent.py:QLearningAgent.__init__]: The signature declares `action_dim` but the outline entry promises `num_actions`. This breaks the contract for the coder implementing this specific interface and deviates from the standard naming convention used in the outline. Fix: Change the parameter name in `QLearningAgent.__init__` from `action_dim` to `num_actions` to match the outline. Change together: [agent.py:QLearningAgent.__init__] Update signature to `__init__(self, num_states: int, num_actions: int, ...)`.\", \"PLAN_CRITIC [agent.py:QLearningAgent.choose_action]: The signature `choose_action(state) -> int` promises a single argument, but the docstring and implementation logic require `valid_actions`. This makes it impossible to implement the required validity checking without adding an undocumented parameter, which violates the outline's promise of the interface. Fix: Update the method signature in the outline (and thus the module interface) to `choose_action(state, valid_actions) -> int` or `Optional[int]` to reflect the actual requirement for valid action filtering. Change together: [agent.py:QLearningAgent.choose_action] Update signature to `choose_action(self, state: int, valid_actions: list[int]) -> int | None`.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The thesis requires comparing Q-Learning against a random baseline. The current plan defines `baseline.py` and `RandomAgent`, but the entrypoint in `experiment.py` only mentions training the Q-Learning agent. It does not describe running episodes with the Random Agent as the primary player to establish the baseline metrics. Fix: Explicitly define two distinct experimental phases or loops in the experiment module: one where P1 is `QLearningAgent` trained against a fixed opponent, and one where P1 is `RandomAgent` playing against itself (or the same fixed opponent) to generate baseline win/loss/draw rates. Change together: [academic_blueprint.metrics] Ensure metrics are collected for both 'q_learning' and 'random_baseline' methods so they can be compared in the thesis.; [figures.py:generate_plots] Update docstring/expectations to read data for both method labels to generate the comparative bar plot mentioned in Chapter 5..\", \"PLAN_CRITIC [agent.py:QLearningAgent.__init__]: The signature declares `action_dim` but the outline entry promises `num_actions`. This breaks the contract for the coder implementing this specific interface and deviates from the standard naming convention used in the outline. Fix: Change the parameter name in `QLearningAgent.__init__` from `action_dim` to `num_actions` to match the outline. Change together: [agent.py:QLearningAgent.__init__] Update signature to `__init__(self, num_states: int, num_actions: int, ...)`.\", \"PLAN_CRITIC [agent.py:QLearningAgent.choose_action]: The signature `choose_action(state) -> int` promises a single argument, but the docstring and implementation logic require `valid_actions`. This makes it impossible to implement the required validity checking without adding an undocumented parameter, which violates the outline's promise of the interface. Fix: Update the method signature in the outline (and thus the module interface) to `choose_action(state, valid_actions) -> int` or `Optional[int]` to reflect the actual requirement for valid action filtering. Change together: [agent.py:QLearningAgent.choose_action] Update signature to `choose_action(self, state: int, valid_actions: list[int]) -> int | None`.\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 4, \"cycle_index\": 5, \"source\": \"planning_critic\"}",
+      "injected_rule": "When defining module interfaces or method signatures in an outline, ensure all parameter names and counts strictly match the contract promised to downstream agents (such as the seed_coder) and are consistent with the broader context requirements, because any mismatch breaks the interface contract and prevents correct implementation."
     },
     {
       "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"pytest:AttributeError\", \"occurrences\": 2, \"tasks\": [\"R1_2\", \"T6\"], \"examples\": [\"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n====================================================================================\", \"Pytest failure: .FF..                                                                                                                                                                                                                                                                                                [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"q_learning_agent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: .FF..                                                                                                                                                                                                                                                                                                [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_________________________________________________________________________________________________________________________________________ test_act_epsilon_greedy _________________________________________________________________________________________________________________________________________\\ntests\\\\test_q_learning_agent.py:35: in test_act_epsilon_greedy\\n    action = agent_epsilon.act(state_tuple, valid_moves)\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nq_learning_agent.py:27: in act\\n    state_tuple = tuple(state.tolist())\\n                        ^^^^^^^^^^^^\\nE   AttributeError: 'tuple' object has no attribute 'tolist'\\n_______________________________________________________________________________________________________________________________________________ test_learn ________________________________________________________________________________________________________________________________________________\\ntests\\\\test_q_learning_agent.py:51: in test_learn\\n    assert state1 in agent.q_table\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\nE   TypeError: unhashable type: 'numpy.ndarray'\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_q_learning_agent.py::test_act_epsilon_greedy - AttributeError: 'tuple' object has no attribute 'tolist'\\nFAILED tests\\\\test_q_learning_agent.py::test_learn - TypeError: unhashable type: 'numpy.ndarray'\\n2 failed, 3 passed in 0.10s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 13, \"cycle_index\": 23, \"task_id\": \"R1_2\", \"target_node\": \"q_learning_agent.py\", \"suggested_rule\": \"Task R1_2 on node q_learning_agent.py (q_learning_agent.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When manipulating state objects that may be numpy arrays or native tuples, verify the type before calling array-specific methods like tolist() or hashability requirements for dictionary keys, because built-in types do not share methods with numpy objects."
+      "context": "{\"pattern\": {\"category\": \"F821\", \"occurrences\": 2, \"tasks\": [\"T10\", \"T2\"], \"examples\": [\"Ruff lint failure: environment.py:56:27: F821 Undefined name `step`\\nenvironment.py:56:82: F821 Undefined name `step`\\nFound 2 errors.\", \"Ruff lint failure: experiment.py:48:44: F821 Undefined name `env_get_valid_actions`\\nexperiment.py:54:25: F821 Undefined name `Optional`\\nexperiment.py:77:49: F821 Undefined name `env_get_valid_actions`\\nexperiment.py:84:38: F821 Undefined name `Optional`\\nexperiment.py:95:38: F821 Undefined name `Optional`\\nexperiment.py:115:49: F821 Undefined name `env_get_valid_actions`\\nexperiment.py:121:34: F821 Un\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"experiment.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Ruff lint failure: experiment.py:33:81: F821 Undefined name `env`\\nexperiment.py:33:143: F821 Undefined name `env`\\nFound 2 errors.\", \"Traceback (most recent call last):\\n  File \\\"<string>\\\", line 46, in <module>\\n    fn()\\n    ~~^^\\n  File \\\"D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\experiment.py\\\", line 33, in run_experiment\\n    q_agent: agent.QLearningAgent = agent.QLearningAgent(num_states=int(np.prod(env.TicTacToeEnv().observation_space.shape)), num_actions=int(env.TicTacToeEnv().action_space.n), lr=config.LEARNING_RATE, gamma=config.GAMMA, epsilon=config.EPSILON_START)\\n                                                                                ^^^\\nNameError: name 'env' is not defined\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 9, \"cycle_index\": 17, \"task_id\": \"T10\", \"target_node\": \"experiment.py\", \"suggested_rule\": \"Task T10 on node experiment.py (experiment.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When using symbols from other modules, verify their import status by checking the contract or source file of that module first, because undefined names indicate missing imports rather than logical errors."
     },
     {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"pytest:AssertionError\", \"occurrences\": 2, \"tasks\": [\"R1_3\", \"R2_1\"], \"examples\": [\"Pytest failure: F.                                                                                                                                                                                                                                                                                                   [100%]\\n====================================================================================\", \"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"game_loop.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n__________________________________________________________________________________________________________________________________ test_play_game_interface_and_contract __________________________________________________________________________________________________________________________________\\ntests\\\\test_game_loop.py:42: in test_play_game_interface_and_contract\\n    assert result['final_board'].shape == (3, 3), f\\\"Final board shape must be (3,3), got {result['final_board'].shape}.\\\"\\nE   AssertionError: Final board shape must be (3,3), got (9,).\\nE   assert (9,) == (3, 3)\\nE     \\nE     At index 0 diff: 9 != 3\\nE     Right contains one more item: 3\\nE     Use -v to get more diff\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_game_loop.py::test_play_game_interface_and_contract - AssertionError: Final board shape must be (3,3), got (9,).\\n1 failed in 0.11s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 18, \"cycle_index\": 28, \"task_id\": \"R2_1\", \"target_node\": \"game_loop.py\", \"suggested_rule\": \"Task R2_1 on node game_loop.py (game_loop.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When returning a multidimensional data structure such as a game board or matrix, ensure the return type explicitly matches the expected tensor dimensions (e.g., using reshape or proper initialization) rather than allowing linear flattening, because dimensionality mismatches cause assertion failures in validation contracts."
-    },
-    {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"pytest:IndexError\", \"occurrences\": 2, \"tasks\": [\"R1_2\", \"R2_2\"], \"examples\": [\"Pytest failure: .FF..                                                                                                                                                                                                                                                                                                [100%]\\n====================================================================================\", \"Pytest failure: .FF..                                                                                                                                                                                                                                                                                                [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"q_learning_agent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: .FF..                                                                                                                                                                                                                                                                                                [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_________________________________________________________________________________________________________________________________________ test_act_epsilon_greedy _________________________________________________________________________________________________________________________________________\\ntests\\\\test_q_learning_agent.py:35: in test_act_epsilon_greedy\\n    action = agent_epsilon.act(state_tuple, valid_moves)\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nq_learning_agent.py:48: in act\\n    valid_q = [q_values[i] for i in valid_moves]\\n               ^^^^^^^^^^^\\nE   IndexError: index 2 is out of bounds for axis 0 with size 2\\n_______________________________________________________________________________________________________________________________________________ test_learn ________________________________________________________________________________________________________________________________________________\\ntests\\\\test_q_learning_agent.py:51: in test_learn\\n    assert state1 in agent.q_table\\n           ^^^^^^^^^^^^^^^^^^^^^^^\\nE   TypeError: unhashable type: 'numpy.ndarray'\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_q_learning_agent.py::test_act_epsilon_greedy - IndexError: index 2 is out of bounds for axis 0 with size 2\\nFAILED tests\\\\test_q_learning_agent.py::test_learn - TypeError: unhashable type: 'numpy.ndarray'\\n2 failed, 3 passed in 0.09s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 21, \"cycle_index\": 31, \"task_id\": \"R2_2\", \"target_node\": \"q_learning_agent.py\", \"suggested_rule\": \"Task R2_2 on node q_learning_agent.py (q_learning_agent.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When implementing logic that operates on numpy arrays or lists, verify that indices used for access are strictly within the bounds of the array's actual length (using `len()` or `.shape`), because relying on expected dimensions without runtime checks leads to IndexError."
-    },
-    {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"pytest:ValueError\", \"occurrences\": 2, \"tasks\": [\"R6_1\", \"T8\"], \"examples\": [\"Pytest failure: .F...                                                                                                                                                                                                                                                                                                [100%]\\n====================================================================================\", \"Pytest failure: ..F..                                                                                                                                                                                                                                                                                                [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"q_learning_agent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: ..F..                                                                                                                                                                                                                                                                                                [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n_______________________________________________________________________________________________________________________________________________ test_learn ________________________________________________________________________________________________________________________________________________\\ntests\\\\test_q_learning_agent.py:41: in test_learn\\n    assert state1 in [tuple(s) for s in agent.q_table.keys()]\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\nE   ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_q_learning_agent.py::test_learn - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\\n1 failed, 4 passed in 0.11s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 46, \"cycle_index\": 56, \"task_id\": \"R6_1\", \"target_node\": \"q_learning_agent.py\", \"suggested_rule\": \"Task R6_1 on node q_learning_agent.py (q_learning_agent.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When comparing numpy arrays (such as states stored in a dictionary) for membership or equality, never use standard Python operators like `in`, `==`, or `!=` directly, because array truth value comparison is ambiguous; instead, use vectorized methods like `np.any()` or `.tolist()` to ensure deterministic evaluation."
+      "agent": "seed_tester",
+      "context": "{\"pattern\": {\"category\": \"pytest:ValueError\", \"occurrences\": 2, \"tasks\": [\"R2_1\", \"T3\"], \"examples\": [\"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n====================================================================================\", \"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_environment.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n________________________________________________________________________________________________________________________________________ test_tic_tac_toe_env_init ________________________________________________________________________________________________________________________________________\\ntests\\\\test_environment.py:10: in test_tic_tac_toe_env_init\\n    assert env.observation_space.high[0] == 2\\nE   ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_environment.py::test_tic_tac_toe_env_init - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\\n1 failed in 0.12s\", \"Metric 'win_rate' is exactly 0 in every run (std_dev 0): the experiment measures nothing. Find the cause in the modules the experiment uses (a game that never ends, an agent that never learns, a value that is never updated) and fix it there, not by changing how the number is written.\", \"Metric 'loss_rate' is exactly 0 in every run (std_dev 0): the experiment measures nothing. Find the cause in the modules the experiment uses (a game that never ends, an agent that never learns, a value that is never updated) and fix it there, not by changing how the number is written.\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 9, \"cycle_index\": 21, \"task_id\": \"R2_1\", \"target_node\": \"experiment.py\", \"suggested_rule\": \"Task R2_1 on node experiment.py (experiment.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
+      "injected_rule": "When asserting equality involving numerical values from a library that may return numpy arrays (e.g., Gym spaces), always use element-wise comparison methods like .any() or .all(), because direct boolean evaluation of multi-element arrays raises ambiguous truth value errors."
     }
   ],
   "category_log": [
@@ -52,13 +27,13 @@
       "cycle": 2,
       "agent": "plan_module",
       "category": "critic",
-      "task_id": "game_loop.py"
+      "task_id": "experiment.py"
     },
     {
       "cycle": 3,
       "agent": "plan_module",
       "category": "critic",
-      "task_id": "q_learning_agent.py"
+      "task_id": "agent.py"
     },
     {
       "cycle": 4,
@@ -70,478 +45,165 @@
       "cycle": 5,
       "agent": "plan_module",
       "category": "critic",
-      "task_id": "game_loop.py"
-    },
-    {
-      "cycle": 6,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "experiment.py"
-    },
-    {
-      "cycle": 7,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "game_loop.py"
-    },
-    {
-      "cycle": 8,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "game_loop.py"
-    },
-    {
-      "cycle": 9,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "q_learning_agent.py"
-    },
-    {
-      "cycle": 10,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "game_loop.py"
-    },
-    {
-      "cycle": 11,
-      "agent": "plan_module",
-      "category": "critic",
-      "task_id": "q_learning_agent.py"
+      "task_id": "agent.py"
     },
     {
       "cycle": 1,
-      "agent": "seed_writer",
-      "category": "document",
+      "agent": "seed_coder",
+      "category": "generic",
       "task_id": "T2"
     },
     {
       "cycle": 2,
       "agent": "seed_coder",
       "category": "F821",
-      "task_id": "T3"
+      "task_id": "T2"
     },
     {
       "cycle": 3,
       "agent": "seed_coder",
       "category": "F821",
-      "task_id": "T3"
+      "task_id": "T2"
     },
     {
       "cycle": 4,
       "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T3"
+      "category": "harness",
+      "task_id": "T4"
     },
     {
       "cycle": 5,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T7"
+      "agent": "seed_tester",
+      "category": "harness",
+      "task_id": "T5"
     },
     {
       "cycle": 6,
       "agent": "seed_tester",
-      "category": "pytest:TypeError",
-      "task_id": "T8"
+      "category": "harness",
+      "task_id": "T5"
     },
     {
       "cycle": 7,
       "agent": "seed_tester",
-      "category": "pytest:assert",
-      "task_id": "T8"
+      "category": "harness",
+      "task_id": "T5"
     },
     {
       "cycle": 8,
-      "agent": "seed_coder",
-      "category": "pytest:ValueError",
-      "task_id": "T8"
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "T7"
     },
     {
       "cycle": 9,
       "agent": "seed_coder",
-      "category": "pytest:ValueError",
+      "category": "harness",
       "task_id": "T8"
     },
     {
       "cycle": 10,
-      "agent": "seed_tester",
+      "agent": "seed_coder",
       "category": "harness",
-      "task_id": "T10"
+      "task_id": "T8"
     },
     {
       "cycle": 11,
-      "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "T10"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T11"
     },
     {
       "cycle": 12,
-      "agent": "seed_coder",
-      "category": "pytest:KeyError",
-      "task_id": "T10"
+      "agent": "seed_tester",
+      "category": "F821",
+      "task_id": "T3"
     },
     {
       "cycle": 13,
-      "agent": "seed_coder",
-      "category": "pytest:KeyError",
-      "task_id": "T10"
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "T3"
     },
     {
       "cycle": 14,
       "agent": "seed_tester",
-      "category": "F821",
-      "task_id": "T4"
+      "category": "pytest:ValueError",
+      "task_id": "T3"
     },
     {
       "cycle": 15,
-      "agent": "seed_tester",
+      "agent": "seed_coder",
       "category": "F821",
-      "task_id": "T4"
+      "task_id": "T10"
     },
     {
       "cycle": 16,
-      "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "T4"
+      "agent": "seed_coder",
+      "category": "run:TypeError",
+      "task_id": "T10"
     },
     {
       "cycle": 17,
-      "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "T6"
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "T10"
     },
     {
       "cycle": 18,
       "agent": "seed_tester",
       "category": "harness",
-      "task_id": "T6"
+      "task_id": "R1_2"
     },
     {
       "cycle": 19,
       "agent": "seed_coder",
-      "category": "pytest:AttributeError",
-      "task_id": "T6"
+      "category": "run:AttributeError",
+      "task_id": "R2_1"
     },
     {
       "cycle": 20,
       "agent": "seed_coder",
-      "category": "pytest:AttributeError",
-      "task_id": "T6"
+      "category": "harness",
+      "task_id": "R2_1"
     },
     {
       "cycle": 21,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R1_2"
+      "agent": "seed_tester",
+      "category": "pytest:ValueError",
+      "task_id": "R2_1"
     },
     {
       "cycle": 22,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "R1_2"
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "T16"
     },
     {
       "cycle": 23,
-      "agent": "seed_coder",
-      "category": "pytest:AttributeError",
-      "task_id": "R1_2"
-    },
-    {
-      "cycle": 24,
-      "agent": "seed_coder",
-      "category": "pytest:AssertionError",
-      "task_id": "R1_3"
-    },
-    {
-      "cycle": 25,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R2_1"
-    },
-    {
-      "cycle": 26,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R2_1"
-    },
-    {
-      "cycle": 27,
-      "agent": "seed_coder",
-      "category": "pytest:NameError",
-      "task_id": "R2_1"
-    },
-    {
-      "cycle": 28,
-      "agent": "seed_coder",
-      "category": "pytest:AssertionError",
-      "task_id": "R2_1"
-    },
-    {
-      "cycle": 29,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
+      "agent": "seed_tester",
+      "category": "pytest:assert",
       "task_id": "R2_2"
-    },
-    {
-      "cycle": 30,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "R2_2"
-    },
-    {
-      "cycle": 31,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R2_2"
-    },
-    {
-      "cycle": 32,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R3_1"
-    },
-    {
-      "cycle": 33,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R3_1"
-    },
-    {
-      "cycle": 34,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R3_1"
-    },
-    {
-      "cycle": 35,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R3_2"
-    },
-    {
-      "cycle": 36,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R3_2"
-    },
-    {
-      "cycle": 37,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R3_2"
-    },
-    {
-      "cycle": 38,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "R4_1"
-    },
-    {
-      "cycle": 39,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R4_1"
-    },
-    {
-      "cycle": 40,
-      "agent": "seed_coder",
-      "category": "pytest:AssertionError",
-      "task_id": "R4_1"
-    },
-    {
-      "cycle": 41,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R4_2"
-    },
-    {
-      "cycle": 42,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R4_2"
-    },
-    {
-      "cycle": 43,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R4_2"
-    },
-    {
-      "cycle": 44,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R4_2"
-    },
-    {
-      "cycle": 45,
-      "agent": "seed_coder",
-      "category": "pytest:AssertionError",
-      "task_id": "R5_1"
-    },
-    {
-      "cycle": 46,
-      "agent": "seed_coder",
-      "category": "pytest:TypeError",
-      "task_id": "R5_1"
-    },
-    {
-      "cycle": 47,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R5_2"
-    },
-    {
-      "cycle": 48,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R5_2"
-    },
-    {
-      "cycle": 49,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "R5_2"
-    },
-    {
-      "cycle": 50,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T8"
-    },
-    {
-      "cycle": 51,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T8"
-    },
-    {
-      "cycle": 52,
-      "agent": "seed_coder",
-      "category": "pytest:IndexError",
-      "task_id": "T8"
-    },
-    {
-      "cycle": 53,
-      "agent": "seed_coder",
-      "category": "pytest:ValueError",
-      "task_id": "T8"
-    },
-    {
-      "cycle": 54,
-      "agent": "seed_coder",
-      "category": "pytest:ValueError",
-      "task_id": "R6_1"
-    },
-    {
-      "cycle": 55,
-      "agent": "seed_coder",
-      "category": "pytest:ValueError",
-      "task_id": "R6_1"
-    },
-    {
-      "cycle": 56,
-      "agent": "seed_coder",
-      "category": "pytest:ValueError",
-      "task_id": "R6_1"
     }
   ],
   "rules": [
     {
       "agent": "plan_module",
-      "rule": "When designing a module's interface to be consumed by external logic, ensure that all return values and parameters contain sufficient context for the consumer to interpret them without relying on implicit state or ambiguous conventions, because consumers cannot map generic outcomes to their specific local entities without explicit role mapping.",
-      "category": "critic",
-      "cycle": 3
-    },
-    {
-      "agent": "plan_module",
-      "rule": "When designing function interfaces for data aggregation or metric computation, return types must match the semantic nature of the data (e.g., numeric for rates/averages, not strings), because consumers cannot derive accurate quantitative metrics from incorrect or ambiguous type contracts.",
+      "rule": "When defining module interfaces or method signatures in an outline, ensure all parameter names and counts strictly match the contract promised to downstream agents (such as the seed_coder) and are consistent with the broader context requirements, because any mismatch breaks the interface contract and prevents correct implementation.",
       "category": "critic",
       "cycle": 5
     },
     {
-      "agent": "plan_module",
-      "rule": "When defining a function interface that orchestrates stateful components, ensure all necessary objects (such as environments or context handles) are explicitly passed as arguments and returned values track the lifecycle data required by higher-level consumers, because interfaces must expose all dependencies and data flows needed for correct integration.",
-      "category": "critic",
-      "cycle": 7
-    },
-    {
-      "agent": "plan_module",
-      "rule": "When defining agent or loop interfaces, ensure that all state required for evaluation (e.g., cumulative metrics) and execution constraints (e.g., valid action masks) are explicitly passed as arguments or returned as values, because omitting them breaks the contract between environment, agent, and experiment modules.",
-      "category": "critic",
-      "cycle": 9
-    },
-    {
       "agent": "seed_coder",
-      "rule": "When manipulating state objects that may be numpy arrays or native tuples, verify the type before calling array-specific methods like tolist() or hashability requirements for dictionary keys, because built-in types do not share methods with numpy objects.",
-      "category": "pytest:AttributeError",
-      "cycle": 23
+      "rule": "When using symbols from other modules, verify their import status by checking the contract or source file of that module first, because undefined names indicate missing imports rather than logical errors.",
+      "category": "F821",
+      "cycle": 17
     },
     {
-      "agent": "seed_coder",
-      "rule": "When returning a multidimensional data structure such as a game board or matrix, ensure the return type explicitly matches the expected tensor dimensions (e.g., using reshape or proper initialization) rather than allowing linear flattening, because dimensionality mismatches cause assertion failures in validation contracts.",
-      "category": "pytest:AssertionError",
-      "cycle": 28
-    },
-    {
-      "agent": "seed_coder",
-      "rule": "When implementing logic that operates on numpy arrays or lists, verify that indices used for access are strictly within the bounds of the array's actual length (using `len()` or `.shape`), because relying on expected dimensions without runtime checks leads to IndexError.",
-      "category": "pytest:IndexError",
-      "cycle": 31
-    },
-    {
-      "agent": "seed_coder",
-      "rule": "When comparing numpy arrays (such as states stored in a dictionary) for membership or equality, never use standard Python operators like `in`, `==`, or `!=` directly, because array truth value comparison is ambiguous; instead, use vectorized methods like `np.any()` or `.tolist()` to ensure deterministic evaluation.",
+      "agent": "seed_tester",
+      "rule": "When asserting equality involving numerical values from a library that may return numpy arrays (e.g., Gym spaces), always use element-wise comparison methods like .any() or .all(), because direct boolean evaluation of multi-element arrays raises ambiguous truth value errors.",
       "category": "pytest:ValueError",
-      "cycle": 56
-    }
-  ],
-  "compactions": [
-    {
-      "agent": "plan_module",
-      "cycle": 1,
-      "rules_consolidated_count": 4,
-      "consolidated_rules": [
-        "When designing a module's interface to be consumed by external logic, ensure that all return values and parameters contain sufficient context for the consumer to interpret them without relying on implicit state or ambiguous conventions, because consumers cannot map generic outcomes to their specific local entities without explicit role mapping.",
-        "When designing function interfaces for data aggregation or metric computation, return types must match the semantic nature of the data (e.g., numeric for rates/averages, not strings), because consumers cannot derive accurate quantitative metrics from incorrect or ambiguous type contracts.",
-        "When defining a function interface that orchestrates stateful components, ensure all necessary objects (such as environments or context handles) are explicitly passed as arguments and returned values track the lifecycle data required by higher-level consumers, because interfaces must expose all dependencies and data flows needed for correct integration.",
-        "When defining agent or loop interfaces, ensure that all state required for evaluation (e.g., cumulative metrics) and execution constraints (e.g., valid action masks) are explicitly passed as arguments or returned as values, because omitting them breaks the contract between environment, agent, and experiment modules."
-      ],
-      "dropped_ineffective": [
-        {
-          "rule": "When designing a module's interface to be consumed by external logic, ensure that all return values and parameters contain sufficient context for the consumer to interpret them without relying on implicit state or ambiguous conventions, because consumers cannot map generic outcomes to their specific local entities without explicit role mapping.",
-          "category": "critic",
-          "before": 2,
-          "after": 6,
-          "cycles_after": 6
-        },
-        {
-          "rule": "When designing function interfaces for data aggregation or metric computation, return types must match the semantic nature of the data (e.g., numeric for rates/averages, not strings), because consumers cannot derive accurate quantitative metrics from incorrect or ambiguous type contracts.",
-          "category": "critic",
-          "before": 4,
-          "after": 4,
-          "cycles_after": 4
-        }
-      ],
-      "invariants": [
-        "When designing a function interface that orchestrates stateful components or agents, explicitly pass all necessary objects (environments, context handles) as arguments and return values must track the lifecycle data required by consumers, because interfaces must expose all dependencies and data flows needed for correct integration.",
-        "When defining agent or loop interfaces, ensure that all state required for evaluation (e.g., cumulative metrics) and execution constraints (e.g., valid action masks) are explicitly passed as arguments or returned as values, because omitting them breaks the contract between environment, agent, and experiment modules."
-      ]
-    },
-    {
-      "agent": "seed_coder",
-      "cycle": 2,
-      "rules_consolidated_count": 4,
-      "consolidated_rules": [
-        "Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.",
-        "When manipulating state objects that may be numpy arrays or native tuples, verify the type before calling array-specific methods like tolist() or hashability requirements for dictionary keys, because built-in types do not share methods with numpy objects.",
-        "When returning a multidimensional data structure such as a game board or matrix, ensure the return type explicitly matches the expected tensor dimensions (e.g., using reshape or proper initialization) rather than allowing linear flattening, because dimensionality mismatches cause assertion failures in validation contracts.",
-        "When implementing logic that operates on numpy arrays or lists, verify that indices used for access are strictly within the bounds of the array's actual length (using `len()` or `.shape`), because relying on expected dimensions without runtime checks leads to IndexError."
-      ],
-      "dropped_ineffective": [],
-      "invariants": [
-        "When implementing public interfaces, preserve strict signature compatibility by honoring every parameter, annotation, and return type defined in `specification`, because the harness validates exports against this contract and mismatches cause immediate rejection.",
-        "When manipulating heterogeneous state objects or indexing collections, verify runtime types and bounds before access rather than relying on declared types, because silent type mismatches or out-of-bounds errors corrupt the experiment data that verification relies on."
-      ]
+      "cycle": 21
     }
   ]
 }

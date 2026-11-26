@@ -36,3 +36,6 @@ Return strictly a valid JSON object, for example:
 For several files at once, use `"files": [{"filename": "tests/test_<module>.py", "content": "..."}]`.
 For a change to an existing file: `"ast_edits": [{"symbol": "<TestClass>.<test_method>", "file": "tests/test_<module>.py", "code": "def <test_method>(self) -> None:\n    ...\n"}]`.
 Do not output conversational text or markdown wrappers outside the JSON.
+
+## LEARNED RULES AND CONSTRAINTS
+- **RULE**: When asserting equality involving numerical values from a library that may return numpy arrays (e.g., Gym spaces), always use element-wise comparison methods like .any() or .all(), because direct boolean evaluation of multi-element arrays raises ambiguous truth value errors.

@@ -231,7 +231,7 @@ class PlanStagesMixin:
                     restart = True
                     break
                 if not result["ok"]:
-                    return False, rel, result["problems"]
+                    return False, rel, result["problems"] + [texts.module_critic_objection(o) for o in result.get("objections", [])]
                 accepted[rel] = result["source"]
         return True, "", []
 
@@ -273,17 +273,20 @@ class PlanStagesMixin:
                 if critic:
                     critic_left -= 1
                     objections = critic
-                    self._learn_from_critic("plan_module", rel, critic)
             self.logger.log_event("PLAN_MODULE_CHECKED", module=rel, attempt=attempt, problems=problems, critic=critic)
             if problems or critic:
                 fb = problems + critic
                 print(f"  [PLAN 2/4: INTERFEJS {rel}] poprawka {attempt}: {len(problems)} problemów, {len(critic)} blokad krytyka", flush=True)
                 continue
+            # The critic's blocks teach the author only once the module is settled: a block the author could not satisfy
+            # next to the outline's `provides` is no evidence of a mistake (§XXX P8: two blocks became a rule
+            # "state only in classes" that the outline's module-level promises then made impossible).
+            self._learn_from_critic("plan_module", rel, objections)
             self.logger.log_event("PLAN_MODULE_ACCEPTED", module=rel, attempts=attempt, over_critic=objections if attempt > 1 else [])
             print(f"  [PLAN 2/4: INTERFEJS {rel}] przyjęty (próby: {attempt})", flush=True)
             return {"ok": True, "source": source, "problems": [], "needs": needs}
         print(f"  [PLAN 2/4: INTERFEJS {rel}] nie udało się: {len(fb)} problemów", flush=True)
-        return {"ok": False, "source": source, "problems": fb, "needs": {}}
+        return {"ok": False, "source": source, "problems": fb, "needs": {}, "objections": objections}
 
     @staticmethod
     def _dependency_closure(outline: dict[str, Any], rel: str) -> list[str]:

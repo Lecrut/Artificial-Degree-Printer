@@ -9,10 +9,12 @@ from typing import Any
 _TB_FRAME = re.compile(r"^(\S+?\.py):\d+: in ", re.MULTILINE)
 _HANG_FRAME = re.compile(r'^File "([^"]+?\.py)", line (?:\d+|\?+) in ', re.MULTILINE)
 _TB_EXC = re.compile(r"^E\s+([A-Za-z_][\w.]*)", re.MULTILINE)
-# Errors raised at the test's own call site: the test uses the API wrongly (wrong arguments, a name the module
-# does not have). Anything else that surfaces only in the test frame (a failed assertion) is a wrong result
-# of the code under test.
-_TEST_MISUSE = {"TypeError", "AttributeError", "NameError", "ImportError", "ModuleNotFoundError", "SyntaxError"}
+# What surfaces only in the test frame and is a wrong result of the code under test: a failed assertion (pytest
+# prints `E   assert a == b` for it, so its "exception" reads `assert`). Every other exception raised in the
+# test's own code (`ValueError` of `array in [...]`, `IndexError` of the test's own data, a misused API) is the
+# test's (2026-11-25, 01: `state1 in [tuple(s) ...]` raised `ValueError` in the test frame and six repairs of the
+# correct `q_learning_agent.py` followed).
+_WRONG_RESULT = {"AssertionError", "Failed", "assert", ""}
 
 
 def _is_test(rel: str) -> bool:
@@ -23,7 +25,7 @@ def _is_test(rel: str) -> bool:
 def _pytest_culprits(issue: str) -> list[tuple[str, bool]]:
     """Per failed test in a `--tb=short` pytest report: (deepest workspace frame, whether that is the code under
     test). A frame below the test means the code raised; only the test frame means either the test misuses the
-    API (`_TEST_MISUSE`, culprit = test) or the code returned a wrong value (assertion, culprit = code; the
+    API (an exception other than a failed assertion, culprit = test) or the code returned a wrong value (assertion, culprit = code; the
     caller resolves which module from the hypergraph).
 
     2026-11-14: the first file named in the findings was taken as the culprit, pytest always names the test file
@@ -43,7 +45,7 @@ def _pytest_culprits(issue: str) -> list[tuple[str, bool]]:
             found.append((code_frames[-1], True))
             continue
         exc = (_TB_EXC.findall(section) or [""])[-1].split(".")[-1].rstrip(":")
-        found.append((frames[0], exc not in _TEST_MISUSE))
+        found.append((frames[0], exc in _WRONG_RESULT))
     return found
 
 
@@ -65,11 +67,33 @@ def _traceback_culprit(text: str, workspace: Path) -> str | None:
 def _suspect_test(h: Any, module: str, test_file: str) -> bool:
     """A failed assertion seen only in the test frame blames the unverified one of the pair (§XIV Q2): the module
     already satisfies every example of its specification (`verified`) and the test is new → the test. 2026-11-19:
-    a fresh test asserted `0.1 > 0.5` after one Q-update with lr=0.1; six repairs of the correct module followed."""
+    a fresh test asserted `0.1 > 0.5` after one Q-update with lr=0.1; six repairs of the correct module followed.
+    A module that never passed is also cleared once the same error of the same test survives two different
+    versions of it (§XXX P6: `R1_2`-`R6_1` rewrote `q_learning_agent.py` six times for a test that fed it `[0.5, 0.0]`)."""
     mod = h.vertices.get(module)
     test_vertex = h.owner_of(test_file)
     test = h.vertices.get(test_vertex) if test_vertex else None
-    return mod is not None and mod.state == "verified" and (test is None or test.state != "verified")
+    if mod is None or (test is not None and test.state == "verified"):
+        return False
+    return mod.state == "verified" or _error_survives_rewrites(mod.history, test_file)
+
+
+_E_LINE = re.compile(r"^E\s+(\S.*)$", re.MULTILINE)
+REWRITES_BEFORE_TEST_IS_SUSPECT = 2
+
+
+def _error_survives_rewrites(history: list[dict[str, Any]], test_file: str) -> bool:
+    """The module's remembered verdicts show the same `E ...` lines of `test_file` under at least
+    `REWRITES_BEFORE_TEST_IS_SUSPECT` different versions of the module file (`version` of each entry)."""
+    name = Path(test_file).name
+    versions: dict[frozenset[str], set[str]] = {}
+    for entry in history:
+        version = str(entry.get("version") or "")
+        for issue in entry.get("issues", []):
+            text = str(issue)
+            if text.startswith("Pytest failure") and name in text and (lines := frozenset(m.strip() for m in _E_LINE.findall(text))):
+                versions.setdefault(lines, set()).add(version)
+    return any(len(v - {""}) >= REWRITES_BEFORE_TEST_IS_SUSPECT for v in versions.values())
 
 
 def _test_to_review(

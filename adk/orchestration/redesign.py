@@ -28,7 +28,7 @@ from adk.orchestration.fragment_replan import _latest_errors
 from adk.orchestration.implementation_audit import compact_audit
 from adk.orchestration.plan_outline import module_files, outline_of, outline_view, outline_violations
 from adk.orchestration.planning import _existing_code
-from adk.orchestration.redesign_rules import decisions_of, diagnosis_of, revision_violations, sources_wanted
+from adk.orchestration.redesign_rules import decisions_of, diagnosis_of, revision_violations, settled_decisions, sources_wanted
 from adk.tools.building.experiment_runner import EXPERIMENT_TIMEOUT_S
 
 MAX_REDESIGNS = 2  # rounds a run
@@ -74,6 +74,15 @@ def _carry_over(old: Hypergraph, new: Hypergraph, rebuild: set[str], failed: set
         results.state = "stale"
 
 
+EARLIER_ROUNDS = 3  # rounds of its own decisions the designer is shown
+_WHY_CHARS = 220
+
+
+def _remembered(decisions: dict[str, dict[str, str]]) -> dict[str, dict[str, str]]:
+    """What a round decided, for the next one: every module it changed, added or removed, with its reason."""
+    return {rel: {"status": d["status"], "why": d["why"][:_WHY_CHARS]} for rel, d in decisions.items() if d["status"] != "keep"}
+
+
 class RedesignMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
 
@@ -103,6 +112,8 @@ class RedesignMixin:
             self.logger.log_event("REDESIGN_FALLBACK", reason="no guidelines that pass the checks")
             return None
         new, decisions = guidelines
+        earlier = {"round": done + 1, "attempt": tried + 1, "decisions": _remembered(decisions), "outcome": "not built"}
+        self.__dict__.setdefault("_redesign_history", []).append(earlier)
         interfaces = blueprint.get("interfaces") if isinstance(blueprint.get("interfaces"), dict) else {}
         accepted = {rel: src for rel, src in interfaces.items() if rel in module_files(new)}
         reopen: dict[str, list[str]] = {}
@@ -112,8 +123,10 @@ class RedesignMixin:
                 reopen[rel] = [*reopen.get(rel, []), texts.redesign_change_feedback(rel, decision["why"])]
         plan_out, planned, problems = self._converge(payload, {}, new, accepted, reopen)
         if problems:
+            earlier["outcome"] = f"not built: {problems[0][:200]}"
             self.logger.log_event("REDESIGN_FALLBACK", reason="the redesigned plan cannot be built", problems=problems[:5])
             return None
+        earlier["outcome"] = "applied; the modules it changed were built and the failures came back"
         tasks = self._apply_redesign(state, h, old, new, decisions, plan_out, planned, blueprint, set(failed), done + 1)
         self.__dict__["_redesigns"] = done + 1
         print(f"  [PRZEPROJEKTOWANIE {done + 1}] {len(tasks)} zadań w nowej kolejce", flush=True)
@@ -153,13 +166,18 @@ class RedesignMixin:
             "unresolved_errors": {v: [e[:600] for e in _latest_errors(h.vertices[v].history)[:_ERRORS_PER_VERTEX]] for v in failed},
             **({"run_error": run_error[:_RUN_ERROR_CHARS]} if run_error else {}),
         }
+        if earlier := self.__dict__.get("_redesign_history"):
+            # §XXXI P2: without its own earlier decisions the designer turned "string states" of round 1 into "numpy arrays"
+            # in round 2, and both were built.
+            revision["earlier_rounds"] = earlier[-EARLIER_ROUNDS:]
         readable = {rel for rel, card in audit["files"].items() if card["implemented"]}
         workspace = set(_existing_code(self.workspace_dir, limit=None))
         feedback: list[str] = []
-        asked, attempt = False, 0
+        asked, attempt, previous = False, 0, None
         while attempt < REDESIGN_ANSWERS:
             answer = self._call_planning_agent(self.agents_dir / "planning" / "plan_outline.md", {
-                **payload, "current_outline": outline_view(old), "revision": revision, **({"feedback": feedback} if feedback else {}),
+                **payload, "current_outline": outline_view(old), "revision": revision,
+                **({"feedback": feedback} if feedback else {}), **({"previous_outline": previous} if previous and feedback else {}),
             })
             output = answer.get("output") if answer.get("status") == "ok" else None
             if not asked and (wanted := sources_wanted(output, readable)):
@@ -174,7 +192,8 @@ class RedesignMixin:
                 self.logger.log_event("REDESIGN_GUIDELINES", attempt=attempt, problems=feedback)
                 continue
             candidate["thesis_type"], candidate["template_name"] = old.get("thesis_type"), old.get("template_name")
-            decisions = decisions_of(output)
+            previous = outline_view(candidate)
+            candidate, decisions = settled_decisions(old, candidate, decisions_of(output))
             problems = outline_violations(candidate, {}, bool(self.include_docs)) + revision_violations(old, candidate, decisions, workspace)
             self.logger.log_event(
                 "REDESIGN_GUIDELINES", attempt=attempt, decisions=decisions, diagnosis=diagnosis_of(output), problems=problems,

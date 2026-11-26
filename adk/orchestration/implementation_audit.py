@@ -22,6 +22,7 @@ from adk.orchestration import agent_texts as texts
 from adk.orchestration.fragment_replan import _latest_errors
 from adk.orchestration.interface_view import interface_view
 from adk.orchestration.plan_outline import existing_names
+from adk.orchestration.findings import headlines
 from adk.orchestration.plan_sketch import source_to_sketch
 
 AUDIT_FILE = "implementation_audit.json"
@@ -83,6 +84,13 @@ def source_facts(source: str) -> dict[str, Any]:
     }
 
 
+def _error_lines(issues: list[str], workspace: Path) -> list[str]:
+    """The last errors as findings (`file > symbol, line: code -- test: exception`): the raw head of a pytest report is
+    its banner and progress bar and used to fill the 400 characters before the exception (§XXX P3, 01: the designer
+    never saw the `IndexError` of `q_learning_agent.py`)."""
+    return headlines(issues, workspace, limit=3) or [e[:ERROR_CHARS] for e in issues[:3]]
+
+
 def audit_facts(h: Hypergraph, workspace: Path, interfaces: dict[str, str]) -> dict[str, dict[str, Any]]:
     """The card of every module of H: its state, its file's facts, its neighbours, its tests and its last errors."""
     cards: dict[str, dict[str, Any]] = {}
@@ -98,7 +106,7 @@ def audit_facts(h: Hypergraph, workspace: Path, interfaces: dict[str, str]) -> d
             "uses": {m: list(names) for m, names in h.edges[f"I:{rel}"].spec.get("uses", {}).items()},
             "used_by": sorted(r for r in modules if rel in h.edges[f"I:{r}"].spec.get("uses", {})),
             "tests": [{"file": t, "state": h.vertices[t].state} for t in h.tests_of(rel) if t in h.vertices],
-            "errors": [e[:ERROR_CHARS] for e in _latest_errors(vertex.history)[:3]],
+            "errors": _error_lines(_latest_errors(vertex.history), workspace),
         }
         if implemented:
             card.update(source_facts(source))
@@ -121,6 +129,14 @@ def _behaviour(output: Any) -> dict[str, Any]:
     }
 
 
+def _opinions(card: dict[str, Any], behaviour: dict[str, Any]) -> list[str]:
+    """What the small auditor finds suspicious, unless the module passed its tests with no error on record and the
+    auditor itself says it matches its interface: then the remarks are guesses about constants and style (§XXX P3, 01:
+    four warnings on a verified `config.py` made the designer redo it) and only add noise."""
+    quiet = card["state"] == "verified" and not card["errors"] and behaviour.get("matches_interface") is not False and not card.get("lacks_planned")
+    return [] if quiet else behaviour.get("suspicious", [])
+
+
 def compact_audit(audit: dict[str, Any], budget: int = COMPACT_CHARS) -> dict[str, Any]:
     """The audit as the designer reads it: declarations and descriptions, never a body. Too long: what passed quietly
     shrinks first (its descriptions, then its declarations), what failed or is suspicious stays whole."""
@@ -131,7 +147,7 @@ def compact_audit(audit: dict[str, Any], budget: int = COMPACT_CHARS) -> dict[st
             "state": card["state"], "implemented": card["implemented"], "lines": card.get("lines"), "failures": card["failures"],
             "declares": [f["signature"] for f in card.get("functions", [])],
             "does": behaviour.get("functions", {}), "matches_interface": behaviour.get("matches_interface"),
-            "suspicious": behaviour.get("suspicious", []), "lacks_planned": card.get("lacks_planned", []),
+            "suspicious": _opinions(card, behaviour), "lacks_planned": card.get("lacks_planned", []),
             "uses": sorted(card["uses"]), "used_by": card["used_by"], "tests": card["tests"], "errors": card["errors"],
         }
         if not card["implemented"]:
