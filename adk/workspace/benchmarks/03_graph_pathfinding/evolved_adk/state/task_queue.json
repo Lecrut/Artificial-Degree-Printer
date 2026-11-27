@@ -1,1 +1,99 @@
-[]
+[
+  {
+    "task_id": "T1",
+    "description": "Literature review of recent related work and its bibliography (discoverer stage)",
+    "target_node": "thesis.md",
+    "assigned_agent": "discoverer_researcher",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T2",
+    "description": "Chapter 1 (Wprowadzenie i tło teoretyczne) in thesis.md: Przegląd algorytmów Dijkstry i A*, definicja heurystyki oktylowej oraz uzasadnienie wyboru wagi.",
+    "target_node": "thesis.md#ch1",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T3",
+    "description": "Implement heuristics.py: Implements the octile distance heuristic function required for the Weighted A* algorithm.. Implement every name its interface declares: octile_distance.",
+    "target_node": "heuristics.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T4",
+    "description": "Unit tests of octile_distance from heuristics.py in tests/test_heuristics.py, through the declared interface only.",
+    "target_node": "tests/test_heuristics.py",
+    "assigned_agent": "seed_tester",
+    "status": "FAILED",
+    "repair_attempts": 3
+  },
+  {
+    "task_id": "T5",
+    "description": "Implement weighted_a_star.py: Implements the proposed Weighted A* algorithm using the octile heuristic.. Implement every name its interface declares: search_weighted_astar.",
+    "target_node": "weighted_a_star.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T6",
+    "description": "Unit tests of search_weighted_astar from weighted_a_star.py in tests/test_weighted_a_star.py, through the declared interface only.",
+    "target_node": "tests/test_weighted_a_star.py",
+    "assigned_agent": "seed_tester",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T7",
+    "description": "Implement figures.py: Reads results.csv and generates comparative plots (nodes expanded, path cost, suboptimality gap) for the paper.. Implement every name its interface declares: generate_figures.",
+    "target_node": "figures.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T8",
+    "description": "Implement experiment.py: Runs the comparative experiment between Dijkstra and Weighted A* across multiple seeds, grid configurations, and weights, saving results to CSV.. Implement every name its interface declares: run_experiment.",
+    "target_node": "experiment.py",
+    "assigned_agent": "seed_coder",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T9",
+    "description": "Chapter 2 (Konfiguracja eksperymentu) in thesis.md: Opis generatora siatek, doboru parametrów (rozmiar, gęstość, liczba powtórzeń) oraz metryk oceny.",
+    "target_node": "thesis.md#ch2",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T10",
+    "description": "Chapter 3 (Wyniki i analiza) in thesis.md: Prezentacja wykresów porównawczych liczby rozwiniętych węzłów, kosztu ścieżki oraz suboptimality gap; dyskusja nad kompromisem między wydajnością a optymalnością.",
+    "target_node": "thesis.md#ch3",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "T11",
+    "description": "Chapter 4 (Wnioski) in thesis.md: Podsumowanie skuteczności Weighted A* w kontekście badanego problemu oraz kierunki dalszych prac.",
+    "target_node": "thesis.md#ch4",
+    "assigned_agent": "seed_writer",
+    "status": "DONE",
+    "repair_attempts": 0
+  },
+  {
+    "task_id": "R1_1",
+    "description": "Fix the missing import for pytest. The previous attempts failed because `pytest` was used in assertions (e.g., `pytest.approx`) but never imported. Add `import pytest` at the top of the file. Ensure all existing test functions remain unchanged, as they correctly verify the octile distance implementation.\n\nThe last verification of this file reported (all of it must be fixed):\n- Pytest failure:\n_____________________________________________________________________________________________________________________________ test_octile_distance_same_position_returns_zero _____________________________________________________________________________________________________________________________\ntests\\test_heuristics.py:7: in test_octile_distance_same_position_returns_zero\nassert octile_distance((5, 5), (5, 5)) == pytest.approx(0.0)\n^^^^^^\nE NameError: name 'pytest' is not defined\n___________________________________________________________________________________________________________________________________ test_octile_distance_diagonal_moves ___________________________________________________________________________________________________________________________________\ntests\\test_heuristics.py:12: in test_octile_distance_diagonal_moves\nassert octile_distance((0, \n- Ruff lint failure: tests\\test_heuristics.py:7:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:12:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:22:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:27:49: F821 Undefined name `pytest`\nFound 4 errors.",
+    "planned_description": "Fix the missing import for pytest. The previous attempts failed because `pytest` was used in assertions (e.g., `pytest.approx`) but never imported. Add `import pytest` at the top of the file. Ensure all existing test functions remain unchanged, as they correctly verify the octile distance implementation.",
+    "target_node": "tests/test_heuristics.py",
+    "assigned_agent": "seed_tester",
+    "status": "DONE",
+    "repair_attempts": 0
+  }
+]

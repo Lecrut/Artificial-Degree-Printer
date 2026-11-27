@@ -18,6 +18,7 @@ from adk.mocks import install_simulated_agents, uninstall_simulated_agents
 def _isolated_harness_logs(tmp_path_factory: pytest.TempPathFactory):
     os.environ["HARNESS_LOG_DIR"] = str(tmp_path_factory.mktemp("harness_logs"))
     os.environ["HARNESS_SKIP_PDF"] = "1"
+    os.environ["HARNESS_FORCE_TIER"] = "none"  # the tests describe the two-tier design; the single-tier switch has its own tests
     yield
 
 

@@ -7,9 +7,19 @@ Names written as `<...>` below are placeholders, never values to copy. `done_whe
 
 ---
 
+## INPUTS
+Other keys of the payload are described in the rules below, where they apply.
+- `user_prompt`: the request the whole project answers.
+- `task`: what this call is for (`description`, `target_node`, and for a repair `repair_of` and `repair_focus`).
+- `target_file`: the workspace file your answer is written to.
+- `existing_content`: what that file holds now (a long document: its outline and the part the task works on).
+- `rejected_answer`: only on the immediate retry: your answer the harness refused, with the `error` and an `instruction`; correct exactly that.
+- `previous_rejected_answer`: your refused answer of the previous attempt on this file, when it was refused twice.
+- `available_packages`: the import line of every installed package; nothing else can be imported.
+
 ## 1. TESTS
 1. **Tests against the contract**:
-   - The interface of the module under test is in `specification` (`symbols`: functions, `Class.method` with parameters, declared attributes; `import`: its import path). Test exactly that interface: never guess a method name, an argument or the order of a returned tuple.
+   - The interface of the module under test is in `specification` (`symbols`: functions, `Class.method` with parameters, declared attributes; `import`: its import path; `interface`: the planned source of the module with every type annotation, return type and docstring). Take types, shapes, return forms and conventions from `interface`, not from your guess. Test exactly that interface: never guess a method name, an argument or the order of a returned tuple.
    - Use only the classes, methods and functions listed in `specification` for the module under test. A name that is not there does not exist. An object's attributes are only its declared methods and annotated attributes; never assert on private or undeclared attributes (e.g. `model.mean_` when the interface does not declare `mean_`). Expected values come from what the docstrings of the interface say (ranges, shapes, conventions, edge cases); assert properties, and compute a reference value in the test itself instead of copying a number.
    - `previous_attempts` (when present) lists why earlier versions of this test failed.
    - Every new test file is first run against the stubs (all bodies `raise NotImplementedError`): there each test must fail only with `NotImplementedError`, or pass (e.g. a test of a declared constant). An `ImportError`, `NameError`, `TypeError` or fixture error on the stubs means the test itself is wrong, and it is returned to you at once.
@@ -21,6 +31,8 @@ Names written as `<...>` below are placeholders, never values to copy. `done_whe
    - Test modules live in `tests/` and are named `test_*.py` (pytest discovery). They import the modules under test at the top level.
    - Determinism comes from the seed constant declared in the interfaces; tests read settings from those constants instead of passing literal numbers.
    - Tests check behaviour (signatures, edge cases, invariants of the algorithm), never pasted result values.
+   - **Numpy values:** never put an array in `==`, `in` or an `if`: `assert array == value`, `assert x in [arrays]` and `if array:` raise `ValueError` (the truth value of an array is ambiguous). Compare with `np.array_equal(a, b)`, `np.allclose(a, b)`, `.item()` / `.tolist()`, `.shape`, or index down to a scalar first (`assert arr[0, 0] == 2`).
+   - **Imports:** import at the top of the test file every name the test uses (`numpy as np`, `pytest`, the module under test). A bare `np` or `gym` without an import is a `NameError` and the test is sent back to you.
 
 ---
 

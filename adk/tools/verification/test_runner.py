@@ -13,7 +13,7 @@ from typing import Any
 from adk.core.models import resolve_adk_path
 
 
-BUILTIN_VERIFICATION_MODULES = {"__init__.py", "test_runner.py", "ref_compiler.py", "contract_check.py"}
+BUILTIN_VERIFICATION_MODULES = {"__init__.py", "test_runner.py", "ref_compiler.py", "contract_check.py", "document_chars.py"}
 
 # Lint findings that mean the code cannot run: syntax errors, invalid comparisons/control flow, undefined names.
 BLOCKING_LINT_RULES = "E9,F63,F7,F82"
@@ -98,8 +98,6 @@ def _import_culprit(stderr: str, w_dir: Path) -> str | None:
 
 def run_isolated_tests(
     workspace_dir: str | Path = "workspace",
-    use_docker: bool = False,
-    docker_image: str = "python:3.12-slim",
     verification_dir: str | Path | None = None,
     scope: dict[str, list[str]] | None = None,
 ) -> dict[str, Any]:
@@ -174,36 +172,6 @@ def run_isolated_tests(
                     )
                 else:
                     errors.append(f"Import error in {py_f.name}: {imp_err}")
-
-    if use_docker and shutil.which("docker"):
-        cmd = [
-            "docker",
-            "run",
-            "--rm",
-            "-v",
-            f"{w_dir.resolve()}:/workspace",
-            "-w",
-            "/workspace",
-            docker_image,
-            "python",
-            "-m",
-            "unittest",
-            "discover",
-        ]
-        proc = _run_tool(cmd, PYTEST_TIMEOUT_S, "Docker test runner", errors)
-        pytest_passed = proc is not None and proc.returncode == 0
-        if proc is not None:
-            stdout_logs.append(proc.stdout + proc.stderr)
-            if not pytest_passed:
-                errors.append(f"Docker test runner failed: {proc.stderr.strip() or proc.stdout.strip()}")
-        return {
-            "status": "PASS" if pytest_passed else "FAIL",
-            "pytest_passed": pytest_passed,
-            "ruff_passed": True,
-            "custom_validators_passed": True,
-            "errors": errors,
-            "stdout": "\n".join(stdout_logs),
-        }
 
     test_files = [p for p in py_files if _is_test_file(p)]
     pytest_passed = True

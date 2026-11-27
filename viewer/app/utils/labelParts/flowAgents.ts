@@ -48,7 +48,7 @@ export const flowAgents: Record<string, FlowText> = {
   },
   task_planner: {
     label: 'task_planner',
-    note: 'Przeplanowanie nieudanych wierzchołków, gdy rundy przeprojektowania są wyczerpane albo ich wytyczne nie przeszły. Dostaje akta napraw (co próbowano i jaki był błąd) i zmienia zadania albo interfejsy tylko nieudanych fragmentów; zweryfikowanych nie rusza.',
+    note: 'Przeplanowanie nieudanych wierzchołków: pierwsza reakcja na koniec kolejki z porażkami, a potem znów, gdy rundy przeprojektowania są wyczerpane albo ich wytyczne nie przeszły. Dostaje akta napraw (co próbowano i jaki był błąd) i zmienia zadania albo interfejsy tylko nieudanych fragmentów; zweryfikowanych nie rusza.',
   },
   plan_change_guard: {
     label: 'plan_change_guard',

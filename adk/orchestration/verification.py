@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from adk.orchestration.failure_attribution import _is_test, _pytest_culprits, _suspect_test, _traceback_culprit
+from adk.orchestration.failure_attribution import _is_test, _pytest_culprits, _suspect_test, _traceback_culprit, _traceback_files
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.factual_audit import thesis_missing_chapters
 from adk.core.models import ValidationReport, read_json_state, write_json_state
@@ -18,6 +18,7 @@ from adk.tools.verification import (
     run_isolated_tests,
 )
 from adk.tools.verification.contract_check import check_import_contract
+from adk.tools.verification.document_chars import control_characters
 from adk.orchestration.common import (
     THESIS_FILE,
     _agent_for_path,
@@ -38,10 +39,12 @@ def _task_scope(node_path: str, written: set[str], h: Hypergraph | None) -> dict
         owners = {h.owner_of(p) for p in candidates} - {None}
         candidates |= {f for v in owners for f in h.files_of(v) if f.endswith(".py")}
         # A test of H the plan has not had written yet (`spec`: after a redesign its file is still the one of the old design)
-        # is not judged with the module; the tester's own task, which writes it, puts it in scope (§XXXI P5).
+        # is not judged with the module; the tester's own task, which writes it, puts it in scope (§XXXI P5). A test that
+        # `failed` is the tester's until it is rewritten: its old error must not take over a module's task (§XXXVII.3,
+        # `D1_10`: the `AssertionError` of `test_trainer.py` from `D1_7` sent the repair of `experiment.py` to the tester).
         candidates |= {
             t for v in owners for t in h.tests_of(v)
-            if t in candidates or t not in h.vertices or h.vertices[t].state != "spec"
+            if t in candidates or t not in h.vertices or h.vertices[t].state not in ("spec", "failed")
         }
     files = {p for p in candidates if p.endswith(".py") and not _is_test(p)}
     tests = {p for p in candidates if p.endswith(".py") and _is_test(p)}
@@ -92,7 +95,6 @@ class VerificationMixin:
         if code_checked:
             test_res = run_isolated_tests(
                 self.workspace_dir,
-                use_docker=False,
                 verification_dir=self.adk_root / "tools" / "verification",
                 scope=scope,
             )
@@ -151,7 +153,10 @@ class VerificationMixin:
         governs_results = is_data_scope or any(
             declared and node_path == declared.partition(":")[0] for declared in (declared_entry, declared_plots)
         )
-        if self._last_experiment_error and governs_results:
+        # A module the failed run passed through governs it too (§XXXVII.2, 01 of 26.11: `evaluator.py` was changed back to
+        # the call that broke the run, and its task was verified with `DATA_FAILED` on record).
+        if self._last_experiment_error and (governs_results or node_path in _traceback_files(self._last_experiment_error, self.workspace_dir)):
+            governs_results = True
             experiment_err = _clip_log(self._last_experiment_error)
             if experiment_err not in test_res["errors"]:
                 test_res["errors"].append(experiment_err)
@@ -164,6 +169,7 @@ class VerificationMixin:
             if missing or (degenerate := _degenerate_metrics(self.workspace_dir)):
                 test_res["errors"] += missing + extra + (degenerate if not missing else [])
                 test_res["status"] = "FAIL"
+                self._mark_results("stale", "METRICS_FAILED", only="verified")  # the file exists but is not what the plan declared (§XXXVII.2)
 
         if is_doc_scope and not is_final_gate:
             code_audit = {
@@ -210,8 +216,9 @@ class VerificationMixin:
                     compiled_docs[doc_file.name] = comp["compiled_text"]
                     if comp["status"] == "FAIL":
                         ref_errors.extend(comp["errors"])
+                    # §XXXII P2: a control character (a JSON-eaten backslash) fails the PDF with no line to repair.
+                    ref_errors.extend(texts.control_character_in_document(doc_file.name, *c) for c in control_characters(doc_file))
 
-                
                 if is_final_gate and getattr(self, "multi_cycle_waves", False):
                     md_thesis = self.workspace_dir / "thesis.md"
                     t_type_check = str(getattr(self, "planned_thesis_type", "inzynierska") or "inzynierska").strip().lower()
@@ -306,8 +313,9 @@ class VerificationMixin:
 
         # Enforce deterministic symbolic ground truth so small LLMs (e.g. gemma4:e2b) cannot ignore
         # real pytest/ruff/ref_compiler errors OR hallucinate failures when all deterministic checks pass.
-        # The approval of the defense is the red team's alone, counted by the harness below; a field of that name in an
-        # answer of the other auditors is nobody's decision (`_is_supervisor_pass` would read it as a veto).
+        # The approval of the defense is counted by the harness below, from the metric errors, and written into the red
+        # team's audit; no auditor's own answer decides it, and a field of that name in the answer of the other auditors
+        # is nobody's decision (`_is_supervisor_pass` would read it as a veto).
         for audit in (code_audit, symbolic_audit):
             audit.pop("gate_3_approved", None)
         deterministic_code_fail = bool(
@@ -374,6 +382,12 @@ class VerificationMixin:
                     break
             if failed_file is None and self._last_experiment_error and governs_results:
                 failed_file = _traceback_culprit(self._last_experiment_error, self.workspace_dir)
+                # What the linter finds in the task's own file comes first: the run of the experiment may be failing in a
+                # neighbour because of this very file (§XXXVII.3: nine `F821` in `experiment.py` hid behind a `TypeError`
+                # in `trainer.py` and the repair went there).
+                lint_named = [p for issue in test_res.get("lint_warnings") or [] for p in self._workspace_paths_in(str(issue))]
+                if node_path in lint_named and not _is_test(node_path):
+                    failed_file = node_path
             if failed_file is None:
                 # Pointer findings name the code file a pointer aims at, but the pointer is the writer's (X6).
                 named = [

@@ -178,6 +178,15 @@ class SpecGateMixin:
             if role == "O":
                 self._set_vertex_state(vertex, "verified", by="DATA_PRODUCED")
 
+    def _mark_results(self, state: str, by: str, only: str | None = None) -> None:
+        """The results the experiment writes (`O` of `R:run`) go to `state` (all, or only those in state `only`):
+        `verified` after a run only says it ran."""
+        h = self._project_h()
+        run = h.edges.get("R:run") if h else None
+        for vertex, role in (run.members.items() if run else []):
+            if role == "O" and (only is None or h.vertices[vertex].state == only):
+                self._set_vertex_state(vertex, state, by=by)
+
     def _ensure_fresh_results(self) -> None:
         """Φ_R freshness before the thesis is judged: results produced by code that has changed since are run
         again by the harness (running the experiment is not an edit — D3)."""
@@ -186,9 +195,7 @@ class SpecGateMixin:
         if run is None or run.fingerprint is None or run.fingerprint == run_fingerprint(self.workspace_dir, h):
             return
         self.logger.log_event("DATA_STALE", produced_by=run.fingerprint)
-        for vertex, role in run.members.items():
-            if role == "O":
-                self._set_vertex_state(vertex, "stale", by="DATA_STALE")
+        self._mark_results("stale", "DATA_STALE")
         self._refresh_experiment_after_code(str(h.producer("R:run")))
 
     def _change_spec(self, h: Hypergraph, rels: list[str], reason: str) -> list[str]:

@@ -106,7 +106,8 @@ def audit_facts(h: Hypergraph, workspace: Path, interfaces: dict[str, str]) -> d
             "uses": {m: list(names) for m, names in h.edges[f"I:{rel}"].spec.get("uses", {}).items()},
             "used_by": sorted(r for r in modules if rel in h.edges[f"I:{r}"].spec.get("uses", {})),
             "tests": [{"file": t, "state": h.vertices[t].state} for t in h.tests_of(rel) if t in h.vertices],
-            "errors": _error_lines(_latest_errors(vertex.history), workspace),
+            # A verified module passed after those errors: they are history and made it look suspect to the designer (§XXXVII.1).
+            "errors": [] if vertex.state == "verified" else _error_lines(_latest_errors(vertex.history), workspace),
         }
         if implemented:
             card.update(source_facts(source))

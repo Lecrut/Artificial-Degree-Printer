@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from adk.core.models import ModelTier
+from adk.core.models import ModelTier, forced_tier
 
 # The small model does the work. The large one takes over a vertex after the small model failed it this many
 # times (failed verifications and rejected answers, counted on the vertex in H over all its tasks; §XI B4).
@@ -23,6 +23,8 @@ def select_model_tier(failures: int = 0, *, kind: str | None = None, mechanical:
     Until 2026-11-14 the tier followed the node (`degree >= 2 or weight > 1.5`), which in any project with code,
     tests and a thesis meant LRM for almost every task and, after the weight escalation, for the rest of the run:
     83% of the 2026-11-13 run's model time went to the large model."""
+    if forced := forced_tier():
+        return forced
     failures = int(failures)
     if remediation:
         return "LRM"
@@ -36,4 +38,6 @@ def select_planning_tier(agent: str, *, attempt: int = 1, has_feedback: bool = F
     """Tier for a planning call. Only the first answer of a module author is the small model's: the outline it builds on
     is decided and so are the interfaces it depends on. Every correction, every critic and every decision about the
     architecture is the large model's (§XXIX D6)."""
+    if forced := forced_tier():
+        return forced
     return "SML" if agent == "plan_module" and attempt == 1 and not has_feedback else "LRM"

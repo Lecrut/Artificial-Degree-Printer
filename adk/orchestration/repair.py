@@ -241,7 +241,6 @@ class RepairMixin:
                         "cycle_index": state.replan_count,
                         "task_id": task.get("task_id"),
                         "target_node": node_id,
-                        "suggested_rule": remediation_directive,
                     },
                     tasks_in_memory=state.tasks,
                 )

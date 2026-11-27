@@ -166,6 +166,16 @@ def focus_symbols(findings: list[Finding], target: str) -> list[str]:
     return sorted({f.symbol for f in findings if f.file == target and f.symbol})
 
 
+def without_symbols(source: str, symbols: dict[str, str]) -> str:
+    """`source` with the code of each symbol replaced by a one-line comment: the repair already carries that code in
+    `repair_focus`, and the whole file next to it sent it twice (§XXXVIII.2). The rest of the file stays: imports, the
+    neighbours the symbol calls."""
+    for name, code in sorted(symbols.items(), key=lambda item: -len(item[1])):
+        if code:
+            source = source.replace(code, f"# the code of `{name}` is in `task.repair_focus.symbols`", 1)
+    return source
+
+
 def symbol_sources(workspace: Path, rel: str, symbols: list[str]) -> dict[str, str]:
     """Current source of each symbol (`name` or `Class.method`) of a workspace file."""
     path = workspace / rel

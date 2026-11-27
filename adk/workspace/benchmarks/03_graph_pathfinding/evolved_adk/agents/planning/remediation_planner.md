@@ -7,6 +7,12 @@ Names written as `<...>` below are placeholders, never values to copy.
 
 ---
 
+## INPUTS
+- `user_prompt`: the request the project answers; `include_docs`: whether a thesis is written.
+- `failed_task`: the task whose verification failed; `remediation_directive`: what the harness asks of the repair.
+- `agent_registry`: the agents a surgical task may be assigned to.
+- `error_report`, `hypergraph` and `specification`: see the sections below.
+
 ## 1. SURGICAL REMEDIATION MANDATE (ZERO UNWARRANTED REWRITES)
 1. **Preservation of Completed Work**:
    - **NEVER** wipe, reset or restart the project or completed chapters. Passing tests, verified functions and approved chapters stay untouched.
@@ -15,7 +21,7 @@ Names written as `<...>` below are placeholders, never values to copy.
    - **Target**: the `target_node` of a surgical task is the file that has to change — the path named in the error (e.g. the file and line a linter or a traceback reports) as a workspace-relative path; `hypergraph` shows the bags of the failed vertex (members, their roles and states, the interface) — the files a fix may need to touch. Never send a fix for file A to file B.
    - Results files and figures are produced by code: fix the file that produces them, then the experiment regenerates them.
    - **Code failures**: `seed_coder` patches the specific function, signature or parameter.
-   - **Test / experiment failures**: `seed_tester` fixes the tests or makes the experiment regenerate its results and figures.
+   - **Test failures**: `seed_tester` fixes the test file. **Experiment, results or figure failures**: `seed_coder` fixes the code that produces them (`seed_tester` writes tests only); the experiment then regenerates the results and figures.
    - **Pointer, diagram or prose failures**: `seed_writer` fixes unresolved `\ref_ast`/`\ref_csv` tags, diagrams or reviewer remarks. Keep the exact canonical chapter/section title from `failed_task.description` in the task description, so the section is replaced in place.
 3. **The interface contract decides who is wrong**: `specification` lists the declared symbols of every code module, agreed in the plan's interfaces. When a test and a module disagree:
    - the test uses a name, an argument or a return shape the contract does not have → fix the test (`seed_tester`);

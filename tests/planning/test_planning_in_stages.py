@@ -445,3 +445,46 @@ def test_the_outline_prompt_has_one_complete_answer_shape_for_writing_and_revisi
     shape = text.split("## OUTPUT", 1)[1]
     assert shape.index('"modules": [') < shape.index('"academic_blueprint"') < shape.index('"revision": {')
     assert "holds only `revision` is refused" in shape and "`previous_outline`" in text
+
+
+_STAR = {"modules": [
+    {"file": "env.py", "depends_on": []}, {"file": "agent.py", "depends_on": []}, {"file": "baseline.py", "depends_on": []},
+    {"file": "data.py", "depends_on": []}, {"file": "experiment.py", "depends_on": ["env.py", "agent.py", "baseline.py", "data.py"]},
+]}
+
+
+def test_the_outline_critic_is_told_by_code_which_module_is_a_hub_and_whether_its_dependencies_meet() -> None:
+    """§XXXIV, 01 of 2026-11-26: an environment, an agent and a baseline that only the experiment knew left all their wiring to
+    `experiment.py` (240 of 509 lines). The critic gets the counts from code; `structure_facts` does not decide anything."""
+    from adk.orchestration.plan_outline import structure_facts
+
+    facts = structure_facts(_STAR)
+    assert facts["direct_dependencies"] == {"env.py": 0, "agent.py": 0, "baseline.py": 0, "data.py": 0, "experiment.py": 4}
+    assert facts["possible_hubs"] == [{
+        "module": "experiment.py", "depends_on": ["env.py", "agent.py", "baseline.py", "data.py"], "its_dependencies_depend_on_each_other": False,
+    }]
+    layered = {"modules": [
+        {"file": "env.py", "depends_on": []}, {"file": "agent.py", "depends_on": []}, {"file": "baseline.py", "depends_on": ["env.py"]},
+        {"file": "trainer.py", "depends_on": ["env.py", "agent.py"]}, {"file": "experiment.py", "depends_on": ["trainer.py", "baseline.py"]},
+    ]}
+    assert structure_facts(layered)["possible_hubs"] == []  # nothing has four dependencies
+    meeting = {"modules": [*_STAR["modules"][:4], {"file": "experiment.py", "depends_on": ["env.py", "agent.py", "baseline.py", "data.py"]}]}
+    meeting["modules"][1] = {"file": "agent.py", "depends_on": ["env.py"]}  # the agent uses the environment: they meet elsewhere
+    assert structure_facts(meeting)["possible_hubs"][0]["its_dependencies_depend_on_each_other"] is True
+
+
+def test_the_outline_critic_receives_the_structure_of_the_outline_it_reviews(tmp_path: Path) -> None:
+    orch = _make_orch(tmp_path)
+    _result, calls = _run(orch, _base_plan(), {})
+    reviews = [p for a, p in calls if a == "outline_critic_guard"]
+    assert reviews and all(set(p["structure"]) == {"direct_dependencies", "possible_hubs"} for p in reviews)
+    assert reviews[0]["structure"]["direct_dependencies"].keys() == {m["file"] for m in reviews[0]["outline"]["modules"]}
+
+
+def test_the_prompts_ask_for_modularity_gently() -> None:
+    root = Path(__file__).resolve().parents[2] / "adk" / "agents" / "planning"
+    critic = (root / "outline_critic_guard.md").read_text(encoding="utf-8")
+    assert "`structure`" in critic and "`possible_hubs`" in critic and "Modularity, gently" in critic
+    assert "Raise it once" in critic and "do not raise it again" in critic and "one-time modularity suggestion of point 5" in critic
+    author = (root / "plan_outline.md").read_text(encoding="utf-8")
+    assert "Prefer a layered, modular design" in author and "This is a preference, not a rule" in author and "never a module for its own sake" in author

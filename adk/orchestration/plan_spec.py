@@ -12,8 +12,10 @@ from adk.hypergraph import Hypergraph, build_from_plan, save
 from adk.hypergraph.oracles import is_stub
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.interface_view import interface_view
-from adk.orchestration.plan_existing import _entrypoint
 from adk.tools.verification.contract_check import stub_source
+
+
+CRITIC_NOTE_CHARS = 1500
 
 
 def _is_proven_blocker(issue: dict[str, Any], targets: set[str]) -> bool:
@@ -73,7 +75,7 @@ class PlanSpecMixin:
             if isinstance(issue, dict):
                 text = texts.critic_finding(
                     str(issue.get("where") or ""), str(issue.get("problem") or ""), str(issue.get("fix") or ""), _affects(issue),
-                )
+                )[:CRITIC_NOTE_CHARS]  # one rambling note was 11k characters of the author's next payload (§XXXVIII.1)
                 (blockers if _is_proven_blocker(issue, targets) else warnings).append(text)
             elif str(issue).strip():
                 warnings.append(texts.critic_finding("", str(issue), ""))
@@ -85,14 +87,13 @@ class PlanSpecMixin:
     ) -> tuple[list[str], list[str]]:
         """(blockers, warnings) of the main critic on the fused plan: outline and every interface together. Its
         blockers name a module (that module is redesigned) or an outline field (the outline is revised)."""
-        blueprint = plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {}
         verdict = self._critic_review("plan_critic_guard.md", {
             "user_prompt": plan_payload.get("user_prompt", ""),
             "outline": plan_out.get("outline") or {},
             "interfaces": {rel: interface_view(src) for rel, src in interfaces.items()},
-            "entrypoint": _entrypoint(plan_out),
-            "academic_blueprint": {k: v for k, v in blueprint.items() if k not in ("literature_recon", "interfaces")},
             "review_history": history or [],
+            "available_packages": plan_payload.get("available_packages"),
+            "experiment_time_limit_s": plan_payload.get("experiment_time_limit_s"),
             "existing_files": plan_payload.get("existing_files") or {},
         }, plan_targets(interfaces))
         blockers, warnings = verdict or ([], [])

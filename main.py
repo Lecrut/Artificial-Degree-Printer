@@ -24,7 +24,8 @@ DEFAULT_BENCHMARK_TASK = TICTACTOE_BENCHMARK_PROMPT
 # Per-run state that must start clean for every scenario so evolution history, failure ledger,
 # HITL gate status, validation report and the task queue do not leak across scenarios.
 # The project hypergraph and the blueprint belong to one run's plan: they are removed, and the plan builds them anew.
-_PLAN_STATE_FILES = ("hypergraph.json", "academic_blueprint.json")
+# So are the outline the redesign revises and the two audits of the previous scenario's code and thesis.
+_PLAN_STATE_FILES = ("hypergraph.json", "academic_blueprint.json", "plan_outline.json", "implementation_audit.json", "factual_audit.json")
 
 
 def _reset_volatile_state(adk_root: str | Path | None) -> None:

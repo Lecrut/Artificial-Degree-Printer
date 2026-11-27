@@ -41,6 +41,13 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-25 | **Audyt XVII — `plan_module` piszący pełne implementacje i monopol LRM (79%–100% czasu) → §XXIX** | `plan_module` zwraca pełny kod funkcji w `"source"` (kasowany potem na dysku do stubów, ale wyciekający do `dependencies`, `seed_tester` i `spec_from_stub`); LRM zjada 79% czasu w 01 i 02 (sztywne `LRM` w całym planowaniu i `redteam_critic_guard`, nieodwracalny licznik `Vertex.failures` nabijany nawet udanym `BUILDING_RETRY`, brak rozróżnienia napraw mechanicznych) | **decyzje D5–D6 zatwierdzone; plan wdrożenia rozpisany w §XXIX.4 (do realizacji)** |
 | 2026-11-25 | **Audyt XVIII — przebieg 25.11 (`01`, `02`) po „better replanning”: konstrukcyjne wady przeprojektowania, atrybucja błędnego testu, odrzucenia `ast_editor` i zatrucie planu w `02` → §XXX** | 01 (63,7 min, 77% LRM): `REDESIGN_FALLBACK` 4/4 (wadliwy szablon JSON w `plan_outline.md`, halucynacje `implementation_auditor` 4B + ucięte błędy, przedwczesny start po fali 0; wdrożone `settled_decisions` psuje `keep`), 6 rund na `q_learning_agent.py` przez `ValueError` w ramce testu, 15× `BUILDER_ANSWER_REJECTED`; 02 (10,8 min, 92% LRM): `PLAN_REJECTED` (krytyk każe klasę wbrew `provides`, `AGENT_MUTATED` utrwala nakaz klas w `plan_module.md`, ślepa eskalacja bez uwagi krytyka) | **wdrożone: P2 (`VERDICT.findings`) oraz częściowe P1 (`settled_decisions` — wymaga korekty dla `keep`); plan napraw P1–P9 w §XXX.3** |
 | 2026-11-26 | **Audyt XIX — przebieg 01 z 25.11 wieczorem (125 min, po §XXX): błąd testu naprawiany przez kodera, projektant bez pamięci rund, krytycy w przeprojektowaniu, stare testy po przeprojektowaniu → §XXXI** | zadania `D1_1`, `R4_1`, `D2_1` padają na `tests/test_game.py -- IMPORT_OUTSIDE_SPEC` mimo dwóch przeprojektowań; naprawy testu idą do `seed_coder` i są odrzucane (6×); projektant w rundzie 1 wybiera napisy, w rundzie 2 tablice numpy; przeprojektowanie nr 2 (21 min) kończy się `REDESIGN_FALLBACK` po drugim cyklu krytyków; 62% czasu LLM to planowanie | **P1, P2, P5 wdrożone z testami (P3 i P4 świadomie nie, §XXXI), bez przebiegu na żywo** |
+| 2026-11-26 | **Audyt XX — przebieg 01 z 26.11 rano (33 min, `COMPLETED_WITH_GAPS`): porzucone zadanie po winie testu, znak sterujący w rozdziale → §XXXII** | `R2_1` (eksperyment) padło z winą `tests/test_environment.py`, test naprawiono (`R2_2`), a `experiment.py` został `impl` bez zadania; w `thesis.md` backspace z `$ar{r}$` w JSON-ie zatrzymał PDF (`invalid character`), trzy generacje `Q*_PDF` bez zmiany | **P1, P2 wdrożone z testami (§XXXII), bez przebiegu na żywo** |
+| 2026-11-26 | **Decyzja XXI — tylko duży model (`HARNESS_FORCE_TIER`, domyślnie `LRM`); limit rozmiaru pliku wdrożony i wycofany → §XXXIII** | `experiment.py` = 47% kodu projektu, przeplanowania zawsze w nim kończą; użytkownik: najpierw domknąć harness na dużym modelu, plik nie może mieć połowy kodu | **duży model wdrożony z testami; limit rozmiaru wycofany, zastąpiony modularnością zarysu (§XXXIV)** |
+| 2026-11-26 | **Decyzja XXII — modularność zarysu zamiast limitu: krytyk i autor szukają układu warstwowego, bez twardego limitu → §XXXIV** | graf 01 to gwiazda: `experiment.py` zależy od 4 modułów, które nigdzie się nie spotykają, więc całe łączenie ląduje w nim (240 z 509 linii); limit „4 połączeń” by go nie zmienił | **wdrożone z testami: `structure_facts`, uwaga krytyka zarysu (jednorazowa), wskazówka w `plan_outline.md`; bez przebiegu na żywo** |
+| 2026-11-26 | **Przegląd XXIII — co jest naprawione po przebiegu 01 z 26.11 i miękkie wytyczne dla testera (tablice numpy, importy) i autora modułu (zwykłe typy) → §XXXV** | tester 4B: `assert array == value` → `ValueError` (×4), `NameError: gym`; interfejs naśladujący `gym.Box`; brak nowszego przebiegu, więc §XXXII–§XXXIV niesprawdzone | **wdrożone: prompty `seed_tester.md`, `plan_module.md` + 2 testy; zakleszczenie `config`↔`figures` nadal otwarte** |
+| 2026-11-27 | **Przegląd XXIV — przebieg 01 z 26.11 wieczorem: poprawny test obwiniany 7 rund, rozdział z odwołaniem do zniknętego symbolu niewidoczny dla naprawy, brak podpowiedzi `typing` → §XXXVI** | `environment.py` nie ustawiał `_terminated`, a `verified` znaczyło tylko „kompiluje się”; 9 napraw tezy bez rozdziału 3; F821 `Dict`/`List`/`Any` ×3 | **wdrożone: `_suspect_test` symetrycznie, odwołanie w ustaleniu `ref_compiler`, `TYPING_NAMES` + 3 testy; reszta obserwacji bez zmian** |
+| 2026-11-27 | **Audyt XXV — pogłębiona analiza przerwanego przebiegu 01 z 26.11 wieczorem (piaskownica): sabotaż redesignu nr 2, pętla `experiment`↔`evaluator`, porwanie napraw `D1_10`, wojna promptów Gymnasium, luki w §XXXVI.2 i ciała w `task_planner` → §XXXVII** | redesign nr 2 mieli przez 23 min działające `verified` moduły (`implementation_audit` pokazuje stare błędy, `redesign_rules` puszcza puste `change`, `earlier_rounds` zachęca do kopiowania Rundy 1); ping-pong `R3_1`↔`R4_1` + przedwczesny `results.csv=verified`; `D1_10` traci 3/3 napraw na `trainer.py` i `failed` test; krytycy + `plan_evolution` mutują `plan_module.md` pod Gymnasium wbrew §XXXV.2; dziura w `_document_context` i brak `stale` rozdziałów po redesignie; pełne ciała i łamanie `TEST_OUTSIDE_SPEC` z `task_planner` | **wdrożone 2026-11-27 (§XXXIX.1, wszystkie 7 punktów; bez przebiegu na żywo)** |
+| 2026-11-27 | **Audyt XXVI — przegląd promptów i payloadów wszystkich 14 agentów na danych z żywego przebiegu + skan bezsprzecznego martwego kodu i jawnych sprzeczności (`P6` / `§XXXVIII.6`) → §XXXVIII** | `task_planner` 89k zn. (>40k duplikatów i historii `state.tasks`); `evolution_architect` 2×13,2k tego samego tekstu i brak wglądu w mutowany prompt; przechodnie `dependencies` w `plan_module` (pułapka `USES_UNDECLARED`); pisarze dostają same klucze BibTeX (145 zn., zero tytułów/abstraktów) i brak `thesis_statement`, za to pakiety Pythona i zakazane `may_cite`; `seed_coder` traci własny `interface` po nadpisaniu stuba; 9 z 14 agentów poza `test_prompt_consistency.py`; martwy kod i sprzeczności (`document_chars.py` poza `BUILTIN_VERIFICATION_MODULES`, `print_summary.py`, `TaskItem`, `use_docker`, `csv_content`/`plot_script`/`bibtex_entries`, W4, `remediation_planner.md`, `_reset_volatile_state`) | **wdrożone 2026-11-27 P1–P6 w całości (§XXXIX.2, §XXXIX.4); bez przebiegu na żywo** |
 ---
 
 # Audyt I — 2026-11-08: Logi benchmarkowe 01 i 02, fiksacja na monolicie "core.py", struktura pętli błędów i ziarnistość zadań
@@ -4166,10 +4173,6 @@ Przegląd kodu etapów, wszystkich siedmiu promptów planowania (porównanie z �
 |---|---|---|---|
 | 1 | **dziesięć wywołań modelu bez osłony przed timeoutem** (`_call_agent` w budowie, auditorach, ewolucji, naprawach, `plan_change`, `fragment_replan`); `call_agent` łapał wyjątek, logował i **rzucał dalej**, wbrew własnemu komentarzowi | jedno wolne wywołanie kończyło cały przebieg (01, 21.11 — „CRASHED”); osłona z §XV.11 działała tylko w planowaniu | `core.llm.call_agent`: `TimeoutError`/`OSError` → `{"status": "error", "error", "output": {}}` po `fail_call`; wywołujący (`["output"]` + `.get`) znoszą pusty wynik; `_call_planning_agent` bez własnego `try`; błąd programistyczny dalej leci |
 | 2 | `fragment_replan` wołał `task_planner` bezpośrednio | j.w. dla przeplanowania | idzie przez `_call_planning_agent`; ładunek dostał `available_packages` (reguła „tylko dostępne pakiety” w prompcie nie miała pokrycia w danych) |
-| 3 | **`task_planner.md` miał ~140 linii o pisaniu całego planu**, pętli łatek i krytyku, których po §XVI nie ma — a służył tylko przeplanowaniu | model dostawał sprzeczne polecenia (`current_plan` jako plan do łatania vs `repair_dossier`) | przepisany na zwarty prompt przeplanowania: wejścia, diagnoza z `history`, reguły interfejsu (te same co `plan_module.md`), wyjście `tasks`/`interfaces`/`gaps` |
-| 4 | **rozdziały o metodzie szły przed kodem** (podział tylko po `RESULTS_WORDS`: wyniki po, reszta przed) | pisarz rozdziału 3–4 nie miał jeszcze symboli do cytowania (`may_cite` puste); wcześniej planista stawiał je po kodzie (Increment 2) | `plan_tasks._NEEDS_NO_CODE`: przed kodem tylko wstęp/cel/literatura/stan wiedzy; reszta po kodzie |
-| 5 | moduł, który zgłosił `needs`, po rozszerzeniu zależności **tracił własny szkic** i projektował od zera, nie wiedząc, o co prosił | zbędna runda i utrata pracy | `_settle` pamięta szkic (`drafts`) i oddaje go jako `previous_source` z `needs_granted` |
-| 6 | istniejący moduł wymieniony tylko jako zależność nie był pokazywany autorowi modułu | autor nie widział API, na którym ma budować (03) | `dependencies` zawiera też `existing` |
 | 9 | odpowiedzi modelu inne niż idealny JSON: `depends_on: "a.py"` (łańcuch → iterowanie po znakach!), `modules` jako słownik, `source` w płocie ``` albo jako jedna linia z `\n` | fałszywe zależności `a`, `.`, `p`, `y`; moduły odrzucane przez parser | `plan_outline._strings`, `outline_of` przyjmuje słownik, `plan_stages._module_source` zdejmuje płot i normalizuje `\n` (jak bramka zapisu) |
 | 10 | konsola: „Odpowiedź z polami: modules, …” dla agentów etapów | brak podglądu decyzji | `summarize_agent_decision`: `moduły: N`, `interfejs: N linii` |
 | 11 | `scripts/analyze_run.py` liczył agentów etapów jako „first build” | fałszywa statystyka pracy | `_PLANNING_AGENTS` rozszerzony |
@@ -5088,3 +5091,347 @@ W `01_rl_tictactoe` przeprojektowanie uruchomiło się **4 razy** (8 wywołań L
 - **Ponowne otwieranie modułów w planie początkowym:** `PLAN_MODULE_REOPENED` 33× w całym przebiegu; po P3/P4 powinno spaść, zmierzyć.
 - Kopia logów po ręcznym zatrzymaniu: przerwanie przez `Ctrl+C` zapisuje wyniki i `evolved_adk/`; zabicie procesu nie.
 - **Pochodzenie dowodów (korekta 2026-11-26):** liczby czasu, `earlier_rounds`, `D1_1`/`R4_1`/`D2_1` i zakleszczenie pochodzą z bieżącego przebiegu (`_evolved_adk_state/…/events.jsonl`, 21:02–23:09 UTC). Diagnoza §XXX (P1–P9c) pochodziła z przebiegu 17:49, a przebieg 21:02 już ją zawierał; tu widać, co z niej zostało (naprawa testu przez kodera, stare testy). Zdanie o 24.11 przy `FINAL_ROUNDS` było z tekstu audytu, nie z logu.
+
+
+---
+
+# §XXXII — 2026-11-26: przebieg 01 z 26.11 rano (po §XXXI; `COMPLETED_WITH_GAPS`, 33 min) — porzucone zadanie po winie testu i znak sterujący w rozdziale (P1, P2 wdrożone)
+
+Źródło: `adk/workspace/benchmarks/01_rl_tictactoe/logs/events.jsonl` (418 zdarzeń, 08:38–09:11 UTC) i `evolved_adk/state/*.json` tego przebiegu; przebiegu 02 nie uruchomiono. Wszystkie liczby poniżej pochodzą z tego pliku.
+
+## §XXXII.1. Stan przebiegu
+
+- 33 min i 97 wywołań LLM (32 min), przy 125 min w poprzednim; planowanie 13,3 min (41%), pierwsze budowanie 8,6 min, naprawy 8,2 min. Przeprojektowanie nie ruszyło ani razu (po 2 rundach przeplanowania nie było wierzchołka `failed`), więc P2 i P5 z §XXXI nie zostały jeszcze sprawdzone w praktyce.
+- **Potwierdzone jako działające:** `VERDICT.findings` mówi, co padło (`tests/test_environment.py > test_tic_tac_toe_env_init, line 10: assert env.observation_space.high[0] == 2 -- ValueError: The truth value of an array…`); porażki plików testów idą do `seed_tester` (`T3`, `T7`, `R2_1` z `failed_file = tests/test_environment.py`), nie ma ani jednego `CODER_TEST_WRITE_SKIPPED` ani odrzucenia zapisu testu przez kodera (w poprzednim przebiegu 10 i 6).
+- Wynik: 16 z 17 wierzchołków `verified`; `experiment.py` w stanie `impl`; PDF nie powstał.
+
+## §XXXII.2. Co było nie tak i co wdrożono
+
+**P1. Zadanie, które upadło z winy testu, nie wracało po naprawie testu (WDROŻONE).** `R2_1` (eksperyment) po 3 próbach padło z `failed_file = tests/test_environment.py`; `_mark_failed` oznaczyło wierzchołek testu jako `failed`, a zadanie dostało `FAILED`, bo odroczenie (`TASK_DEFERRED`) wymaga, żeby `readiness` wierzchołka zadania czekała na obwinionego, a eksperyment nie zależy od wierzchołka testu. Przeplanowanie naprawiło test (`R2_2` → `verified`, 30,3 min), ale `experiment.py` został w stanie `impl` bez zadania w kolejce (przeplanowanie obejmuje tylko `failed`), więc przebieg skończył się z nim jako luką. *Naprawa:* zadanie zapamiętuje `blamed` (obwiniony wierzchołek), a `schedule._requeue_blamed` na końcu kolejki wraca do `TODO` (raz, z zerem prób, `TASK_REQUEUED`), gdy obwiniony jest `verified`, a własny wierzchołek zadania nie jest ani `verified`, ani `failed`. Testy: `test_a_task_that_failed_for_another_vertexs_fault_runs_again_once_that_vertex_is_repaired`, `test_a_task_is_not_run_again_while_the_vertex_at_fault_is_still_broken`, `test_a_vertex_that_was_verified_meanwhile_or_failed_itself_is_left_alone`.
+
+**P2. Znak sterujący w rozdziale zatrzymuje PDF i nikt go nie widzi (WDROŻONE).** W `thesis.md` (rozdział 1, linia 4) stoi `$\x08ar{r}$`: JSON odczytał `\b` z `\bar` jako backspace. XeTeX kończy błędem `thesis.compiled.tex:65: Text line contains an invalid character`, bez wskazania źródła; harness trzy razy przepisał rozdział 1 (`Q1_PDF`–`Q3_PDF`), audyt się nie zmienił i przebieg zakończył się `AUDYT PLIKOW SIE NIE ZMIENIL`. Weryfikacja rozdziałów przechodziła (`PASS`) z tym znakiem. *Naprawa:* `tools/verification/document_chars.control_characters` i `agent_texts.control_character_in_document` — każdy znak sterujący poza tabulatorem, nowym wierszem i CR w `*.md`/`*.tex` jest ustaleniem weryfikacji dokumentu (`CONTROL_CHARACTER [thesis.md]: line N … write every LaTeX backslash doubled`), więc pada zadanie rozdziału, który go wpisał. Testy: `tests/verification/test_document_control_characters.py`.
+
+## §XXXII.3. Nie zrobione / do obserwacji
+
+- **Tester na modelu 4B nie umie napisać asercji o tablicy numpy** (`ValueError: The truth value of an array…` w `T3` trzy razy i w `R2_2`, w końcu `verified` po 5 porażkach wierzchołka). Przyczyna po stronie planu: interfejs `environment.py` odtwarza `gym` (`observation_space.high[0]`, `Box`) dla kółka i krzyżyk, a test patrzy na tablicę zamiast skalaru. Atrybucja do testera działa (P6 z §XXX); pozostaje jakość testu. Pomysł: prompt testera z regułą o porównaniach tablic (`np.array_equal`, `.item()`), albo krytyk modułu pyta, czy `gym` jest potrzebny.
+- **Koder 4B napisał w `environment.py` bezsensowne `run_episode`** (`isinstance(agent_p1(step), int) …`, nazwy `step`, `x` bez definicji; trzy werdykty `F821`) i dopiero po dwóch naprawach dostał poprawny kod; model niższej klasy, bez winy harnessu.
+- **Przebieg 02 nie ruszył** (zadanie 01 zakończone, przebieg zatrzymany), więc poprawka §XXX P8 (plan 02) nie była dziś sprawdzona.
+
+
+---
+
+# §XXXIII — 2026-11-26: decyzja użytkownika — na razie tylko duży model (wdrożone); limit rozmiaru pliku wdrożony i wycofany
+
+Źródło decyzji: rozmowa po przebiegu 01 z 26.11 (§XXXII). `experiment.py` miał 240 z 509 linii kodu (47%), a pozostałe moduły 9–95; każde przeplanowanie kończyło się w tym pliku. Użytkownik: najpierw domknąć harness na dużym modelu, potem sprawdzać go na mniejszych; żaden plik nie może mieć połowy kodu projektu.
+
+## §XXXIII.1. Tylko duży model, odwracalnie
+
+- `core.models.forced_tier()` czyta `HARNESS_FORCE_TIER` (`SML` | `LRM` | `none`); **bez zmiennej = `LRM`**. Używają jej `complexity_router.select_model_tier` / `select_planning_tier` (logi zadań pokazują prawdziwy poziom) i `core.llm.call_agent` (jedno miejsce, przez które przechodzi każde wywołanie, także te, które same wołają `model_tier="SML"`: audytorzy, `implementation_auditor`).
+- Dwa poziomy zostają w kodzie, w `.env` i w routerze: `HARNESS_FORCE_TIER=none` przywraca projekt „SML pracuje, LRM eskaluje”; `SML` wymusza jeden mały poziom (przyszły eksperyment na mniejszych modelach). `.env` nie był ruszany; opis zmiennej jest w `.env.example`. Testy ustawiają `none` w `tests/conftest.py`, bo opisują projekt dwupoziomowy.
+- Testy: `test_until_the_harness_is_closed_every_call_gets_the_large_model`, `test_a_call_that_names_the_small_model_itself_follows_the_switch` (`tests/orchestration/test_model_tier_routing.py`).
+- Zastępuje to decyzję z 2026-11-14 („nie przełączać wszystkiego na duży model”): tamta dotyczyła ukrycia prędkości kosztem celu badawczego, ta jest świadomym, tymczasowym etapem.
+
+## §XXXIII.2. Limit rozmiaru pliku — WYCOFANY tego samego dnia
+
+Wdrożony i usunięty w ciągu jednego dnia: użytkownik chciał ograniczyć **zależności** pliku (jeden plik główny powiązany ze wszystkim), nie jego rozmiar, i uznał limit rozmiaru za niepotrzebną zależność i blokadę. Usunięte: `orchestration/size_gate.py`, wpięcie w `verification.py`, teksty `MODULE_TOO_LARGE`, wiersze o rozmiarze w `plan_outline.md` i `seed_coder.md`, `tests/verification/test_module_size.py` oraz odchudzenie fikstury `FEDERATED_CORE_CODE` (przywrócona). Przed usunięciem pokazał użyteczną rzecz: bramka rozmiaru złapała moduł 196 linii w mocku zadania 4, więc liczenie linii działało; nie zostaje nic z tego w kodzie.
+
+## §XXXIII.3. Nie zrobione (rozważania z rozmowy, bez decyzji)
+
+- Eksperyment generowany przez harness z funkcji `trial(seed) -> dict` per metoda; słownik typów w sygnaturach publicznych (zwykłe typy zamiast tablic numpy dla małych dziedzin); wygenerowane testy kontraktowe; limity liczby funkcji i długości docstringów na szkicu. Zamiast limitu rozmiaru: modularność zarysu, §XXXIV.
+
+---
+
+# §XXXIV — 2026-11-26: modularność zarysu — krytyk i autor szukają układu warstwowego, bez twardego limitu (wdrożone)
+
+**Dane (hipergraf przebiegu 01 z 26.11):** graf zależności to gwiazda: `experiment.py` zależy od `agent`, `baseline`, `config`, `environment` (4), a te cztery nie zależą od niczego i nie spotykają się nigdzie poza eksperymentem; `figures.py` jest odłączony. Cała logika łączenia (pętla gry, kodowanie stanu, treningi, ewaluacja, agregacja) musiała więc trafić do `experiment.py` (240 z 509 linii). Limit „maksymalnie 4 połączenia” niczego by tu nie zmienił (eksperyment ma dokładnie 4). Reguła kodu o zasięgu punktu wejścia jest przechodnia (`plan_outline.outline_violations`), więc warstwy są dozwolone, a gwiazda jest wyborem planisty. `config.py` nie jest wymuszany przez harness (może go nie być).
+
+**Decyzja użytkownika:** bez twardego limitu; krytyk ma próbować znaleźć jak najbardziej modularny układ, nienachalnie i nie za wszelką cenę.
+
+**Wdrożone:**
+- `plan_outline.structure_facts(outline)` liczy kodem `direct_dependencies` każdego modułu i `possible_hubs` (moduły z ≥ `HUB_DEPENDENCIES` = 4 bezpośrednimi zależnościami, z flagą `its_dependencies_depend_on_each_other`: czy te zależności zależą od siebie gdziekolwiek indziej). To fakty, nic nie blokują; idą w ładunku krytyka zarysu (`structure`, `plan_stages._outline_stage`).
+- `outline_critic_guard.md`, punkt 5 „Modularity, gently”: krytyk szuka najbardziej modularnego układu zgodnego z zadaniem; dla hubu, którego zależności się nie spotykają, proponuje **jeden** moduł pośredni (trainer, evaluator, etap potoku) i zgłasza to **raz** (jako jedyna blokada tego rodzaju: inaczej autor w ogóle by tego nie usłyszał, bo uwagi nieblokujące są tylko logowane); jeśli `review_history` pokazuje, że już zgłosił, nie powtarza, a gdy zależności się spotykają albo warstwa tylko przekazywałaby wywołania, milczy.
+- `plan_outline.md`: „Prefer a layered, modular design” — około trzech zależności na moduł, współpraca dwóch modułów dostaje własny moduł, warstwa tylko tam, gdzie ma własną pracę (preferencja, nie reguła).
+- Testy w `tests/planning/test_planning_in_stages.py`: fakty dla gwiazdy, układu warstwowego i spotykających się zależności; ładunek krytyka zawiera `structure`; treść promptów.
+
+**Do obserwacji:** czy po zmianie zarys przestaje być gwiazdą (nowy moduł pośredni w `PLAN_OUTLINE_CHECKED`), czy krytyk nie dokłada warstw bez pracy, ile rund zarysu to kosztuje. Nie wdrożone (bez decyzji): eksperyment generowany przez harness z `trial(seed)` per metoda, słownik typów w sygnaturach publicznych.
+
+---
+
+# §XXXV — 2026-11-26 wieczorem: przegląd przebiegu 01 z 26.11 rano — co naprawione, co nie, i miękkie wytyczne dla testera i autora modułu (wdrożone)
+
+Nowszego przebiegu niż 01 z 26.11 (08:38–09:11 UTC) nie ma: żaden proces nie działa, `benchmarks/*/logs` i `_evolved_adk_state/*/workspace/logs` mają te same daty. Zmiany z §XXXII–§XXXIV (kolejkowanie po winie testu, znak sterujący, tylko duży model, modularność zarysu) **nie były jeszcze sprawdzone na żywo**.
+
+## §XXXV.1. Stan wad z przebiegu 01 z 26.11
+
+| Wada | Stan |
+|---|---|
+| `experiment.py` w `impl` po naprawie testu (zadanie nie wracało) | naprawione, §XXXII P1 (`_requeue_blamed`) |
+| backspace w rozdziale zatrzymuje PDF | naprawione, §XXXII P2 (`CONTROL_CHARACTER`) |
+| cały eksperyment w jednym pliku (gwiazda zależności) | częściowo, §XXXIV (fakty o hubach, jednorazowa uwaga krytyka, wskazówka dla autora zarysu) |
+| tester pisze `assert array == value` (`ValueError` w `T3` ×3, `R2_2`; wcześniej `x in [tablic]`) i bare `gym` bez importu (`NameError`) | **naprawione miękko tutaj** (prompt testera) |
+| interfejs naśladujący framework (`observation_space.high[0]`, `Box`) i tablice numpy jako stany (klucze niehaszowalne 25.11, nieczytelne testy 26.11) | **naprawione miękko tutaj** (prompt autora modułu) |
+| koder 4B pisze bezsensowny `run_episode` (`F821`) | bez zmian w harnessie; jakość modelu, adresuje przejście na LRM (§XXXIII) |
+| przeprojektowanie ani razu nie ruszyło | do sprawdzenia w następnym przebiegu (§XXXI P2, P5) |
+| zakleszczenie `config.py` ↔ `figures.py` (§XXXI.3) | **niezamknięte**: wymaga otwierania zostawionego modułu w trakcie `_settle` bez żywego przypadku do odtworzenia; nie ruszano |
+
+## §XXXV.2. Wdrożone (miękkie wytyczne, zgodnie z preferencją użytkownika: bez twardych blokad)
+
+- `seed_tester.md` (reguła 2): wartości numpy nigdy w `==`, `in`, `if` (`np.array_equal`, `np.allclose`, `.item()`, `.tolist()`, `.shape`, indeksowanie do skalaru) oraz import na górze pliku każdej używanej nazwy.
+- `plan_module.md`: „Plain types first” — w publicznych sygnaturach małej dziedziny zwykłe typy (`tuple[int, ...]` dla planszy 3x3, `int` dla akcji), numpy tylko dla pracy numerycznej, bez kopiowania API frameworku (gym, `Box`), chyba że badanie tego chce.
+- Testy: `test_the_tester_is_told_how_to_compare_numpy_values_and_to_import_what_it_uses`, `test_the_module_author_prefers_plain_types_to_arrays_and_framework_apis` (`tests/agents/test_prompt_consistency.py`).
+
+## §XXXV.3. Do sprawdzenia w następnym przebiegu (01 i 02 na `HARNESS_FORCE_TIER`, domyślnie LRM)
+
+1. Czy zarys przestaje być gwiazdą (nowy moduł pośredni w `PLAN_OUTLINE_CHECKED`) i czy krytyk nie dokłada warstw bez pracy.
+2. Czy zadanie po winie testu wraca (`TASK_REQUEUED`) i czy `experiment.py` kończy `verified`.
+3. Czy w testach znikają `ValueError` o tablicach i czy interfejsy używają zwykłych typów.
+4. Czy 02 przechodzi planowanie (§XXX P8), czy pojawia się `REDESIGN_*` i `earlier_rounds`, ile trwa całość (cel: poniżej 33 min z 26.11, bo duży model jest wolniejszy na wywołanie, ale wywołań ma być mniej).
+
+
+---
+
+# §XXXVI — 2026-11-27: przebieg 01 z 26.11 wieczorem (LRM, przerwany po ~3 h) — trzy pętle harnessu (wdrożone)
+
+Źródło: żywe logi `_evolved_adk_state/01_rl_tictactoe/workspace/logs/` (`events.jsonl`, `agent_trace.jsonl`), czytane narzędziem `scripts/task_timeline.py` (dopisane tego dnia). Przebieg: 268 wywołań LLM, 20 zadań DONE, 14 FAILED, 4 przeplanowania, 2 redesigny (jeden zastosowany), `HARNESS_BUG_REPORTED`. Zadania są mniejsze i jest ich więcej (§XXXIV działa), ale przebieg się nie kończył z trzech przyczyn po stronie harnessu. Zakres tego wpisu to **tylko te trzy**; reszta obserwacji jest niżej, bez zmian w kodzie.
+
+## §XXXVI.1. Poprawny test obwiniany przez 7 rund (`_suspect_test`)
+
+- **Objaw:** `test_get_legal_actions_terminated_game` padał w T3, R1_2, R1_1, D1_2, R2_2, R3_2, R4_2 (piętnaście werdyktów); tester przepisywał test, który był poprawny.
+- **Przyczyna kodu:** `environment.py:step` zwraca `terminated=True`, ale nie ustawia `self._terminated`, więc `get_legal_actions()` po wygranej zwracało `[0, 1]` (odtworzone lokalnie partią `legal[-1]`).
+- **Przyczyna harnessu:** `_suspect_test` (§XIV Q2) obwinia test, gdy moduł jest `verified` a test nowy. Ale `verified` pierwszego zadania modułu znaczy tylko „kompiluje się, importuje, ma nazwy planu”; żaden test zachowania jeszcze nie przeszedł. Tester dostawał w naprawie `test_contradicts_verified_module` („environment.py already gives every result its specification examples require… change nothing in the module”), czyli fałszywą wskazówkę.
+- **Poprawka:** reguła symetryczna do §XXX P6. Ten sam błąd (te same linie `E …`) tego samego testu, który przetrwał dwie różne wersje **testu** (`version` w historii wierzchołka testu), oznacza, że winny jest moduł: `_suspect_test` zwraca `False`, a komunikat o podejrzanym teście nie trafia do testera. Reguła §XIV Q2 pozostaje dla pierwszej próby.
+- **Test:** `test_a_test_whose_error_survives_two_rewrites_of_the_test_is_not_the_suspect_even_against_a_verified_module` (`tests/verification/test_culprit_attribution.py`; jedna wersja i inny błąd za każdym razem nadal czynią test podejrzanym).
+- **Nie zrobione:** R1_1 dostał opis zadania o zawieszeniu w `_check_winner` z poprzedniej rundy (ostatni zapis historii modułu), a nie o bieżącym teście. Nie ruszano.
+
+## §XXXVI.2. Rozdział z odwołaniem do zniknętego symbolu niewidoczny dla naprawy (9 nieudanych napraw tezy)
+
+- **Objaw:** D1_11–D1_13 (rozdziały 4–6) padały 9 razy z „Symbol 'evaluate_games' not found in 'evaluator.py'”; odpowiedzi pisarza nie zawierały tej nazwy, a `may_cite` miało poprawny `evaluate_symmetric`.
+- **Przyczyna:** rozdział 3 (T16) powstał przed redesignem i cytował `evaluate_games` i `run_symmetric_evaluation` (zmienione przez redesign). Weryfikacja sprawdza całą tezę, a komunikat kompilatora odwołań nie zawierał samego odwołania, więc w opisie naprawy nie było `\ref_ast{…}`. `_document_context` pokazuje rozdziały zawierające odwołania z opisu zadania, a bez nich ogon dokumentu (600 znaków): pisarz nie widział rozdziału 3.
+- **Poprawka:** `ref_compiler` dołącza odwołanie do ustalenia (`\ref_ast{file:symbol}: …`, tak samo `\ref_csv`, `\ref_fig` przy nieznalezionym celu). Istniejący mechanizm pokazuje wtedy rozdział, który je zawiera; ustalenie nadal jest rozpoznawane jako ustalenie odwołań (`_is_pointer_finding`).
+- **Test:** `test_a_pointer_finding_names_the_pointer_so_the_repair_sees_the_chapter_that_holds_it` (`tests/verification/test_symbolic_pointers_and_citations.py`).
+- **Nie zrobione:** rozdziały cytujące zmieniony symbol nadal nie wracają same w stan `stale` po redesignie; naprawa teraz widzi rozdział, ale to nadal ona go odnajduje.
+
+## §XXXVI.3. Brak podpowiedzi importu dla nazw z `typing`
+
+- **Objaw:** `experiment.py` używał `Dict`, `List`, `Any` bez importu; trzy naprawy D1_10 powtarzały F821 bez podpowiedzi (podobnie `Tuple` w teście R2_1).
+- **Przyczyna:** `import_hints.importable_names` zna kanoniczne pakiety i symbole planu, ale nie `typing`.
+- **Poprawka:** `TYPING_NAMES` (`Any`, `Callable`, `Dict`, `Iterable`, `List`, `Literal`, `Mapping`, `Optional`, `Sequence`, `Set`, `Tuple`, `Union`) jako `from typing import X`. Nadal tylko podpowiedź dla autora; harness niczego nie wstawia (D2/D3).
+- **Test:** `test_an_undefined_annotation_name_gets_its_typing_import_as_a_hint` (`tests/building/test_what_a_builder_is_shown.py`).
+
+## §XXXVI.4. Obserwacje bez zmian w kodzie
+
+- D1_10: pierwsze zlecenie naprawy F821 w `experiment.py` poszło do `trainer.py` (`failed_file=trainer.py`); prawdopodobnie ustalenie kontraktu miało pierwszeństwo przed ruffem w wyborze pliku. Nie zbadane do końca.
+- Czas: planowanie i research to 49% (59 min), `plan_module` 74 wywołania; krytyk zarysu raz z `done_reason: length` (252 s).
+- `TASK_REQUEUED` nie wystąpił (brak takiego przypadku), błędów `ValueError` o tablicach w testach nie było.
+- Zakleszczenie `config.py` ↔ `figures.py` (§XXXI.3) nadal otwarte.
+
+
+---
+
+# §XXXVII — 2026-11-27: pogłębiona analiza przerwanego przebiegu 01 z 26.11 wieczorem (piaskownica po utracie zasilania) — siedem dalszych błędów konstrukcyjnych harnessu (do decyzji, nic niewdrożone)
+
+Źródło: pełny stan i logi z piaskownicy `adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/` (`workspace/logs/{events.jsonl,agent_trace.jsonl}`, `state/{task_queue,hypergraph,implementation_audit,academic_blueprint,evolution_history}.json`, zmutowane `agents/**/*.md`, pliki `workspace/*.py` i `workspace/tests/*.py`). Przebieg trwał `20:57:42 → 23:07:19 UTC` (280 startów LLM na `qwen3.6:35b`, 121,4 min czasu modelu) i urwał się na braku prądu w trakcie wywołania `#280 plan_module` w 2. rundzie przeprojektowania.
+
+Poza trzema poprawkami wdrożonymi w §XXXVI, przebieg ujawnił siedem poważniejszych usterek harnessu (w tym lukę w poprawce z §XXXVI.2 oraz pełne wyjaśnienie zagadki `D1_10` z §XXXVI.4).
+
+## §XXXVII.1. Sabotaż przeprojektowania nr 2: 23 minuty mielenia od zera zweryfikowanych modułów
+
+- **Objaw:** O `22:44:46` ruszył Redesign 2 dla `failed: ["evaluator.py", "tests/test_environment.py", "thesis.md#ch4", "thesis.md#ch5", "thesis.md#ch6"]`. W tym momencie `q_agent.py` + `tests/test_q_agent.py` (od `22:11:56`) oraz `trainer.py` + `tests/test_trainer.py` (od `22:39:05`) były w pełni `verified`. Mimo to projektant w `REDESIGN_GUIDELINES` (`22:47:33`) oznaczył **5 z 7 modułów jako `"status": "change"`**, kopiując **słowo w słowo** uzasadnienia `why` z Rundy 1 sprzed godziny (`"Was a stub..."` dla `trainer.py`/`evaluator.py`/`experiment.py`, `"Fixes AttributeError ... _states"` z `R1_4` dla `q_agent.py`), podczas gdy `PLAN_OUTLINE_REVISED` odnotował **`changed: [], removed: []`**. Aż do utraty zasilania (`23:07:19`) harness od nowa projektował interfejsy działających modułów.
+- **Trzy przyczyny po stronie harnessu:**
+  1. **Stare błędy na `verified` wierzchołkach w `implementation_audit`:** `spec_gate._remember_verdict` nigdy nie czyści `Vertex.history` po przejściu wierzchołka na `verified`, a `implementation_audit.audit_facts` (linia 109) bezwarunkowo wpisuje `"errors": _error_lines(_latest_errors(vertex.history))`. W `state/implementation_audit.json` zweryfikowany `q_agent.py` nadal pokazywał dawny `IndexError` z `D1_4`, a zweryfikowany `trainer.py` — `TypeError: unexpected keyword argument 'seed'` z `D1_10`. Przez niepuste `errors` żaden z nich nie kwalifikował się też jako `quiet` w `compact_audit`.
+  2. **Asymetria walidatora `redesign_rules.revision_violations`:** walidator odrzuca `status == "keep"` przy zmienionym wpisie zarysu (`redesign_keep_changed`), ale **przepuszcza `status == "change"` przy identycznym wpisie zarysu (`changed == set()`)**, a warunek pustej rewizji (`if not (changed or removed or redesigned)`, linia 89) uznaje samą etykietę `"change"` za zmianę. Następnie `redesign._redesign_failed` (linie 121–123) wymusza otwarcie każdego takiego modułu w `_converge`, a `_apply_redesign` (linia 216) kasuje jego stan `verified`.
+  3. **Pułapka `earlier_rounds` w `plan_outline.md` (linia 60):** instrukcja *„Do not reverse a decision of an earlier round … unless the errors show that decision as the cause”* w zestawieniu ze słownikiem `decisions` z Rundy 1 zachęciła model do przeklejenia `status: "change"` z Rundy 1 zamiast ustawienia `"keep"` dla modułów naprawionych między rundami.
+
+## §XXXVII.2. Nieskończony ping-pong `experiment.py` ↔ `evaluator.py` (`R3_1` ↔ `R4_1`) i zatruty `results.csv = verified`
+
+- **Przyczyna w kodzie workspace'u:** W `experiment.py` koder w linii 23 przekazał poprawnie `opponent_callable=random_opponent.select_action` do `train_agent`, ale w linii 27 przekazał sam obiekt `opponent=random_opponent` (`RandomAgent` bez `__call__`) do `evaluate_symmetric`, które oczekiwało `Callable[[TicTacToeEnv], int]`.
+- **Trzy błędy harnessu składające się na cykl bez wyjścia:**
+  1. **Ślepa atrybucja najgłębszej ramki (`R3_1`, `22:23:30`):** Uruchomienie eksperymentu padło wewnątrz `evaluator.py:32` (`action = opponent(env)` → `TypeError: 'RandomAgent' object is not callable`). `failure_attribution._traceback_culprit` bierze zawsze najgłębszą ramkę w workspace'ie, więc obwinił **zweryfikowany `evaluator.py`** (mający zielony `tests/test_evaluator.py`) zamiast wywołującego **`experiment.py`**.
+  2. **Rozbicie `evaluator.py` + przedwczesny `DATA_PRODUCED` (`R3_1_FIX1`, `22:24:11`):** W szybkiej naprawie koder zmienił `evaluator.py` na `opponent.select_action(env)`. Eksperyment przeszedł i zapisał `results.csv` → `building._refresh_experiment_after_code` natychmiast wywołało `_record_data_produced()`, ustawiając **`results.csv` w stan `verified` przed uruchomieniem weryfikacji zadania**. Chwilę później weryfikacja `R3_1_FIX1` **oblała** zarówno `tests/test_evaluator.py` (`MockOpponent` miał `__call__`, nie miał `.select_action`), jak i kontrolę metryk (`experiment.py` zapisało w kolumnie `metric` nazwę `'win_rate'` zamiast zadeklarowanego `'win_rate_q_vs_random'` oraz `NaN` dla `convergence_epoch`). Mimo oblanej weryfikacji:
+     - `results.csv` **pozostało `verified`**, przedwcześnie odblokowując pisanie rozdziałów wynikowych `D1_11`–`D1_13` na niekompletnych danych;
+     - ustalenia o brakujących metrykach z `experiment.py` dopisały się do `history` wierzchołka **`evaluator.py`** i trafiły później do opisu zadania `R4_1`.
+  3. **`DATA_FAILED` ignorowane na zadaniu modułu zamyka pętlę (`TASK_DEFERRED` → `R4_1 PASS` → `R3_1` od nowa):** `R3_1` wyczerpało naprawy, przeszło w `WAITING` (`TASK_DEFERRED`, `blamed="evaluator.py"`) i oznaczyło `evaluator.py` jako `failed`. W rundzie 4 zadanie `R4_1` przywróciło w `evaluator.py` wywołanie `opponent(env)`. O `22:41:15` eksperyment znów wybuchł (`DATA_FAILED`: `'RandomAgent' object is not callable`), ale ponieważ `verification._run_verification_step` (linie 152–159) podpina `_last_experiment_error` wyłącznie pod zadania `governs_results` (`entrypoint`/`plots`), **`R4_1` dostało `VERDICT PASS` (`repairs=0`)**. Zweryfikowanie `evaluator.py` o `22:41:16` obudziło `R3_1` (`experiment.py`), które bez jakiejkolwiek zmiany w `experiment.py` powtórzyło cały cykl i o `22:43:08` drugi raz z rzędu odłożyło się z `blamed="evaluator.py"`, wbijając `evaluator.py` z powrotem w `failed`.
+
+## §XXXVII.3. Rozwiązanie zagadki `D1_10` z §XXXVI.4: dwustopniowe porwanie napraw (`0/3` napraw dla `experiment.py`)
+
+Hipoteza z §XXXVI.4 („ustalenie kontraktu miało pierwszeństwo przed ruffem”) nie tłumaczyła przebiegu `D1_10`. Rzeczywisty łańcuch w `verification.py` wyglądał tak:
+1. **Priorytet `_last_experiment_error` przed Ruffem (`D1_10` → `trainer.py`):** W `D1_10` `experiment.py` miało 9 błędów Ruffa `F821` (`Dict`, `List`, `Any`), ale zdążyło też wywołać `train_agent(..., env_config={'seed': SEED})`, co rzuciło w `trainer.py:33` `TypeError: TicTacToeEnv.__init__() got an unexpected keyword argument 'seed'` (`DATA_FAILED`). W `verification._run_verification_step` (linie 364–387) kolejność wyboru `failed_file` to: `spec_found` (364) → `_pytest_culprits` (366, pomija Ruffa) → **`_traceback_culprit(_last_experiment_error)` (379)** → **dopiero na końcu `_workspace_paths_in` dla Ruffa (382–387)**. Błąd uruchomienia w sąsiedzie przykrył więc 9 błędów `F821` w samym pliku zadania i skierował `D1_10_FIX1` do `trainer.py`.
+2. **`_task_scope` wciąga testy w stanie `failed` (`D1_10_FIX1` → `tests/test_trainer.py`):** Edycja `trainer.py` wpisała go do `_written_since_verification`. W kolejnej weryfikacji `verification._task_scope` (linie 43–46) dołącza każdy test dotkniętego modułu o stanie `!= "spec"` — wciągnęło więc **`tests/test_trainer.py`, które już wcześniej poległo i miało stan `"failed"` po `D1_7`**. Jego `AssertionError` w `_pytest_culprits` (linia 366) przebił zarówno `DATA_FAILED`, jak i Ruffa, przez co `D1_10_FIX2` poszło do `seed_tester` na `tests/test_trainer.py`. Zadanie `D1_10` upadło bez ani jednej naprawy skierowanej do `experiment.py`.
+
+## §XXXVII.4. Wojna promptów w planowaniu: krytycy + `plan_evolution` kontrują §XXXV.2 (62,3 min = 50% czasu LLM, 74 wywołania `plan_module`)
+
+- W §XXXV.2 dopisano do `plan_module.md` (linia 22) regułę **„Plain types first”**: zakaz kopiowania API frameworku (`gym`, `observation_space`, `Box`) i preferencję zwykłych typów Pythona nad `np.ndarray`.
+- Prompty `outline_critic_guard.md`, `module_critic_guard.md` i `plan_critic_guard.md` nie dostały odpowiadającej reguły, a `plan_outline` nadal wpisywał w `provides` typy `np.ndarray`/Gymnasium. Krytycy wielokrotnie **blokowali** `environment.py` za niepełną zgodność ze standardem Gymnasium (np. `21:06:46`, `23:04:18`, `23:05:00`: blokada `TicTacToeEnv.reset` za brak argumentu `options` wymaganego przez API Gymnasium).
+- Gdy `plan_module` ustępował krytykowi w poprawce, `plan_evolution._learn_from_critic` zapisywało blokadę jako błąd autora i po każdych 2 miejscach uruchamiało Architekta Ewolucji (16 z 21 mutacji `AGENT_MUTATED` w przebiegu dotyczyło `plan_module` i `plan_outline`). W efekcie na końcu zmutowanego `agents/planning/plan_module.md` (linie 76–77) wyhodowano reguły **nakazujące ścisłą walidację sygnatur względem zewnętrznego standardu Gymnasium** — wprost sprzeczne z linią 22 tego samego promptu.
+
+## §XXXVII.5. Trzy luki w obsłudze rozdziałów i wskaźników (w tym dziura w poprawce z §XXXVI.2)
+
+1. **Rozłączny `if / elif` w `building._document_context` (linie 62–68) psuje poprawkę z §XXXVI.2:**
+   - W pełnym cyklu naprawy (`repair._repair_cycle`, linia 396) opis zadania dostaje prefiks kontekstu sekcji (`Chapter 4 (Konstrukcja eksperymentu)...`), więc `_extract_canonical_chapter_num` zwraca `target = 4`. Gałąź `elif pointers:` **nigdy się wtedy nie wykonuje** — pisarz nadal widzi wyłącznie Rozdział 4 i nie widzi Rozdziału 3 z zepsutym `\ref_ast{evaluator.py:evaluate_games}`.
+   - Z kolei w szybkiej naprawie (`D1_11_FIX1`), gdzie opis nie zawiera numeru rozdziału (`target is None`), `elif pointers:` pokazuje **wyłącznie** Rozdział 3, ukrywając treść Rozdziału 4 będącego celem zadania `D1_11`.
+2. **`redesign._carry_over` (linie 55–75) nie cofa rozdziałów cytujących przeprojektowany moduł do `stale`:** Rozdział 3 (`thesis.md#ch3`, napisany w `T16`) miał w hipergrafie krawędź `N:thesis.md#ch3` obserwującą `evaluator.py` (`spec_gate._record_citations`), ale `_carry_over` oznacza jako `stale` wyłącznie testy użytkowników (`new.tests_of(rel)`) oraz `results.csv` — pomija wierzchołki `chapter`. Rozdział 3 został więc `verified` z martwymi wskaźnikami do usuniętych symboli.
+3. **Niezamknięta klamra `\ref_ast{...` połyka kolejne akapity (`ref_compiler.py`, linia 316):** W `D1_11` (`22:26:32`) pisarz napisał `` `\ref_ast{random_agent.py:RandomAgent` `` bez `}`. Wyrażenie `r"\\ref_ast\{([^:}]+):([^}]+)\}"` dopasowało `[^}]+` przez dwa akapity aż do `}` następnego `\ref_ast{trainer.py:Trainer}`, produkując mylący komunikat o ukośniku w ścieżce. Wzorzec powinien wykluczać `{` i `\n` (`[^:}\n{]+`) oraz osobno zgłaszać niezamknięty znacznik `\ref_(?:ast|csv|fig)\{`.
+
+## §XXXVII.6. `task_planner` omija D5 (pełne ciała funkcji z błędami w `interfaces`) i zleca łamanie `spec_gate`
+
+1. **Pełne implementacje w `academic_blueprint.json["interfaces"]`:** Zgodnie z obawą zanotowaną po §XXIX D5, `fragment_replan._replan_interfaces` (linie 244–266) zapisuje kod zwrócony przez `task_planner` wprost do `blueprint["interfaces"]` bez wycięcia ciał (`interface_view`). W piaskownicy `q_agent.py`, `evaluator.py` i `experiment.py` mają w `interfaces` pełne 50-liniowe implementacje napisane przez planistę — przy czym ciało `experiment.py` w samym `interfaces` zawierało błędy `opponent=random_opponent`, `'win_rate'` zamiast `'win_rate_q_vs_random'` oraz brak `'convergence_epoch'`.
+2. **Polecenia łamiące `TEST_OUTSIDE_SPEC` (`R4_2`):** Ponieważ `environment.py` widniało w `verified_do_not_touch`, `task_planner` w zadaniu `R4_2` wprost polecił testerowi ręczne ustawienie prywatnych pól (`env._board`, `env._terminated = True`), co spowodowało **3 odrzucenia zapisu z rzędu (`SPEC_WRITE_REJECTED: TEST_OUTSIDE_SPEC`)**. W `R4_4` polecił natomiast napisać Rozdział 5 (Wyniki) bez wartości liczbowych.
+
+## §XXXVII.7. Atrybucja zawieszenia (`_HANG_FRAME` w `T9`) i nieświeży opis po `force_ready` (`R1_2` → `R1_1`)
+
+- **Losowa ramka przy zawieszeniu (`failure_attribution._pytest_culprits`, linie 33–37):** W `T9` (`tests/test_trainer.py`) nieskończona pętla leżała w `trainer.py:train_agent`, która w kółko tworzyła i wołała `TicTacToeEnv`. Gdy `faulthandler` przerwał test po 20 s (`21:34:30`), najświeższą ramką było akurat `File "environment.py", line 18 in __init__` (a w 4. próbie sklejony bufor `line 2672 in _check_winner`). Wybór `frames[0]` wysłał kodera w kroku 84 do „naprawiania nieskończonej pętli w `TicTacToeEnv.__init__`”, gdzie nie było żadnej pętli.
+- **Zdezaktualizowane `latest_errors` po `force_ready`:** W Rundzie 1 `R1_2` (`tests/test_environment.py`) ruszyło przed `R1_1` (`environment.py`) dzięki `force_ready=True` (`fragment_replan._replan_tasks`, linie 304–305), ale w trakcie `R1_2` szybkie naprawy `R1_2_FIX1/2` zmodyfikowały `environment.py` przed `TASK_DEFERRED`. Gdy bezpośrednio po nim ruszyło `R1_1`, jego opis miał już na sztywno doklejony stary błąd zawieszenia z `_with_latest_errors` z chwili planowania, zamiast aktualnego błędu z `R1_2`.
+
+
+---
+
+# §XXXVIII — 2026-11-27: przegląd promptów i payloadów wszystkich 14 agentów na danych z żywego przebiegu — za dużo, za mało i rozjazdy prompt ↔ payload (do decyzji, nic niewdrożone)
+
+Źródło: wszystkie prompty `adk/agents/{planning,building,verification,evolution}/*.md`, kod składający ładunki (`context.py`, `building.py`, `plan_stages.py`, `plan_spec.py`, `planning.py`, `fragment_replan.py`, `redesign.py`, `repair.py`, `plan_change.py`, `evolution.py`), `tests/agents/test_prompt_consistency.py` oraz pomiar wszystkich 280 żądań `phase="request"` z `adk/workspace/benchmarks/_evolved_adk_state/01_rl_tictactoe/workspace/logs/agent_trace.jsonl`.
+
+## §XXXVIII.1. Pomiar rozmiarów payloadów w żywym przebiegu (`01_rl_tictactoe`)
+
+| Agent | Wywołań | Payload mediana (zn.) | Payload max (zn.) | Główne składowe w piku |
+|---|---:|---:|---:|---|
+| `task_planner.md` | 4 | 85 762 | **89 003** | `repair_dossier` (47,4k) + `current_plan` (38,3k: `tasks` 21,4k, `interfaces` 13,8k) |
+| `plan_outline.md` | 11 | 7 594 | **30 546** | `revision` w redesignie (20,5k) + `current_outline` (4,1k) |
+| `evolution_architect.md` | 23 | 7 431 | **27 407** | `pattern` (13,2k) + `validation_report` (13,2k — identyczna kopia) |
+| `plan_module.md` | 75 | 12 140 | **25 969** | `feedback` (11,4k) + `dependencies` (7,1k) + `outline` (3,8k) |
+| `seed_coder.md` | 32 | 15 027 | **25 887** | `existing_content` (7,5k) + `specification` (5,6k) + `rejected_answer` (5,2k) + `task` (4,0k) |
+| `seed_tester.md` | 46 | 15 214 | **25 552** | `task` (7,7k) + `previous_attempts` (4,6k) + `specification` (4,1k) + `existing_content` (3,6k) |
+| `plan_critic_guard.md` | 8 | 19 641 | **22 720** | `interfaces` (9,2k) + `review_history` (6,3k) + `outline` (3,8k) + `academic_blueprint` (1,9k) |
+| `module_critic_guard.md` | 40 | 10 994 | **16 645** | `dependencies` (9,4k — domknięcie przechodnie) + `outline` (4,1k) |
+| `seed_writer.md` | 18 | 7 831 | 11 755 | `existing_content` (6,6k) + `user_prompt` (1,3k) + `may_cite` (1,1k) |
+| `prompt_consolidator.md` | 3 | 9 296 | 9 721 | `base_prompt` (7,1k) + `accumulated_rules` (1,7k) |
+| `implementation_auditor.md` | 9 | 7 716 | 9 371 | `source` (5,0k) + `card` (2,3k) + `planned_interface` (2,0k) |
+| `outline_critic_guard.md` | 7 | 5 473 | 8 208 | `outline` (4,1k) + `review_history` (2,5k) |
+| `remediation_planner.md` | 3 | 6 992 | 7 149 | `specification` (2,6k) + `user_prompt` (1,3k) + `error_report` (0,9k) |
+| `background_researcher.md` | 1 | 4 095 | 4 095 | `user_prompt` (1,3k) + `planned_chapters` (0,9k) + `may_cite` (0,6k) |
+
+## §XXXVIII.2. ZA DUŻO — duplikaty, martwy balast i szkodliwe wycieki
+
+1. **`task_planner` (~89 tys. zn., 69–94 s na wywołanie) dostaje >40 tys. zn. duplikatów i historii (`fragment_replan._replan_failed`, linie 204–212):**
+   - `current_plan.tasks` (21,4k zn.): wysyłana jest pełna historyczna lista `state.tasks` od początku przebiegu (`T1..T16`, martwe `R1_*`, `D1_*`, `R2_*`, `R3_*`) z doklejonymi wcześniej tracebackami z `_with_latest_errors` i słownikami `harness_bug`. Planista potrzebuje wyłącznie zadań otwartych (`TODO`/`WAITING`).
+   - `current_plan.interfaces` (13,8k zn.): zawiera wszystkie moduły (także z `verified_do_not_touch`), bez `interface_view(...)` (więc przenosi pełne ciała wpisane we wcześniejszych rundach), a dla nieudanych modułów dubluje `repair_dossier.failed[i].planned_interface`. Gdy wszystkie `failed` to rozdziały, kod interfejsów jest tam całkiem zbędny.
+   - Potrójna kopia tego samego błędu: ostatni werdykt leci w `latest_errors`, jako ostatni element `history`, oraz w opisie wcześniejszego zadania `R*` w `current_plan.tasks`.
+2. **`evolution_architect` dostaje identyczne 13,2 tys. zn. dwukrotnie w jednym ładunku (`plan_evolution.py` linie 38–39, `repair.py` linie 227–238):**
+   - `pattern.examples` (13 198 zn.) i `validation_report.issues` (13 182 zn.) w `plan_evolution.py` referencjonują dosłownie tę samą listę `examples`, bez limitu znaków na pojedynczy wpis krytyka.
+   - Przy `source="planning_critic"` wysyłany jest też pełny `agent_registry` (choć `plan_outline` i `plan_module` w nim nie występują), a w `repair.py` leci `suggested_rule = remediation_directive` zawierające identyfikator zadania (`"Task T3 on node..."`), sprzeczny z zakazem podawania ID zadań w regule.
+3. **Domknięcie przechodnie `dependencies` w `plan_module` i `module_critic_guard` (`plan_stages._module_stage`, linia 245):**
+   - `_dependency_closure(outline, rel)` wysyła wszystkie moduły pośrednie (do 9,4k zn.), a nie tylko bezpośrednie `module.depends_on`. Ponieważ `plan_module.md` mówi *„Only `dependencies` (by the names they declare)”*, autor widzi w `dependencies` moduły spoza `module.depends_on`, importuje je bezpośrednio i wpada w błąd `USES_UNDECLARED` albo blokadę krytyka.
+4. **Duplikat `academic_blueprint` w `plan_critic_guard` i nieprzycięty `feedback` (11,4k zn.) w `plan_module`:**
+   - `plan_spec._plan_review` (linie 90–95) wysyła `outline` (zawierające już całe `academic_blueprint`, `entrypoint` i `plots`), a obok dokleja drugi raz identyczne `academic_blueprint` (1,9k zn.) i `entrypoint`.
+   - Pojedyncza runda `feedback` w `plan_module` osiągnęła 11 430 zn., bo `plan_spec._critic_review` nie przycina długości pojedynczej uwagi (inaczej niż `module_critic_objection[:600]`).
+5. **Pakiety Pythona i zakazane wskaźniki w zadaniach tekstowych oraz podwójny kod w szybkich naprawach (`building.py` linia 138, `context.py` linie 63–64):**
+   - `available_packages` (`numpy`, `pytest`, `sklearn`...) trafia w każdym wywołaniu do `seed_writer` i `background_researcher`.
+   - `background_researcher` (`T1`, `target_node="thesis.md"`) przez `vertex is None` dostaje `_document_context_slice(h)` z pełnym `may_cite.available_ast_symbols`, mimo że `background_researcher.md` (linia 18) kategorycznie zakazuje używania `\ref_ast` i `\ref_csv`.
+   - W szybkiej naprawie z `task.repair_focus` (źródła naprawianych funkcji) `building.py` wysyła równolegle cały plik w `existing_content`; przy `BUILDING_RETRY` mogą jednocześnie polecieć `previous_rejected_answer` i `rejected_answer`.
+
+## §XXXVIII.3. ZA MAŁO — ślepe plamki prowadzące do halucynacji i rozjazdów
+
+1. **`background_researcher` i `seed_writer` dostają wyłącznie gołe klucze BibTeX bez tytułów i abstraktów (`context._literature_slice`, linie 120–126):**
+   - `planning.py` pobiera rekordy z arXiv i zapisuje `references.bib`, ale `_literature_slice` przekazuje pisarzom jedynie `available_citation_keys` (145 zn.: 7 samych identyfikatorów w stylu `"deka2022arc"`, `"hwang2023practical"`), bez tytułów, autorów, lat i streszczeń. Autorzy muszą zgadywać zawartość cytowanych prac z samej nazwy klucza. (Dodatkowo w `scout_domain_conventions` → `key_limitations_to_overcome` nadal zaszyty jest sztuczny frazes *„Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees”*).
+2. **`seed_coder` po pierwszym zapisie traci z payloadu własny zaplanowany interfejs (`context._context_for`, linie 72–80):**
+   - `seed_tester` dostaje zawsze pełny `interface_for_test(interfaces, module)` (typy zwracane + docstringi planu z kluczami słowników i przypadkami brzegowymi).
+   - `seed_coder` dostaje `"interface"` wyłącznie dla używanych sąsiadów (`uses`), natomiast dla **własnego modułu** widzi tylko `_spec_view` (`symbols: {nazwa: [parametry]}` — bez typów zwracanych i bez docstringa planu). Po nadpisaniu stuba jednozdaniowym docstringiem (zgodnie z `seed_coder.md` pkt 3) koder w żadnej kolejnej naprawie (`_FIX`, `R*`) nie widzi już docstringa kontraktu, z którego rozlicza go tester (tak powstał rozjazd kluczy `'episode_rewards'` vs `'reward_history'` w `trainer.py`).
+3. **`seed_writer` nie dostaje `thesis_statement`, `baseline_comparison` ani `metrics` z `academic_blueprint` (`context._document_context_slice`, linie 147–156):**
+   - `seed_writer.md` wymaga podania formalnej tezy we Wstępie, opisu porównania z baseline'em na zadeklarowanych metrykach w Eksperymentach i rozliczenia tezy we Wnioskach, ale ładunek zawiera tylko `planned_chapters` i surowy `user_prompt` — zatwierdzone pola z `academic_blueprint` nie są przekazywane.
+4. **`evolution_architect` nie widzi promptu ani dotychczasowych reguł agenta, którego mutuje (`evolution._run_evolution_step`, linie 77–85):**
+   - Brak podglądu zasad bazowych i sekcji `LEARNED RULES` / `CONSOLIDATED INVARIANTS` mutowanego agenta sprawił, że architekt wygenerował dla `plan_module.md` reguły wymuszające API Gymnasium wprost sprzeczne z linią 22 tego pliku (§XXXVII.4).
+5. **Krytycy planowania nie widzą `available_packages`, `experiment_time_limit_s` ani reguły „Plain types first”:**
+   - Żaden z trzech krytyków (`outline_critic_guard`, `module_critic_guard`, `plan_critic_guard`) nie dostaje listy pakietów środowiska ani limitu czasu eksperymentu, a brak symetrycznej wytycznej o prostych typach Pythona powodował blokowanie `environment.py` za odejście od Gymnasium.
+6. **Brakujące elementy sporu w `remediation_planner`, `plan_change_guard` i `task_planner`:**
+   - `remediation_planner` ma oceniać zgodność kodu z sygnaturą i docstringiem (`remediation_planner.md` linia 22), ale w `specification` (`repair.py` linia 355) dostaje tylko nazwy symboli i parametrów (`_specification_symbols`).
+   - `plan_change_guard` przy `TEST_OUTSIDE_SPEC` dostaje kod modułu (`implementation`), ale nie dostaje kodu testu zgłaszającego odczyt atrybutu (`plan_change.py` linie 112–122).
+   - `task_planner.md` nie ostrzega przed bramką `TEST_OUTSIDE_SPEC` na prywatnych polach `_x` w testach (stąd polecenie ustawiania `env._board` i `env._terminated` w `R4_2`).
+
+## §XXXVIII.4. Rozjazdy prompt ↔ payload poza zasięgiem `test_prompt_consistency.py`
+
+Test `test_every_prompt_names_every_input_the_code_sends` (`tests/agents/test_prompt_consistency.py`, linie 25–61) sprawdza wyłącznie 5 promptów planowania etapowego. W pozostałych 9 agentach w żywym przebiegu wysyłane są klucze nieopisane w ich promptach:
+- `background_researcher.md`: z 11 kluczy opisany tylko 1 (`available_citation_keys`); brak opisu `user_prompt`, `task`, `target_file`, `existing_content`, `planned_chapters`, `done_when`, `template_name`, `thesis_type` (+ zbędne `available_packages` i zakazane `may_cite`).
+- `seed_writer.md`: brak opisu `user_prompt`, `target_file`, `existing_content` (wraz z etykietami wycinków dokumentu), `available_citation_keys`, `template_name`, `thesis_type` (+ zbędne `available_packages`).
+- `seed_coder.md`: brak opisu `user_prompt`, `target_file`, `existing_content`, `rejected_answer`, `previous_rejected_answer`.
+- `seed_tester.md`: brak opisu `user_prompt`, `target_file`, `existing_content`, `available_packages`, `rejected_answer`, `previous_rejected_answer`.
+- `evolution_architect.md`: brak opisu `validation_report`, `agent_registry`, `agent_failure_count`, `cycle_index`, `task_id`, `target_node`, `suggested_rule`.
+- `remediation_planner.md`: brak opisu `user_prompt`, `agent_registry`, `include_docs`, `remediation_directive`.
+- `plan_outline.md`: wymienia `domain_context` i `agent_registry`, które są wysyłane w pierwszym planowaniu (`planning.py`), ale pomijane w redesignie (`redesign._redesign_payload`).
+
+## §XXXVIII.5. Proponowany plan porządków (P1–P6, do decyzji)
+
+- **P1 (Odchudzenie `task_planner` z ~89k do ~25k zn.):** w `current_plan.tasks` zostawić tylko zadania otwarte (`TODO`/`WAITING`); `current_plan.interfaces` przepuszczać przez `interface_view` i pomijać moduły obecne już w `repair_dossier.failed[*].planned_interface` (oraz pomijać interfejsy kodu, gdy `failed` to wyłącznie rozdziały); nie powtarzać `latest_errors` jako ostatniego wpisu `history`; dopisać w `task_planner.md` zakaz zlecania dostępu do `_atrybutów` w testach.
+- **P2 (Symetria kontraktu dla `seed_coder` i odchudzenie napraw):** dołączać `specification[own]["interface"]` również dla własnego modułu kodera (gdy plik nie jest już stubem); przy `repair_focus` nie dublować pełnego pliku w `existing_content` i czyścić `previous_rejected_answer` przy podaniu `rejected_answer`.
+- **P3 (Prawdziwy kontekst dla pisarzy tekstu):** w `_literature_slice` przekazywać zwięzłe rekordy `{key, title, authors, year, summary}` z `references.bib`/arXiv zamiast gołych kluczy (i usunąć zaszyty frazes z `scout_domain_conventions`); w `_document_context_slice` dodać `thesis_statement`, `baseline_comparison` i `metrics`; nie wysyłać `available_packages` do `seed_writer`/`background_researcher` ani `may_cite` do `background_researcher`.
+- **P4 (Higiena planowania i ewolucji):** w `plan_stages._module_stage` ograniczyć `dependencies` do bezpośrednich `module.depends_on`; usunąć duplikat `academic_blueprint` w `plan_critic_guard` i przyciąć pojedynczy wpis `feedback`; przekazać krytykom `available_packages`, `experiment_time_limit_s` i zasadę prostych typów z §XXXV.2; w `evolution_architect` usunąć duplikat `validation_report`/`suggested_rule` i dołączyć aktualne reguły mutowanego agenta.
+- **P5 (Domknięcie `test_prompt_consistency.py`):** po oczyszczeniu zbędnych pól objąć testem spójności `klucze payloadu ↔ prompt` wszystkie pozostałe agenty budujące, naprawcze i ewolucyjne.
+- **P6 (Usunięcie bezsprzecznego martwego kodu i jawnych sprzeczności):** wdrożenie punktów z §XXXVIII.6 poniżej.
+
+## §XXXVIII.6. Bezsprzeczny martwy kod i jawne sprzeczności (potwierdzone skanem AST i przeglądem kodu/promptów)
+
+Poniższa lista obejmuje wyłącznie elementy bezdyskusyjne (pomija dwie otwarte decyzje architektoniczne: los nieużywanego `sota_researcher` oraz sens wywoływania trzech audytorów LLM w Gate 3, których werdykt jest nadpisywany):
+
+1. **`document_chars.py` poza `BUILTIN_VERIFICATION_MODULES` w `adk/tools/verification/test_runner.py` (linie 16 i 295–313) + kasowanie `tools/` przy wznowieniu (`adk/benchmarks/runner.py`, linie 57–59):**
+   - `BUILTIN_VERIFICATION_MODULES = {"__init__.py", "test_runner.py", "ref_compiler.py", "contract_check.py"}` nie wymienia dodanego w §XXXII `document_chars.py`. Przez to `run_isolated_tests` traktuje go jako wypromowany skrypt walidatora W4 (`promoted_scripts`) i przy każdej weryfikacji spawnuje osobny podproces `python document_chars.py <plik.py>` dla każdego pliku Pythona w zakresie.
+   - Z kolei w `runner.py` bezwarunkowe `shutil.rmtree(sandbox_root / "tools")` przy `resume` niszczy każdy faktycznie wypromowany skrypt z `CREATE_TOOL`.
+2. **Martwy plik `adk/benchmarks/print_summary.py` (207 linii) i martwa klasa `TaskItem` w `adk/core/models.py` (linie 23–45):**
+   - `0` referencji w `adk/`, `main.py`, `scripts/`, `adk/mocks/` i `tests/`. `print_summary.py` operuje na nieistniejących już kluczach payloadów z połowy listopada (`"rules"`, `"agent_name"`, `"tasks"` w `plan_critic_guard`), a `TaskItem` nie zna połowy obecnych pól zadań (`repair_attempts`, `blamed`, `force_ready`, `requeued`, `harness_bug`).
+3. **Martwe i niekompatybilne gałęzie `use_docker` w `adk/tools/verification/test_runner.py` (linie 178–206) i `adk/tools/evolution/sandbox_verifier.py` (linie 22–54):**
+   - Nigdzie niewłączane (`use_docker=False` w każdym wywołaniu); gałąź w `test_runner.py` uruchamia `python -m unittest discover` zamiast `pytest`, ignoruje `scope`, pomija `ruff` i zwraca słownik bez wymaganych kluczy `lint_warnings` i `out_of_scope`.
+4. **Sprzeczne z kontraktem kształty odpowiedzi z ery sprzed D4 w `adk/orchestration/write_gate.py` (linie 130, 318–356) i `adk/orchestration/common.py` (linie 16–53, 277–279):**
+   - `csv_content` + `benchmark_file` (wraz ze sztucznym podbijaniem `os.utime(..., now + 1.0)` obchodzącym kontrakt świeżości `Φ_R`) oraz `plot_script` + `plot_file` (i wyjątek dla `seed_tester` piszącego wykresy w linii 130 `write_gate.py`) nie występują w żadnym obecnym prompcie ani nawet w `mocks/agents.py` (ostały się wyłącznie w starych testach jednostkowych) i łamią zasadę, że wyniki i wykresy powstają wyłącznie z uruchomienia kodu (`entrypoint` / `plots`).
+   - `bibtex_entries` + `bib_file` (`_filter_bibtex`, `_merge_bibtex_entries`): wszystkie prompty badaczy zakazują dziś zwracania BibTeXa (bibliografię zapisuje `planning.py`), a tej ścieżki używa już tylko fallback w `mocks/agents.py` (linia 272).
+5. **Prehistoryczne szablony promptów w generatorach Warstwy 4 (`adk/tools/evolution/agent_splitter.py` linie 80–85, `adk/tools/evolution/agent_creator.py` linie 58–67):**
+   - `agent_splitter.py` wpisuje do generowanego sub-agenta zakazane `"test_file": "test_core.py"` oraz `"csv_content": ""`.
+   - `agent_creator.py` generuje koderowi przykład z ciałem `pass` i miesza w jednym schemacie JSON edycję kodu (`ast_edits`) z pisaniem sekcji pracy (`section_title` / `section_content`).
+6. **Fałszywy komunikat z ery doctestów w `adk/orchestration/agent_texts.py` (`test_contradicts_verified_module`, linie 176–181):**
+   - Wciąż twierdzi: *„`{module}` already gives every result its specification examples require, so the failing assertion is suspect”*, podczas gdy od §XIX plan nie ma żadnych wykonywalnych przykładów, a `verified` po pierwszym zadaniu modułu oznacza jedynie poprawne parsowanie, import i obecność nazw ze stubu.
+7. **Jawna sprzeczność ról w `adk/agents/planning/remediation_planner.md` (linia 18) i komentarza w `adk/orchestration/verification.py` (linie 318 i 358):**
+   - `remediation_planner.md` linia 18 przypisuje `seed_tester` naprawę eksperymentu, wyników i wykresów (*„`seed_tester` fixes the tests or makes the experiment regenerate its results and figures”*), wprost wbrew `seed_tester.md` linia 4 (*„Code modules, the experiment, results files and figures belong to `seed_coder`”*) i własnej linii 25.
+   - Komentarz w `verification.py` linia 318 mówi *„The approval of the defense is the red team's alone”*, po czym linia 358 nadpisuje `redteam_audit["gate_3_approved"] = not metric_errors`.
+8. **Niepełne czyszczenie stanu między scenariuszami w `main.py` (`_reset_volatile_state`, linie 27–36):**
+   - Kasuje tylko `hypergraph.json` i `academic_blueprint.json`, zostawiając w `adk/state/` pliki `plan_outline.json`, `implementation_audit.json` i `factual_audit.json` z poprzedniego scenariusza.
+9. **Nieaktualne opisy kolejności `redesign` ↔ `task_planner` i poziomów modeli w `CODEBASE_MAP.md` (linie 7, 36) oraz `viewer/` (`nodes.ts` linia 41, `flowSteps.ts` linie 69, 82, 97, `flowAgents.ts` linie 15, 51, 71–83) + brak reguły „Plain types first” w `plan_outline.md`:**
+   - Mapa i schemat `/flow` opisują, że `redesign` idzie przed pierwszym przeplanowaniem (od §XXX P4 `_redesign_due` wymusza najpierw rundę `task_planner`) oraz opisują wywołania jako `SML` bez wzmianki o domyślnym `HARNESS_FORCE_TIER=LRM` (§XXXIII).
+   - Reguła prostych typów z §XXXV.2 trafiła do `plan_module.md` i (w §XXXIX.1) do trzech krytyków planu, ale nadal brakuje jej w `plan_outline.md` (gdzie autor zarysu wpisuje podpowiedzi sygnatur w `provides`).
+   - *(Uwaga: zaszyty frazes reklamowy ADK w `literature_engine.py` został już usunięty w ramach §XXXIX.2 P3).*
+
+
+
+---
+
+# §XXXIX — 2026-11-27: wdrożenie §XXXVII i §XXXVIII (testy 449/449, ruff czysty; bez przebiegu na żywo)
+
+## §XXXIX.1. §XXXVII — siedem błędów harnessu
+
+- **XXXVII.1 (sabotaż przeprojektowania):** `implementation_audit` nie pokazuje starych `errors` na wierzchołkach `verified`; `settled_decisions` zamienia `change` na `keep`, gdy moduł nie jest w `failed`, a jego wpis w zarysie jest stary (cicha korekta, jak dla `keep`); `plan_outline.md`: status z wcześniejszej rundy to historia, nie domyślna wartość. Test `test_redesign.py` z „zmianą samą etykietą” zmieniony tak, by projektant realnie zmieniał wpis.
+- **XXXVII.2 (ping-pong `experiment` ↔ `evaluator`):** `_traceback_culprit` obwinia wywołującego, gdy `X object is not callable` dotyczy parametru funkcji, w której pada błąd (sprawdzane przez `ast`); `_run_verification_step` traktuje moduł obecny w tracebacku nieudanego uruchomienia jak zadanie rządzące wynikami (koniec `PASS` przy `DATA_FAILED`); gdy metryki nie zgadzają się z planem, `results.csv` wraca z `verified` do `stale` (`_mark_results`).
+- **XXXVII.3 (porwanie napraw):** błędy lintera w pliku zadania mają pierwszeństwo przed winnym z tracebacku uruchomienia; `_task_scope` nie wciąga testów w stanie `failed`.
+- **XXXVII.4 (wojna promptów):** reguła „Plain Python is the plan's rule” w trzech krytykach; `evolution_architect` widzi aktualny prompt mutowanego agenta (`agent_prompt`) i nie dodaje reguły sprzecznej z nim.
+- **XXXVII.5 (rozdziały):** `_document_context` pokazuje i rozdział docelowy, i rozdziały z nazwanymi wskaźnikami; `_carry_over` cofa do `stale` rozdziały cytujące przeprojektowany moduł; wskaźniki `ef_ast`/`ef_csv` nie przekraczają linii i `{`, niezamknięty znacznik jest zgłaszany.
+- **XXXVII.6 (`task_planner`):** interfejsy z re-planu przechodzą przez `interface_view` (bez ciał); `task_planner.md` zakazuje zlecania testom dostępu do pól prywatnych.
+- **XXXVII.7:** zawieszony test obwinia kod, który test wywołał (najbardziej zewnętrzną ramkę projektu), a nie przypadkową najświeższą; opis zadania z re-planu odczytuje świeże błędy wierzchołka przy starcie (`planned_description`, `_fresh_description`).
+
+## §XXXIX.2. §XXXVIII — porządki w payloadach
+
+- **P1:** `task_planner` dostaje tylko otwarte zadania, interfejsy modułów, które nie padły (bez ciał, a gdy padły same rozdziały: żadne), i każdy błąd raz (`history` bez ostatniego werdyktu).
+- **P2:** `seed_coder` widzi własny zaplanowany interfejs, gdy plik nie jest już stubem; `previous_rejected_answer` nie leci razem z `rejected_answer`. Przy `repair_focus` kod naprawianych symboli jest w `existing_content` zastąpiony komentarzem (jest w całości w `task.repair_focus.symbols`), reszta pliku zostaje: `without_symbols` w `findings.py`.
+- **P3:** pisarze dostają `references` (klucz, tytuł, autorzy, rok z `references.bib`) oraz `thesis_statement`, `baseline_comparison`, `metrics`; `available_packages` nie idzie do `seed_writer`/`background_researcher`, a `may_cite` do `background_researcher`; zaszyty frazes o „neuro-symbolic AST/CSV” zniknął z `literature_engine`.
+- **P4:** `plan_module` i jego krytyk widzą tylko bezpośrednie `depends_on`; `plan_critic_guard` nie dostaje duplikatu `academic_blueprint`/`entrypoint`; wszyscy trzej krytycy dostają `available_packages` i `experiment_time_limit_s`; pojedyncza uwaga krytyka ≤ 1500 znaków; `evolution_architect` nie dostaje duplikatu `validation_report` ani `suggested_rule` z numerem zadania, ani rejestru dla wzorca krytyka.
+- **P5:** nowy `tests/agents/test_builder_prompt_consistency.py` (cztery agenty budujące) i test architekta; promptów dopisano sekcje `INPUTS`. Objęty także `remediation_planner` (sekcja `INPUTS` i test); w `plan_outline.md` `domain_context` i `agent_registry` opisane jako tylko z pierwszego planowania.
+
+## §XXXIX.3. Do sprawdzenia w następnym przebiegu
+
+Czy Redesign nie rusza zweryfikowanych modułów (`REDESIGN_GUIDELINES` bez `change` na `verified`), czy `evaluator.py`/`experiment.py` nie wpadają w cykl, czy rozmiar payloadu `task_planner` spadł z ~89k, i czy krytycy przestali blokować pod Gymnasium. Punkty XXXVII.2.2–2.3 mają tylko testy jednostkowe pomocników, bez testu scenariusza end-to-end.
+
+## §XXXIX.4. §XXXVIII.6 (P6) — martwy kod i jawne sprzeczności
+
+Każdy punkt sprawdzony w kodzie przed zmianą; testy 451/451, ruff, lint i testy viewera czyste.
+
+1. `document_chars.py` dopisany do `BUILTIN_VERIFICATION_MODULES` (koniec podprocesu na każdy plik); `runner.py` kopiuje `tools/` na istniejący folder (`dirs_exist_ok`), więc nie kasuje wypromowanych walidatorów przy wznowieniu.
+2. Usunięte `adk/benchmarks/print_summary.py` i klasa `TaskItem` (0 odwołań).
+3. Usunięty parametr `use_docker` (i `docker_image`) z `run_isolated_tests` i `evaluate_and_promote_validator` wraz z gałęziami Dockera; wywołania i testy poprawione.
+4. `write_gate`: koniec ze starymi kształtami `csv_content`/`benchmark_file` (razem z `os.utime`), `plot_script`/`plot_file` (i wyjątkiem dla testera) oraz `bibtex_entries`/`bib_file`; usunięte `_filter_bibtex`, `_merge_bibtex_entries`, `_verified_citation_keys`, wpisy w `OUTPUT_SCHEMA` i `_METADATA_KEYS`, klucze w mocku badacza oraz trzy testy tych ścieżek. Zostaje `test_code` z regułą pomijania cudzego, istniejącego pliku testowego.
+5. `agent_splitter`: bez `test_core.py` i `csv_content`; `agent_creator`: schemat tylko edycji kodu (`ast_edits`), bez ciała `pass` i bez sekcji pracy.
+6. `test_contradicts_verified_module` nie twierdzi już, że `verified` oznacza spełnione przykłady specyfikacji.
+7. `remediation_planner.md`: tester naprawia tylko testy, eksperyment, wyniki i wykresy należą do `seed_coder`; komentarz w `verification.py` opisuje, że zgodę na obronę liczy harness.
+8. `main.py`: `_reset_volatile_state` usuwa także `plan_outline.json`, `implementation_audit.json` i `factual_audit.json`.
+9. `CODEBASE_MAP.md` i opisy `/flow` w viewerze: najpierw jedna runda `task_planner`, przeprojektowanie dopiero potem (`_redesign_due`), oraz informacja o `HARNESS_FORCE_TIER=LRM`; reguła prostych typów dopisana do `plan_outline.md`. Topologia schematu `/flow` była poprawna (tylko opisy i komentarz).

@@ -12,7 +12,6 @@ from adk.tools.planning import (
     select_model_tier,
 )
 from adk.orchestration.common import (
-    _merge_bibtex_entries,
     _fit_items,
     THESIS_FILE,
     _declared_vs_measured_metrics,
@@ -47,7 +46,6 @@ from adk.orchestration.repair import RepairMixin
 
 __all__ = [
     "NeuroSymbolicOrchestrator",
-    "_merge_bibtex_entries",
     "_issue_signature",
     "_collect_report_issues",
     "_fit_items",
@@ -187,6 +185,10 @@ class NeuroSymbolicOrchestrator(
                     return replanned["stop"]
                 continue
 
+            # A task that failed for another vertex's fault runs once more when that vertex has been repaired (§XXXII P1).
+            if self._requeue_blamed(state):
+                continue
+
             # A failed task leaves the workspace in an unknown state: audit it before defending the thesis.
             # WAITING (only with H): planned work whose dependencies never turned ready in this generation.
             if any(isinstance(t, dict) and t.get("status") in ("FAILED", "WAITING") for t in state.tasks):
@@ -323,6 +325,8 @@ class NeuroSymbolicOrchestrator(
             self.logger.log_event("TASK_DEFERRED", task_id=t_id, node=node_file, blamed=blamed)
             print(f"  [ZADANIE {t_id} ODŁOŻONE] czeka na naprawę {blamed}.", flush=True)
             return None
+        if blamed is not None and blamed != self._task_vertex(task):
+            task["blamed"] = blamed  # the task is run again once that vertex is verified (`_requeue_blamed`)
         write_json_state(self.task_queue_path, state.tasks)
         self.logger.log_event(
             "TASK_FAILED", task_id=t_id, node=node_file, repair_attempts=task.get("repair_attempts", 0),

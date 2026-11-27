@@ -1,5 +1,7 @@
 export const graphLabels = {
   fit: 'Dopasuj widok',
+  files: 'Pliki',
+  order: 'Kolejność',
   start: 'Początek',
   end: 'Stan końcowy',
   play: 'Odtwórz',

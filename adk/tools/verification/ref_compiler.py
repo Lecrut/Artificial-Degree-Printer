@@ -257,7 +257,7 @@ def compile_symbolic_references(
         except (OSError, UnicodeDecodeError, ValueError) as exc:
             ok, val = False, f"Cannot read '{rel_file}': {exc}"
         if not ok:
-            errors.append(str(val) + _pointer_hint(rel_file, sym))
+            errors.append(f"{key}: {val}{_pointer_hint(rel_file, sym)}")  # the pointer itself finds its chapter
             return key
         resolved[key] = val
         if d_path.suffix == ".tex":
@@ -286,7 +286,7 @@ def compile_symbolic_references(
         except (OSError, UnicodeDecodeError, ValueError, csv.Error) as exc:
             ok, val = False, f"Cannot read '{rel_file}': {exc}"
         if not ok:
-            errors.append(str(val))
+            errors.append(f"{key}: {val}")
             return key
         if csv_path.is_file() and latest_py_mtime > 0 and csv_path.stat().st_mtime + 1e-6 < latest_py_mtime:
             stale_msg = f"CSV file '{rel_file}' is older than Python source code in workspace."
@@ -303,7 +303,7 @@ def compile_symbolic_references(
         key = f"\\ref_fig{{{fig_target}}}"
         ok, val = _lookup_fig_value(w_dir, text, fig_target)
         if not ok:
-            errors.append(str(val))
+            errors.append(f"{key}: {val}")
             return key
         resolved[key] = val
         if d_path.suffix == ".tex":
@@ -313,11 +313,15 @@ def compile_symbolic_references(
             return str(val).replace("_", "\\_")
         return str(val)
 
-    compiled_text = re.sub(r"\\ref_ast\{([^:}]+):([^}]+)\}", _replace_ast, text)
-    compiled_text = re.sub(r"\\ref_csv\{([^:}]+):([^}]+)\}", _replace_csv, compiled_text)
+    compiled_text = re.sub(r"\\ref_ast\{([^:}\n{]+):([^}\n{]+)\}", _replace_ast, text)
+    compiled_text = re.sub(r"\\ref_csv\{([^:}\n{]+):([^}\n{]+)\}", _replace_csv, compiled_text)
     compiled_text = re.sub(r"\\ref_fig\{([^}]+)\}", _replace_fig, compiled_text)
 
 
+    # A tag that is not closed on its line would swallow the paragraphs up to the next `}` (§XXXVII.5).
+    for unclosed in re.finditer(r"\\ref_(?:ast|csv|fig)\{([^}\n{]*)(.?)", text):
+        if unclosed.group(2) != "}":
+            errors.append(f"Unclosed symbolic tag: {unclosed.group(0)[:60]!r}. Close it with '}}' on the same line.")
     # Check for malformed \ref_ast{...} or \ref_csv{...} missing a ':' separator
     for bad_tag in re.findall(r"\\ref_(?:ast|csv)\{[^:}]+\}", text):
         if bad_tag.startswith("\\ref_csv") and not results_exist:

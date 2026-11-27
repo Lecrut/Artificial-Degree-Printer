@@ -1,0 +1,549 @@
+{
+  "version": 2,
+  "vertices": {
+    "config.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "",
+      "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "core.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "",
+      "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "heuristics.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement heuristics.py: Implements the octile distance heuristic function required for the Weighted A* algorithm.. Implement every name its interface declares: octile_distance.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T3"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "weighted_a_star.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement weighted_a_star.py: Implements the proposed Weighted A* algorithm using the octile heuristic.. Implement every name its interface declares: search_weighted_astar.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T5"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "experiment.py": {
+      "kind": "entry",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement experiment.py: Runs the comparative experiment between Dijkstra and Weighted A* across multiple seeds, grid configurations, and weights, saving results to CSV.. Implement every name its interface declares: run_experiment.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T8"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "figures.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement figures.py: Reads results.csv and generates comparative plots (nodes expanded, path cost, suboptimality gap) for the paper.. Implement every name its interface declares: generate_figures.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T7"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "tests/test_heuristics.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "Unit tests of octile_distance from heuristics.py in tests/test_heuristics.py, through the declared interface only.",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "T4",
+          "issues": [
+            "Pytest failure:\n_____________________________________________________________________________________________________________________________ test_octile_distance_same_position_returns_zero _____________________________________________________________________________________________________________________________\ntests\\test_heuristics.py:8: in test_octile_distance_same_position_returns_zero\nassert octile_distance((5, 5), (5, 5)) == pytest.approx(0.0)\n^^^^^^\nE NameError: name 'pytest' is not defined\n___________________________________________________________________________________________________________________________________ test_octile_distance_diagonal_moves ___________________________________________________________________________________________________________________________________\ntests\\test_heuristics.py:15: in test_octile_distance_diagonal_moves\nassert octile_distance((0, ",
+            "Ruff lint failure: tests\\test_heuristics.py:8:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:15:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:34:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:42:49: F821 Undefined name `pytest`\nFound 4 errors."
+          ],
+          "version": "58a2ce600732"
+        },
+        {
+          "task_id": "T4",
+          "issues": [
+            "Pytest failure:\n_____________________________________________________________________________________________________________________________ test_octile_distance_same_position_returns_zero _____________________________________________________________________________________________________________________________\ntests\\test_heuristics.py:7: in test_octile_distance_same_position_returns_zero\nassert octile_distance((5, 5), (5, 5)) == pytest.approx(0.0)\n^^^^^^\nE NameError: name 'pytest' is not defined\n___________________________________________________________________________________________________________________________________ test_octile_distance_diagonal_moves ___________________________________________________________________________________________________________________________________\ntests\\test_heuristics.py:12: in test_octile_distance_diagonal_moves\nassert octile_distance((0, ",
+            "Ruff lint failure: tests\\test_heuristics.py:7:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:12:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:22:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:27:49: F821 Undefined name `pytest`\nFound 4 errors."
+          ],
+          "version": "98c12a08d737"
+        },
+        {
+          "task_id": "T4_FIX2",
+          "issues": [
+            "ANSWER_REJECTED: Symbol edits rejected (nothing from this answer was saved):\n- test_heuristics.py:_import_block: The new code of _import_block contains no definition of `_import_block`; nothing was saved. The code of one symbol starts with its header (`def _import_block(...):` or `class _import_block:`); a body alone cannot be placed."
+          ],
+          "version": "98c12a08d737"
+        },
+        {
+          "task_id": "T4",
+          "issues": [
+            "Pytest failure:\n_____________________________________________________________________________________________________________________________ test_octile_distance_same_position_returns_zero _____________________________________________________________________________________________________________________________\ntests\\test_heuristics.py:7: in test_octile_distance_same_position_returns_zero\nassert octile_distance((5, 5), (5, 5)) == pytest.approx(0.0)\n^^^^^^\nE NameError: name 'pytest' is not defined\n___________________________________________________________________________________________________________________________________ test_octile_distance_diagonal_moves ___________________________________________________________________________________________________________________________________\ntests\\test_heuristics.py:12: in test_octile_distance_diagonal_moves\nassert octile_distance((0, ",
+            "Ruff lint failure: tests\\test_heuristics.py:7:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:12:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:22:47: F821 Undefined name `pytest`\ntests\\test_heuristics.py:27:49: F821 Undefined name `pytest`\nFound 4 errors."
+          ],
+          "version": "98c12a08d737"
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "R1_1"
+      },
+      "files": [],
+      "failures": 4
+    },
+    "tests/test_weighted_a_star.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "Unit tests of search_weighted_astar from weighted_a_star.py in tests/test_weighted_a_star.py, through the declared interface only.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "T6"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "results.csv": {
+      "kind": "data",
+      "owner": null,
+      "state": "verified",
+      "description": "",
+      "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "references.bib": {
+      "kind": "bib",
+      "owner": "writer",
+      "state": "verified",
+      "description": "",
+      "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch1": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Wprowadzenie i tło teoretyczne — Przegląd algorytmów Dijkstry i A*, definicja heurystyki oktylowej oraz uzasadnienie wyboru wagi.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch2": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Konfiguracja eksperymentu — Opis generatora siatek, doboru parametrów (rozmiar, gęstość, liczba powtórzeń) oraz metryk oceny.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch3": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Wyniki i analiza — Prezentacja wykresów porównawczych liczby rozwiniętych węzłów, kosztu ścieżki oraz suboptimality gap; dyskusja nad kompromisem między wydajnością a optymalnością.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch4": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Wnioski — Podsumowanie skuteczności Weighted A* w kontekście badanego problemu oraz kierunki dalszych prac.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    }
+  },
+  "edges": {
+    "I:config.py": {
+      "type": "I",
+      "members": {
+        "config.py": "P",
+        "core.py": "C",
+        "experiment.py": "C"
+      },
+      "spec": {
+        "import": "config",
+        "symbols": {
+          "SEED": {
+            "kind": "const",
+            "type": null
+          },
+          "GRID_SIZE": {
+            "kind": "const",
+            "type": null
+          },
+          "OBSTACLE_DENSITY": {
+            "kind": "const",
+            "type": null
+          }
+        },
+        "uses": {},
+        "packages": []
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:core.py": {
+      "type": "I",
+      "members": {
+        "core.py": "P",
+        "experiment.py": "C"
+      },
+      "spec": {
+        "import": "core",
+        "symbols": {
+          "generate_obstacle_grid": {
+            "kind": "func",
+            "params": [
+              "size",
+              "density",
+              "seed"
+            ],
+            "required": []
+          },
+          "search_grid": {
+            "kind": "func",
+            "params": [
+              "grid",
+              "start",
+              "goal"
+            ],
+            "required": [
+              "grid",
+              "start",
+              "goal"
+            ]
+          }
+        },
+        "uses": {
+          "config.py": [
+            "GRID_SIZE",
+            "OBSTACLE_DENSITY",
+            "SEED"
+          ]
+        },
+        "packages": [
+          "heapq",
+          "math",
+          "random"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:heuristics.py": {
+      "type": "I",
+      "members": {
+        "heuristics.py": "P",
+        "weighted_a_star.py": "C",
+        "tests/test_heuristics.py": "T"
+      },
+      "spec": {
+        "import": "heuristics",
+        "symbols": {
+          "octile_distance": {
+            "kind": "func",
+            "params": [
+              "pos1",
+              "pos2"
+            ],
+            "required": [
+              "pos1",
+              "pos2"
+            ]
+          }
+        },
+        "uses": {},
+        "packages": []
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:weighted_a_star.py": {
+      "type": "I",
+      "members": {
+        "weighted_a_star.py": "P",
+        "experiment.py": "C",
+        "tests/test_weighted_a_star.py": "T"
+      },
+      "spec": {
+        "import": "weighted_a_star",
+        "symbols": {
+          "search_weighted_astar": {
+            "kind": "func",
+            "params": [
+              "grid",
+              "start",
+              "goal",
+              "weight"
+            ],
+            "required": [
+              "grid",
+              "start",
+              "goal",
+              "weight"
+            ]
+          }
+        },
+        "uses": {
+          "heuristics.py": [
+            "octile_distance"
+          ]
+        },
+        "packages": [
+          "heapq",
+          "math"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:experiment.py": {
+      "type": "I",
+      "members": {
+        "experiment.py": "P"
+      },
+      "spec": {
+        "import": "experiment",
+        "symbols": {
+          "WEIGHTS": {
+            "kind": "const",
+            "type": "list[float]"
+          },
+          "N_RUNS": {
+            "kind": "const",
+            "type": "int"
+          },
+          "run_experiment": {
+            "kind": "func",
+            "params": [],
+            "required": []
+          }
+        },
+        "uses": {
+          "config.py": [],
+          "core.py": [],
+          "weighted_a_star.py": []
+        },
+        "packages": []
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:figures.py": {
+      "type": "I",
+      "members": {
+        "figures.py": "P"
+      },
+      "spec": {
+        "import": "figures",
+        "symbols": {
+          "generate_figures": {
+            "kind": "func",
+            "params": [],
+            "required": []
+          }
+        },
+        "uses": {},
+        "packages": [
+          "matplotlib",
+          "pandas",
+          "seaborn"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "R:run": {
+      "type": "R",
+      "members": {
+        "experiment.py": "P",
+        "results.csv": "O",
+        "figures.py": "C",
+        "config.py": "C",
+        "core.py": "C",
+        "heuristics.py": "C",
+        "weighted_a_star.py": "C"
+      },
+      "spec": {
+        "entry": "experiment.py:run_experiment",
+        "metrics": [
+          "avg_expanded_nodes",
+          "std_expanded_nodes",
+          "path_cost_dijkstra",
+          "path_cost_astar",
+          "suboptimality_gap"
+        ],
+        "plots": "figures.py:generate_figures"
+      },
+      "fingerprint": "bd902e95c6c33dfd528ae793c75700a3f229c332e4ac3ea786f9bf92872b525f",
+      "observed": []
+    },
+    "N:thesis.md#ch1": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch1": "X",
+        "references.bib": "C"
+      },
+      "spec": {
+        "title": "Wprowadzenie i tło teoretyczne",
+        "focus": "Przegląd algorytmów Dijkstry i A*, definicja heurystyki oktylowej oraz uzasadnienie wyboru wagi.",
+        "uses_results": false
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "N:thesis.md#ch2": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch2": "X",
+        "references.bib": "C",
+        "results.csv": "C"
+      },
+      "spec": {
+        "title": "Konfiguracja eksperymentu",
+        "focus": "Opis generatora siatek, doboru parametrów (rozmiar, gęstość, liczba powtórzeń) oraz metryk oceny.",
+        "uses_results": true
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "N:thesis.md#ch3": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch3": "X",
+        "references.bib": "C",
+        "results.csv": "C"
+      },
+      "spec": {
+        "title": "Wyniki i analiza",
+        "focus": "Prezentacja wykresów porównawczych liczby rozwiniętych węzłów, kosztu ścieżki oraz suboptimality gap; dyskusja nad kompromisem między wydajnością a optymalnością.",
+        "uses_results": true
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "N:thesis.md#ch4": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch4": "X",
+        "references.bib": "C",
+        "results.csv": "C"
+      },
+      "spec": {
+        "title": "Wnioski",
+        "focus": "Podsumowanie skuteczności Weighted A* w kontekście badanego problemu oraz kierunki dalszych prac.",
+        "uses_results": true
+      },
+      "fingerprint": null,
+      "observed": []
+    }
+  },
+  "order": [
+    [
+      "I:config.py",
+      "I:core.py"
+    ],
+    [
+      "I:config.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:config.py",
+      "R:run"
+    ],
+    [
+      "I:core.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:core.py",
+      "R:run"
+    ],
+    [
+      "I:experiment.py",
+      "R:run"
+    ],
+    [
+      "I:heuristics.py",
+      "I:weighted_a_star.py"
+    ],
+    [
+      "I:heuristics.py",
+      "R:run"
+    ],
+    [
+      "I:weighted_a_star.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:weighted_a_star.py",
+      "R:run"
+    ],
+    [
+      "R:run",
+      "N:thesis.md#ch2"
+    ],
+    [
+      "R:run",
+      "N:thesis.md#ch3"
+    ],
+    [
+      "R:run",
+      "N:thesis.md#ch4"
+    ]
+  ]
+}

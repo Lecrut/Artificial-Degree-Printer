@@ -18,6 +18,7 @@ from adk.orchestration.common import (
     MaterializationError,
 )
 from adk.orchestration.failure_kinds import _collect_report_issues
+from adk.orchestration.findings import without_symbols
 
 # pytest summary line: `FAILED path.py::Class::test_name - message` (or ERROR)
 _FAILED_TEST_LINE = re.compile(r"^(?:FAILED|ERROR)\s+(\S+?\.py)::(\S+?)(?:\s+-\s+(.*))?$", re.MULTILINE)
@@ -61,12 +62,17 @@ def _document_context(document: str, task_description: str) -> str:
     ]
     target = _extract_canonical_chapter_num(task_description)
     pointers = set(_POINTER.findall(task_description))
+    # Both, when the task has both: a repair of chapter 4 that names a broken pointer of chapter 3 needs to see chapter 3
+    # (§XXXVII.5: the `elif` showed one or the other, and the writer never saw the pointer it was to fix).
+    parts: list[str] = []
+    labels: list[str] = []
     if target is not None:
-        parts, label = [text for number, text in chapters if number == target], texts.chapter_context_label(target)
-    elif pointers:
-        parts, label = [text for _, text in chapters if any(p in text for p in pointers)], texts.POINTER_CHAPTERS_LABEL
-    else:
-        parts, label = [], ""
+        parts += [text for number, text in chapters if number == target]
+        labels.append(texts.chapter_context_label(target))
+    if pointers and (extra := [text for _, text in chapters if text not in parts and any(p in text for p in pointers)]):
+        parts += extra
+        labels.append(texts.POINTER_CHAPTERS_LABEL)
+    label = "\n".join(labels) if parts else ""
     body = "\n\n".join(parts)
     if not body:
         body, label = document[-600:], texts.DOCUMENT_TAIL_LABEL
@@ -122,6 +128,8 @@ class BuildingMixin:
         else:
             payload_existing_content = existing_content
 
+        if node_path.endswith(".py") and isinstance(focus := task.get("repair_focus"), dict) and focus.get("symbols"):
+            payload_existing_content = without_symbols(payload_existing_content, focus["symbols"])
         self.logger.log_step(
             "BUILDING",
             f"Zadanie {task.get('task_id')} -> agent '{agent_id}' na wierzchołku {node_id} ({node_path})",
@@ -138,6 +146,11 @@ class BuildingMixin:
             "available_packages": available_package_imports(),
             **self._context_for(self._task_vertex(task), node_path),
         }
+        # Text writers do not import anything, and the literature review may not point at code or results (§XXXVIII.2).
+        if agent_id in ("seed_writer", "background_researcher"):
+            builder_payload.pop("available_packages")
+        if agent_id == "background_researcher":
+            builder_payload.pop("may_cite", None)
         done_when = self._done_when(node_path, builder_payload)
         if done_when:
             builder_payload["done_when"] = done_when
@@ -171,7 +184,7 @@ class BuildingMixin:
                 {"type": "BUILDER_ANSWER_REJECTED", "task_id": task.get("task_id"), "agent": agent_id, "error": str(exc)[:2000]}
             )
             retry_payload = {
-                **builder_payload,
+                **{k: v for k, v in builder_payload.items() if k != "previous_rejected_answer"},  # the newer rejection replaces the older
                 "rejected_answer": {
                     "error": str(exc),
                     "output": llm_res.get("output", {}),

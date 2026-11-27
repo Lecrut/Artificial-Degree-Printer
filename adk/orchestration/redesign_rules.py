@@ -40,14 +40,16 @@ def diagnosis_of(output: Any) -> dict[str, dict[str, str]]:
 
 
 def settled_decisions(
-    old: dict[str, Any], new: dict[str, Any], decisions: dict[str, dict[str, str]],
+    old: dict[str, Any], new: dict[str, Any], decisions: dict[str, dict[str, str]], failed: set[str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, dict[str, str]]]:
     """(the revised outline, the statuses) with the two labels the outline itself decides put right, so a wrong label
     does not cost a whole round (§XXX P1, 01 of 2026-11-25: 4 of 4 rounds lost):
     - `keep` is a promise that the module stays as it is: its OLD entry is restored in the revised outline. The model
       rewrote the whole JSON and reworded `purpose`/`provides` of modules it called correct; turning those into
       `change` sent 6 of 7 verified modules back to design;
-    - `new` for a module the old outline already had can only mean `change`."""
+    - `new` for a module the old outline already had can only mean `change`;
+    - `change` for a module that did not fail and whose entry is the old one changes nothing: it is `keep` (the designer
+      copied the status of an earlier round, and `change` sends a verified module back to design, §XXXVII.1)."""
     before = {m["file"]: m for m in old["modules"]}
     fixed = {rel: dict(d) for rel, d in decisions.items()}
     modules = []
@@ -57,6 +59,8 @@ def settled_decisions(
             entry = dict(before[rel])
         elif fixed.get(rel, {}).get("status") == "new" and rel in before:
             fixed[rel]["status"] = "change"
+        elif fixed.get(rel, {}).get("status") == "change" and failed is not None and rel not in failed and entry == before.get(rel):
+            fixed[rel]["status"] = "keep"
         modules.append(entry)
     return {**new, "modules": modules}, fixed
 

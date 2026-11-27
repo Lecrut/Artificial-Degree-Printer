@@ -6,6 +6,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Any
 
+from adk.core.models import write_json_state
 from adk.hypergraph import save
 from adk.hypergraph.oracles import is_stub
 from adk.hypergraph.schedule import CONTENT_STATE, readiness, vertex_of
@@ -17,6 +18,27 @@ _OPEN = ("TODO", "WAITING")
 
 class SchedulerMixin:
     """Part of NeuroSymbolicOrchestrator; relies on the attributes set in its __init__."""
+
+    def _requeue_blamed(self, state: _RunState) -> list[str]:
+        """Tasks that failed because another vertex was at fault (a module's task, a test that kept failing) and whose own
+        vertex is still unfinished, now that the blamed vertex is `verified`: back to TODO, once each. Before, the experiment
+        stayed `impl` after its test was repaired and the run ended with it as a gap (§XXXII P1, 01 of 2026-11-26: `R2_1`
+        failed on `tests/test_environment.py`, the test was fixed by `R2_2`, nobody ran the experiment again)."""
+        h = self._project_h()
+        if h is None:
+            return []
+        again: list[str] = []
+        for task in state.tasks:
+            blamed, own = task.get("blamed"), self._task_vertex(task)
+            if task.get("status") != "FAILED" or task.get("requeued") or blamed not in h.vertices or own not in h.vertices:
+                continue
+            if h.vertices[blamed].state == "verified" and h.vertices[own].state not in ("verified", "failed"):
+                task.update({"status": "TODO", "requeued": True, "repair_attempts": 0})
+                self.logger.log_event("TASK_REQUEUED", task_id=task.get("task_id"), node=own, blamed=blamed)
+                again.append(str(task.get("task_id")))
+        if again:
+            write_json_state(self.task_queue_path, state.tasks)
+        return again
 
     def _task_vertex(self, task: dict[str, Any]) -> str | None:
         h = self._project_h()
@@ -67,6 +89,7 @@ class SchedulerMixin:
             if vertex and h is not None:
                 h.vertices[vertex].attempts += 1
                 save(h, self.hypergraph_path)
+                self._fresh_description(h, task)
             yield idx, task
 
     def _on_task_result(self, task: dict[str, Any], passed: bool) -> None:

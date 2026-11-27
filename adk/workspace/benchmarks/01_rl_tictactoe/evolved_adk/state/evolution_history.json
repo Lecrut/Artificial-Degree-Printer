@@ -1,9 +1,27 @@
 {
   "events": [
     {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_outline",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_outline.md",
+        "injected_rule": "When defining metrics to verify a thesis claim involving relative performance or accuracy, ensure the `metrics` list explicitly includes all distinct groups (e.g., agent vs. baseline) whose outcomes are required for that comparison, because omitting any group's statistics makes the claim unverifiable in the results file.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
       "type": "MUTATION_REJECTED",
       "agent": "plan_module",
-      "rule": "When defining module interfaces or docstrings, ensure that all internal dependencies are explicitly listed in the contract and that any claims about side effects (like file generation) correspond to existing, correctly wired modules; additionally, when designing agents for dynamic environments, the interface must account for dynamic constraints by passing context-specific data (like valid actions) rather than assuming fixed parameters, because architectural consistency requires that runtime variability is reflected in compile-time signatures.",
+      "rule": "When defining an interface for a module that implements a standard framework API (e.g., Gymnasium), ensure method signatures strictly adhere to the external specification's requirements, even if this contradicts internal docstring claims or simpler local conventions, because compatibility with the runtime environment is a hard constraint.",
+      "reason": "concerns what the harness enforces (syntax, answer shape, imports)"
+    },
+    {
+      "type": "MUTATION_REJECTED",
+      "agent": "plan_module",
+      "rule": "When designing an interface that consumes other modules, strictly adhere to the public contract (signatures and docstrings) of the dependencies as provided in the input; if a required capability is missing from that contract, use the `needs` field to request it rather than inventing parameters or modifying signatures, because the plan defines the contract for others, not vice versa.",
       "reason": "concerns what the harness enforces (syntax, answer shape, imports)"
     },
     {
@@ -12,101 +30,47 @@
         "status": "mutated",
         "agent": "plan_module",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
-        "injected_rule": "When defining module interfaces or method signatures in an outline, ensure all parameter names and counts strictly match the contract promised to downstream agents (such as the seed_coder) and are consistent with the broader context requirements, because any mismatch breaks the interface contract and prevents correct implementation.",
+        "injected_rule": "When designing a module interface that coordinates multiple sub-tasks (e.g., training and evaluation), distinguish clearly between factories (which create objects) and operators (which process them); if a called function internally creates an object, the caller must NOT also instantiate that object unless it intends to replace the call with inlined logic, because shared object lifecycle management prevents data leakage and ensures the correct instance is passed downstream.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
       }
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T4",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- agent.py:QLearningAgent.__init__: SyntaxError in new_code: unexpected indent at line 12 of your code: `def __init__(` is indented by 8 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation.\n- agent.py:QLearningAgent.choose_action: SyntaxError in new_code: unexpected indent at line 12 of your code: `def choose_action(` is indented by 8 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation.\n- agent.py:QLearningAgent.update: SyntaxError in new_code: unexpected indent at line 15 of your code: `def update(` is indented by 8 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation.\n- agent.py:QLearningAgent.get_q_values: SyntaxError in new_code: unexpected indent at line 6 of your code: `def get_q_values(self) -> np.ndarray:` is indented by 8 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T5",
-      "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_agent.py]: reads QLearningAgent.gamma, QLearningAgent.lr, which the interface does not declare (test only declared methods and attributes)"
+      "type": "MUTATION_REJECTED",
+      "agent": "plan_module",
+      "rule": "When a function's docstring promises return values derived from aggregating or transforming intermediate results, explicitly declare in the return description which keys those aggregated metrics occupy and how they are computed, because consumers must rely on the interface contract to access processed data without guessing implementation details.",
+      "reason": "concerns what the harness enforces (syntax, answer shape, imports)"
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
       "task_id": "T5_FIX1",
-      "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_agent.py:<module>.test_update_applies_bellman_equation: Class <module> does not exist in test_agent.py; the edit of <module>.test_update_applies_bellman_equation has nowhere to land."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T5_FIX2",
-      "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_agent.py:<module>.test_update_applies_bellman_equation: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 6) at line 2 of your code: `\"\"\"Tests that update method correctly applies the Q-Learning Bellman equation.` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation.\n- test_agent.py:<module>.test_update_sets_future_value_to_zero_when_done: SyntaxError in new_code: unterminated triple-quoted string literal (detected at line 5) at line 2 of your code: `\"\"\"Tests that update method treats future value as 0 when done=True.` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- q_agent.py:QAgent.load_q_table: SyntaxError in new_code: unexpected indent at line 3 of your code: `def load_q_table(self, filepath: str) -> None:` is indented by 4 spaces, the line before by 0. Every statement of one block (the body of a `def` with its docstring) must start at the same indentation."
     },
     {
       "type": "BUILDER_ANSWER_REJECTED",
       "task_id": "T8",
-      "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- config.py:py: The new code of py contains no definition of `py`; nothing was saved. The code of one symbol starts with its header (`def py(...):` or `class py:`); a body alone cannot be placed."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T8_FIX1",
-      "agent": "seed_coder",
-      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- config.py:12: unterminated triple-quoted string literal (detected at line 12)\n    11: LEARNING_RATE: float = 0.2\n    12: \"\"\""
-    },
-    {
-      "type": "UNKNOWN_CITATIONS_DROPPED",
-      "keys": [
-        "puter1994markov",
-        "wa2024reinforcement"
-      ]
-    },
-    {
-      "type": "UNKNOWN_CITATIONS_DROPPED",
-      "keys": [
-        "amiri2025reinforcement",
-        "ho2018deep",
-        "puterman2019markov",
-        "waite2017introduction",
-        "wang2021sampleefficiency",
-        "watkin2013reinforcement"
-      ]
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "T10",
-      "agent": "seed_coder",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- IMPORT_OUTSIDE_SPEC [experiment.py]: imports reset_seed, run_episode from config.py; its interface has EPSILON_DECAY, EPSILON_END, EPSILON_START, GAMMA, LEARNING_RATE, NUM_EPISODES, SEEDS, TEST_EPISODES"
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "seed_coder",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
-        "injected_rule": "When using symbols from other modules, verify their import status by checking the contract or source file of that module first, because undefined names indicate missing imports rather than logical errors.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R1_2",
       "agent": "seed_tester",
-      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_agent.py]: reads QLearningAgent.gamma, QLearningAgent.lr, which the interface does not declare (test only declared methods and attributes)"
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_baseline_agent.py]: reads RandomAgent._rng, which the interface does not declare (test only declared methods and attributes)"
     },
     {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R1_2_FIX1",
-      "agent": "seed_tester",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- test_agent.py:py: The new code of py contains no definition of `py`; nothing was saved. The code of one symbol starts with its header (`def py(...):` or `class py:`); a body alone cannot be placed."
-    },
-    {
-      "type": "BUILDER_ANSWER_REJECTED",
-      "task_id": "R2_1_FIX1",
+      "type": "MUTATION_REJECTED",
       "agent": "seed_coder",
-      "error": "Symbol edits rejected (nothing from this answer was saved):\n- environment.py:TicTacToeEnv.reset: The new code of TicTacToeEnv.reset also contains action_space, observation_space, __init__, step, get_valid_actions, _get_winner, _flatten_observation; nothing was saved. Send every symbol as its own element of ast_edits, or the whole file in `files`.\n- environment.py:run_episode: Provided new_code contains no AST statements."
+      "rule": "When accessing attributes on an imported class instance, verify their existence in the class definition provided in the specification or infer them from the class name and type; do not assume stateful tracking attributes exist unless explicitly declared in the interface because using undefined attributes causes AttributeError at runtime.",
+      "reason": "encodes a symptom (error code, exception type, line number) instead of a working method"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T13",
+      "agent": "seed_coder",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- FUNCTION_NEVER_RETURNS [pipeline.py]: the annotation promises a value, the body has no `return <value>` (is the answer cut off?): run_evaluation_pipeline"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T14",
+      "agent": "seed_tester",
+      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_pipeline.py:131: unmatched ']'\n   130:         assert isinstance(result, dict), \"Result must be a dict\"\n   131:         assert 'agent_vs_baseline' in result, \"Missing 'agent_vs_baseline'\"] \n   132:         assert 'baseline_vs_baseline' in result, \"Missing 'baseline_vs_baseline'\""
     },
     {
       "type": "AGENT_MUTATED",
@@ -114,32 +78,329 @@
         "status": "mutated",
         "agent": "seed_tester",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_tester.md",
-        "injected_rule": "When asserting equality involving numerical values from a library that may return numpy arrays (e.g., Gym spaces), always use element-wise comparison methods like .any() or .all(), because direct boolean evaluation of multi-element arrays raises ambiguous truth value errors.",
+        "injected_rule": "When writing tests for modules that rely on external dependencies (like agents or models), ensure those dependencies are properly instantiated and passed to the function under test, because omitting the dependency object results in silent errors or uncallable attributes rather than immediate import failures.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
       }
     },
     {
-      "type": "QUEUE_REBUILT",
-      "generation": 1,
-      "task_ids": [
-        "Q1_PDF"
-      ]
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "test_pipeline.py"
+        ],
+        "signature": "test_pipeline.py::TestRunEvaluationPipeline::test_aggregation_logic_with_mocked_metrics:KeyError\ntest_pipeline.py::TestRunEvaluationPipeline::test_returns_dict_with_correct_keys:KeyError\ntest_pipeline.py::TestRunEvaluationPipeline::test_seeds_passed_to_random_agents:KeyError\ntest_pipeline.py::TestRunTrainingPipeline::test_calls_qagent_with_correct_params:AssertionError",
+        "task_id": "R3_2",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
+      }
     },
     {
-      "type": "QUEUE_REBUILT",
-      "generation": 2,
-      "task_ids": [
-        "Q2_PDF"
-      ]
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_outline",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_outline.md",
+        "injected_rule": "When a module's purpose involves comparing agents (e.g., evaluator), ensure it can instantiate every agent it needs directly from the dependencies; if a dependency only provides statistics, add the agent factory or class to that same dependency rather than relying on the consumer to define it, because comparison requires active participation from all parties.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
     },
     {
-      "type": "QUEUE_REBUILT",
-      "generation": 3,
-      "task_ids": [
-        "Q3_PDF"
-      ]
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When defining an interface for a component in a heterogeneous system, ensure the signature strictly conforms to the abstract contract expected by consumers, rather than optimizing for the specific internal implementation of the provider; mismatched signatures break polymorphism and force fragile adapters. When designing functions that perform statistical computations (e.g., standard deviation), ensure all parameters required for determinism or reproducibility (e.g., seeds) are explicitly part of the public interface if their values flow into downstream stochastic components; missing propagation parameters render the computed metric unreliable or meaningless.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When a function's purpose involves returning the result of an external operation (such as training or running simulation) to a consumer module, the signature must explicitly return the data or object instances needed by that consumer, because omitting required output parameters forces callers to depend on side effects or inaccessible internal state.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When designing interfaces for concrete simulation or evaluation components, pass specific instances (or parameters to instantiate them) rather than abstract types or relying on implicit global state, because concrete dependencies allow the caller to control object lifecycle and enable modular reuse without requiring complex role-alternation logic in every consumer.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "plan_module",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+          "cycle": 1,
+          "rules_consolidated": 4,
+          "dropped_ineffective": [
+            "When designing a module interface that coordinates multiple sub-tasks (e.g., training and evaluation), distinguish clearly between factories (which create objects) and operators (which process them); if a called function internally creates an object, the caller must NOT also instantiate that object unless it intends to replace the call with inlined logic, because shared object lifecycle management prevents data leakage and ensures the correct instance is passed downstream.",
+            "When defining an interface for a component in a heterogeneous system, ensure the signature strictly conforms to the abstract contract expected by consumers, rather than optimizing for the specific internal implementation of the provider; mismatched signatures break polymorphism and force fragile adapters. When designing functions that perform statistical computations (e.g., standard deviation), ensure all parameters required for determinism or reproducibility (e.g., seeds) are explicitly part of the public interface if their values flow into downstream stochastic components; missing propagation parameters render the computed metric unreliable or meaningless."
+          ],
+          "invariants": [
+            "When designing a public interface for a module that performs computation or simulation, return all necessary data and object instances explicitly in the function signatures because this eliminates dependency on side effects or inaccessible internal state and ensures the contract is self-contained.",
+            "When defining parameters for concrete simulation or evaluation components, pass specific class references or instantiation arguments rather than relying on implicit global state or abstract types because this allows callers to control object lifecycle, enables modular reuse, and prevents hidden coupling between modules."
+          ]
+        }
+      }
+    },
+    {
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "cycle": 1,
+        "rules_consolidated": 4,
+        "dropped_ineffective": [
+          "When designing a module interface that coordinates multiple sub-tasks (e.g., training and evaluation), distinguish clearly between factories (which create objects) and operators (which process them); if a called function internally creates an object, the caller must NOT also instantiate that object unless it intends to replace the call with inlined logic, because shared object lifecycle management prevents data leakage and ensures the correct instance is passed downstream.",
+          "When defining an interface for a component in a heterogeneous system, ensure the signature strictly conforms to the abstract contract expected by consumers, rather than optimizing for the specific internal implementation of the provider; mismatched signatures break polymorphism and force fragile adapters. When designing functions that perform statistical computations (e.g., standard deviation), ensure all parameters required for determinism or reproducibility (e.g., seeds) are explicitly part of the public interface if their values flow into downstream stochastic components; missing propagation parameters render the computed metric unreliable or meaningless."
+        ],
+        "invariants": [
+          "When designing a public interface for a module that performs computation or simulation, return all necessary data and object instances explicitly in the function signatures because this eliminates dependency on side effects or inaccessible internal state and ensures the contract is self-contained.",
+          "When defining parameters for concrete simulation or evaluation components, pass specific class references or instantiation arguments rather than relying on implicit global state or abstract types because this allows callers to control object lifecycle, enables modular reuse, and prevents hidden coupling between modules."
+        ]
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When a source implementation introduces arguments not present in the accepted outline, align the sketch with the source's practical requirements by moving non-contractual configuration (such as environment classes) to module-level constants rather than altering the public signature or the outline, because the sketch must reflect the necessary dependencies of the implementation while maintaining the interface contract.",
+        "active_rules_count": 1,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When a dependency has been previously corrected via feedback, ensure that any subsequent logic or signatures involving that dependency are fully synchronized with those corrections rather than referencing old interfaces or leaving contradictory logic, because the accepted interface is the only source of truth.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When a method's operational requirements (such as hyperparameters or state) differ from its explicit signature or when an outline's type hint conflicts with the source code's design intent, reconcile the sketch by ensuring all functional arguments required for execution are declared in the signature and that type hints match the actual passed values (e.g., class vs instance), because the interface must be self-contained and logically consistent to prevent implementation gaps.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_tester",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_tester.md",
+        "injected_rule": "When asserting equality involving Numpy scalar types (e.g., np.int64), convert both sides to standard Python types (e.g., via .item() or int()) before comparison, because direct equality checks between numpy scalars and Python ints can be unreliable or ambiguous in assert statements.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "D1_4",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- IMPORT_OUTSIDE_SPEC [tests/test_q_agent.py]: imports DEFAULT_DISCOUNT_FACTOR, DEFAULT_EPSILON_START, DEFAULT_LEARNING_RATE from q_agent.py; its interface has QAgent, QAgent.__init__, QAgent.choose_action, QAgent.epsilon, QAgent.gamma, QAgent.load_q_table, QAgent.lr, QAgent.n_actions, QAgent.q_table, QAgent.save_q_table, QAgent.update"
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When implementing a module that uses symbols from other planned modules, import every necessary public name from its specification interface in the source code; omitting an import creates undefined name errors because Python executes top-to-down and does not inject dependencies implicitly.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "D1_12_FIX_2",
+      "agent": "seed_tester",
+      "error": "Code does not parse; nothing from this answer was saved. Fix the places below and return the answer again in the same format:\n- tests/test_experiment.py:53: invalid syntax\n    52:          patch('evaluator.compute_metrics') as mock_compute_metrics, \\\n    53:          patch('baseline_agent.compute_self_play_stats') as mock_compute_self_play,\n    54:          patch('builtins.open', new_callable=io.StringIO) as mock_open_file:"
+    },
+    {
+      "type": "MUTATION_REJECTED",
+      "agent": "plan_module",
+      "rule": "When defining a module interface, align signatures and return types strictly with the semantic contract (docstrings and established conventions) rather than external source artifacts or rigid outline hints when they conflict, because the sketch must describe the actual logical behaviour required by consumers.",
+      "reason": "concerns what the harness enforces (syntax, answer shape, imports)"
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "injected_rule": "When an instance requires state for correctness or reproducibility (such as a random seed), enforce it through explicit constructor arguments rather than relying on module-level constants or global state, because instance-level configuration ensures isolation and adheres to the contract of deterministic behavior.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "plan_module",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+          "cycle": 2,
+          "rules_consolidated": 4,
+          "dropped_ineffective": [
+            "When a source implementation introduces arguments not present in the accepted outline, align the sketch with the source's practical requirements by moving non-contractual configuration (such as environment classes) to module-level constants rather than altering the public signature or the outline, because the sketch must reflect the necessary dependencies of the implementation while maintaining the interface contract.",
+            "When a dependency has been previously corrected via feedback, ensure that any subsequent logic or signatures involving that dependency are fully synchronized with those corrections rather than referencing old interfaces or leaving contradictory logic, because the accepted interface is the only source of truth.",
+            "When a method's operational requirements (such as hyperparameters or state) differ from its explicit signature or when an outline's type hint conflicts with the source code's design intent, reconcile the sketch by ensuring all functional arguments required for execution are declared in the signature and that type hints match the actual passed values (e.g., class vs instance), because the interface must be self-contained and logically consistent to prevent implementation gaps."
+          ],
+          "invariants": [
+            "When designing a public interface for computation or simulation, pass specific class references or instantiation arguments rather than relying on implicit global state because this allows callers to control object lifecycle, enables modular reuse, and prevents hidden coupling between modules.",
+            "When an instance requires state for correctness or reproducibility, enforce it through explicit constructor arguments rather than relying on module-level constants because instance-level configuration ensures isolation and adheres to the contract of deterministic behavior.",
+            "When defining a public interface, return all necessary data and object instances explicitly in the function signatures because this eliminates dependency on side effects or inaccessible internal state and ensures the contract is self-contained."
+          ]
+        }
+      }
+    },
+    {
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\planning\\plan_module.md",
+        "cycle": 2,
+        "rules_consolidated": 4,
+        "dropped_ineffective": [
+          "When a source implementation introduces arguments not present in the accepted outline, align the sketch with the source's practical requirements by moving non-contractual configuration (such as environment classes) to module-level constants rather than altering the public signature or the outline, because the sketch must reflect the necessary dependencies of the implementation while maintaining the interface contract.",
+          "When a dependency has been previously corrected via feedback, ensure that any subsequent logic or signatures involving that dependency are fully synchronized with those corrections rather than referencing old interfaces or leaving contradictory logic, because the accepted interface is the only source of truth.",
+          "When a method's operational requirements (such as hyperparameters or state) differ from its explicit signature or when an outline's type hint conflicts with the source code's design intent, reconcile the sketch by ensuring all functional arguments required for execution are declared in the signature and that type hints match the actual passed values (e.g., class vs instance), because the interface must be self-contained and logically consistent to prevent implementation gaps."
+        ],
+        "invariants": [
+          "When designing a public interface for computation or simulation, pass specific class references or instantiation arguments rather than relying on implicit global state because this allows callers to control object lifecycle, enables modular reuse, and prevents hidden coupling between modules.",
+          "When an instance requires state for correctness or reproducibility, enforce it through explicit constructor arguments rather than relying on module-level constants because instance-level configuration ensures isolation and adheres to the contract of deterministic behavior.",
+          "When defining a public interface, return all necessary data and object instances explicitly in the function signatures because this eliminates dependency on side effects or inaccessible internal state and ensures the contract is self-contained."
+        ]
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "D2_4",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_NO_ASSERTIONS [tests/test_q_agent.py]: these tests check nothing (no `assert`, `pytest.raises`, `pytest.approx`): test_q_table_initialized_correct_type_and_empty, test_n_actions_attribute, test_default_hyperparameters, test_custom_hyperparameters, test_choose_action_returns_valid_move, test_choose_action_exploration_returns_valid_move, test_choose_action_deterministic_with_zero_q_values, test_choose_action_with_high_q_value, test_choose_action_with_high_q_value_other_move, test_choose_action_exploration_range, test_choose_action_empty_possible_moves_raises, test_choose_action_invalid_move_raises, test_update_modifies_q_table, test_update_with_done_true, test_update_with_done_false, test_update_updates_lr_and_gamma, test_save_q_table_creates_file, test_save_and_load_q_table, test_load_q_table_file_not_found, test_save_load_preserves_shape"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "D2_4_FIX3",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_NO_ASSERTIONS [tests/test_q_agent.py]: these tests check nothing (no `assert`, `pytest.raises`, `pytest.approx`): test_choose_action_invalid_move_raises"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "D2_6",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_baseline_agent.py]: reads RandomAgent._rng, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "D2_11_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- experiment.py:<module>: an ast_edits element named after the module replaces the WHOLE file, and this code would delete BASELINE_N_MATCHES, FIGURES_DIRNAME, FINAL_EPSILON, GAMMA, INITIAL_EPSILON, LEARNING_RATE, N_EPISODES, N_MATCHES_PER_EVAL, REPETITIONS, RESULTS_FILENAME, SEED_OFFSET, run_experiment. To change one symbol, name that symbol; to replace the module, return all of it in 'files'."
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "D2_11_FIX2",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- experiment.py:<module>: an ast_edits element named after the module replaces the WHOLE file, and this code would delete BASELINE_N_MATCHES, FIGURES_DIRNAME, FINAL_EPSILON, GAMMA, INITIAL_EPSILON, LEARNING_RATE, N_EPISODES, N_MATCHES_PER_EVAL, REPETITIONS, RESULTS_FILENAME, SEED_OFFSET, run_experiment. To change one symbol, name that symbol; to replace the module, return all of it in 'files'."
+    },
+    {
+      "type": "MUTATION_REJECTED",
+      "agent": "seed_writer",
+      "rule": "When verifying a symbolic pointer \\ref_ast, cross-reference the target symbol against the project's available symbols list rather than inferring existence from file names or similar variable conventions; if the specific symbol is absent from the verified list but a semantically equivalent value exists, explicitly check for name variants (e.g., DEFAULT_LEARNING_RATE vs LEARNING_RATE) in that same source before writing the pointer to avoid hallucinated definitions.",
+      "reason": "names specific project files/symbols: LEARNING_RATE"
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When validating input coordinates for array indexing, always explicitly check bounds against the array's shape before accessing elements, because integer indices derived from flat inputs (like TicTacToe moves) often exceed valid multi-dimensional limits when not properly unpacked or clamped.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "injected_rule": "When implementing logic that computes set membership or enumeration (e.g., valid moves, options), derive the result explicitly and count the cardinality before assertion or return, because off-by-one errors in set generation are common when indices or conditions are approximated.",
+        "active_rules_count": 0,
+        "compacted": true,
+        "compaction_details": {
+          "status": "consolidated",
+          "agent": "seed_coder",
+          "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+          "cycle": 3,
+          "rules_consolidated": 4,
+          "dropped_ineffective": [],
+          "invariants": [
+            "When defining public interfaces or modifying existing symbols, strictly preserve parameter names, order, types, and return signatures declared in the specification contract, because breaking backward compatibility invalidates the harness's static analysis and other modules' expectations.",
+            "When using symbols from other planned modules, explicitly import every required name from the `specification` interface rather than relying on implicit resolution, because Python executes top-down and undefined names cause immediate runtime rejection.",
+            "When implementing logic that computes set membership or enumeration (e.g., valid moves), derive the result explicitly and verify its cardinality before assertion, because off-by-one errors in set generation are common when indices or conditions are approximated."
+          ]
+        }
+      }
+    },
+    {
+      "type": "PROMPT_CONSOLIDATED",
+      "details": {
+        "status": "consolidated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\01_rl_tictactoe\\agents\\building\\seed_coder.md",
+        "cycle": 3,
+        "rules_consolidated": 4,
+        "dropped_ineffective": [],
+        "invariants": [
+          "When defining public interfaces or modifying existing symbols, strictly preserve parameter names, order, types, and return signatures declared in the specification contract, because breaking backward compatibility invalidates the harness's static analysis and other modules' expectations.",
+          "When using symbols from other planned modules, explicitly import every required name from the `specification` interface rather than relying on implicit resolution, because Python executes top-down and undefined names cause immediate runtime rejection.",
+          "When implementing logic that computes set membership or enumeration (e.g., valid moves), derive the result explicitly and verify its cardinality before assertion, because off-by-one errors in set generation are common when indices or conditions are approximated."
+        ]
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "R5_3_FIX1",
+      "agent": "seed_coder",
+      "error": "Symbol edits rejected (nothing from this answer was saved):\n- experiment.py:<module>: an ast_edits element named after the module replaces the WHOLE file, and this code would delete run_experiment. To change one symbol, name that symbol; to replace the module, return all of it in 'files'."
+    },
+    {
+      "type": "MUTATION_REJECTED",
+      "agent": "seed_coder",
+      "rule": "When importing symbols from a target module, verify that the name exists in that module's public interface before writing the import statement, because assuming availability without cross-referencing the specification or available symbols leads to runtime ImportError.",
+      "reason": "encodes a symptom (error code, exception type, line number) instead of a working method"
     }
   ]
 }

@@ -36,7 +36,7 @@ def test_the_failed_part_is_re_planned_from_its_dossier(tmp_path: Path):
     assert state.tasks == result["tasks"]
     dossier = sent[0]["repair_dossier"]
     assert [e["vertex"] for e in dossier["failed"]] == ["config.py"]
-    assert dossier["failed"][0]["history"][-1]["issues"] == ["ANSWER_REJECTED: SyntaxError"]
+    assert dossier["failed"][0]["latest_errors"] == ["ANSWER_REJECTED: SyntaxError"] and dossier["failed"][0]["history"] == []  # said once (§XXXVIII P1)
     assert "thesis.md#ch1" in dossier["verified_do_not_touch"] and "core.py" in dossier["failed"][0]["waiting_on_it"]
     replanned = [e for e in _events(orch, seen) if e["event"] == "REPLANNED"]
     assert replanned and replanned[0]["tasks"] == ["R1_1"] and len(replanned[0]["dropped"]) == 2
@@ -223,3 +223,93 @@ def test_an_interface_change_is_refused_for_a_module_whose_error_did_not_move(tm
 def test_the_task_planner_prompt_names_the_unmoved_error_flag():
     text = (Path(__file__).resolve().parents[2] / "adk" / "agents" / "planning" / "task_planner.md").read_text(encoding="utf-8")
     assert "`same_error_as_last_round`" in text
+
+
+def _failed_for_the_tests_fault(h, blamed_state: str):
+    h.vertices["core.py"].state = "impl"  # the module's task failed, its own vertex is unfinished
+    h.vertices["tests/test_core.py"].state = blamed_state
+    return _state([{"task_id": "R2_1", "target_node": "core.py", "assigned_agent": "seed_coder", "status": "FAILED",
+                    "repair_attempts": 3, "blamed": "tests/test_core.py"}])
+
+
+def test_a_task_that_failed_for_another_vertexs_fault_runs_again_once_that_vertex_is_repaired(tmp_path: Path):
+    """§XXXII P1, 01 of 2026-11-26: `R2_1` (the experiment) failed on `tests/test_environment.py`; `R2_2` repaired the test;
+    the experiment stayed `impl` with no task and the run ended with it as a gap."""
+    orch, h = _planned(tmp_path)
+    state = _failed_for_the_tests_fault(h, "verified")
+    seen = _seen(orch)
+    assert orch._requeue_blamed(state) == ["R2_1"]
+    task = state.tasks[0]
+    assert task["status"] == "TODO" and task["repair_attempts"] == 0 and task["requeued"] is True
+    assert [e["event"] for e in _events(orch, seen)] == ["TASK_REQUEUED"]
+    task["status"] = "FAILED"  # it fails again: not a third time
+    assert orch._requeue_blamed(state) == []
+
+
+def test_a_task_is_not_run_again_while_the_vertex_at_fault_is_still_broken(tmp_path: Path):
+    orch, h = _planned(tmp_path)
+    for broken in ("failed", "written", "spec"):
+        state = _failed_for_the_tests_fault(h, broken)
+        assert orch._requeue_blamed(state) == [] and state.tasks[0]["status"] == "FAILED"
+
+
+def test_a_vertex_that_was_verified_meanwhile_or_failed_itself_is_left_alone(tmp_path: Path):
+    orch, h = _planned(tmp_path)
+    state = _failed_for_the_tests_fault(h, "verified")
+    h.vertices["core.py"].state = "verified"
+    assert orch._requeue_blamed(state) == []
+    h.vertices["core.py"].state = FAILED  # the re-plan takes it
+    assert orch._requeue_blamed(state) == []
+
+
+def test_an_interface_the_planner_wrote_with_bodies_is_kept_without_them(tmp_path: Path, monkeypatch):
+    """§XXXVII.6: the planner's 50-line implementations (with the bugs of the code) went into `interfaces` as they were."""
+    orch, h = _planned(tmp_path)
+    h.vertices["core.py"].state = FAILED
+    seen: dict[str, str] = {}
+    monkeypatch.setattr(orch, "_apply_amendment", lambda rel, source, *_a: seen.setdefault(rel, source) and [])
+    interfaces: dict[str, str] = {}
+    out = {"interfaces": {"core.py": 'def f() -> int:\n    """Return one."""\n    total = 0\n    for i in range(3):\n        total += i\n    return total\n'}}
+    assert orch._replan_interfaces(h, out, ["core.py"], interfaces, {}) == ["core.py"]
+    assert "total" not in seen["core.py"] and "..." in seen["core.py"] and interfaces["core.py"] == seen["core.py"]
+
+
+def test_a_replanned_task_that_waited_reads_the_findings_of_its_vertex_again_when_it_starts(tmp_path: Path):
+    """§XXXVII.7: `R1_1` started with the hang found before `R1_2` had changed `environment.py`."""
+    orch, h = _planned(tmp_path)
+    h.vertices["core.py"].state = FAILED
+    h.vertices["core.py"].history[:] = [{"task_id": "T2", "issues": ["Pytest failure: OLD hang"]}]
+    _answer(orch, [{"target_node": "core.py", "description": "rewrite", "assigned_agent": "seed_coder"}])
+    state = _state([])
+    task = orch._replan_failed(state)["tasks"][0]
+    assert "OLD hang" in task["description"]
+    task["force_ready"] = True  # it starts although its dependencies are not ready: what is read is the history at that moment
+    state.tasks.append(task)
+    h.vertices["core.py"].history[:] = [{"task_id": "R1_2_FIX1", "issues": ["Pytest failure: NEW assertion"]}]
+    h.vertices["core.py"].state = "stale"
+    _idx, started = next(iter(orch._task_order(state)))
+    assert "NEW assertion" in started["description"] and "OLD hang" not in started["description"] and started["description"].startswith("rewrite")
+
+
+def test_the_planner_gets_open_tasks_interfaces_of_the_others_and_each_error_once(tmp_path: Path):
+    """§XXXVIII.2 / P1: `task_planner` read 89k characters: the whole finished queue, every interface twice, the last error three times."""
+    orch, h = _planned(tmp_path)
+    h.vertices["core.py"].state = FAILED
+    h.vertices["core.py"].history[:] = [
+        {"task_id": "T2", "issues": ["Pytest failure: FIRST"]},
+        {"task_id": "T2_FIX1", "issues": ["Pytest failure: LAST"]},
+    ]
+    done = {**_TASKS[0], "status": "DONE"}
+    open_task = {**_TASKS[2], "status": "WAITING", "planned_description": "x"}
+    sent = _answer(orch, [])
+    orch._replan_failed(_state([done, open_task]))
+    plan, dossier = sent[0]["current_plan"], sent[0]["repair_dossier"]["failed"][0]
+    assert [t["task_id"] for t in plan["tasks"]] == [open_task["task_id"]] and "planned_description" not in plan["tasks"][0]
+    assert "core.py" not in plan["interfaces"]  # it is the dossier's `planned_interface`
+    assert dossier["latest_errors"] == ["Pytest failure: LAST"]
+    assert [e["issues"] for e in dossier["history"]] == [["Pytest failure: FIRST"]]  # the last verdict is not repeated
+    h.vertices["core.py"].state = "verified"
+    h.vertices["thesis.md#ch1"] = type(h.vertices["core.py"])("thesis.md#ch1", "chapter", None, state=FAILED)
+    sent_chapters = _answer(orch, [])
+    orch._replan_failed(_state([]))
+    assert sent_chapters[-1]["current_plan"]["interfaces"] == {}  # only a chapter failed

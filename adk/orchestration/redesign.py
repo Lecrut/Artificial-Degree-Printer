@@ -69,6 +69,13 @@ def _carry_over(old: Hypergraph, new: Hypergraph, rebuild: set[str], failed: set
         vertex.attempts, vertex.history = (0 if vid in failed else before.attempts), list(before.history)
         if vid in stale and vertex.state == "verified":
             vertex.state = "stale"
+    # A chapter that cites a redesigned module points at symbols that may be gone (§XXXVII.5: chapter 3 stayed `verified`
+    # with `\ref_ast` to a module the redesign had rebuilt).
+    for edge in old.edges.values():
+        if edge.type == "N" and set(edge.observed) & rebuild:
+            for vid, role in edge.members.items():
+                if role == "X" and vid in new.vertices and new.vertices[vid].state == "verified":
+                    new.vertices[vid].state = "stale"
     run, results = new.edges.get("R:run"), new.vertices.get(RESULTS_FILE)
     if run is not None and results is not None and results.state == "verified" and rebuild & set(run.members):
         results.state = "stale"
@@ -193,7 +200,7 @@ class RedesignMixin:
                 continue
             candidate["thesis_type"], candidate["template_name"] = old.get("thesis_type"), old.get("template_name")
             previous = outline_view(candidate)
-            candidate, decisions = settled_decisions(old, candidate, decisions_of(output))
+            candidate, decisions = settled_decisions(old, candidate, decisions_of(output), set(failed))
             problems = outline_violations(candidate, {}, bool(self.include_docs)) + revision_violations(old, candidate, decisions, workspace)
             self.logger.log_event(
                 "REDESIGN_GUIDELINES", attempt=attempt, decisions=decisions, diagnosis=diagnosis_of(output), problems=problems,

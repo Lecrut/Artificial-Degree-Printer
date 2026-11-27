@@ -25,7 +25,7 @@ def test_runner_sees_sources_when_workspace_lives_under_benchmarks(tmp_path: Pat
     (ws / "core.py").write_text("def value() -> int:\n    return 1\n", encoding="utf-8")
     (ws / "test_core.py").write_text("from core import value\ndef test_value():\n    assert value() == 1\n", encoding="utf-8")
 
-    res = run_isolated_tests(ws, use_docker=False)
+    res = run_isolated_tests(ws)
     assert res["pytest_passed"] is True
     assert "No Python files" not in res["stdout"]
 
@@ -36,12 +36,12 @@ def test_isolated_test_runner_pass_and_fail(tmp_path: Path):
     (ws / "math_mod.py").write_text("def add(a: int, b: int) -> int:\n    return a + b\n", encoding="utf-8")
     (ws / "test_math.py").write_text("from math_mod import add\ndef test_add():\n    assert add(2, 3) == 5\n", encoding="utf-8")
 
-    res_pass = run_isolated_tests(ws, use_docker=False)
+    res_pass = run_isolated_tests(ws)
     assert res_pass["status"] == "PASS"
     assert res_pass["pytest_passed"] is True
 
     (ws / "test_math.py").write_text("from math_mod import add\ndef test_add():\n    assert add(2, 3) == 999\n", encoding="utf-8")
-    res_fail = run_isolated_tests(ws, use_docker=False)
+    res_fail = run_isolated_tests(ws)
     assert res_fail["status"] == "FAIL"
     assert res_fail["pytest_passed"] is False
 
@@ -102,7 +102,7 @@ def test_a_test_file_without_tests_is_named_in_the_finding(tmp_path: Path):
     (ws / "tests").mkdir(parents=True)
     (ws / "experiment.py").write_text("def run() -> int:\n    return 1\n", encoding="utf-8")
     (ws / "tests" / "test_experiment.py").write_text("from experiment import run\n", encoding="utf-8")
-    report = run_isolated_tests(ws, use_docker=False, verification_dir=tmp_path / "none")
+    report = run_isolated_tests(ws, verification_dir=tmp_path / "none")
     assert report["status"] == "FAIL"
     assert any("tests/test_experiment.py define no test function" in e for e in report["errors"])
 
@@ -112,7 +112,7 @@ def test_ruff_findings_name_workspace_relative_paths(tmp_path: Path):
     ws = tmp_path / "ws"
     ws.mkdir()
     (ws / "config.py").write_text("X = undefined_name\n", encoding="utf-8")
-    report = run_isolated_tests(ws, use_docker=False, verification_dir=tmp_path / "none")
+    report = run_isolated_tests(ws, verification_dir=tmp_path / "none")
     ruff = [e for e in report["errors"] if e.startswith("Ruff lint failure")]
     assert ruff and "config.py:1" in ruff[0] and str(tmp_path) not in ruff[0] and "ws" not in ruff[0].split("config.py")[0]
 

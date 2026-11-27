@@ -175,9 +175,10 @@ def focused_repair_description(target: str, symbols: list[str], findings: list[s
 
 def test_contradicts_verified_module(module: str) -> str:
     return (
-        f"{module} already gives every result its specification examples require, so the failing assertion is "
-        "suspect: check the expected value against the specification and the arithmetic of the code (e.g. one "
-        "update with the declared parameters) and fix the test; change nothing in the module."
+        f"{module} passed its own verification, which only says that it parses, imports and has the names its interface "
+        "declares, not that its results are right. Check first whether the failing assertion is: compare its expected "
+        "value with the docstring of the interface and with the arithmetic of the code (e.g. one update with the "
+        "declared parameters). If the expected value is wrong, fix the test and change nothing in the module."
     )
 
 
@@ -251,6 +252,15 @@ MISSING_CHAPTERS_PATTERN = re.compile(r"missing chapters.*?\[(.*?)\]", re.IGNORE
 
 def missing_chapters(labels: list[str]) -> str:
     return f"{MISSING_CHAPTERS}: {labels}. Every planned chapter is required."
+
+
+def control_character_in_document(file: str, line: int, code: str, near: str) -> str:
+    return (
+        f"CONTROL_CHARACTER [{file}]: line {line} holds the control character {code} (shown as <CTRL>): `{near}`. A backslash of "
+        "the text was read by JSON as an escape (\\b became a backspace, \\t a tab, \\f a form feed), so `\\bar` lost its "
+        "`\\b`. Write that passage again with every LaTeX backslash doubled in the JSON string (\\\\bar, \\\\tau, \\\\frac); "
+        "the PDF cannot be built while this character is in the file."
+    )
 
 
 def chapter_covers(number: int) -> str:

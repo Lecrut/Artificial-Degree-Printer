@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import time
 from pathlib import Path
@@ -289,24 +288,6 @@ def test_a_chapter_may_cite_what_h_holds(tmp_path: Path):
     assert not any(c.startswith("ablation.csv") for c in may_cite["available_csv_columns"])
 
 
-def test_unverified_bibtex_from_a_model_is_dropped(tmp_path: Path):
-    adk_dir = _clone_adk_env(tmp_path)
-    orch = NeuroSymbolicOrchestrator(adk_root=adk_dir, provider="mock")
-    orch.provider = "ollama"
-    orch.blueprint_path.write_text(
-        json.dumps({"literature_recon": {"citation_source": "arxiv", "available_citation_keys": ["real2023paper"]}}),
-        encoding="utf-8",
-    )
-    bib = (
-        "@article{real2023paper,\n  title = {Real},\n  year = {2023}\n}\n\n"
-        "@article{invented2024paper,\n  title = {Hallucinated},\n  year = {2024}\n}"
-    )
-    orch._materialize_workspace_artifact("references.bib", {"bibtex_entries": bib})
-    written = (adk_dir / "workspace" / "references.bib").read_text(encoding="utf-8")
-    assert "real2023paper" in written
-    assert "invented2024paper" not in written
-
-
 def test_results_pointer_findings_wait_for_green_code_and_refs_join_the_critic(tmp_path: Path) -> None:
     """U9: Q1-Q4 each gave the writer CRITIC + REFS on \\ref_csv while results.csv did not exist."""
     orch = _orch(tmp_path)
@@ -330,3 +311,28 @@ def test_results_pointer_findings_wait_for_green_code_and_refs_join_the_critic(t
     )
     assert [t["task_id"] for t in green] == ["Q2_CRITIC"]
     assert "[K1]" in green[0]["description"] and "[K2]" in green[0]["description"]
+
+
+def test_a_pointer_finding_names_the_pointer_so_the_repair_sees_the_chapter_that_holds_it(tmp_path: Path) -> None:
+    """§XXXVI (01, 2026-11-26): chapter 3 cited `evaluate_games`, renamed by a redesign; the finding named only the
+    symbol, so the repairs of chapters 4-6 saw the end of the document and failed nine times with the same error."""
+    from adk.orchestration import agent_texts as texts
+    from adk.orchestration.building import _document_context
+
+    (tmp_path / "evaluator.py").write_text('def evaluate_symmetric() -> None:\n    """Evaluates."""\n', encoding="utf-8")
+    chapter3 = "## Rozdział 3: Środowisko\nPorównanie liczy \\ref_ast{evaluator.py:evaluate_games}.\n"
+    thesis = "## Rozdział 1: Wstęp\nTekst.\n\n## Rozdział 2: Metoda\nTekst.\n\n" + chapter3 + "\n## Rozdział 4: Wyniki\n" + "Zakończenie. " * 80
+    errors = _errors(tmp_path, thesis)
+
+    assert errors and "\\ref_ast{evaluator.py:evaluate_games}" in errors[0] and "not found" in errors[0]
+    description = texts.focused_repair_description("thesis.md", [], errors)
+    assert "Porównanie liczy" in _document_context(thesis, description)  # chapter 3 is shown to the one who repairs
+
+
+def test_an_unclosed_pointer_does_not_swallow_the_next_paragraphs(tmp_path: Path) -> None:
+    r"""§XXXVII.5: `\ref_ast{random_agent.py:RandomAgent` without `}` matched up to the `}` of a pointer two paragraphs later."""
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "trainer.py").write_text("class Trainer:\n    pass\n", encoding="utf-8")
+    errors = _errors(tmp_path, "Agent `\\ref_ast{random_agent.py:RandomAgent` gra.\n\nDrugi akapit.\n\nTrener \\ref_ast{src/trainer.py:Trainer}.\n")
+    assert any("Unclosed symbolic tag" in e for e in errors)
+    assert not any("Drugi akapit" in e for e in errors)  # the old message quoted the swallowed paragraphs

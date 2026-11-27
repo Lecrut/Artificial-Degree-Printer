@@ -1,0 +1,91 @@
+{
+  "modules": [
+    {
+      "file": "data_generator.py",
+      "purpose": "Generates synthetic multi-channel physiological telemetry data with injected anomalies and known ground truth labels.",
+      "depends_on": [],
+      "provides": [
+        "generate_dataset(n_channels: int, duration: int, anomaly_rate: float, noise_std: float, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]"
+      ]
+    },
+    {
+      "file": "baseline_zscore.py",
+      "purpose": "Implements the static univariate Z-score based anomaly detection baseline.",
+      "depends_on": [
+        "data_generator.py"
+      ],
+      "provides": [
+        "ZScoreDetector(window_size: int)",
+        "ZScoreDetector.predict(channel_data: np.ndarray) -> np.ndarray"
+      ]
+    },
+    {
+      "file": "method_random_subspace.py",
+      "purpose": "Implements the proposed Random Subspace Ensemble detector.",
+      "depends_on": [],
+      "provides": [
+        "RandomSubspaceDetector(n_subspaces: int, subspace_dim: int)",
+        "RandomSubspaceDetector.fit(data: np.ndarray) -> None",
+        "RandomSubspaceDetector.predict(data: np.ndarray) -> np.ndarray"
+      ]
+    },
+    {
+      "file": "experiment.py",
+      "purpose": "Runs the full experiment loop, computing per-sample binary predictions via proper thresholds before calculating metrics to ensure F1 is non-zero and valid.",
+      "depends_on": [
+        "data_generator.py",
+        "baseline_zscore.py",
+        "method_random_subspace.py"
+      ],
+      "provides": [
+        "run_experiment() -> None"
+      ]
+    },
+    {
+      "file": "plots.py",
+      "purpose": "Reads results.csv and generates visualizations for the thesis.",
+      "depends_on": [],
+      "provides": [
+        "create_figures() -> None"
+      ]
+    }
+  ],
+  "entrypoint": "experiment.py:run_experiment",
+  "plots": "plots.py:create_figures",
+  "academic_blueprint": {
+    "thesis_title": "Odporna detekcja anomalii w wielokanałowej telemetrii fizjologicznej: komitety losowych podprzestrzeni",
+    "thesis_statement": "Komitety oparte na losowych podprzestrzeniach wykazują wyższą odporność na szum i zmienną korelację kanałów niż statyczny detektor Z-score w syntetycznej telemetrii fizjologicznej.",
+    "baseline_comparison": "Statyczny detektor Z-score (jednowymiarowy) vs. Proponowany komitet losowych podprzestrzeni na danych syntetycznych z wstrzykniętymi anomaliami.",
+    "metrics": [
+      "auc_roc",
+      "f1_score"
+    ],
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "Wstęp",
+        "focus": "Motywacja, zakres pracy, cel badawczy oraz struktura rozprawy."
+      },
+      {
+        "index": 2,
+        "title": "Przegląd Literatury",
+        "focus": "Metody detekcji anomalii w telemetrii fizjologicznej, podejścia statyczne vs. ensembled/subspace methods."
+      },
+      {
+        "index": 3,
+        "title": "Propozycja Metodologii",
+        "focus": "Opis detektora bazowego Z-score oraz nowego detektora na losowych podprzestrzeniach (RSE)."
+      },
+      {
+        "index": 4,
+        "title": "Eksperymenty i Wyniki",
+        "focus": "Opis generowania danych syntetycznych, konfiguracja eksperymentu, prezentacja wyników liczbowych."
+      },
+      {
+        "index": 5,
+        "title": "Analiza i Wnioski",
+        "focus": "Krytyczna analiza wyników, dyskusja o ogólności i ograniczeniach podejścia oraz wnioski końcowe."
+      }
+    ]
+  }
+}

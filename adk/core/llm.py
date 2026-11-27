@@ -8,7 +8,7 @@ from typing import Any, Callable
 
 from adk.core.connection import LLMConnectionManager
 from adk.core.llm_trace import fail_call, finish_call, start_call
-from adk.core.models import resolve_adk_path
+from adk.core.models import forced_tier, resolve_adk_path
 
 # (agent name, system prompt, payload, tier) -> parsed output
 AgentSimulator = Callable[[str, str, dict[str, Any], str], dict[str, Any]]
@@ -157,6 +157,7 @@ def call_agent(
 
     if model_tier not in ("SML", "LRM"):
         raise ValueError(f"Unsupported model_tier '{model_tier}'. Expected 'SML' or 'LRM'.")
+    model_tier = forced_tier() or model_tier  # the calls that name SML themselves (auditors) follow the same switch
 
     system_prompt = path.read_text(encoding="utf-8")
     serialized_payload = json.dumps(user_payload, ensure_ascii=False, indent=2)

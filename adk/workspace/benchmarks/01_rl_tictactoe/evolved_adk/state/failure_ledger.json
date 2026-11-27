@@ -1,19 +1,79 @@
 {
   "failures": [
     {
-      "agent": "plan_module",
-      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"agent.py\", \"experiment.py\"], \"examples\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The thesis requires comparing Q-Learning against a random baseline. The current plan defines `baseline.py` and `RandomAgent`, but the entrypoint in `experiment.py` only mentions training the Q-Learning agent. It does not describe running episodes with the Random Agent as the primary player to establish the baseline metrics. Fix: Explicitly define two distinct experimental phases or loops in the experiment module: one where P1 is `QLearningAgent` trained against a fixed opponent, and one where P1 is `RandomAgent` playing against itself (or the same fixed opponent) to generate baseline win/loss/draw rates. Change together: [academic_blueprint.metrics] Ensure metrics are collected for both 'q_learning' and 'random_baseline' methods so they can be compared in the thesis.; [figures.py:generate_plots] Update docstring/expectations to read data for both method labels to generate the comparative bar plot mentioned in Chapter 5..\", \"PLAN_CRITIC [agent.py:QLearningAgent.__init__]: The signature declares `action_dim` but the outline entry promises `num_actions`. This breaks the contract for the coder implementing this specific interface and deviates from the standard naming convention used in the outline. Fix: Change the parameter name in `QLearningAgent.__init__` from `action_dim` to `num_actions` to match the outline. Change together: [agent.py:QLearningAgent.__init__] Update signature to `__init__(self, num_states: int, num_actions: int, ...)`.\", \"PLAN_CRITIC [agent.py:QLearningAgent.choose_action]: The signature `choose_action(state) -> int` promises a single argument, but the docstring and implementation logic require `valid_actions`. This makes it impossible to implement the required validity checking without adding an undocumented parameter, which violates the outline's promise of the interface. Fix: Update the method signature in the outline (and thus the module interface) to `choose_action(state, valid_actions) -> int` or `Optional[int]` to reflect the actual requirement for valid action filtering. Change together: [agent.py:QLearningAgent.choose_action] Update signature to `choose_action(self, state: int, valid_actions: list[int]) -> int | None`.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": null, \"failed_agent\": \"plan_module\", \"issues\": [\"PLAN_CRITIC [experiment.py:run_experiment]: The thesis requires comparing Q-Learning against a random baseline. The current plan defines `baseline.py` and `RandomAgent`, but the entrypoint in `experiment.py` only mentions training the Q-Learning agent. It does not describe running episodes with the Random Agent as the primary player to establish the baseline metrics. Fix: Explicitly define two distinct experimental phases or loops in the experiment module: one where P1 is `QLearningAgent` trained against a fixed opponent, and one where P1 is `RandomAgent` playing against itself (or the same fixed opponent) to generate baseline win/loss/draw rates. Change together: [academic_blueprint.metrics] Ensure metrics are collected for both 'q_learning' and 'random_baseline' methods so they can be compared in the thesis.; [figures.py:generate_plots] Update docstring/expectations to read data for both method labels to generate the comparative bar plot mentioned in Chapter 5..\", \"PLAN_CRITIC [agent.py:QLearningAgent.__init__]: The signature declares `action_dim` but the outline entry promises `num_actions`. This breaks the contract for the coder implementing this specific interface and deviates from the standard naming convention used in the outline. Fix: Change the parameter name in `QLearningAgent.__init__` from `action_dim` to `num_actions` to match the outline. Change together: [agent.py:QLearningAgent.__init__] Update signature to `__init__(self, num_states: int, num_actions: int, ...)`.\", \"PLAN_CRITIC [agent.py:QLearningAgent.choose_action]: The signature `choose_action(state) -> int` promises a single argument, but the docstring and implementation logic require `valid_actions`. This makes it impossible to implement the required validity checking without adding an undocumented parameter, which violates the outline's promise of the interface. Fix: Update the method signature in the outline (and thus the module interface) to `choose_action(state, valid_actions) -> int` or `Optional[int]` to reflect the actual requirement for valid action filtering. Change together: [agent.py:QLearningAgent.choose_action] Update signature to `choose_action(self, state: int, valid_actions: list[int]) -> int | None`.\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 4, \"cycle_index\": 5, \"source\": \"planning_critic\"}",
-      "injected_rule": "When defining module interfaces or method signatures in an outline, ensure all parameter names and counts strictly match the contract promised to downstream agents (such as the seed_coder) and are consistent with the broader context requirements, because any mismatch breaks the interface contract and prevents correct implementation."
+      "agent": "plan_outline",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"outline:0\", \"outline:1\"], \"examples\": [\"PLAN_CRITIC [environment.py]: The module promises 'TicTacToeEnv: class(gym.Env)', which implies a Gymnasium environment API (reset returning Observation/Info dict). However, it also promises 'get_state_hash(state) -> int'. Without specifying that the observation space outputs integers (hashes), the downstream modules cannot guarantee type safety for state hashing without importing internal logic or making assumptions about the gym.Env wrapper. Fix: Update `environment.py` purpose to explicitly state: 'Provides a custom TicTacToe environment where observations are integer state hashes compatible with direct Q-table indexing.'\", \"PLAN_CRITIC [academic_blueprint.metrics]: The thesis statement claims the agent 'achieves a result equal to or better than random play'. To verify this claim, one must compare the Q-Agent's win rate against the Baseline Agent's win rate. The outline lacks a specific metric for the baseline's win rate (or performance), making it impossible to quantitatively demonstrate 'equal to or better' in `results.csv` without deriving it from raw match counts which are not explicitly listed as metrics. Fix: Add 'baseline_win_rate' and 'baseline_draw_rate' to the `metrics` list in `academic_blueprint.metrics`. Change together: [experiment.py] Ensure `run_experiment` computes and records baseline metrics for all evaluated configurations.; [evaluator.py:compute_metrics] Update signature to accept or return baseline stats if needed, though usually `evaluate_match` returns relative stats. The fix is primarily on the blueprint's metric list..\", \"PLAN_CRITIC [academic_blueprint.metrics]: The thesis statement claims the Q-Learning agent achieves results 'equal to or better than random play'. The current metrics list includes baseline_win_rate and baseline_draw_rate but lacks the Q-Agent's own win/draw/loss rates, making it impossible to quantitatively verify the claim in results.csv. Fix: Add 'agent_win_rate', 'agent_draw_rate', and 'agent_loss_rate' to the `academic_blueprint.metrics` list. Change together: [experiment.py] Ensure run_experiment calculates and records agent_win_rate, agent_draw_rate, agent_loss_rate alongside baseline metrics in results.csv..\"]}, \"failed_agent\": \"plan_outline\", \"agent_failure_count\": 2, \"cycle_index\": 2, \"source\": \"planning_critic\"}",
+      "injected_rule": "When defining metrics to verify a thesis claim involving relative performance or accuracy, ensure the `metrics` list explicitly includes all distinct groups (e.g., agent vs. baseline) whose outcomes are required for that comparison, because omitting any group's statistics makes the claim unverifiable in the results file."
     },
     {
-      "agent": "seed_coder",
-      "context": "{\"pattern\": {\"category\": \"F821\", \"occurrences\": 2, \"tasks\": [\"T10\", \"T2\"], \"examples\": [\"Ruff lint failure: environment.py:56:27: F821 Undefined name `step`\\nenvironment.py:56:82: F821 Undefined name `step`\\nFound 2 errors.\", \"Ruff lint failure: experiment.py:48:44: F821 Undefined name `env_get_valid_actions`\\nexperiment.py:54:25: F821 Undefined name `Optional`\\nexperiment.py:77:49: F821 Undefined name `env_get_valid_actions`\\nexperiment.py:84:38: F821 Undefined name `Optional`\\nexperiment.py:95:38: F821 Undefined name `Optional`\\nexperiment.py:115:49: F821 Undefined name `env_get_valid_actions`\\nexperiment.py:121:34: F821 Un\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"experiment.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Ruff lint failure: experiment.py:33:81: F821 Undefined name `env`\\nexperiment.py:33:143: F821 Undefined name `env`\\nFound 2 errors.\", \"Traceback (most recent call last):\\n  File \\\"<string>\\\", line 46, in <module>\\n    fn()\\n    ~~^^\\n  File \\\"D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\experiment.py\\\", line 33, in run_experiment\\n    q_agent: agent.QLearningAgent = agent.QLearningAgent(num_states=int(np.prod(env.TicTacToeEnv().observation_space.shape)), num_actions=int(env.TicTacToeEnv().action_space.n), lr=config.LEARNING_RATE, gamma=config.GAMMA, epsilon=config.EPSILON_START)\\n                                                                                ^^^\\nNameError: name 'env' is not defined\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 9, \"cycle_index\": 17, \"task_id\": \"T10\", \"target_node\": \"experiment.py\", \"suggested_rule\": \"Task T10 on node experiment.py (experiment.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When using symbols from other modules, verify their import status by checking the contract or source file of that module first, because undefined names indicate missing imports rather than logical errors."
+      "agent": "plan_module",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"pipeline.py\", \"trainer.py\"], \"examples\": [\"PLAN_CRITIC [pipeline.py:run_training_pipeline]: The signature `run_training_pipeline(agent_params, env_params)` requires the caller to construct and pass a `QAgent` instance in `agent_params`, but it does not accept an agent argument. Since `QAgent.__init__` requires no seed or environment state initialization arguments, constructing the agent inside this function would bypass any external configuration of random seeds (if added later) and contradicts the pattern where the caller owns object lifecycle. More critically, `run_evaluation_pipeline` accepts a `q_agent` instance directly. For consistency in module design, the training pipeline should either accept/return agents explicitly or be responsible for their creation entirely; mixing implicit agent creation with explicit agent passing creates an ambiguous interface. Fix: Change the return type to `Optional[QAgent]` and remove the agent instantiation logic inside `run_training_pipeline`, OR keep internal instantiation but do not require `agent_params` as a dict passed in (instead, instantiate it internally). Given `train_policy` takes `agent_params`, the current design tries to pass hyperparameters to create an agent. However, `train_policy` also takes `env_params`. A cleaner fix is to have `run_training_pipeline` accept the parameters needed by `train_policy` directly (`n_episodes`, `env_params`, `agent_params`) without creating a QAgent instance itself, and return the result of `train_policy` plus the final agent if neede\", \"PLAN_CRITIC [pipeline.py:train_policy signature mismatch]: The outline promise for `trainer.py` is `train_policy(n_episodes, env_params, agent_params, logger) -> dict`. The source code in `pipeline.py` calls `train_policy` inside `run_training_pipeline`. However, `run_training_pipeline`'s docstring says it initializes a `QAgent` using `agent_params`. But `train_policy` ALSO initializes a `QAgent` using `agent_params`. This results in DOUBLE initialization and potential state leakage or confusion about which agent is trained. Furthermore, `run_evaluation_pipeline` requires the specific trained `QAgent` instance. If `train_policy` creates its own internal agent, it does not return it (returns dict), making it impossible for `pipeline.py` to get the trained weights out of `trainer.py` to pass to evaluation. Fix: Modify `run_training_pipeline` to NOT create a QAgent if `train_policy` creates one. Instead, since `trainer.py`'s `train_policy` creates an agent internally and discards it (returns only dict stats), `pipeline.py` CANNOT retrieve the trained model for evaluation. The interface of `trainer.py` is flawed for this pipeline architecture, but as a critic of `pipeline.py`, I must flag that `pipeline.py` cannot fulfill its purpose with the current `trainer.py` dependency because it loses the trained agent. Fix: Change `trainer.py`'s `train_policy` to return `(stats_dict, QAgent)` OR have `run_training_pipeline` NOT use `train_policy` for training but implement logic that retur\", \"PLAN_CRITIC [trainer.py:train_policy]: The plan mandates training for `n_episodes=50000` (defined in `pipeline.py` constant) but sets `experiment_time_limit_s=180`. Training 50k episodes of a Tic-Tac-Toe environment within the time limit is impossible given Python's overhead, leading to incomplete training and invalid results. The interface for `train_policy` accepts `n_episodes` without warning about this constraint. Fix: Reduce the `TRAINING_N_EPISODES` constant in `pipeline.py` to 5000 episodes, which is sufficient for Tic-Tac-Toe convergence and fits the time limit comfortably. Update the docstring of `train_policy` to reflect this feasible range. Change together: [pipeline.py:TRAINING_N_EPISODES] Change value from 50000 to 5000.; [academic_blueprint.planned_chapters[3]] Update chapter focus description to reflect the actual number of training episodes (5,000) used in the experiment..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 6, \"cycle_index\": 8, \"source\": \"planning_critic\"}",
+      "injected_rule": "When designing a module interface that coordinates multiple sub-tasks (e.g., training and evaluation), distinguish clearly between factories (which create objects) and operators (which process them); if a called function internally creates an object, the caller must NOT also instantiate that object unless it intends to replace the call with inlined logic, because shared object lifecycle management prevents data leakage and ensures the correct instance is passed downstream."
     },
     {
       "agent": "seed_tester",
-      "context": "{\"pattern\": {\"category\": \"pytest:ValueError\", \"occurrences\": 2, \"tasks\": [\"R2_1\", \"T3\"], \"examples\": [\"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n====================================================================================\", \"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_environment.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: F                                                                                                                                                                                                                                                                                                    [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n________________________________________________________________________________________________________________________________________ test_tic_tac_toe_env_init ________________________________________________________________________________________________________________________________________\\ntests\\\\test_environment.py:10: in test_tic_tac_toe_env_init\\n    assert env.observation_space.high[0] == 2\\nE   ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_environment.py::test_tic_tac_toe_env_init - ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\\n1 failed in 0.12s\", \"Metric 'win_rate' is exactly 0 in every run (std_dev 0): the experiment measures nothing. Find the cause in the modules the experiment uses (a game that never ends, an agent that never learns, a value that is never updated) and fix it there, not by changing how the number is written.\", \"Metric 'loss_rate' is exactly 0 in every run (std_dev 0): the experiment measures nothing. Find the cause in the modules the experiment uses (a game that never ends, an agent that never learns, a value that is never updated) and fix it there, not by changing how the number is written.\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 9, \"cycle_index\": 21, \"task_id\": \"R2_1\", \"target_node\": \"experiment.py\", \"suggested_rule\": \"Task R2_1 on node experiment.py (experiment.py) failed verification; the findings are in the verification report passed alongside. Do this: remove their cause in the file they concern.\"}",
-      "injected_rule": "When asserting equality involving numerical values from a library that may return numpy arrays (e.g., Gym spaces), always use element-wise comparison methods like .any() or .all(), because direct boolean evaluation of multi-element arrays raises ambiguous truth value errors."
+      "context": "{\"pattern\": {\"category\": \"pytest:AssertionError\", \"occurrences\": 2, \"tasks\": [\"T12\", \"T14\"], \"examples\": [\"Pytest failure: ..F......                                                                                                                                                                                                                                                                                            [100%]\\n====================================================================================\", \"Pytest failure: FF.FF................                                                                                                                                                                                                                                                                                [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_pipeline.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: FFFFF                                                                                                                                                                                                                                                                                                [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n______________________________________________________________________________________________________________________ TestRunTrainingPipeline.test_returns_tuple_of_stats_and_agent ______________________________________________________________________________________________________________________\\ntests\\\\test_pipeline.py:56: in test_returns_tuple_of_stats_and_agent\\n    assert returned_stats == mock_stats, \\\"Returned stats should match train_policy output\\\"\\nE   AssertionError: Returned stats should match train_policy output\\nE   assert <MagicMock spec='QAgent' id='2177237694992'> == {'final_epsilon': 0.05, 'total_episodes': 10000, 'avg_rewards_100': -0.1, 'convergence_step': 5000}\\n______________________________________________________________________________________________________________________ TestRunTrainingPipeline.test_calls_qagent_with_correct_params ______________________________________________________________________________________________________________________\\ntests\\\\test_pipeline.py:80: in test_calls_qagent_with_correct_params\\n    MockQAgentClass.assert_called_once_with(\\nC:\\\\Users\\\\Filip\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\Lib\\\\unittest\\\\mock.py:990: in assert_called_once_with\\n    raise AssertionError(msg)\\nE   AssertionError: Expected 'QAgent' to be called once. Called 0 times.\\n______________________________________________________________________________________________________________________ TestRunEvaluationPipeline.test_returns_dict_with_correct_keys ______________________________________________________________________________________________________________________\\ntests\\\\test_pipeline.py:108: in test_returns_dict_with_correct_keys\\n    result = pipeline.run_evaluation_pipeline(mock_agent, n_reps, seed)\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\npipeline.py:54: in run_evaluation_pipeline\\n    wins_a = result_ab['wins_agent_a']\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\\nE   KeyError: 'wins_agent_a'\\n______________________________________________________________________________________________________________________ TestRunEvaluationPipeline.test_seeds_passed_to_random_agents _______________________________________________________________________________________________________________________\\ntests\\\\test_pipeline.py:132: in test_seeds_passed_to_random_agents\\n    pipeline.run_evaluation_pipeline(mock_agent, n_reps, base_seed)\\npipeline.py:54: in run_evaluation_pipeline\\n    wins_a = result_ab['wins_agent_a']\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\\nE   KeyError: 'wins_agent_a'\\n__________________________________________________________________________________________________________________ TestRunEvaluationPipeline.test_aggregation_logic_with_mocked_metrics ___________________________________________________________________________________________________________________\\ntests\\\\test_pipeline.py:170: in test_aggregation_logic_with_mocked_metrics\\n    result = pipeline.run_evaluation_pipeline(mock_agent, n_reps, seed)\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\npipeline.py:54: in run_evaluation_pipeline\\n    wins_a = result_ab['wins_agent_a']\\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\\nE   KeyError: 'wins_agent_a'\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_pipeline.py::TestRunTrainingPipeline::test_returns_tuple_of_stats_and_agent - AssertionError: Returned stats should match train_policy output\\nFAILED tests\\\\test_pipeline.py::TestRunTrainingPipeline::test_calls_qagent_with_correct_params - AssertionError: Expected 'QAgent' to be called once. Called 0 times.\\nFAILED tests\\\\test_pipeline.py::TestRunEvaluationPipeline::test_returns_dict_with_correct_keys - KeyError: 'wins_agent_a'\\nFAILED tests\\\\test_pipeline.py::TestRunEvaluationPipeline::test_seeds_passed_to_random_agents - KeyError: 'wins_agent_a'\\nFAILED tests\\\\test_pipeline.py::TestRunEvaluationPipeline::test_aggregation_logic_with_mocked_metrics - KeyError: 'wins_agent_a'\\n5 failed in 0.19s\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 10, \"cycle_index\": 25, \"task_id\": \"T14\", \"target_node\": \"tests/test_pipeline.py\"}",
+      "injected_rule": "When writing tests for modules that rely on external dependencies (like agents or models), ensure those dependencies are properly instantiated and passed to the function under test, because omitting the dependency object results in silent errors or uncallable attributes rather than immediate import failures."
+    },
+    {
+      "agent": "plan_outline",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"outline:11\", \"outline:12\"], \"examples\": [\"PLAN_CRITIC [evaluator.py]: The `baseline_comparison` in the academic blueprint requires comparing Q-Agent performance against a Random Agent baseline. However, no module provides a function to compute the win rate of the Random Agent playing against itself (self-play), which is necessary to establish the baseline metric defined in `academic_blueprint.metrics` (`baseline_win_rate`). Fix: Add `compute_self_play_stats(n_matches, seed) -> dict` to `baseline_agent.py` to calculate and return the win/draw/loss rates when Random Agent plays against itself. Change together: [baseline_agent.py.provides] Add `compute_self_play_stats(n_matches, seed) -> dict` to the list of provided functions.; [academic_blueprint.metrics] Ensure `baseline_win_rate` is explicitly recognized as requiring this new function's output in the blueprint context..\", \"PLAN_CRITIC [trainer.py]: `trainer.py` depends on `environment.py`, `q_agent.py`, and `baseline_agent.py`. These dependencies do not depend on each other (0 inter-dependencies), so `trainer.py` acts as a hub holding all wiring logic itself. This violates the modularity principle by mixing training logic with agent/environment instantiation. Fix: Introduce a `simulation.py` module to own the interaction loop (`train_episode`) between an environment and any agent, letting `trainer.py` call it instead of importing both agents and env directly for wiring. Change together: [environment.py] No change in provides/depends_on, but now a consumer of simulation.py.; [q_agent.py] No change in provides/depends_on, but now a consumer of simulation.py.; [baseline_agent.py] No change in provides/depends_on, but now a consumer of simulation.py.; [simulation.py] Add new module: depends_on [environment.py, q_agent.py], provides [run_episode(env_cls, agent_class, ...)].; [trainer.py] Remove `q_agent.py` and `baseline_agent.py` from depends_on; add `simulation.py`. Change provides: remove `train_episode`, keep `train_policy` but use `simulation.run_episode`..\", \"PLAN_CRITIC [evaluator.py]: `evaluator.py` is responsible for comparing the Q-Agent against the Baseline, but it lacks the Random Agent implementation itself. It depends on `baseline_agent.py` only for statistics of self-play, not for the agent logic required to play against the Q-Agent in the 'agent vs random' comparison mentioned in the thesis statement. Fix: Ensure `baseline_agent.py` provides a class instance or factory (e.g., `create_random_agent()`) so `evaluator.py` can instantiate it for the comparison matches. Change together: [baseline_agent.py] Update `provides` to include `create_random_agent(env) -> RandomAgent` or expose `RandomAgent` class clearly as instantiable.; [evaluator.py] No structural change needed if it imports the class, but verify it uses this provider for 'agent vs random' matches..\"]}, \"failed_agent\": \"plan_outline\", \"agent_failure_count\": 4, \"cycle_index\": 13, \"source\": \"planning_critic\"}",
+      "injected_rule": "When a module's purpose involves comparing agents (e.g., evaluator), ensure it can instantiate every agent it needs directly from the dependencies; if a dependency only provides statistics, add the agent factory or class to that same dependency rather than relying on the consumer to define it, because comparison requires active participation from all parties."
+    },
+    {
+      "agent": "plan_module",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"baseline_agent.py\", \"pipeline.py\"], \"examples\": [\"PLAN_CRITIC [pipeline.py:run_evaluation_pipeline]: The docstring for `run_evaluation_pipeline` promises to compute standard deviation of win rates across repetitions ('std_dev'), but the function signature lacks a `seed` parameter. Without passing a fixed seed to the RandomAgent (which accepts an optional seed) or the environment, the random choices will vary unpredictably between runs, making `std_dev` uncomputable and results non-reproducible. Fix: Add `seed: Optional[int] = None` to the `run_evaluation_pipeline` signature. Pass this seed when instantiating `RandomAgent` inside the loop (e.g., `RandomAgent(seed=seed if seed is None else seed + i)`) to ensure statistical variance can be correctly calculated and results remain reproducible. Change together: [run_evaluation_pipeline] Add argument `seed: Optional[int] = None` to the function signature..\", \"PLAN_CRITIC [baseline_agent.py:RandomAgent.choose_action]: The signature `choose_action(env: TicTacToeEnv) -> int` requires the environment instance as an argument. However, the outline entry for `q_agent.py` defines the corresponding interface `QAgent.choose_action(state_hash, possible_moves) -> int`, which expects a state hash and move list. The consumer `simulation.py` is designed to work with abstract agent interfaces; forcing `RandomAgent` to require the raw environment object breaks the interface uniformity required by `simulation.py` and prevents `RandomAgent` from being swapped directly for `QAgent` without changing the simulation loop logic. Fix: Change `RandomAgent.choose_action(env: TicTacToeEnv) -> int` to `choose_action(state_hash: int, possible_moves: List[int]) -> int` to match the interface declared in `q_agent.py`. The implementation should select from `possible_moves` using the provided seed/state context internally or via instance state. Change together: [simulation.py:train_policy] Ensure simulation calls agents with (state_hash, possible_moves) rather than env for all agent types.; [evaluator.py:evaluate_match] Ensure evaluator calls agents with (state_hash, possible_moves) rather than env for all agent types..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 10, \"cycle_index\": 14, \"source\": \"planning_critic\"}",
+      "injected_rule": "When defining an interface for a component in a heterogeneous system, ensure the signature strictly conforms to the abstract contract expected by consumers, rather than optimizing for the specific internal implementation of the provider; mismatched signatures break polymorphism and force fragile adapters. When designing functions that perform statistical computations (e.g., standard deviation), ensure all parameters required for determinism or reproducibility (e.g., seeds) are explicitly part of the public interface if their values flow into downstream stochastic components; missing propagation parameters render the computed metric unreliable or meaningless."
+    },
+    {
+      "agent": "plan_module",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"evaluator.py\", \"simulation.py\"], \"examples\": [\"PLAN_CRITIC [simulation.py:train_policy]: The function `train_policy` declares a return type of `dict`, but its purpose includes 'owning the interaction loop... letting trainer.py call it' and the outline's metric collection requirement. Critically, the signature includes `epsilon_decay_fn` but does not expose the final trained agent or Q-table to consumers (experiment.py), making it impossible for experiment.py to obtain the results needed for CSV output. Fix: Update `train_policy` to return the trained `QAgent` instance along with training statistics, ensuring the consumer has access to the learned model for subsequent evaluation and metrics computation.\", \"PLAN_CRITIC [simulation.py:run_episode]: `run_episode` accepts `agent_class: Type[QAgent]` (a class) but the consumer `experiment.py` needs to run evaluation using a *trained* agent instance. A class cannot be used directly for inference without instantiation, and the current signature forces the simulation module to handle instantiation, which couples it too tightly with creation logic rather than interaction logic. Fix: Change `run_episode` arguments from `env_class`/`agent_class` to `env` (instance) and `agent` (instance), allowing the caller to provide pre-configured or trained agent instances for both training and evaluation contexts.\", \"PLAN_CRITIC [evaluator.py:evaluate_match]: The outline promises `evaluate_match(agent_a, agent_b, n_matches, seed) -> dict`, but the source code signature is `evaluate_match(agent_a: Any, agent_b: Any, env_class: type, n_matches: int, seed: int)`. This adds a required positional argument (`env_class`) not declared in the outline, breaking the interface contract. Additionally, the return type annotation `Dict[str, float]` contradicts the docstring which states it returns counts (integers). Fix: Remove `env_class` from the function signature to match the outline. Change the return type annotation to `Dict[str, int]` and update the docstring to clarify that keys are 'wins_agent_a', 'wins_agent_b', and 'draws' with integer values. Change together: [experiment.py] Must call evaluator.evaluate_match with only 4 arguments (agent_a, agent_b, n_matches, seed), removing the env_class argument that the current source signature forces it to pass..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 12, \"cycle_index\": 16, \"source\": \"planning_critic\"}",
+      "injected_rule": "When a function's purpose involves returning the result of an external operation (such as training or running simulation) to a consumer module, the signature must explicitly return the data or object instances needed by that consumer, because omitting required output parameters forces callers to depend on side effects or inaccessible internal state."
+    },
+    {
+      "agent": "plan_module",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"baseline_agent.py\", \"simulation.py\"], \"examples\": [\"PLAN_CRITIC [simulation.py:train_policy]: The `train_policy` signature requires an `agent_class: Type[QAgent]`, but the evaluation phase in the experiment needs to pass a `RandomAgent` instance (from `baseline_agent`) as the opponent. This design prevents reusing the training loop for opponent evaluations and forces a separate implementation for the baseline, breaking modularity. Fix: Remove the `agent_class` parameter from `train_policy`. The function should accept only concrete instances (`env_instance`, `opponent_agent`) or instantiate them internally with fixed classes. Since the environment is always TicTacToe and the opponent is always a known class, accepting specific arguments (like `epsilon` per step) is safer than generic classes for this scope. Change together: [simulation.py:run_episode] Update signature to `run_episode(env: TicTacToeEnv, agent: QAgent, opponent: RandomAgent, epsilon: float, lr: float, gamma: float)` to handle the two-player interaction explicitly.; [experiment.py:run_experiment] Update the call to `train_policy` to pass instantiated `TicTacToeEnv`, the specific `QAgent` (or its params), and a `RandomAgent` instance as opponent, removing the class-based generic arguments..\", \"PLAN_CRITIC [baseline_agent.py:compute_self_play_stats]: The signature `compute_self_play_stats(n_matches, seed)` relies on global or implicit state to manage turns (who plays X/O). The plan describes balancing first-move advantage in the evaluator, but this baseline function has no mechanism to alternate roles or distinguish 'first player' results correctly within its returned dictionary structure (`win_rate` is ambiguous for 1P vs 2P stats without knowing who played what). Fix: Refactor `compute_self_play_stats` to accept an environment class and agent factory (or instances) to properly handle the turn alternation and result counting internally, or move this logic into `evaluator.py` where role balancing is already defined. Change together: [experiment.py] Update imports and calls to use the refactored baseline evaluation from `evaluator.py` or updated `baseline_agent.py` that correctly handles role alternation..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 14, \"cycle_index\": 18, \"source\": \"planning_critic\"}",
+      "injected_rule": "When designing interfaces for concrete simulation or evaluation components, pass specific instances (or parameters to instantiate them) rather than abstract types or relying on implicit global state, because concrete dependencies allow the caller to control object lifecycle and enable modular reuse without requiring complex role-alternation logic in every consumer."
+    },
+    {
+      "agent": "plan_module",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"baseline_agent.py\", \"simulation.py\"], \"examples\": [\"PLAN_CRITIC [baseline_agent.py:RandomAgent.choose_action]: The signature `choose_action(self, possible_moves: List[int]) -> int` requires the caller to pre-compute valid moves and pass them as a list. However, the consumer `evaluator.py` (which runs matches between agents) typically needs to interact with the environment step-by-step. If `evaluator.py` calls `env.get_valid_moves()` itself, it bypasses the agent's encapsulation but works; however, if `evaluator.py` expects to pass just the environment object to the agent (a common pattern in RL evaluation scripts where the agent queries its own state), this signature is wrong. More critically, looking at `compute_self_play_stats`, it takes `env_class` but instantiates environments. If `RandomAgent` needs valid moves to act, and `evaluator.py` is the consumer, `evaluator.py` must have access to `get_valid_moves` or the agent must fetch them. The outline for `baseline_agent.py` promises `choose_action(env)` in the *outline* but the `source` provides `choose_action(possible_moves)`. The harness checks that the source matches the outline's promised names. The outline says: `RandomAgent.choose_action(env) -> int`. The source says: `def choose_action(self, possible_moves: List[int]) -> int`. This is a mismatch between the outline promise and the source implementation. The outline requires the agent to receive the environment (to query moves itself), but the source implements it requiring pre-fetched moves. Fix: Change the signature \", \"PLAN_CRITIC [baseline_agent.py:compute_self_play_stats]: The outline promises `compute_self_play_stats(n_matches, seed) -> dict`. The source implements `compute_self_play_stats(n_matches: int, seed: int, env_class) -> dict`. While passing `env_class` is necessary to instantiate the environment (since no global instance exists), the outline's signature lacks this parameter. This creates a blocking inconsistency: the harness will flag that the source declares an extra positional argument not present in the outline's promise, or if the consumer calls it with 2 args as per the outline, it will fail at runtime. Conversely, if the consumer uses the source's 3-arg version, it deviates from the outline. The module interface critic must ensure the source matches the outline's *promised* signature. The outline explicitly lists `compute_self_play_stats(n_matches, seed) -> dict`. The source adds `env_class`. Fix: Move `env_class` out of the function arguments by defining it as a module-level constant in `baseline_agent.py` (e.g., `ENV_CLASS = TicTacToeEnv`) or importing it from `environment.py` and referencing it inside. This allows the function signature to match the outline's promise: `compute_self_play_stats(n_matches, seed) -> dict`. Alternatively, if the outline is rigid, update the outline to accept `env_class`, but since I must fix the *module* against the *outline*, I will assume the module can use a constant. However, looking at the `source`, it imports `numpy` but doesn't impor\", \"PLAN_CRITIC [simulation.py:run_episode]: The signature `run_episode(env_class, agent_class, ...)` promises class types as arguments, but the source code implements `run_episode(env: TicTacToeEnv, agent: QAgent, ...)`. This contradicts the outline promise (`env_class` implies instantiating inside) and breaks consumer compatibility if any consumer expects to pass classes rather than instances. Fix: Align the source implementation with the outline's parameter names and semantics by defining the function to accept `env_class` and `agent_class`, or update the outline to match the source's instance-based signature. Given the name `env_class`, the function should likely instantiate them internally.\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 16, \"cycle_index\": 20, \"source\": \"planning_critic\"}",
+      "injected_rule": "When a source implementation introduces arguments not present in the accepted outline, align the sketch with the source's practical requirements by moving non-contractual configuration (such as environment classes) to module-level constants rather than altering the public signature or the outline, because the sketch must reflect the necessary dependencies of the implementation while maintaining the interface contract."
+    },
+    {
+      "agent": "plan_module",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"evaluator.py\", \"q_agent.py\"], \"examples\": [\"PLAN_CRITIC [q_agent.py:QAgent.update]: The interface for `QAgent.update` in `q_agent.py` requires arguments `lr` and `gamma` (learning rate and discount factor). However, `simulation.py:run_episode` receives these parameters but the plan does not specify that it must pass them to the update method; furthermore, if the coder assumes standard usage where the agent object holds its own hyperparameters, passing `lr` and `gamma` every time is inconsistent with typical class design unless strictly enforced. More critically, looking at the call site in `experiment.py` which calls `train_policy`, `train_policy` receives `lr` and `gamma` but passes them to `run_episode`. `run_episode` then needs to pass them to `agent.update`. The blocker is actually in `simulation.py:run_episode`: it accepts `epsilon, lr, gamma` but does not have a clear path to initialize the `QAgent` with these (since `n_states`/`n_actions` are missing from its signature in the review history fix which was only partially applied). Wait, let's look closer at `simulation.py:train_policy`. It accepts `agent_params: Dict[str, any]`. This is fragile. The real blocker is simpler: `simulation.py:run_episode` takes `agent_class: type`. `experiment.py` (via the previous review fix which is partially reflected here) is supposed to pass instances. But `run_episode` still has `agent_class: type` in the current interface provided! It does NOT match the fix from round 1 which required passing concrete instances or removing the \", \"PLAN_CRITIC [evaluator.py:evaluate_match]: The signature `evaluate_match(agent_a, agent_b: object, ...)` is too loose regarding the `agent_b` type. The plan requires evaluating a QAgent against a RandomAgent and potentially baseline vs baseline. The docstring says 'Agents alternate roles', but the implementation needs to know which class of opponent to instantiate for each match if the agent itself doesn't hold the opponent reference. More importantly, `baseline_agent.py:compute_self_play_stats` is defined as a standalone function in the outline but depends on `environment.TicTacToeEnv`. It attempts to do role balancing internally, while `evaluator.py` also claims to handle role balancing. This is duplicate logic and ambiguity. The baseline stats should use the same evaluation engine as the agent to ensure fairness and consistency. Fix: Move the baseline self-play logic into `evaluator.py` by adding a function `compute_baseline_stats(n_matches, seed)` that uses `RandomAgent` internally. Remove `compute_self_play_stats` from `baseline_agent.py`. Update `experiment.py` to call `evaluator.compute_baseline_stats` instead. Change together: [evaluator.py] Add `def compute_baseline_stats(n_matches: int, seed: int) -> Dict[str, float]` that instantiates two RandomAgents and runs matches balancing roles, returning rates.; [baseline_agent.py] Remove `compute_self_play_stats`. Keep `RandomAgent` class only.; [experiment.py] Update imports to use `evaluator.compute_baseline_stats` and ca\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 18, \"cycle_index\": 22, \"source\": \"planning_critic\"}",
+      "injected_rule": "When a dependency has been previously corrected via feedback, ensure that any subsequent logic or signatures involving that dependency are fully synchronized with those corrections rather than referencing old interfaces or leaving contradictory logic, because the accepted interface is the only source of truth."
+    },
+    {
+      "agent": "plan_module",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"evaluator.py\", \"q_agent.py\"], \"examples\": [\"PLAN_CRITIC [q_agent.py:QAgent.choose_action]: The method signature requires an 'epsilon' argument, but the module's dependency on environment.py (which defines constants like WIN_REWARD etc.) and the consumer simulation.py implies a need to manage state or hyperparameters internally. More critically, the outline promises `QAgent.__init__(n_states, n_actions) -> None` which does NOT accept epsilon, lr, or gamma, yet `choose_action` needs epsilon and `update` needs lr/gamma. This forces the coder to set these as instance attributes in init or elsewhere without signature support, creating a disconnect between the promised interface and the operational requirements defined by the Bellman equation logic described. Fix: Add 'epsilon', 'lr', and 'gamma' arguments to `QAgent.__init__` so hyperparameters are part of the constructor interface, or update the outline to reflect that these are settable attributes. However, since the outline is fixed, the blocker is actually that `choose_action` takes `epsilon` as an argument while `update` does NOT take `lr` and `gamma`. The module source code shows `update` using \", \"PLAN_CRITIC [q_agent.py:QAgent.update]: The docstring states that `update` uses the agent's internal hyperparameters (lr, gamma), but the method signature `(state_hash, action, reward, next_state_hash, done)` does not accept these values. If they are internal attributes, they must be set during initialization. The outline promises `__init__(n_states, n_actions)`, which cannot initialize lr and gamma. Furthermore, `choose_action` takes `epsilon` as an argument, creating an inconsistency: why is exploration rate passed externally while learning rate/gamma are internal? This mixed interface design makes the module difficult to use correctly and contradicts the typical encapsulation of agent hyperparameters. Fix: Change `QAgent.__init__` to accept all hyperparameters: `(n_states, n_actions, lr=0.1, gamma=0.9, epsilon=1.0)`. Remove `epsilon` from the `choose_action` signature so it uses the internal state, aligning with how `update` uses internal states for lr/gamma.\", \"PLAN_CRITIC [evaluator.py:evaluate_match]: The outline promises `evaluate_match(agent_a, agent_b, n_matches, seed)` but the source code defines `evaluate_match(agent_a, agent_b_class, n_matches, seed)`. The consumer `experiment.py` cannot pass an agent instance directly due to this signature mismatch. Fix: Change `evaluate_match`'s second parameter from `agent_b_class: type` to `agent_b_class: type` in the outline to match the source's design where it instantiates the class. However, since the role of critic fixes the interface, we must align them. The most logical fix is to update the outline signature to `evaluate_match(agent_a: QAgent, agent_b_class: type, n_matches: int, seed: int) -> dict`. Change together: [evaluator.py:evaluate_match] Update parameter `agent_b` to `agent_b_class` with type hint `type` in the provided outline entry..\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 20, \"cycle_index\": 24, \"source\": \"planning_critic\"}",
+      "injected_rule": "When a method's operational requirements (such as hyperparameters or state) differ from its explicit signature or when an outline's type hint conflicts with the source code's design intent, reconcile the sketch by ensuring all functional arguments required for execution are declared in the signature and that type hints match the actual passed values (e.g., class vs instance), because the interface must be self-contained and logically consistent to prevent implementation gaps."
+    },
+    {
+      "agent": "seed_tester",
+      "context": "{\"pattern\": {\"category\": \"pytest:assert\", \"occurrences\": 3, \"tasks\": [\"D1_2\", \"R3_1\", \"T10\"], \"examples\": [\"Pytest failure: .F.....                                                                                                                                                                                                                                                                                              [100%]\\n====================================================================================\", \"Pytest failure: ..F......                                                                                                                                                                                                                                                                                            [100%]\\n====================================================================================\", \"Pytest failure: ..............F....F.F                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"tests/test_environment.py\", \"failed_agent\": \"seed_tester\", \"issues\": [\"Pytest failure: ...................F.F                                                                                                                                                                                                                                                                               [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n________________________________________________________________________________________________________________________________ TestGetStateHash.test_max_hash_is_correct ________________________________________________________________________________________________________________________________\\ntests\\\\test_environment.py:152: in test_max_hash_is_correct\\n    assert env.get_state_hash(full_board) == expected_max\\nE   assert np.int64(19682) == 88569\\nE    +  where np.int64(19682) = get_state_hash(array([[1, 1, 1],\\\\n       [1, 1, 1],\\\\n       [1, 1, 1]]))\\nE    +    where get_state_hash = <environment.TicTacToeEnv object at 0x000002777E3C5250>.get_state_hash\\n____________________________________________________________________________________________________________________________ TestGetStateHash.test_get_valid_moves_after_moves ____________________________________________________________________________________________________________________________\\ntests\\\\test_environment.py:171: in test_get_valid_moves_after_moves\\n    assert len(valid_moves_after) == 8\\nE   assert 7 == 8\\nE    +  where 7 = len({1, 3, 4, 5, 6, 7, ...})\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_environment.py::TestGetStateHash::test_max_hash_is_correct - assert np.int64(19682) == 88569\\nFAILED tests\\\\test_environment.py::TestGetStateHash::test_get_valid_moves_after_moves - assert 7 == 8\\n2 failed, 20 passed in 0.16s\"]}, \"failed_agent\": \"seed_tester\", \"agent_failure_count\": 18, \"cycle_index\": 33, \"task_id\": \"D1_2\", \"target_node\": \"tests/test_environment.py\"}",
+      "injected_rule": "When asserting equality involving Numpy scalar types (e.g., np.int64), convert both sides to standard Python types (e.g., via .item() or int()) before comparison, because direct equality checks between numpy scalars and Python ints can be unreliable or ambiguous in assert statements."
+    },
+    {
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"F821\", \"occurrences\": 2, \"tasks\": [\"D1_5\", \"T5\"], \"examples\": [\"Ruff lint failure: q_agent.py:44:16: F821 Undefined name `os`\\nFound 1 error.\", \"Ruff lint failure: baseline_agent.py:11:21: F821 Undefined name `np`\\nbaseline_agent.py:13:35: F821 Undefined name `environment`\\nbaseline_agent.py:64:22: F821 Undefined name `np`\\nFound 3 errors.\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"baseline_agent.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Import error in baseline_agent.py: Traceback (most recent call last):\\n  File \\\"<string>\\\", line 1, in <module>\\n    import baseline_agent\\n  File \\\"D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\baseline_agent.py\\\", line 5, in <module>\\n    class RandomAgent:\\n    ...<18 lines>...\\n            return possible_moves[int(self._rng.choice(len(possible_moves)))]\\n  File \\\"D:\\\\studia-local\\\\Artificial-Degree-Printer\\\\adk\\\\workspace\\\\benchmarks\\\\_evolved_adk_state\\\\01_rl_tictactoe\\\\workspace\\\\baseline_agent.py\\\", line 13, in RandomAgent\\n    def choose_action(self, env: TicTacToeEnv) -> int:\\n                                 ^^^^^^^^^^^^\\nNameError: name 'TicTacToeEnv' is not defined\", \"Ruff lint failure: baseline_agent.py:11:21: F821 Undefined name `np`\\nbaseline_agent.py:13:34: F821 Undefined name `TicTacToeEnv`\\nbaseline_agent.py:44:15: F821 Undefined name `TicTacToeEnv`\\nbaseline_agent.py:55:30: F821 Undefined name `PLAYER_X`\\nbaseline_agent.py:57:32: F821 Undefined name `PLAYER_O`\\nbaseline_agent.py:66:30: F821 Undefined name `PLAYER_X`\\nbaseline_agent.py:68:32: F821 Undefined name `PLAYER_O`\\nFound 7 errors.\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 18, \"cycle_index\": 39, \"task_id\": \"D1_5\", \"target_node\": \"baseline_agent.py\"}",
+      "injected_rule": "When implementing a module that uses symbols from other planned modules, import every necessary public name from its specification interface in the source code; omitting an import creates undefined name errors because Python executes top-to-down and does not inject dependencies implicitly."
+    },
+    {
+      "agent": "plan_module",
+      "context": "{\"pattern\": {\"category\": \"critic\", \"occurrences\": 2, \"tasks\": [\"baseline_agent.py\", \"trainer.py\"], \"examples\": [\"PLAN_CRITIC [baseline_agent.py:RandomAgent.__init__]: The class lacks the `seed` argument required to fulfill its purpose of 'deterministic reproducibility', while providing no mechanism for consumers (trainer/evaluator) to set this seed globally or locally. Fix: Add a `seed` parameter to `RandomAgent.__init__(self, seed=None)` and store it so that `choose_action` can enforce deterministic behavior as described in the docstring. Change together: [baseline_agent.py:RandomAgent] Ensure __init__ accepts a seed argument to support the reproducibility promise..\", \"PLAN_CRITIC [baseline_agent.py:RandomAgent.__init__]: The docstring claims 'sets the global random seed', but using global state is poor practice for an agent class designed to be instantiated multiple times (e.g., in parallel evaluations or repeated experiments), leading to unpredictable side effects. The interface does not provide a way to isolate the randomness per instance. Fix: Replace global `random.seed()` with an instance-level `self._rng = random.Random(seed)` and use `self._rng.choice(possible_moves)` inside `choose_action`. Change together: [baseline_agent.py:RandomAgent] Use a local Random instance for determinism instead of global state.; [baseline_agent.py:RandomAgent.choose_action] Update implementation to use `self._rng.choice`..\", \"PLAN_CRITIC [trainer.py:train_policy]: The `train_policy` interface declares `agent_params` as the source for Q-agent hyperparameters (like `lr`, `gamma`, `epsilon_start`). However, the module also defines top-level constants (`DEFAULT_LR`, `DEFAULT_GAMMA`, etc.) that are not utilized by the function signature. This forces the consumer (`experiment.py`) to either ignore these constants or requires them to be passed in a way that contradicts the function's explicit dictionary parameter structure. More critically, the consumer needs to instantiate `QAgent` and `RandomAgent`. The interface for `train_policy` does not allow passing pre-instantiated agents or configuring their initialization arguments (like the seed for `RandomAgent`), which is necessary for reproducibility as required by the prompt's emphasis on deterministic seeds. Fix: Add `env_seed: int` to `train_policy` and document that it initializes the environment seed. Ensure the interface clearly supports passing a fixed seed for reproducibility, or remove the unused default constants to avoid confusion about which source of truth (constants vs params) applies. Change together: [trainer.py:DEFAULT_LR] Remove `DEFAULT_LR`, `DEFAULT_GAMMA`, `DEFAULT_EPSILON_START`, and `DEFAULT_EPSILON_DECAY` constants as they are not used in the provided function signatures and create ambiguity about where default values originate.; [trainer.py:train_policy] Add `env_seed: int = None` argument to allow the experiment module to set the r\"]}, \"failed_agent\": \"plan_module\", \"agent_failure_count\": 24, \"cycle_index\": 28, \"source\": \"planning_critic\"}",
+      "injected_rule": "When an instance requires state for correctness or reproducibility (such as a random seed), enforce it through explicit constructor arguments rather than relying on module-level constants or global state, because instance-level configuration ensures isolation and adheres to the contract of deterministic behavior."
+    },
+    {
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"pytest:IndexError\", \"occurrences\": 4, \"tasks\": [\"R1_2\", \"R4_1\", \"T10\", \"T14\"], \"examples\": [\"Pytest failure: FFFFFFF                                                                                                                                                                                                                                                                                              [100%]\\n====================================================================================\", \"Pytest failure: .............F.F...F                                                                                                                                                                                                                                                                                 [100%]\\n====================================================================================\", \"Pytest failure: FF.FF                                                                                                                                                                                                                                                                                                [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"environment.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: .............F.F.....F                                                                                                                                                                                                                                                                               [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n____________________________________________________________________________________________________________________ TestTicTacToeEnvStep.test_step_invalid_move_does_not_update_state ____________________________________________________________________________________________________________________\\ntests\\\\test_environment.py:94: in test_step_invalid_move_does_not_update_state\\n    new_obs, reward, terminated, truncated, info = env.step(9)\\n                                                   ^^^^^^^^^^^\\nenvironment.py:57: in step\\n    self.board[row, col] = PLAYER_X\\n    ^^^^^^^^^^^^^^^^^^^^\\nE   IndexError: index 3 is out of bounds for axis 0 with size 3\\n________________________________________________________________________________________________________________________ TestTicTacToeEnvStep.test_step_invalid_move_returns_info _________________________________________________________________________________________________________________________\\ntests\\\\test_environment.py:117: in test_step_invalid_move_returns_info\\n    new_obs, reward, terminated, truncated, info = env.step(9)\\n                                                   ^^^^^^^^^^^\\nenvironment.py:57: in step\\n    self.board[row, col] = PLAYER_X\\n    ^^^^^^^^^^^^^^^^^^^^\\nE   IndexError: index 3 is out of bounds for axis 0 with size 3\\n____________________________________________________________________________________________________________________________ TestGetStateHash.test_get_valid_moves_after_moves ____________________________________________________________________________________________________________________________\\ntests\\\\test_environment.py:174: in test_get_valid_moves_after_moves\\n    assert len(valid_moves_after) == 8\\nE   assert 7 == 8\\nE    +  where 7 = len({1, 2, 3, 5, 6, 7, ...})\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_environment.py::TestTicTacToeEnvStep::test_step_invalid_move_does_not_update_state - IndexError: index 3 is out of bounds for axis 0 with size 3\\nFAILED tests\\\\test_environment.py::TestTicTacToeEnvStep::test_step_invalid_move_returns_info - IndexError: index 3 is out of bounds for axis 0 with size 3\\nFAILED tests\\\\test_environment.py::TestGetStateHash::test_get_valid_moves_after_moves - assert 7 == 8\\n3 failed, 19 passed in 0.15s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 29, \"cycle_index\": 60, \"task_id\": \"R4_1\", \"target_node\": \"environment.py\"}",
+      "injected_rule": "When validating input coordinates for array indexing, always explicitly check bounds against the array's shape before accessing elements, because integer indices derived from flat inputs (like TicTacToe moves) often exceed valid multi-dimensional limits when not properly unpacked or clamped."
+    },
+    {
+      "agent": "seed_coder",
+      "context": "{\"pattern\": {\"category\": \"pytest:assert\", \"occurrences\": 3, \"tasks\": [\"D2_2\", \"R4_1\", \"R5_1\"], \"examples\": [\"Pytest failure: .....................F                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\", \"Pytest failure: .....................F                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\", \"Pytest failure: .....................F                                                                                                                                                                                                                                                                               [100%]\\n====================================================================================\"]}, \"validation_report\": {\"status\": \"FAIL\", \"failed_file\": \"environment.py\", \"failed_agent\": \"seed_coder\", \"issues\": [\"Pytest failure: .....................F                                                                                                                                                                                                                                                                               [100%]\\n================================================================================================================================================ FAILURES =================================================================================================================================================\\n____________________________________________________________________________________________________________________________ TestGetStateHash.test_get_valid_moves_after_moves ____________________________________________________________________________________________________________________________\\ntests\\\\test_environment.py:174: in test_get_valid_moves_after_moves\\n    assert len(valid_moves_after) == 8\\nE   assert 7 == 8\\nE    +  where 7 = len({1, 2, 3, 5, 6, 7, ...})\\n========================================================================================================================================= short test summary info =========================================================================================================================================\\nFAILED tests\\\\test_environment.py::TestGetStateHash::test_get_valid_moves_after_moves - assert 7 == 8\\n1 failed, 21 passed in 0.15s\"]}, \"failed_agent\": \"seed_coder\", \"agent_failure_count\": 34, \"cycle_index\": 67, \"task_id\": \"R5_1\", \"target_node\": \"environment.py\"}",
+      "injected_rule": "When implementing logic that computes set membership or enumeration (e.g., valid moves, options), derive the result explicitly and count the cardinality before assertion or return, because off-by-one errors in set generation are common when indices or conditions are approximated."
     }
   ],
   "category_log": [
@@ -25,185 +85,772 @@
     },
     {
       "cycle": 2,
-      "agent": "plan_module",
+      "agent": "plan_outline",
       "category": "critic",
-      "task_id": "experiment.py"
+      "task_id": "outline:1"
     },
     {
       "cycle": 3,
       "agent": "plan_module",
       "category": "critic",
-      "task_id": "agent.py"
+      "task_id": "environment.py"
     },
     {
       "cycle": 4,
       "agent": "plan_module",
       "category": "critic",
-      "task_id": "experiment.py"
+      "task_id": "q_agent.py"
     },
     {
       "cycle": 5,
       "agent": "plan_module",
       "category": "critic",
-      "task_id": "agent.py"
+      "task_id": "trainer.py"
+    },
+    {
+      "cycle": 6,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "evaluator.py"
+    },
+    {
+      "cycle": 7,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "pipeline.py"
+    },
+    {
+      "cycle": 8,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "trainer.py"
+    },
+    {
+      "cycle": 9,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "pipeline.py"
+    },
+    {
+      "cycle": 10,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "trainer.py"
+    },
+    {
+      "cycle": 11,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "pipeline.py"
     },
     {
       "cycle": 1,
-      "agent": "seed_coder",
-      "category": "generic",
-      "task_id": "T2"
+      "agent": "seed_tester",
+      "category": "pytest:IndexError",
+      "task_id": "T4"
     },
     {
       "cycle": 2,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T2"
+      "agent": "seed_tester",
+      "category": "pytest:IndexError",
+      "task_id": "T4"
     },
     {
       "cycle": 3,
-      "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T2"
+      "agent": "seed_tester",
+      "category": "pytest:IndexError",
+      "task_id": "T4"
     },
     {
       "cycle": 4,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T4"
+      "category": "F821",
+      "task_id": "T5"
     },
     {
       "cycle": 5,
-      "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "T5"
+      "agent": "seed_coder",
+      "category": "pytest:IndexError",
+      "task_id": "T10"
     },
     {
       "cycle": 6,
       "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "T5"
+      "category": "pytest:assert",
+      "task_id": "T10"
     },
     {
       "cycle": 7,
       "agent": "seed_tester",
-      "category": "harness",
-      "task_id": "T5"
+      "category": "pytest:assert",
+      "task_id": "T10"
     },
     {
       "cycle": 8,
       "agent": "seed_tester",
-      "category": "pytest:AssertionError",
-      "task_id": "T7"
+      "category": "pytest:assert",
+      "task_id": "T10"
     },
     {
       "cycle": 9,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T8"
+      "category": "generic",
+      "task_id": "T11"
     },
     {
       "cycle": 10,
       "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "T8"
+      "category": "generic",
+      "task_id": "T12"
     },
     {
       "cycle": 11,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "T11"
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T12"
     },
     {
       "cycle": 12,
-      "agent": "seed_tester",
-      "category": "F821",
-      "task_id": "T3"
+      "agent": "seed_coder",
+      "category": "pytest:AttributeError",
+      "task_id": "T12"
     },
     {
       "cycle": 13,
-      "agent": "seed_tester",
-      "category": "pytest:assert",
-      "task_id": "T3"
+      "agent": "seed_coder",
+      "category": "generic",
+      "task_id": "T12"
     },
     {
       "cycle": 14,
-      "agent": "seed_tester",
-      "category": "pytest:ValueError",
-      "task_id": "T3"
+      "agent": "seed_coder",
+      "category": "pytest:TypeError",
+      "task_id": "R1_1"
     },
     {
       "cycle": 15,
       "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T10"
+      "category": "pytest:AttributeError",
+      "task_id": "R1_1"
     },
     {
       "cycle": 16,
       "agent": "seed_coder",
-      "category": "run:TypeError",
-      "task_id": "T10"
+      "category": "pytest:AttributeError",
+      "task_id": "R1_1"
     },
     {
       "cycle": 17,
       "agent": "seed_coder",
-      "category": "F821",
-      "task_id": "T10"
+      "category": "pytest:IndexError",
+      "task_id": "R1_2"
     },
     {
       "cycle": 18,
-      "agent": "seed_tester",
-      "category": "harness",
+      "agent": "seed_coder",
+      "category": "pytest:IndexError",
       "task_id": "R1_2"
     },
     {
       "cycle": 19,
       "agent": "seed_coder",
-      "category": "run:AttributeError",
-      "task_id": "R2_1"
+      "category": "pytest:AttributeError",
+      "task_id": "T12"
     },
     {
       "cycle": 20,
-      "agent": "seed_coder",
-      "category": "harness",
-      "task_id": "R2_1"
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "T12"
     },
     {
       "cycle": 21,
       "agent": "seed_tester",
-      "category": "pytest:ValueError",
-      "task_id": "R2_1"
+      "category": "pytest:AssertionError",
+      "task_id": "T12"
     },
     {
       "cycle": 22,
-      "agent": "seed_writer",
-      "category": "document",
-      "task_id": "T16"
+      "agent": "seed_coder",
+      "category": "pytest:IndexError",
+      "task_id": "T14"
     },
     {
       "cycle": 23,
+      "agent": "seed_coder",
+      "category": "pytest:IndexError",
+      "task_id": "T14"
+    },
+    {
+      "cycle": 24,
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "T14"
+    },
+    {
+      "cycle": 25,
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "T14"
+    },
+    {
+      "cycle": 26,
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "R3_1"
+    },
+    {
+      "cycle": 27,
       "agent": "seed_tester",
       "category": "pytest:assert",
-      "task_id": "R2_2"
+      "task_id": "R3_1"
+    },
+    {
+      "cycle": 28,
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "R3_1"
+    },
+    {
+      "cycle": 29,
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "R3_2"
+    },
+    {
+      "cycle": 30,
+      "agent": "seed_tester",
+      "category": "pytest:AssertionError",
+      "task_id": "R3_2"
+    },
+    {
+      "cycle": 12,
+      "agent": "plan_outline",
+      "category": "critic",
+      "task_id": "outline:11"
+    },
+    {
+      "cycle": 13,
+      "agent": "plan_outline",
+      "category": "critic",
+      "task_id": "outline:12"
+    },
+    {
+      "cycle": 14,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "baseline_agent.py"
+    },
+    {
+      "cycle": 15,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "simulation.py"
+    },
+    {
+      "cycle": 16,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "evaluator.py"
+    },
+    {
+      "cycle": 17,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "simulation.py"
+    },
+    {
+      "cycle": 18,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "baseline_agent.py"
+    },
+    {
+      "cycle": 19,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "baseline_agent.py"
+    },
+    {
+      "cycle": 20,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "simulation.py"
+    },
+    {
+      "cycle": 21,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "q_agent.py"
+    },
+    {
+      "cycle": 22,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "evaluator.py"
+    },
+    {
+      "cycle": 23,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "q_agent.py"
+    },
+    {
+      "cycle": 24,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "evaluator.py"
+    },
+    {
+      "cycle": 31,
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "D1_2"
+    },
+    {
+      "cycle": 32,
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "D1_2"
+    },
+    {
+      "cycle": 33,
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "D1_2"
+    },
+    {
+      "cycle": 34,
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "D1_4"
+    },
+    {
+      "cycle": 35,
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "D1_4"
+    },
+    {
+      "cycle": 36,
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "D1_4"
+    },
+    {
+      "cycle": 37,
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "D1_5"
+    },
+    {
+      "cycle": 38,
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "D1_5"
+    },
+    {
+      "cycle": 39,
+      "agent": "seed_coder",
+      "category": "F821",
+      "task_id": "D1_5"
+    },
+    {
+      "cycle": 40,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "D1_12"
+    },
+    {
+      "cycle": 41,
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "D1_12"
+    },
+    {
+      "cycle": 42,
+      "agent": "seed_writer",
+      "category": "generic",
+      "task_id": "D1_12"
+    },
+    {
+      "cycle": 25,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "environment.py"
+    },
+    {
+      "cycle": 26,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "q_agent.py"
+    },
+    {
+      "cycle": 27,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "baseline_agent.py"
+    },
+    {
+      "cycle": 28,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "trainer.py"
+    },
+    {
+      "cycle": 29,
+      "agent": "plan_module",
+      "category": "critic",
+      "task_id": "experiment.py"
+    },
+    {
+      "cycle": 43,
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "D2_2"
+    },
+    {
+      "cycle": 44,
+      "agent": "seed_tester",
+      "category": "pytest:assert",
+      "task_id": "D2_2"
+    },
+    {
+      "cycle": 45,
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "D2_2"
+    },
+    {
+      "cycle": 46,
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "D2_2"
+    },
+    {
+      "cycle": 47,
+      "agent": "seed_tester",
+      "category": "pytest:ValueError",
+      "task_id": "D2_4"
+    },
+    {
+      "cycle": 48,
+      "agent": "seed_tester",
+      "category": "pytest:Failed",
+      "task_id": "D2_4"
+    },
+    {
+      "cycle": 49,
+      "agent": "seed_coder",
+      "category": "pytest:Failed",
+      "task_id": "D2_4"
+    },
+    {
+      "cycle": 50,
+      "agent": "seed_coder",
+      "category": "pytest:Failed",
+      "task_id": "D2_4"
+    },
+    {
+      "cycle": 51,
+      "agent": "seed_coder",
+      "category": "run:ImportError",
+      "task_id": "D2_11"
+    },
+    {
+      "cycle": 52,
+      "agent": "seed_coder",
+      "category": "run:ImportError",
+      "task_id": "D2_11"
+    },
+    {
+      "cycle": 53,
+      "agent": "seed_coder",
+      "category": "run:ImportError",
+      "task_id": "D2_11"
+    },
+    {
+      "cycle": 54,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "D2_12"
+    },
+    {
+      "cycle": 55,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "D2_12"
+    },
+    {
+      "cycle": 56,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "D2_12"
+    },
+    {
+      "cycle": 57,
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "R4_1"
+    },
+    {
+      "cycle": 58,
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "R4_1"
+    },
+    {
+      "cycle": 59,
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "R4_1"
+    },
+    {
+      "cycle": 60,
+      "agent": "seed_coder",
+      "category": "pytest:IndexError",
+      "task_id": "R4_1"
+    },
+    {
+      "cycle": 61,
+      "agent": "seed_coder",
+      "category": "pytest:Failed",
+      "task_id": "R4_2"
+    },
+    {
+      "cycle": 62,
+      "agent": "seed_coder",
+      "category": "pytest:AttributeError",
+      "task_id": "D2_4"
+    },
+    {
+      "cycle": 63,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "R4_4"
+    },
+    {
+      "cycle": 64,
+      "agent": "seed_writer",
+      "category": "document",
+      "task_id": "R4_4"
+    },
+    {
+      "cycle": 65,
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "R5_1"
+    },
+    {
+      "cycle": 66,
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "R5_1"
+    },
+    {
+      "cycle": 67,
+      "agent": "seed_coder",
+      "category": "pytest:assert",
+      "task_id": "R5_1"
+    },
+    {
+      "cycle": 68,
+      "agent": "seed_coder",
+      "category": "run:ImportError",
+      "task_id": "R5_3"
+    },
+    {
+      "cycle": 69,
+      "agent": "seed_coder",
+      "category": "run:ImportError",
+      "task_id": "R5_3"
+    },
+    {
+      "cycle": 70,
+      "agent": "seed_coder",
+      "category": "run:ImportError",
+      "task_id": "R5_3"
     }
   ],
   "rules": [
     {
-      "agent": "plan_module",
-      "rule": "When defining module interfaces or method signatures in an outline, ensure all parameter names and counts strictly match the contract promised to downstream agents (such as the seed_coder) and are consistent with the broader context requirements, because any mismatch breaks the interface contract and prevents correct implementation.",
+      "agent": "plan_outline",
+      "rule": "When defining metrics to verify a thesis claim involving relative performance or accuracy, ensure the `metrics` list explicitly includes all distinct groups (e.g., agent vs. baseline) whose outcomes are required for that comparison, because omitting any group's statistics makes the claim unverifiable in the results file.",
       "category": "critic",
-      "cycle": 5
+      "cycle": 2
     },
     {
-      "agent": "seed_coder",
-      "rule": "When using symbols from other modules, verify their import status by checking the contract or source file of that module first, because undefined names indicate missing imports rather than logical errors.",
-      "category": "F821",
-      "cycle": 17
+      "agent": "plan_module",
+      "rule": "When designing a module interface that coordinates multiple sub-tasks (e.g., training and evaluation), distinguish clearly between factories (which create objects) and operators (which process them); if a called function internally creates an object, the caller must NOT also instantiate that object unless it intends to replace the call with inlined logic, because shared object lifecycle management prevents data leakage and ensures the correct instance is passed downstream.",
+      "category": "critic",
+      "cycle": 8
     },
     {
       "agent": "seed_tester",
-      "rule": "When asserting equality involving numerical values from a library that may return numpy arrays (e.g., Gym spaces), always use element-wise comparison methods like .any() or .all(), because direct boolean evaluation of multi-element arrays raises ambiguous truth value errors.",
-      "category": "pytest:ValueError",
-      "cycle": 21
+      "rule": "When writing tests for modules that rely on external dependencies (like agents or models), ensure those dependencies are properly instantiated and passed to the function under test, because omitting the dependency object results in silent errors or uncallable attributes rather than immediate import failures.",
+      "category": "pytest:AssertionError",
+      "cycle": 25
+    },
+    {
+      "agent": "plan_outline",
+      "rule": "When a module's purpose involves comparing agents (e.g., evaluator), ensure it can instantiate every agent it needs directly from the dependencies; if a dependency only provides statistics, add the agent factory or class to that same dependency rather than relying on the consumer to define it, because comparison requires active participation from all parties.",
+      "category": "critic",
+      "cycle": 13
+    },
+    {
+      "agent": "plan_module",
+      "rule": "When defining an interface for a component in a heterogeneous system, ensure the signature strictly conforms to the abstract contract expected by consumers, rather than optimizing for the specific internal implementation of the provider; mismatched signatures break polymorphism and force fragile adapters. When designing functions that perform statistical computations (e.g., standard deviation), ensure all parameters required for determinism or reproducibility (e.g., seeds) are explicitly part of the public interface if their values flow into downstream stochastic components; missing propagation parameters render the computed metric unreliable or meaningless.",
+      "category": "critic",
+      "cycle": 14
+    },
+    {
+      "agent": "plan_module",
+      "rule": "When a function's purpose involves returning the result of an external operation (such as training or running simulation) to a consumer module, the signature must explicitly return the data or object instances needed by that consumer, because omitting required output parameters forces callers to depend on side effects or inaccessible internal state.",
+      "category": "critic",
+      "cycle": 16
+    },
+    {
+      "agent": "plan_module",
+      "rule": "When designing interfaces for concrete simulation or evaluation components, pass specific instances (or parameters to instantiate them) rather than abstract types or relying on implicit global state, because concrete dependencies allow the caller to control object lifecycle and enable modular reuse without requiring complex role-alternation logic in every consumer.",
+      "category": "critic",
+      "cycle": 18
+    },
+    {
+      "agent": "plan_module",
+      "rule": "When a source implementation introduces arguments not present in the accepted outline, align the sketch with the source's practical requirements by moving non-contractual configuration (such as environment classes) to module-level constants rather than altering the public signature or the outline, because the sketch must reflect the necessary dependencies of the implementation while maintaining the interface contract.",
+      "category": "critic",
+      "cycle": 20
+    },
+    {
+      "agent": "plan_module",
+      "rule": "When a dependency has been previously corrected via feedback, ensure that any subsequent logic or signatures involving that dependency are fully synchronized with those corrections rather than referencing old interfaces or leaving contradictory logic, because the accepted interface is the only source of truth.",
+      "category": "critic",
+      "cycle": 22
+    },
+    {
+      "agent": "plan_module",
+      "rule": "When a method's operational requirements (such as hyperparameters or state) differ from its explicit signature or when an outline's type hint conflicts with the source code's design intent, reconcile the sketch by ensuring all functional arguments required for execution are declared in the signature and that type hints match the actual passed values (e.g., class vs instance), because the interface must be self-contained and logically consistent to prevent implementation gaps.",
+      "category": "critic",
+      "cycle": 24
+    },
+    {
+      "agent": "seed_tester",
+      "rule": "When asserting equality involving Numpy scalar types (e.g., np.int64), convert both sides to standard Python types (e.g., via .item() or int()) before comparison, because direct equality checks between numpy scalars and Python ints can be unreliable or ambiguous in assert statements.",
+      "category": "pytest:assert",
+      "cycle": 33
+    },
+    {
+      "agent": "seed_coder",
+      "rule": "When implementing a module that uses symbols from other planned modules, import every necessary public name from its specification interface in the source code; omitting an import creates undefined name errors because Python executes top-to-down and does not inject dependencies implicitly.",
+      "category": "F821",
+      "cycle": 39
+    },
+    {
+      "agent": "plan_module",
+      "rule": "When an instance requires state for correctness or reproducibility (such as a random seed), enforce it through explicit constructor arguments rather than relying on module-level constants or global state, because instance-level configuration ensures isolation and adheres to the contract of deterministic behavior.",
+      "category": "critic",
+      "cycle": 28
+    },
+    {
+      "agent": "seed_coder",
+      "rule": "When validating input coordinates for array indexing, always explicitly check bounds against the array's shape before accessing elements, because integer indices derived from flat inputs (like TicTacToe moves) often exceed valid multi-dimensional limits when not properly unpacked or clamped.",
+      "category": "pytest:IndexError",
+      "cycle": 60
+    },
+    {
+      "agent": "seed_coder",
+      "rule": "When implementing logic that computes set membership or enumeration (e.g., valid moves, options), derive the result explicitly and count the cardinality before assertion or return, because off-by-one errors in set generation are common when indices or conditions are approximated.",
+      "category": "pytest:assert",
+      "cycle": 67
+    }
+  ],
+  "compactions": [
+    {
+      "agent": "plan_module",
+      "cycle": 1,
+      "rules_consolidated_count": 4,
+      "consolidated_rules": [
+        "When designing a module interface that coordinates multiple sub-tasks (e.g., training and evaluation), distinguish clearly between factories (which create objects) and operators (which process them); if a called function internally creates an object, the caller must NOT also instantiate that object unless it intends to replace the call with inlined logic, because shared object lifecycle management prevents data leakage and ensures the correct instance is passed downstream.",
+        "When defining an interface for a component in a heterogeneous system, ensure the signature strictly conforms to the abstract contract expected by consumers, rather than optimizing for the specific internal implementation of the provider; mismatched signatures break polymorphism and force fragile adapters. When designing functions that perform statistical computations (e.g., standard deviation), ensure all parameters required for determinism or reproducibility (e.g., seeds) are explicitly part of the public interface if their values flow into downstream stochastic components; missing propagation parameters render the computed metric unreliable or meaningless.",
+        "When a function's purpose involves returning the result of an external operation (such as training or running simulation) to a consumer module, the signature must explicitly return the data or object instances needed by that consumer, because omitting required output parameters forces callers to depend on side effects or inaccessible internal state.",
+        "When designing interfaces for concrete simulation or evaluation components, pass specific instances (or parameters to instantiate them) rather than abstract types or relying on implicit global state, because concrete dependencies allow the caller to control object lifecycle and enable modular reuse without requiring complex role-alternation logic in every consumer."
+      ],
+      "dropped_ineffective": [
+        {
+          "rule": "When designing a module interface that coordinates multiple sub-tasks (e.g., training and evaluation), distinguish clearly between factories (which create objects) and operators (which process them); if a called function internally creates an object, the caller must NOT also instantiate that object unless it intends to replace the call with inlined logic, because shared object lifecycle management prevents data leakage and ensures the correct instance is passed downstream.",
+          "category": "critic",
+          "before": 6,
+          "after": 8,
+          "cycles_after": 10
+        },
+        {
+          "rule": "When defining an interface for a component in a heterogeneous system, ensure the signature strictly conforms to the abstract contract expected by consumers, rather than optimizing for the specific internal implementation of the provider; mismatched signatures break polymorphism and force fragile adapters. When designing functions that perform statistical computations (e.g., standard deviation), ensure all parameters required for determinism or reproducibility (e.g., seeds) are explicitly part of the public interface if their values flow into downstream stochastic components; missing propagation parameters render the computed metric unreliable or meaningless.",
+          "category": "critic",
+          "before": 10,
+          "after": 4,
+          "cycles_after": 4
+        }
+      ],
+      "invariants": [
+        "When designing a public interface for a module that performs computation or simulation, return all necessary data and object instances explicitly in the function signatures because this eliminates dependency on side effects or inaccessible internal state and ensures the contract is self-contained.",
+        "When defining parameters for concrete simulation or evaluation components, pass specific class references or instantiation arguments rather than relying on implicit global state or abstract types because this allows callers to control object lifecycle, enables modular reuse, and prevents hidden coupling between modules."
+      ]
+    },
+    {
+      "agent": "plan_module",
+      "cycle": 2,
+      "rules_consolidated_count": 4,
+      "consolidated_rules": [
+        "When a source implementation introduces arguments not present in the accepted outline, align the sketch with the source's practical requirements by moving non-contractual configuration (such as environment classes) to module-level constants rather than altering the public signature or the outline, because the sketch must reflect the necessary dependencies of the implementation while maintaining the interface contract.",
+        "When a dependency has been previously corrected via feedback, ensure that any subsequent logic or signatures involving that dependency are fully synchronized with those corrections rather than referencing old interfaces or leaving contradictory logic, because the accepted interface is the only source of truth.",
+        "When a method's operational requirements (such as hyperparameters or state) differ from its explicit signature or when an outline's type hint conflicts with the source code's design intent, reconcile the sketch by ensuring all functional arguments required for execution are declared in the signature and that type hints match the actual passed values (e.g., class vs instance), because the interface must be self-contained and logically consistent to prevent implementation gaps.",
+        "When an instance requires state for correctness or reproducibility (such as a random seed), enforce it through explicit constructor arguments rather than relying on module-level constants or global state, because instance-level configuration ensures isolation and adheres to the contract of deterministic behavior."
+      ],
+      "dropped_ineffective": [
+        {
+          "rule": "When a source implementation introduces arguments not present in the accepted outline, align the sketch with the source's practical requirements by moving non-contractual configuration (such as environment classes) to module-level constants rather than altering the public signature or the outline, because the sketch must reflect the necessary dependencies of the implementation while maintaining the interface contract.",
+          "category": "critic",
+          "before": 16,
+          "after": 8,
+          "cycles_after": 8
+        },
+        {
+          "rule": "When a dependency has been previously corrected via feedback, ensure that any subsequent logic or signatures involving that dependency are fully synchronized with those corrections rather than referencing old interfaces or leaving contradictory logic, because the accepted interface is the only source of truth.",
+          "category": "critic",
+          "before": 18,
+          "after": 6,
+          "cycles_after": 6
+        },
+        {
+          "rule": "When a method's operational requirements (such as hyperparameters or state) differ from its explicit signature or when an outline's type hint conflicts with the source code's design intent, reconcile the sketch by ensuring all functional arguments required for execution are declared in the signature and that type hints match the actual passed values (e.g., class vs instance), because the interface must be self-contained and logically consistent to prevent implementation gaps.",
+          "category": "critic",
+          "before": 20,
+          "after": 4,
+          "cycles_after": 4
+        }
+      ],
+      "invariants": [
+        "When designing a public interface for computation or simulation, pass specific class references or instantiation arguments rather than relying on implicit global state because this allows callers to control object lifecycle, enables modular reuse, and prevents hidden coupling between modules.",
+        "When an instance requires state for correctness or reproducibility, enforce it through explicit constructor arguments rather than relying on module-level constants because instance-level configuration ensures isolation and adheres to the contract of deterministic behavior.",
+        "When defining a public interface, return all necessary data and object instances explicitly in the function signatures because this eliminates dependency on side effects or inaccessible internal state and ensures the contract is self-contained."
+      ]
+    },
+    {
+      "agent": "seed_coder",
+      "cycle": 3,
+      "rules_consolidated_count": 4,
+      "consolidated_rules": [
+        "Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.",
+        "When implementing a module that uses symbols from other planned modules, import every necessary public name from its specification interface in the source code; omitting an import creates undefined name errors because Python executes top-to-down and does not inject dependencies implicitly.",
+        "When validating input coordinates for array indexing, always explicitly check bounds against the array's shape before accessing elements, because integer indices derived from flat inputs (like TicTacToe moves) often exceed valid multi-dimensional limits when not properly unpacked or clamped.",
+        "When implementing logic that computes set membership or enumeration (e.g., valid moves, options), derive the result explicitly and count the cardinality before assertion or return, because off-by-one errors in set generation are common when indices or conditions are approximated."
+      ],
+      "dropped_ineffective": [],
+      "invariants": [
+        "When defining public interfaces or modifying existing symbols, strictly preserve parameter names, order, types, and return signatures declared in the specification contract, because breaking backward compatibility invalidates the harness's static analysis and other modules' expectations.",
+        "When using symbols from other planned modules, explicitly import every required name from the `specification` interface rather than relying on implicit resolution, because Python executes top-down and undefined names cause immediate runtime rejection.",
+        "When implementing logic that computes set membership or enumeration (e.g., valid moves), derive the result explicitly and verify its cardinality before assertion, because off-by-one errors in set generation are common when indices or conditions are approximated."
+      ]
     }
   ]
 }

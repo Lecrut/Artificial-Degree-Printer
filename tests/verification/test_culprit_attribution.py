@@ -262,10 +262,10 @@ def test_an_exception_raised_in_the_test_frame_alone_is_the_tests_unless_it_is_a
     assert _pytest_culprits(in_code) == [("agent.py", True)]  # a frame below the test: the code raised
 
 
-def _pair(module_state: str, history: list[dict], test_state: str = "written") -> SimpleNamespace:
+def _pair(module_state: str, history: list[dict], test_state: str = "written", test_history: list[dict] | None = None) -> SimpleNamespace:
     mod = SimpleNamespace(state=module_state, history=history)
     return SimpleNamespace(
-        vertices={"agent.py": mod, "tests/test_agent.py": SimpleNamespace(state=test_state, history=[])},
+        vertices={"agent.py": mod, "tests/test_agent.py": SimpleNamespace(state=test_state, history=test_history or [])},
         owner_of=lambda rel: rel,
     )
 
@@ -285,6 +285,18 @@ def test_a_test_is_suspect_when_its_error_survives_two_versions_of_a_module_that
     assert not _suspect_test(_pair("failed", [_failure("a1")]), "agent.py", "tests/test_agent.py")
     assert not _suspect_test(_pair("failed", [_failure("a1"), _failure("b2")], "verified"), "agent.py", "tests/test_agent.py")
     assert _suspect_test(_pair("verified", []), "agent.py", "tests/test_agent.py")  # the old rule (§XIV Q2) stays
+
+
+def test_a_test_whose_error_survives_two_rewrites_of_the_test_is_not_the_suspect_even_against_a_verified_module():
+    """§XXXVI: 01, 2026-11-26: the correct `test_get_legal_actions_terminated_game` was rewritten fifteen times
+    against `environment.py`, which was `verified` (it compiled) and never set `_terminated`."""
+    from adk.orchestration.failure_attribution import _suspect_test
+
+    twice = [_failure("t1", "assert 2 == 0"), _failure("t2", "assert 2 == 0")]
+    assert not _suspect_test(_pair("verified", [], test_history=twice), "agent.py", "tests/test_agent.py")
+    assert not _suspect_test(_pair("failed", [_failure("a1"), _failure("b2")], test_history=twice), "agent.py", "tests/test_agent.py")
+    assert _suspect_test(_pair("verified", [], test_history=twice[:1]), "agent.py", "tests/test_agent.py")  # one failed version: still new
+    assert _suspect_test(_pair("verified", [], test_history=[twice[0], _failure("t2", "assert 3 == 0")]), "agent.py", "tests/test_agent.py")  # a different error each time
 
 
 def test_every_verdict_remembered_on_a_vertex_carries_the_version_of_its_file(tmp_path: Path) -> None:
@@ -318,3 +330,42 @@ def test_a_failing_test_file_is_the_testers_even_when_the_coder_was_its_last_wri
 
     assert report["status"] == "FAIL" and report["failed_file"] == "tests/test_game.py"
     assert report["failed_agent"] == "seed_tester"
+
+
+def test_a_not_callable_parameter_is_charged_to_the_caller_that_passed_it(tmp_path: Path) -> None:
+    """§XXXVII.2: `evaluator.py` called its parameter `opponent(env)`; `experiment.py` passed an object without `__call__`."""
+    ws = tmp_path / "ws"
+    (ws / "src").mkdir(parents=True)
+    (ws / "src" / "evaluator.py").write_text("def evaluate(env, opponent):\n    action = opponent(env)\n    return action\n", encoding="utf-8")
+    (ws / "src" / "experiment.py").write_text("def run():\n    evaluate(1, object())\n", encoding="utf-8")
+    trace = (
+        "Traceback (most recent call last):\n"
+        f'  File "{ws / "src" / "experiment.py"}", line 2, in run\n    evaluate(1, object())\n'
+        f'  File "{ws / "src" / "evaluator.py"}", line 2, in evaluate\n    action = opponent(env)\n'
+        "TypeError: 'RandomAgent' object is not callable"
+    )
+    assert _traceback_culprit(trace, ws) == "src/experiment.py"
+    # The called name is not a parameter: the function itself is wrong.
+    (ws / "src" / "evaluator.py").write_text("def evaluate(env, opponent):\n    helper = 3\n    action = helper(env)\n", encoding="utf-8")
+    own = trace.replace("line 2, in evaluate\n    action = opponent(env)", "line 3, in evaluate\n    action = helper(env)")
+    assert _traceback_culprit(own, ws) == "src/evaluator.py"
+
+
+def test_a_hung_test_is_charged_to_the_code_the_test_called_not_to_the_newest_frame() -> None:
+    """§XXXVII.7: the loop was in `trainer.py`, the newest frame happened to be `environment.py:__init__`."""
+    hang = (
+        "Pytest failure: Pytest: a test hung and was stopped after 20s (probably an infinite loop). Stack (newest frame first):\n"
+        'File "environment.py", line 18 in __init__\n'
+        'File "trainer.py", line 40 in train_agent\n'
+        r'File "tests\test_trainer.py", line 12 in test_train' "\n"
+        r'File "C:\venv\Lib\site-packages\_pytest\python.py", line 1 in pytest_pyfunc_call'
+    )
+    assert _pytest_culprits(hang) == [("trainer.py", False)]
+
+
+def test_every_workspace_file_of_a_traceback_is_named(tmp_path: Path) -> None:
+    from adk.orchestration.failure_attribution import _traceback_files
+
+    ws = tmp_path / "ws"
+    trace = f'  File "{ws / "a.py"}", line 3, in f\n  File "{ws / "src" / "b.py"}", line 9, in g\n  File "C:\\lib\\x.py", line 1, in h\n'
+    assert _traceback_files(trace, ws) == {"a.py", "src/b.py"}

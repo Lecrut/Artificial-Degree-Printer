@@ -1,0 +1,376 @@
+{
+  "failed": [
+    "experiment.py"
+  ],
+  "files": {
+    "data_generator.py": {
+      "file": "data_generator.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 1,
+      "failures": 2,
+      "uses": {},
+      "used_by": [
+        "experiment.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_data_generator.py",
+          "state": "verified"
+        }
+      ],
+      "errors": [],
+      "parses": true,
+      "lines": 41,
+      "fingerprint": "0482a3b2816a3662404812fe5acdc584d1d4493feba330517ed3f8e3935816ce",
+      "imports": [
+        "import numpy as np"
+      ],
+      "constants": [
+        "DEFAULT_DURATION",
+        "DEFAULT_N_CHANNELS",
+        "DEFAULT_ANOMALY_RATE",
+        "DEFAULT_NOISE_STD"
+      ],
+      "classes": [],
+      "functions": [
+        {
+          "name": "generate_dataset",
+          "signature": "generate_dataset(n_channels: int, duration: int, anomaly_rate: float, noise_std: float) -> tuple[np.ndarray, np.ndarray]",
+          "docstring": "Generates synthetic physiological signals with injected anomalies.",
+          "calls": [
+            "int",
+            "np.array",
+            "np.empty",
+            "np.linspace",
+            "np.random.choice",
+            "np.random.normal",
+            "np.random.randint",
+            "np.random.uniform",
+            "np.sin",
+            "np.zeros",
+            "range"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "generate_dataset": "It initializes a time vector `t` spanning 10π and allocates a zero-filled array of shape `(duration, n_channels)`. It populates each column with a sine wave (frequency and phase vary by channel index), adds Gaussian noise scaled by `noise_std`, selects unique random indices for anomalies, and injects spikes of magnitude proportional to `noise_std` into the selected channels at those indices."
+        },
+        "matches_interface": true,
+        "suspicious": [
+          "generate_dataset: The docstring promises 'random walks or sine waves' but only implements sine waves; callers relying on random walk statistics (diffusive noise) will get deterministic periodic signals instead.",
+          "generate_dataset: For `duration <= 0`, it returns an empty array but does not handle negative `n_channels` which would raise a ValueError in `np.empty` or `np.zeros`, violating the implied robustness of a generator.",
+          "generate_dataset: The anomaly spike magnitude scales with `noise_std`; if `noise_std` is small, anomalies become nearly indistinguishable from background noise, potentially breaking detection logic that expects significant deviation."
+        ]
+      }
+    },
+    "baseline_zscore.py": {
+      "file": "baseline_zscore.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 1,
+      "failures": 0,
+      "uses": {},
+      "used_by": [
+        "experiment.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_baseline_zscore.py",
+          "state": "verified"
+        }
+      ],
+      "errors": [],
+      "parses": true,
+      "lines": 65,
+      "fingerprint": "f9f9cd2c2c31cf6082cbf77b92811bd6278169453327d27ef0223340c00c3287",
+      "imports": [
+        "import numpy as np",
+        "from typing import Any"
+      ],
+      "constants": [],
+      "classes": [
+        {
+          "name": "ZScoreDetector",
+          "bases": [],
+          "attributes": [
+            "window_size: int"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "ZScoreDetector.__init__",
+          "signature": "__init__(self, window_size: int) -> None",
+          "docstring": "Initializes the detector with a fixed window size for local statistics calculation.",
+          "calls": [],
+          "raises": []
+        },
+        {
+          "name": "ZScoreDetector.predict",
+          "signature": "predict(self, channel_data: np.ndarray) -> np.ndarray",
+          "docstring": "Predicts anomalies for a 2D array of multi-channel data.",
+          "calls": [
+            "abs",
+            "max",
+            "np.array",
+            "np.mean",
+            "np.std",
+            "np.zeros",
+            "range"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "__init__": "It stores the integer `window_size` argument as an instance attribute `self.window_size`. No other state is initialized.",
+          "predict": "It extracts duration and channel count from input shape, returning an empty boolean array if duration is zero. It initializes a result array of False and iterates over every time step and channel to compute the absolute Z-score against a rolling window (preceding `window_size` points). For each point, it calculates mean and population standard deviation; if std is 0, Z-score is 0. If any channel's"
+        },
+        "matches_interface": true,
+        "suspicious": [
+          "predict: uses a hardcoded THRESHOLD constant (3.0) instead of making the threshold configurable or documented as an internal default.",
+          "predict: computes Z-scores independently per channel but updates a shared `is_anomaly` array, which is correct logic but creates a dense boolean mask rather than listing specific anomaly indices/channels.",
+          "predict: uses ddof=0 (population std dev) for the rolling window statistics; while valid for baselines, this differs from sample standard deviation (ddof=1) often used in statistical inference."
+        ]
+      }
+    },
+    "method_random_subspace.py": {
+      "file": "method_random_subspace.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 2,
+      "failures": 0,
+      "uses": {},
+      "used_by": [
+        "experiment.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_method_random_subspace.py",
+          "state": "verified"
+        }
+      ],
+      "errors": [],
+      "parses": true,
+      "lines": 75,
+      "fingerprint": "ae40ed8c20d33b7194531ba0d8e64434c32a2a7c131b58b82743c1d11cc54c3b",
+      "imports": [
+        "import numpy as np"
+      ],
+      "constants": [],
+      "classes": [
+        {
+          "name": "RandomSubspaceDetector",
+          "bases": [],
+          "attributes": [
+            "n_subspaces: int",
+            "subspace_dim: int",
+            "_means: list[np.ndarray]",
+            "_covariances: list[np.ndarray]",
+            "_subspace_indices: list[np.ndarray]"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "RandomSubspaceDetector.__init__",
+          "signature": "__init__(self, n_subspaces: int, subspace_dim: int) -> None",
+          "docstring": "Initializes the detector with the specified ensemble parameters.",
+          "calls": [],
+          "raises": []
+        },
+        {
+          "name": "RandomSubspaceDetector.fit",
+          "signature": "fit(self, data: np.ndarray) -> None",
+          "docstring": "Trains the ensemble on the provided physiological telemetry data.",
+          "calls": [
+            "np.array",
+            "np.cov",
+            "np.mean",
+            "np.random.default_rng",
+            "range",
+            "rng.choice",
+            "self._covariances.append",
+            "self._means.append",
+            "self._subspace_indices.append"
+          ],
+          "raises": []
+        },
+        {
+          "name": "RandomSubspaceDetector.predict",
+          "signature": "predict(self, data: np.ndarray) -> np.ndarray",
+          "docstring": "Calculates anomaly scores for the input data based on the fitted ensemble.",
+          "calls": [
+            "np.linalg.inv",
+            "np.sum",
+            "np.zeros",
+            "range"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "RandomSubspaceDetector.__init__": "It stores `n_subspaces` and `subspace_dim` as attributes and initializes three empty lists (`_means`, `_covariances`, `_subspace_indices`) to hold the model state. It performs no validation on input parameters.",
+          "RandomSubspaceDetector.fit": "It resets the internal lists, creates a NumPy random generator seeded with 42, and iterates `n_subspaces` times. In each iteration, it randomly selects `subspace_dim` feature indices, computes the mean and covariance of those features, appends them to the respective lists, and handles 0-dimensional covariance arrays by reshaping them.",
+          "RandomSubspaceDetector.predict": "It initializes a zero vector for scores with length equal to the number of input samples. It iterates through each fitted subspace, extracts the relevant data columns, computes the squared Mahalanobis distance (falling back to squared Euclidean distance if the covariance is singular), accumulates these distances, and finally returns their average across all subspaces."
+        },
+        "matches_interface": true,
+        "suspicious": [
+          "RandomSubspaceDetector.fit: Uses a fixed random seed (42), making the model deterministic but potentially brittle if randomness is expected for robustness.",
+          "RandomSubspaceDetector.predict: Accumulates `mahal` scores into `scores` which is initialized as `np.zeros(...)` with default float type; if input `data` is integer, precision loss may occur before the final division.",
+          "RandomSubspaceDetector.fit: The condition `if cov.ndim == 0` handles only 1-dimensional subspaces; larger subspaces with singular covariance will trigger an exception caught by the fallback logic.",
+          "RandomSubspaceDetector.predict: Returns the average score but does not standardize it, making absolute thresholding difficult across datasets with different feature scales or dimensionalities."
+        ]
+      }
+    },
+    "experiment.py": {
+      "file": "experiment.py",
+      "kind": "entry",
+      "state": "failed",
+      "implemented": true,
+      "attempts": 1,
+      "failures": 3,
+      "uses": {
+        "data_generator.py": [
+          "generate_dataset"
+        ],
+        "baseline_zscore.py": [
+          "ZScoreDetector"
+        ],
+        "method_random_subspace.py": [
+          "RandomSubspaceDetector"
+        ]
+      },
+      "used_by": [],
+      "tests": [],
+      "errors": [
+        "Metric 'f1_score' is exactly 0 in every run (std_dev 0): the experiment measures nothing. Find the cause in the modules the experiment uses (a game that never ends, an agent that never learns, a value that is never updated) and fix it there, not by changing how the number is written."
+      ],
+      "parses": true,
+      "lines": 81,
+      "fingerprint": "c164a0799e0aedb622223637274037e9609eb969a7866cc2e678cab91fd38fad",
+      "imports": [
+        "import numpy as np",
+        "import pandas as pd",
+        "from sklearn.metrics import f1_score, roc_auc_score",
+        "from data_generator import generate_dataset",
+        "from baseline_zscore import ZScoreDetector",
+        "from method_random_subspace import RandomSubspaceDetector"
+      ],
+      "constants": [
+        "N_REPETITIONS",
+        "DURATION",
+        "N_CHANNELS",
+        "ANOMALY_RATE",
+        "NOISE_STD",
+        "WINDOW_SIZE",
+        "N_SUBSPACES",
+        "SUBSPACE_DIM"
+      ],
+      "classes": [],
+      "functions": [
+        {
+          "name": "run_experiment",
+          "signature": "run_experiment() -> None",
+          "docstring": "Executes the complete experiment loop for robust anomaly detection comparison.",
+          "calls": [
+            "RandomSubspaceDetector",
+            "ZScoreDetector",
+            "all_results.append",
+            "anomaly_mask.any",
+            "anomaly_mask.sum",
+            "df.groupby",
+            "df.groupby(['method', 'metric'])['value'].agg",
+            "df.groupby(['method', 'metric'])['value'].agg(['mean', 'std'",
+            "f1_score",
+            "generate_dataset",
+            "grouped.to_csv",
+            "grouped['std_dev'].fillna"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "run_experiment": "Finally, it groups the accumulated results by method and metric, calculating mean and standard deviation values, and writes this summary DataFrame to 'results.csv'. If no data was collected, it writes an empty CSV with the correct headers."
+        },
+        "matches_interface": true,
+        "suspicious": [
+          "run_experiment: ZScoreDetector uses predict(data) on the entire dataset for scoring, which may constitute data leakage if the detector requires separate train/test splits as implied by 'baseline' status.",
+          "run_experiment: RandomSubspaceDetector.fit is called on the same data used for prediction; while common in unsupervised learning, it assumes the training set represents the anomaly distribution.",
+          "run_experiment: f1_score is computed using raw scores for ZScoreDetector (which might not be boolean) or binary predictions for RandomSubspaceDetector, creating an inconsistency in how metrics are derived between methods.",
+          "run_experiment: If generate_dataset returns no anomalies (anomaly_mask.sum() == 0), the loop continues silently without recording a zero-score entry, leading to missing rows for that repetition in the aggregated results."
+        ]
+      }
+    },
+    "plots.py": {
+      "file": "plots.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 1,
+      "failures": 0,
+      "uses": {},
+      "used_by": [],
+      "tests": [],
+      "errors": [],
+      "parses": true,
+      "lines": 75,
+      "fingerprint": "722ce0735f2e740b68c668991644cc7f03cec861e6df8c2f0859f4a4688d8b9d",
+      "imports": [
+        "import matplotlib",
+        "import matplotlib.pyplot as plt",
+        "import pandas as pd",
+        "import seaborn as sns",
+        "from typing import Optional"
+      ],
+      "constants": [],
+      "classes": [],
+      "functions": [
+        {
+          "name": "create_figures",
+          "signature": "create_figures() -> None",
+          "docstring": "Reads the aggregated results from the default `results.csv` location and writes publication-quality figures into the default `figures/` dire",
+          "calls": [
+            "all",
+            "all_std_devs.get",
+            "ax1.bar",
+            "ax1.legend",
+            "ax1.set_title",
+            "ax1.set_xticklabels",
+            "ax1.set_xticks",
+            "ax1.set_ylabel",
+            "ax2.set_title",
+            "df.iterrows",
+            "df.pivot",
+            "df['method'].unique"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "create_figures": "It loads `results.csv` from the current working directory, validating that it exists, is not empty, and contains required `metric`/`value` columns. It then pivots the data, iterates rows to build an error dictionary, draws a bar chart of means with error bars on `ax1`, and saves it as `performance_comparison.png`. Finally, it attempts to draw a heatmap of the pivoted values on `ax2` and saves it a"
+        },
+        "matches_interface": true,
+        "suspicious": [
+          "create_figures: The function reads from the current working directory (`os.getcwd()`), which will break if invoked from a different context than where the data resides.",
+          "create_figures: The second plot (`ax2`) only renders if specific conditions are met; otherwise, no heatmap is generated and no error is raised despite potentially empty `pivot_df`.",
+          "create_figures: The heatmap logic `all((m in pivot_df.columns for m in metrics))` checks column existence against the DataFrame's columns attribute incorrectly after pivoting (should check index/rows or columns depending on pivot structure)."
+        ]
+      }
+    }
+  }
+}

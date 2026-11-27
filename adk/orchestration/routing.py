@@ -126,14 +126,6 @@ class RoutingMixin:
 
         return queue_tasks
 
-    def _verified_citation_keys(self) -> set[str] | None:
-        """Citation keys of the verified bibliography planning wrote, or None before planning found any literature."""
-        blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
-        recon = blueprint.get("literature_recon", {}) if isinstance(blueprint, dict) else {}
-        if not isinstance(recon, dict) or not recon.get("citation_source"):
-            return None
-        return set(recon.get("available_citation_keys") or [])
-
     def _known_citations_only(self, text: str) -> str:
         r"""`text` without the `\cite` keys the workspace bibliography lacks, as the reference check reads it. A
         made-up key stayed in the document after its task failed and failed every later section of the same file

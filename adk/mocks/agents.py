@@ -262,14 +262,12 @@ class SimulatedAgents:
     def _researcher(self, agent: str) -> dict[str, Any]:
         sc = self.scenario
         stage = "discoverer" if "discoverer" in agent else "background"
-        bib = (sc.discoverer_bibtex if stage == "discoverer" else sc.background_bibtex) or sc.background_bibtex or sc.discoverer_bibtex
         section = (sc.discoverer_section if stage == "discoverer" else sc.background_section) or sc.background_section
-        if not bib:
-            bib = "@article{sutton2018reinforcement,\n  author = {Sutton, Richard S. and Barto, Andrew G.},\n  title = {Reinforcement Learning},\n  journal = {MIT Press},\n  year = {2018}\n}\n"
+        if not section:
             section = "Foundations of the problem follow \\cite{sutton2018reinforcement}."
         title = sc.thesis_chapters[1][0] if len(sc.thesis_chapters) >= 2 else "Rozdział 2: Przegląd literatury"
         return {
-            "research_stage": stage, "bib_file": "references.bib", "bibtex_entries": bib,
+            "research_stage": stage,
             "section_title": title, "literature_review_section": section,
             "summary": f"{stage} literature review with its bibliography.",
         }

@@ -1,0 +1,673 @@
+{
+  "failed": [
+    "baseline_agent.py",
+    "tests/test_environment.py",
+    "tests/test_q_agent.py",
+    "thesis.md#ch2"
+  ],
+  "files": {
+    "environment.py": {
+      "file": "environment.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 1,
+      "failures": 0,
+      "uses": {},
+      "used_by": [
+        "baseline_agent.py",
+        "evaluator.py",
+        "experiment.py",
+        "simulation.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_environment.py",
+          "state": "failed"
+        }
+      ],
+      "errors": [],
+      "parses": true,
+      "lines": 152,
+      "fingerprint": "eda7c239dcbd507ea61a4b584d167884f60bf6cfa88451513c8df753b293913c",
+      "imports": [
+        "import gymnasium as gym",
+        "from gymnasium import spaces",
+        "import numpy as np",
+        "from typing import Tuple, Dict, Any, Optional, List"
+      ],
+      "constants": [
+        "BOARD_SIZE",
+        "NUM_ACTIONS",
+        "PLAYER_X",
+        "PLAYER_O",
+        "DRAW_REWARD",
+        "WIN_REWARD",
+        "LOSS_REWARD"
+      ],
+      "classes": [
+        {
+          "name": "TicTacToeEnv",
+          "bases": [
+            "gym.Env"
+          ],
+          "attributes": [
+            "observation_space: spaces.Discrete",
+            "action_space: spaces.Discrete"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "TicTacToeEnv.__init__",
+          "signature": "__init__(self) -> None",
+          "docstring": "Initializes the environment. Sets up observation and action spaces.",
+          "calls": [
+            "np.zeros",
+            "pow",
+            "spaces.Discrete",
+            "super",
+            "super().__init__"
+          ],
+          "raises": []
+        },
+        {
+          "name": "TicTacToeEnv.reset",
+          "signature": "reset(self, seed: Optional[int]=None, options: Optional[Dict[str, Any]]=None) -> Tuple[int, Dict[str, Any]]",
+          "docstring": "Resets the environment to the initial empty board state.",
+          "calls": [
+            "np.zeros",
+            "self.get_state_hash",
+            "super",
+            "super().reset"
+          ],
+          "raises": []
+        },
+        {
+          "name": "TicTacToeEnv.step",
+          "signature": "step(self, action: int) -> Tuple[int, float, bool, bool, Dict[str, Any]]",
+          "docstring": "Processes one time step.",
+          "calls": [
+            "np.random.choice",
+            "self._check_winner",
+            "self.get_state_hash",
+            "self.get_valid_moves"
+          ],
+          "raises": []
+        },
+        {
+          "name": "TicTacToeEnv.get_state_hash",
+          "signature": "get_state_hash(self, state: np.ndarray) -> int",
+          "docstring": "Computes the integer hash for a given numpy board array.",
+          "calls": [
+            "enumerate",
+            "state.flatten"
+          ],
+          "raises": []
+        },
+        {
+          "name": "TicTacToeEnv.get_valid_moves",
+          "signature": "get_valid_moves(self) -> List[int]",
+          "docstring": "Returns the list of valid actions for the current state.",
+          "calls": [
+            "range"
+          ],
+          "raises": []
+        },
+        {
+          "name": "TicTacToeEnv._check_winner",
+          "signature": "_check_winner(self) -> Optional[int]",
+          "docstring": "Checks if there is a winner or if the board is full.",
+          "calls": [
+            "np.all",
+            "np.diagonal",
+            "np.fliplr",
+            "np.sum",
+            "range"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "TicTacToeEnv.__init__": "Initializes by calling parent `__init__`, setting observation space to discrete size 19683 (3^9) and action space to 9. It initializes `self.board` as a 3x3 zero-filled numpy array of integers.",
+          "TicTacToeEnv.reset": "Calls parent `reset` with the seed, resets `self.board` to zeros, and returns the state hash of the empty board paired with an empty dictionary info.",
+          "TicTacToeEnv.step": "Checks if the action is valid; if not, returns current hash, 0.0 reward, and False flags. Otherwise, places Player X (1) on the board, checks for a win/draw, and returns immediately if game over. If not over, it randomly selects a move for Player O (-1), updates the board, checks again for game end, and returns result or 0.0 reward.",
+          "TicTacToeEnv.get_state_hash": "Flattens the input state array and computes an integer by summing `(cell + 1) * 3^i` for non-zero cells. Cells with value -1 contribute `0 * 3^i`, effectively treating them as 0 in the base-3 hash, while Player X (1) contributes `2 * 3^i`.",
+          "TicTacToeEnv.get_valid_moves": "Iterates range 9, calculating row/col from index, and returns a list of indices where the corresponding cell in `self.board` is 0.",
+          "TicTacToeEnv._check_winner": "Checks rows, columns, and diagonals by summing values. It correctly identifies wins for Player X (1) and Player O (-1) by comparing sums to +/-3. It checks for a draw if the board is full. Note: It checks Player X twice on diagonals but only once on the anti-diagonal check block logic appears redundant but correct in outcome, yet it misses checking Player O win on the main diagonal explicitly in t"
+        },
+        "matches_interface": false,
+        "suspicious": [
+          "get_state_hash: Maps Player O (-1) to 0 in the hash calculation, potentially causing state collision if the code interprets -1 as 'empty' (0) elsewhere or relies on unique hashing for Q-table indexing where empty cells are also 0.",
+          "step: Returns `reward=0.0` for non-terminal steps instead of a constant small penalty or the specified reward structure logic, though docstring says '0 otherwise', this might hide lack of convergence in sparse reward settings.",
+          "_check_winner: Returns `None` for ongoing games but `0` for draws; callers must distinguish between `None` and `0`, which violates the plan's implied clarity if it expected a specific enum or integer set.",
+          "step: Opponent move is random using `np.random.choice`, introducing non-determinism that will break reproducibility tests if seeds are not passed correctly to the opponent selection logic (which currently does not accept a seed)."
+        ]
+      }
+    },
+    "q_agent.py": {
+      "file": "q_agent.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 1,
+      "failures": 0,
+      "uses": {},
+      "used_by": [
+        "evaluator.py",
+        "simulation.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_q_agent.py",
+          "state": "failed"
+        }
+      ],
+      "errors": [],
+      "parses": true,
+      "lines": 60,
+      "fingerprint": "6bf9354a7052cedc8203687562ef2541f4535a4daffdf6c22e6bb11415f90eee",
+      "imports": [
+        "import numpy as np",
+        "from typing import List"
+      ],
+      "constants": [
+        "DEFAULT_LEARNING_RATE",
+        "DEFAULT_DISCOUNT_FACTOR",
+        "DEFAULT_EPSILON_START"
+      ],
+      "classes": [
+        {
+          "name": "QAgent",
+          "bases": [],
+          "attributes": [
+            "q_table: np.ndarray",
+            "n_actions: int"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "QAgent.__init__",
+          "signature": "__init__(self, n_states: int, n_actions: int, lr: float=DEFAULT_LEARNING_RATE, gamma: float=DEFAULT_DISCOUNT_FACTOR, epsilon: float=DEFAULT_EPSILON_START) -> None",
+          "docstring": "Initializes the Q-agent with a zero-initialized Q-table and specified hyperparameters.",
+          "calls": [
+            "np.zeros"
+          ],
+          "raises": []
+        },
+        {
+          "name": "QAgent.choose_action",
+          "signature": "choose_action(self, state_hash: int, possible_moves: List[int]) -> int",
+          "docstring": "Selects an action using the agent's internal epsilon-greedy policy.",
+          "calls": [
+            "int",
+            "np.max",
+            "np.random.choice",
+            "np.random.rand",
+            "zip"
+          ],
+          "raises": []
+        },
+        {
+          "name": "QAgent.update",
+          "signature": "update(self, state_hash: int, action: int, reward: float, next_state_hash: int, done: bool) -> None",
+          "docstring": "Updates the Q-table entry for the given state and action using the Bellman equation with internal hyperparameters.",
+          "calls": [
+            "np.max",
+            "np.vstack",
+            "np.zeros"
+          ],
+          "raises": []
+        },
+        {
+          "name": "QAgent.save_q_table",
+          "signature": "save_q_table(self, filepath: str) -> None",
+          "docstring": "Saves the Q-table to a binary file (.npy). Args: filepath - The path where the file will be saved.",
+          "calls": [
+            "np.save"
+          ],
+          "raises": []
+        },
+        {
+          "name": "QAgent.load_q_table",
+          "signature": "load_q_table(self, filepath: str) -> None",
+          "docstring": "Loads a Q-table from a binary file (.npy) into the agent's q_table attribute. Overwrites existing values. Args: filepath - The path to the f",
+          "calls": [
+            "FileNotFoundError",
+            "np.load",
+            "os.path.exists"
+          ],
+          "raises": [
+            "FileNotFoundError"
+          ]
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "__init__": "Takes n_states and n_actions to initialize a numpy array of shape (n_states, n_actions) filled with zeros. Stores hyperparameters lr, gamma, epsilon, and n_actions as instance attributes using default constants.",
+          "choose_action": "Takes state_hash and possible_moves. If random value < epsilon, returns a random move from possible_moves. Otherwise, finds the maximum Q-value among available moves and returns one randomly chosen tie-breaking move.",
+          "update": "Takes state, action, reward, next_state, and done. Dynamically expands self.q_table with zero rows if state_hash or next_state_hash exceeds current dimensions. Computes Bellman update using current max future Q (or 0 if done) and writes result back to the table.",
+          "save_q_table": "Takes filepath and saves the current numpy array directly using np.save, overwriting any existing file at that path.",
+          "load_q_table": "Takes filepath. Checks existence with os.path.exists; raises FileNotFoundError if missing. Loads the file via np.load and completely replaces self.q_table with the loaded data."
+        },
+        "matches_interface": true,
+        "suspicious": [
+          "choose_action: Returns a random tie-breaker among best moves rather than deterministically selecting the first or last, causing nondeterministic behavior for identical states.",
+          "update: Dynamically grows the Q-table size during runtime via vstack; this mutates memory footprint unpredictably and invalidates any external references to the old array shape.",
+          "load_q_table: Raises FileNotFoundError explicitly but does not check if the loaded file's dimensions match n_states/n_actions, risking shape mismatch errors in subsequent calls.",
+          "update: Computes np.max(self.q_table[next_state_hash]) without checking if next_state_hash is within bounds before access, relying on prior padding logic which could fail if indices are negative or erratic.",
+          "__init__: Uses a constant DEFAULT_EPSILON_START of 1.0 by default, meaning the agent starts with pure random exploration, potentially conflicting with plans expecting immediate exploitation."
+        ]
+      }
+    },
+    "baseline_agent.py": {
+      "file": "baseline_agent.py",
+      "kind": "code",
+      "state": "failed",
+      "implemented": true,
+      "attempts": 1,
+      "failures": 3,
+      "uses": {
+        "environment.py": [
+          "TicTacToeEnv"
+        ]
+      },
+      "used_by": [
+        "evaluator.py",
+        "experiment.py",
+        "simulation.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_baseline_agent.py",
+          "state": "spec"
+        }
+      ],
+      "errors": [
+        "Import error in baseline_agent.py: Traceback (most recent call last):\nFile \"<string>\", line 1, in <module>\nimport baseline_agent\nFile \"baseline_agent.py\", line 5, in <module>\nclass RandomAgent:\n...<18 lines>...\nreturn possible_moves[int(self._rng.choice(len(possible_moves)))]\nFile \"baseline_agent.py",
+        "baseline_agent.py > RandomAgent.__init__, line 11: `self._rng = np.random.default_rng(seed)` -- F821 Undefined name `np`",
+        "baseline_agent.py > RandomAgent.choose_action, line 13: `def choose_action(self, env: TicTacToeEnv) -> int:` -- F821 Undefined name `TicTacToeEnv`"
+      ],
+      "parses": true,
+      "lines": 75,
+      "fingerprint": "4ea3528454cc60b682b19011886282bc801668adfe97a886a0562d352a6d2209",
+      "imports": [
+        "from typing import Optional, List",
+        "import random"
+      ],
+      "constants": [],
+      "classes": [
+        {
+          "name": "RandomAgent",
+          "bases": [],
+          "attributes": [
+            "_rng: random.Random"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "compute_self_play_stats",
+          "signature": "compute_self_play_stats(n_matches: int, seed: int) -> dict",
+          "docstring": "Runs a series of self-play matches between two independent RandomAgents to establish a baseline against the TicTacToeEnv.",
+          "calls": [
+            "RandomAgent",
+            "TicTacToeEnv",
+            "agent_p1.choose_action",
+            "agent_p2.choose_action",
+            "env.get_valid_moves",
+            "env.reset",
+            "env.step",
+            "info.get",
+            "range"
+          ],
+          "raises": []
+        },
+        {
+          "name": "RandomAgent.__init__",
+          "signature": "__init__(self, seed: Optional[int]=None) -> None",
+          "docstring": "Initializes the RandomAgent with a specified random number generator.",
+          "calls": [
+            "np.random.default_rng"
+          ],
+          "raises": []
+        },
+        {
+          "name": "RandomAgent.choose_action",
+          "signature": "choose_action(self, env: TicTacToeEnv) -> int",
+          "docstring": "Selects one action from the allowed moves in the environment.",
+          "calls": [
+            "ValueError",
+            "env.get_valid_moves",
+            "int",
+            "len",
+            "self._rng.choice"
+          ],
+          "raises": [
+            "ValueError"
+          ]
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "compute_self_play_stats": "This function initializes counters for wins and draws, then loops `n_matches` times. In each iteration, it creates two new `RandomAgent` instances and a `TicTacToeEnv`. It runs the game by alternating actions from agent 1 and agent 2 until `terminated` is true or no moves are left, incrementing counters based on the winner info. Finally, it calculates and returns a dictionary of win/draw rates; ho",
+          "RandomAgent.__init__": "This method attempts to initialize the random number generator by calling `np.random.default_rng(seed)`. However, the module only imports `random` from the standard library and does not import `numpy`; consequently, this line raises a NameError because the name `np` is undefined.",
+          "RandomAgent.choose_action": "This method retrieves valid moves via `env.get_valid_moves()`, checks if the list is empty (raising ValueError if so), and selects a random index using `self._rng.choice(len(possible_moves))`. This fails at runtime because `__init__` never successfully assigned `self._rng` (due to the numpy import error), leaving it undefined or uninitialized."
+        },
+        "matches_interface": false,
+        "suspicious": [
+          "RandomAgent.__init__: Uses `np.random.default_rng`, but `numpy` is not imported; raises NameError immediately upon instantiation.",
+          "compute_self_play_stats: References undefined names `PLAYER_X` and `PLAYER_O` inside the game loop logic.",
+          "RandomAgent.choose_action: Depends on `self._rng` which is never successfully initialized, causing AttributeError or type errors during action selection.",
+          "RandomAgent.__init__: Interface specifies `_rng: np.random.Generator`, but source imports `random` module, indicating a mismatch in intended randomization library.",
+          "compute_self_play_stats: Calculates rates using a denominator that includes draws (`total = p1_wins + p2_wins + draws`), which contradicts standard win-rate calculations where only decisive games count, though this matches the docstring."
+        ]
+      }
+    },
+    "simulation.py": {
+      "file": "simulation.py",
+      "kind": "code",
+      "state": "stub",
+      "implemented": false,
+      "attempts": 0,
+      "failures": 0,
+      "uses": {
+        "environment.py": [
+          "TicTacToeEnv"
+        ],
+        "q_agent.py": [
+          "QAgent"
+        ],
+        "baseline_agent.py": [
+          "RandomAgent"
+        ]
+      },
+      "used_by": [
+        "experiment.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_simulation.py",
+          "state": "spec"
+        }
+      ],
+      "errors": [],
+      "behavior": {}
+    },
+    "evaluator.py": {
+      "file": "evaluator.py",
+      "kind": "code",
+      "state": "impl",
+      "implemented": true,
+      "attempts": 0,
+      "failures": 0,
+      "uses": {
+        "environment.py": [
+          "TicTacToeEnv"
+        ],
+        "q_agent.py": [
+          "QAgent"
+        ],
+        "baseline_agent.py": [
+          "RandomAgent"
+        ]
+      },
+      "used_by": [
+        "experiment.py"
+      ],
+      "tests": [
+        {
+          "file": "tests/test_evaluator.py",
+          "state": "spec"
+        }
+      ],
+      "errors": [],
+      "parses": true,
+      "lines": 78,
+      "fingerprint": "d157fe28632317867b05056aef5c6c5e7e8979c8ce33838411a7ef3d72b79e5d",
+      "imports": [
+        "import numpy as np",
+        "from typing import Dict, Any, Optional, List, Tuple",
+        "from environment import TicTacToeEnv, WIN_REWARD, LOSS_REWARD, DRAW_REWARD",
+        "from q_agent import QAgent",
+        "from baseline_agent import RandomAgent"
+      ],
+      "constants": [],
+      "classes": [],
+      "functions": [
+        {
+          "name": "evaluate_match",
+          "signature": "evaluate_match(agent_a: Any, agent_b: Any, env_template: TicTacToeEnv, n_matches: int, epsilon: float) -> Dict[str, int]",
+          "docstring": "Simulates a series of matches between two agents and returns the result counts.",
+          "calls": [
+            "active_agent.choose_action",
+            "env._get_available_moves",
+            "env.reset",
+            "env.step",
+            "info.get",
+            "isinstance",
+            "range",
+            "type",
+            "type(env_template)"
+          ],
+          "raises": []
+        },
+        {
+          "name": "compute_metrics",
+          "signature": "compute_metrics(win_rate: float, win_count: int, draw_count: int, loss_count: int, n_matches: int, baseline_win_rate: float=0.0, baseline_draw_rate: float=0.0) -> Dict[str, float]",
+          "docstring": "Computes performance metrics from raw match counts and rates.",
+          "calls": [],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [
+        "compute_baseline_stats"
+      ],
+      "behavior": {
+        "functions": {
+          "evaluate_match": "The function initializes zero counters for wins and draws, then iterates n_matches times. In each iteration, it clones the environment template, resets it, and assigns players based on match index parity to balance first-move advantage (even indices: agent_a as X; odd: agent_b as X). It runs a loop where agents alternate turns, calling choose_action with epsilon for QAgent instances or without for",
+          "compute_metrics": "The function accepts raw win/draw/loss counts and rates, returning a dictionary of floats. If n_matches is zero, it returns zero rates for the agent and negative values for baseline advantages equal to the negated baseline inputs. Otherwise, it calculates agent_draw_rate as draw_count divided by n_matches, agent_loss_rate as loss_count divided by n_matches, vs_baseline_advantage as win_rate minus "
+        },
+        "matches_interface": true,
+        "suspicious": [
+          "evaluate_match: The sum of returned counts may be less than n_matches because the loop breaks on exception without incrementing any counter, contradicting 'sum equals n_matches'.",
+          "evaluate_match: Draw detection relies on 'not (done or truncated)' being false while done is False but truncated is True, or loop break due to no moves; logic for 'draws += 1' in the else branch covers non-done outcomes but might misclassify forced breaks as draws.",
+          "compute_metrics: win_rate and draw_count are treated independently; agent_draw_rate is computed from draw_count/n_matches while vs_baseline_advantage uses the passed win_rate, not re-calculating win_count/n_matches, creating potential inconsistency if inputs don't match.",
+          "evaluate_match: The function modifies local counters but does not return any information about matches that failed (exceptions), making silent failures indistinguishable from draws.",
+          "compute_metrics: baseline_win_rate and baseline_draw_rate are used only for subtraction; if they represent rates > 1.0 or invalid inputs, the advantages become negative without warning."
+        ]
+      }
+    },
+    "experiment.py": {
+      "file": "experiment.py",
+      "kind": "entry",
+      "state": "impl",
+      "implemented": true,
+      "attempts": 0,
+      "failures": 1,
+      "uses": {
+        "environment.py": [
+          "TicTacToeEnv"
+        ],
+        "baseline_agent.py": [
+          "RandomAgent",
+          "compute_self_play_stats"
+        ],
+        "evaluator.py": [
+          "compute_metrics",
+          "evaluate_match"
+        ],
+        "simulation.py": [
+          "train_policy"
+        ]
+      },
+      "used_by": [],
+      "tests": [],
+      "errors": [
+        "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothin...\n- TEST_INVALID_ON_STUBS [tests/test_experiment.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: tests.test_experiment"
+      ],
+      "parses": true,
+      "lines": 74,
+      "fingerprint": "d91cb3deda9d1e25dca0de17810352e7c1dadea5d6a3b00d8d2cb6e0fa17ebe1",
+      "imports": [
+        "import csv",
+        "import os",
+        "from typing import Dict, Any",
+        "from pipeline import run_training_pipeline, run_evaluation_pipeline"
+      ],
+      "constants": [
+        "RESULTS_FILENAME",
+        "FIGURES_DIRNAME"
+      ],
+      "classes": [],
+      "functions": [
+        {
+          "name": "run_experiment",
+          "signature": "run_experiment() -> None",
+          "docstring": "Runs the complete experiment: training, evaluation, and saving results to CSV. Executes `run_training_pipeline` with default hyperparameters",
+          "calls": [
+            "agent_vs_baseline.get",
+            "baseline_vs_baseline.get",
+            "csv.writer",
+            "evaluation_metrics.get",
+            "isinstance",
+            "len",
+            "open",
+            "os.makedirs",
+            "rows.append",
+            "run_evaluation_pipeline",
+            "run_training_pipeline",
+            "training_stats.get"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [
+        "BASELINE_N_MATCHES",
+        "FINAL_EPSILON",
+        "GAMMA",
+        "INITIAL_EPSILON",
+        "LEARNING_RATE",
+        "N_EPISODES",
+        "N_MATCHES_PER_EVAL",
+        "REPETITIONS"
+      ],
+      "behavior": {
+        "functions": {
+          "run_experiment": "It defines hyperparameters for a Q-Learning agent (learning rate 0.1, epsilon decay 0.995) and calls `run_training_pipeline` to obtain statistics and a trained agent object. It extracts the last value from the `avg_rewards_100` list in training stats as the final reward metric, then calls `run_evaluation_pipeline` with fixed seeds to get win/loss/draw rates for both the agent and a baseline. Final"
+        },
+        "matches_interface": true,
+        "suspicious": [
+          "run_experiment: training_stats.get('avg_rewards_100') assumes a list structure for the reward history; if it returns a scalar or None in unexpected ways, the extraction logic might silently fall back to 0.0 without raising an error, masking incomplete training.",
+          "run_experiment: evaluation_metrics.get() uses empty dict {} as fallback if keys are missing; this causes metrics like 'agent_win_rate' to default to 0.0 silently, hiding potential KeyError issues from the caller or test suite."
+        ]
+      }
+    },
+    "figures.py": {
+      "file": "figures.py",
+      "kind": "code",
+      "state": "verified",
+      "implemented": true,
+      "attempts": 1,
+      "failures": 0,
+      "uses": {},
+      "used_by": [],
+      "tests": [],
+      "errors": [],
+      "parses": true,
+      "lines": 109,
+      "fingerprint": "1970ced1cc5a9283c8a0980ef14114d072fd61c2923433a929de442ed762c102",
+      "imports": [
+        "import os",
+        "from typing import List, Tuple",
+        "import matplotlib",
+        "import matplotlib.pyplot as plt",
+        "import pandas as pd"
+      ],
+      "constants": [
+        "RESULTS_PATH",
+        "FIGURES_DIR"
+      ],
+      "classes": [],
+      "functions": [
+        {
+          "name": "generate_plots",
+          "signature": "generate_plots() -> None",
+          "docstring": "Reads `results.csv` from the workspace root, generates plots for convergence and comparison metrics, and saves them into `figures/`. Creates",
+          "calls": [
+            "df['method'].unique",
+            "df['method'].unique().tolist",
+            "df['metric'].unique",
+            "df['metric'].unique().tolist",
+            "os.makedirs",
+            "pd.read_csv",
+            "plot_agent_metrics",
+            "plot_win_draw_rates",
+            "print"
+          ],
+          "raises": []
+        },
+        {
+          "name": "plot_win_draw_rates",
+          "signature": "plot_win_draw_rates(df: pd.DataFrame, win_metrics: List[str], draw_metrics: List[str]) -> None",
+          "docstring": "Plots win and draw rates for agents/baselines as bar charts.",
+          "calls": [
+            "ax1.bar",
+            "ax1.set_title",
+            "ax1.set_xlabel",
+            "ax1.set_ylabel",
+            "ax2.bar",
+            "ax2.set_title",
+            "ax2.set_xlabel",
+            "ax2.set_ylabel",
+            "df['metric'].isin",
+            "os.path.join",
+            "plt.close",
+            "plt.savefig"
+          ],
+          "raises": []
+        },
+        {
+          "name": "plot_agent_metrics",
+          "signature": "plot_agent_metrics(df: pd.DataFrame, agent_metrics: List[str]) -> None",
+          "docstring": "Plots aggregated metrics for the learning agent.",
+          "calls": [
+            "agents_data.iterrows",
+            "ax.bar",
+            "ax.set_title",
+            "ax.set_xlabel",
+            "ax.set_ylabel",
+            "df['metric'].isin",
+            "labels.append",
+            "m.replace",
+            "m.replace('_', ' ').title",
+            "os.path.join",
+            "plt.close",
+            "plt.savefig"
+          ],
+          "raises": []
+        }
+      ],
+      "lacks_planned": [],
+      "behavior": {
+        "functions": {
+          "generate_plots": "The function creates the `figures/` directory, then reads `results.csv` into a DataFrame, returning immediately if the file is missing, empty, or lacks required columns (`method`, `metric`, `value`). It filters metrics into win/draw categories and agent-specific categories, then calls `plot_win_draw_rates` and `plot_agent_metrics` for each non-empty category.",
+          "plot_win_draw_rates": "Filters the DataFrame for rows where `metric` matches win or draw names, plotting them as separate bar charts on a two-panel figure (`win_draw_rates.png`). If either metric list is empty or data is missing for those metrics, the corresponding subplot remains blank, but the file is still saved.",
+          "plot_agent_metrics": "Filters the DataFrame for rows where `metric` contains 'agent_', replacing underscores with spaces and title-casing them to create x-axis labels. It plots these as a single bar chart (`agent_metrics.png`) and closes the figure."
+        },
+        "matches_interface": true,
+        "suspicious": [
+          "generate_plots: uses hardcoded paths `results.csv` and `figures/`, which will break if the file is run from any directory other than the workspace root.",
+          "plot_win_draw_rates: calls `plt.subplots(1, 2)` even when no win or draw metrics are found, potentially saving a blank or partially blank plot file unnecessarily.",
+          "plot_agent_metrics: iterates rows manually to format labels instead of vectorizing the string replacement, which is inefficient for large DataFrames and prone to index misalignment if logic changes.",
+          "generate_plots: returns silently on validation errors without raising exceptions or writing logs, making it difficult for calling modules to detect failure modes programmatically."
+        ]
+      }
+    }
+  }
+}

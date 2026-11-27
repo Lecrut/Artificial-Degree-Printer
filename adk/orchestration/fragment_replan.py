@@ -18,6 +18,7 @@ from adk.hypergraph.schedule import FAILED, readiness
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.common import _RunState, _agent_for_path, available_package_imports
 from adk.orchestration.failure_kinds import error_signature
+from adk.orchestration.interface_view import interface_view
 from adk.orchestration.plan_interfaces import _plan_interfaces
 
 REPLANS_WITHOUT_PROGRESS = 3 # re-plans in a row after which no new vertex was verified: the run ends with gaps
@@ -35,6 +36,15 @@ def _latest_errors(history: list[dict[str, Any]]) -> list[str]:
         if entry.get("task_id") not in _MARKERS and entry.get("issues"):
             return [str(i) for i in entry["issues"]]
     return []
+
+
+def _history_before_latest(history: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The verdicts of a vertex without the one `_latest_errors` already gives: the same error was sent three times
+    (`latest_errors`, the end of `history`, the task that carried it: §XXXVIII.2)."""
+    for i in range(len(history) - 1, -1, -1):
+        if history[i].get("task_id") not in _MARKERS and history[i].get("issues"):
+            return history[:i] + history[i + 1:]
+    return history
 
 
 def _mentioned(text: str, rel: str) -> bool:
@@ -153,7 +163,7 @@ class FragmentReplanMixin:
                 "attempts": v.attempts,
                 "failures": v.failures,
                 "latest_errors": _latest_errors(v.history),
-                "history": v.history,
+                "history": _history_before_latest(v.history),
                 "last_writer": v.last_writer,
                 "waiting_on_it": _dependents(h, vertex),
             })
@@ -162,6 +172,21 @@ class FragmentReplanMixin:
             "verified_do_not_touch": sorted(v for v, x in h.vertices.items() if x.state == "verified"),
             "entrypoint": blueprint.get("entrypoint"),
         }
+
+    @staticmethod
+    def _open_tasks_for_planner(state: _RunState) -> list[dict[str, Any]]:
+        """Only the tasks that can still run: the finished ones (every `T*`, `D*`, `R*` of the run, with their tracebacks)
+        were 21 of the 89 thousand characters of the planner's payload (§XXXVIII.2)."""
+        return [{k: v for k, v in t.items() if k != "planned_description"} for t in state.tasks if t.get("status") in ("TODO", "WAITING")]
+
+    @staticmethod
+    def _interfaces_for_planner(h: Hypergraph, interfaces: dict[str, str], failed: list[str]) -> dict[str, str]:
+        """The interfaces of the modules that did not fail, without bodies (the failed ones are in the dossier as
+        `planned_interface`). Nothing when only chapters failed: no code interface is of use to them (§XXXVIII.2)."""
+        if not any(h.vertices[v].kind in ("code", "entry", "test") for v in failed):
+            return {}
+        own = {h.tested_module(v) if h.vertices[v].kind == "test" else v for v in failed}
+        return {rel: interface_view(src) for rel, src in interfaces.items() if rel not in own}
 
     def _redesign_due(self, h: Hypergraph) -> bool:
         """At least one local re-plan has run, and since then no vertex became verified that had not been before."""
@@ -203,7 +228,7 @@ class FragmentReplanMixin:
             {
                 "user_prompt": self.current_user_prompt,
                 "current_plan": {
-                    "tasks": state.tasks, "interfaces": interfaces,
+                    "tasks": self._open_tasks_for_planner(state), "interfaces": self._interfaces_for_planner(h, interfaces, failed),
                     "academic_blueprint": {k: v for k, v in blueprint.items() if k not in ("literature_recon", "interfaces")},
                 },
                 "repair_dossier": dossier,
@@ -241,8 +266,11 @@ class FragmentReplanMixin:
         # interface of `game_loop.py` and `q_learning_agent.py` against an unchanged `.FF..` whose cause was a test).
         unchanged = {e["vertex"] for e in (dossier or {}).get("failed", []) if e.get("same_error_as_last_round")}
         changed: list[str] = []
-        for rel, source in _plan_interfaces(out).items():
-            if interfaces.get(rel) == source:
+        for rel, planned in _plan_interfaces(out).items():
+            # An interface has no bodies (§XXXVII.6: the planner wrote 50-line implementations, with the very bugs of the
+            # code, into `interfaces`, from where the next planner and the testers read them).
+            source = interface_view(planned)
+            if interface_view(interfaces.get(rel, "")) == source:
                 continue
             if rel in unchanged:
                 self.logger.log_event("SPEC_AMEND_SKIPPED", module=rel, task_id="REPLAN", reason="same error as after the last re-plan")
@@ -286,6 +314,7 @@ class FragmentReplanMixin:
             task = {
                 "task_id": f"R{round_no}_{i}",
                 "description": self._with_latest_errors(h, raw),
+                "planned_description": str(raw.get("description") or ""),  # without the findings: they are read again when the task starts
                 "target_node": str(raw["target_node"]),
                 "assigned_agent": str(raw.get("assigned_agent") or ""),
                 "status": "TODO",
@@ -305,6 +334,7 @@ class FragmentReplanMixin:
                 task["force_ready"] = True  # once: the test is fixed first, the failed module is judged by the fixed test
             if vertex in open_tasks:
                 open_tasks[vertex]["description"] = task["description"]
+                open_tasks[vertex]["planned_description"] = task["planned_description"]
                 if task.get("force_ready"):
                     open_tasks[vertex]["force_ready"] = True
                 updated.append(vertex)
@@ -314,6 +344,13 @@ class FragmentReplanMixin:
             tasks.append(task)
         tasks.sort(key=lambda t: not t.get("force_ready"))
         return tasks, dropped, updated, reopened
+
+    def _fresh_description(self, h: Hypergraph, task: dict[str, Any]) -> None:
+        """A re-planned task that waited (a test goes first with `force_ready`, its module waits) carries the findings of
+        the moment it was planned; its vertex may have failed differently since (§XXXVII.7: `R1_1` started with the hang
+        of before `R1_2` had changed `environment.py`). They are read again when the task starts."""
+        if (planned := task.get("planned_description")) is not None:
+            task["description"] = self._with_latest_errors(h, {"description": planned, "target_node": task.get("target_node")})
 
     def _with_latest_errors(self, h: Hypergraph, raw: dict[str, Any]) -> str:
         """The planner's description plus, by the harness, the findings of the last verification of the vertex."""

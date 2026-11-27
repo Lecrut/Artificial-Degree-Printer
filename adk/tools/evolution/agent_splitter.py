@@ -78,10 +78,8 @@ def split_agent(
             f"```json\n"
             f"{{\n"
             f'  "ast_edits": [],\n'
-            f'  "test_file": "test_core.py",\n'
-            f'  "test_code": "def test_{slug}():\\n    assert True\\n",\n'
-            f'  "benchmark_file": "results.csv",\n'
-            f'  "csv_content": "",\n'
+            f'  "test_file": "tests/test_<module>.py",\n'
+            f'  "test_code": "<the pytest source of the test file>",\n'
             f'  "summary": "Executed specialized {spec} task."\n'
             f"}}\n"
             f"```\n"

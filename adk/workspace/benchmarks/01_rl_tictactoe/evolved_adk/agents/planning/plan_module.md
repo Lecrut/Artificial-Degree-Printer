@@ -19,6 +19,7 @@ You return a **sketch**: a JSON object of declarations. It has no field for a bo
   - Public attributes that tests may read are declared in the class's `attributes` (`<name>: <type>`, or `<name>: <type> = <default>` in a dataclass); anything not declared is private.
   - A decorator goes into `decorators` (`dataclass`, `staticmethod`, `classmethod`, `property`), not into the signature.
 - **Imports**: `imports` lists complete import lines. Only `dependencies` (by the names they declare), the standard library and `available_packages`. Every name the annotations use is imported (`from typing import ...` or built-in generics). This includes the module a type comes from: a signature with `np.ndarray` needs `"import numpy as np"` in `imports`, `pd.DataFrame` needs `"import pandas as pd"`; a name no import gives it fails the stub (`NameError`) and costs a round.
+- **Plain types first.** In the public signatures of a small domain use plain Python types (`int`, `float`, `str`, `tuple`, `list`, `dict`): a 3x3 board is a `tuple[int, ...]` of nine cells, an action an `int`, a state a `tuple`. Use numpy arrays only where the work is numerical (matrices, datasets, batches), and do not copy the API of a framework (gym spaces, `observation_space`, `Box`) unless the research asks for it: arrays make states unhashable and tests fragile, and every extra framework object is one more thing to implement and to test.
 - **Constants** hold plain values of their declared type (no `dataclasses.field` outside a dataclass). Experiment settings (sizes, repetitions, seeds, hyperparameters) are named module-level constants, chosen to finish within `experiment_time_limit_s`.
 - **If this module holds the `entrypoint` or the `plots` function**: that function takes no required arguments (the harness calls it without any).
   - The entrypoint imports, at module top level, the modules it runs, and writes `results.csv` in the workspace root: tidy rows `method,metric,value` (optional `std_dev,n_runs`), one row per method and metric (repetitions aggregated into it), for exactly the outline's metrics. The entrypoint's docstring names every metric literally (e.g. `mean_td_error`), with the method it is measured for: the harness refuses an interface that leaves one out.
@@ -63,5 +64,11 @@ Return strictly one JSON object, no text outside it:
 }
 ```
 
+---
+
+## CONSOLIDATED EVOLUTIONARY INVARIANTS
+- **INVARIANT**: When designing a public interface for computation or simulation, pass specific class references or instantiation arguments rather than relying on implicit global state because this allows callers to control object lifecycle, enables modular reuse, and prevents hidden coupling between modules.
+- **INVARIANT**: When an instance requires state for correctness or reproducibility, enforce it through explicit constructor arguments rather than relying on module-level constants because instance-level configuration ensures isolation and adheres to the contract of deterministic behavior.
+- **INVARIANT**: When defining a public interface, return all necessary data and object instances explicitly in the function signatures because this eliminates dependency on side effects or inaccessible internal state and ensures the contract is self-contained.
+
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When defining module interfaces or method signatures in an outline, ensure all parameter names and counts strictly match the contract promised to downstream agents (such as the seed_coder) and are consistent with the broader context requirements, because any mismatch breaks the interface contract and prevents correct implementation.

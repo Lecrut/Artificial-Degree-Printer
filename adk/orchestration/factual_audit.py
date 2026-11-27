@@ -93,7 +93,6 @@ class FactualAuditMixin:
         """Read the workspace as it is. The next queue is built from this, not from the abandoned plan."""
         test_res = run_isolated_tests(
             self.workspace_dir,
-            use_docker=False,
             verification_dir=self.adk_root / "tools" / "verification",
         )
         files: list[str] = []

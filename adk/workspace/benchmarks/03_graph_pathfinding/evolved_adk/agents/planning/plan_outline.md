@@ -12,23 +12,25 @@ Names written as `<...>` below are placeholders for your own decisions, never va
 - `experiment_time_limit_s`: after every change of the code the harness runs the whole experiment (every repetition and seed, then the figures function) and stops it after this many seconds. Choose sizes and repetitions that finish well within it.
 - `available_packages`: the import line of every external package installed. Nothing can be installed during the run.
 - `existing_files`: code already in the workspace (path → source), empty for a new project. Building on an existing module is right: list it under its own path. With `provides` naming only what its source defines, the harness keeps that code as it is. Promise more only when the research requires changing that module; it is then extended, keeping every name it has. New behaviour belongs in new modules.
-- `detected_template`, `domain_context`, `agent_registry`: the document type and the active agents.
+- `detected_template`: the document type. `domain_context` and `agent_registry` (the active agents) come only with the first planning, not in a redesign.
 - `include_docs`: when false the run produces code and results only, with no thesis: `planned_chapters` is empty.
 - `missing_agent_specialization`: a specialist the caller asks for (or null). When it is set, repeat it in your answer, and the specialist implements the modules.
 - `current_outline` + `feedback` (only when correcting): see CORRECTING.
+- `revision` (only when the project is already built and failed): see REVISING.
 
 ## WHAT TO DECIDE
 - **Modules** — small, single-purpose, each one file `<path>.py`.
   - The proposed method and the baseline live in their own modules.
   - Shared data or environment code lives in its own module.
   - The experiment entrypoint lives in a module that imports what it runs.
+  - **Prefer a layered, modular design.** A module imports few others (about three at most). Where two modules have to work together (an environment and an agent, data and a model), give that interplay its own module (a trainer, an evaluator) that imports both, so the entrypoint module only calls the stages in order and does not wire everything itself: if an environment, an agent and a baseline never meet anywhere but in the entrypoint, all their wiring ends up in the entrypoint and it becomes the project. This is a preference, not a rule: add a layer only where it has a job of its own, never a module for its own sake.
   - Every experiment setting is a named module-level constant in a module of your choice, so the thesis can cite it.
   - Test files are not modules: the harness plans a unit-test task for every module with logic.
 - For each module:
   - `file`: its workspace-relative path;
   - `purpose`: one sentence — what it does for the research;
   - `depends_on`: the planned or existing modules it imports. Dependencies form a hierarchy, with no cycles;
-  - `provides`: the public names other modules and the harness use, each with a short signature hint, e.g. `<Class>`, `<Class>.<method>(<arg>) -> <type>`, `<function>(<arg>) -> <type>`. Every name a consumer will call must be promised here: a consumer may use only what its dependencies promise.
+  - `provides`: the public names other modules and the harness use, each with a short signature hint, e.g. `<Class>`, `<Class>.<method>(<arg>) -> <type>`, `<function>(<arg>) -> <type>`. Every name a consumer will call must be promised here: a consumer may use only what its dependencies promise. Write the hints with plain Python types (`int`, `tuple`, `list`, `dict`) in a small domain, not the types or the API of a framework (`np.ndarray`, Gymnasium spaces) unless the research asks for it: the module author is told the same, and the critics do not hold a module to a framework's API.
 - **The experiment runs the plan**: the entrypoint's module depends — directly or through other modules — on every module except the figures module. The experiment never reimplements a planned module.
 - **Harness contracts, not suggestions**:
   - `entrypoint`: `<path>.py:<function>` — a function in the `provides` of its module, called WITHOUT arguments. It writes `results.csv` in the workspace root: tidy rows `method,metric,value` (optional `std_dev,n_runs`), one row per method and metric (repetitions aggregated into it), for the metrics you declare. Every number in the thesis points at this file.
@@ -48,8 +50,34 @@ You are correcting YOUR outline, not writing a new one.
 - Keep everything else exactly as it is. A module whose entry you do not change keeps its accepted interface; a module you change gets its interface redesigned.
 - Return the whole corrected outline.
 
+## REVISING (`revision`)
+When `revision` is present the project is already built, the queue ended and modules failed after every repair. You do not write a first outline: you revise the design. `current_outline` is the outline in force; `feedback`, when present, lists what is wrong with your previous revision. `revision` carries:
+- `reason`: why you are asked.
+- `failed`: the modules that failed.
+- `implementation`: for every module of the project what its file really is: `state` (`verified` means only that the file passed its own tests, not that it works with the others), `implemented`, `declares` (signatures), `does` (what each function does, said by an auditor who read the code), `matches_interface`, `suspicious`, `lacks_planned` (names the plan declares and the file lacks), `uses`, `used_by`, `tests`, `errors`. You see no bodies.
+- `unresolved_errors`: the last errors of each failed module.
+- `run_error`: the traceback of the last run of the experiment, when it failed.
+- `earlier_rounds`: your own earlier revisions in this run, each with the modules it changed, added or removed (`status`, `why`) and its `outcome` (`not built`: its plan could not be built, with the reason; `applied`: it was built and the failures came back). Do not reverse a decision of an earlier round (a state encoding, the owner of a responsibility, a module's interface) unless the errors show that decision as the cause: a reversal is a new decision, and its `why` names the error that proves it. A design that was applied and failed again is not wrong for being old; look for what the errors say. The `status` of an earlier round is history, not a default: a module that is `verified` now and is not in `failed` is `keep` this round, whatever its status was before.
+- `sources`: only after you asked for code (see below): the code of the files you named.
+- `previous_outline`: with `feedback`, the outline of your previous revision that the feedback is about; correct it, do not start over, and answer with the whole object again.
+
+The descriptions in `implementation` are written by an auditor and can miss a detail (a line that is not there, a value that is never updated). If you cannot find the cause without reading code, ask ONCE, for up to three implemented modules: answer with `revision.need_source`, a list of their paths, and nothing else. The harness sends their code in `revision.sources` and asks you again; a second request is not answered. Ask only for files whose descriptions or errors point at them.
+
+Decide where the cause is: in the module that failed, in a neighbour it calls (a module that passed and still returns something other than it declares), or in how the work is cut into modules (a module that does two things, a helper that several modules need). Then return the whole revised outline (every module, `entrypoint`, `plots`, `academic_blueprint`) and a status for EVERY module of the old outline and of the new one:
+- `keep`: its entry in the outline stays exactly as it is, so its interface stays (the file is still rebuilt if it failed);
+- `change`: its `purpose`, `depends_on` or `provides` change, or its design is wrong and is redesigned;
+- `new`: a module the old outline does not have (a helper, one half of a module you split), in a file whose name is free;
+- `remove`: gone from the outline; no module depends on it afterwards.
+
+Rules:
+- A `keep` entry is identical to the old one, word for word.
+- Change as little as the errors demand. Every module you change is redesigned and its tests are written again; everything you keep stays as it is. A module that passed and that the errors do not name stays `keep`, unless it is the cause.
+- Do not remove a module to hide a failure, and do not add one that nothing imports.
+- If nothing in the design is wrong (the failed modules only need to be written again), mark every module `keep`: the harness then re-plans the failed modules itself.
+- `revision.diagnosis`: for every failed module its `cause` (`this_file`, `neighbour` or `split`) and one sentence `why`.
+
 ## OUTPUT
-Return strictly one JSON object, no text outside it:
+Return strictly one JSON object, no text outside it. It is ALWAYS the whole outline: `modules` (every module), `entrypoint`, `plots`, `academic_blueprint`; an answer that holds only `revision` is refused. `revision` is added only when `revision` is in your input:
 ```json
 {
   "modules": [
@@ -68,10 +96,14 @@ Return strictly one JSON object, no text outside it:
     "baseline_comparison": "<metoda odniesienia i sposób porównania>",
     "metrics": ["<metryka_1>", "<metryka_2>"],
     "planned_chapters": [{"index": 1, "title": "<Rozdział 1: ...>", "focus": "<zakres rozdziału>"}]
+  },
+  "revision": {
+    "modules": {"<path>.py": {"status": "keep | change | new | remove", "why": "<one sentence>"}},
+    "diagnosis": {"<failed_path>.py": {"cause": "this_file | neighbour | split", "why": "<one sentence>"}}
   }
 }
 ```
+To read code instead of answering, return only `{"revision": {"need_source": ["<path>.py"]}}` (the single exception to the whole-object rule).
 
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When designing module interfaces or dependencies, explicitly verify that required inputs (such as baseline metrics or return values) are available from the specified source modules before listing them, because assuming data flow without confirming the actual function signature leads to unimplementable modules and broken cross-file dependencies.
-- **RULE**: When designing new modules that rely on existing infrastructure, prioritize and explicitly depend on existing modules to satisfy functional requirements rather than creating duplicate wrappers or parallel implementations, because reusing existing sources prevents structural ambiguity and violates the 'One concept, one place' principle.
+- **RULE**: When declaring module interfaces and metrics, ensure that dependencies and data flows strictly follow the execution order (experiment writes results.csv before figures reads it) and avoid declaring imports between modules that are logically independent or temporally ordered, because false coupling breaks the modular contract and hinders verification.

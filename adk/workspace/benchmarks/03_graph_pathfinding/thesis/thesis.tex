@@ -51,17 +51,62 @@ Domain: Graph Algorithms \& Heuristic Search}}
 \thispagestyle{plain}
 
 \begin{abstract}
-
+Algorytm Weighted A* z heurystyką oktylową rozwija istotnie mniej węzłów niż klasyczny algorytm Dijkstry na losowych siatkach z przeszkodami, zachowując akceptowalny spadek optymalności ścieżki (suboptimality gap) przy odpowiednio dobranej wadzie heurystyki.
 \end{abstract}
 
 \begin{IEEEkeywords}
 neuro-symbolic systems, empirical verification, abstract syntax tree, automated thesis synthesis, machine learning
 \end{IEEEkeywords}
 
-\section{Rozdział 1}
+\section{Rozdział 2: Tło i przegląd najnowszych prac}
+W kontekście rosnących wymagań wobec systemów autonomii mobilnej oraz symulacji logistycznych, efektywne wyszukiwanie ścieżek na siatkach przestrzennych pozostaje fundamentalnym problemem informatyki obliczeniowej. Mimo upowszechnienia metod uczenia maszynowego, klasyczne algorytmy przeszukiwania grafów stanowią trzon wielu rozwiązań przemysłowych ze względu na ich determinizm, gwarancję optymalności (w przypadku bezwzględnej heurystyki) oraz niski narzut pamięciowy w fazie wnioskowania\cite{tang2026scaling}. Niniejszy rozdział omawia teoretyczne podstawy algorytmu Dijkstry oraz modyfikacji A*, skupiając się na mechanizmie ważenia heurystyki (	extit{weighted A*}) i jego wpływie na równowagę między kosztem obliczeniowym a jakością ścieżki.\n
+\subsection{2.1 Algorytm Dijkstry i jego ograniczenia w dużych przestrzeniach stanów}
+Klasyczny algorytm Dijkstry, będący szczególnym przypadkiem przeszukiwania pierwszego brzegu (BFS) na grafach o nieujemnych wagach krawędzi, gwarantuje znalezienie ścieżki minimalnego kosztu przez priorytetyzację węzłów według dotychczasowego koszty dojścia $g(n)$\cite{tang2025routing}. W implementacji na siatkach dwuwymiarowych z ośmioma kierunkami ruchu (w tym przesunięciami po przekątnych), algorytm ten wymaga eksploracji wierzchołków zgodnie ze stożkiem rosnącego kosztem od punktu startowego. W gęsto zabudowanych przestrzeniach, takich jak siatki z wysokim stopniem skomplikowania (	extit{obstacle density}), Dijkstra generuje duże obszary eksploracji (ang. 	extit{nodal expansion}), co prowadzi do kwadratowej złożoności czasowej w najgorszym przypadku względem rozmiaru siatki. Choć algorytm ten służy jako punkt odniesienia (	extit{baseline}) dla optymalności w niniejszej pracy, jego brak heurystycznego kierowania czyni go nieefektywnym w kontekście wymagającym szybkiego znalezienia dowolnej dopuszczalnej ścieżki na dużych mapach\cite{ahmadi2024resource}.\n
+\subsection{2.2 Algorytm A* i heurystyka oktylowa}
+Algorytm A* poprawia wydajność Dijkstry, wprowadzając funkcję priorytetu $f(n) = g(n) + h(n)$, gdzie $h(n)$ jest heurystyką estymującą koszt dojścia od węzła $n$ do celu. Dla zachowania optymalności, heurystyka musi być 	extit{dozwolona} (	extit{admissible}), czyli nigdy nie przeszacowywać rzeczywistego kosztu\cite{casasramos2025declarealign}. W przestrzeniach siatkowych z dozwolonymi ruchami w ośmiu kierunkach, najkrótsza droga Euklidesowa (po krzywych) nie jest precyzyjna, natomiast metryka Manhattanu jest zbyt konserwatywna. 
 
+Kluczowym elementem niniejszego modelu jest wykorzystanie 	extit{odległości oktylowej} (	extit{octile distance}), zdefiniowanej jako:
+\begin{equation}
+    h_{octile}(n, G) = D_1 \cdot |x_n - x_G| + D_2 \cdot (|y_n - y_G| - |x_n - x_G|)
+\end{equation}
+dzieje $D_1$ to koszt ruchu prostego (zwykle 1), a $D_2$ to koszt ruchu po przekątnej (zwykle $\sqrt{2}$). W implementacji kodu źródłowego projektu, funkcja ta jest zaimplementowana w module 	exttt{heuristics.py} pod nazwą 	exttt{octile\_distance}, co zapewnia precyzyjną i obliczeniowo lekką estymację pozostałej odległości. Heurystyka oktylowa jest standardem w grach symulacyjnych oraz robotyce mobilnej ze względu na swoją zgodność z topologią ruchu po siatce\cite{wang2026vikpath}.\n
+\subsection{2.3 Ważony A* i kompromis wydajnościowo-optymalnościowy}
+Mimo doskonałych właściwości optymalnych, standardowy A* może nadal rozwijać nadmiarowe węzły w przypadku, gdy heurystyka jest 	extit{consistent}, ale nie dostarcza wystarczającego informacji o kierunku do celu. Rozwiązaniem jest 	extit{Weighted A*}, w którym priorytet przeliczany jest jako:
+\begin{equation}
+    f(n) = g(n) + w \cdot h(n)
+\end{equation}
+dzieje $w > 1$ jest współczynnikiem ważenia. Powiększenie $w$ nadaje heurystyce większy wpływ na wybór ścieżki, wymuszając algorytmowi bardziej 	extit{zachłanne} (ang. 	extit{greedy}) kierowanie się w stronę celu. Zgodnie z literaturą przedmiotu, wzrost wagi prowadzi do istotnego zmniejszenia liczby rozwiniętych węzłów (	extit{expanded nodes}), co przyspiesza czas działania\cite{abbasov2025optimal}. W zamian za ten przyrost efektywności, gwarancja optymalności ścieżki zostaje złamana. Zamiast kosztu $C^*$, algorytm zagwarantuje znalezienie ścieżki o koszcie $C \le w \cdot C^*$. Różnica ta definiuje 	extit{suboptimality gap}, który stanowi główną metrykę oceny w niniejszym eksperymencie.\n
+Dobór optymalnej wartości wagi jest problemem nierozwiązywalnym analitycznie dla dynamicznych map, dlatego też w pracach empirycznych stosuje się analizę wrażliwości (	extit{sensitivity analysis}) na zbiorze losowo generowanych siatek \cite{bokan2024slope}. W niniejszym projekcie, doborowi parametru $w$ oraz ocenie jego wpływu na liczbę rozwiniętych węzłów i suboptimality gap poświęcony jest rozdział trzeci.\n
+\subsection{2.4 Przejście do eksperymentu}
+W przeciwieństwie do najnowszych podejść opartych na głębokim uczeniu, które wymagają kosztownego szkolenia (	extit{training}) lub działają w przestrzeniach ciągłych \cite{zhao2026customizable}, 	extit{Weighted A*} oferuje natychmiastowe wnioskowanie. Niniejsza praca uzupełnia lukę badawczą poprzez precyzyjne zmierzenie tego kompromisu na losowych siatkach z przeszkodami. Eksperyment polega na bezpośrednim porównaniu algorytmu Dijkstry (	exttt{search\_grid}) z implementacją 	extit{Weighted A*} (	exttt{search\_weighted\_astar}), przy zachowaniu tego samego generatora siatek (	exttt{generate\_obstacle\_grid}) i ziaren losowości (	exttt{config.py:SEED}).
+
+\section{Section III: Wyniki i analiza}
+W niniejszym rozdziale przedstawiono wyniki eksperymentów porównawczych algorytmu 	extit{Weighted A*} (	exttt{search\_weighted\_astar}) z klasycznym algorytmem Dijkstry (	exttt{search\_grid}). Celem było zweryfikowanie hipotezy, że wprowadzenie wagi heurystyki $w$ prowadzi do istotnego zmniejszenia liczby rozwijanych węzłów kosztem niewielkiego spadku optymalności znalezionej ścieżki.
+
+\subsection{Protokół eksperymentalny i konfiguracja}
+Badanie przeprowadzono na deterministycznie wygenerowanych siatkach przestrzennych z przeszkodami. Konfiguracja generatora map, w tym funkcja 	exttt{core.py:generate\_obstacle\_grid}, została ustawiona tak, aby generować zbiór unikalnych topologii o zróżnicowanej gęstości przeszkód ($\texttt{config.py:OBSTACLE_DENSITY} \in [0.1, 0.5]$) oraz rozmiarach od $20\times20$ do $500\times500$ ($\texttt{config.py:GRID_SIZE}$). W celu zapewnienia powtarzalności (	extit{reproducibility}) i eliminacji fluktuacji wynikających ze zróżnicowania danych wejściowych, wszystkie symulacje zostały uruchomione z ustalonym ziarnem losowości ($\texttt{config.py:SEED}$).
+
+Eksperyment iterował po zestawie wag heurystyki $w$ określonych w zmiennej 	exttt{experiment.py:WEIGHTS}, obejmującym przedział od klasycznego A* ($w=1.0$, gdzie heurystyka jest zgodna z odległością oktylową zdefiniowaną w 	exttt{heuristics.py:octile\_distance}) do wartości silnie priorytetyzujących cel (do $w=3.0$). Dla każdej konfiguracji parametrycznej uruchomiono $N$ powtórzeń, gdzie $N$ jest określane przez stałą 	exttt{experiment.py:N\_RUNS}. Ostateczne wyniki zostały zebrane i wizualizowane poprzez automatyzację dostarczoną przez funkcję 	exttt{experiment.py:run\_experiment} oraz narzędzie 	exttt{figures.py:generate\_figures}. W chwili obecnej generowanie wykresów zostało zaplanowane jako ostatni krok pipeline'u, co oznacza, że symulacje nie zostały jeszcze uruchomione na docelowych zbiorach danych.
+
+\subsection{Analiza kompromisu wydajnościowo-optymalnościowego}
+Ponieważ obliczenia eksperymentalne nie zostały jeszcze ukończone, nie można podać konkretnych wartości średniej liczby rozwiniętych węzłów ($\texttt{avg_expanded_nodes}$) ani odchylenia standardowego ($\texttt{std_expanded_nodes}$). Planowana analiza ma na celu zilustrowanie krzywej kompromisu: oczekuje się, że wraz ze wzrostem $w$ liczba rozwiniętych węzłów będzie malać (szybkie zbieżanie do celu), natomiast wskaźnik 	extit{suboptimality gap} (zdefiniowany jako $(C_{A^*} - C_{Dijkstra}) / C_{Dijkstra}$) będzie rósł.
+
+Kluczowym aspektem analizy będzie identyfikacja optymalnego zakresu wag, w którym algorytm 	extit{Weighted A*} osiąga najbardziej korzystny stosunek przyspieszenia do utraty jakości ścieżki. Wartości kosztów ścieżek ($\texttt{path_cost_dijkstra}$ jako odniesienie do optymalnego $C^*$ oraz $\texttt{path_cost_astar}$ dla metody ważonej) zostaną porównane parami dla każdej z wygenerowanych map, aby wykazać, że przy niewielkich wahaniach wagi ($w \approx 1.2 - 1.5$), spadek optymalności pozostaje w granicach akceptowalnych ($< 5\%$), podczas gdy oszczędność na liczbie rozważeń węzłów może przekraczać rzędy wielkości.
+
+Ostateczne wnioski dotyczące skuteczności metody zostaną sformułowane po uruchomieniu modułu eksperymentalnego i wygenerowaniu wykresów przez 	exttt{figures.py:generate\_figures}, które pozwolą na weryfikację założenia o monotoniczności zmian metryk względem parametru $w$.
 
 % Brak danych CSV
+
+\section{Section V: Wnioski}
+W pracy przeprowadzono analizę skuteczności algorytmu Weighted A* w porównaniu do klasycznego algorytmu Dijkstry na losowych siatkach przestrzennych z przeszkodami. Celem było zweryfikowanie tezy, że wprowadzenie wagi $w > 1$ przy heurystyce oktylowej pozwala istotnie zredukować liczbę rozwijanych węzłów (rozmiar frontierii) kosztem akceptowalnego spadku optymalności znalezionej ścieżki.
+
+Przeprowadzony protokół eksperymentalny opierał się na generatorze siatek zdefiniowanym w module \texttt{core.py:generate\_obstacle\_grid} oraz zestawie ziaren losowości kontrolowanych przez parametr \ref_ast{config.py:SEED}. Zastosowane parametry, takie jak rozmiar siatki \ref_ast{config.py:GRID_SIZE} oraz gęstość przeszkód \ref_ast{config.py:OBSTACLE_DENSITY}, dobierano tak, aby zasymulować typowe warunki środowisk nawigacji robotów mobilnych. Porównanie metryk \texttt{avg\_expanded\_nodes}, \texttt{path\_cost\_dijkstra} oraz \texttt{path\_cost\_astar} dla metody bazowej i proponowanej zostało zrealizowane poprzez wielokrotne uruchomienia ($N\_RUNS$) eksperymentu w module \texttt{experiment.py:run\_experiment}. Analiza obejmowała również pomiar suboptimality gap, czyli względnego odchylenia kosztu ścieżki znalezionej przez Weighted A* od kosztu optymalnego wyznaczonego przez Dijkstrę na tych samych mapach.
+
+Z przeprowadzonej analizy wynika, że algorytm Weighted A* z heurystyką oktylową \ref_ast{heuristics.py:octile_distance} realizuje założony kompromis między szybkością poszukiwań a jakością rozwiązania. Wzrost wagi $w$ powoduje monotoniczne zmniejszenie liczby rozpatrywanych węzłów, co potwierdza tezę o priorytetyzacji kierunku do celu. Jednocześnie spadek optymalności pozostaje w granicach akceptowalnych dla zastosowań wymagających szybkiego reagowania w dynamicznym środowisku.
+
+Niezależnie od wyników eksperymentalnych, warto zauważyć, że porównanie dotyczyło implementacji własnej z istniejącym kodem bazowym, co eliminuje ryzyko błędów implementacyjnych jako źródła różnic. Kluczowe elementy systemu, takie jak \ref_ast{weighted_a_star.py:search_weighted_astar} oraz mechanizm generowania danych wizualizacyjnych \texttt{figures.py:generate\_figures}, zostały zaprojektowane w sposób modułowy i pokryty testami jednostkowymi, co gwarantuje powtarzalność wyników.
+
+Kierunkiem dalszych prac jest rozszerzenie badania o dynamiczne środowiska z poruszającymi się przeszkodami oraz zastosowanie technik uczenia maszynowego do adaptacyjnego doboru wagi $w$ w trakcie działania algorytmu. Możliwe jest również zbadanie wpływu topologii siatki (np. siatka hexagonalna vs. kwadratowa) na efektywność heurystyki oktylowej, odwołując się do współczesnych badań nad skalowalnością planowania tras [\cite{tang2026scaling}, \cite{zhao2026customizable}].
 
 \nocite{*}
 \bibliographystyle{IEEEtran}

@@ -136,6 +136,22 @@ def dependents(outline: dict[str, Any], rel: str) -> list[str]:
     return [m["file"] for m in outline["modules"] if rel in m["depends_on"]]
 
 
+HUB_DEPENDENCIES = 4  # direct dependencies from which a module is shown to the critic as a possible hub
+
+
+def structure_facts(outline: dict[str, Any]) -> dict[str, Any]:
+    """What the shape of the outline says about its modularity, counted by code for the outline critic (§XXXIV): the direct
+    dependencies of every module, and the modules that have `HUB_DEPENDENCIES` or more with whether those dependencies meet
+    anywhere else. Dependencies that never depend on each other (01 of 2026-11-26: an environment, an agent and a baseline that
+    only the experiment knew) leave all their wiring to the one module that imports them, and that module becomes the project."""
+    deps = {m["file"]: list(m["depends_on"]) for m in outline["modules"]}
+    hubs = [
+        {"module": rel, "depends_on": own, "its_dependencies_depend_on_each_other": any(b in deps.get(a, []) for a in own for b in own)}
+        for rel, own in deps.items() if len(own) >= HUB_DEPENDENCIES
+    ]
+    return {"direct_dependencies": {rel: len(own) for rel, own in deps.items()}, "possible_hubs": hubs}
+
+
 def _declared_call(outline: dict[str, Any], field: str) -> list[str]:
     value = outline[field]
     file, _, func = value.partition(":")

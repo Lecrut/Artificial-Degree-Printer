@@ -1,60 +1,109 @@
-"""Reads results.csv and generates publication-ready figures for the thesis."""
-import numpy as np
+"""Module for reading results from the experiment and generating static plots for the thesis."""
+
+import os
+from typing import List, Tuple
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import pandas as pd
-from matplotlib.pyplot import subplots, legend
+
+RESULTS_PATH: str = "results.csv"
+FIGURES_DIR: str = "figures"
+
 
 def generate_plots() -> None:
-    """Reads 'results.csv' (columns: method, metric, value, std_dev, n_runs) and writes figures to 'figures/'. Generates two subplots: a learning curve showing mean reward evolution over episodes for Q-Learning versus Random Agent with error bars (from std_dev), and a final performance comparison bar plot of win/loss/draw rates. Uses matplotlib backend Agg. Handles empty input by raising ValueError. All axis labels and titles reflect the literal metric names and method names."""
-    df = pd.read_csv('results.csv')
-    if df.empty:
-        raise ValueError('results.csv is empty')
-    required_cols = ['method', 'metric', 'value', 'std_dev']
-    missing_cols = [c for c in required_cols if c not in df.columns]
-    if missing_cols:
-        raise ValueError(f'Missing required columns: {missing_cols}')
-    fig1, ax1 = subplots(figsize=(8, 6))
-    fig2, ax2 = subplots(figsize=(8, 4))
-    reward_data = df[df['metric'] == 'avg_reward'].copy()
-    other_metrics = [m for m in df['metric'].unique() if m != 'avg_reward']
-    if not reward_data.empty:
-        if len(reward_data) > 1:
-            pass
-        else:
-            ax1.barh(y=reward_data['method'], height=0.3, x=reward_data['value'].tolist(), yerr=reward_data['std_dev'].tolist(), capsize=5)
-            ax1.set_xlabel('Mean Reward')
-            ax1.set_title('Learning Curve: Mean Reward by Method (Aggregate)')
-    else:
-        all_data = df.head()
-        ax1.axis('off')
-    stats_data = df[df['metric'].isin(['win_rate', 'loss_rate', 'draw_rate'])]
-    x_pos = np.arange(len(df[df['method'] == 'Q-Learning']['method'])) + 0.1 if not df.empty else []
-    x_neg = np.arange(len(df[df['method'] == 'Random']['method'])) - 0.5 if 'Random' in df['method'].values else []
-    methods = sorted(df['method'].unique().tolist())
-    metrics_to_plot = ['win_rate', 'loss_rate', 'draw_rate']
-    colors = ['#1f77b4', '#ff7f0e']
-    if 'Q-Learning' in df['method'].values:
-        idx_q = methods.index('Q-Learning')
-    else:
-        idx_q = -1
-    if 'Random' in df['method'].values:
-        idx_r = methods.index('Random')
-    else:
-        idx_r = -1
-    ax2.bar(x_pos[idx_q] if idx_q >= 0 else 0, stats_data[stats_data['metric'] == 'win_rate']['value'].values[0] if not stats_data[stats_data['metric'] == 'win_rate'].empty else 0, color='#1f77b4', width=0.35, label='Q-Learning')
-    ax2.bar(x_pos[idx_r] if idx_r >= 0 else 0, stats_data[stats_data['metric'] == 'win_rate']['value'].values[0] if not stats_data[stats_data['metric'] == 'win_rate'].empty else 0, color='#ff7f0e', width=0.35, label='Random')
-    ax2.bar(x_pos[idx_q] if idx_q >= 0 else 0, stats_data[stats_data['metric'] == 'loss_rate']['value'].values[0] if not stats_data[stats_data['metric'] == 'loss_rate'].empty else 0, color='#1f77b4', width=0.35)
-    ax2.bar(x_pos[idx_r] if idx_r >= 0 else 0, stats_data[stats_data['metric'] == 'loss_rate']['value'].values[0] if not stats_data[stats_data['metric'] == 'loss_rate'].empty else 0, color='#ff7f0e', width=0.35)
-    ax2.bar(x_pos[idx_q] if idx_q >= 0 else 0, stats_data[stats_data['metric'] == 'draw_rate']['value'].values[0] if not stats_data[stats_data['metric'] == 'draw_rate'].empty else 0, color='#1f77b4', width=0.35)
-    ax2.bar(x_pos[idx_r] if idx_r >= 0 else 0, stats_data[stats_data['metric'] == 'draw_rate']['value'].values[0] if not stats_data[stats_data['metric'] == 'draw_rate'].empty else 0, color='#ff7f0e', width=0.35)
-    ax2.set_ylabel('Rate')
-    ax2.set_title('Final Performance: Win/Loss/Draw Rates')
-    ax2.legend()
-    output_dir = 'figures'
-    import os
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    fig1.savefig(f'{output_dir}/learning_curve.pdf')
-    fig1.savefig(f'{output_dir}/learning_curve.png', bbox_inches='tight')
-    fig2.savefig(f'{output_dir}/performance_comparison.pdf')
-    fig2.savefig(f'{output_dir}/performance_comparison.png', bbox_inches='tight')
-    return ['figures/learning_curve.pdf', 'figures/performance_comparison.pdf']
+    """Reads `results.csv` from the workspace root, generates plots for convergence and comparison metrics, and saves them into `figures/`. Creates the `figures/` directory if it does not exist. Handles missing data or invalid CSV formats gracefully without crashing."""
+    # Ensure output directory exists
+    os.makedirs(FIGURES_DIR, exist_ok=True)
+
+    try:
+        df: pd.DataFrame = pd.read_csv(RESULTS_PATH)
+    except FileNotFoundError:
+        print(f"Warning: {RESULTS_PATH} not found. Cannot generate plots.")
+        return
+    except pd.errors.EmptyDataError:
+        print("Warning: results.csv is empty. Cannot generate plots.")
+        return
+
+    if 'method' not in df.columns or 'metric' not in df.columns or 'value' not in df.columns:
+        print("Warning: results.csv does not contain required columns ('method', 'metric', 'value').")
+        return
+
+    methods: List[str] = df['method'].unique().tolist()
+    metrics: List[str] = df['metric'].unique().tolist()
+
+    # Identify metrics specific to the agent for convergence analysis if applicable.
+    # Usually, 'avg_episode_reward' is a time-series or aggregated result. 
+    # Here results.csv is tidy: method, metric, value. If it's aggregated, we plot bar charts.
+    # If it were step-by-step, structure would differ (e.g., episode column). 
+    # Given the spec implies aggregation (mean, std_dev), we treat these as summary statistics.
+
+    # 1. Plot Win Rates for Comparison
+    win_metrics: List[str] = [m for m in metrics if 'win_rate' in m]
+    draw_metrics: List[str] = [m for m in metrics if 'draw_rate' in m]
+
+    if win_metrics:
+        plot_win_draw_rates(df, win_metrics, draw_metrics)
+
+    # 2. Plot Agent Performance Metrics (if available) vs Baseline or just absolute values
+    agent_metrics: List[str] = [m for m in metrics if 'agent_' in m]
+    if agent_metrics:
+        plot_agent_metrics(df, agent_metrics)
+
+
+def plot_win_draw_rates(df: pd.DataFrame, win_metrics: List[str], draw_metrics: List[str]) -> None:
+    """Plots win and draw rates for agents/baselines as bar charts."""
+    if not df.empty:
+        fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+        
+        # Win Rates
+        wins_data: pd.DataFrame = df[df['metric'].isin(win_metrics)][['method', 'value']]
+        if not wins_data.empty:
+            ax1: plt.Axes = axes[0]
+            ax1.bar(wins_data['method'], wins_data['value'], color=['skyblue', 'lightcoral'])
+            ax1.set_title('Win Rates Comparison')
+            ax1.set_xlabel('Agent Type')
+            ax1.set_ylabel('Win Rate')
+
+        # Draw Rates
+        draws_data: pd.DataFrame = df[df['metric'].isin(draw_metrics)][['method', 'value']]
+        if not draws_data.empty:
+            ax2: plt.Axes = axes[1]
+            ax2.bar(draws_data['method'], draws_data['value'], color=['silver', 'lightgray'])
+            ax2.set_title('Draw Rates Comparison')
+            ax2.set_xlabel('Agent Type')
+            ax2.set_ylabel('Draw Rate')
+        
+        plt.tight_layout()
+        plt.savefig(os.path.join(FIGURES_DIR, "win_draw_rates.png"))
+        plt.close(fig)
+
+
+def plot_agent_metrics(df: pd.DataFrame, agent_metrics: List[str]) -> None:
+    """Plots aggregated metrics for the learning agent."""
+    if not df.empty:
+        agents_data: pd.DataFrame = df[df['metric'].isin(agent_metrics)][['metric', 'value']]
+        if not agents_data.empty:
+            fig: plt.Figure
+            ax: plt.Axes
+            fig, ax = plt.subplots(figsize=(8, 6))
+            
+            # Map metric codes to readable names for plotting
+            labels: List[str] = []
+            values: List[float] = []
+            for _, row in agents_data.iterrows():
+                m: str = row['metric']
+                v: float = row['value']
+                label: str = m.replace('_', ' ').title()
+                labels.append(label)
+                values.append(v)
+
+            ax.bar(labels, values, color='teal')
+            ax.set_title('Agent Performance Metrics (Aggregated)')
+            ax.set_xlabel('Metric')
+            ax.set_ylabel('Value')
+            
+            plt.tight_layout()
+            plt.savefig(os.path.join(FIGURES_DIR, "agent_metrics.png"))
+            plt.close(fig)

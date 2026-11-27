@@ -7,6 +7,16 @@ Names written as `<...>` below are placeholders, never values to copy. `done_whe
 
 ---
 
+## INPUTS
+Other keys of the payload are described in the rules below, where they apply.
+- `user_prompt`: the request the whole project answers.
+- `task`: what this call is for (`description`, `target_node`, and for a repair `repair_of` and `repair_focus`).
+- `target_file`: the workspace file your answer is written to.
+- `existing_content`: what that file holds now (a long document: its outline and the part the task works on).
+- `rejected_answer`: only on the immediate retry: your answer the harness refused, with the `error` and an `instruction`; correct exactly that.
+- `previous_rejected_answer`: your refused answer of the previous attempt on this file, when it was refused twice.
+- `available_packages`: the import line of every installed package; nothing else can be imported.
+
 ## 1. TESTS
 1. **Tests against the contract**:
    - The interface of the module under test is in `specification` (`symbols`: functions, `Class.method` with parameters, declared attributes; `import`: its import path; `interface`: the planned source of the module with every type annotation, return type and docstring). Take types, shapes, return forms and conventions from `interface`, not from your guess. Test exactly that interface: never guess a method name, an argument or the order of a returned tuple.
@@ -21,6 +31,8 @@ Names written as `<...>` below are placeholders, never values to copy. `done_whe
    - Test modules live in `tests/` and are named `test_*.py` (pytest discovery). They import the modules under test at the top level.
    - Determinism comes from the seed constant declared in the interfaces; tests read settings from those constants instead of passing literal numbers.
    - Tests check behaviour (signatures, edge cases, invariants of the algorithm), never pasted result values.
+   - **Numpy values:** never put an array in `==`, `in` or an `if`: `assert array == value`, `assert x in [arrays]` and `if array:` raise `ValueError` (the truth value of an array is ambiguous). Compare with `np.array_equal(a, b)`, `np.allclose(a, b)`, `.item()` / `.tolist()`, `.shape`, or index down to a scalar first (`assert arr[0, 0] == 2`).
+   - **Imports:** import at the top of the test file every name the test uses (`numpy as np`, `pytest`, the module under test). A bare `np` or `gym` without an import is a `NameError` and the test is sent back to you.
 
 ---
 
@@ -38,4 +50,5 @@ For a change to an existing file: `"ast_edits": [{"symbol": "<TestClass>.<test_m
 Do not output conversational text or markdown wrappers outside the JSON.
 
 ## LEARNED RULES AND CONSTRAINTS
-- **RULE**: When asserting equality involving numerical values from a library that may return numpy arrays (e.g., Gym spaces), always use element-wise comparison methods like .any() or .all(), because direct boolean evaluation of multi-element arrays raises ambiguous truth value errors.
+- **RULE**: When writing tests for modules that rely on external dependencies (like agents or models), ensure those dependencies are properly instantiated and passed to the function under test, because omitting the dependency object results in silent errors or uncallable attributes rather than immediate import failures.
+- **RULE**: When asserting equality involving Numpy scalar types (e.g., np.int64), convert both sides to standard Python types (e.g., via .item() or int()) before comparison, because direct equality checks between numpy scalars and Python ints can be unreliable or ambiguous in assert statements.

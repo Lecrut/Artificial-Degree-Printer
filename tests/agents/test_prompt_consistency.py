@@ -101,3 +101,17 @@ def test_the_module_author_is_told_that_a_type_needs_its_import() -> None:
     the round (and then the large model) was spent on `NameError` of the stub."""
     text = (Path(__file__).resolve().parents[2] / "adk" / "agents" / "planning" / "plan_module.md").read_text(encoding="utf-8")
     assert '`np.ndarray` needs `"import numpy as np"`' in text and "`NameError`" in text
+
+
+def test_the_tester_is_told_how_to_compare_numpy_values_and_to_import_what_it_uses() -> None:
+    """§XXXV: `assert env.observation_space.high[0] == 2` raised `ValueError` (truth value of an array) in `T3` three times and in
+    `R2_2` of 01 on 2026-11-26, and `state1 in [tuple(s) ...]` the day before; a bare `gym` was a `NameError`."""
+    text = (Path(__file__).resolve().parents[2] / "adk" / "agents" / "building" / "seed_tester.md").read_text(encoding="utf-8")
+    assert "assert array == value" in text and "np.array_equal" in text and "ValueError" in text
+    assert "import at the top of the test file every name the test uses" in text and "`NameError`" in text
+
+
+def test_the_module_author_prefers_plain_types_to_arrays_and_framework_apis() -> None:
+    """§XXXV: numpy states were unhashable Q-table keys (25.11) and a gym-like `Box` interface made the tests of 26.11 unwritable."""
+    text = (Path(__file__).resolve().parents[2] / "adk" / "agents" / "planning" / "plan_module.md").read_text(encoding="utf-8")
+    assert "Plain types first" in text and "`tuple[int, ...]`" in text and "do not copy the API of a framework" in text

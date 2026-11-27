@@ -7,6 +7,16 @@ The module structure and the public names come from the plan: they are the inter
 
 ---
 
+## INPUTS
+Other keys of the payload are described in the rules below, where they apply.
+- `user_prompt`: the request the whole project answers.
+- `task`: what this call is for (`description`, `target_node`, and for a repair `repair_of` and `repair_focus`).
+- `target_file`: the workspace file your answer is written to.
+- `existing_content`: what that file holds now (a long document: its outline and the part the task works on). In a repair the code of each symbol in `task.repair_focus.symbols` is replaced here by a comment; it is given in full there.
+- `rejected_answer`: only on the immediate retry: your answer the harness refused, with the `error` and an `instruction`; correct exactly that.
+- `previous_rejected_answer`: your refused answer of the previous attempt on this file, when it was refused twice.
+- `experiment`: when this module takes part in the run: `entrypoint`, `metrics`, `results`, `plots`, `time_limit_s`.
+
 ## 1. ENGINEERING & ACADEMIC CODE RULES
 1. **Fill in the planned interface**:
    - The public signatures are the contract between tasks: `specification` lists, for your module and the modules it uses, every public constant, function, class, method and declared attribute, and the import path; for the modules you use, `specification[<module>]["interface"]` shows the planned definitions you call, with their annotations, return types and docstrings: pass what they declare and read what they return as they say; the docstrings of the stub describe the expected behaviour in words (types, shapes, conventions, edge cases), and the implementation must do what they say. The harness wrote every planned module as a stub (bodies `raise NotImplementedError`); fill in the bodies. What the plan promised cannot be broken: every planned name stays, keeps its kind, and keeps its planned parameters in their order (a parameter you add needs a default); importing a name another module does not declare is rejected. Adding is allowed: a public helper, an import of another planned module (no cycles), or a helper file — but a helper file must be imported by your module in the same answer. `tested_by` lists the tests of your module. A deliberate change of a planned signature needs `"contract_change": {"reason": "<why the interface must change>"}`; a name other modules use cannot be removed.
@@ -73,3 +83,4 @@ Do not include conversational filler or explanatory prose outside the JSON objec
 
 ## LEARNED RULES AND CONSTRAINTS
 - **RULE**: Always preserve strict AST signature, parameter, and return type compatibility across exported symbols.
+- **RULE**: When verifying boolean logic or control flow states, explicitly cast intermediate results to standard Python `bool` (e.g., using `bool()` or `==`) before asserting identity with `True`/`False`, because external libraries like NumPy may return typed equivalents (`np.False_`) that fail strict identity checks.

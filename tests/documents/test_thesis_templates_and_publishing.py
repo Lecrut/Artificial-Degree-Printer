@@ -205,7 +205,6 @@ def test_two_researchers_and_three_tier_routing():
     from adk.core.models import read_json_state
     from adk.mocks.agents import SimulatedAgents
     from adk.mocks.scenarios import SCENARIOS
-    from adk.orchestrator import _merge_bibtex_entries
 
     reg_path = Path(__file__).resolve().parent.parent.parent / "adk" / "state" / "agent_registry.json"
     agents = read_json_state(reg_path)["agents"]
@@ -226,12 +225,6 @@ def test_two_researchers_and_three_tier_routing():
     assert _research("02_ml_anomaly_detection") == ["background_researcher", "discoverer_researcher"]
     for key in ("03_graph_pathfinding", "04_federated_learning"):
         assert _research(key) == ["discoverer_researcher"]
-
-    merged = _merge_bibtex_entries(fx.ANOMALY_BACKGROUND_BIBTEX, fx.ANOMALY_DISCOVERER_BIBTEX)
-    assert "hampel1974influence" in merged
-    assert "liu2008isolation" in merged
-    assert "xu2023deep" in merged
-    assert "zhang2024conformal" in merged
 
 
 def test_detect_template_from_prompt_and_live_mock_isolation(tmp_path: Path):

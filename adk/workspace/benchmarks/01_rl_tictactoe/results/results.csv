@@ -1,9 +1,0 @@
-method,metric,value,std_dev,n_runs
-q_learning,win_rate,0.0,0.0,2
-q_learning,loss_rate,0.0,0.0,2
-q_learning,draw_rate,1.0,0.0,2
-q_learning,avg_reward,0.0,0.0,2
-random_baseline,win_rate,0.0,0.0,1
-random_baseline,loss_rate,0.0,0.0,1
-random_baseline,draw_rate,2.0,0.0,1
-random_baseline,avg_reward,0.0,0.0,1

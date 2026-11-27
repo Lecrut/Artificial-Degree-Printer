@@ -142,11 +142,9 @@ def extract_paper_card_from_abstract(
         for s in sentences
         if any(kw in s.lower() for kw in ("however", "limitation", "bottleneck", "overhead", "expensive", "future work", "assume", "restrict"))
     ]
-    limitation = (
-        lim_candidates[0][:160]
-        if lim_candidates
-        else "Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees"
-    )
+    # No sentence about a limitation: none is claimed (a stock phrase about this very harness was put in every paper's
+    # mouth and reached the writers as a finding of the literature, §XXXVIII.3).
+    limitation = lim_candidates[0][:160] if lim_candidates else ""
 
     return {
         "key": cite_key,

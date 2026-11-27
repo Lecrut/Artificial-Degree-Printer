@@ -65,8 +65,8 @@ export const flowSteps: Record<string, FlowText> = {
     note: 'Po przejściu kolejki harness sprawdza hipergraf: wierzchołek failed oznacza, że autor i naprawy nie dały rady.',
   },
   d_redesign: {
-    label: 'Są jeszcze rundy przeprojektowania?',
-    note: 'Dopóki nie wyczerpano limitu 2 rund na przebieg, na końcu kolejki z nieudanymi wierzchołkami najpierw rewiduje się projekt: zweryfikowany plik przeszedł tylko własne testy, a przyczyna porażki bywa w sąsiedzie albo w podziale na moduły. Taka runda nie liczy się do limitów przeplanowania.',
+    label: 'Pora na przeprojektowanie?',
+    note: 'Najpierw idzie jedna runda przeplanowania (task_planner). Dopiero gdy po niej żaden wierzchołek nie przybył jako zweryfikowany, a nie wyczerpano limitu 2 rund na przebieg, rewiduje się projekt: zweryfikowany plik przeszedł tylko własne testy, a przyczyna porażki bywa w sąsiedzie albo w podziale na moduły. Taka runda nie liczy się do limitów przeplanowania.',
   },
   s_revise: {
     label: 'Projektant rewiduje zarys',

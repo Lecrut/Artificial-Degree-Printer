@@ -12,8 +12,10 @@ from typing import Any
 from adk.core.models import read_json_state
 from adk.hypergraph import Hypergraph
 from adk.hypergraph.observe import planned_module_for_test
+from adk.hypergraph.oracles import is_stub
 from adk.orchestration.interface_view import interface_for_test, interfaces_for_coder
 from adk.tools.building.experiment_runner import EXPERIMENT_TIMEOUT_S
+from adk.tools.building.thesis_publisher import _parse_bibtex_items
 
 
 def _spec_view(h: Hypergraph, module: str) -> dict[str, Any]:
@@ -78,6 +80,12 @@ class ContextMixin:
                 for module, part in interfaces_for_coder(interfaces, uses).items():
                     if module in context["specification"]:
                         context["specification"][module].update(self._with_interface(part))
+                # The coder's own contract too, once the file is no longer the stub that carries it: the one-line docstring
+                # it wrote over the planned one is what the tester then judges it against (§XXXVIII.3, `episode_rewards`
+                # vs `reward_history`).
+                own_file = self.workspace_dir / vertex
+                if vertex in context["specification"] and own_file.is_file() and not is_stub(own_file.read_text(encoding="utf-8", errors="replace")):
+                    context["specification"][vertex].update(self._with_interface(interface_for_test(interfaces, vertex)))
             if v.kind != "test":
                 context["tested_by"] = h.tests_of(vertex)
             run = h.edges.get("R:run")
@@ -120,9 +128,16 @@ class ContextMixin:
     def _literature_slice(self) -> dict[str, Any]:
         blueprint = read_json_state(self.blueprint_path) if self.blueprint_path.exists() else {}
         recon = blueprint.get("literature_recon", {}) if isinstance(blueprint, dict) else {}
+        keys = list((recon or {}).get("available_citation_keys") or [])
+        # What each key stands for: a bare `deka2022arc` made the writers guess the content of the paper (§XXXVIII.3).
+        references = [
+            {k: v for k, v in {"key": e["key"], "title": e.get("title"), "authors": e.get("author"), "year": e.get("year")}.items() if v}
+            for e in _parse_bibtex_items(self.workspace_dir / "references.bib") if e["key"] in keys
+        ]
         return {
             "thesis_type": blueprint.get("thesis_type", "inzynierska"),
-            "available_citation_keys": list((recon or {}).get("available_citation_keys") or []),
+            "available_citation_keys": keys,
+            **({"references": references} if references else {}),
         }
 
     def _document_context_slice(self, h: Hypergraph) -> dict[str, Any]:
@@ -152,6 +167,9 @@ class ContextMixin:
                 "available_figures": figures,
             },
             "planned_chapters": [{"title": c.get("title"), "focus": c.get("focus")} for c in chapters],
+            # What the chapters have to say, as approved in the plan: the introduction states the thesis, the experiments
+            # compare with the baseline on these metrics, the conclusions settle the thesis (§XXXVIII.3).
+            **{k: blueprint[k] for k in ("thesis_statement", "baseline_comparison", "metrics") if blueprint.get(k)},
             "template_name": blueprint.get("template_name", "thesis_plodz"),
             **self._literature_slice(),
         }

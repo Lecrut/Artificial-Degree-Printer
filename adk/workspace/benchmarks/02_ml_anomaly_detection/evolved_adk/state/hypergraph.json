@@ -1,0 +1,660 @@
+{
+  "version": 2,
+  "vertices": {
+    "data_generator.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement data_generator.py: Generates synthetic multi-channel physiological telemetry data with injected anomalies and known ground truth labels.. Implement every name its interface declares: generate_dataset.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "D2_1"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "baseline_zscore.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement baseline_zscore.py: Implements the static univariate Z-score based anomaly detection baseline.. Implement every name its interface declares: ZScoreDetector, ZScoreDetector.__init__, ZScoreDetector.predict.",
+      "attempts": 5,
+      "history": [
+        {
+          "task_id": "R5_1",
+          "issues": [
+            "Pytest failure:\n_____________________________________________________________________________________________________________________ TestZScoreDetector.test_predict_anomaly_detected_in_any_channel _____________________________________________________________________________________________________________________\ntests\\test_baseline_zscore.py:51: in test_predict_anomaly_detected_in_any_channel\nassert bool_result[-1] is True\nE assert np.False_ is True\nFAILED tests\\test_baseline_zscore.py::TestZScoreDetector::test_predict_anomaly_detected_in_any_channel - assert np.False_ is True\n1 failed, 6 passed in 0.09s"
+          ],
+          "version": "de024ea71d5e"
+        },
+        {
+          "task_id": "R5_1",
+          "issues": [
+            "Pytest failure:\n_____________________________________________________________________________________________________________________ TestZScoreDetector.test_predict_anomaly_detected_in_any_channel _____________________________________________________________________________________________________________________\ntests\\test_baseline_zscore.py:51: in test_predict_anomaly_detected_in_any_channel\nassert bool_result[-1] is True\nE assert np.False_ is True\nFAILED tests\\test_baseline_zscore.py::TestZScoreDetector::test_predict_anomaly_detected_in_any_channel - assert np.False_ is True\n1 failed, 6 passed in 0.09s"
+          ],
+          "version": "793200323da2"
+        },
+        {
+          "task_id": "REPLAN",
+          "issues": [
+            "Interface of baseline_zscore.py changed by the re-plan."
+          ]
+        },
+        {
+          "task_id": "R6_1",
+          "issues": [
+            "Pytest failure:\n_____________________________________________________________________________________________________________________ TestZScoreDetector.test_predict_anomaly_detected_in_any_channel _____________________________________________________________________________________________________________________\ntests\\test_baseline_zscore.py:51: in test_predict_anomaly_detected_in_any_channel\nassert bool_result[-1] is True\nE assert np.True_ is True\nFAILED tests\\test_baseline_zscore.py::TestZScoreDetector::test_predict_anomaly_detected_in_any_channel - assert np.True_ is True\n1 failed, 6 passed in 0.09s"
+          ],
+          "version": "f42311e79929"
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "R6_1"
+      },
+      "files": [],
+      "failures": 1
+    },
+    "method_random_subspace.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement method_random_subspace.py: Implements the proposed Random Subspace Ensemble detector.. Implement every name its interface declares: RandomSubspaceDetector, RandomSubspaceDetector.__init__, RandomSubspaceDetector.fit, RandomSubspaceDetector.predict.",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "REPLAN",
+          "issues": [
+            "Interface of method_random_subspace.py changed by the re-plan."
+          ]
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "D1_1_FIX2"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "experiment.py": {
+      "kind": "entry",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement experiment.py: Runs the full experiment loop, computing per-sample binary predictions via proper thresholds before calculating metrics to ensure F1 is non-zero and valid.. Implement every name its interface declares: run_experiment.",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "D2_5",
+          "issues": [
+            "Metric 'f1_score' is exactly 0 in every run (std_dev 0): the experiment measures nothing. Find the cause in the modules the experiment uses (a game that never ends, an agent that never learns, a value that is never updated) and fix it there, not by changing how the number is written."
+          ],
+          "version": "5c5b5ca074b9"
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "D2_5"
+      },
+      "files": [],
+      "failures": 1
+    },
+    "plots.py": {
+      "kind": "code",
+      "owner": "coder",
+      "state": "verified",
+      "description": "Implement plots.py: Reads results.csv and generates visualizations for the thesis.. Implement every name its interface declares: create_figures.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_coder",
+        "task_id": "T11"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "tests/test_data_generator.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "Unit tests of generate_dataset from data_generator.py in tests/test_data_generator.py, through the declared interface only.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "D2_2"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "tests/test_baseline_zscore.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "Unit tests of ZScoreDetector from baseline_zscore.py in tests/test_baseline_zscore.py, through the declared interface only.",
+      "attempts": 1,
+      "history": [
+        {
+          "task_id": "D2_4",
+          "issues": [
+            "Pytest failure:\n_____________________________________________________________________________________________________________________ TestZScoreDetector.test_predict_anomaly_detected_in_any_channel _____________________________________________________________________________________________________________________\ntests\\test_baseline_zscore.py:59: in test_predict_anomaly_detected_in_any_channel\nassert result[-1] is False\nE assert np.False_ is False\nFAILED tests\\test_baseline_zscore.py::TestZScoreDetector::test_predict_anomaly_detected_in_any_channel - assert np.False_ is False\n1 failed, 6 passed in 0.11s"
+          ],
+          "version": "c6a75ddd94c7"
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "R6_1_FIX1"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "tests/test_method_random_subspace.py": {
+      "kind": "test",
+      "owner": "tester",
+      "state": "verified",
+      "description": "Unit tests of RandomSubspaceDetector from method_random_subspace.py in tests/test_method_random_subspace.py, through the declared interface only.",
+      "attempts": 2,
+      "history": [
+        {
+          "task_id": "T10",
+          "issues": [
+            "ANSWER_REJECTED: Code does not parse; nothing from this answer was saved. Fix the places below and return the answer aga...\n- tests/test_method_random_subspace.py:102: invalid syntax\n101: # Since the detector is trained on standard normal distribution,\n102: points near the mean should be less anomalous than distant outliers.\n103: assert score_outlier > score_center, \\"
+          ],
+          "version": ""
+        },
+        {
+          "task_id": "T10_FIX1",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothin...\n- TEST_OUTSIDE_SPEC [tests/test_method_random_subspace.py]: reads RandomSubspaceDetector._covariances, RandomSubspaceDetector._means, RandomSubspaceDetector._subspace_indices, which the interface does not declare (test only declared methods and attributes)"
+          ],
+          "version": ""
+        },
+        {
+          "task_id": "T10_FIX2",
+          "issues": [
+            "ANSWER_REJECTED: Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothin...\n- TEST_OUTSIDE_SPEC [tests/test_method_random_subspace.py]: reads RandomSubspaceDetector._covariances, RandomSubspaceDetector._means, RandomSubspaceDetector._subspace_indices, which the interface does not declare (test only declared methods and attributes)"
+          ],
+          "version": ""
+        }
+      ],
+      "last_writer": {
+        "agent": "seed_tester",
+        "task_id": "R1_2"
+      },
+      "files": [],
+      "failures": 0
+    },
+    "results.csv": {
+      "kind": "data",
+      "owner": null,
+      "state": "verified",
+      "description": "",
+      "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "references.bib": {
+      "kind": "bib",
+      "owner": "writer",
+      "state": "verified",
+      "description": "",
+      "attempts": 0,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch1": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Wstęp — Motywacja, zakres pracy, cel badawczy oraz struktura rozprawy.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch2": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Przegląd Literatury — Metody detekcji anomalii w telemetrii fizjologicznej, podejścia statyczne vs. ensembled/subspace methods.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch3": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Propozycja Metodologii — Opis detektora bazowego Z-score oraz nowego detektora na losowych podprzestrzeniach (RSE).",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch4": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Eksperymenty i Wyniki — Opis generowania danych syntetycznych, konfiguracja eksperymentu, prezentacja wyników liczbowych.",
+      "attempts": 1,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    },
+    "thesis.md#ch5": {
+      "kind": "chapter",
+      "owner": "writer",
+      "state": "verified",
+      "description": "Analiza i Wnioski — Krytyczna analiza wyników, dyskusja o ogólności i ograniczeniach podejścia oraz wnioski końcowe.",
+      "attempts": 2,
+      "history": [],
+      "last_writer": null,
+      "files": [],
+      "failures": 0
+    }
+  },
+  "edges": {
+    "I:data_generator.py": {
+      "type": "I",
+      "members": {
+        "data_generator.py": "P",
+        "experiment.py": "C",
+        "tests/test_data_generator.py": "T"
+      },
+      "spec": {
+        "import": "data_generator",
+        "symbols": {
+          "DEFAULT_DURATION": {
+            "kind": "const",
+            "type": "int"
+          },
+          "DEFAULT_N_CHANNELS": {
+            "kind": "const",
+            "type": "int"
+          },
+          "DEFAULT_ANOMALY_RATE": {
+            "kind": "const",
+            "type": "float"
+          },
+          "DEFAULT_NOISE_STD": {
+            "kind": "const",
+            "type": "float"
+          },
+          "generate_dataset": {
+            "kind": "func",
+            "params": [
+              "n_channels",
+              "duration",
+              "anomaly_rate",
+              "noise_std",
+              "rng"
+            ],
+            "required": [
+              "n_channels",
+              "duration",
+              "anomaly_rate",
+              "noise_std",
+              "rng"
+            ]
+          }
+        },
+        "uses": {},
+        "packages": [
+          "numpy"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:baseline_zscore.py": {
+      "type": "I",
+      "members": {
+        "baseline_zscore.py": "P",
+        "experiment.py": "C",
+        "tests/test_baseline_zscore.py": "T"
+      },
+      "spec": {
+        "import": "baseline_zscore",
+        "symbols": {
+          "ZScoreDetector": {
+            "kind": "class"
+          },
+          "ZScoreDetector.__init__": {
+            "kind": "method",
+            "params": [
+              "self",
+              "window_size"
+            ],
+            "required": [
+              "window_size"
+            ]
+          },
+          "ZScoreDetector.predict": {
+            "kind": "method",
+            "params": [
+              "self",
+              "data"
+            ],
+            "required": [
+              "data"
+            ]
+          },
+          "ZScoreDetector.window_size": {
+            "kind": "attr"
+          }
+        },
+        "uses": {},
+        "packages": [
+          "numpy",
+          "typing"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:method_random_subspace.py": {
+      "type": "I",
+      "members": {
+        "method_random_subspace.py": "P",
+        "experiment.py": "C",
+        "tests/test_method_random_subspace.py": "T"
+      },
+      "spec": {
+        "import": "method_random_subspace",
+        "symbols": {
+          "RandomSubspaceDetector": {
+            "kind": "class"
+          },
+          "RandomSubspaceDetector.__init__": {
+            "kind": "method",
+            "params": [
+              "self",
+              "n_subspaces",
+              "subspace_dim"
+            ],
+            "required": [
+              "n_subspaces",
+              "subspace_dim"
+            ]
+          },
+          "RandomSubspaceDetector.fit": {
+            "kind": "method",
+            "params": [
+              "self",
+              "data"
+            ],
+            "required": [
+              "data"
+            ]
+          },
+          "RandomSubspaceDetector.predict": {
+            "kind": "method",
+            "params": [
+              "self",
+              "data"
+            ],
+            "required": [
+              "data"
+            ]
+          },
+          "RandomSubspaceDetector.n_subspaces": {
+            "kind": "attr"
+          },
+          "RandomSubspaceDetector.subspace_dim": {
+            "kind": "attr"
+          }
+        },
+        "uses": {},
+        "packages": [
+          "numpy"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:experiment.py": {
+      "type": "I",
+      "members": {
+        "experiment.py": "P"
+      },
+      "spec": {
+        "import": "experiment",
+        "symbols": {
+          "N_REPETITIONS": {
+            "kind": "const",
+            "type": "int"
+          },
+          "DURATION": {
+            "kind": "const",
+            "type": "int"
+          },
+          "N_CHANNELS": {
+            "kind": "const",
+            "type": "int"
+          },
+          "ANOMALY_RATE": {
+            "kind": "const",
+            "type": "float"
+          },
+          "NOISE_STD": {
+            "kind": "const",
+            "type": "float"
+          },
+          "WINDOW_SIZE": {
+            "kind": "const",
+            "type": "int"
+          },
+          "N_SUBSPACES": {
+            "kind": "const",
+            "type": "int"
+          },
+          "SUBSPACE_DIM": {
+            "kind": "const",
+            "type": "int"
+          },
+          "run_experiment": {
+            "kind": "func",
+            "params": [],
+            "required": []
+          }
+        },
+        "uses": {
+          "data_generator.py": [
+            "generate_dataset"
+          ],
+          "baseline_zscore.py": [
+            "ZScoreDetector"
+          ],
+          "method_random_subspace.py": [
+            "RandomSubspaceDetector"
+          ]
+        },
+        "packages": [
+          "numpy",
+          "pandas",
+          "sklearn"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "I:plots.py": {
+      "type": "I",
+      "members": {
+        "plots.py": "P"
+      },
+      "spec": {
+        "import": "plots",
+        "symbols": {
+          "create_figures": {
+            "kind": "func",
+            "params": [],
+            "required": []
+          }
+        },
+        "uses": {},
+        "packages": [
+          "matplotlib",
+          "pandas",
+          "seaborn",
+          "typing"
+        ]
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "R:run": {
+      "type": "R",
+      "members": {
+        "experiment.py": "P",
+        "results.csv": "O",
+        "plots.py": "C",
+        "baseline_zscore.py": "C",
+        "data_generator.py": "C",
+        "method_random_subspace.py": "C"
+      },
+      "spec": {
+        "entry": "experiment.py:run_experiment",
+        "metrics": [
+          "auc_roc",
+          "f1_score"
+        ],
+        "plots": "plots.py:create_figures"
+      },
+      "fingerprint": "b3ed85e8ceb71df86a78aa513f48e5bdee5ea2d17ac4b624badb5d730916251b",
+      "observed": []
+    },
+    "N:thesis.md#ch1": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch1": "X",
+        "references.bib": "C"
+      },
+      "spec": {
+        "title": "Wstęp",
+        "focus": "Motywacja, zakres pracy, cel badawczy oraz struktura rozprawy.",
+        "uses_results": false
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "N:thesis.md#ch2": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch2": "X",
+        "references.bib": "C"
+      },
+      "spec": {
+        "title": "Przegląd Literatury",
+        "focus": "Metody detekcji anomalii w telemetrii fizjologicznej, podejścia statyczne vs. ensembled/subspace methods.",
+        "uses_results": false
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "N:thesis.md#ch3": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch3": "X",
+        "references.bib": "C"
+      },
+      "spec": {
+        "title": "Propozycja Metodologii",
+        "focus": "Opis detektora bazowego Z-score oraz nowego detektora na losowych podprzestrzeniach (RSE).",
+        "uses_results": false
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "N:thesis.md#ch4": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch4": "X",
+        "references.bib": "C",
+        "results.csv": "C"
+      },
+      "spec": {
+        "title": "Eksperymenty i Wyniki",
+        "focus": "Opis generowania danych syntetycznych, konfiguracja eksperymentu, prezentacja wyników liczbowych.",
+        "uses_results": true
+      },
+      "fingerprint": null,
+      "observed": []
+    },
+    "N:thesis.md#ch5": {
+      "type": "N",
+      "members": {
+        "thesis.md#ch5": "X",
+        "references.bib": "C",
+        "results.csv": "C",
+        "experiment.py": "C",
+        "plots.py": "C",
+        "method_random_subspace.py": "C",
+        "baseline_zscore.py": "C",
+        "data_generator.py": "C"
+      },
+      "spec": {
+        "title": "Analiza i Wnioski",
+        "focus": "Krytyczna analiza wyników, dyskusja o ogólności i ograniczeniach podejścia oraz wnioski końcowe.",
+        "uses_results": true
+      },
+      "fingerprint": null,
+      "observed": [
+        "baseline_zscore.py",
+        "data_generator.py",
+        "experiment.py",
+        "method_random_subspace.py",
+        "plots.py"
+      ]
+    }
+  },
+  "order": [
+    [
+      "I:baseline_zscore.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:baseline_zscore.py",
+      "R:run"
+    ],
+    [
+      "I:data_generator.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:data_generator.py",
+      "R:run"
+    ],
+    [
+      "I:experiment.py",
+      "R:run"
+    ],
+    [
+      "I:method_random_subspace.py",
+      "I:experiment.py"
+    ],
+    [
+      "I:method_random_subspace.py",
+      "R:run"
+    ],
+    [
+      "R:run",
+      "N:thesis.md#ch4"
+    ],
+    [
+      "R:run",
+      "N:thesis.md#ch5"
+    ]
+  ]
+}

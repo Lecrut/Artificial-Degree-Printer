@@ -6,35 +6,17 @@
         "status": "mutated",
         "agent": "plan_outline",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\03_graph_pathfinding\\agents\\planning\\plan_outline.md",
-        "injected_rule": "When designing module interfaces or dependencies, explicitly verify that required inputs (such as baseline metrics or return values) are available from the specified source modules before listing them, because assuming data flow without confirming the actual function signature leads to unimplementable modules and broken cross-file dependencies.",
+        "injected_rule": "When declaring module interfaces and metrics, ensure that dependencies and data flows strictly follow the execution order (experiment writes results.csv before figures reads it) and avoid declaring imports between modules that are logically independent or temporally ordered, because false coupling breaks the modular contract and hinders verification.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
       }
     },
     {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "plan_module",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\03_graph_pathfinding\\agents\\planning\\plan_module.md",
-        "injected_rule": "When designing a module interface, define all shared constants and parameters as public module-level exports before implementation begins, because consumers require direct access to these values for data interpretation and consistency, not just function inputs.",
-        "active_rules_count": 1,
-        "compacted": false,
-        "compaction_details": null
-      }
-    },
-    {
-      "type": "AGENT_MUTATED",
-      "details": {
-        "status": "mutated",
-        "agent": "plan_outline",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\03_graph_pathfinding\\agents\\planning\\plan_outline.md",
-        "injected_rule": "When designing new modules that rely on existing infrastructure, prioritize and explicitly depend on existing modules to satisfy functional requirements rather than creating duplicate wrappers or parallel implementations, because reusing existing sources prevents structural ambiguity and violates the 'One concept, one place' principle.",
-        "active_rules_count": 2,
-        "compacted": false,
-        "compaction_details": null
-      }
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T4_FIX2",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_heuristics.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_octile_distance_diagonal_moves: NameError: name 'pytest' is not defined; test_octile_distance_mixed_moves: NameError: name 'pytest' is not defined; test_octile_distance_negative_coordinates: NameError: name 'pytest' is not defined"
     }
   ]
 }

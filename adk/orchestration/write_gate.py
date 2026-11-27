@@ -4,9 +4,7 @@ from __future__ import annotations
 
 
 import ast
-import os
 import re
-import time
 from pathlib import Path
 from typing import Any
 
@@ -23,8 +21,6 @@ from adk.tools.building.doc_editor import split_section_title
 from adk.orchestration.common import (
     _normalized_files,
     _agent_for_path,
-    _filter_bibtex,
-    _merge_bibtex_entries,
     MaterializationError,
     OUTPUT_SCHEMA,
     THESIS_FILE,
@@ -78,8 +74,7 @@ class WriteGateMixin:
                 else:
                     dest.write_text(before, encoding="utf-8")
             raise
-        plot_name = str(llm_output.get("plot_file") or node_path).replace("\\", "/")
-        self._record_written(node_path, originals, writer, plot_name)
+        self._record_written(node_path, originals, writer)
 
     def _planned_names(self, rel: str) -> set[str] | None:
         """Names the plan's interface declares for module `rel` (None: the plan has no interface for it)."""
@@ -96,7 +91,6 @@ class WriteGateMixin:
         node_path: str,
         originals: dict[Path, str | None],
         writer: dict[str, Any] | None,
-        plot_name: str = "",
     ) -> None:
         """Remember who wrote which files (`last_writer` on their vertex in H) and queue them for the next
         verification's scope. Two kinds of write are logged, not blocked (R6):
@@ -127,7 +121,6 @@ class WriteGateMixin:
                 for rel in written
                 if rel.endswith(".py")
                 and not agent.startswith(_agent_for_path(rel))
-                and not (agent.startswith("seed_tester") and rel == plot_name)
             ]
             if cross_role:
                 self._record_evolution_event(
@@ -309,50 +302,21 @@ class WriteGateMixin:
         if source_code and node_path.endswith(".py") and not materialized_any:
             materialized_any = _write(node_path, source_code)
 
-        # test suite, results and plotting script (seed_tester). A side artifact lands only when it IS the
-        # task's target (same path or name) or does not exist yet: on 2026-11-14 the tester attached
-        # `plot_script` to every test repair and the stale script overwrote the plotting module each time.
-        skipped_side: list[str] = []
-        for body_key, file_key, default_rel in (
-            ("test_code", "test_file", node_path),  # without a file name: the task's own target (§XIII)
-            ("csv_content", "benchmark_file", "results.csv"),
-            ("plot_script", "plot_file", node_path),
-        ):
-            body = _normalize_raw_code(llm_output.get(body_key))
-            side_rel = _canonical(str(llm_output.get(file_key) or default_rel))
-            if body and (
-                side_rel != node_path
-                and Path(side_rel).name != Path(node_path).name
-                and (self.workspace_dir / side_rel).exists()
-            ):
-                skipped_side.append(f"{body_key} -> {side_rel}")
-                continue
-            if body and _write(side_rel, body):
-                materialized_any = True
-                if body_key == "csv_content":
-                    csv_path = self.workspace_dir / side_rel
-                    now = time.time() + 1.0
-                    os.utime(csv_path, (now, now))
-        if skipped_side:
-            self._record_evolution_event({"type": "SIDE_ARTIFACT_SKIPPED", "node": node_path, "skipped": skipped_side})
+        # The test suite (seed_tester). Results and figures are never an answer: they come from running the code
+        # (`entrypoint`, `plots`), so no side artifact is written (§XXXVIII.6).
+        body = _normalize_raw_code(llm_output.get("test_code"))
+        side_rel = _canonical(str(llm_output.get("test_file") or node_path))  # without a file name: the task's own target (§XIII)
+        if body and side_rel != node_path and Path(side_rel).name != Path(node_path).name and (self.workspace_dir / side_rel).exists():
+            # A test file other than the task's own that already exists is left as it is (2026-11-14: a stale attachment
+            # overwrote a module on every repair).
+            self._record_evolution_event({"type": "SIDE_ARTIFACT_SKIPPED", "node": node_path, "skipped": [f"test_code -> {side_rel}"]})
+        elif body and _write(side_rel, body):
+            materialized_any = True
         _raise_if_unparsable()
         if role_skipped:
             self._record_evolution_event(
                 {"type": "CODER_TEST_WRITE_SKIPPED", "node": node_path, "agent": agent, "files": sorted(set(role_skipped))}
             )
-
-        # bibliography (researchers): merged by citation key; with an arXiv-verified bibliography only its keys stay
-        bibtex_entries = llm_output.get("bibtex_entries")
-        verified_keys = self._verified_citation_keys()
-        if isinstance(bibtex_entries, str) and bibtex_entries.strip() and verified_keys is not None:
-            bibtex_entries, dropped = _filter_bibtex(bibtex_entries, verified_keys)
-            if dropped:
-                self._record_evolution_event({"type": "UNVERIFIED_CITATIONS_DROPPED", "keys": dropped})
-        if isinstance(bibtex_entries, str) and bibtex_entries.strip():
-            bib_path = self.workspace_dir / str(llm_output.get("bib_file") or "references.bib")
-            existing_bib = bib_path.read_text(encoding="utf-8", errors="ignore") if bib_path.exists() else ""
-            merged = _merge_bibtex_entries(existing_bib, bibtex_entries) if existing_bib else bibtex_entries.strip() + "\n"
-            materialized_any = _write(bib_path.relative_to(self.workspace_dir).as_posix(), merged) or materialized_any
 
         if self.include_docs:
             doc_target = full_file_path if node_path.endswith((".md", ".tex")) else (self.workspace_dir / "thesis.md")

@@ -57,13 +57,11 @@ def create_specialized_agent(
             '{\n'
             '  "ast_edits": [\n'
             '    {\n'
-            '      "symbol": "target_symbol",\n'
-            '      "code": "def target_symbol() -> None:\\n    pass\\n"\n'
+            '      "symbol": "<function> or <Class>.<method>",\n'
+            '      "code": "<the complete new source of that symbol>"\n'
             '    }\n'
             '  ],\n'
-            '  "section_title": "Optional Thesis Subsection Title",\n'
-            '  "section_content": "Optional grounded academic prose with \\\\ref_ast{file:symbol} and \\\\ref_csv{file:row:column}.",\n'
-            '  "summary": "Completed specialized task."\n'
+            '  "summary": "<one sentence>"\n'
             '}'
         )
 

@@ -83,3 +83,24 @@ def test_the_simulated_architect_writes_a_rule_for_the_planner_instead_of_splitt
     orch._learn_from_critic("plan_module", "src/b.py", ["PLAN_CRITIC [src/b.py]: second"])
     learned = (orch.agents_dir / "planning" / "plan_module.md").read_text(encoding="utf-8")
     assert "state what every value means" in learned
+
+
+def test_the_architect_reads_the_prompt_it_mutates_once_and_not_the_registry_for_a_critics_pattern(tmp_path: Path) -> None:
+    """§XXXVIII.2-3: the pattern and the validation report were the same 13k characters, the architect did not see the prompt it
+    wrote a rule for (it wrote rules against its own line 22), and the registry of agents that are not in it was sent."""
+    orch, asked = _orch(tmp_path)
+    (orch.agents_dir / "planning" / "plan_module.md").write_text("# plan_module\n- **Plain types first.**\n", encoding="utf-8")
+    orch._learn_from_critic("plan_module", "src/a.py", ["PLAN_CRITIC [src/a.py]: x"])
+    orch._learn_from_critic("plan_module", "src/b.py", ["PLAN_CRITIC [src/b.py]: y"])
+    payload = asked[0]
+    assert "Plain types first" in payload["agent_prompt"]
+    assert "validation_report" not in payload and "agent_registry" not in payload and payload["pattern"]["examples"]
+
+
+def test_the_architect_prompt_names_every_input_of_a_critics_pattern(tmp_path: Path) -> None:
+    """§XXXVIII.4 / P5: the keys of the evolution call were not described anywhere."""
+    orch, asked = _orch(tmp_path)
+    orch._learn_from_critic("plan_module", "src/a.py", ["PLAN_CRITIC [src/a.py]: x"])
+    orch._learn_from_critic("plan_module", "src/b.py", ["PLAN_CRITIC [src/b.py]: y"])
+    prompt = (Path(__file__).resolve().parents[2] / "adk" / "agents" / "evolution" / "evolution_architect.md").read_text(encoding="utf-8")
+    assert [k for k in sorted(asked[0]) if f"`{k}`" not in prompt] == []

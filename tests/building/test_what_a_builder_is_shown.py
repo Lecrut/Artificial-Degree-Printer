@@ -8,40 +8,11 @@ from typing import Any
 
 from adk.orchestration.common import available_package_imports
 from adk.orchestration.findings import focus_symbols, repair_findings, symbol_sources
-from adk.orchestrator import NeuroSymbolicOrchestrator
 from tests.support.failed_vertex_project import _CONFIG as _CONFIG_failed_vertex_project
 from tests.support.failed_vertex_project import _planned, _repair_once
 from tests.support.orchestrator_sandbox import _orch
 from tests.support.sample_research_project import _ENTRY, _spec_orch
 from tests.support.tictactoe_interface import ENV_INTERFACE
-
-PLOT = "def generate_diagram_text() -> str:\n    return 'diagram'\n"
-
-
-def _establish_plot_contract(orch: NeuroSymbolicOrchestrator) -> None:
-    orch._materialize_workspace_artifact("plot_results.py", {"files": [{"filename": "plot_results.py", "content": PLOT}]})
-
-
-def test_stale_plot_script_attached_to_a_test_repair_is_skipped(tmp_path: Path) -> None:
-    """2026-11-14: the tester attached plot_script to every test repair and lost ~95 whole answers over it."""
-    orch = _orch(tmp_path)
-    _establish_plot_contract(orch)
-
-    orch._materialize_workspace_artifact(
-        "test_env.py",
-        {
-            "test_file": "test_env.py",
-            "test_code": "def test_ok() -> None:\n    assert True\n",
-            "plot_script": "def something_else() -> None:\n    pass\n",
-            "plot_file": "plot_results.py",
-        },
-    )
-
-    assert (orch.workspace_dir / "test_env.py").exists()
-    assert (orch.workspace_dir / "plot_results.py").read_text(encoding="utf-8") == PLOT
-    events = {e["type"] for e in json.loads(orch.evolution_history_path.read_text(encoding="utf-8"))["events"]}
-    assert "SIDE_ARTIFACT_SKIPPED" in events
-
 
 def test_a_code_task_sees_its_specification_and_history_not_the_writers_grounding(tmp_path: Path):
     """X5 (no memory of earlier attempts) and U7 (writer directives in the coder's payload, `\ref_csv` in code).
@@ -100,6 +71,26 @@ def test_an_undefined_name_gets_its_import_line_as_a_hint(tmp_path: Path) -> Non
     texts = [f.text for f in repair_findings([issue], tmp_path, lambda rel: importable_names(h, rel, available_package_imports()))]
     assert "`from src.plots import plot_results`" in texts[0] and "`import pandas as pd`" in texts[1]
     assert "`import src.plots`" in texts[2] and "import line" not in texts[3]
+    assert (tmp_path / "experiment.py").read_text(encoding="utf-8") == source  # nothing inserted
+
+
+def test_an_undefined_annotation_name_gets_its_typing_import_as_a_hint(tmp_path: Path) -> None:
+    """§XXXVI (01, 2026-11-26): `experiment.py` used `Dict`, `List` and `Any` undefined in three repairs and none
+    of them carried an import hint, because `typing` is not among the canonical packages."""
+    from types import SimpleNamespace
+
+    from adk.orchestration.findings import repair_findings
+    from adk.orchestration.import_hints import importable_names
+
+    h = SimpleNamespace(edges={})
+    source = "def run():\n    cfg: Dict[str, Any] = {}\n    rows: List[int] = []\n"
+    (tmp_path / "experiment.py").write_text(source, encoding="utf-8")
+    issue = (
+        "Ruff lint failure: experiment.py:2:10: F821 Undefined name `Dict`\n"
+        "experiment.py:2:20: F821 Undefined name `Any`\nexperiment.py:3:11: F821 Undefined name `List`"
+    )
+    texts = [f.text for f in repair_findings([issue], tmp_path, lambda rel: importable_names(h, rel, {}))]
+    assert "`from typing import Dict`" in texts[0] and "`from typing import Any`" in texts[1] and "`from typing import List`" in texts[2]
     assert (tmp_path / "experiment.py").read_text(encoding="utf-8") == source  # nothing inserted
 
 
@@ -232,3 +223,61 @@ def test_repair_payload_carries_the_source_of_the_failing_tests(tmp_path: Path) 
     assert list(failing) == ["test_agent.py::TestAgent::test_act"]
     assert failing["test_agent.py::TestAgent::test_act"]["error"] == "assert 1 == 2"
     assert "def test_act" in failing["test_agent.py::TestAgent::test_act"]["source"]
+
+
+def test_a_repair_of_one_chapter_also_shows_the_chapter_that_holds_the_pointer_it_names() -> None:
+    """§XXXVII.5: the full repair of chapter 4 had a target and the `elif` never showed chapter 3, where the pointer was broken."""
+    from adk.orchestration.building import _document_context
+
+    ch3 = "## Rozdział 3: Metoda\nZob. \\ref_ast{evaluator.py:evaluate_games} tu. KONIEC3"
+    ch4 = "## Rozdział 4: Wyniki\nWynik. KONIEC4"
+    doc = f"# Praca\n\n{ch3}\n\n{ch4}\n"
+    both = _document_context(doc, "Chapter 4: Wyniki. Fix \\ref_ast{evaluator.py:evaluate_games}")
+    assert "KONIEC3" in both and "KONIEC4" in both
+    only_target = _document_context(doc, "Chapter 4: Wyniki.")
+    assert "KONIEC4" in only_target and "KONIEC3" not in only_target
+
+
+def test_the_coder_reads_its_own_planned_interface_once_the_file_is_no_longer_a_stub(tmp_path: Path):
+    """§XXXVIII.3: after the first write the docstring of the plan is gone from the file, and the tester judges against it."""
+    orch, _h = _planned(tmp_path)
+    own = 'def own() -> dict:\n    """Return the keys episode_rewards and wins."""\n    ...\n'
+    orch.blueprint_path.write_text(__import__("json").dumps({"interfaces": {"core.py": own}}), encoding="utf-8")
+    (orch.workspace_dir / "core.py").write_text('def own() -> dict:\n    """Run."""\n    return {"reward_history": []}\n', encoding="utf-8")
+    assert "episode_rewards" in orch._context_for("core.py", "core.py")["specification"]["core.py"]["interface"]
+
+
+def test_writers_get_what_the_keys_stand_for_and_what_the_plan_says_the_thesis_is(tmp_path: Path):
+    """§XXXVIII.3 / P3: bare BibTeX keys made the authors guess at papers; `thesis_statement`, `baseline_comparison` and `metrics` never arrived."""
+    orch, h = _planned(tmp_path)
+    (orch.workspace_dir / "references.bib").write_text(
+        "@article{deka2022arc,\n  title = {Adaptive Q-learning},\n  author = {Deka, A. and Roy, B.},\n  year = {2022}\n}\n", encoding="utf-8"
+    )
+    blueprint = {
+        "literature_recon": {"available_citation_keys": ["deka2022arc"]}, "thesis_statement": "Q beats random.",
+        "baseline_comparison": "vs random", "metrics": ["win_rate"],
+    }
+    orch.blueprint_path.write_text(__import__("json").dumps(blueprint), encoding="utf-8")
+    context = orch._document_context_slice(h)
+    assert context["references"] == [{"key": "deka2022arc", "title": "Adaptive Q-learning", "authors": "Deka, A. and Roy, B.", "year": "2022"}]
+    assert context["thesis_statement"] == "Q beats random." and context["metrics"] == ["win_rate"] and context["baseline_comparison"] == "vs random"
+    assert context["available_citation_keys"] == ["deka2022arc"]
+
+
+def test_a_repair_does_not_get_the_code_of_its_focus_symbols_twice(tmp_path: Path):
+    """§XXXVIII.2 / P2: `repair_focus` carries the code to fix and `existing_content` carried the whole file with it again."""
+    orch = _orch(tmp_path)
+    code = "import os\n\n\ndef keep() -> int:\n    return 1\n\n\ndef broken() -> int:\n    return undefined_name\n"
+    (orch.workspace_dir / "core.py").write_text(code, encoding="utf-8")
+    seen: dict[str, Any] = {}
+
+    def capture(_md: Any, payload: dict[str, Any], **_kw: Any) -> dict[str, Any]:
+        seen.update(payload)
+        return {"status": "ok", "output": {"files": [{"filename": "core.py", "content": code}]}}
+
+    orch._call_agent = capture
+    focus = symbol_sources(orch.workspace_dir, "core.py", ["broken"])
+    task = {"task_id": "T2_FIX1", "target_node": "core.py", "description": "fix", "assigned_agent": "seed_coder", "repair_focus": {"file": "core.py", "symbols": focus}}
+    orch._execute_builder_step(task, "SML")
+    assert "undefined_name" not in seen["existing_content"] and "def keep()" in seen["existing_content"] and "import os" in seen["existing_content"]
+    assert "undefined_name" in seen["task"]["repair_focus"]["symbols"]["broken"]

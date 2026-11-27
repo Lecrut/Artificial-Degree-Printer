@@ -1,8 +1,46 @@
 {
-  "thesis_type": "paper",
-  "template_name": "paper_ieee",
-  "template_certain": true,
-  "thesis_title": "[DOCUMENT FORMAT: Artykuł Naukowy IEEE Conference Paper | thesis_type=paper | template_name=paper_ieee (IEEEtran.cls)]\nTemat pracy w języku polskim\nHeurystyczna optymalizacja ścieżek na siatkach przestrzennych: ważony algorytm A* z metryką oktylową\nTemat pracy w języku angielskim\nHeuristic Pathfinding Optimization on Spatial Grids: Weighted Octile A* vs. Dijkstra\nZakres pracy\n\nPunktem wyjścia jest istniejący projekt wyszukiwania ścieżek na siatkach z przeszkodami, zawierający generator siatek oraz bazową implementację algorytmu Dijkstry dla ośmiu kierunków ruchu (krok prosty kosztuje 1, krok po przekątnej pierwiastek z 2). Projekt należy rozbudować, zachowując działanie wersji bazowej, i porównywać się z nią samą, a nie z jej ponowną implementacją.\n\nCelem artykułu jest sprawdzenie, czy ważony algorytm A*, w którym priorytet węzła to dotychczasowy koszt dojścia powiększony o odległość oktylową do celu pomnożoną przez wagę, rozwija mniej węzłów niż algorytm bazowy i jakim kosztem w optymalności znalezionej ścieżki. Parametry, rozmiary i gęstość siatek, liczbę powtórzeń i ziaren losowości, metryki oraz kryterium sukcesu należy dobrać i uzasadnić samodzielnie. Nowy kod powinien składać się z małych modułów o jednym zadaniu, pokrytych testami jednostkowymi, a wszystkie wyniki powinny pochodzić z jednego, powtarzalnego eksperymentu.\n\nArtykuł powinien przedstawić tło (algorytmy Dijkstry i A*, dopuszczalność heurystyki), opis eksperymentu, wyniki na wykresach oraz wnioski. Każda liczba podana w tekście musi wynikać z kodu albo z wyników eksperymentu.",
+  "thesis_title": "Heurystyczna optymalizacja ścieżek na siatkach przestrzennych: ważony algorytm A* z metryką oktylową",
+  "thesis_statement": "Algorytm Weighted A* z heurystyką oktylową rozwija istotnie mniej węzłów niż klasyczny algorytm Dijkstry na losowych siatkach z przeszkodami, zachowując akceptowalny spadek optymalności ścieżki (suboptimality gap) przy odpowiednio dobranej wadzie heurystyki.",
+  "baseline_comparison": "Porównanie własnej implementacji algorytmu Dijkstry (z istniejącego projektu) z proponowanym Weighted A* na tym samym generatorze siatek i zestawie ziaren losowości, badane w funkcji różnych wag heurystyki.",
+  "metrics": [
+    "avg_expanded_nodes",
+    "std_expanded_nodes",
+    "path_cost_dijkstra",
+    "path_cost_astar",
+    "suboptimality_gap"
+  ],
+  "planned_chapters": [
+    {
+      "index": 1,
+      "title": "Wprowadzenie i tło teoretyczne",
+      "focus": "Przegląd algorytmów Dijkstry i A*, definicja heurystyki oktylowej oraz uzasadnienie wyboru wagi."
+    },
+    {
+      "index": 2,
+      "title": "Konfiguracja eksperymentu",
+      "focus": "Opis generatora siatek, doboru parametrów (rozmiar, gęstość, liczba powtórzeń) oraz metryk oceny."
+    },
+    {
+      "index": 3,
+      "title": "Wyniki i analiza",
+      "focus": "Prezentacja wykresów porównawczych liczby rozwiniętych węzłów, kosztu ścieżki oraz suboptimality gap; dyskusja nad kompromisem między wydajnością a optymalnością."
+    },
+    {
+      "index": 4,
+      "title": "Wnioski",
+      "focus": "Podsumowanie skuteczności Weighted A* w kontekście badanego problemu oraz kierunki dalszych prac."
+    }
+  ],
+  "entrypoint": "experiment.py:run_experiment",
+  "plots": "figures.py:generate_figures",
+  "interfaces": {
+    "config.py": "SEED = 42\nGRID_SIZE = 32\nOBSTACLE_DENSITY = 0.22\n",
+    "core.py": "import heapq\nimport math\nimport random\n\nimport config\n\n\ndef generate_obstacle_grid(\n    size: int = config.GRID_SIZE, density: float = config.OBSTACLE_DENSITY, seed: int = config.SEED\n) -> list[list[int]]:\n    \"\"\"A seeded size x size grid: 1 is an obstacle, 0 a free cell; the top row and the right column stay free.\"\"\"\n    rng = random.Random(seed)\n    grid = [[1 if rng.random() < density else 0 for _ in range(size)] for _ in range(size)]\n    for i in range(size):\n        grid[0][i] = 0\n        grid[i][size - 1] = 0\n    return grid\n\n\ndef search_grid(grid: list[list[int]], start: tuple[int, int], goal: tuple[int, int]) -> tuple[float, int]:\n    \"\"\"Dijkstra search on the 8-connected grid (straight step 1, diagonal sqrt(2)): (path cost, expanded nodes),\n    or (inf, expanded nodes) when the goal is unreachable.\"\"\"\n    n = len(grid)\n    pq: list[tuple[float, tuple[int, int]]] = [(0.0, start)]\n    dist: dict[tuple[int, int], float] = {start: 0.0}\n    visited: set[tuple[int, int]] = set()\n    expanded = 0\n    neighbors = [\n        (-1, 0, 1.0), (1, 0, 1.0), (0, -1, 1.0), (0, 1, 1.0),\n        (-1, -1, math.sqrt(2.0)), (-1, 1, math.sqrt(2.0)), (1, -1, math.sqrt(2.0)), (1, 1, math.sqrt(2.0)),\n    ]\n    while pq:\n        d, curr = heapq.heappop(pq)\n        if curr in visited:\n            continue\n        visited.add(curr)\n        expanded += 1\n        if curr == goal:\n            return d, expanded\n        cr, cc = curr\n        for dr, dc, cost in neighbors:\n            nr, nc = cr + dr, cc + dc\n            if 0 <= nr < n and 0 <= nc < n and grid[nr][nc] == 0:\n                nxt, nxt_d = (nr, nc), d + cost\n                if nxt not in dist or nxt_d < dist[nxt]:\n                    dist[nxt] = nxt_d\n                    heapq.heappush(pq, (nxt_d, nxt))\n    return float(\"inf\"), expanded\n",
+    "heuristics.py": "\"\"\"Provides the octile distance heuristic function for 8-connected spatial grids.\"\"\"\n\n\ndef octile_distance(pos1: tuple[int, int], pos2: tuple[int, int]) -> float:\n    \"\"\"Computes the octile distance between two grid positions. The result represents the minimum number of steps to move from pos1 to pos2 on an infinite unobstructed 8-connected grid (where diagonal moves cost sqrt(2) and orthogonal moves cost 1). Returns a non-negative float equal to max(dx, dy) + (sqrt(2) - 1) * min(dx, dy), where dx is the absolute difference in x-coordinates and dy is the absolute difference in y-coordinates. For pos1 == pos2, returns 0.0.\"\"\"\n    ...\n",
+    "weighted_a_star.py": "\"\"\"Implements the proposed Weighted A* algorithm using the octile heuristic for pathfinding on 8-connected spatial grids.\"\"\"\n\n\nfrom heuristics import octile_distance\nimport heapq\nimport math\n\n\ndef search_weighted_astar(grid: list[list[int]], start: tuple[int, int], goal: tuple[int, int], weight: float) -> tuple[float, int]:\n    \"\"\"Executes the Weighted A* algorithm to find a path from start to goal on the provided grid. The grid is a 2D list of integers where 0 represents an empty cell and 1 represents an obstacle. Returns a tuple containing: 1) The total cost of the found path as a float, or infinity (math.inf) if no path exists; 2) The number of nodes expanded during the search as an integer. If start or goal are out of grid bounds, returns (inf, 0). If start equals goal, returns (0.0, 0). The algorithm uses a priority queue where the node value is g + weight * h, with g being the path cost from start and h being the octile distance heuristic to goal.\"\"\"\n    ...\n",
+    "experiment.py": "\"\"\"Runs the comparative experiment between Dijkstra and Weighted A* across multiple seeds, grid configurations, and weights, saving results to CSV.\"\"\"\n\n\nimport config\nimport core\nimport weighted_a_star\n\n\nWEIGHTS: list[float] = [0.5, 1.0, 1.5, 2.0]\nN_RUNS: int = 50\n\n\ndef run_experiment() -> None:\n    \"\"\"Executes the comparative experiment. It iterates over each weight in WEIGHTS, generates a grid using config parameters via core.generate_obstacle_grid, and for N_RUNS repetitions, calls core.search_grid (Dijkstra) and weighted_a_star.search_weighted_astar. It computes average expanded nodes (avg_expanded_nodes), standard deviation of expanded nodes (std_expanded_nodes), path cost for Dijkstra (path_cost_dijkstra), path cost for A* (path_cost_astar), and the suboptimality gap defined as (cost_astar - cost_dijkstra) / cost_dijkstra when a valid path exists, or 0.0 otherwise. It writes results to results.csv with columns: method, metric, value, std_dev, n_runs. Specifically, it writes rows for method='weighted_astar' and metric='suboptimality_gap' containing the aggregated suboptimality gap data across runs.\"\"\"\n    ...\n",
+    "figures.py": "\"\"\"Module for generating comparative visualization plots from experimental results.\"\"\"\n\n\nimport matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\n\n\ndef generate_figures() -> None:\n    \"\"\"Reads the `results.csv` file from the workspace root. The CSV must contain columns for method, metric, and value (and optional std_dev). Generates comparative plots for nodes expanded, path cost, and suboptimality gap between Dijkstra and Weighted A*. Saves all figure files into the `figures/` directory relative to the workspace root. Creates a summary plot showing the trade-off between performance improvement (nodes saved) and optimality loss (suboptimality gap). No required arguments are passed.\"\"\"\n    ...\n"
+  },
   "literature_recon": {
     "thesis_type": "paper",
     "research_routing": [
@@ -23,10 +61,7 @@
       "Xulong Tang and Dionysios Diamantopoulos and Tristan Müller and Apo Kayi and Nelson Mimura Gonzalez and Muhammad Osama and Seetharami Seelam and Haralampos Pozidis and Blake R. Johnson and Yasuko Eckert (2026) [tang2026scaling]: Using multiple graphics processing units (GPUs) is a natural way to scale these simulations, but naively distributing syndrome batches introduces host-side prep",
       "Rui Zhao and Chao Chen and Longfei Xu and Chenguang Ji and Hengbin Cui and Kaikui Liu and Xiaolong Li (2026) [zhao2026customizable]: Prior data-driven approaches equating ground truth of the optimal route with user trajectory, which is however moderately influenced by the navigation service, ",
       "Junyao Wang and Yulin Xu and Mohammad Abdullah Al Faruque (2026) [wang2026vikpath]: Recent studies have explored learning-based approaches to improve pathfinding efficiency; however, most existing methods rely on supervised learning and require",
-      "Kabir Murjani and Mishri Bhavsar and Manish I. Patel and Jonti Talukdar (2026) [murjani2026alpharoute]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
-      "Aleksandr Ananikian and Daniil Drozdov and Konstantin Yakovlev (2026) [ananikian2026upath]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
       "Hao-Tsung Yang and Ssu-Yuan Lo and Kuan-Lun Chen and Ching-Kai Wang (2026) [yang2026generating]: To overcome these limitations, we propose a novel hybrid framework that decomposes D-TSP into two efficient steps.",
-      "Chris Tava (2025) [tava2025learning]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
       "Saman Ahmadi and Mahdi Jalili (2025) [ahmadi2025fast]: While traditional point-to-point pathfinding algorithms for EVs assume a known initial energy level, many real-world scenarios involving uncertainty in availabl"
     ],
     "available_citation_keys": [
@@ -52,5 +87,32 @@
       "bokan2024slope"
     ],
     "citation_source": "arxiv"
+  },
+  "thesis_type": "paper",
+  "template_name": "paper_ieee",
+  "template_certain": true,
+  "table_of_contents": {
+    "chapters": [
+      {
+        "index": 1,
+        "title": "Wprowadzenie i tło teoretyczne",
+        "focus": "Przegląd algorytmów Dijkstry i A*, definicja heurystyki oktylowej oraz uzasadnienie wyboru wagi."
+      },
+      {
+        "index": 2,
+        "title": "Konfiguracja eksperymentu",
+        "focus": "Opis generatora siatek, doboru parametrów (rozmiar, gęstość, liczba powtórzeń) oraz metryk oceny."
+      },
+      {
+        "index": 3,
+        "title": "Wyniki i analiza",
+        "focus": "Prezentacja wykresów porównawczych liczby rozwiniętych węzłów, kosztu ścieżki oraz suboptimality gap; dyskusja nad kompromisem między wydajnością a optymalnością."
+      },
+      {
+        "index": 4,
+        "title": "Wnioski",
+        "focus": "Podsumowanie skuteczności Weighted A* w kontekście badanego problemu oraz kierunki dalszych prac."
+      }
+    ]
   }
 }

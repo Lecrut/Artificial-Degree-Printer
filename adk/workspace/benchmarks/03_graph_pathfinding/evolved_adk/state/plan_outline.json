@@ -1,0 +1,99 @@
+{
+  "modules": [
+    {
+      "file": "config.py",
+      "purpose": "Stores experiment constants (seed, grid size, density) and baseline parameters; kept as-is from existing_files.",
+      "depends_on": [],
+      "provides": [
+        "SEED: int",
+        "GRID_SIZE: int",
+        "OBSTACLE_DENSITY: float"
+      ]
+    },
+    {
+      "file": "core.py",
+      "purpose": "Provides the obstacle grid generator and the baseline Dijkstra pathfinding implementation on 8-connected grids.",
+      "depends_on": [
+        "config.py"
+      ],
+      "provides": [
+        "generate_obstacle_grid(size: int, density: float, seed: int) -> list[list[int]]",
+        "search_grid(grid: list[list[int]], start: tuple[int, int], goal: tuple[int, int]) -> tuple[float, int]"
+      ]
+    },
+    {
+      "file": "heuristics.py",
+      "purpose": "Implements the octile distance heuristic function required for the Weighted A* algorithm.",
+      "depends_on": [],
+      "provides": [
+        "octile_distance(pos1: tuple[int, int], pos2: tuple[int, int]) -> float"
+      ]
+    },
+    {
+      "file": "weighted_a_star.py",
+      "purpose": "Implements the proposed Weighted A* algorithm using the octile heuristic.",
+      "depends_on": [
+        "heuristics.py"
+      ],
+      "provides": [
+        "search_weighted_astar(grid: list[list[int]], start: tuple[int, int], goal: tuple[int, int], weight: float) -> tuple[float, int]"
+      ]
+    },
+    {
+      "file": "experiment.py",
+      "purpose": "Runs the comparative experiment between Dijkstra and Weighted A* across multiple seeds, grid configurations, and weights, saving results to CSV.",
+      "depends_on": [
+        "config.py",
+        "core.py",
+        "weighted_a_star.py"
+      ],
+      "provides": [
+        "run_experiment() -> None"
+      ]
+    },
+    {
+      "file": "figures.py",
+      "purpose": "Reads results.csv and generates comparative plots (nodes expanded, path cost, suboptimality gap) for the paper.",
+      "depends_on": [],
+      "provides": [
+        "generate_figures() -> None"
+      ]
+    }
+  ],
+  "entrypoint": "experiment.py:run_experiment",
+  "plots": "figures.py:generate_figures",
+  "academic_blueprint": {
+    "thesis_title": "Heurystyczna optymalizacja ścieżek na siatkach przestrzennych: ważony algorytm A* z metryką oktylową",
+    "thesis_statement": "Algorytm Weighted A* z heurystyką oktylową rozwija istotnie mniej węzłów niż klasyczny algorytm Dijkstry na losowych siatkach z przeszkodami, zachowując akceptowalny spadek optymalności ścieżki (suboptimality gap) przy odpowiednio dobranej wadzie heurystyki.",
+    "baseline_comparison": "Porównanie własnej implementacji algorytmu Dijkstry (z istniejącego projektu) z proponowanym Weighted A* na tym samym generatorze siatek i zestawie ziaren losowości, badane w funkcji różnych wag heurystyki.",
+    "metrics": [
+      "avg_expanded_nodes",
+      "std_expanded_nodes",
+      "path_cost_dijkstra",
+      "path_cost_astar",
+      "suboptimality_gap"
+    ],
+    "planned_chapters": [
+      {
+        "index": 1,
+        "title": "Wprowadzenie i tło teoretyczne",
+        "focus": "Przegląd algorytmów Dijkstry i A*, definicja heurystyki oktylowej oraz uzasadnienie wyboru wagi."
+      },
+      {
+        "index": 2,
+        "title": "Konfiguracja eksperymentu",
+        "focus": "Opis generatora siatek, doboru parametrów (rozmiar, gęstość, liczba powtórzeń) oraz metryk oceny."
+      },
+      {
+        "index": 3,
+        "title": "Wyniki i analiza",
+        "focus": "Prezentacja wykresów porównawczych liczby rozwiniętych węzłów, kosztu ścieżki oraz suboptimality gap; dyskusja nad kompromisem między wydajnością a optymalnością."
+      },
+      {
+        "index": 4,
+        "title": "Wnioski",
+        "focus": "Podsumowanie skuteczności Weighted A* w kontekście badanego problemu oraz kierunki dalszych prac."
+      }
+    ]
+  }
+}

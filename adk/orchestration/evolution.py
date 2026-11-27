@@ -24,6 +24,7 @@ from adk.orchestration.common import (
 
 # Planners that are not in the agent registry but whose prompt may still learn (rules from the planning critics).
 _PLANNING_AUTHORS = ("task_planner", "plan_outline", "plan_module")
+AGENT_PROMPT_CHARS = 12000
 
 # Role words every prompt may use; naming them is not naming a file of this project.
 _GENERIC_NAMES = {"__init__", "main", "test", "tests", "config", "core", "utils", "init", "setup"}
@@ -75,10 +76,17 @@ class EvolutionMixin:
         failed_agent = str(payload.get("failed_agent", "seed_coder"))
 
         enriched_payload: dict[str, Any] = {
-            "agent_registry": agent_registry,
+            # The planners of a critic's pattern are not in the registry, and the registry is only read to find an agent.
+            **({} if payload.get("source") == "planning_critic" else {"agent_registry": agent_registry}),
             "agent_failure_count": int(payload.get("agent_failure_count", 1)),
             **payload,
         }
+        # The agent it is to give a rule sees its prompt as it is now, with the rules it already learned: without it the
+        # architect wrote rules against `plan_module.md`'s own line 22 (§XXXVII.4, §XXXVIII.3).
+        listed = (agent_registry.get("agents", {}).get(failed_agent) or {}).get("path")
+        agent_path = self.adk_root / str(listed) if listed else next(iter(self.agents_dir.rglob(f"{failed_agent}.md")), None)
+        if agent_path is not None and agent_path.is_file():
+            enriched_payload["agent_prompt"] = agent_path.read_text(encoding="utf-8", errors="replace")[:AGENT_PROMPT_CHARS]
 
         self.logger.log_step("EVOLUTION", "Uruchomienie Architekta Ewolucji (W4)", enriched_payload)
         arch_md = self.agents_dir / "evolution" / "evolution_architect.md"

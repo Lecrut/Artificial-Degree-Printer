@@ -11,6 +11,8 @@ const { elements, position, max, current, playing, play, stop } = useHypergraphR
 const selected = ref<string | null>(null)
 // A phone is too narrow for the graph; the matrix scrolls instead.
 const view = ref<'graph' | 'matrix'>(useDisplay().smAndDown.value ? 'matrix' : 'graph')
+const files = ref(false)
+const order = ref(false)
 const dialog = ref(false)
 // The last snapshot saved by the replayed moment: resuming from it brings the run back to what the graph shows.
 const snapshot = computed(() => snapshotAt(props.events, current.value?.ts ?? null))
@@ -28,6 +30,8 @@ const states = computed(() => Object.fromEntries(elements.value.nodes.filter(n =
           <v-btn value="graph" :prepend-icon="mdiGraphOutline" :text="labels.graph.viewGraph" />
           <v-btn value="matrix" :prepend-icon="mdiTableLarge" :text="labels.graph.viewMatrix" />
         </v-btn-toggle>
+        <v-switch v-if="view === 'graph'" v-model="files" :label="labels.graph.files" color="primary" density="compact" hide-details />
+        <v-switch v-if="view === 'graph'" v-model="order" :label="labels.graph.order" color="primary" density="compact" hide-details />
         <GraphLegend />
         <LaunchResumeButton v-if="at" :at="at" :snapshot="snapshot" here />
       </div>
@@ -35,7 +39,7 @@ const states = computed(() => Object.fromEntries(elements.value.nodes.filter(n =
     <v-row>
       <v-col cols="12" lg="8">
         <v-fade-transition mode="out-in">
-          <GraphHypergraphCanvas v-if="view === 'graph'" v-model="selected" :elements="elements" />
+          <GraphHypergraphCanvas v-if="view === 'graph'" v-model="selected" :elements="elements" :files="files" :order="order" />
           <GraphIncidenceMatrix v-else v-model="selected" :hypergraph="hypergraph" :states="states" />
         </v-fade-transition>
       </v-col>

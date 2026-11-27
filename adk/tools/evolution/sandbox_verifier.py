@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -19,7 +18,6 @@ def evaluate_and_promote_validator(
     good_sample_input: str,
     verification_dir: str | Path = "tools/verification",
     evolution_history_path: str | Path = "state/evolution_history.json",
-    use_docker: bool = False,
 ) -> dict[str, Any]:
     """Test a synthesized Python verification script on bad (must fail) and good (must pass) samples; promote to verification/ if valid."""
     v_dir = resolve_adk_path(verification_dir)
@@ -37,22 +35,7 @@ def evaluate_and_promote_validator(
         good_file.write_text(good_sample_input, encoding="utf-8")
 
         def _run_sample(sample_file: Path) -> subprocess.CompletedProcess[str]:
-            if use_docker and shutil.which("docker"):
-                cmd = [
-                    "docker",
-                    "run",
-                    "--rm",
-                    "-v",
-                    f"{tmp_path.resolve()}:/sandbox",
-                    "-w",
-                    "/sandbox",
-                    "python:3.12-slim",
-                    "python",
-                    safe_name,
-                    sample_file.name,
-                ]
-            else:
-                cmd = [sys.executable, str(script_path), str(sample_file)]
+            cmd = [sys.executable, str(script_path), str(sample_file)]
             return subprocess.run(cmd, capture_output=True, text=True, timeout=SAMPLE_TIMEOUT_S)
 
         try:

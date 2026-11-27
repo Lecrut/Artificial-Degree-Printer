@@ -149,3 +149,33 @@ def test_the_auditors_of_the_defense_run_on_the_small_model(tmp_path: Path) -> N
     orch._call_agent = agent
     orch._run_verification_step({"task_id": "FINAL", "target_node": "core.py"}, include_docs=False, is_final_gate=True)
     assert tiers.get("code_auditor") == "SML" and tiers.get("redteam_critic_guard") == "SML"
+
+
+def test_until_the_harness_is_closed_every_call_gets_the_large_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Decision of 2026-11-26: the large model does everything; small models are tried once the harness is closed. The default
+    (`HARNESS_FORCE_TIER` unset) is `LRM`, for the build router and for planning; `none` is the two-tier design again."""
+    monkeypatch.delenv("HARNESS_FORCE_TIER", raising=False)
+    assert select_model_tier(0) == "LRM" and select_model_tier(0, mechanical=True) == "LRM" and select_model_tier(0, kind="chapter") == "LRM"
+    assert select_planning_tier("plan_module", attempt=1) == "LRM"
+    monkeypatch.setenv("HARNESS_FORCE_TIER", "none")
+    assert select_model_tier(0) == "SML" and select_planning_tier("plan_module", attempt=1) == "SML"
+    monkeypatch.setenv("HARNESS_FORCE_TIER", "sml")  # a single small tier is possible too (the later experiment)
+    assert select_model_tier(5, remediation=True) == "SML" and select_planning_tier("plan_outline") == "SML"
+
+
+def test_a_call_that_names_the_small_model_itself_follows_the_switch(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The auditors and the implementation auditor call `call_agent(model_tier="SML")` directly; the switch decides at the one
+    place every call passes, so none of them keeps a small model while the rest use the large one."""
+    from adk.core.llm import call_agent, set_llm_handler
+
+    seen: list[str] = []
+    set_llm_handler(lambda _agent, _prompt, _payload, tier: seen.append(tier) or {"status": "PASS"})
+    agent = "agents/verification/code_auditor.md"
+    try:
+        monkeypatch.delenv("HARNESS_FORCE_TIER", raising=False)
+        assert call_agent(agent, {}, model_tier="SML")["model_tier"] == "LRM"
+        monkeypatch.setenv("HARNESS_FORCE_TIER", "none")
+        assert call_agent(agent, {}, model_tier="SML")["model_tier"] == "SML"
+    finally:
+        set_llm_handler(None)
+    assert seen == ["LRM", "SML"]

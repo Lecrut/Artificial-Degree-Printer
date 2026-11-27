@@ -36,7 +36,8 @@ export function useCytoscape(container: Ref<HTMLElement | null>, elements: Ref<G
       container: container.value,
       elements: definitions(elements.value),
       style: style.value,
-      layout: { name: 'cose', animate: false, nodeRepulsion: () => 9000, idealEdgeLength: () => 70, padding: 24 },
+      // Strong repulsion and long links pull the hub-and-spoke clusters (code, thesis) apart instead of packing them into one knot.
+      layout: { name: 'cose', animate: false, nodeRepulsion: () => 60000, idealEdgeLength: () => 150, nodeOverlap: 30, gravity: 0.3, numIter: 3000, padding: 24 },
     })
     cy.on('tap', 'node', (event) => { selected.value = event.target.id() })
     cy.on('tap', (event) => { if (event.target === cy) selected.value = null })

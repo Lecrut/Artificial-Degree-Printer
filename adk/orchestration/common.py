@@ -13,45 +13,6 @@ from adk.orchestration import agent_texts as texts
 from adk.orchestration import agent_task_templates as templates
 
 
-def _filter_bibtex(bib_text: str, allowed_keys: set[str]) -> tuple[str, list[str]]:
-    """Keep only entries whose citation key is in `allowed_keys`; return the kept text and the dropped keys."""
-    entry_pattern = re.compile(r"(@\w+\s*\{\s*([^,\s]+)\s*,.*?\n\})", re.DOTALL)
-    kept: list[str] = []
-    dropped: list[str] = []
-    for match in entry_pattern.finditer(bib_text):
-        key = match.group(2).strip()
-        if key in allowed_keys:
-            kept.append(match.group(1).strip())
-        else:
-            dropped.append(key)
-    return "\n\n".join(kept), dropped
-
-
-def _merge_bibtex_entries(existing_bib: str, new_bib: str) -> str:
-    """Merge BibTeX entries from existing_bib and new_bib, deduplicating by citation key while preserving order."""
-    entry_pattern = re.compile(r"(@\w+\s*\{\s*([^,\s]+)\s*,.*?\n\})", re.DOTALL)
-    entries_by_key: dict[str, str] = {}
-    ordered_keys: list[str] = []
-
-    for source_text in (existing_bib, new_bib):
-        if not source_text or not source_text.strip():
-            continue
-        matches = list(entry_pattern.finditer(source_text))
-        if matches:
-            for m in matches:
-                full_entry = m.group(1).strip()
-                cite_key = m.group(2).strip()
-                if cite_key not in entries_by_key:
-                    ordered_keys.append(cite_key)
-                entries_by_key[cite_key] = full_entry
-        else:
-            raw_key = f"_raw_{len(ordered_keys)}"
-            ordered_keys.append(raw_key)
-            entries_by_key[raw_key] = source_text.strip()
-
-    return "\n\n".join(entries_by_key[k] for k in ordered_keys) + "\n"
-
-
 # Repairs sent straight back to the failed file's author with the verification findings, before the one
 # planner-and-evolution cycle a task gets (Audit IV §IV.7 pkt 6).
 FAST_REPAIR_ATTEMPTS = 2
@@ -274,17 +235,14 @@ OUTPUT_SCHEMA = (
     "ast_edits[{symbol, code, file?}]",
     "source_code (Python target only)",
     "test_code + test_file",
-    "csv_content + benchmark_file",
-    "plot_script + plot_file",
-    "bibtex_entries + bib_file",
     "literature_review_section + section_title + research_stage",
     "section_title + section_content",
     "sections[{section_title, section_content}]",
 )
 # Keys that describe an answer rather than carry an artifact.
 _METADATA_KEYS = {
-    "summary", "status", "notes", "rationale", "research_stage", "citation_keys", "test_file", "benchmark_file",
-    "plot_file", "bib_file", "section_title", "planned_visualizations", "contract_change",
+    "summary", "status", "notes", "rationale", "research_stage", "citation_keys", "test_file",
+    "section_title", "planned_visualizations", "contract_change",
     # Echo of the payload: a small model sometimes copies the task back (N7, 2026-11-15: "fields ['task']").
     "task", "target_file", "task_id",
 }

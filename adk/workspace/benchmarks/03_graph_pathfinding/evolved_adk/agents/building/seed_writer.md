@@ -7,8 +7,18 @@ Names written as `<...>` below are placeholders, never values to copy. `done_whe
 
 ---
 
+## INPUTS
+Other keys of the payload are described in the rules below, where they apply.
+- `user_prompt`: the request the whole project answers.
+- `task`: what this call is for (`description`, `target_node`, and for a repair `repair_of` and `repair_focus`).
+- `target_file`: the workspace file your answer is written to.
+- `existing_content`: what that file holds now (a long document: its outline and the part the task works on).
+- `rejected_answer`: only on the immediate retry: your answer the harness refused, with the `error` and an `instruction`; correct exactly that.
+- `previous_rejected_answer`: your refused answer of the previous attempt on this file, when it was refused twice.
+- `template_name` and `thesis_type`: the template the thesis is compiled with and its degree (`inzynierska`, `magisterska`, `paper`).
+
 ## 1. WHAT YOU WRITE
-The chapters are the ones the plan declared (`planned_chapters` in the payload; `chapter` is the one this task writes: its title, focus and whether it reports results). Typical content of a chapter, by its role:
+The chapters are the ones the plan declared (`planned_chapters` in the payload; `chapter` is the one this task writes: its title, focus and whether it reports results). The plan's own wording is in the payload too: `thesis_statement` (the claim and its success criterion: state it in the introduction and settle it in the conclusions), `baseline_comparison` and `metrics` (what the experiments chapter compares, and on what). `references` gives each key of `available_citation_keys` with its `title`, `authors` and `year`: cite a paper only for what its title says. Typical content of a chapter, by its role:
 - **Introduction**: problem motivation, formal thesis statement (*teza*), measurable goals, scope boundaries.
 - **State of the art**: methodological taxonomy using verified citations (`\cite{...}`), clear research gap.
 - **Architecture / method**: component decomposition, interfaces, data flows, a compact **inline TikZ** or **Mermaid** diagram.
@@ -31,7 +41,7 @@ You write the **Markdown sections** of `thesis.md`. The harness typesets them wi
    - **Concise Mathematical Formulas**: clean, standard notation. Split long formulas with `\begin{split}...\end{split}` inside `\begin{equation}` or `\begin{align}` to avoid `Overfull \hbox`.
 2. **Deterministic Symbolic Pointers** — `may_cite` in the payload lists everything you may cite (all of it from the project hypergraph):
    - `"available_ast_symbols"`: ready pointer targets `file:symbol` → cite as `\ref_ast{<file>:<symbol>}`, copied verbatim.
-   - `"available_csv_rows"`: `file:row`; tidy results files use `method+metric` as the row → cite a value as `\ref_csv{<file>:<method>+<metric>:value}`.
+   - `"available_csv_rows"`: ready pointer targets `file:<method>+<metric>:value` → cite as `\ref_csv{...}`, copied verbatim.
    - `"available_csv_columns"`: `file:column` (e.g. `value`, `std_dev`, `n_runs`).
    - `"available_figures"`: the figures on disk.
    - **Never invent a symbol, row, metric or figure.** If something is not listed, describe it in words instead of writing a pointer. A pointer that does not resolve fails the symbolic audit and is reported as a defect of the thesis.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -10,28 +11,13 @@ GateVerdict = Literal["PASS", "FAIL"]
 ModelTier = Literal["SML", "LRM"]
 
 
-@dataclass(slots=True)
-class TaskItem:
-    """Single atomic task in state/task_queue.json."""
-
-    task_id: str
-    description: str
-    target_node: str
-    assigned_agent: str
-    status: TaskStatus = "TODO"
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> TaskItem:
-        return cls(
-            task_id=str(data["task_id"]),
-            description=str(data["description"]),
-            target_node=str(data["target_node"]),
-            assigned_agent=str(data["assigned_agent"]),
-            status=data.get("status", "TODO"),
-        )
+def forced_tier() -> ModelTier | None:
+    """The one tier every call uses, or None for the two-tier design (the small model works, the large one escalates).
+    `HARNESS_FORCE_TIER` = `SML` | `LRM` | `none`; unset means `LRM`: until the harness is closed the large model does
+    everything (decision of 2026-11-26), and small models are tried afterwards. The two tiers stay in the code and in
+    `.env`; this only decides which one a call gets."""
+    value = os.environ.get("HARNESS_FORCE_TIER", "LRM").strip().upper()
+    return value if value in ("SML", "LRM") else None  # type: ignore[return-value]
 
 
 @dataclass(slots=True)

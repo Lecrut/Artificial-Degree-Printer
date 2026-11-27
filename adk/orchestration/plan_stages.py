@@ -26,7 +26,7 @@ from adk.orchestration.interface_view import interface_view
 from adk.orchestration.plan_existing import _with_existing
 from adk.orchestration.plan_outline import (
     changed_modules, dependents, existing_names, kept_as_is, module_entry, module_files, module_order, outline_of, outline_view,
-    outline_violations, provided_name,
+    outline_violations, provided_name, structure_facts,
 )
 from adk.orchestration.plan_sketch import sketch_to_source, source_to_sketch
 from adk.orchestration.plan_spec import plan_targets
@@ -45,6 +45,7 @@ ESCALATIONS = 1  # a module that cannot converge sends its evidence to the outli
 
 _PLACE = re.compile(r"\[([^\]]+)\]")
 _MODULE_KEYS = ("user_prompt", "available_packages", "experiment_time_limit_s")
+_CRITIC_KEYS = ("available_packages", "experiment_time_limit_s")  # what the author is bound by, so the critic does not ask for what cannot be
 
 
 def _route(findings: list[str], files: list[str]) -> tuple[dict[str, list[str]], list[str]]:
@@ -155,7 +156,8 @@ class PlanStagesMixin:
             if not problems and critic_left and attempt < OUTLINE_ROUNDS:
                 verdict = self._critic_review("outline_critic_guard.md", {
                     "user_prompt": plan_payload.get("user_prompt", ""), "outline": outline_view(candidate),
-                    "existing_files": sorted(existing), "review_history": history,
+                    "structure": structure_facts(candidate), "existing_files": sorted(existing), "review_history": history,
+                    **{k: plan_payload.get(k) for k in _CRITIC_KEYS},
                 }, plan_targets(module_files(candidate)))
                 critic = verdict[0] if verdict else []
                 if critic:
@@ -242,7 +244,9 @@ class PlanStagesMixin:
         """One module's interface: written, checked by code, reviewed; `{ok, source, problems, needs}`."""
         entry = module_entry(outline, rel)
         # An existing module the outline lists as a dependency but does not plan is still the author's to see.
-        deps = {d: interface_view(accepted.get(d) or existing[d]) for d in self._dependency_closure(outline, rel) if d in accepted or d in existing}
+        # The direct dependencies only: the author is told it may use `dependencies` and nothing else, and the closure showed it
+        # modules it had not declared (`USES_UNDECLARED`, a critic's block; §XXXVIII.2).
+        deps = {d: interface_view(accepted.get(d) or existing[d]) for d in entry["depends_on"] if d in accepted or d in existing}
         consumers = [module_entry(outline, c) for c in dependents(outline, rel)]
         fb, source, critic_left, objections = list(feedback), previous or "", MODULE_CRITIC_ROUNDS, []
         for attempt in range(1, MODULE_ROUNDS + 1):
@@ -268,6 +272,7 @@ class PlanStagesMixin:
                 verdict = self._critic_review("module_critic_guard.md", {
                     "user_prompt": plan_payload.get("user_prompt", ""), "outline": outline_view(outline), "module": entry,
                     "source": source, "dependencies": deps, "consumers": consumers,
+                    **{k: plan_payload.get(k) for k in _CRITIC_KEYS},
                 }, {rel, Path(rel).name})
                 critic = verdict[0] if verdict else []
                 if critic:
@@ -288,16 +293,6 @@ class PlanStagesMixin:
         print(f"  [PLAN 2/4: INTERFEJS {rel}] nie udało się: {len(fb)} problemów", flush=True)
         return {"ok": False, "source": source, "problems": fb, "needs": {}, "objections": objections}
 
-    @staticmethod
-    def _dependency_closure(outline: dict[str, Any], rel: str) -> list[str]:
-        seen: list[str] = []
-        frontier = list(module_entry(outline, rel)["depends_on"])
-        while frontier:
-            dep = frontier.pop()
-            if dep not in seen:
-                seen.append(dep)
-                frontier += module_entry(outline, dep)["depends_on"]
-        return seen
 
     def _module_problems(
         self, rel: str, source: str, accepted: dict[str, str], outline: dict[str, Any], existing: dict[str, str]

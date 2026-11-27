@@ -36,7 +36,6 @@ class PlanEvolutionMixin:
         examples = _fit_items([f for e in fresh for f in e["findings"]][:3])
         self._run_evolution_step({
             "pattern": {"category": CRITIC_CATEGORY, "occurrences": len(targets), "tasks": targets, "examples": examples},
-            "validation_report": {"status": "FAIL", "failed_file": None, "failed_agent": agent, "issues": examples},
             "failed_agent": agent,
             "agent_failure_count": sum(1 for e in self._critic_log if e["agent"] == agent),
             "cycle_index": len(self._critic_log),

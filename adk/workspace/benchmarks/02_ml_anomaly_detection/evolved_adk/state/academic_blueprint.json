@@ -1,8 +1,47 @@
 {
-  "thesis_type": "magisterska",
-  "template_name": "thesis_plodz",
-  "template_certain": true,
-  "thesis_title": "[DOCUMENT FORMAT: Praca Magisterska Politechniki Łódzkiej (II stopień) | thesis_type=magisterska | template_name=thesis_plodz (ThesisPLodz.cls)]\nTemat pracy w języku polskim\nOdporna detekcja anomalii w wielokanałowej telemetrii fizjologicznej: komitety losowych podprzestrzeni\nTemat pracy w języku angielskim\nRobust Anomaly Detection in Multi-Channel Physiological Telemetry via Random Subspace Ensembles\nZakres pracy\n\nCelem pracy jest opracowanie i ocena odpornego detektora anomalii dla wielokanałowej telemetrii fizjologicznej, opartego na komitecie detektorów działających na losowych podprzestrzeniach cech, oraz sprawdzenie, czy wykrywa on anomalie skuteczniej niż statyczny, jednowymiarowy detektor oparty na wartości Z, stanowiący rozwiązanie bazowe.\n\nDane do eksperymentów powinny być syntetyczne, generowane w ramach projektu, z wstrzykniętymi anomaliami o znanym położeniu, które stanowią punkt odniesienia przy ocenie; nie korzysta się z zewnętrznych zbiorów danych. Parametry detektorów, liczbę powtórzeń i ziaren losowości, metryki oraz kryterium sukcesu należy dobrać i uzasadnić samodzielnie. Kod powinien składać się z małych modułów o jednym zadaniu, pokrytych testami jednostkowymi, a wszystkie wyniki powinny pochodzić z jednego, powtarzalnego eksperymentu.\n\nPraca powinna zawierać przegląd metod detekcji anomalii, opis proponowanego detektora i rozwiązania bazowego, analizę wyników z uwzględnieniem ich rozrzutu między powtórzeniami, wykresy oraz wnioski. Każda liczba podana w tekście musi wynikać z kodu albo z wyników eksperymentu.",
+  "thesis_title": "Odporna detekcja anomalii w wielokanałowej telemetrii fizjologicznej: komitety losowych podprzestrzeni",
+  "thesis_statement": "Komitety oparte na losowych podprzestrzeniach wykazują wyższą odporność na szum i zmienną korelację kanałów niż statyczny detektor Z-score w syntetycznej telemetrii fizjologicznej.",
+  "baseline_comparison": "Statyczny detektor Z-score (jednowymiarowy) vs. Proponowany komitet losowych podprzestrzeni na danych syntetycznych z wstrzykniętymi anomaliami.",
+  "metrics": [
+    "auc_roc",
+    "f1_score"
+  ],
+  "planned_chapters": [
+    {
+      "index": 1,
+      "title": "Wstęp",
+      "focus": "Motywacja, zakres pracy, cel badawczy oraz struktura rozprawy."
+    },
+    {
+      "index": 2,
+      "title": "Przegląd Literatury",
+      "focus": "Metody detekcji anomalii w telemetrii fizjologicznej, podejścia statyczne vs. ensembled/subspace methods."
+    },
+    {
+      "index": 3,
+      "title": "Propozycja Metodologii",
+      "focus": "Opis detektora bazowego Z-score oraz nowego detektora na losowych podprzestrzeniach (RSE)."
+    },
+    {
+      "index": 4,
+      "title": "Eksperymenty i Wyniki",
+      "focus": "Opis generowania danych syntetycznych, konfiguracja eksperymentu, prezentacja wyników liczbowych."
+    },
+    {
+      "index": 5,
+      "title": "Analiza i Wnioski",
+      "focus": "Krytyczna analiza wyników, dyskusja o ogólności i ograniczeniach podejścia oraz wnioski końcowe."
+    }
+  ],
+  "entrypoint": "experiment.py:run_experiment",
+  "plots": "plots.py:create_figures",
+  "interfaces": {
+    "data_generator.py": "\"\"\"Generates synthetic multi-channel physiological telemetry data with injected anomalies and known ground truth labels.\"\"\"\n\n\nimport numpy as np\n\n\nDEFAULT_DURATION: int = 1000\nDEFAULT_N_CHANNELS: int = 5\nDEFAULT_ANOMALY_RATE: float = 0.02\nDEFAULT_NOISE_STD: float = 0.1\n\n\ndef generate_dataset(n_channels: int, duration: int, anomaly_rate: float, noise_std: float, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:\n    \"\"\"Generates synthetic physiological signals with injected anomalies.\n\n    Returns a tuple containing:\n    1. `data`: A numpy array of shape (duration, n_channels) containing the synthetic telemetry signals. The values are floats representing the amplitude of each channel at each time step.\n    2. `anomaly_mask`: A boolean numpy array of shape (duration,) where True indicates an anomalous time step and False indicates normal operation. This serves as the ground truth for evaluation.\n\n    The data is generated using random walks or sine waves with added Gaussian noise defined by `noise_std`. Anomalies are injected according to `anomaly_rate` by modifying the signal values significantly (e.g., spikes or step changes) at randomly selected time indices determined by the provided `rng`.\n\n    Edge cases:\n    - If `duration` is 0, returns arrays of shape (0, n_channels) and (0,).\n    - If `anomaly_rate` results in fewer than one expected anomaly, the actual number may vary due to discrete sampling, but typically reflects the probability distribution.\n    - Negative or zero `noise_std` is handled as standard deviation magnitude (absolute value).\"\"\"\n    ...\n",
+    "baseline_zscore.py": "\"\"\"Implements the static univariate Z-score based anomaly detection baseline for multi-channel physiological telemetry.\"\"\"\nimport numpy as np\nfrom typing import Tuple\n\nclass ZScoreDetector:\n    \"\"\"A detector that flags anomalies in multi-channel physiological data using a Z-score threshold computed over a rolling window for each channel.\"\"\"\n    window_size: int\n\n    def __init__(self, window_size: int) -> None:\n        \"\"\"Initializes the detector with a fixed window size for local statistics calculation.\n\n        Args:\n            window_size: The number of preceding time steps to use for calculating mean and standard deviation.\n        \"\"\"\n        ...\n    def predict(self, data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:\n        \"\"\"Predicts anomalies for a 2D array of multi-channel data.\n\n        Computes Z-scores using a rolling window of `window_size` independently for each channel. \n        For each time step `i`, the Z-score is computed relative to the mean and standard deviation \n        of the window of points *preceding* `i` (i.e., indices `[max(0, i-window_size):i]`).\n        A time step is flagged as an anomaly if its absolute Z-score exceeds 3.0 in ANY channel.\n\n        Args:\n            data: A numpy array of shape (duration, n_channels) containing the telemetry signals.\n\n        Returns:\n            bool_array: A boolean numpy array of shape (duration,) where True indicates a detected anomaly.\n            max_abs_z_scores: A float numpy array of shape (duration,) where each value is the maximum \n                absolute Z-score across all channels for that time step.\n\n        Edge cases:\n        - If data is empty (duration 0), returns `(np.array([], dtype=bool), np.array([], dtype=float))`.\n        - If the window has fewer than 2 points, standard deviation is treated as infinity (Z-score 0) to avoid division by zero.\n        - If standard deviation is effectively zero (constant history), Z-score is 0.\"\"\"\n        ...",
+    "method_random_subspace.py": "\"\"\"Implements the Random Subspace Ensemble detector for robust anomaly detection in physiological telemetry.\"\"\"\nimport numpy as np\n\nclass RandomSubspaceDetector:\n    \"\"\"An ensemble anomaly detector that fits multiple independent sub-models on random subsets of features.\"\"\"\n    n_subspaces: int\n    subspace_dim: int\n    _means: list[np.ndarray]\n    _covariances: list[np.ndarray]\n    _subspace_indices: list[np.ndarray]\n\n    def __init__(self, n_subspaces: int, subspace_dim: int) -> None:\n        \"\"\"Initializes the detector with the specified ensemble parameters.\n\n        Args:\n            n_subspaces: The number of random subspaces (sub-models) to train.\n            subspace_dim: The dimensionality of each random subspace.\n        \"\"\"\n        ...\n    def fit(self, data: np.ndarray) -> None:\n        \"\"\"Trains the ensemble on the provided physiological telemetry data.\n\n        For each of the n_subspaces, it randomly selects subspace_dim features,\n        computes the mean and covariance of that subset, and stores them.\n\n        Args:\n            data: A 2D numpy array (n_samples, n_features) containing the training telemetry data.\n        \"\"\"\n        ...\n    def predict(self, data: np.ndarray) -> np.ndarray:\n        \"\"\"Calculates anomaly scores for the input data based on the fitted ensemble.\n\n        The final score is the average Mahalanobis distance squared across all subspaces.\n\n        Args:\n            data: A 2D numpy array (n_samples, n_features) containing the telemetry data to evaluate.\n\n        Returns:\n            A 1D numpy array of shape (n_samples,) with anomaly scores (higher means more anomalous).\n        \"\"\"\n        ...",
+    "experiment.py": "\"\"\"Runs the full experiment loop over multiple repetitions for anomaly detection evaluation using synthetic data, comparing baseline and proposed detectors via AUC-ROC and F1 score metrics.\"\"\"\n\n\nimport numpy as np\nimport pandas as pd\nfrom sklearn.metrics import f1_score, roc_auc_score\nfrom data_generator import generate_dataset\nfrom baseline_zscore import ZScoreDetector\nfrom method_random_subspace import RandomSubspaceDetector\n\n\nN_REPETITIONS: int = 10\nDURATION: int = 1000\nN_CHANNELS: int = 5\nANOMALY_RATE: float = 0.02\nNOISE_STD: float = 0.1\nWINDOW_SIZE: int = 50\nN_SUBSPACES: int = 10\nSUBSPACE_DIM: int = 3\n\n\ndef run_experiment() -> None:\n    \"\"\"Executes the complete experiment loop for robust anomaly detection comparison and writes results to CSV.\n\n    For each of N_REPETITIONS repetitions:\n    1. Creates a deterministic `rng` using `np.random.default_rng(repetition + 42)`.\n    2. Calls `generate_dataset(n_channels=N_CHANNELS, duration=DURATION, anomaly_rate=ANOMALY_RATE, noise_std=NOISE_STD, rng=rng)` to obtain synthetic telemetry data and ground truth labels.\n    3. Initializes the baseline `ZScoreDetector` with `WINDOW_SIZE`. Calls `predict(data)` which returns a continuous numpy array of shape (duration,) representing the maximum absolute Z-score across all channels for each time step.\n    4. Computes binary predictions for the baseline using a fixed threshold of 3.0 on these Z-scores (anomaly if max_Z > 3.0). Computes AUC-ROC using the continuous Z-scores against the ground truth labels.\n    5. Initializes `RandomSubspaceDetector` with `N_SUBSPACES` and `SUBSPACE_DIM`. Calls `fit(data)` to train on the telemetry data, then `predict(data)` to obtain a continuous anomaly score array of shape (duration,).\n    6. Computes binary predictions for the Random Subspace detector using a fixed rule-based threshold: `mean(scores) + 2 * std(scores)`. Anomaly if score > threshold. Computes F1 score using these binary predictions against ground truth.\n    7. Aggregates `auc_roc` and `f1_score` across repetitions into a pandas DataFrame with columns: `method`, `metric`, `value`, `std_dev`, `n_runs`. The `method` column contains 'zscore' and 'random_subspace'. The `metric` column contains 'auc_roc' and 'f1_score'.\n    8. Writes the DataFrame to 'results.csv' in the current working directory.\n\n    Edge cases:\n    - If a metric cannot be computed (e.g., only one class present in predictions), it is omitted or recorded as NaN/0 depending on sklearn defaults.\n    - Fixed thresholds ensure consistent interface usage and avoid oracle cheating.\"\"\"\n    ...\n",
+    "plots.py": "\"\"\"Reads results.csv and generates visualizations for the thesis.\"\"\"\n\n\nimport matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt\nimport pandas as pd\nimport seaborn as sns\nfrom typing import Optional\n\n\ndef create_figures() -> None:\n    \"\"\"Reads the aggregated results from the default `results.csv` location and writes publication-quality figures into the default `figures/` directory. Generates a boxplot comparing AUC-ROC and F1 scores between the baseline (Z-score) and proposed method, and a line plot showing performance stability across repetitions. Handles cases where results data is empty or missing metrics gracefully by logging warnings.\"\"\"\n    ...\n"
+  },
   "literature_recon": {
     "thesis_type": "magisterska",
     "research_routing": [
@@ -22,11 +61,9 @@
     ],
     "key_limitations_to_overcome": [
       "Shuhan Yuan and Xintao Wu (2022) [yuan2022trustworthy]: Despite the successes, anomaly detection models still face many limitations.",
-      "Leman Akoglu and Hanghang Tong and Danai Koutra (2014) [akoglu2014graphbased]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
       "Yueyang Liu and Lance Kennedy and Hossein Amiri and Andreas Züfle (2024) [liu2024neural]: However, existing trajectory anomaly detection methods are primarily focused on vehicle-level traffic, while human-level trajectory anomaly detection remains un",
       "Pankaj Malhotra and Anusha Ramakrishnan and Gaurangi Anand and Lovekesh Vig and Puneet Agarwal and Gautam Shroff (2016) [malhotra2016lstmbased]: However, there are often external factors or variables which are not captured by sensors leading to time-series which are inherently unpredictable.",
       "Mustafa Umut Ozbek and Taiwo Ojo and Pooria Madani and Khalil El-Khatib and Li Yang (2026) [ozbek2026robustness]: Machine-learning-based anomaly detection is increasingly used in industrial control systems (ICS), yet most studies assume that detector training data is trustw",
-      "Fei Wu and Dagong Lu and Mufeng Yao and Xinlei Xu and Fengjun Guo (2026) [wu2026loger]: Lacks neuro-symbolic AST/CSV verification and zero-dependency pure-Python reproducibility guarantees",
       "Buang Zhang and Tung Kieu and Xiangfei Qiu and Chenjuan Guo and Jilin Hu and Aoying Zhou and Christian S. Jensen and Bin Yang (2025) [zhang2025encodethende]: However, representations learned by autoencoders are sensitive to anomalies in training time series, causing reduced accuracy.",
       "Pavol Harar and Zoltan Galaz and Jesus B. Alonso-Hernandez and Jiri Mekyska and Radim Burget and Zdenek Smekal (2019) [harar2019robust]: In comparison with previously published works, this article is the first to utilize combination of 4 different databases comprising normophonic and pathological"
     ],
@@ -51,6 +88,7 @@
       "ayle2022robustness",
       "lee2022robust",
       "mondal2025robust",
+      "oshaughnessy2026rift",
       "brand2026quantuminspi",
       "lee2026scalerobust",
       "wang2026rosci",
@@ -69,9 +107,40 @@
       "pan2026generalist",
       "silva2026acoustic",
       "rautela2026sensoformer",
-      "ibrahim2026robust",
-      "benda2026enhancing"
+      "ibrahim2026robust"
     ],
     "citation_source": "arxiv"
+  },
+  "thesis_type": "magisterska",
+  "template_name": "thesis_plodz",
+  "template_certain": true,
+  "table_of_contents": {
+    "chapters": [
+      {
+        "index": 1,
+        "title": "Wstęp",
+        "focus": "Motywacja, zakres pracy, cel badawczy oraz struktura rozprawy."
+      },
+      {
+        "index": 2,
+        "title": "Przegląd Literatury",
+        "focus": "Metody detekcji anomalii w telemetrii fizjologicznej, podejścia statyczne vs. ensembled/subspace methods."
+      },
+      {
+        "index": 3,
+        "title": "Propozycja Metodologii",
+        "focus": "Opis detektora bazowego Z-score oraz nowego detektora na losowych podprzestrzeniach (RSE)."
+      },
+      {
+        "index": 4,
+        "title": "Eksperymenty i Wyniki",
+        "focus": "Opis generowania danych syntetycznych, konfiguracja eksperymentu, prezentacja wyników liczbowych."
+      },
+      {
+        "index": 5,
+        "title": "Analiza i Wnioski",
+        "focus": "Krytyczna analiza wyników, dyskusja o ogólności i ograniczeniach podejścia oraz wnioski końcowe."
+      }
+    ]
   }
 }

@@ -136,19 +136,18 @@ def test_sandbox_verifier_promotes_valid_validator(tmp_path: Path):
         good_sample_input="This is clean input",
         verification_dir=ver_dir,
         evolution_history_path=hist_path,
-        use_docker=False,
     )
     assert res["status"] == "PROMOTED"
     assert (ver_dir / "forbidden_token_checker.py").exists()
 
     ws_dir = adk_dir / "workspace"
     (ws_dir / "bad_code.py").write_text("# FORBIDDEN token inside\nx = 1\n", encoding="utf-8")
-    ver_fail = run_isolated_tests(ws_dir, use_docker=False, verification_dir=ver_dir)
+    ver_fail = run_isolated_tests(ws_dir, verification_dir=ver_dir)
     assert ver_fail["status"] == "FAIL"
     assert ver_fail["custom_validators_passed"] is False
 
     (ws_dir / "bad_code.py").write_text("x = 1\n", encoding="utf-8")
-    ver_pass = run_isolated_tests(ws_dir, use_docker=False, verification_dir=ver_dir)
+    ver_pass = run_isolated_tests(ws_dir, verification_dir=ver_dir)
     assert ver_pass["status"] == "PASS"
     assert ver_pass["custom_validators_passed"] is True
 

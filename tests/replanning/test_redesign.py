@@ -276,7 +276,8 @@ def test_the_tests_of_what_uses_a_redesigned_module_are_verified_again(tmp_path:
         current = payload["current_outline"]
         statuses = {m["file"]: {"status": "keep", "why": ""} for m in current["modules"]}
         statuses["src/mod_a.py"] = {"status": "change", "why": "the base of both"}
-        return {**current, "revision": {"modules": statuses}}
+        modules = [{**m, "purpose": "The base of both, redesigned."} if m["file"] == "src/mod_a.py" else m for m in current["modules"]]  # a bare label changes nothing (§XXXVII.1)
+        return {**current, "modules": modules, "revision": {"modules": statuses}}
 
     orch, _state, result, _calls = _redesign(tmp_path, change_mod_a)
     h = load(orch.hypergraph_path)
@@ -506,3 +507,53 @@ def test_a_test_the_plan_has_not_had_written_yet_is_not_judged_with_the_module_i
 def test_the_new_queue_has_a_task_for_the_tester_on_the_stale_test(tmp_path: Path) -> None:
     _orch, _state, result, _calls = _redesign(tmp_path)
     assert any(t["target_node"] == "tests/test_mod_b.py" and t["assigned_agent"] == "seed_tester" for t in result["tasks"])
+
+
+def test_change_of_an_untouched_module_that_did_not_fail_is_keep(tmp_path: Path) -> None:
+    """§XXXVII.1, 01 of 26.11: the designer copied `change` of round 1 for modules that were verified since, with the outline
+    entry unchanged; the walidator let it pass and 5 of 7 verified modules went back to design."""
+    _orch, plan_out, _state = _project(tmp_path)
+    from adk.orchestration.plan_outline import outline_of
+
+    old = outline_of(plan_out["outline"])
+    answer = _split_outline(plan_out["outline"])
+    new, decisions = outline_of(answer), decisions_of(answer)
+    quiet = {**decisions, "src/mod_a.py": {"status": "change", "why": "Was a stub (copied from round 1)."}}
+    assert next(m for m in new["modules"] if m["file"] == "src/mod_a.py") == next(m for m in old["modules"] if m["file"] == "src/mod_a.py")
+    _, fixed = settled_decisions(old, new, quiet, {"src/mod_b.py"})
+    assert fixed["src/mod_a.py"]["status"] == "keep"
+    _, still = settled_decisions(old, new, quiet, {"src/mod_a.py"})
+    assert still["src/mod_a.py"]["status"] == "change"  # a failed module may be redesigned
+
+
+def test_a_failed_test_is_not_judged_with_the_module_it_tests_until_it_is_rewritten(tmp_path: Path) -> None:
+    """§XXXVII.3, `D1_10`: the old `AssertionError` of a `failed` `test_trainer.py` was taken for the error of the module's
+    own task, and the repair of `experiment.py` went to the tester."""
+    from adk.orchestration.verification import _task_scope
+
+    orch, _state, _result, _calls = _redesign(tmp_path)
+    h = load(orch.hypergraph_path)
+    h.vertices["tests/test_mod_a.py"].state = "failed"
+    assert "tests/test_mod_a.py" not in _task_scope("src/mod_a.py", set(), h)["tests"]
+    assert "tests/test_mod_a.py" in _task_scope("src/mod_a.py", {"tests/test_mod_a.py"}, h)["tests"]  # just written: judged
+
+
+def test_a_chapter_that_cites_a_redesigned_module_is_verified_again() -> None:
+    """§XXXVII.5: chapter 3 cited `evaluator.py`, the redesign rebuilt it, and the chapter stayed `verified` with dead pointers."""
+    from adk.hypergraph import Edge, Hypergraph, Vertex
+    from adk.orchestration.redesign import _carry_over
+
+    def graph() -> Hypergraph:
+        return Hypergraph(
+            {"src/mod_b.py": Vertex("src/mod_b.py", "code", None), "thesis.md#ch3": Vertex("thesis.md#ch3", "chapter", None)},
+            {
+                "I:src/mod_b.py": Edge("I:src/mod_b.py", "I", {"src/mod_b.py": "P"}),
+                "N:thesis.md#ch3": Edge("N:thesis.md#ch3", "N", {"thesis.md#ch3": "X", "src/mod_b.py": "C"}),
+            },
+        )
+
+    old, new = graph(), graph()
+    old.edges["N:thesis.md#ch3"].observed = ["src/mod_b.py"]
+    old.vertices["thesis.md#ch3"].state = "verified"
+    _carry_over(old, new, {"src/mod_b.py"}, set())
+    assert new.vertices["thesis.md#ch3"].state == "stale"

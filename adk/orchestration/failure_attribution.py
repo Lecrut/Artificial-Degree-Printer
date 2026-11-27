@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import re
 from pathlib import Path
 from typing import Any
@@ -31,10 +32,14 @@ def _pytest_culprits(issue: str) -> list[tuple[str, bool]]:
     2026-11-14: the first file named in the findings was taken as the culprit, pytest always names the test file
     first, and 77 repairs of failed assertions went to the tester while the bug sat in the module."""
     if "a test hung and was stopped" in issue:
-        # faulthandler's dump, newest frame first, has no pytest sections: the file of the newest frame is the
-        # culprit (2026-11-23, 01: a test whose own mock recursed was charged to `experiment.py`).
+        # faulthandler's dump, newest frame first, has no pytest sections. A test whose own mock recursed has only test
+        # frames: the newest is the culprit (2026-11-23, 01: it was charged to `experiment.py`). When code of the project
+        # is on the stack, the newest frame is chance (the loop calls helpers all the time: 2026-11-26, 01, a loop in
+        # `trainer.py` showed `environment.py:__init__`, §XXXVII.7): the code frame the test called, the outermost, is it.
         frames = [f.replace("\\", "/") for f in _HANG_FRAME.findall(issue)]
-        return [(frames[0], False)] if frames else []
+        own = [f for f in frames if not re.match(r"^([A-Za-z]:|/)", f) and "site-packages" not in f]
+        code = [f for f in own if not _is_test(f)]
+        return [(code[-1] if code else frames[0], False)] if frames else []
     found: list[tuple[str, bool]] = []
     for section in re.split(r"\n_{3,} .+? _{3,}\n", issue)[1:]:
         frames = [f.replace("\\", "/") for f in _TB_FRAME.findall(section)]
@@ -50,18 +55,61 @@ def _pytest_culprits(issue: str) -> list[tuple[str, bool]]:
 
 
 _PY_FRAME = re.compile(r'File "([^"]+?\.py)", line \d+')
+_PY_FRAME_CODE = re.compile(r'File "([^"]+?\.py)", line (\d+), in (\S+)\n[ \t]+(.*)')
+_NOT_CALLABLE = re.compile(r"TypeError: '[^']+' object is not callable")
+
+
+def _parameters_of(path: Path, line: int) -> set[str]:
+    """The parameters of the function that contains `line` of `path` (empty when it cannot be told)."""
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
+    except (SyntaxError, OSError):
+        return set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.lineno <= line <= (node.end_lineno or node.lineno):
+            a = node.args
+            return {p.arg for p in [*a.posonlyargs, *a.args, *a.kwonlyargs]}
+    return set()
 
 
 def _traceback_culprit(text: str, workspace: Path) -> str | None:
     """The deepest workspace file in a Python traceback (a run of the experiment or of the plots function).
-    2026-11-20: `plots.py` raised, the error was charged to the entrypoint and three repairs rewrote a correct file."""
+    2026-11-20: `plots.py` raised, the error was charged to the entrypoint and three repairs rewrote a correct file.
+    Except one case (§XXXVII.2, 01 of 26.11): `X object is not callable` at a call of a PARAMETER of the failing
+    function means the caller passed the wrong object, so the nearest frame of another file below is charged (a
+    verified `evaluator.py` called `opponent(env)` and was rewritten, while `experiment.py` passed a `RandomAgent`)."""
     root = workspace.resolve()
-    for raw in reversed(_PY_FRAME.findall(text)):
+
+    def relative(raw: str) -> str | None:
         try:
             return Path(raw).resolve().relative_to(root).as_posix()
         except (ValueError, OSError):
-            continue
+            return None
+
+    own = [(rel, int(line), code) for raw, line, _fn, code in _PY_FRAME_CODE.findall(text) if (rel := relative(raw))]
+    if own and _NOT_CALLABLE.search(text):
+        rel, line, code = own[-1]
+        called = set(re.findall(r"\b(\w+)\(", code))
+        if called & _parameters_of(root / rel, line):
+            for caller, _line, _code in reversed(own[:-1]):
+                if caller != rel:
+                    return caller
+    for raw in reversed(_PY_FRAME.findall(text)):
+        if rel := relative(raw):
+            return rel
     return None
+
+
+def _traceback_files(text: str, workspace: Path) -> set[str]:
+    """Every workspace file a Python traceback passes through."""
+    root = workspace.resolve()
+    found: set[str] = set()
+    for raw in _PY_FRAME.findall(text):
+        try:
+            found.add(Path(raw).resolve().relative_to(root).as_posix())
+        except (ValueError, OSError):
+            continue
+    return found
 
 
 def _suspect_test(h: Any, module: str, test_file: str) -> bool:
@@ -69,12 +117,18 @@ def _suspect_test(h: Any, module: str, test_file: str) -> bool:
     already satisfies every example of its specification (`verified`) and the test is new → the test. 2026-11-19:
     a fresh test asserted `0.1 > 0.5` after one Q-update with lr=0.1; six repairs of the correct module followed.
     A module that never passed is also cleared once the same error of the same test survives two different
-    versions of it (§XXX P6: `R1_2`-`R6_1` rewrote `q_learning_agent.py` six times for a test that fed it `[0.5, 0.0]`)."""
+    versions of it (§XXX P6: `R1_2`-`R6_1` rewrote `q_learning_agent.py` six times for a test that fed it `[0.5, 0.0]`).
+    The same holds the other way round (§XXXVI): the same error surviving two different versions of the test means
+    the test is not what is wrong (2026-11-26, 01: `environment.py` never set `_terminated`, and the correct
+    `test_get_legal_actions_terminated_game` was rewritten fifteen times because the module was `verified`, which
+    only said that it compiles)."""
     mod = h.vertices.get(module)
     test_vertex = h.owner_of(test_file)
     test = h.vertices.get(test_vertex) if test_vertex else None
     if mod is None or (test is not None and test.state == "verified"):
         return False
+    if test is not None and _error_survives_rewrites(test.history, test_file):
+        return False  # §XXXVI: the test was rewritten and fails the same way: the module is what is wrong
     return mod.state == "verified" or _error_survives_rewrites(mod.history, test_file)
 
 

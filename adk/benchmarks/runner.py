@@ -54,9 +54,8 @@ def _prepare_evolved_adk_sandbox(base_adk_root: Path, sandbox_root: Path, reset:
         shutil.copytree(base_adk_root / "agents", sandbox_root / "agents")
     
     # Always refresh tools from base_adk_root so fixes in publishers/templates are never stale
-    if (sandbox_root / "tools").exists():
-        shutil.rmtree(sandbox_root / "tools")
-    shutil.copytree(base_adk_root / "tools", sandbox_root / "tools")
+    # Over the existing folder, not instead of it: a validator the run promoted (CREATE_TOOL) lives there (§XXXVIII.6).
+    shutil.copytree(base_adk_root / "tools", sandbox_root / "tools", dirs_exist_ok=True)
     (sandbox_root / "workspace").mkdir(parents=True, exist_ok=True)
     return sandbox_root
 

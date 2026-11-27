@@ -38,7 +38,7 @@ export const FLOW_NODES: FlowNode[] = [
   node('d_more', 'decision', 0, 19),
   node('j_queue1', 'jump', -1, 19),
   node('d_failed', 'decision', 0, 20),
-  // The end of the queue with failed vertices: the designer revises the design first (redesign), then the re-plan of the failed.
+  // The end of the queue with failed vertices: the first round is the re-plan of the failed; the designer revises the design (redesign) once that round did not help.
   node('d_redesign', 'decision', -1, 20),
   node('implementation_auditor', 'agent', -3, 20),
   node('s_revise', 'step', -3, 21),

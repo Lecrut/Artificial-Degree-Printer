@@ -5,7 +5,7 @@ import { flowSteps, type FlowText } from './flowSteps'
 /** Texts of the flow page: the page itself, the answers on the arrows, and one label and note per block. */
 export const flowLabels = {
   title: 'Przepływ systemu',
-  subtitle: 'Od startu do końca, od góry do dołu: kto po kim działa, gdzie jest „jeśli” i dokąd wracają pętle. Kliknij blok, żeby zobaczyć opis, a dla agenta jego prompt.',
+  subtitle: 'Od startu do końca, od góry do dołu: kto po kim działa, gdzie jest „jeśli” i dokąd wracają pętle. Kliknij blok, żeby zobaczyć opis, a dla agenta jego prompt. Opisy „mały model” podają projekt: od 26.11 `HARNESS_FORCE_TIER` (domyślnie LRM) kieruje wszystkie wywołania na duży model.',
   legend: 'Legenda',
   kinds: {
     start: 'Start / koniec',

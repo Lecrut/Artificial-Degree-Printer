@@ -4,13 +4,37 @@
       "type": "AGENT_MUTATED",
       "details": {
         "status": "mutated",
-        "agent": "plan_outline",
-        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_outline.md",
-        "injected_rule": "When designing module interfaces for metrics that depend on raw scores versus binary predictions, explicitly define a deterministic thresholding or scoring conversion step within the experiment module's contract, because undefined transitions from continuous outputs to discrete labels introduce ambiguity in metric calculation.",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
+        "injected_rule": "When a module's purpose involves evaluating data against ground truth or computing statistical metrics, ensure all imported libraries required for that computation are declared in the sketch's imports and used in the interface's logic, because the planner must explicitly bridge dependencies with their utilitarian functions to make the metric computable.",
         "active_rules_count": 1,
         "compacted": false,
         "compaction_details": null
       }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T6_FIX1",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_INVALID_ON_STUBS [tests/test_data_generator.py]: against the stubs a test may fail only with NotImplementedError; these fail for a reason of their own: test_negative_noise_std_handled: NameError: name 'pytest' is not defined"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T10",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_method_random_subspace.py]: reads RandomSubspaceDetector._covariances, RandomSubspaceDetector._means, RandomSubspaceDetector._subspace_indices, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T10_FIX1",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_method_random_subspace.py]: reads RandomSubspaceDetector._covariances, RandomSubspaceDetector._means, RandomSubspaceDetector._subspace_indices, which the interface does not declare (test only declared methods and attributes)"
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "T10_FIX2",
+      "agent": "seed_tester",
+      "error": "Write rejected: the answer breaks the specification of the project (the interfaces in the plan); nothing was saved. Keep every planned public name and signature, import only names the producer's interface declares, keep helpers private (`_name`), and write no files outside the plan. A deliberate change of an interface needs 'contract_change': {'reason': '<why>'}; a name other modules use cannot be removed.\n- TEST_OUTSIDE_SPEC [tests/test_method_random_subspace.py]: reads RandomSubspaceDetector._covariances, RandomSubspaceDetector._means, RandomSubspaceDetector._subspace_indices, which the interface does not declare (test only declared methods and attributes)"
     },
     {
       "type": "AGENT_MUTATED",
@@ -18,10 +42,58 @@
         "status": "mutated",
         "agent": "plan_module",
         "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
-        "injected_rule": "When defining a module's interface, ensure that the functional statefulness (state persistence across calls) and shape semantics (dimensionality of inputs vs outputs) are modeled via explicit class structures or unambiguous scalar/1D return contracts respectively, because hidden instance state in pure functions leads to silent contract failures and ambiguous shapes break downstream consumer expectations.",
-        "active_rules_count": 1,
+        "injected_rule": "When designing a module that depends on another, ensure every dependency listed in the metadata is actively utilized within this module's logic or interface to justify its import, because dependencies must reflect actual usage rather than mere availability.",
+        "active_rules_count": 2,
         "compacted": false,
         "compaction_details": null
+      }
+    },
+    {
+      "type": "MUTATION_REJECTED",
+      "agent": "plan_module",
+      "rule": "When designing a detector interface intended for downstream metric computation, ensure the return type and docstring explicitly describe continuous scores or probabilities rather than binary labels if the output is required by consumers for statistical evaluation (like AUC-ROC), because binary outputs lose the sensitivity needed for robust metric calculation.",
+      "reason": "concerns what the harness enforces (syntax, answer shape, imports)"
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "plan_module",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\planning\\plan_module.md",
+        "injected_rule": "When a module's interface relies on an existing dependency, strictly adhere to the dependency's declared return types and signatures as the source of truth for data shapes and semantics, because assuming implicit conversions or undocumented behaviors in the interface design phase introduces ambiguity that breaks downstream contract verification.",
+        "active_rules_count": 3,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "BUILDER_ANSWER_REJECTED",
+      "task_id": "D2_4",
+      "agent": "seed_tester",
+      "error": "The answer for 'tests/test_baseline_zscore.py' was not saved: it is not valid JSON (cut off or an unterminated string). Return a shorter answer: only the symbols you change, in 'ast_edits', with no reasoning inside the code."
+    },
+    {
+      "type": "AGENT_MUTATED",
+      "details": {
+        "status": "mutated",
+        "agent": "seed_coder",
+        "file": "D:\\studia-local\\Artificial-Degree-Printer\\adk\\workspace\\benchmarks\\_evolved_adk_state\\02_ml_anomaly_detection\\agents\\building\\seed_coder.md",
+        "injected_rule": "When verifying boolean logic or control flow states, explicitly cast intermediate results to standard Python `bool` (e.g., using `bool()` or `==`) before asserting identity with `True`/`False`, because external libraries like NumPy may return typed equivalents (`np.False_`) that fail strict identity checks.",
+        "active_rules_count": 2,
+        "compacted": false,
+        "compaction_details": null
+      }
+    },
+    {
+      "type": "HARNESS_BUG_REPORTED",
+      "details": {
+        "files_in_error": [
+          "test_baseline_zscore.py"
+        ],
+        "signature": "test_baseline_zscore.py::TestZScoreDetector::test_predict_anomaly_detected_in_any_channel:assert",
+        "task_id": "R5_1",
+        "reason": "Ten sam błąd przetrwał zmianę promptu agenta; przyczyna leży poza agentem (routing, kontrakt, narzędzie).",
+        "source": "harness"
       }
     }
   ]

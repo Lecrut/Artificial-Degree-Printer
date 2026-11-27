@@ -2,63 +2,73 @@
   "modules": [
     {
       "file": "environment.py",
-      "purpose": "Implements Tic-Tac-Toe game logic, state handling, and provides utilities for playing episodes and parsing results.",
+      "purpose": "Provides a custom Tic-Tac-Toe Gymnasium environment with a correct, collision-free integer state hash for Q-table indexing and deterministic opponent moves.",
       "depends_on": [],
       "provides": [
-        "TicTacToeEnv",
-        "TicTacToeEnv.__init__()",
-        "TicTacToeEnv.reset() -> dict",
-        "TicTacToeEnv.step(action) -> tuple[obs, reward, done, trunc, info]",
-        "TicTacToeEnv.get_valid_actions(obs) -> list[int]",
-        "run_episode(env, agent_p1, agent_p2, player_turn='X') -> dict",
-        "parse_episode_result(info, p1_id, p2_id) -> dict"
+        "TicTacToeEnv: class(gym.Env)",
+        "TicTacToeEnv.reset(seed) -> dict",
+        "TicTacToeEnv.step(action) -> tuple",
+        "TicTacToeEnv.get_state_hash(state) -> int"
       ]
     },
     {
-      "file": "agent.py",
-      "purpose": "Implements the Tabular Q-Learning agent with epsilon-greedy policy.",
-      "depends_on": [],
+      "file": "q_agent.py",
+      "purpose": "Implements the tabular Q-Learning agent with epsilon-greedy exploration, dynamic Q-table expansion, and correct default hyperparameters.",
+      "depends_on": [
+        "environment.py"
+      ],
       "provides": [
-        "QLearningAgent",
-        "QLearningAgent.__init__(num_states, num_actions, lr=0.1, gamma=0.9, epsilon=1.0)",
-        "QLearningAgent.choose_action(state) -> int",
-        "QLearningAgent.update(state, action, reward, next_state, done)",
-        "QLearningAgent.get_q_values() -> np.ndarray"
+        "QAgent: class",
+        "QAgent.__init__(n_states, n_actions) -> None",
+        "QAgent.choose_action(state_hash, possible_moves) -> int",
+        "QAgent.update(state_hash, action, reward, next_state_hash, done) -> None",
+        "QAgent.save_q_table(filepath) -> None",
+        "QAgent.load_q_table(filepath) -> None"
       ]
     },
     {
-      "file": "baseline.py",
-      "purpose": "Implements the random baseline agent that selects uniformly from valid actions.",
-      "depends_on": [],
+      "file": "baseline_agent.py",
+      "purpose": "Implements the random baseline player using standard library `random` module for deterministic reproducibility.",
+      "depends_on": [
+        "environment.py"
+      ],
       "provides": [
-        "RandomAgent",
-        "RandomAgent.__init__()",
-        "RandomAgent.choose_action(valid_actions, rng) -> int"
+        "RandomAgent: class",
+        "RandomAgent.choose_action(state_hash, possible_moves) -> int"
       ]
     },
     {
-      "file": "config.py",
-      "purpose": "Defines all hyperparameters, experiment settings, and constants as module-level variables.",
-      "depends_on": [],
+      "file": "trainer.py",
+      "purpose": "Manages the training loop for the Q-Learning agent against a random baseline.",
+      "depends_on": [
+        "environment.py",
+        "q_agent.py",
+        "baseline_agent.py"
+      ],
       "provides": [
-        "NUM_EPISODES: int",
-        "TEST_EPISODES: int",
-        "SEEDS: list[int]",
-        "LEARNING_RATE: float",
-        "GAMMA: float",
-        "EPSILON_START: float",
-        "EPSILON_END: float",
-        "EPSILON_DECAY: float"
+        "train_episode(env, q_agent, epsilon, lr, gamma) -> tuple",
+        "train_policy(n_episodes, env_params, agent_params) -> dict"
+      ]
+    },
+    {
+      "file": "evaluator.py",
+      "purpose": "Evaluates trained agents (Q-Agent and Baseline) against each other using deterministic seeds.",
+      "depends_on": [
+        "environment.py",
+        "q_agent.py",
+        "baseline_agent.py"
+      ],
+      "provides": [
+        "evaluate_match(agent_a, agent_b, n_matches, seed) -> dict",
+        "compute_metrics(win_rate, draw_rate, loss_rate, n_matches) -> dict"
       ]
     },
     {
       "file": "experiment.py",
-      "purpose": "Orchestrates the training, testing, and aggregation of results for both agents across all seeds.",
+      "purpose": "Entrypoint that orchestrates training, evaluation across repetitions, and saves results to CSV.",
       "depends_on": [
-        "environment.py",
-        "agent.py",
-        "baseline.py",
-        "config.py"
+        "trainer.py",
+        "evaluator.py"
       ],
       "provides": [
         "run_experiment() -> None"
@@ -66,7 +76,7 @@
     },
     {
       "file": "figures.py",
-      "purpose": "Reads results.csv and generates the required plots (learning curves, win rates) for the thesis.",
+      "purpose": "Reads results.csv and generates plots for the thesis.",
       "depends_on": [],
       "provides": [
         "generate_plots() -> None"
@@ -76,45 +86,41 @@
   "entrypoint": "experiment.py:run_experiment",
   "plots": "figures.py:generate_plots",
   "academic_blueprint": {
-    "thesis_title": "Optymalizacja polityki Q-Learning w środowiskach skończonych na przykładzie gry w kółko i krzyżyk",
-    "thesis_statement": "Agenty uczące się tabelarycznym Q-Learningiem osiągają poziom gry znacząco lepszy niż losowi przeciwnicy po wystarczającym budżecie treningu, dążąc do optymalnej (nieprzegrywającej) polityki w grze o sumie zerowej.",
-    "baseline_comparison": "Losowy agent (Random Agent) wybierający równe prawdopodobieństwo dla każdego dopuszczalnego ruchu jako punkt odniesienia dolnej granicy skuteczności.",
+    "thesis_title": "Tabelaryczne Q-Learning w grach skończonych na przykładzie kółka i krzyżyka",
+    "thesis_statement": "Agent uczący się metodą tabelarycznego Q-Learningu osiąga wynik równy grze losowej lub lepszy po zakończeniu treningu przeciwko przeciwnikowi losowemu w grze w kółko i krzyżyk, co potwierdzają metryki wygranej i zremisowanej.",
+    "baseline_comparison": "Wyniki agenta Q-Learning są porównywane z wynikami losowego gracza (Random Agent) w serii meczów 'agent vs random'.",
     "metrics": [
-      "win_rate",
-      "loss_rate",
-      "draw_rate",
-      "avg_reward"
+      "agent_win_rate",
+      "agent_draw_rate",
+      "agent_loss_rate",
+      "avg_episode_reward",
+      "baseline_win_rate"
     ],
     "planned_chapters": [
       {
         "index": 1,
-        "title": "Wprowadzenie do uczenia ze wzmocnieniem",
-        "focus": "Podstawowe pojęcia: agent, środowisko, stan, akcja, nagroda; definicja procesu decyzyjnego Markova (MDP)."
+        "title": "Wprowadzenie do Uczenia ze Wzmocnieniem",
+        "focus": "Podstawowe pojęcia: agent, środowisko, nagroda, stan. Cel pracy i zakres tematu."
       },
       {
         "index": 2,
-        "title": "Metoda Q-Learning dla gier skończonych",
-        "focus": "Teoria aktualizacji tabeli Q, równanie Bellmana, eksploracja vs eksploatacja (epsilon-greedy), zbieżność w grach deterministycznych."
+        "title": "Teoretyczne podstawy Q-Learningu",
+        "focus": "Równanie Bellmana, aktualizacja wag Q, eksploracja a eksploatacja (epsilon-greedy)."
       },
       {
         "index": 3,
         "title": "Modelowanie gry w kółko i krzyżyk",
-        "focus": "Reprezentacja stanu planszy jako wejścia dla algorytmu, definicja funkcji nagrody (zwycięstwo/porażka/remis), przestrzeń stanów gry."
+        "focus": "Opis stanu gry, akcji, nagród. Dlaczego ta gra jest odpowiednia dla metody tabelarycznej."
       },
       {
         "index": 4,
-        "title": "Konstrukcja eksperymentu",
-        "focus": "Uzasadnienie doboru hiperparametrów, opis metody treningu i testowania, definicja metryk oceny skuteczności."
+        "title": "Przebieg eksperymentu",
+        "focus": "Parametry uczenia, konfiguracja środowiska, procedura ewaluacji i zestawienie metryk."
       },
       {
         "index": 5,
-        "title": "Wyniki eksperymentu",
-        "focus": "Prezentacja wykresów nauki i statystyk końcowych (współczynnik wygranych) dla Q-Learning w porównaniu do losowego agenta."
-      },
-      {
-        "index": 6,
-        "title": "Wnioski",
-        "focus": "Ocena sukcesu tezy, analiza trudności uczenia się w końcowej fazie gry oraz potencjalne kierunki dalszych badań (np. tablica wartości vs funkcja aproksymująca)."
+        "title": "Wyniki i dyskusja",
+        "focus": "Prezentacja wykresów konwergencji, porównanie z baseline'em, wnioski o skuteczności metody."
       }
     ]
   }
