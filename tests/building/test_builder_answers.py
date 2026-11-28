@@ -71,7 +71,7 @@ def test_an_answer_that_is_no_json_is_told_so() -> None:
 
 
 def test_a_prose_repair_that_breaks_the_experiment_is_restorable(tmp_path: Path):
-    from adk.orchestration.building import BuildingMixin
+    from adk.orchestration.building.builder import BuildingMixin
 
     ws = _workspace(tmp_path)
     (ws / "experiment.py").write_text("OLD = 1\n", encoding="utf-8")

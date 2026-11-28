@@ -3,14 +3,14 @@ import type { FlowKind, FlowNode } from '#shared/types/flow'
 const node = (id: string, kind: FlowKind, col: number, row: number): FlowNode => ({ id, kind, col, row })
 
 /**
- * The blocks of the diagram. A hand-made description of the harness (`orchestrator.run`, `plan_stages`, `building`,
- * `verification`, `repair`, `fragment_replan`): a change of the flow there is a change here (flow.test.ts keeps the agents in step).
+ * The blocks of the diagram. A hand-made description of the harness (`orchestrator.run`, `planning/stages`, `building/builder`,
+ * `verification/step`, `recovery/repair`, `recovery/replan`): a change of the flow there is a change here (flow.test.ts keeps the agents in step).
  * Columns: 0 is the main line, -1 and -2 the re-plan side, 1 to 4 the repair side.
  */
 export const FLOW_NODES: FlowNode[] = [
   node('start', 'start', 0, 0),
   node('recon', 'step', 0, 1),
-  // Planning, stage by stage (plan_stages): outline, one interface per module, tasks derived by code, the main critic.
+  // Planning, stage by stage (planning/stages): outline, one interface per module, tasks derived by code, the main critic.
   node('plan_outline', 'agent', 0, 2),
   node('outline_critic_guard', 'agent', 0, 3),
   node('d_outline', 'decision', 0, 4),

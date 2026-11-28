@@ -35,7 +35,7 @@ def test_a_way_of_working_passes_but_its_near_copy_does_not() -> None:
 
 def test_plain_words_are_not_project_identifiers() -> None:
     """§VI.9 P3: a module named model.py or agent.py must not ban the words "model"/"agent" from rules."""
-    from adk.orchestration.evolution import _looks_like_identifier
+    from adk.orchestration.evolution.evolution import _looks_like_identifier
 
     assert not _looks_like_identifier("model") and not _looks_like_identifier("Agent")
     assert all(_looks_like_identifier(n) for n in ("q_learner", "TicTacToeGame", "game.py", "env2", "MAX_STEPS"))

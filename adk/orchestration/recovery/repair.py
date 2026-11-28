@@ -7,10 +7,10 @@ from typing import Any
 from adk.orchestration import agent_texts as texts
 from adk.core.models import read_json_state, write_json_state
 from adk.tools.planning import select_model_tier
-from adk.orchestration.findings import focus_symbols, repair_findings, symbol_sources
-from adk.orchestration.interface_view import labelled
-from adk.orchestration.import_hints import importable_names, own_declarations
-from adk.orchestration.failure_attribution import _is_test, _suspect_test, _test_to_review
+from adk.orchestration.verification.findings import focus_symbols, repair_findings, symbol_sources
+from adk.orchestration.building.interface_view import labelled
+from adk.orchestration.building.import_hints import importable_names, own_declarations
+from adk.orchestration.verification.attribution import _is_test, _suspect_test, _test_to_review
 from adk.orchestration.common import (
     _agent_for_path,
     available_package_imports,
@@ -19,8 +19,8 @@ from adk.orchestration.common import (
     _is_document,
     _RunState,
 )
-from adk.orchestration.plan_change import _spec_findings
-from adk.orchestration.failure_kinds import (
+from adk.orchestration.planning.change import _spec_findings
+from adk.orchestration.verification.failure_kinds import (
     is_mechanical_failure,
     _issue_signature,
     _issue_category,

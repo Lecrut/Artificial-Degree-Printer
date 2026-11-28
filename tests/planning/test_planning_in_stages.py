@@ -8,9 +8,9 @@ from typing import Any
 from unittest.mock import patch
 
 from adk.mocks.staged import outline_from_plan, staged_answer
-from adk.orchestration import plan_stages
-from adk.orchestration.plan_outline import module_order, outline_of, outline_violations
-from adk.orchestration.plan_tasks import planned_tasks
+from adk.orchestration.planning import stages as plan_stages
+from adk.orchestration.planning.outline import module_order, outline_of, outline_violations
+from adk.orchestration.planning.tasks import planned_tasks
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from tests.support.phased_orchestrator import _setup_test_orchestrator, _staged_agents
 from tests.support.planned_projects import SPEC
@@ -456,7 +456,7 @@ _STAR = {"modules": [
 def test_the_outline_critic_is_told_by_code_which_module_is_a_hub_and_whether_its_dependencies_meet() -> None:
     """§XXXIV, 01 of 2026-11-26: an environment, an agent and a baseline that only the experiment knew left all their wiring to
     `experiment.py` (240 of 509 lines). The critic gets the counts from code; `structure_facts` does not decide anything."""
-    from adk.orchestration.plan_outline import structure_facts
+    from adk.orchestration.planning.outline import structure_facts
 
     facts = structure_facts(_STAR)
     assert facts["direct_dependencies"] == {"env.py": 0, "agent.py": 0, "baseline.py": 0, "data.py": 0, "experiment.py": 4}

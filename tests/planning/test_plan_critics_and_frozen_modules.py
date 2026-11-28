@@ -16,7 +16,7 @@ _EXPERIMENT = (
 
 
 def _two_module_outline(baseline_provides: list[str]) -> dict:
-    from adk.orchestration.plan_outline import outline_of
+    from adk.orchestration.planning.outline import outline_of
 
     outline = outline_of({
         "modules": [
@@ -47,7 +47,7 @@ def test_the_module_critic_sees_the_interface_without_a_written_body(tmp_path: P
 
 
 def test_a_promise_written_with_a_keyword_is_the_name_after_it() -> None:
-    from adk.orchestration.plan_outline import provided_name
+    from adk.orchestration.planning.outline import provided_name
 
     assert provided_name("class ZScoreDetector: <Class>") == "ZScoreDetector"
     assert provided_name("def run() -> None") == "run"
@@ -77,7 +77,7 @@ def test_an_accepted_consumer_still_pins_a_name_the_outline_promises(tmp_path: P
 
 
 def test_reopened_consumer_does_not_block_dependency_after_outline_revision(tmp_path: Path) -> None:
-    from adk.orchestration.plan_outline import outline_of
+    from adk.orchestration.planning.outline import outline_of
     from tests.support.staged_planning import _make_orch
 
     orch = _make_orch(tmp_path)
@@ -121,7 +121,7 @@ def test_reopened_consumer_does_not_block_dependency_after_outline_revision(tmp_
 
 
 def test_the_critics_read_every_body_as_an_ellipsis() -> None:
-    from adk.orchestration.interface_view import interface_view
+    from adk.orchestration.building.interface_view import interface_view
 
     source = 'class A:\n    """Doc."""\n\n    def go(self, x: int) -> int:\n        """Go."""\n        return x + 1\n'
     view = interface_view(source)

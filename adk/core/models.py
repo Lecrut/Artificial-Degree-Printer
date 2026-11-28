@@ -6,7 +6,6 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-TaskStatus = Literal["TODO", "WAITING", "IN_PROGRESS", "DONE", "FAILED"]
 GateVerdict = Literal["PASS", "FAIL"]
 ModelTier = Literal["SML", "LRM"]
 

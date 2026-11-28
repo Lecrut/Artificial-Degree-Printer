@@ -6,9 +6,9 @@ from pathlib import Path
 
 from adk.mocks.staged import outline_from_plan
 from adk.orchestration.common import available_package_imports
-from adk.orchestration.interface_view import interface_view
-from adk.orchestration.plan_sketch import source_to_sketch
-from adk.orchestration.planning import _existing_code
+from adk.orchestration.building.interface_view import interface_view
+from adk.orchestration.planning.sketch import source_to_sketch
+from adk.orchestration.planning.phase import _existing_code
 from tests.support.staged_planning import (
     _MOD_A,
     _base_plan,
@@ -49,7 +49,7 @@ def test_an_imported_existing_module_joins_the_plan_with_its_own_source() -> Non
         PATHFINDING_BASELINE_CONFIG_CODE,
         PATHFINDING_BASELINE_CORE_CODE,
     )
-    from adk.orchestration.plan_existing import _with_existing
+    from adk.orchestration.planning.existing_code import _with_existing
 
     existing = {"core.py": PATHFINDING_BASELINE_CORE_CODE, "config.py": PATHFINDING_BASELINE_CONFIG_CODE, "unused.py": "x = 1\n"}
     plan = {"interfaces": {"run.py": "from core import search_grid\n\ndef run() -> None:\n    ...\n"}}

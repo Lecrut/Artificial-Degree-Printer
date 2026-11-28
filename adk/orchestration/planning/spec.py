@@ -11,7 +11,7 @@ from adk.core.models import ModelTier
 from adk.hypergraph import Hypergraph, build_from_plan, save
 from adk.hypergraph.oracles import is_stub
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.interface_view import interface_view
+from adk.orchestration.building.interface_view import interface_view
 from adk.tools.verification.contract_check import stub_source
 
 

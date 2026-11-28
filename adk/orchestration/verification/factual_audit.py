@@ -15,7 +15,7 @@ from adk.tools.verification import (
     run_isolated_tests,
 )
 from adk.orchestration.common import _fit_items
-from adk.orchestration.failure_kinds import _collect_report_issues
+from adk.orchestration.verification.failure_kinds import _collect_report_issues
 
 
 _ROMAN = {"i": 1, "v": 5, "x": 10}

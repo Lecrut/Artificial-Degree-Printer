@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.failure_kinds import _issue_category
+from adk.orchestration.verification.failure_kinds import _issue_category
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from adk.tools.verification import run_isolated_tests
 from tests.support.adk_sandbox import _clone_adk_env

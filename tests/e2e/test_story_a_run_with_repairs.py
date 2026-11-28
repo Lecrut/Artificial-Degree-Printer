@@ -31,7 +31,14 @@ _E2E_IFACES = {"src/config.py": "N_GAMES: int = 3\nSEEDS: list[int] = [0, 1]\n",
 _E2E_IMPL = {
     "src/config.py": _E2E_IFACES["src/config.py"],
     "src/game.py": 'from src.config import N_GAMES\n\n\ndef play(seed: int) -> int:\n    """Wins."""\n    return (seed + N_GAMES) % 2\n',
-    "src/experiment.py": 'from src.config import SEEDS\nfrom src.game import play\n\n\ndef run_experiment() -> list[int]:\n    """Wins."""\n    return [play(s) for s in SEEDS]\n',
+    # The experiment writes results.csv: a clean exit without it measured nothing (§XL.2).
+    "src/experiment.py": (
+        'from src.config import SEEDS\nfrom src.game import play\n\n\ndef run_experiment() -> list[int]:\n    """Wins."""\n'
+        "    wins = [play(s) for s in SEEDS]\n"
+        '    with open("results.csv", "w", encoding="utf-8") as f:\n'
+        '        f.write(f"method,metric,value,std_dev,n_runs\\nq,wins,{sum(wins)},0.5,{len(wins)}\\n")\n'
+        "    return wins\n"
+    ),
 }
 
 

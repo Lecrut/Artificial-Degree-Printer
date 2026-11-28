@@ -9,9 +9,9 @@ from types import SimpleNamespace
 from adk.mocks import code_fixtures as fx
 from adk.mocks.scenarios import config_source
 from adk.orchestration.common import _RunState
-from adk.orchestration.failure_attribution import _pytest_culprits, _traceback_culprit
-from adk.orchestration.findings import repair_findings
-from adk.orchestration.recovery import RecoveryMixin
+from adk.orchestration.verification.attribution import _pytest_culprits, _traceback_culprit
+from adk.orchestration.verification.findings import repair_findings
+from adk.orchestration.recovery.generations import RecoveryMixin
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from adk.tools.verification import test_runner
 from tests.support.failed_vertex_project import _CONFIG as _CONFIG_failed_vertex_project
@@ -277,7 +277,7 @@ def _failure(version: str, exc: str = "IndexError: index 2 is out of bounds for 
 
 
 def test_a_test_is_suspect_when_its_error_survives_two_versions_of_a_module_that_never_passed():
-    from adk.orchestration.failure_attribution import _suspect_test
+    from adk.orchestration.verification.attribution import _suspect_test
 
     assert _suspect_test(_pair("failed", [_failure("a1"), _failure("b2")]), "agent.py", "tests/test_agent.py")
     assert not _suspect_test(_pair("failed", [_failure("a1"), _failure("a1")]), "agent.py", "tests/test_agent.py")  # same code twice: not a rewrite
@@ -290,7 +290,7 @@ def test_a_test_is_suspect_when_its_error_survives_two_versions_of_a_module_that
 def test_a_test_whose_error_survives_two_rewrites_of_the_test_is_not_the_suspect_even_against_a_verified_module():
     """§XXXVI: 01, 2026-11-26: the correct `test_get_legal_actions_terminated_game` was rewritten fifteen times
     against `environment.py`, which was `verified` (it compiled) and never set `_terminated`."""
-    from adk.orchestration.failure_attribution import _suspect_test
+    from adk.orchestration.verification.attribution import _suspect_test
 
     twice = [_failure("t1", "assert 2 == 0"), _failure("t2", "assert 2 == 0")]
     assert not _suspect_test(_pair("verified", [], test_history=twice), "agent.py", "tests/test_agent.py")
@@ -364,8 +364,28 @@ def test_a_hung_test_is_charged_to_the_code_the_test_called_not_to_the_newest_fr
 
 
 def test_every_workspace_file_of_a_traceback_is_named(tmp_path: Path) -> None:
-    from adk.orchestration.failure_attribution import _traceback_files
+    from adk.orchestration.verification.attribution import _traceback_files
 
     ws = tmp_path / "ws"
     trace = f'  File "{ws / "a.py"}", line 3, in f\n  File "{ws / "src" / "b.py"}", line 9, in g\n  File "C:\\lib\\x.py", line 1, in h\n'
     assert _traceback_files(trace, ws) == {"a.py", "src/b.py"}
+
+
+def test_a_frame_outside_the_project_is_nobodys_culprit() -> None:
+    """01 of 27.11: `R3_2` was charged to `Lib/unittest/mock.py` and the repair went nowhere."""
+    nl = chr(10)
+    issue = nl.join([
+        "Pytest failure:", "___ test_x ___", "tests/test_pipeline.py:53: in test_x", "    mock.assert_called_once()",
+        "C:/Python313/Lib/unittest/mock.py:950: in assert_called_once", "    raise AssertionError(msg)", "E   AssertionError: Called 0 times.",
+    ])
+    assert _pytest_culprits(issue) == [("tests/test_pipeline.py", True)]
+
+
+def test_a_missing_name_the_plan_promises_the_neighbour_is_the_neighbours_fault() -> None:
+    from adk.hypergraph import Edge, Hypergraph
+    from adk.orchestration.verification.attribution import _neighbour_behind_plan
+
+    h = Hypergraph({}, {"I:evaluator.py": Edge("I:evaluator.py", "I", {}, spec={"symbols": {"evaluate_match": {}, "compute_baseline_stats": {}}})})
+    issue = "Import contract violation: experiment.py imports compute_baseline_stats from evaluator.py, which that module does not define. Available in evaluator.py: x."
+    assert _neighbour_behind_plan(h, issue) == "evaluator.py"
+    assert _neighbour_behind_plan(h, issue.replace("compute_baseline_stats", "invented_name")) is None  # the importer invented it

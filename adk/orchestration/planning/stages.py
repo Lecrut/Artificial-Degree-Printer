@@ -1,7 +1,7 @@
 """Planning in stages (§XVI, 2026-11-21). One plan grows through four stages; nothing ever goes back to the start.
 
 1. Outline (`plan_outline.md`): modules with purpose, dependencies and promised names, entrypoint, figures, metrics,
-   chapters. Checked by code (`plan_outline.outline_violations`), then by its critic (`outline_critic_guard.md`).
+   chapters. Checked by code (`planning.outline.outline_violations`), then by its critic (`outline_critic_guard.md`).
 2. Interfaces, one module at a time, dependencies first (`plan_module.md`): each sees the accepted interfaces it
    builds on, is checked by code against them, then by its critic (`module_critic_guard.md`). Accepted = frozen. The
    author declares a sketch with no place for a body, and the harness builds the interface from it (`plan_sketch`);
@@ -22,16 +22,16 @@ from typing import Any
 
 from adk.hypergraph.validate import code_violations
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.interface_view import interface_view
-from adk.orchestration.plan_existing import _with_existing
-from adk.orchestration.plan_outline import (
+from adk.orchestration.building.interface_view import interface_view
+from adk.orchestration.planning.existing_code import _with_existing
+from adk.orchestration.planning.outline import (
     changed_modules, dependents, existing_names, kept_as_is, module_entry, module_files, module_order, outline_of, outline_view,
     outline_violations, provided_name, structure_facts,
 )
-from adk.orchestration.plan_sketch import sketch_to_source, source_to_sketch
-from adk.orchestration.plan_spec import plan_targets
-from adk.orchestration.plan_tasks import planned_tasks
-from adk.orchestration.planning import _existing_code
+from adk.orchestration.planning.sketch import sketch_to_source, source_to_sketch
+from adk.orchestration.planning.spec import plan_targets
+from adk.orchestration.planning.tasks import planned_tasks
+from adk.orchestration.planning.phase import _existing_code
 from adk.tools.planning import select_planning_tier
 from adk.tools.verification.contract_check import stub_source
 

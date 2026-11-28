@@ -48,6 +48,7 @@ Dokument narastający. Każdy audyt dopisywany jest jako nowa, datowana sekcja; 
 | 2026-11-27 | **Przegląd XXIV — przebieg 01 z 26.11 wieczorem: poprawny test obwiniany 7 rund, rozdział z odwołaniem do zniknętego symbolu niewidoczny dla naprawy, brak podpowiedzi `typing` → §XXXVI** | `environment.py` nie ustawiał `_terminated`, a `verified` znaczyło tylko „kompiluje się”; 9 napraw tezy bez rozdziału 3; F821 `Dict`/`List`/`Any` ×3 | **wdrożone: `_suspect_test` symetrycznie, odwołanie w ustaleniu `ref_compiler`, `TYPING_NAMES` + 3 testy; reszta obserwacji bez zmian** |
 | 2026-11-27 | **Audyt XXV — pogłębiona analiza przerwanego przebiegu 01 z 26.11 wieczorem (piaskownica): sabotaż redesignu nr 2, pętla `experiment`↔`evaluator`, porwanie napraw `D1_10`, wojna promptów Gymnasium, luki w §XXXVI.2 i ciała w `task_planner` → §XXXVII** | redesign nr 2 mieli przez 23 min działające `verified` moduły (`implementation_audit` pokazuje stare błędy, `redesign_rules` puszcza puste `change`, `earlier_rounds` zachęca do kopiowania Rundy 1); ping-pong `R3_1`↔`R4_1` + przedwczesny `results.csv=verified`; `D1_10` traci 3/3 napraw na `trainer.py` i `failed` test; krytycy + `plan_evolution` mutują `plan_module.md` pod Gymnasium wbrew §XXXV.2; dziura w `_document_context` i brak `stale` rozdziałów po redesignie; pełne ciała i łamanie `TEST_OUTSIDE_SPEC` z `task_planner` | **wdrożone 2026-11-27 (§XXXIX.1, wszystkie 7 punktów; bez przebiegu na żywo)** |
 | 2026-11-27 | **Audyt XXVI — przegląd promptów i payloadów wszystkich 14 agentów na danych z żywego przebiegu + skan bezsprzecznego martwego kodu i jawnych sprzeczności (`P6` / `§XXXVIII.6`) → §XXXVIII** | `task_planner` 89k zn. (>40k duplikatów i historii `state.tasks`); `evolution_architect` 2×13,2k tego samego tekstu i brak wglądu w mutowany prompt; przechodnie `dependencies` w `plan_module` (pułapka `USES_UNDECLARED`); pisarze dostają same klucze BibTeX (145 zn., zero tytułów/abstraktów) i brak `thesis_statement`, za to pakiety Pythona i zakazane `may_cite`; `seed_coder` traci własny `interface` po nadpisaniu stuba; 9 z 14 agentów poza `test_prompt_consistency.py`; martwy kod i sprzeczności (`document_chars.py` poza `BUILTIN_VERIFICATION_MODULES`, `print_summary.py`, `TaskItem`, `use_docker`, `csv_content`/`plot_script`/`bibtex_entries`, W4, `remediation_planner.md`, `_reset_volatile_state`) | **wdrożone 2026-11-27 P1–P6 w całości (§XXXIX.2, §XXXIX.4); bez przebiegu na żywo** |
+| 2026-11-28 | **Audyt XXVII — benchmarki 27.11 (01, 02, 03; LRM) → §XL** | 02 prawdziwy sukces; 03 fałszywy `COMPLETED`: `run_experiment` bez obliczeń i zapisu, `DATA_PRODUCED` i `results.csv = verified` bez pliku, rozdział wyników zmyślony; 01 `COMPLETED_WITH_GAPS` po 5 przeplanowaniach i 2 przeprojektowaniach (atrybucja do `unittest/mock.py` i do importera zamiast sąsiada za planem, nieczytelne `DATA_FAILED`) | **wdrożone z testami: brak `results.csv` po udanym uruchomieniu = `DATA_FAILED` (§XL.2), trzy poprawki atrybucji i logu (§XL.3); `adk/orchestration/` w 6 podfolderach, martwy kod usunięty (§XL.5); bez przebiegu na żywo** |
 ---
 
 # Audyt I — 2026-11-08: Logi benchmarkowe 01 i 02, fiksacja na monolicie "core.py", struktura pętli błędów i ziarnistość zadań
@@ -5435,3 +5436,59 @@ Każdy punkt sprawdzony w kodzie przed zmianą; testy 451/451, ruff, lint i test
 7. `remediation_planner.md`: tester naprawia tylko testy, eksperyment, wyniki i wykresy należą do `seed_coder`; komentarz w `verification.py` opisuje, że zgodę na obronę liczy harness.
 8. `main.py`: `_reset_volatile_state` usuwa także `plan_outline.json`, `implementation_audit.json` i `factual_audit.json`.
 9. `CODEBASE_MAP.md` i opisy `/flow` w viewerze: najpierw jedna runda `task_planner`, przeprojektowanie dopiero potem (`_redesign_due`), oraz informacja o `HARNESS_FORCE_TIER=LRM`; reguła prostych typów dopisana do `plan_outline.md`. Topologia schematu `/flow` była poprawna (tylko opisy i komentarz).
+
+---
+
+# §XL — 2026-11-28: benchmarki 27.11 (01, 02, 03; tylko LRM `qwen3.6:35b`) — fałszywy sukces 03 bez `results.csv` (wdrożone)
+
+## §XL.1. Wyniki przebiegu
+
+| zadanie | status | czas | stan faktyczny |
+|---|---|---|---|
+| 01 tictactoe | `COMPLETED_WITH_GAPS` (`PRZEPLANOWANIE BEZ POSTEPU`) | 152 min | uczciwa porażka: `environment.py`, `experiment.py` i `thesis.md#ch2` `failed`, 31× `DATA_FAILED`, brak PDF; 5 przeplanowań, 2 przeprojektowania; czas LLM po ok. 30% na planowanie, budowę i naprawy |
+| 02 anomaly | `COMPLETED` | 62 min | prawdziwy sukces: 15/15 wierzchołków `verified`, `results.csv` z 4 wierszami (2 metody × 2 metryki, `n_runs` 10), PDF |
+| 03 pathfinding | `COMPLETED` | 13 min | **fałszywy sukces** (§XL.2) |
+
+## §XL.2. Udane uruchomienie bez `results.csv` przechodziło jako wyprodukowane dane
+
+`code/experiment.py:run_experiment` w 03 kończy się na przypisaniu zmiennych z `config` — niczego nie liczy i nie zapisuje. Mimo to wierzchołek przeszedł na `verified`, harness zalogował dwa razy `DATA_PRODUCED`, wierzchołek `results.csv` dostał `verified` bez pliku na dysku, Gate 3 przepuścił obronę, a rozdział wyników opisuje „monotoniczny spadek liczby rozpatrywanych węzłów”, którego nikt nie zmierzył.
+
+Przyczyna: trzy warstwy traktowały brak pliku jako „eksperyment jeszcze nie ruszył”, a nie „eksperyment nic nie dał”:
+- `building._results_format_problem` → `""` dla brakującego pliku („brak zgłosi sam eksperyment” — ale runner nie sprawdzał istnienia, tylko kod wyjścia);
+- `common._declared_vs_measured_metrics` → `[]`, gdy nie ma żadnego wiersza;
+- więc ani bramka metryk przy zadaniu entrypointu (`verification.py`), ani Gate 3 nie miały czego zablokować.
+
+**Wdrożone:** `building._refresh_experiment_after_code` — uruchomienie zakończone sukcesem (nie `skipped`), po którym w katalogu workspace nie ma `results.csv`, jest porażką z `agent_texts.EXPERIMENT_NO_RESULTS` (runner usuwa stary plik przed startem, więc brak po starcie = nic nie zapisano). Dalej działa zwykła ścieżka `DATA_FAILED`: zadanie entrypointu idzie do naprawy. Tekst `EXPERIMENT_NO_RESULTS` mówi koderowi, co ma zrobić (policzyć zadeklarowane metryki i zapisać je do `results.csv` w katalogu workspace). Pozostałe dwie warstwy bez zmian: po tej poprawce brak pliku przy działającym entrypoincie już do nich nie dochodzi. Test: `tests/verification/test_running_tests_and_the_experiment.py::test_an_experiment_that_exits_cleanly_without_results_csv_failed` (prawdziwe uruchomienie pustego `run_experiment`; bez poprawki pada). Fikstura `tests/e2e/test_story_a_run_with_repairs.py` utrwalała ten sam błąd (zaimplementowany `run_experiment` zwracał listę bez zapisu `results.csv`, a test oczekiwał `COMPLETED`); teraz zapisuje wiersz w formacie kontraktu.
+
+## §XL.3. Poprawki z analizy 01 z 27.11 (były w kopii roboczej bez wpisu)
+
+- `DATA_FAILED` loguje koniec tracebacku (`[-600:]`), nie początek: pierwsze 400 znaków to była tylko ścieżka runnera (31 zdarzeń w 01, żadne czytelne).
+- `failure_attribution._pytest_culprits`: ramki spoza projektu (ścieżka bezwzględna, `site-packages`) nie są winnym — `R3_2` było obciążone `Lib/unittest/mock.py` i naprawa szła donikąd.
+- `failure_attribution._neighbour_behind_plan` (wołane w `verification.py`): naruszenie kontraktu importu „X imports N from M, which that module does not define”, gdy plan (σ worka `I:M`) obiecuje `N` modułowi `M`, obciąża `M` (sąsiad jest za planem), nie importera — `experiment.py` dostał 3 naprawy, a brakowało `compute_baseline_stats` w `evaluator.py`.
+- Testy: `tests/verification/test_culprit_attribution.py` (dwa nowe).
+
+## §XL.4. Do sprawdzenia w następnym przebiegu
+
+Powtórka 01 i 03: czy 03 dostaje naprawę entrypointu zamiast fałszywego `COMPLETED`, czy 01 z poprawkami atrybucji (§XL.3) dochodzi do `verified` `experiment.py`. Na dziś jedynie 02 przechodzi naprawdę; przepływ nie jest potwierdzony jako domknięty.
+
+## §XL.5. Porządek w `adk/orchestration/` (decyzja użytkownika, 2026-11-28)
+
+36 płaskich plików → 6 podfolderów jak w `adk/agents/` i `adk/tools/` (`planning`, `building`, `verification`, `evolution`) plus `recovery` i `run`; prefiks `plan_` zniknął, bo mówi go folder. Wspólne zostają `agent_texts.py` i `common.py`. Przeniesione przez `git mv` (historia plików zachowana), importy przepisane skryptem, a w komentarzach i docstringach zmienione tylko jednoznaczne odwołania. Treść modułów bez zmian poza usunięciem martwego kodu: `planning/existing_code._entrypoint` i `core/models.TaskStatus` (skan AST: 0 odwołań; funkcji używanych tylko przez testy nie ma). Wpisy audytu sprzed tej daty używają starych nazw:
+
+| stara nazwa | nowa ścieżka |
+|---|---|
+| `planning.py` | `planning/phase.py` |
+| `plan_stages`, `plan_outline`, `plan_sketch`, `plan_spec`, `plan_tasks`, `plan_interfaces`, `plan_change` | `planning/stages`, `outline`, `sketch`, `spec`, `tasks`, `interfaces`, `change` |
+| `plan_existing` | `planning/existing_code` |
+| `agent_task_templates` | `planning/task_templates` |
+| `building.py`, `context`, `interface_view`, `import_hints`, `write_gate`, `spec_gate` | `building/builder.py`, `building/context` itd. |
+| `verification.py` | `verification/step.py` |
+| `failure_attribution` | `verification/attribution` |
+| `failure_kinds`, `findings`, `factual_audit` | `verification/…` (te same nazwy) |
+| `evolution`, `plan_evolution` | `evolution/evolution`, `evolution/critic_evolution` |
+| `repair`, `redesign`, `redesign_rules`, `implementation_audit` | `recovery/…` (te same nazwy) |
+| `fragment_replan` | `recovery/replan` |
+| `recovery.py` | `recovery/generations.py` |
+| `schedule`, `routing`, `gates`, `resume`, `snapshots` | `run/…` (te same nazwy) |
+
+Ponad limit 400 linii nadal: `verification/step.py` (453), `recovery/repair.py` (423), `agent_texts.py` (501, celowo jedno źródło tekstów) — bez podziału w tej zmianie.

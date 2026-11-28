@@ -15,7 +15,7 @@ from adk.hypergraph.observe import absorbable
 from adk.hypergraph.oracles import run_fingerprint, static_defects, stub_functions, validate_test_on_stubs
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.common import MaterializationError
-from adk.orchestration.failure_kinds import _PYTEST_E_LINE
+from adk.orchestration.verification.failure_kinds import _PYTEST_E_LINE
 from adk.hypergraph.model import module_import_path
 
 

@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from adk.mocks import code_fixtures as fx
-from adk.orchestration import repair
+from adk.orchestration.recovery import repair
 from adk.orchestration.common import _RunState
-from adk.orchestration.failure_attribution import _suspect_test
+from adk.orchestration.verification.attribution import _suspect_test
 from tests.support.failed_vertex_project import _TASKS, _events, _planned, _seen
 from tests.support.queue_state import _state
 
@@ -92,7 +92,7 @@ def test_the_same_breach_of_the_specification_does_not_skip_the_planner(tmp_path
 
 
 def test_a_test_is_reviewed_after_the_module_failed_on_it(tmp_path: Path):
-    from adk.orchestration.failure_attribution import _test_to_review
+    from adk.orchestration.verification.attribution import _test_to_review
 
     _orch_, h = _planned(tmp_path)
     assert _test_to_review(h, "core.py", set()) is None  # no failures yet
@@ -115,7 +115,7 @@ def test_the_review_goes_to_the_author_of_the_test_once_and_costs_no_repair_atte
 
 
 def test_a_verified_test_is_reviewed_only_after_the_interface_of_its_module_changed(tmp_path: Path):
-    from adk.orchestration.failure_attribution import _test_to_review
+    from adk.orchestration.verification.attribution import _test_to_review
 
     orch, h = _planned(tmp_path)
     _blamed_once(h)
@@ -127,7 +127,7 @@ def test_a_verified_test_is_reviewed_only_after_the_interface_of_its_module_chan
 
 
 def test_a_changed_interface_allows_one_more_review_of_the_same_test(tmp_path: Path):
-    from adk.orchestration.failure_attribution import _test_to_review
+    from adk.orchestration.verification.attribution import _test_to_review
 
     orch, h = _planned(tmp_path)
     _blamed_once(h)
@@ -140,7 +140,7 @@ def test_a_changed_interface_allows_one_more_review_of_the_same_test(tmp_path: P
 
 
 def test_only_a_change_of_the_call_contract_counts_as_a_change_of_the_interface():
-    from adk.orchestration.plan_change import _contract_changed
+    from adk.orchestration.planning.change import _contract_changed
 
     old = 'def f(x: int) -> tuple[int, int]:\n    """Old."""\n    ...\n'
     docs = 'def f(x: int) -> tuple[int, int]:\n    """New words."""\n    ...\n'
@@ -175,7 +175,7 @@ def test_a_review_that_changes_nothing_sends_the_next_repair_to_the_module(tmp_p
 
 
 def test_a_test_of_another_module_named_in_the_failures_is_reviewed_too(tmp_path: Path):
-    from adk.orchestration.failure_attribution import _test_to_review
+    from adk.orchestration.verification.attribution import _test_to_review
 
     _orch_, h = _planned(tmp_path)
     foreign = "Pytest failure:\ntests\\test_other.py:5: in test_y\ncore.py:9: in f\nE TypeError: unhashable"

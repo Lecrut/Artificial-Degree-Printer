@@ -213,8 +213,8 @@ def test_two_researchers_and_three_tier_routing():
 
     def _research(key: str) -> list[str]:
         """The researchers of the derived queue (§XVI) for the benchmark's document type."""
-        from adk.orchestration.plan_outline import outline_of
-        from adk.orchestration.plan_tasks import planned_tasks
+        from adk.orchestration.planning.outline import outline_of
+        from adk.orchestration.planning.tasks import planned_tasks
 
         spec = BENCHMARK_TASKS[key]
         outline = outline_of(SimulatedAgents(SCENARIOS[key])("plan_outline", "", {"user_prompt": "x"}, "LRM"))

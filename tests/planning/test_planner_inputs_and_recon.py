@@ -53,7 +53,9 @@ def test_the_experiment_time_limit_reaches_planner_and_coder() -> None:
     """K3: the harness stopped the experiment after 180 s, and no prompt or payload said so."""
     import inspect
 
-    from adk.orchestration import context, planning
+    from adk.orchestration.building import context
+
+    from adk.orchestration.planning import phase as planning
     from adk.tools.building.experiment_runner import (
         EXPERIMENT_TIMEOUT_S,
         execute_workspace_experiment,
@@ -100,8 +102,8 @@ def test_research_first_task_ordering_in_planner():
     from adk.benchmarks import BENCHMARK_TASKS
     from adk.mocks.agents import SimulatedAgents
     from adk.mocks.scenarios import SCENARIOS
-    from adk.orchestration.plan_outline import outline_of
-    from adk.orchestration.plan_tasks import planned_tasks
+    from adk.orchestration.planning.outline import outline_of
+    from adk.orchestration.planning.tasks import planned_tasks
 
     for task_id, spec in BENCHMARK_TASKS.items():
         agents = SimulatedAgents(SCENARIOS[task_id])
@@ -157,8 +159,8 @@ def test_paper_card_extraction_and_arxiv_parser():
 def test_vertical_feature_slices_in_single_task_planner():
     """The derived queue interleaves code, its tests and the thesis; the outline carries the blueprint."""
     from adk.mocks.staged import outline_from_plan
-    from adk.orchestration.plan_outline import outline_of
-    from adk.orchestration.plan_tasks import planned_tasks
+    from adk.orchestration.planning.outline import outline_of
+    from adk.orchestration.planning.tasks import planned_tasks
     from tests.support.planned_projects import SPEC
 
     outline_res = call_agent("agents/planning/plan_outline.md", {"user_prompt": "Build Q-learning agent with unit tests and thesis documentation"}, model_tier="LRM", provider="mock")

@@ -180,3 +180,19 @@ def test_hung_test_is_a_finding_naming_the_test_not_an_exception(tmp_path: Path,
     assert res["status"] == "FAIL"
     hang = next(e for e in res["errors"] if e.startswith("Pytest failure"))
     assert "a test hung" in hang and "test_loop.py" in hang and "loop.py" in hang
+
+
+def test_an_experiment_that_exits_cleanly_without_results_csv_failed(tmp_path: Path) -> None:
+    """03 of 27.11: `run_experiment` only read its config, exited 0, and the harness logged DATA_PRODUCED with no file."""
+    from adk.orchestration import agent_texts as texts
+
+    orch = _orch(tmp_path)
+    (orch.workspace_dir / "experiment.py").write_text("def run_experiment() -> None:\n    n_runs = 3\n", encoding="utf-8")
+    orch.blueprint_path.write_text(json.dumps({"entrypoint": "experiment.py:run_experiment"}), encoding="utf-8")
+
+    before = orch.logger.events_path.read_text(encoding="utf-8") if orch.logger.events_path.exists() else ""
+    orch._refresh_experiment_after_code("experiment.py")
+
+    assert orch._last_experiment_error == texts.EXPERIMENT_NO_RESULTS
+    events = orch.logger.events_path.read_text(encoding="utf-8")[len(before):]  # the log is shared by the test session
+    assert '"DATA_FAILED"' in events and '"DATA_PRODUCED"' not in events

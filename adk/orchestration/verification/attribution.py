@@ -9,6 +9,7 @@ from typing import Any
 
 _TB_FRAME = re.compile(r"^(\S+?\.py):\d+: in ", re.MULTILINE)
 _HANG_FRAME = re.compile(r'^File "([^"]+?\.py)", line (?:\d+|\?+) in ', re.MULTILINE)
+_OUTSIDE = re.compile(r"^([A-Za-z]:|/)")  # an absolute path: the project's frames are relative to the workspace
 _TB_EXC = re.compile(r"^E\s+([A-Za-z_][\w.]*)", re.MULTILINE)
 # What surfaces only in the test frame and is a wrong result of the code under test: a failed assertion (pytest
 # prints `E   assert a == b` for it, so its "exception" reads `assert`). Every other exception raised in the
@@ -45,6 +46,9 @@ def _pytest_culprits(issue: str) -> list[tuple[str, bool]]:
         frames = [f.replace("\\", "/") for f in _TB_FRAME.findall(section)]
         if not frames:
             continue
+        # A frame outside the project (the stdlib's `unittest/mock.py`, a package) is nobody's file: 01 of 27.11 charged
+        # `R3_2` to `Lib/unittest/mock.py`, and the repair went nowhere. The project's own frames decide.
+        frames = [f for f in frames if not _OUTSIDE.match(f) and "site-packages" not in f] or frames
         code_frames = [f for f in frames if not _is_test(f)]
         if code_frames:
             found.append((code_frames[-1], True))
@@ -110,6 +114,21 @@ def _traceback_files(text: str, workspace: Path) -> set[str]:
         except (ValueError, OSError):
             continue
     return found
+
+
+_NOT_DEFINED = re.compile(r"(\S+\.py) imports (.+?) from (\S+\.py), which that module does not define")
+
+
+def _neighbour_behind_plan(h: Any, issue: str) -> str | None:
+    """The module an import contract violation is about, when the plan promises it the missing name (σ): the importer
+    used what the plan declares and the neighbour's file is behind the plan (01 of 27.11: `experiment.py` was charged,
+    three repairs of it kept importing `compute_baseline_stats`, which `evaluator.py` was still to get). None otherwise."""
+    m = _NOT_DEFINED.search(issue)
+    edge = h.edges.get(f"I:{m.group(3)}") if m else None
+    if m is None or edge is None:
+        return None
+    declared = set(edge.spec.get("symbols", {}))
+    return m.group(3) if any(n.strip() in declared for n in m.group(2).split(",")) else None
 
 
 def _suspect_test(h: Any, module: str, test_file: str) -> bool:

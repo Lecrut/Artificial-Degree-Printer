@@ -20,7 +20,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-from adk.orchestration.snapshots import STATE_FILES
+from adk.orchestration.run.snapshots import STATE_FILES
 
 # Rendered from thesis.md and the results: the run builds them again.
 _DERIVED = {"thesis.compiled.md", "thesis.compiled.tex", "thesis.tex", "thesis.html", "thesis.pdf", "thesis.compiled.pdf"}

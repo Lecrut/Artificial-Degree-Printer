@@ -21,7 +21,7 @@ from adk.orchestration.common import (
     _RunState,
     _agent_for_path,
 )
-from adk.orchestration.failure_kinds import _collect_report_issues, _issue_signature
+from adk.orchestration.verification.failure_kinds import _collect_report_issues, _issue_signature
 
 
 _POINTER_FINDING = re.compile(

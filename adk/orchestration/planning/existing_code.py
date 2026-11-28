@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from adk.hypergraph.model import module_import_path
-from adk.orchestration.plan_interfaces import _plan_interfaces
+from adk.orchestration.planning.interfaces import _plan_interfaces
 
 
 # `import m` / `from m import x`.
@@ -33,8 +33,3 @@ def _with_existing(plan_out: dict[str, Any], existing: dict[str, str] | None) ->
                 frontier.append(existing[rel])
                 added = True
     return {**plan_out, "interfaces": interfaces} if added else plan_out
-
-
-def _entrypoint(plan_out: dict[str, Any]) -> str:
-    blueprint = plan_out.get("academic_blueprint") if isinstance(plan_out.get("academic_blueprint"), dict) else {}
-    return str(blueprint.get("entrypoint") or plan_out.get("entrypoint") or "").strip()

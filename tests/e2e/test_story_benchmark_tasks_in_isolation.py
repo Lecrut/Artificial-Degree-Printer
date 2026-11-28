@@ -70,7 +70,7 @@ def test_benchmark_runner_single_task_in_isolated_tmp(tmp_path: Path):
     assert mutated[0]["injected_rule"] in sandbox_prompt.read_text(encoding="utf-8")
     # plot_run_fails: the figures script raises when the harness runs it after the experiment; the failure is the
     # figures module's, and its author repairs it.
-    assert of("DATA_FAILED")  # (the event keeps the first 400 characters of the traceback; the verdict names the file)
+    assert of("DATA_FAILED")  # (the event keeps the end of the traceback; the verdict names the file)
     assert any(e["status"] == "FAIL" and e["failed_file"] == "plot_results.py" for e in of("VERDICT"))
     # coder_breaks_signature + tester_uses_undeclared_name: both answers are refused before they reach the disk.
     assert len(of("SPEC_WRITE_REJECTED")) == 2

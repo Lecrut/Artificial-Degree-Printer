@@ -13,7 +13,7 @@ from adk.core.models import read_json_state
 from adk.hypergraph import Hypergraph
 from adk.hypergraph.observe import planned_module_for_test
 from adk.hypergraph.oracles import is_stub
-from adk.orchestration.interface_view import interface_for_test, interfaces_for_coder
+from adk.orchestration.building.interface_view import interface_for_test, interfaces_for_coder
 from adk.tools.building.experiment_runner import EXPERIMENT_TIMEOUT_S
 from adk.tools.building.thesis_publisher import _parse_bibtex_items
 

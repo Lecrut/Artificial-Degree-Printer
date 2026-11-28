@@ -117,8 +117,8 @@ def test_adk_neuro_symbolic_harness_structure():
         "hypergraph/model.py",
         "hypergraph/build.py",
         "hypergraph/observe.py",
-        "orchestration/context.py",
-        "orchestration/plan_change.py",
+        "orchestration/building/context.py",
+        "orchestration/planning/change.py",
         "agents/planning/plan_change_guard.md",
     ]
     missing = [rel for rel in expected_paths if not (adk_root / rel).exists()]

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from adk.hypergraph import code_violations, load
-from adk.orchestration.plan_interfaces import _plan_interfaces
+from adk.orchestration.planning.interfaces import _plan_interfaces
 from tests.support.sample_research_project import (
     _CONFIG,
     _ENTRY,
@@ -68,7 +68,7 @@ def test_undeclared_uses_duplicate_modules_and_missing_packages_are_violations()
 def test_planning_returns_violations_to_the_planner_then_builds_h_and_stubs(tmp_path: Path):
     """The module whose interface the code rejects goes back to its author alone (§XVI); then H and the stubs."""
     from adk.mocks.staged import sketch_of
-    from adk.orchestration.plan_sketch import sketch_to_source
+    from adk.orchestration.planning.sketch import sketch_to_source
     from tests.support.orchestrator_sandbox import _orch
     from tests.support.staged_planning import _run, _sketch
 
@@ -89,7 +89,7 @@ def test_planning_returns_violations_to_the_planner_then_builds_h_and_stubs(tmp_
     assert violations == [] and interfaces == {rel: sketch_to_source(sketch_of(src)) for rel, src in _GOOD.items()} and len(sent) == 2
     assert any("ENTRYPOINT_HAS_ARGUMENTS" in f for f in sent[1]["feedback"]) and "config" in sent[1]["previous_sketch"]["functions"][0]["signature"]
     # The main critic judges only the plan the code accepted, and sees its interfaces (stubs: no written bodies).
-    from adk.orchestration.interface_view import interface_view
+    from adk.orchestration.building.interface_view import interface_view
     assert len(reviewed) == 1 and reviewed[0]["interfaces"] == {rel: interface_view(src) for rel, src in interfaces.items()}
 
     h = orch._build_project_hypergraph(interfaces, {"entrypoint": _ENTRY, "metrics": ["f1"]}, plan["tasks"])
@@ -133,7 +133,7 @@ def test_declared_plots_module_is_not_required_to_be_imported_by_the_experiment(
 
 def test_results_contract_is_enforced_not_only_prompted(tmp_path: Path) -> None:
     """K5: 02 wrote a row per seed with a `seed` column; `method+metric` pointers then cited the first seed."""
-    from adk.orchestration.building import _results_format_problem
+    from adk.orchestration.building.builder import _results_format_problem
 
     good = tmp_path / "good.csv"
     good.write_text("method,metric,value,std_dev,n_runs\nensemble,f1,0.8,0.1,5\nzscore,f1,0.7,0.1,5\n", encoding="utf-8")

@@ -10,7 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 from adk.orchestration import agent_texts as texts
-from adk.orchestration import agent_task_templates as templates
+from adk.orchestration.planning import task_templates as templates
 
 
 # Repairs sent straight back to the failed file's author with the verification findings, before the one

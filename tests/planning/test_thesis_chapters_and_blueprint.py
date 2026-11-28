@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from adk.hypergraph import build_from_plan
-from adk.orchestration.factual_audit import thesis_missing_chapters
+from adk.orchestration.verification.factual_audit import thesis_missing_chapters
 from tests.support.phased_orchestrator import _setup_test_orchestrator, _staged_agents
 from tests.support.planned_projects import SPEC
 from tests.support.sample_research_project import _ENTRY, _GOOD
@@ -99,7 +99,7 @@ def test_a_section_task_maps_to_its_chapter():
 
 def test_the_thesis_is_complete_with_the_planned_chapters():
     """01: five planned chapters, the final gate demanded a sixth and Q1_CH6 wrote a chapter outside the plan."""
-    from adk.orchestration.factual_audit import thesis_missing_chapters
+    from adk.orchestration.verification.factual_audit import thesis_missing_chapters
 
     thesis = "\n".join(f"## Rozdział {n}: T\n\ntext" for n in range(1, 6))
     assert thesis_missing_chapters(thesis, {n: "" for n in range(1, 6)}) == []

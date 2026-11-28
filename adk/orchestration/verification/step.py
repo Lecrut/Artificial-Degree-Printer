@@ -5,9 +5,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from adk.orchestration.failure_attribution import _is_test, _pytest_culprits, _suspect_test, _traceback_culprit, _traceback_files
+from adk.orchestration.verification.attribution import _is_test, _neighbour_behind_plan, _pytest_culprits, _suspect_test, _traceback_culprit, _traceback_files
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.factual_audit import thesis_missing_chapters
+from adk.orchestration.verification.factual_audit import thesis_missing_chapters
 from adk.core.models import ValidationReport, read_json_state, write_json_state
 from adk.hypergraph import Hypergraph
 from adk.tools.verification import (
@@ -26,8 +26,8 @@ from adk.orchestration.common import (
     _declared_vs_measured_metrics,
     _degenerate_metrics,
 )
-from adk.orchestration.failure_kinds import _collect_report_issues
-from adk.orchestration.findings import headlines
+from adk.orchestration.verification.failure_kinds import _collect_report_issues
+from adk.orchestration.verification.findings import headlines
 
 
 def _task_scope(node_path: str, written: set[str], h: Hypergraph | None) -> dict[str, list[str]]:
@@ -388,6 +388,8 @@ class VerificationMixin:
                 lint_named = [p for issue in test_res.get("lint_warnings") or [] for p in self._workspace_paths_in(str(issue))]
                 if node_path in lint_named and not _is_test(node_path):
                     failed_file = node_path
+            if failed_file is None and h is not None:
+                failed_file = next((t for issue in contract_violations if (t := _neighbour_behind_plan(h, str(issue)))), None)
             if failed_file is None:
                 # Pointer findings name the code file a pointer aims at, but the pointer is the writer's (X6).
                 named = [

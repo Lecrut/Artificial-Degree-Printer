@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from adk.orchestration.plan_evolution import CRITIC_CATEGORY
+from adk.orchestration.evolution.critic_evolution import CRITIC_CATEGORY
 from adk.orchestrator import NeuroSymbolicOrchestrator
 
 RULE = "When you give an example in an interface, work out its value by hand before you write it, because the example is checked later against real code."

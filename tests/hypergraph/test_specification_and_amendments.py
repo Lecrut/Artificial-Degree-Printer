@@ -10,8 +10,8 @@ import pytest
 from adk.hypergraph import load
 from adk.mocks import code_fixtures as fx
 from adk.orchestration.common import MaterializationError
-from adk.orchestration.failure_kinds import HARNESS_ENFORCED_CATEGORIES, _issue_category
-from adk.orchestration.plan_change import _typos
+from adk.orchestration.verification.failure_kinds import HARNESS_ENFORCED_CATEGORIES, _issue_category
+from adk.orchestration.planning.change import _typos
 from tests.support.failed_vertex_project import _planned
 from tests.support.game_project import (
     _GAME,
@@ -133,7 +133,7 @@ def test_keep_tells_the_next_attempt_why_the_interface_stands(tmp_path: Path):
 
 
 def test_amendments_per_module_are_bounded(tmp_path: Path):
-    from adk.orchestration.plan_change import AMENDMENTS_PER_MODULE
+    from adk.orchestration.planning.change import AMENDMENTS_PER_MODULE
 
     orch, _ = _planned_game_project(tmp_path)
     seen = _planner_answers(orch, {"decision": "KEEP", "reason": "x"})

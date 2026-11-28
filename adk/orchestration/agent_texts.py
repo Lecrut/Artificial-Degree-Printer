@@ -10,7 +10,7 @@ from typing import Any
 
 
 # --- builder exceptions and write-gate rejections ------------------------------------------------------------------
-# A failure that is a rejected answer or a builder exception never feeds evolution (failure_kinds._issue_category): the
+# A failure that is a rejected answer or a builder exception never feeds evolution (verification.failure_kinds._issue_category): the
 # gate already returned the exact reason to the agent. The pattern matches the messages below.
 GATE_REJECTION = re.compile(
     r"raised an exception|write rejected|symbol edits rejected|nothing from this answer was saved|was not saved"
@@ -101,7 +101,7 @@ CALL_SITE_HINT = " -- called from {}:{} (`{}`); check what that call passes agai
 TEST_CALL_HINT = " -- called directly by the test at {}:{} (`{}`); if the values that call passes (arguments, data the test built) are what breaks this code, the test is wrong, not this file: say so in your answer"
 OWN_NAME_HINT = " -- `{}` is declared by the planned interface of this file; define it at module level again (a rewrite dropped it)"
 IMPORT_HINT = " -- add the import line `{}` at the top of the file"  # D2: the one line from the source of truth
-EXPERIMENT_NO_RESULTS = "The experiment did not produce results.csv"
+EXPERIMENT_NO_RESULTS = "The experiment did not produce results.csv: the entrypoint must compute the declared metrics and write them to results.csv in the workspace root"
 
 
 DOCUMENT_OUTLINE_LABEL = "[DOCUMENT OUTLINE (headings)]:"

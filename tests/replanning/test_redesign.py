@@ -10,12 +10,12 @@ from typing import Any, Callable
 from adk.hypergraph import load
 from adk.mocks.staged import sketch_of, staged_answer
 from adk.orchestration.common import _RunState
-from adk.orchestration.implementation_audit import (
+from adk.orchestration.recovery.implementation_audit import (
     audit_facts,
     compact_audit,
     source_facts,
 )
-from adk.orchestration.redesign_rules import decisions_of, revision_violations, settled_decisions
+from adk.orchestration.recovery.redesign_rules import decisions_of, revision_violations, settled_decisions
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from tests.support.staged_planning import _MOD_A, _MOD_B, _base_plan, _make_orch, _run
 
@@ -198,7 +198,7 @@ def test_what_the_designer_reads_has_no_body_and_shrinks_what_passed_quietly(tmp
 
 def test_the_statuses_and_the_outline_must_say_the_same(tmp_path: Path) -> None:
     _orch, plan_out, _state = _project(tmp_path)
-    from adk.orchestration.plan_outline import outline_of
+    from adk.orchestration.planning.outline import outline_of
 
     old = outline_of(plan_out["outline"])
     answer = _split_outline(plan_out["outline"])
@@ -217,7 +217,7 @@ def test_keep_restores_the_old_entry_and_new_for_an_existing_module_means_change
     """§XXX P1, 01: the designer called `config.py`, `random_agent.py`, `experiment.py` correct (`keep`) but rewrote the whole
     JSON with reworded `purpose`/`provides`. `keep` is a promise: the old entry comes back, the module stays `keep`."""
     _orch, plan_out, _state = _project(tmp_path)
-    from adk.orchestration.plan_outline import outline_of
+    from adk.orchestration.planning.outline import outline_of
 
     old = outline_of(plan_out["outline"])
     answer = _split_outline(plan_out["outline"])
@@ -491,7 +491,7 @@ def test_a_test_the_plan_has_not_had_written_yet_is_not_judged_with_the_module_i
     `get_current_player`, which no interface declares) and failed `D1_1`, `D2_1` and `R4_1`, the module's own verification.
     The hypergraph knows better: the test vertex is `spec`. The file stays (the tester repairs it, imports included); it
     joins the scope with the tester's own task."""
-    from adk.orchestration.verification import _task_scope
+    from adk.orchestration.verification.step import _task_scope
 
     orch, _state, result, _calls = _redesign(tmp_path)
     assert result is not None
@@ -513,7 +513,7 @@ def test_change_of_an_untouched_module_that_did_not_fail_is_keep(tmp_path: Path)
     """§XXXVII.1, 01 of 26.11: the designer copied `change` of round 1 for modules that were verified since, with the outline
     entry unchanged; the walidator let it pass and 5 of 7 verified modules went back to design."""
     _orch, plan_out, _state = _project(tmp_path)
-    from adk.orchestration.plan_outline import outline_of
+    from adk.orchestration.planning.outline import outline_of
 
     old = outline_of(plan_out["outline"])
     answer = _split_outline(plan_out["outline"])
@@ -529,7 +529,7 @@ def test_change_of_an_untouched_module_that_did_not_fail_is_keep(tmp_path: Path)
 def test_a_failed_test_is_not_judged_with_the_module_it_tests_until_it_is_rewritten(tmp_path: Path) -> None:
     """§XXXVII.3, `D1_10`: the old `AssertionError` of a `failed` `test_trainer.py` was taken for the error of the module's
     own task, and the repair of `experiment.py` went to the tester."""
-    from adk.orchestration.verification import _task_scope
+    from adk.orchestration.verification.step import _task_scope
 
     orch, _state, _result, _calls = _redesign(tmp_path)
     h = load(orch.hypergraph_path)
@@ -541,7 +541,7 @@ def test_a_failed_test_is_not_judged_with_the_module_it_tests_until_it_is_rewrit
 def test_a_chapter_that_cites_a_redesigned_module_is_verified_again() -> None:
     """§XXXVII.5: chapter 3 cited `evaluator.py`, the redesign rebuilt it, and the chapter stayed `verified` with dead pointers."""
     from adk.hypergraph import Edge, Hypergraph, Vertex
-    from adk.orchestration.redesign import _carry_over
+    from adk.orchestration.recovery.redesign import _carry_over
 
     def graph() -> Hypergraph:
         return Hypergraph(

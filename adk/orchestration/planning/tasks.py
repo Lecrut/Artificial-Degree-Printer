@@ -9,9 +9,9 @@ from typing import Any
 
 import re
 
-from adk.orchestration import agent_task_templates as templates
+from adk.orchestration.planning import task_templates as templates
 from adk.orchestration.common import THESIS_FILE
-from adk.orchestration.plan_outline import module_entry, module_order
+from adk.orchestration.planning.outline import module_entry, module_order
 from adk.tools.verification.contract_check import public_api
 
 # Chapters that need no code: the introduction and the literature. The others describe or report the code and are

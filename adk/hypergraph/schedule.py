@@ -1,5 +1,5 @@
 """Work from the state of H (Audit VI §VII.12.8): which vertex a task works on, whether it is ready, and the
-state a vertex reaches. Pure functions; the orchestrator's scheduler (orchestration/schedule.py) applies them."""
+state a vertex reaches. Pure functions; the orchestrator's scheduler (orchestration/run/schedule.py) applies them."""
 
 from __future__ import annotations
 

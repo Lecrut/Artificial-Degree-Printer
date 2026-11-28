@@ -9,7 +9,7 @@ from typing import Any
 from adk.hypergraph.validate import code_violations
 from adk.mocks import code_fixtures as fx
 from adk.mocks.staged import sketch_of
-from adk.orchestration.plan_sketch import sketch_to_source, source_to_sketch
+from adk.orchestration.planning.sketch import sketch_to_source, source_to_sketch
 
 SKETCH: dict[str, Any] = {
     "docstring": "Environment of the game.",

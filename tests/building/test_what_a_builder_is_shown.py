@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from adk.orchestration.common import available_package_imports
-from adk.orchestration.findings import focus_symbols, repair_findings, symbol_sources
+from adk.orchestration.verification.findings import focus_symbols, repair_findings, symbol_sources
 from tests.support.failed_vertex_project import _CONFIG as _CONFIG_failed_vertex_project
 from tests.support.failed_vertex_project import _planned, _repair_once
 from tests.support.orchestrator_sandbox import _orch
@@ -57,8 +57,8 @@ def test_an_undefined_name_gets_its_import_line_as_a_hint(tmp_path: Path) -> Non
     the harness inserts nothing; the author gets the one import line from the source of truth."""
     from types import SimpleNamespace
 
-    from adk.orchestration.findings import repair_findings
-    from adk.orchestration.import_hints import importable_names
+    from adk.orchestration.verification.findings import repair_findings
+    from adk.orchestration.building.import_hints import importable_names
 
     edge = SimpleNamespace(type="I", id="I:src/plots.py", spec={"import": "src.plots", "symbols": {"plot_results": {"kind": "func"}}})
     h = SimpleNamespace(edges={edge.id: edge})
@@ -79,8 +79,8 @@ def test_an_undefined_annotation_name_gets_its_typing_import_as_a_hint(tmp_path:
     of them carried an import hint, because `typing` is not among the canonical packages."""
     from types import SimpleNamespace
 
-    from adk.orchestration.findings import repair_findings
-    from adk.orchestration.import_hints import importable_names
+    from adk.orchestration.verification.findings import repair_findings
+    from adk.orchestration.building.import_hints import importable_names
 
     h = SimpleNamespace(edges={})
     source = "def run():\n    cfg: Dict[str, Any] = {}\n    rows: List[int] = []\n"
@@ -97,8 +97,8 @@ def test_an_undefined_annotation_name_gets_its_typing_import_as_a_hint(tmp_path:
 def test_an_undefined_constant_of_the_file_itself_is_hinted_from_its_own_interface(tmp_path: Path):
     from types import SimpleNamespace
 
-    from adk.orchestration.findings import repair_findings
-    from adk.orchestration.import_hints import importable_names, own_declarations
+    from adk.orchestration.verification.findings import repair_findings
+    from adk.orchestration.building.import_hints import importable_names, own_declarations
 
     own = SimpleNamespace(type="I", id="I:experiment.py", spec={"import": "experiment", "uses": {"subspace.py": ["Detector", "N"]}, "symbols": {
         "N_ESTIMATORS": {"kind": "const", "type": "int"}, "run": {"kind": "func"}}})
@@ -113,7 +113,7 @@ def test_an_undefined_constant_of_the_file_itself_is_hinted_from_its_own_interfa
 
 
 def test_a_pytest_finding_shows_the_call_that_passed_the_argument(tmp_path: Path):
-    from adk.orchestration.findings import repair_findings
+    from adk.orchestration.verification.findings import repair_findings
 
     (tmp_path / "tests").mkdir()
     (tmp_path / "trainer.py").write_text("def train(agent):\n    state = [1, 2]\n    agent.update(state)\n", encoding="utf-8")
@@ -130,7 +130,7 @@ def test_a_pytest_finding_shows_the_call_that_passed_the_argument(tmp_path: Path
 
 
 def test_the_used_part_of_an_interface_is_the_named_definitions_with_their_docstrings():
-    from adk.orchestration.interface_view import used_part
+    from adk.orchestration.building.interface_view import used_part
 
     src = (
         'import numpy as np\n\nN: int = 3\n\nclass A:\n    """A."""\n    def f(self) -> tuple[int, int]:\n        """Pair."""\n        ...\n\n'
@@ -190,7 +190,7 @@ def test_a_new_test_file_sees_the_signatures_of_every_code_module(tmp_path: Path
 
 def test_writer_sees_the_whole_target_chapter_or_the_chapters_with_the_named_pointers() -> None:
     """A chapter was cut to 1500 characters before "replace the section"; CRITIC tasks saw only the last 600."""
-    from adk.orchestration.building import _document_context
+    from adk.orchestration.building.builder import _document_context
 
     ch1 = "## Rozdział 1: Wstęp\n" + "a" * 3000 + " KONIEC1"
     ch4 = "## Rozdział 4: Wyniki\nWynik \\ref_csv{results.csv} jest dobry. " + "b" * 2000
@@ -227,7 +227,7 @@ def test_repair_payload_carries_the_source_of_the_failing_tests(tmp_path: Path) 
 
 def test_a_repair_of_one_chapter_also_shows_the_chapter_that_holds_the_pointer_it_names() -> None:
     """§XXXVII.5: the full repair of chapter 4 had a target and the `elif` never showed chapter 3, where the pointer was broken."""
-    from adk.orchestration.building import _document_context
+    from adk.orchestration.building.builder import _document_context
 
     ch3 = "## Rozdział 3: Metoda\nZob. \\ref_ast{evaluator.py:evaluate_games} tu. KONIEC3"
     ch4 = "## Rozdział 4: Wyniki\nWynik. KONIEC4"

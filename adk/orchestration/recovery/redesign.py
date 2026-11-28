@@ -24,11 +24,11 @@ from adk.hypergraph.build import RESULTS_FILE
 from adk.hypergraph.schedule import vertex_of
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.common import _RunState, available_package_imports
-from adk.orchestration.fragment_replan import _latest_errors
-from adk.orchestration.implementation_audit import compact_audit
-from adk.orchestration.plan_outline import module_files, outline_of, outline_view, outline_violations
-from adk.orchestration.planning import _existing_code
-from adk.orchestration.redesign_rules import decisions_of, diagnosis_of, revision_violations, settled_decisions, sources_wanted
+from adk.orchestration.recovery.replan import _latest_errors
+from adk.orchestration.recovery.implementation_audit import compact_audit
+from adk.orchestration.planning.outline import module_files, outline_of, outline_view, outline_violations
+from adk.orchestration.planning.phase import _existing_code
+from adk.orchestration.recovery.redesign_rules import decisions_of, diagnosis_of, revision_violations, settled_decisions, sources_wanted
 from adk.tools.building.experiment_runner import EXPERIMENT_TIMEOUT_S
 
 MAX_REDESIGNS = 2  # rounds a run

@@ -9,7 +9,7 @@ import re
 from typing import Any
 
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.routing import _canonical_path
+from adk.orchestration.run.routing import _canonical_path
 from adk.hypergraph.build import spec_from_stub
 from adk.tools.verification.contract_check import is_contract_module
 

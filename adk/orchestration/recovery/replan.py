@@ -17,9 +17,9 @@ from adk.hypergraph import Hypergraph, save
 from adk.hypergraph.schedule import FAILED, readiness
 from adk.orchestration import agent_texts as texts
 from adk.orchestration.common import _RunState, _agent_for_path, available_package_imports
-from adk.orchestration.failure_kinds import error_signature
-from adk.orchestration.interface_view import interface_view
-from adk.orchestration.plan_interfaces import _plan_interfaces
+from adk.orchestration.verification.failure_kinds import error_signature
+from adk.orchestration.building.interface_view import interface_view
+from adk.orchestration.planning.interfaces import _plan_interfaces
 
 REPLANS_WITHOUT_PROGRESS = 3 # re-plans in a row after which no new vertex was verified: the run ends with gaps
 MAX_REPLANS = 6

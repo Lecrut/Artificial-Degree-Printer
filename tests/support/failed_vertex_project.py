@@ -36,7 +36,7 @@ _CONFIG = 'import os\n\n\nclass Paths:\n    def results(self) -> str:\n        "
 
 
 def _repair_once(tmp_path: Path, failures: int, issue: str | None = None) -> tuple[dict, str]:
-    from adk.orchestration import repair
+    from adk.orchestration.recovery import repair
 
     orch, h = _planned(tmp_path)
     core = fx.TICTACTOE_CORE_CODE

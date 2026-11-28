@@ -19,11 +19,11 @@ from adk.core.models import read_json_state, write_json_state
 from adk.hypergraph import Hypergraph
 from adk.hypergraph.oracles import is_stub
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.fragment_replan import _latest_errors
-from adk.orchestration.interface_view import interface_view
-from adk.orchestration.plan_outline import existing_names
-from adk.orchestration.findings import headlines
-from adk.orchestration.plan_sketch import source_to_sketch
+from adk.orchestration.recovery.replan import _latest_errors
+from adk.orchestration.building.interface_view import interface_view
+from adk.orchestration.planning.outline import existing_names
+from adk.orchestration.verification.findings import headlines
+from adk.orchestration.planning.sketch import source_to_sketch
 
 AUDIT_FILE = "implementation_audit.json"
 SOURCE_CHARS = 12000  # of one file, for its description

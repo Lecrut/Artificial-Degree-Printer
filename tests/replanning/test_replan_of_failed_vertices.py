@@ -6,7 +6,7 @@ from pathlib import Path
 
 from adk.hypergraph.schedule import FAILED
 from adk.orchestration.common import _RunState
-from adk.orchestration.fragment_replan import _latest_errors
+from adk.orchestration.recovery.replan import _latest_errors
 from tests.support.failed_vertex_project import _TASKS, _events, _planned, _seen
 from tests.support.queue_state import _state
 
@@ -187,7 +187,7 @@ def test_a_neighbour_the_errors_do_not_name_is_not_a_suspect(tmp_path: Path):
 
 
 def test_a_file_name_inside_another_name_is_not_a_mention():
-    from adk.orchestration.fragment_replan import _mentioned
+    from adk.orchestration.recovery.replan import _mentioned
 
     assert _mentioned("tests\\test_trainer.py:13: in test_x\ntrainer.py:63: in f", "trainer.py")
     assert not _mentioned("tests\\test_trainer.py:13: in test_x", "trainer.py")

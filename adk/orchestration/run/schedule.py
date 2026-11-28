@@ -113,7 +113,7 @@ class SchedulerMixin:
     def _chapter_states_from_thesis(self, passed: bool, task: dict[str, Any]) -> None:
         """A thesis task that names no single chapter (several at once, a critic's fixes): every planned chapter
         now present in thesis.md takes the task's outcome (mock 01, 2026-11-18: six chapters written, all `spec`)."""
-        from adk.orchestration.factual_audit import thesis_missing_chapters
+        from adk.orchestration.verification.factual_audit import thesis_missing_chapters
 
         h = self._project_h()
         thesis = self.workspace_dir / THESIS_FILE

@@ -10,7 +10,7 @@ import pytest
 from adk.mocks import code_fixtures as fx
 from adk.mocks.scenarios import config_source
 from adk.orchestration.common import MaterializationError
-from adk.orchestration.failure_kinds import is_mechanical_failure
+from adk.orchestration.verification.failure_kinds import is_mechanical_failure
 from adk.tools.planning import select_model_tier, select_planning_tier
 from tests.support.failed_vertex_project import _planned, _repair_once
 from tests.support.game_project import (

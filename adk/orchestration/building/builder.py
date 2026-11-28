@@ -17,8 +17,8 @@ from adk.orchestration.common import (
     _is_document,
     MaterializationError,
 )
-from adk.orchestration.failure_kinds import _collect_report_issues
-from adk.orchestration.findings import without_symbols
+from adk.orchestration.verification.failure_kinds import _collect_report_issues
+from adk.orchestration.verification.findings import without_symbols
 
 # pytest summary line: `FAILED path.py::Class::test_name - message` (or ERROR)
 _FAILED_TEST_LINE = re.compile(r"^(?:FAILED|ERROR)\s+(\S+?\.py)::(\S+?)(?:\s+-\s+(.*))?$", re.MULTILINE)
@@ -330,10 +330,15 @@ class BuildingMixin:
         result = execute_workspace_experiment(self.workspace_dir, entrypoint=entrypoint or None, plots=plots or None)
         if result.get("ok") and (problem := _results_format_problem(self.workspace_dir / "results.csv")):
             result = {"ok": False, "error": problem}
+        # The runner deletes results.csv before the run: a clean exit without it measured nothing (03 of 27.11: a
+        # `run_experiment` that only read its config was verified, DATA_PRODUCED, and the results chapter was invented).
+        if result.get("ok") and not result.get("skipped") and not (self.workspace_dir / "results.csv").is_file():
+            result = {"ok": False, "error": texts.EXPERIMENT_NO_RESULTS}
         if result.get("skipped") or result.get("ok"):
             self._last_experiment_error = ""
             if result.get("ok"):
                 self._record_data_produced()
             return
         self._last_experiment_error = str(result.get("error") or texts.EXPERIMENT_NO_RESULTS)
-        self.logger.log_event("DATA_FAILED", error=self._last_experiment_error[:400])
+        # The end of a traceback is the error; its first 400 characters were only the path of the runner (27.11: 31 events, none readable).
+        self.logger.log_event("DATA_FAILED", error=self._last_experiment_error[-600:])

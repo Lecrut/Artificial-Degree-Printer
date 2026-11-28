@@ -7,8 +7,8 @@ import time
 from pathlib import Path
 
 from adk.core.llm import call_agent
-from adk.orchestration.context import _results_targets
-from adk.orchestration.write_gate import _plain_symbol
+from adk.orchestration.building.context import _results_targets
+from adk.orchestration.building.write_gate import _plain_symbol
 from adk.orchestrator import NeuroSymbolicOrchestrator
 from adk.tools.building.doc_editor import edit_document_section
 from adk.tools.verification import compile_symbolic_references
@@ -61,7 +61,7 @@ def test_pointer_naming_a_directory_is_a_finding_not_a_crash(tmp_path: Path) -> 
 
 def test_pointer_findings_are_the_writers_whatever_file_they_name():
     """X6, 02: "Symbol 'CONFIG' not found in 'config.py'" became a coder task on src/config.py."""
-    from adk.orchestration.recovery import _is_pointer_finding
+    from adk.orchestration.recovery.generations import _is_pointer_finding
 
     assert _is_pointer_finding("Symbol 'CONFIG' not found in 'config.py' Closest existing targets: src/config.py:CHANNELS.")
     assert _is_pointer_finding("File 'src' does not exist (it is a directory, not a file) A path inside a pointer is separated by a slash")
@@ -317,7 +317,7 @@ def test_a_pointer_finding_names_the_pointer_so_the_repair_sees_the_chapter_that
     """§XXXVI (01, 2026-11-26): chapter 3 cited `evaluate_games`, renamed by a redesign; the finding named only the
     symbol, so the repairs of chapters 4-6 saw the end of the document and failed nine times with the same error."""
     from adk.orchestration import agent_texts as texts
-    from adk.orchestration.building import _document_context
+    from adk.orchestration.building.builder import _document_context
 
     (tmp_path / "evaluator.py").write_text('def evaluate_symmetric() -> None:\n    """Evaluates."""\n', encoding="utf-8")
     chapter3 = "## Rozdział 3: Środowisko\nPorównanie liczy \\ref_ast{evaluator.py:evaluate_games}.\n"

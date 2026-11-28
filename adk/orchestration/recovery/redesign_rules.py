@@ -7,8 +7,8 @@ from __future__ import annotations
 from typing import Any
 
 from adk.orchestration import agent_texts as texts
-from adk.orchestration.plan_outline import changed_modules
-from adk.orchestration.routing import _canonical_path
+from adk.orchestration.planning.outline import changed_modules
+from adk.orchestration.run.routing import _canonical_path
 
 STATUSES = ("keep", "change", "new", "remove")
 
